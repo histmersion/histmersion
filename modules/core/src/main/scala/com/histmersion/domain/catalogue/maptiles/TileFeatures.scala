@@ -5,7 +5,7 @@ package domain.catalogue.maptiles
   * Pure.
   */
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object TileFeatures:

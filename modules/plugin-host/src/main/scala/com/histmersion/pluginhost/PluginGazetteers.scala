@@ -16,8 +16,8 @@ import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.Attribution
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin's gazetteer source as the host reads it: the client its download goes through, its answer guarded, and each
   * of its places checked and turned into the host's [[PlaceInput]]. Pure but for [[http]].

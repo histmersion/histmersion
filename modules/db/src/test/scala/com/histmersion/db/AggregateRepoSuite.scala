@@ -17,7 +17,7 @@ import com.histmersion.api.library.{Aggregate, Filter, Finding, Source}
 import com.histmersion.util.database.given
 import com.histmersion.api.library.Citekey
 import com.histmersion.config.Limits
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `periods` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. The bucketing itself is pure
   * and covered by `core/AggregateSuite`.

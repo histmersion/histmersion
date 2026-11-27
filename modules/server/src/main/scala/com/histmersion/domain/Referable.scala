@@ -9,7 +9,7 @@ import com.histmersion.domain.Title
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Implemented by each domain whose records others point at — a person's bookmarks, notes and read marks, a goal's
   * links, a picture's links. The pointing side stores an [[ItemRef]] and asks here, when it shows the reference, what

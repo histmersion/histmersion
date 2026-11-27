@@ -21,7 +21,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.util.data.TableName
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The About counts against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Other suites write into the
   * same database at the same time, so each count is compared with its own table read in the same breath, not with a

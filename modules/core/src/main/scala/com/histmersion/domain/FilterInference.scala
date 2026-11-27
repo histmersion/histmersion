@@ -16,8 +16,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `infer-filter` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (a), phase 2):
   * an article that records no coverage filter (#958) gets one proposed by a model — free text, topics, tags and the

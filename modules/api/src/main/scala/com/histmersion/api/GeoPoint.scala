@@ -3,8 +3,8 @@ package api
 
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** WGS84 lon/lat, matching PostGIS `geometry(Point, 4326)`. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

@@ -2,7 +2,7 @@ package com.histmersion
 package util.storage
 
 import java.nio.file.{Files, Path}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 @atBoundary(BoundaryKind.Process, "reads text files from disk")
 final class DiskTextFiles extends TextFiles:

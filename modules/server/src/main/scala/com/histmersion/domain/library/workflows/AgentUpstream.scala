@@ -28,7 +28,7 @@ import com.histmersion.domain.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built

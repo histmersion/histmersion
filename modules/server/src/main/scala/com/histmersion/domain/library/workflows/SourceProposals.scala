@@ -26,7 +26,7 @@ import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
   * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or

@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.library.Finding
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a dot on the map stands for. Every kind but the areas (regions, polities: shapes, never dots) joins the one
   * cluster group of the map ([[MapView]]), so dots near each other are drawn as one bubble whatever layer they come

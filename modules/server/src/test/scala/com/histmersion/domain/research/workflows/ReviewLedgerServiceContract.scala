@@ -12,7 +12,7 @@ import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite, Slug
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the review ledgers answer, the same on the database and in memory: a ledger written and read back, none for an
   * article never reviewed, refused for an article that does not exist, passed once no MAJOR is open, following its

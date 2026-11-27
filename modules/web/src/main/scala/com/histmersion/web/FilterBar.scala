@@ -16,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Years
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the place, the
   * period (the timeline's span, echoed and editable) and the topic in view; authors, status, tags and the publication

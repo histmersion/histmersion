@@ -8,7 +8,7 @@ import com.histmersion.api.library.{RefRow, UpdateNotice, WorkRef}
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** OpenAlex + Crossref: search, metadata, deposited reference lists and amendment notices. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

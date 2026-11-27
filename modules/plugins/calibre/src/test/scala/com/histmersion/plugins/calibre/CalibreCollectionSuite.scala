@@ -12,7 +12,7 @@ import com.histmersion.pluginhost.HostCollection
 import java.nio.file.{Files, Path}
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `calibre` plugin over a fixture library (a fake `calibredb` over the fixture's books, the system's `sqlite3`
   * over its `metadata.db`): what it reads, what it writes and with which commands, the GUI's lock, write-back off, and

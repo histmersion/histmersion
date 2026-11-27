@@ -2,7 +2,7 @@ package com.histmersion
 package util.storage
 
 import com.histmersion.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a prune removed. */
 final case class PruneReport(removed: List[Stored]):

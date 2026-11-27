@@ -10,7 +10,7 @@ import org.ekrich.config.ConfigFactory
 
 import com.histmersion.config.{AppConfig, AuthConfig}
 import com.histmersion.util.problem.Problem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How the access gate decides, as a pure function of the peer, the port, the method, the path, the `Host`, `Origin`
   * and `Referer` headers, whether a proxy forwarded it, what credential it presented, and the policy — tried over every

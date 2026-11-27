@@ -17,7 +17,7 @@ import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.Sha256
 import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet, PluginsMarkdown, PluginsReport}
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion plugin …` — the plugins of the LOCAL install (docs/research-plugins.md §7). These commands manage files
   * in the data directory and run the bundle's `histmersion-relink`; they never touch the database, and they refuse when

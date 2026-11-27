@@ -8,7 +8,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `plugin repo`, `plugin api-jar` and `plugin new`: what a plugin author needs from the install on this machine. They
   * read files only, and need no server.

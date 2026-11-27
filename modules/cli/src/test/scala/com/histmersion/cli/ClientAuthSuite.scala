@@ -7,7 +7,7 @@ import java.net.InetSocketAddress
 import java.nio.file.Files
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #767: the file downloads (`backups download`, `original`) are built outside the typed `call`, and `downloadBackup`
   * sent no bearer token. A stand-in server that wants the key on EVERY request — as one behind an authenticating proxy

@@ -2,7 +2,7 @@ package com.histmersion
 package config
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** One memory setting of the bundled Postgres (`runtime.postgres.*`): a size, `auto` (sized from the machine's RAM by
   * the parameter's own rule, [[PgParameter.auto]]) or nothing (Postgres' own default: the setting is not passed).

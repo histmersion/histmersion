@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.worklists
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** What an import does with the list it imports into: empty it first (importing the same file twice is idempotent), or
   * add to it.
   */

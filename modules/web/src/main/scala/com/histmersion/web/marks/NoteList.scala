@@ -4,7 +4,7 @@ package web.marks
 import com.histmersion.api.personal.Note
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The person's notes on one item, where the item is read: each with when it was written, its text, and Change and
   * Delete.

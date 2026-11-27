@@ -9,7 +9,7 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the goals: the goals (with their links and schedules) and their old slugs.
   *

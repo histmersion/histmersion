@@ -1,7 +1,7 @@
 package com.histmersion
 package api.settings
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object ReloadMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

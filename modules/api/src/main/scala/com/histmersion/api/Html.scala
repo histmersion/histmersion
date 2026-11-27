@@ -3,8 +3,8 @@ package api
 
 import scala.annotation.tailrec
 import scala.quoted.*
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Markup a page may put into its document as it is. A value is made in only three ways, so a text that came from
   * outside (a title, a credit, an OCR'd body, an agent's notes) never becomes markup by accident:

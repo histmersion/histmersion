@@ -26,7 +26,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.

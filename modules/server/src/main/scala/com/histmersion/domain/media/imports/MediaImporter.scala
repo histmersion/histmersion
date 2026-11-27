@@ -16,7 +16,7 @@ import com.histmersion.domain.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of the imports `media import <provider>` runs (#1446) — what it asks about, what it has still to ask, and a run
   * over a batch of targets. The one-run endpoint and the job share it, so every provider gets the same dry run,

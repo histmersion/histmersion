@@ -8,7 +8,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.{Period, TileLayer, TilesApi}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The tile service's pure half: what a request's key reads (and what it leaves out), its ETag and the browser's
   * revalidation, and the cache's bound.

@@ -7,7 +7,7 @@ import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.catalogue.{Latitude, Longitude, Place}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The point-only seed regions (2026-10-09): which points are only an atlas grid square's centre. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

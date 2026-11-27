@@ -2,7 +2,7 @@ package com.histmersion
 package api.automation
 import com.histmersion.api.{OffsetPage, YearFmt}
 import com.histmersion.api.Markdown.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object GoalsMarkdown:
 

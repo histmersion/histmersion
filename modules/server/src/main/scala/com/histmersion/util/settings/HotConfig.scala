@@ -5,7 +5,7 @@ import com.histmersion.config.{AppConfig, LoadedConfig, UserConfigFile}
 import ox.{forkDiscard, useInScope}
 
 import scala.concurrent.duration.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The config a hot generation is built from: the decoded settings the server runs on (fitted to this process — the
   * bundled runtime's endpoints) and the load they came from (the file, the user's plugin blocks, the environment read

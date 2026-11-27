@@ -7,7 +7,7 @@ import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.{Aggregate, TimeHistogram}
 import com.histmersion.api.catalogue.{Period, Year}
 import com.histmersion.api.library.Histogram
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pure tests for the timeline bucketing (plan §1.6 sizes, §1.7 strip). No DB involved. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

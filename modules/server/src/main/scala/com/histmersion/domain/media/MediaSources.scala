@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What media needs of the sources its figures and covers belong to (the library's, which implements it): the citekey a
   * source has now — an old one followed —, whether a source is stored under a citekey, and its converted text, where

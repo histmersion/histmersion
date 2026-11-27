@@ -5,7 +5,7 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
 import java.util.concurrent.atomic.AtomicInteger
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 type CitekeyRule = Match["[a-z][a-z0-9_-]*"]
 

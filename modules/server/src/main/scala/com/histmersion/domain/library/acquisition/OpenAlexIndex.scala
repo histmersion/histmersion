@@ -17,7 +17,7 @@ import java.time.LocalDate
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** OpenAlex: search by publication date, `cites:` and `authorships.author.id:` filters. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

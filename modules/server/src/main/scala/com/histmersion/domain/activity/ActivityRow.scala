@@ -14,8 +14,8 @@ import com.augustnagro.magnum.*
 import java.time.Instant
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One row of the merged list, in the order of [[ActivityRepo.Merged]]'s columns. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

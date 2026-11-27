@@ -72,7 +72,7 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.plugin.CollectionUpdateEntry
 import com.histmersion.plugin.CollectionChange
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items

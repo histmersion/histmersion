@@ -11,7 +11,7 @@ import java.time.Instant
 import com.histmersion.util.basemap.RangeHttp
 import com.histmersion.util.basemap.RetryPolicy
 import com.histmersion.config.RuntimeConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base map's wiring: the outbound policy its client is given, the sea-floor grid of each setting, and where
   * `basemap.dir` resolves. No network, no database.

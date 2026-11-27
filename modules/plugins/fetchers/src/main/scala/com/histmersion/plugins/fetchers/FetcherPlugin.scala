@@ -2,7 +2,7 @@ package com.histmersion
 package plugins.fetchers
 
 import com.histmersion.plugin.{Plugin, Spi}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of Histmersion's own acquisition plugins: on by default (its defaults resource), switched off by
   * `histmersion.plugins.<id>.enabled = false`. Its endpoints and rules are Histmersion's own `histmersion.acquire`

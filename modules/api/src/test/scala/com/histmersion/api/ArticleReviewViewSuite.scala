@@ -11,7 +11,7 @@ import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding,
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.Activity
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The review view's words: reviewer names, a finding's fate, the Markdown every surface returns, and the wire shape of
   * the state.

@@ -6,7 +6,7 @@ import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.FetchedFile
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `arxiv` plugin's fetcher: an arXiv preprint's PDF, by its arXiv id. */
 final class ArxivFetcher(cfg: UpstreamSettings, http: () => Plugin.Http) extends SourceFetcher:

@@ -6,8 +6,8 @@ import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostOwned
 import com.histmersion.domain.Title
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An AI provider that is Histmersion's OWN code (the three CLI runtimes), registered through the plugin host like any
   * other (docs/research-plugins.md §22, D2) but run by the host's own clients with its `agents.providers.<name>.*`

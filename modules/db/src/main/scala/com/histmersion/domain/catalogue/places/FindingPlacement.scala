@@ -4,7 +4,7 @@ package domain.catalogue.places
 import com.histmersion.api.catalogue.Geocode
 import com.augustnagro.magnum.{DbCon, Frag}
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the places decide for the library: which places a source's findings belong to (`finding_places`), placed again
   * inside the library's own transaction whenever it writes the source, so a moved or new finding is located the moment

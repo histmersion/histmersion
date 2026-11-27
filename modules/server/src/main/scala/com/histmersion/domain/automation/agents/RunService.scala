@@ -26,7 +26,7 @@ import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.CodexRetention
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent runs as the engine's features read them — each run's row with its steps' usage summed — and the steps
   * themselves: the checkpoints a resume replays, the attempts, the trace, the spend.

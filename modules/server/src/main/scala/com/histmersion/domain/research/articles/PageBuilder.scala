@@ -17,7 +17,7 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.

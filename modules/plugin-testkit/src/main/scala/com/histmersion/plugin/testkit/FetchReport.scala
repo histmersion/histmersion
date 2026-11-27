@@ -2,7 +2,7 @@ package com.histmersion
 package plugin.testkit
 
 import com.histmersion.plugin.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One fetch of one work through the plugin's fetchers, run as the server runs its acquisition chain: the legal gate,
   * an exception read as a miss, a "PDF" that is not one read as no copy, one memo for the work.

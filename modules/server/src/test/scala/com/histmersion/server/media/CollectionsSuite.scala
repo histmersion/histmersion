@@ -35,7 +35,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The store as a few maps, with the gazetteer facts the matches read. */
 final class CollStore(facts: Map[Place.Id, PlaceFacts], named: Map[ImportService.PlaceKey, List[PlaceFacts]])

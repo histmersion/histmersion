@@ -4,7 +4,7 @@ package domain.research.articles
 import com.histmersion.api.checks.Lint.{FormatChecker, LintRuleReport, Rule}
 import com.histmersion.util.data.checks.CheckRun
 import com.augustnagro.magnum.{DbCon, Frag}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles' lint rules as the db suites run them: a rule's report on the suite's connection and the SQL each rule
   * reads.

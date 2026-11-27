@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 import com.histmersion.plugin.Plugin.Config.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
 final case class WithSecrets(token: Secret, password: Option[Secret], retries: Int, verbose: Boolean)

@@ -12,7 +12,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The article surface over real HTTP (plan §5.2 stream 2.7): the REST contract including its status codes, and the
   * rendered `/article/{slug}` page — whose whole point is that a `[[citekey]]` and a `[[slug]]` resolve to DIFFERENT

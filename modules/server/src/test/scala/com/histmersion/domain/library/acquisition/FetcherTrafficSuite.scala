@@ -19,7 +19,7 @@ import java.time.{Instant, LocalDate}
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The recorded traffic of the acquisition chain: every request the stock generation's source fetchers (and the
   * new-source search's CORE index, on the generation's CORE key) send for a set of works, on the wire below the

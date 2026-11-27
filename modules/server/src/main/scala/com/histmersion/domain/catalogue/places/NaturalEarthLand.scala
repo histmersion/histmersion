@@ -15,7 +15,7 @@ import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.server.HttpDownload
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object NaturalEarthLand:

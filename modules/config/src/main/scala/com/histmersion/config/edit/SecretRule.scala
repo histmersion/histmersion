@@ -1,8 +1,9 @@
 package com.histmersion
 package config.edit
 
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** How a setting that holds a credential may be written into the config file. */
 @movesTo(FeaturePlace.UtilSettings)
 enum SecretRule derives CanEqual:

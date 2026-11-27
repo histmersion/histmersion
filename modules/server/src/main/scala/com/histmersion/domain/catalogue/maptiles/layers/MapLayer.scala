@@ -6,7 +6,7 @@ import com.histmersion.domain.catalogue.maptiles.{TileCell, TilePoint}
 import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.domain.catalogue.maptiles.MapTiles
 import com.augustnagro.magnum.Frag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A point layer of the map that another domain draws: the map cuts its tiles, the domain says which of its items lie
   * in a tile's box and how a drawn item reads.

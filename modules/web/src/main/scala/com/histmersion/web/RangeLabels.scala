@@ -3,7 +3,7 @@ package web
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where the timeline overview's two years go — the selection's "from" and "to" under its handles — so they never
   * overlap and never leave the bar. Pure, so the placement is a unit test and [[TimelineView]] only applies the answer.

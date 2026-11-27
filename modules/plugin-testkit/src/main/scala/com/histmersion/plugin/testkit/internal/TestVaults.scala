@@ -4,7 +4,7 @@ package plugin.testkit.internal
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The stand-in vaults of a test's `secrets`: `vault → (ref → value)`. */
 final private[testkit] class TestVaults(
@@ -24,9 +24,15 @@ final private[testkit] class TestVaults(
           ctx.secretVaults.add(
             Registry.AddId(vault.value),
             new Secret.Vault:
-              @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+              @tolerated(
+                LintRule.G44,
+                "pending G44 (raw value only in the newtype's companion or at a lifted boundary)"
+              )
               val name = Secret.Vault.Name(vault.value)
-              @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+              @tolerated(
+                LintRule.G44,
+                "pending G44 (raw value only in the newtype's companion or at a lifted boundary)"
+              )
               def resolve(ref: Secret.Vault.ResolveRef) =
                 refs
                   .get(Secret.Ref.Vault.Ref(ref.value))

@@ -50,7 +50,7 @@ import com.histmersion.pluginhost.HostAiHttp
 import com.histmersion.config.AcquireConfig
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin loaded as the Histmersion server loads it — without the server, its database or Postgres — and run as the
   * server runs it.

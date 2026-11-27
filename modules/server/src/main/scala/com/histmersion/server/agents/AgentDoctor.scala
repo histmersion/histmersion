@@ -31,8 +31,8 @@ import com.histmersion.config.UserPaths
 import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.plugin.AiCheck
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `agent doctor`: every provider, checked WITHOUT spending anything (docs/research-embedded-agents.md §15). Per
   * provider: whether a role's chain uses it, its key (never shown), its base URL, the free model listing (`GET

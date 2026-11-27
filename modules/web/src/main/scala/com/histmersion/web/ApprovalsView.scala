@@ -17,7 +17,7 @@ import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The approvals window (docs/research-embedded-agents.md §5.2): changes agent runs PROPOSED — a source's status, a
   * disagreement edge — each with its evidence and the quote code verified, and approve / reject behind the write gate.

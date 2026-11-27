@@ -15,7 +15,7 @@ import java.nio.file.Files
 import java.time.Duration
 import com.histmersion.config.ConverterConfig
 import com.histmersion.util.jobs.Job
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A whole book legitimately converts for far longer than an article: the client asks the sidecar for the page count
   * and allows `pages × seconds-per-page` when that beats the configured timeout.

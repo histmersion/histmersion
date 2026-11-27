@@ -6,8 +6,8 @@ import com.histmersion.api.basemap.BasemapMarkdown
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion basemap status|fetch|rm` — the local base map's extracts on the SERVER's machine
   * (docs/user-guide/how-to/open-data.md): what is there (and which of the two styles it draws whole), downloading them

@@ -13,7 +13,7 @@ import com.histmersion.api.library.{Facet, Label}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Reusable autocomplete + chip component. Ported from chips.js (137 lines).
   *

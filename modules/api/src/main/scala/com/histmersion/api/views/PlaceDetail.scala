@@ -9,7 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A place's page as the server answers it: the gazetteer's `PlaceCard` with the place's pictures. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

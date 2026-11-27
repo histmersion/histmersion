@@ -11,8 +11,8 @@ import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.agents.RunQuery
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The engine's list filters a client sent (core [[ListFilters]]: the approvals' and the runs'; the jobs' are
   * `util.jobs.JobListing.query`), checked and turned into the repos' queries: a value outside a closed vocabulary (a

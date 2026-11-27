@@ -6,7 +6,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources with a fetched file that are not in a collection: `count` gaps, `uncounted` records without a file,
   * `total` both, and every row.

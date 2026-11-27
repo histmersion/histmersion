@@ -45,7 +45,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.plugin.CatalogueEvent
 import com.histmersion.api.TimeSpan
 import com.histmersion.upstreams.dating.CatalogDating
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Media collections and event catalogues as plugins (docs/research-plugins.md §6, §19): the built-in ones registered
   * through the plugin host and switched off like any plugin; a third-party plugin's collection and catalogue registered

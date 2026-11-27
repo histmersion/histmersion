@@ -8,7 +8,7 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the named periods: this collection's own, after the places and before the events. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

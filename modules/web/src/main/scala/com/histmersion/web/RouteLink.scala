@@ -4,7 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import org.scalajs.dom.window
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A link to a page of the web UI: a real `<a href>`, so ⌘/Ctrl/Shift/middle click opens it in a new tab; a plain click
   * moves there without reloading.

@@ -4,8 +4,8 @@ import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one way a command prints its answer (#1946): the shared Markdown rendering — for people and LLMs — or, with
   * `--json`, the response as the server sent it, for scripts. Every command that offers JSON takes `--json` (one name,

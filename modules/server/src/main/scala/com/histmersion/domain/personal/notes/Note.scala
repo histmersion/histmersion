@@ -15,7 +15,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.{Latitude, Longitude, UserId, Year}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A note as the person sees it: what it is left on as that shows now, and what that is called. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

@@ -6,7 +6,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The reader's "Map motion" setting (#4718), kept per device: follow the system's reduced-motion setting (the
   * default), always animate, or never.
@@ -27,6 +27,7 @@ object MapMotion:
   def fromWire(s: Wire): Option[MapMotion] = values.find(_.wire.value == s.value.trim.toLowerCase)
 
   /** Pure: does the map animate under choice `m` when the system asks for reduced motion (`systemReduced`)? */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def animates(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m match
     case System => !systemReduced.value
     case Always => true
@@ -35,6 +36,7 @@ object MapMotion:
   /** Pure: is the map still only because the system asks for it (the setting follows the system)? The menu says so
     * under the setting.
     */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def heldBySystem(m: MapMotion, systemReduced: MotionPref.SystemReduced): Boolean = m == System && systemReduced.value
 
   /** Pure: MapLibre's `reduceMotion` option for a map made under `m` — `None` leaves MapLibre to read the system's

@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every active filter as a chip with its remove button, the period among them once it is not the default span — the
   * one list the filter panel, its folded rail's count and an empty result list show.

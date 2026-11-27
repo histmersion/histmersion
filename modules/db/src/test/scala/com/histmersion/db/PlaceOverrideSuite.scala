@@ -25,7 +25,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.identity.AliasTable
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's kind and period for a place (V080), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * setting one re-matches the place's findings; every writer of `places` — a re-seed, a gazetteer-style upsert, the

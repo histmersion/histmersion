@@ -3,7 +3,7 @@ package plugins.media
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `smithsonian`: the Smithsonian's Open Access API (an api.data.gov key, sent as a header): one search by the place's
   * name answers the records; only a CC0 image media item is used ([[Smithsonian]]). The units in `exclude-providers`

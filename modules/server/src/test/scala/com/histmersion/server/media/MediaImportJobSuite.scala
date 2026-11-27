@@ -35,7 +35,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1491: a media import over a few hundred places/events is a JOB, through the real server — the request answers at
   * once with the job, the job reports `n/total` as it goes, a picture that cannot be fetched is a line in its summary

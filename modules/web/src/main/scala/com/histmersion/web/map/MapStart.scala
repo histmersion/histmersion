@@ -6,7 +6,7 @@ import com.histmersion.api.instance.{MapStartConfig, MapStartMode}
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.Store
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where the map opens (`ui.map-start`): where this browser last left it ("last", kept per browser under
   * [[StorageKey]]) or always at the configured place.

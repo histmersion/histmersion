@@ -13,8 +13,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the review manager and the review ledgers record about articles, read for their review state: per article the
   * newest `article-review` item, the ledger's findings COUNTED in SQL (a ledger runs to hundreds of KB; a list page

@@ -9,7 +9,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A list item's goal and the run or job that wrote it and that ticked it off. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agents' scratch state: a JSON value under a key, by key. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

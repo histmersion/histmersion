@@ -33,7 +33,7 @@ import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The stall report tells a wait by its kind of reason only; the sentence is made from the case. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

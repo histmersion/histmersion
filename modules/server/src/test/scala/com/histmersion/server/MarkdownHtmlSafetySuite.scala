@@ -1,7 +1,8 @@
 package com.histmersion
 package server
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** The one Markdown renderer of the pages, over random hostile Markdown (a seeded generator: a failure names its seed
   * and input): raw HTML blocks, inline HTML, Markdown links and images with script addresses, half-open tags. The
   * output is read back by this suite's own reader: no `<script>` element, no event-handler attribute, no `href`/`src`

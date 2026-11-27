@@ -19,7 +19,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** compile-article's pure logic: the claim table (quotes found in the record), the evidence model, and the code
   * self-check of a draft — fatal problems always sent back, the rest sent back until the last attempt, then listed for

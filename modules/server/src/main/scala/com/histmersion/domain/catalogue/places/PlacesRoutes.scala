@@ -13,7 +13,7 @@ import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's endpoints bound to their controllers, in the order route matching needs: the `/{id}` route is a
   * prefix of `/{id}/children` and `/{id}/tree`, so the longer paths come first. `card` is a place's page (`GET
@@ -22,7 +22,10 @@ import com.histmersion.lint.{LintRule, tolerated}
   */
 object PlacesRoutes:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def missing(id: ApiPlace.Id): Api.Error =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")),
@@ -30,22 +33,34 @@ object PlacesRoutes:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def exact(id: ApiPlace.Id): Either[Api.Error, Place.Id] = Place.Id.either(id.value).left.map(_ => missing(id))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def trimmed(id: ApiPlace.Id): Either[Api.Error, Place.Id] =
     Place.Id.either(id.value.trim).left.map(_ => missing(id))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def year(asOf: Option[Api.AggregateQuery.AsOf]): Option[DeepTime.SignedYear] =
     asOf.map(y => DeepTime.SignedYear(y.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def apply(
       places: PlacesControllers,
       gazetteer: GazetteerControllers,

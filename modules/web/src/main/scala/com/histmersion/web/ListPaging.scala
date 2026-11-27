@@ -4,7 +4,7 @@ package web
 import com.histmersion.api.Paging
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.Plural
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The rows a newest-first list window (jobs, agent runs, approvals) shows, page by page ([[Paging]]: keyset cursors,
   * the total and the per-state counts from the server).

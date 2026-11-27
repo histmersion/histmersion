@@ -4,7 +4,7 @@ package upstreams.identifiers
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.ArxivId
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object Identifiers:
   type ArxivText = ArxivText.T
   object ArxivText extends Newtype[String, Pure]

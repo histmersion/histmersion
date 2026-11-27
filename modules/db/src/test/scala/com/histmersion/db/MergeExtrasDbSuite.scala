@@ -64,7 +64,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries and a merge decides beyond M5, against real Postgres (docs/research-merge-import.md §7.8): a
   * collection's own places and named periods (V052) and not its seeds, a goal's plan, links and schedules (#881, V054),

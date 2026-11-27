@@ -2,7 +2,7 @@ package com.histmersion
 package web
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The boundaries of a playback, drawn from every state fetched so far and faded in and out by the playhead at each
   * frame (#3764): the year's states were fetched five times a second and the map replaced its shapes with each answer —

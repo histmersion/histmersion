@@ -12,8 +12,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Named historical periods (`periods`, V016) — the timeline's presets and the PeriodO definitions behind them: the
   * search, the single-period reads and the write path. The period is `int8range '[]'`, so the inclusive upper bound

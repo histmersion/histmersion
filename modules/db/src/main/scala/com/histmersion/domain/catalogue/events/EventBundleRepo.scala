@@ -25,8 +25,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events as a bundle carries them (docs/research-merge-import.md §4, §7.3): the events with their datings, edges
   * and participants, their old ids, what the catalogues say about them and the corrections by hand — read out in a

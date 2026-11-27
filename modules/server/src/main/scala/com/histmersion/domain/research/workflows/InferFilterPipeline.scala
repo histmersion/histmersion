@@ -32,7 +32,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `infer-filter <article>` (docs/research-process-managers.md §4 (a), phase 2): an article that records no coverage
   * filter (#958) gets one proposed — the review manager runs it BEFORE the article's review, so the review's coverage

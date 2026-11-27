@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.{Href, Html}
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The media layer's popup (#1446): a source's figure names its source; a provider's picture shows its local thumbnail
   * with the credit line and licence its licence requires — the licence's name, linked to its text. A click on the

@@ -16,7 +16,7 @@ import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite, Politeness
 import java.time.Instant
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.config.AppConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The polite client (#1446): its User-Agent, its pace, and what it does with 429/503 and MediaWiki's maxlag — all
   * against a fake provider and a fake clock.

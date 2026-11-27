@@ -4,7 +4,7 @@ package web.marks
 import com.histmersion.web.SourceLink
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A note's text as the page shows it ([[NoteMarkdown]], built as elements: nothing the person wrote is read as HTML).
   */

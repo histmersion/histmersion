@@ -12,7 +12,7 @@ import com.histmersion.util.storage.{Location, Reservation, Storage, Store}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import scala.util.Using
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Small PMTiles archives built in a test, and a [[RangeHttp]] that answers from a local file — no network anywhere in
   * the base-map suites.

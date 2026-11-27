@@ -8,7 +8,7 @@ import com.histmersion.plugin.testkit.{PluginHarness, ScriptedAiHttp}
 import com.histmersion.pluginhost.Registries
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.CoreQuota
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own HTTP AI providers run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does (the host's own `agents.providers.<name>` supplied to a first-party

@@ -10,7 +10,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"). `Readable` and `Physical` are the two vector
   * styles drawn from the server's own extracts ([[BaseMaps]]); `Standard`, `Muted` and `Dark` the ONLINE raster maps —

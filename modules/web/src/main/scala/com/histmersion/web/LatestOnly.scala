@@ -4,7 +4,7 @@ package web
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One request in flight, and the NEWEST wish waiting behind it: `apply(a)` starts `run(a, done)` at once when nothing
   * runs; while one runs, further calls only replace the waiting value, and when the running one calls `done` the newest

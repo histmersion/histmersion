@@ -21,7 +21,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.web.settings.SettingsPages
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pages of Library, Research and Settings, and of single items (a run, a goal, a place…), shown over Explore —
   * which stays as it is underneath, hidden, so coming back finds the map where it was. Each section shows the view that
@@ -96,7 +96,6 @@ object Pages:
     div(cls := "page-layout page-single", mainTag(cls := "page-main wm-content", idAttr := "page-main", body))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sideLink(r: Route, label: UiLabels.Text, on: Boolean, mods: Modifier[HtmlElement]*): HtmlElement =
     RouteLink(
       r,
@@ -107,6 +106,7 @@ object Pages:
       mods
     )
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def group(name: UiLabels.Text): HtmlElement = div(cls := "side-group", name)
 
   /** A watched list's link: bold while it has something new, with the count of what waits on someone. */
@@ -201,12 +201,10 @@ object Pages:
     case _                 => notFound
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def section(heading: UiLabels.Text, body: HtmlElement): HtmlElement =
     div(h1(cls := "page-title", heading), body)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def agentsOff(text: UiLabels.Text): HtmlElement =
     p(cls := "muted", text, " Their settings are ", code("agents.enabled"), " in the server's configuration.")
 

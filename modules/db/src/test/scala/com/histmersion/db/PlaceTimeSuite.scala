@@ -29,7 +29,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.EventSummary
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The time rule of the place views (2026-10-09, [[PlaceTimeBasis]]) against a real PostGIS (HISTMERSION_TEST_DB_URL;
   * skipped otherwise), on every surface that reads places at a time: the map feed, search and suggestions, a place's

@@ -8,8 +8,8 @@ import com.histmersion.util.database.Timestamps
 import com.augustnagro.magnum.*
 
 import java.time.Instant
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `ui_seen` table: one mark per board. Takes the connection it runs on. */
 @atBoundary(BoundaryKind.Sql, "reads and writes the seen tables and their row codecs")

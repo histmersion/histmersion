@@ -4,7 +4,7 @@ package domain.media.covers
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources a run of covers and illustrations looks at: those with figures and no illustration yet, those with an
   * ISBN or OCLC number and no cover yet (not asked of Open Library yet).

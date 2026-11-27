@@ -7,7 +7,7 @@ import com.histmersion.util.data.DataOwner
 import com.histmersion.domain.catalogue.CataloguePlan
 import com.histmersion.util.data.exchange.PlanRules
 import com.histmersion.util.data.exchange.MergeRules
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge treats attestations: they travel with the sources they quote, and nothing points at them. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

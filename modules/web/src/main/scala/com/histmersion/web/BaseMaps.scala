@@ -15,7 +15,7 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.web.map.MapSurface
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base map (docs/user-guide/exploring/web-ui.md, "The base map"; docs/research-map-styles.md):
   *
@@ -302,7 +302,6 @@ object BaseMaps:
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def drawFoot(): Unit =
     noticeEl.foreach(_.remove())

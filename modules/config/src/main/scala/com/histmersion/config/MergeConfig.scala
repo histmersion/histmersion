@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The source matcher of `merge plan` (docs/research-merge-import.md §5.2): Fellegi–Sunter-style log-weights with
   * hand-set values, and the two thresholds that split a score into auto-merge, needs-decision and new. Tuned here, not

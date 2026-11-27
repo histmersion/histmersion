@@ -4,7 +4,7 @@ package plugin.testkit.internal
 import com.histmersion.plugin.*
 import com.histmersion.plugin.testkit.LogLine
 import com.histmersion.pluginhost.{HostLog, HostServices}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every line logged while a harness ran: the plugin's own (through `Plugin.Context.log`), and the host's (the
   * acquisition chain, the polite clients). Guarded by `this`: a fetcher may log from several threads.

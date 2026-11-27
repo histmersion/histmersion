@@ -7,7 +7,7 @@ import com.histmersion.util.ocr.Chunk
 import java.time.Instant
 import java.util.UUID
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's records the in-memory services share: the sources (each with its findings, chunks and identity), the
   * old citekeys, the edges between stored sources and the edges parked until their target arrives.

@@ -2,7 +2,7 @@ package com.histmersion
 package web.setup
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The first-run setup's seven steps, in order. */
 enum SetupStep(val label: SetupStep.Label, val optional: SetupStep.Optional = SetupStep.Optional(false))

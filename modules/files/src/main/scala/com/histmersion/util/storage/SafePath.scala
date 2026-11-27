@@ -7,7 +7,7 @@ import com.histmersion.api.given
 
 import java.nio.file.{Path, Paths}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Confining a caller-supplied path to a configured directory.
   *

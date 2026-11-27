@@ -110,8 +110,8 @@ import com.histmersion.domain.research.ResearchData
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The composition root's object graph over one server's `Deps`: every domain's wiring and controllers, the views that
   * join several of them (`server.views`) and this instance's own (`server.instance`). REST routes ([[HttpApi]]) and MCP

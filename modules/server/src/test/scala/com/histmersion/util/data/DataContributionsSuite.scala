@@ -13,7 +13,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.data.exchange.CarriedKinds
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The registry: one contribution per owner, one owner per table, and — on a migrated database — every table of the
   * schema owned by exactly one contributor. The schema part is skipped without HISTMERSION_TEST_DB_URL.

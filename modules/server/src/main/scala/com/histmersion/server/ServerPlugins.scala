@@ -10,8 +10,8 @@ import com.histmersion.server.agents.BuiltinAi
 import com.histmersion.util.plugins.Plugins
 import org.ekrich.config.ConfigFactory
 import com.histmersion.config.ConfigReload
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server's plugin generations: [[Plugins]] with what this host supplies — the command-line AI runtimes it still
   * runs itself ([[BuiltinAi]]), the one acquisition client every plugin of a generation is lent, and the CORE budget

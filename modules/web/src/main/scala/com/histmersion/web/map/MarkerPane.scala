@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One pane of DOM markers over the map: each at its map point, moved every frame the map moves (one `transform` write
   * per marker in view; one far outside the view is hidden, not moved).

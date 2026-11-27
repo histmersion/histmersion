@@ -25,7 +25,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.automation.Agents
 import com.histmersion.util.database.given
 import com.histmersion.api.jobs.JobState
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server-side filters of the approvals, agent-runs and jobs lists and their facet counts (core `ListFilters`)
   * against a real Postgres (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write the same tables at the same

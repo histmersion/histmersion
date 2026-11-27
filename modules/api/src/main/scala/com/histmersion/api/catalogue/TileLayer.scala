@@ -4,7 +4,7 @@ import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Mapbox vector tiles, cut by the grid MapLibre asks for (Web Mercator, 512 px a tile). */
 enum TileLayer:

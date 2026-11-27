@@ -7,7 +7,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The page's one map: its surface, and the DOM panes over it ([[MapStack]]'s order). */
 object TheMap:

@@ -22,8 +22,8 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.domain.CoreQuota
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.EventEntry
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin's catalogue as the host reads it: the query it is asked, its polite HTTP, and its records checked and
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].

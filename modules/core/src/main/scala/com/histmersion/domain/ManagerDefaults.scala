@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 @movesTo(FeaturePlace.AutomationManagers)
 final case class ManagerDefaults(

@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `bundle export|verify|import` (docs/research-merge-import.md): where the server builds a bundle before it is
   * downloaded and keeps an uploaded one while it is read, and how long a finished export is left there for its download

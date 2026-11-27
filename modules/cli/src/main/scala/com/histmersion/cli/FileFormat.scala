@@ -3,8 +3,8 @@ package cli
 
 import com.histmersion.config.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pure helpers for `lint --file`. */
 @atBoundary(BoundaryKind.CliArgs, "splits a note file into frontmatter and body for `histmersion lint --file`")

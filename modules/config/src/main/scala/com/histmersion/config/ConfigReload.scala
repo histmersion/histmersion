@@ -6,8 +6,8 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 import scala.jdk.CollectionConverters.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The config side of an in-place reload (docs/research-plugins.md §3.5), pure: which settings differ between the
   * running config and the one just read, which of them a running server can take on, and the config it switches to. The

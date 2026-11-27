@@ -20,7 +20,7 @@ import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *

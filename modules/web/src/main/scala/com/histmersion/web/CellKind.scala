@@ -9,7 +9,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The cells of a tiled layer drawn as bubbles ([[MapView.dots]] draws a cell alone as the bubble of its count): what
   * they count for and where a click goes — into their box.

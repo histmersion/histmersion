@@ -7,8 +7,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
 import java.security.MessageDigest
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The plugins directory's `lib/`: the dependency jars of the installed plugins, and three files. `classpath` lists the
   * jars in class-path order, `inputs` the plugin jars and POMs they were resolved from (`<sha256> <file>`), and

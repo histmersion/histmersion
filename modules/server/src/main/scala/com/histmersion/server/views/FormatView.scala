@@ -7,7 +7,7 @@ import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.server.MarkdownLint
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Source
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `POST /api/lint/markdown`: Markdown that is not stored (yet), checked as the field it is about to be — an article's
   * body by research's rules, a summary against research's pages, a source's notes by the library's. With `fix`, the

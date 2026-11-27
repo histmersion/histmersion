@@ -4,7 +4,7 @@ package domain.catalogue.evidence
 import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.util.text.Anchor
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
   * `suffix`), as an attestation stores it (`quote`/`prefix`/`suffix`). Used when a merge keeps one OCR body and the

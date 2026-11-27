@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 enum ProviderKind(val wire: ProviderKind.Wire) derives CanEqual:
   case Anthropic extends ProviderKind(ProviderKind.Wire("anthropic"))
   case OpenAI extends ProviderKind(ProviderKind.Wire("openai"))

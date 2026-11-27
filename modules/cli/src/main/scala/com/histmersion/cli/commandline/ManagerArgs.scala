@@ -30,11 +30,14 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The command line of [[ManagerCmd]]. */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion manager`: declares its options, parses them into typed commands")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter of `histmersion manager`: declares its options, parses them into typed commands"
+)
 object ManagerArgs:
   /** `agent digest|decide-all|managers|manager|enqueue|autopilot|scheduler|stalls`, held by `agent`. */
   def leaves(): List[Subcommand] =

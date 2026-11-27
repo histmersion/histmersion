@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CoverageSearch(query: CoverageSearch.Query, total: CoverageSearch.Total, cited: List[Citekey])

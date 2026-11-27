@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);

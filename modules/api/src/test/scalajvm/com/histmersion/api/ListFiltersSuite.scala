@@ -13,7 +13,7 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Facet
 import com.histmersion.api.jobs.JobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The list filters' pure parts: the multi-valued parameters, the time bounds, who decided an approval, the facet
   * header and its round trip, and what a heading or a next-page line says.

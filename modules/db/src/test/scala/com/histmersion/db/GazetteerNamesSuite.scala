@@ -34,7 +34,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #987 against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise), on the REAL bundled seed: the places a
   * finding names in plain English are read out of `db/places` itself (Natural Earth physical + cities, Pleiades with

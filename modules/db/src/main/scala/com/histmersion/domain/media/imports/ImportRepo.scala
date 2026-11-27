@@ -14,8 +14,8 @@ import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.DeepTime
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the media imports ask about and what they recorded asking (#1446, V082): the places on the map and the events
   * not asked yet by a provider, the facts a collection's match reads of a place, and `media_checks`. Every method runs

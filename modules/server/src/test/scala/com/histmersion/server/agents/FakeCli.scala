@@ -13,7 +13,7 @@ import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A fake CLI (`claude`, `codex`, `opencode`): a shell script that records what it was given — its arguments one per
   * line, its stdin, the `--output-schema` file, the environment values a test asserts on, whether its working directory

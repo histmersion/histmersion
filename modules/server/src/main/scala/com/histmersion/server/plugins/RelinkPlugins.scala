@@ -32,8 +32,8 @@ import com.histmersion.api.Sha256
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.config.UserPaths.pathEquality
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The JVM-side tool of the relink kit (docs/research-plugins.md §7.4): run by `bin/histmersion-relink` and the JVM
   * launcher with the kit's jars on the class path, as [[pluginTool]] — never part of the server's native image (nothing
@@ -73,8 +73,9 @@ object RelinkPlugins:
   type Note = Note.T
   object Note extends Newtype[String, Pure]
 
-  extension (id: PluginDescription.Id) @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-                                       private def nonEmpty: Boolean = id.value.nonEmpty
+  extension (id: PluginDescription.Id)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    private def nonEmpty: Boolean = id.value.nonEmpty
 
   private val SpiVersion: PluginSet.SpiVersion = PluginSet.SpiVersion(Spi.Version)
 

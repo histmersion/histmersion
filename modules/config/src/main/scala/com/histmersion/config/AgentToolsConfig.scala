@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** What one tool call of an agent step may return (every runtime: the agent MCP endpoint a run token reaches and the
   * API tool loop). Every later turn of the step re-sends the result, so a long one is cut at a line with a trailer

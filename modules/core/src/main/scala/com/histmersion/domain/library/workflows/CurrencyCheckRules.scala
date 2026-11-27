@@ -10,7 +10,7 @@ import com.histmersion.api.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure rules of a currency check (docs/research-embedded-agents.md §14): what it makes of the papers citing a
   * source, and the acquisition item a disagreeing paper outside the corpus becomes.

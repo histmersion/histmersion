@@ -18,7 +18,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats attestations: they travel with the sources they quote. When a pair of sources that are one
   * keeps one OCR body, the attestations that point into the other are found again in it (re-anchored) — under each

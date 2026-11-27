@@ -26,8 +26,8 @@ import com.histmersion.util.json.StoredIdCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code

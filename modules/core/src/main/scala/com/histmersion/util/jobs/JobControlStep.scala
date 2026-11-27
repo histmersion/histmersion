@@ -1,7 +1,8 @@
 package com.histmersion
 package util.jobs
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** What answering a [[JobAction]] on one job takes. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

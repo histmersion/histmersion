@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.{Instant, ZoneOffset}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** When a bookmark, a note or a read mark was made or changed: to the microsecond, as Postgres keeps it. */
 type MarkTime = MarkTime.T

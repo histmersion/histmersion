@@ -25,7 +25,7 @@ import com.histmersion.domain.automation.Pipeline
 import com.histmersion.domain.automation.Run
 import com.histmersion.api.automation.Managers
 import com.histmersion.domain.ManagerPolicy.Item
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's pure rules (docs/research-process-managers.md "As built: the autopilot"): the checked auto approvals
   * and their caps, the goal-status advance, the managers every goal has, the spread crons, the extend threshold, the

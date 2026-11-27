@@ -13,7 +13,7 @@ import com.histmersion.api.instance.EventsUiConfig
 import com.histmersion.web.ui.ThemeTokens
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events on the map while the timeline plays (#1440). Fetched ONCE when playback starts (the filter's events over
   * the span played — `/api/events/geo`); every frame after that is local: each event's visibility is computed from the

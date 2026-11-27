@@ -13,7 +13,7 @@ import com.histmersion.server.agents.ServerEngineSite
 import com.histmersion.domain.library.collections.CollectionsControllers
 import com.histmersion.domain.library.collections.CollectionsService
 import com.histmersion.domain.library.collections.RefusingCollectionLibrary
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the composition registers, written as text to `src/test/resources/oracle/registries/` and compared byte for
   * byte, recorded on the code before the transition adapters and `Handlers` went (slice 12, part 2): every owner's data

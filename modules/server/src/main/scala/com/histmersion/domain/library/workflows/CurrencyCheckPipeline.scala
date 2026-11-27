@@ -31,7 +31,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `currency-check <goal>` (docs/research-embedded-agents.md §4.5, §14): is what the goal rests on still accepted? For
   * each of the goal's sources with a DOI: `assess --apply` (a retraction overwrites the status, as `assess` always

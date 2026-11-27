@@ -31,7 +31,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `enrich-source <citekey>` (docs/research-embedded-agents.md §4.2): read one source and propose its summary,
   * classification, period, quoted findings and notes; CODE verifies every answer and writes ONE patch. The LLM steps

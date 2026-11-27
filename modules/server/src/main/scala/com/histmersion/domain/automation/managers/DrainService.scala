@@ -17,7 +17,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Drain mode (#3762 proposal 4): `histmersion agent autopilot drain` stops the central scheduler from admitting
   * anything new — and the managers' tick from deciding approvals by code (a decision wakes a waiting run) and from

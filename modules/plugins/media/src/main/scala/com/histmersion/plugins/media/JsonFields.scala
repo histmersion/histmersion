@@ -9,7 +9,7 @@ import com.histmersion.plugin.{Period, Year}
 
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** A field as text: a string, or a number written out; blank is none. */
 extension (c: Cursor)

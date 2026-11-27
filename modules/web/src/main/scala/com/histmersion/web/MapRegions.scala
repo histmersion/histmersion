@@ -11,7 +11,7 @@ import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.MapArea
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a person downloads of the base map from the About window, as data: the regions to pick from, the fetch a choice
   * asks for, and the dry run's sizes zoom by zoom.

@@ -3,7 +3,7 @@ package cli
 
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion rename <old> <new> [--json]`: the arguments parse, and a new citekey the server would refuse is a usage
   * error here, before any request.

@@ -6,7 +6,7 @@ package util.basemap
   */
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class GebcoPart(
     name: GebcoPart.Name,
     url: GebcoPart.Url,

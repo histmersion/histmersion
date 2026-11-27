@@ -8,7 +8,7 @@ import hearth.typename.TypeName as Named
 
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Why an operation did not succeed: one closed list of cases, in eleven groups, each case holding typed data and no
   * sentence. The sentence, the HTTP status, the CLI exit code, the log line and the stored wording are the edges' (one
@@ -147,8 +147,9 @@ object Problem:
   /** A problem's English sentence, as its renderer wrote it: what a [[Relayed]] problem holds. */
   type Sentence = Sentence.T
   object Sentence extends Newtype[String, Pure]:
-    extension (sentence: Sentence) @tolerated(LintRule.G60Unrecognised, "pending G60 (only the stored column's reader builds Unrecognised)")
-                                   def kept: Problem = Stored.Unrecognised(Stored.Text(sentence.value))
+    extension (sentence: Sentence)
+      @tolerated(LintRule.G60Unrecognised, "pending G60 (only the stored column's reader builds Unrecognised)")
+      def kept: Problem = Stored.Unrecognised(Stored.Text(sentence.value))
 
   /** A setting's key: `histmersion.agents.budgets.daily-usd`. */
   type SettingKey = SettingKey.T

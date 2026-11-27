@@ -6,8 +6,8 @@ import sttp.model.StatusCode
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
 import com.histmersion.api.Api
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the ui routes with their request and response bodies")
 object UiApi:

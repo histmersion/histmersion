@@ -3,7 +3,7 @@ package cli
 
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.CollectionAudit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The audit compares loosely where Calibre legitimately differs (subtitles, accents, "Last, First") and strictly where
   * it matters (no author in common, scraped junk, a missing entry).

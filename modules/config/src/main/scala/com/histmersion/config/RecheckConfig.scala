@@ -4,7 +4,7 @@ package config
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 import RecheckConfig.{Failures, Kept}
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The acquisition list's legal re-check: on or off, the days an item's check holds, the items tried a day and a pass,
   * the minutes between passes, the share (percent) of the autopilot's shared daily legal ingest allowance it may take,

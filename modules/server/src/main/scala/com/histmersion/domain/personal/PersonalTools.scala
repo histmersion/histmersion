@@ -16,7 +16,7 @@ import com.histmersion.api.personal.PersonalApi
 import com.histmersion.api.Paging
 import com.histmersion.api.personal.Note
 import com.histmersion.api.personal.ItemKey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The person's bookmarks and notes for agents to READ: there is no tool that makes, changes or removes one — those are
   * the person's own, written in the web UI and with `histmersion bookmarks|notes`. An agent reads them for the local

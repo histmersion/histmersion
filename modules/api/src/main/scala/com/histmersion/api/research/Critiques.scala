@@ -9,7 +9,7 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object Critiques:
   type Count = Count.T
   object Count extends Newtype[Int, Pure]

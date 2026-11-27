@@ -3,7 +3,7 @@ package plugin.testkit
 
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HttpAnswer
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A canned answer of [[HttpMode.Stub]]. */
 final case class StubAnswer(

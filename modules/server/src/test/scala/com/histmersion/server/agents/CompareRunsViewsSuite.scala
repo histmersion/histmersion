@@ -19,7 +19,7 @@ import com.histmersion.domain.CompareRuns
 import com.histmersion.domain.ReviewArticle.{Finding, Merged, Report, Reviewer, Severity, Verdict}
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 import com.histmersion.api.automation.Agents
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `agent compare` at the server's edge: recorded runs as the store reads them, compared by the domain, shown on the
   * wire and in Markdown as before the domain had records of its own.

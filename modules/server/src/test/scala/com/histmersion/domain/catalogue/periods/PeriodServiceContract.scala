@@ -10,7 +10,7 @@ import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion, Ye
 import com.histmersion.domain.catalogue.{CatalogueStores, CatalogueStoreSuite}
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the named periods keep: parents written before their parts and the inclusive span read back, the
   * placement a re-import keeps, an idempotent upsert, the presets and the search by label, region and span, the seed's

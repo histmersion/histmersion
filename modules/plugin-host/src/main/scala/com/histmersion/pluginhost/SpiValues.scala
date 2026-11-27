@@ -12,8 +12,8 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.plugin.WikidataId
 import com.histmersion.plugin.Licence
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The values the plugin SPI exchanges, converted between plugin-api's newtypes and the model's. plugin-api's copies
   * judge nothing (Iron `Pure`): the model's types are the only judge, here, where a plugin's value becomes the model's.

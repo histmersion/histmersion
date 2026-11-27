@@ -10,7 +10,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The citation graph over REST and MCP. Each row's far end arrives classified ([[NeighborTarget]]), so every renderer
   * (MCP, the CLI over HTTP, the HTML page) links sources, articles and unresolved targets without a second lookup. A
@@ -31,7 +31,10 @@ final class CitationsControllers(citations: CitationService, sources: SourceServ
     citations.contradictions(citekey.map(canonical), since)
 
   /** `POST /api/edges/resolve`: the parked edges whose target now names one stored source, promoted. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def resolveEdges(using Creator.New): Either[Api.Error, EdgesResolved] =
     maintenance.guard(WriteGate.OperationName("edges/resolve")):
       Right(EdgesResolved(EdgesResolved.Resolved(sources.resolveEdges(Caller.Local).value)))

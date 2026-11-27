@@ -6,8 +6,8 @@ import org.scalajs.dom
 import org.scalajs.dom.window
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Wording
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The page being shown, from the address bar: [[Route.parse]] of the path, kept in step with back/forward. Moving
   * between the web UI's pages changes the address without reloading (the map, the filters and the open windows stay);

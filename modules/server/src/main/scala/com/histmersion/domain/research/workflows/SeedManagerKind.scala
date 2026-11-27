@@ -41,7 +41,7 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `seed:<goal>` manager kind (propose-articles, then one article-compile item per article a person approved — a
   * compiled article is queued for the review manager — and the goal's plan), as research contributes it: over its

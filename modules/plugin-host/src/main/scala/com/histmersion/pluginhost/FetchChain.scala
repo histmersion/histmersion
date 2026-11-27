@@ -12,7 +12,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): the [[SourceFetcher]]s the plugins registered, run
   * as ONE chain until one finds a copy. The fetchers know how to ask their upstream; everything around them is decided

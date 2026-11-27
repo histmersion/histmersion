@@ -8,7 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Autopilot:
@@ -17,6 +17,7 @@ object Autopilot:
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class AutopilotSet(
       on: AutopilotSet.On,
       by: Option[AutopilotSet.By] = None,

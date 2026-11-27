@@ -7,7 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The colour theme a reader picked: follow the system's setting (the default), always light, or always dark. One
   * button cycles them in that order, as the documentation site's does.

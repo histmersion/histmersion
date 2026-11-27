@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A line-based three-way merge (diff3; Khanna, Kunal & Pierce 2007), for article bodies that changed on both sides
   * since a common base (docs/research-merge-import.md §5.4). Pure.

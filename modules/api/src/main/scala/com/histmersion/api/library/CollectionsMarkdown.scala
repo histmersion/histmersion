@@ -3,7 +3,7 @@ package api.library
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.Plural
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The collections' answers as Markdown, for the CLI and the MCP tools alike. */
 object CollectionsMarkdown:

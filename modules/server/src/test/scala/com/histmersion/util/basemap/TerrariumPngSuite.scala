@@ -3,7 +3,7 @@ package util.basemap
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Terrarium PNGs: what the encoder writes is a PNG any reader takes, with the elevation in its pixels, and the decoder
   * reads it back.

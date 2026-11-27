@@ -9,7 +9,7 @@ import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An LLM answer after code validation: the value to checkpoint, and what was dropped or doubted on the way (run
   * warnings, not failures).

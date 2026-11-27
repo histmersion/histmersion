@@ -6,7 +6,7 @@ import com.histmersion.plugin.*
 import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the registered plugins contribute, one map per extension point, in registration order. Read by the rest of the
   * app; an immutable snapshot of one [[Generation]].

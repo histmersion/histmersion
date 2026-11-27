@@ -34,8 +34,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review

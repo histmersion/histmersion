@@ -13,8 +13,8 @@ import com.histmersion.util.console.Console
 import com.histmersion.util.access.AccessPolicy
 import com.histmersion.util.database.InstanceLock
 import com.histmersion.util.problem.Raised
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server binary: the command line, the config and the plugins on the main thread, the bundled runtime when there
   * is one, then [[Composition]] and the listener.

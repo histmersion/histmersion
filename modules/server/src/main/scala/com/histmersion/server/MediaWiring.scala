@@ -13,8 +13,8 @@ import com.histmersion.pluginhost.{HttpTransport, JavaHttpTransport}
 import com.histmersion.util.ocr.ConverterClient
 import com.histmersion.util.storage.Blob
 import com.histmersion.api.ocr.ConvertedDoc
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Media's services and controllers, built over one server's `deps`: `http` fetches the providers' pictures and Open
   * Library's covers, `converter` makes thumbnails; the sources its figures and covers belong to are the library's.

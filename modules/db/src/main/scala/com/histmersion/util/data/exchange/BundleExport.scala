@@ -12,8 +12,8 @@ import java.io.OutputStream
 import javax.sql.DataSource
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `bundle export` (docs/research-merge-import.md §4, milestone M1): the database as a `.hmx` bundle, written to a
   * stream, from the carried kinds of the registry.

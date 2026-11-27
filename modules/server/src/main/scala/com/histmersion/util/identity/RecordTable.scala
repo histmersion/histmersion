@@ -12,7 +12,7 @@ import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.given
 import com.histmersion.util.database.literal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How an owner's table names its records, so that references to them are resolved and described in one place: the
   * table (aliased `t` in the expressions), the expression of a record's key and title, its uid column where the kind

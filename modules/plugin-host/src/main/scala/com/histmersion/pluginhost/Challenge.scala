@@ -7,7 +7,7 @@ import scala.concurrent.duration.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.domain.CoreQuota
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A bot-protection CHALLENGE (Cloudflare's "Just a moment…" interstitial and its kin) rather than an answer. Such a
   * host is treated as having no copy: it is neither retried nor worked around.

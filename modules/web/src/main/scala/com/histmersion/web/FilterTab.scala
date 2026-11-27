@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import com.histmersion.api.Plural
 import com.histmersion.api.library.Filter
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One controller for the list tabs that follow the global filter (Articles, Events — #1798 item 5): on a UiState
   * change it recomputes the query, skips an unchanged one, debounces, drops answers to superseded requests

@@ -7,7 +7,7 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.given
 import com.histmersion.api.research.Article
 import com.histmersion.api.Markdown
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")

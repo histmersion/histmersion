@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `drop`: the vector layers (or their kinds) never stored — [[Basemap.parseDrop]]; everything else is kept and the
   * style decides what is drawn. `onDemand`: the map outside the extract (or deeper), read as a page needs it (#3760).

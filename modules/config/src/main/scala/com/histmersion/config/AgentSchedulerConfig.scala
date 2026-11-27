@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The crons and the goal sweeps. Since phase 3 a goal's schedules are its watcher (`watch:<goal>`) and every manager's
   * cron fires from the managers' tick (docs/research-process-managers.md, "As built (phase 3)"); the scheduler thread

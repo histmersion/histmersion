@@ -3,7 +3,7 @@ package domain.media.figures
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.media.assets.NewFigure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which files of a figures folder are figures, and what a note says of where they are (plan §1.8). */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

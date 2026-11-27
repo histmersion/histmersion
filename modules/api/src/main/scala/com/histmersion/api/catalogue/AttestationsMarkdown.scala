@@ -2,7 +2,7 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.api.OffsetPage
 import com.histmersion.api.Markdown.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object AttestationsMarkdown:
 

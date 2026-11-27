@@ -4,7 +4,7 @@ package plugin.testkit
 import com.histmersion.plugin.testkit.internal.RecordedExchange
 
 import java.nio.file.{Files, Path}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** Paths of a test's recordings. */
 @atBoundary(BoundaryKind.Process, "finds a test's recorded exchange files")

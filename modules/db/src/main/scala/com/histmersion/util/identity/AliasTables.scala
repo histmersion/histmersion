@@ -3,7 +3,7 @@ package util.identity
 
 import javax.sql.DataSource
 import com.histmersion.api.aliases.AliasKind
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every alias table the owners registered, by kind: how an old identifier of any kind is followed. */
 final class AliasTables(val tables: List[AliasTable]):

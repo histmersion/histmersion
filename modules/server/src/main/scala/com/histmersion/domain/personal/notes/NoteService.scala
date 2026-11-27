@@ -14,7 +14,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's notes, each left on an item or a point on the map, which it opens back to. A target and a text reach here
   * checked; a removed note is kept as its tombstone. An item's key and title are its owner's as they are when the notes

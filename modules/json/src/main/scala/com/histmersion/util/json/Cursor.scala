@@ -3,7 +3,7 @@ package util.json
 
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** A position in a JSON document that may not exist: how a reader walks a document whose shape no record describes
   * (`doc.cursor.downField("a").downArray.focus`).

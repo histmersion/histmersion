@@ -22,7 +22,7 @@ import com.histmersion.api.library.{
   CollectionsMarkdown
 }
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The collections' rules on the in-memory service (the database one runs the same rules; the calibre commands' suite
   * runs it end to end): what a listing leaves out, what a push sends and records, what an update and an audit are

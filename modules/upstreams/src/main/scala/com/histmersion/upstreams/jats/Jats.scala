@@ -2,7 +2,7 @@ package com.histmersion
 package upstreams.jats
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object Jats:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]

@@ -9,7 +9,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.domain.CoreQuota
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own acquisition plugins run as any plugin author runs theirs: through the plugin testkit, which loads
   * a plugin from the class path as the server does (the host's own `histmersion.acquire` settings supplied to a

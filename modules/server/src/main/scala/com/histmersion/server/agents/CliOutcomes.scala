@@ -10,8 +10,8 @@ import sttp.ai.core.agent.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.api.automation.Agents
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 @movesTo(FeaturePlace.AutomationAgents)

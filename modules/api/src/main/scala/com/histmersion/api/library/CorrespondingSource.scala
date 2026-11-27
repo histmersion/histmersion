@@ -3,7 +3,7 @@ package api.library
 import scala.annotation.tailrec
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The AGPL (section 13) has a server offer everyone who uses it over a network the source of the very version that is
   * running: the repository at the commit it was built from, or the repository itself when the commit is unknown. The

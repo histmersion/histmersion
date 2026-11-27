@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import scala.util.control.NonFatal
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The dependencies of user plugins, resolved together with what the server ships — run from the relink kit by
   * `histmersion-relink --resolve` (which `histmersion plugin add` and `rm`, the relink's pre-flight and the JVM

@@ -4,7 +4,7 @@ package server
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Whether a source page shows the whole OCR'd paper. */
 @movesTo(FeaturePlace.LibrarySources)

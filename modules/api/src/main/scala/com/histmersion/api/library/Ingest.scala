@@ -10,7 +10,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Sha256
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object Ingest:
   type Disposition = Disposition.T
   object Disposition extends Newtype[String, Pure]

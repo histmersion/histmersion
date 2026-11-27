@@ -16,7 +16,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.Fetch
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `pmc` plugin's two fetchers, by DOI: `pmc`, the PDF — Europe PMC's free links, else the one NCBI's PMC Article
   * Datasets publish — and `pmc-text`, the record's JATS full text when there is no PDF anywhere (the chain runs it

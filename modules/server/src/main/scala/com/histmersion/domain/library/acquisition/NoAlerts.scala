@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** No citation or author alerts (a test, or a server built without them). */
 object NoAlerts extends CitationAlerts:

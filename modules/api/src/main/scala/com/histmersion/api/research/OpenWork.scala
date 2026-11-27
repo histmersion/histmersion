@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import java.time.Instant
 import scala.util.Try
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object OpenWork:
 

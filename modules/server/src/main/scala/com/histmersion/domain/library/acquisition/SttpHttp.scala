@@ -10,8 +10,8 @@ import com.histmersion.config.AcquireConfig
 import com.histmersion.domain.{CoreQuota, HttpPolicy}
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, PolicyHttp, SttpTransport}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The real client: the host's acquisition client ([[PolicyHttp]] — the one outbound policy, a bot challenge the end of
   * a request) as the three verbs the acquisition clients read.

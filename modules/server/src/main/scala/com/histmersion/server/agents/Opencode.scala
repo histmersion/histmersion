@@ -15,8 +15,8 @@ import com.histmersion.api.automation.PlanQuota
 import java.nio.file.Path
 import sttp.ai.core.agent.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 @atBoundary(BoundaryKind.Process, "builds the opencode CLI arguments and reads its output")

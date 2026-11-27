@@ -7,7 +7,7 @@ import com.histmersion.domain.MergePlanner
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.data.exchange.{PlanRules, PlanRun}
 import com.histmersion.api.text.WikiLinks
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Research's rules of a merge plan: an article the merge writes links the bundle's sources by the citekeys they have
   * here.

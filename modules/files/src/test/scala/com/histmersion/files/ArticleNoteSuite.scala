@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] (plan §5.2 stream 2.7). The shapes asserted here are the ones the existing
   * research wiki actually writes — that is what "the 40+ existing articles import" means in the acceptance line.

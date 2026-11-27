@@ -7,8 +7,8 @@ import scala.annotation.tailrec
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The user config file's part in a load: where it was looked for, whether it was there, and the keys of it that are no
   * setting (a typo is said, never silently dropped).

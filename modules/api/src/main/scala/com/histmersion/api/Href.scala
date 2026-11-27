@@ -1,8 +1,9 @@
 package com.histmersion
 package api
 
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** An address a page may link to or show an image from, its scheme checked: only the web (`http`, `https`), mail
   * (`mailto`, links only), an address on this server (relative, no scheme) and, for an image only, an inline raster
   * picture (`data:image/png|jpeg|gif|webp;base64,…`). `javascript:`, `vbscript:`, every other `data:` (an SVG image can

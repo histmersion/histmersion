@@ -6,7 +6,7 @@ import com.histmersion.domain.catalogue.events.HeldEvent
 import com.histmersion.domain.catalogue.periods.StoredPeriod
 import com.histmersion.domain.catalogue.places.{HeldOverride, HeldPlace, HeldSite}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The catalogue's rows held in memory, one record the `InMemory` services of its features share (each reads and
   * changes its own part, through lenses): the named periods and the bundled seeds' versions; the attestations and the

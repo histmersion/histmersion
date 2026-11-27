@@ -7,8 +7,8 @@ import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Named historical periods from ChronOntology (DAI).
   *

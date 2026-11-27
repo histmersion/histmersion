@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Step role → its model CHAIN, `provider:model > provider:model > …` (one model is a chain of one;
   * [[ModelChains.parseChain]]). Empty = no model configured for that role; a step that needs it is refused with a

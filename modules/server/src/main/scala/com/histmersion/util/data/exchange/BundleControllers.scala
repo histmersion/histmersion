@@ -27,7 +27,7 @@ import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The bundle and merge endpoints, MCP tools and `histmersion bundle|merge` commands (docs/research-merge-import.md):
   * the raw inputs parsed, the maintenance guard of every write, the [[BundleService]] call. An upload is the file the
@@ -77,7 +77,10 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def importUploaded(req: MergeImportRequest): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("merge/import")):
@@ -94,7 +97,10 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
     * bundle (its decisions are remembered by issue id).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def applyUploaded(req: MergeApplyRequest)(using Creator.New): Either[Api.Error, MergeApplyJob] =
     maintenance.guard(WriteGate.OperationName("merge/apply")):
@@ -106,7 +112,10 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
   /** `GET /api/merge/apply/{job}` — the job is a `jobs` row, so it answers across a restart (#888). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def applyStatus(job: Job.Id): Either[Api.Error, MergeApplyJob] =
     bundles
@@ -137,7 +146,10 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       BundleControllers.sha256(bundle.value).left.map(Api.Error(_)).map(bundles.putSession(_, r))
 
   /** `POST /api/merge/resolutions` — the YAML of a resolution file, read; every bad line at once. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def parseResolutions(text: MergeResolutionsFile.Text): Either[Api.Error, MergeResolutions] =
     MergeResolutionsFile
@@ -151,14 +163,20 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def merges(limit: Option[Api.Merge.Limit]): List[MergeInfo] =
     bundles.merges(limit.map(_.value).flatMap(PageSize.option(_)).getOrElse(BundleControllers.ListLimit))
 
   def mergeDetail(id: MergeRepo.MergeIdOrPrefix): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def mergeLedger(
       uid: Option[MergeRepo.UidText],
       merge: Option[MergeRepo.MergeIdOrPrefix],
@@ -188,7 +206,10 @@ object BundleControllers:
   val LedgerLimit: PageSize = PageSize(200)
 
   /** A bundle's name on the server: its sha256, 64 lower-case hex digits. Pure. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def sha256(raw: String): Either[Problems, Sha256] =
     Sha256
@@ -202,7 +223,10 @@ object BundleControllers:
 
   /** `since` must be a moment: ISO-8601 with an offset (`2026-10-03T09:12:00Z`), as `asOf` is. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def since(raw: Option[BundleScope.Since.At]): Either[Problems, Option[BundleScope.Since.At]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
@@ -223,7 +247,10 @@ object BundleControllers:
 
   /** `attachment; filename="histmersion-<label or id>-<asOf>.hmx"`. Pure. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def disposition(m: Bundle.Manifest): Disposition =
     val who = m.instance.label.map(_.value.trim).filter(_.nonEmpty).getOrElse(m.instance.id.toString.take(8))
     val stamp = m.asOf.map(_.value.filter(_.isDigit).take(14)).filter(_.nonEmpty).getOrElse("empty")

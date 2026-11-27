@@ -11,7 +11,7 @@ import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.Url
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The open-access indexes' records of one DOI, asked lazily and at most once per fetch, shared through the fetch's
   * memo by the index steps and the landing step of every open-access index plugin.

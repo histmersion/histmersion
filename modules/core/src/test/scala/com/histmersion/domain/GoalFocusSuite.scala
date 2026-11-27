@@ -17,7 +17,7 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
 import com.histmersion.domain.automation.{Goal, ItemStatus}
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's focus, pure (docs/research-process-managers.md "As built: the focus"): the selection order (closest
   * to done, depth-first, pins, a person's priority, ties), the sticky active set and what frees a slot (reviewed,

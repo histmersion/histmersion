@@ -8,8 +8,8 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which open acquisition items a source that just came in fulfils (#970).
   *

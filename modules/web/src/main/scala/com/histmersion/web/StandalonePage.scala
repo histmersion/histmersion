@@ -5,7 +5,7 @@ import org.scalajs.dom
 import org.scalajs.dom.document
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The entry point of the standalone `/source/…` and `/article/…` pages: the same bundle as the web UI, wiring only
   * what a rendered page needs — link previews and in-page navigation.

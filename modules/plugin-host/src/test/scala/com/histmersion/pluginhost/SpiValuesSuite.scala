@@ -19,7 +19,7 @@ import com.histmersion.plugin.CatalogueEvent
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.plugin.MediaItem
 import com.histmersion.plugin.MediaRights
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The conversions between plugin-api's newtypes and the model's: plugin-api's judge nothing, so every value a plugin
   * hands over is checked by the model's type here, and a plain value the host still holds is parsed by it.

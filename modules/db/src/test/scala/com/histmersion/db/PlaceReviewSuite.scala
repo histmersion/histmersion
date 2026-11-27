@@ -20,7 +20,7 @@ import com.histmersion.util.database.given
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `lint --rule place-kind` and `--rule place-grid-point` (2026-10-09), against a real PostGIS
   * (HISTMERSION_TEST_DB_URL; skipped otherwise): the dry run lists people, polities, a settlement and a merge and

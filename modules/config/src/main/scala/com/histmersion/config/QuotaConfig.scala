@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is unknown; a window with
   * no floor of its own has `defaultFloor`; a stale reading lets a run go on only with `margin` points to spare;

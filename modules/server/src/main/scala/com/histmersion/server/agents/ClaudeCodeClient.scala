@@ -22,8 +22,8 @@ import java.nio.file.Files
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `claude-code` provider: ONE `claude -p` process per LLM step attempt, run as the step's agent from the GENERATED
   * headless plugin (docs/research-agent-runtimes.md §2.4, §3a):

@@ -29,8 +29,8 @@ import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion merge plan` — what importing another collection's bundle would do, and every issue, in one run
   * (docs/research-merge-import.md §6, milestone M3). The bundle is uploaded to the server (it is planned there, against

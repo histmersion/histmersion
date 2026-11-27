@@ -14,8 +14,8 @@ import com.histmersion.api.Sha256
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The figures as a bundle carries them (docs/research-merge-import.md §4): this collection's assets with their
   * source's uid, read out in uid order, the bytes of each one a blob — and written in by an import, the metadata of the

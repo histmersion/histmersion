@@ -20,7 +20,7 @@ import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, Pl
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.automation.ProviderKind
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of user-added plugins and the relink kit (docs/research-plugins.md §7, §8): the plugin-set digest and
   * what `histmersion plugin status` concludes from it, the plugins directory's index, Maven coordinates, and the kit's

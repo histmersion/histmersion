@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer extension point added within SPI 2: a context written before it refuses a source (so a plugin built
   * against it still compiles and links), and a place's defaults are the plain ones.

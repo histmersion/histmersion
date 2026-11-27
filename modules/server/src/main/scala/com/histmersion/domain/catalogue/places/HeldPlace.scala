@@ -11,7 +11,7 @@ import com.histmersion.domain.DeepTime
 import java.util.Locale
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A place as the in-memory catalogue holds it: the row an import or a person wrote, the dataset it came in with, its
   * names (a name a person added is `manual`, which no import deletes), the edges to its parents and its links.

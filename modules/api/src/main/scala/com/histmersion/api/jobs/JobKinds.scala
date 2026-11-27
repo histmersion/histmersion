@@ -2,7 +2,7 @@ package com.histmersion
 package api.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every kind of background job the server runs, as their owners registered them, in the order the jobs window lists
   * them, and the fields their jobs' detail may hold, in the order the detail shows them. A kind nobody registered is

@@ -1,7 +1,8 @@
 package com.histmersion
 package server
 
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+
 /** The server binary's command line. It takes almost nothing — every setting is config — but what it does not know is
   * an ERROR that ends the process before anything is opened: once, `--help` started a real server against the live
   * database (docs/research-plugins.md §10.3).

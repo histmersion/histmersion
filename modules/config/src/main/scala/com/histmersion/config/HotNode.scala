@@ -2,7 +2,7 @@ package com.histmersion
 package config
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** One node of the hot component graph (docs/research-plugins.md §3.6): its name, the nodes its value is built from,
   * and the config keys it is built from — each a HOCON path prefix (`histmersion.db` covers `histmersion.db.url` and

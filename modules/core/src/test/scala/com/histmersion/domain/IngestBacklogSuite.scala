@@ -25,7 +25,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Managers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The watchers' ingest backlog, pure: a sweep's allowance after the backlog, the drain's order and caps, where a pick
   * goes when it is not ingested, what a failed ingest leads to, the days to drain, and the repair's decision per

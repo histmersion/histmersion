@@ -29,7 +29,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[TreeRepo]] against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

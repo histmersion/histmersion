@@ -9,7 +9,7 @@ import com.histmersion.Period
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a point-only seed region IS, from what its sources say (`lint --rule place-kind`, 2026-10-09). Pleiades files a
   * people, a civic tribe, a province, a deme and a district alike as a "region" with one representative point; this

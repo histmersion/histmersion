@@ -14,7 +14,7 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.jobs.JobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition list's re-check as every surface shows it: an item's last check under it in `queue acquire`, the
   * status line (`agent autopilot status`, `about`) and a pass's report. Pure.

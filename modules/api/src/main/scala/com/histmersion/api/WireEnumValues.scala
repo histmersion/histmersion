@@ -3,8 +3,8 @@ package api
 
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A wire vocabulary's spellings: every value, how one is written, and how one is read back. The api's own copy of the
   * kernel's (the api names no package outside `com.histmersion.api`).

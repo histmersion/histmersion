@@ -17,8 +17,8 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every file of another module that derives a codec or schema imports `com.histmersion.api.VocabularyCodecs.given`:
   * without it Kindlings derives its own instance for a vocabulary field, spelled differently (an enum with parameters

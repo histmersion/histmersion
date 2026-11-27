@@ -14,7 +14,7 @@ import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.Title
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources proposed as discussing an event — scored, then confirmed or rejected — and which events' proposals were
   * computed.

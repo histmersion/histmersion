@@ -8,7 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

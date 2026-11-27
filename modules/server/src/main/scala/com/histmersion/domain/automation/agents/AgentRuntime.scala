@@ -8,7 +8,7 @@ import scala.annotation.tailrec
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an agent definition is run, which decides how it is rendered (docs/research-agent-runtimes.md §2): the three
   * CLI runtimes, the direct API (sttp-ai, the engine's own loop), and the person's own interactive Claude Code session

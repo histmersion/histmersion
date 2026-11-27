@@ -5,7 +5,7 @@ import java.util.Locale
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Wikidata:
 

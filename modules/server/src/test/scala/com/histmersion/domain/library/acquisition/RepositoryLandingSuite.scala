@@ -7,7 +7,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.upstreams.landing.RepositoryLanding
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Repository landing pages (#1580): which pages are a repository's, what their tags name, Zenodo's files. Pure; the
   * recorded pages and records are exercised end to end in the server's `LandingFetchSuite`.

@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
 import hearth.kindlings.optics.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.basemap.PmTiles
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A store in memory, for tests of the code that is given one: the same keys, the same answers, no disk. Its files
   * cannot be handed to another program.

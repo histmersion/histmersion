@@ -2,7 +2,7 @@ package com.histmersion
 package plugins.vaults
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** What KeePassXC's stderr says about a failed attempt: the one place its words are read (the process boundary), so
   * that [[YubiKey.failure]] branches on a case.

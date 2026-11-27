@@ -33,13 +33,16 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.Paging
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Filter
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion CLI — a pure HTTP client of the server (no DB access on the host). Every command maps to one `Api`
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
   */
-@atBoundary(BoundaryKind.CliArgs, "parses the top-level `histmersion` command line and dispatches to the command parsers")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "parses the top-level `histmersion` command line and dispatches to the command parsers"
+)
 object Cli:
   enum Writes derives CanEqual:
     case DryRun, Apply
@@ -257,6 +260,8 @@ object Cli:
       case CommandLine.Outcome.Run(server, caller, cmd, json) =>
         finish(server, caller.orElse(AgentIdentity.configured(Settings.app.cli.agent)), cmd.run, json)
 
+  @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def finish(
       server: Option[Client.ServerUrl],
       caller: AgentIdentity,

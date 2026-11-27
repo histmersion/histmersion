@@ -11,7 +11,7 @@ import com.histmersion.api.instance.{About, AboutMarkdown}
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.plugins.{PluginsReport, PluginState}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The About window: `GET /api/about` — the server's build, its health, the job queue, the newest backup and how big
   * the store is. Read once when the window opens, and again on "refresh".

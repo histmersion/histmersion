@@ -9,8 +9,8 @@ import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.api.{OpenSide, Span, Years}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Reader/writer for the Linked Places Format (LPF v1.1) and plain GeoJSON `FeatureCollection`s.
   *

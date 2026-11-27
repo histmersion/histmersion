@@ -24,7 +24,7 @@ import com.histmersion.domain.Title
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.instance.BuildId
 import com.histmersion.server.instance.WebBundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class PagesOracleSuite extends munit.FunSuite:
 

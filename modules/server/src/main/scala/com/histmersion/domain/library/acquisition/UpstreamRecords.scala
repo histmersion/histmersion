@@ -15,7 +15,7 @@ import com.histmersion.api.library.Refs
 import com.histmersion.api.library.Title
 import com.histmersion.upstreams.archiveorg.ArchiveItem
 import com.histmersion.upstreams.archiveorg.ArchiveFile
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

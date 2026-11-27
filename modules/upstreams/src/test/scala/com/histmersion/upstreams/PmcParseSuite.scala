@@ -10,7 +10,7 @@ import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.jats.Jats
 import com.histmersion.plugin.WorkKey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Europe PMC search hits and NCBI's PMC Article Datasets records (#1523), from responses captured on 2026-10-11
   * (trimmed, in `src/test/resources/acquire`).

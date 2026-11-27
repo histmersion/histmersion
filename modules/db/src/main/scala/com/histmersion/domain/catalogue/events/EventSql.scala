@@ -12,7 +12,7 @@ import com.histmersion.domain.catalogue.Place
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events' SQL other queries of the catalogue embed: an event's tier and anchor, the selection of the event list
   * (and of the map's events layer), the map's event tiles' candidates.

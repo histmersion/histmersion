@@ -31,7 +31,7 @@ import com.histmersion.server.agents.EngineContributions
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The stream-2.8 surface over real HTTP: status codes and JSON shapes are part of the contract, so they are asserted
   * through the wire rather than through the handlers. Skipped without HISTMERSION_TEST_DB_URL.

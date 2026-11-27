@@ -4,7 +4,7 @@ package plugins.events
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion.events.noaa`: NCEI's hazard service, its page size, the pace and the datasets read (comma-separated:
   * `earthquakes`, `volcanoes`, `tsunamis`).

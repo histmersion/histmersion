@@ -4,7 +4,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's ingest jobs, as it registers them: bringing a source in, and reading its text again. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

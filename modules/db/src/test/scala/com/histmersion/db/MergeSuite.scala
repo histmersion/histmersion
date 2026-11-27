@@ -72,7 +72,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `merge plan` against real Postgres (docs/research-merge-import.md §8, milestone M3): the crafted pair of
   * collections, "work" and "home", built through the repositories in two databases of their own; work's bundle planned

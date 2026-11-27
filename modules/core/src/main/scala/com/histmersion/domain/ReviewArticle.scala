@@ -38,8 +38,8 @@ import com.histmersion.api.library.Citekey as ApiCitekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.3): the
   * mechanical checks, the validation of each reviewer's answer, the merge of the panel (worst verdict wins,

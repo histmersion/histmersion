@@ -7,7 +7,7 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final private[places] case class FootprintRow(

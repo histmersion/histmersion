@@ -7,7 +7,7 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `resolve` end to end, offline: the test plugin `hello-deps` (its POM lists `hello-lib`) from the fixture repository
   * the build writes, a kit whose module list is the test's, a coursier cache of its own. The Scala library is in the

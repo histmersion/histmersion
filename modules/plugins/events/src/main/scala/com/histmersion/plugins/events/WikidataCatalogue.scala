@@ -15,8 +15,8 @@ import com.histmersion.upstreams.wikidata.WikidataItem
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Wikidata's events of the configured classes (battles, sieges, wars, treaties …): the query service, one SPARQL query
   * per class. A part is a class, `class:<qid>`.

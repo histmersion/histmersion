@@ -29,7 +29,7 @@ import com.histmersion.web.marks.NoteList
 import com.histmersion.web.WindowKey
 import com.histmersion.api.UiLabels
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Library's reading pane: the item chosen in the table. Its actions (show it on the map, open its page in a new tab,
   * pin it as a window; in a narrow window, back to the list), then what it is, its title, its authors, its status,

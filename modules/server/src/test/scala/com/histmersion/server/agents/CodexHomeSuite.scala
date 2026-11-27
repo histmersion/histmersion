@@ -14,7 +14,7 @@ import java.nio.file.{Files, Path}
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import com.histmersion.config.CodexConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A retention pass over a TEMPORARY Codex home (#2582) — never the live one: old transcripts go, new ones and the
   * login stay, the SQLite files are vacuumed through the configured command, and nothing happens while a run holds the

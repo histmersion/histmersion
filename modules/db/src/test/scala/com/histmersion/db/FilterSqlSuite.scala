@@ -27,7 +27,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.Frag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `Filter → SQL` is a pure function (plan §1.0), so it is tested WITHOUT a database: the SQL text and the bound
   * parameters are asserted directly.

@@ -2,7 +2,7 @@ package com.histmersion
 package api.basemap
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object BaseMapSource:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]

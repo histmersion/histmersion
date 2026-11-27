@@ -18,7 +18,7 @@ import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.PlacesJobKinds
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The refinement of the Wikidata sites' types (a job, dry run or not): each site on the map asked for its classes
   * (P31) and their superclasses (P279), and given the curated type they fall under.
@@ -38,7 +38,10 @@ final class SiteTypesControllers(
     PluginEvents.polite(http, settings().media, intervalMs)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def refineSiteTypes(caller: Caller, req: SiteTypes.Request)(using Creator.New): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
@@ -50,7 +53,10 @@ final class SiteTypesControllers(
   /** The refinement itself, inside the job (under its unit's permit). */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit)(using WritePermit): SiteTypes.Report =
     val started = DeepTime.SignedYear(clock.millis())
     val refresh = SiteTypeService.Refresh(req.refresh.value)
@@ -129,5 +135,8 @@ final class SiteTypesControllers(
       )
 
 object SiteTypesControllers:
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   val SiteTypesJobKind: Job.Kind = Job.Kind.assume(PlacesJobKinds.SiteTypes.kind.value)

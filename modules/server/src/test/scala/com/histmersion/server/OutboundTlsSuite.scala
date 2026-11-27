@@ -16,7 +16,7 @@ import java.security.cert.{CertificateFactory, CertPathValidator, PKIXParameters
 import scala.jdk.CollectionConverters.*
 import com.histmersion.pluginhost.PolicyHttp
 import com.histmersion.domain.library.acquisition.Http
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `acquire.tls` (#1568): more roots than the JDK's, never less verification. The fixtures are public CA certificates:
   * HARICA TLS RSA Root CA 2021 (not in the JDK's cacerts) and GEANT TLS RSA 1, the intermediate

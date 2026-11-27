@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The downloads under way — the background map, the gazetteers, the event catalogues, the pictures — each with Pause,
   * Resume and Cancel in place (the jobs' own controls). Asked again while one is going.

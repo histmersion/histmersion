@@ -19,8 +19,8 @@ import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A stable handle on a component a config reload may rebuild (docs/research-plugins.md §3.6). Its holder never
   * reloads: [[use]] gives the value of the generation the calling thread is pinned to — or pins the current generation

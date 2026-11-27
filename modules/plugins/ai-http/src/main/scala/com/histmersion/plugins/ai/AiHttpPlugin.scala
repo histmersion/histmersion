@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.{AiProvider, Plugin, Spi}
 import com.histmersion.plugin.Registry
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of Histmersion's own HTTP AI providers as a plugin: on by default (its defaults resource), switched off by
   * `histmersion.plugins.<id>.enabled = false`; it registers ONE provider under `name`, built from the host's

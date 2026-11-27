@@ -2,7 +2,7 @@ package com.histmersion
 package web.map
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map layer's own logic on the fake engine ([[FakeSurface]]): clustering, what is drawn in view, the projection's
   * round trip, geometry bounds, and the software-renderer test.

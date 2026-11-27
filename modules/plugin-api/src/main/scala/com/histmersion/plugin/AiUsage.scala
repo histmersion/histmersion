@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Tokens of one call. `input` counts ALL prompt tokens, cached ones included; `cacheRead` and `cacheWrite` are parts
   * of it. `reasoning` is the part of `output` the model spent thinking, where the provider says.

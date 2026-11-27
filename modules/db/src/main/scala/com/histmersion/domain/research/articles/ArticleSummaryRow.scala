@@ -8,7 +8,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.research.Article
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A list row as the database has it: [[ArticleSummary]] without the review state, which the server derives from other
   * tables.

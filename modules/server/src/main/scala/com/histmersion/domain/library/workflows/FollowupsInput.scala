@@ -7,7 +7,7 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `followups` as an agent may call it: no `apply` — a model never writes edges. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

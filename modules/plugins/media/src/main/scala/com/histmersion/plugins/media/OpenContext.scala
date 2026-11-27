@@ -11,8 +11,8 @@ import com.histmersion.plugin.*
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Open Context (https://opencontext.org/about/services), no key: its search API's JSON answer
   * (`/query/.json?type=media&cat=oc-gen-image&q=`) with the `attributes` it is asked for — each record's licence

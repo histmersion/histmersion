@@ -7,7 +7,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One item of a collection as a listing shows it (a Calibre book): its id, title, authors, year, publisher, tags,
   * identifiers by scheme and its files.

@@ -15,7 +15,7 @@ import scala.util.control.NonFatal
 
 import LogWriter.{subjectsOf, writesCounted, written, StagedEveryMillis}
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class LogWriter(
     settings: () => LogConfig,

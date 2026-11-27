@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How much each comparison of two sources counts when a merge asks whether they are one work (`merge.weights`). */
 final case class MatchWeights(

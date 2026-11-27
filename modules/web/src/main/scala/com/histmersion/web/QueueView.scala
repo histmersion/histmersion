@@ -19,7 +19,7 @@ import com.histmersion.api.Paging
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The three bookkeeping lists — the acquisition queue, the backlog and the worklog — each a window of the main UI,
   * drawn by this ONE implementation parameterised by [[Queue.Kind]] (`/acquire`, `/tasks` and `/log` open the app with
@@ -266,7 +266,6 @@ object QueueView:
     * server's OCR job applies too, addressed to the item.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fulfil(item: Queue.QueueItem, citekey: Preview.Target.Source.Citekey): (Queue.QueueItem.Id, Queue.QueuePatch) =
     item.id -> Queue.fulfil(item, citekey)
 

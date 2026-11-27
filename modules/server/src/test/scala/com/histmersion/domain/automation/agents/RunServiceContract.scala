@@ -14,7 +14,7 @@ import java.time.Instant
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerLight
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the runs' reads and steps keep: a run's usage is its steps' sum; attempts, checkpoints and the trace in
   * their order; the lists and pages, their filters and facets.

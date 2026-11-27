@@ -9,12 +9,15 @@ import com.histmersion.api.library.Query
 import com.histmersion.api.Api
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `POST /api/query` and `GET /api/schema/tables` (MCP `query`, `schema`). */
 final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def run(req: QueryRequest): Either[Problems, QueryResult] =
     val q = cfg().query
     queries

@@ -18,7 +18,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The process managers as the engine's other features reach them: a manager and its settings, its items (added, held
   * and released for the focus), its events, and the few reads over every manager at once that the autopilot, the focus,

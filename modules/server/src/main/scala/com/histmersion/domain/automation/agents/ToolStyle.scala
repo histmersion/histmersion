@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The name a runtime gives one of Histmersion's MCP tools: Claude Code `mcp__histmersion__get_source`, opencode
   * `histmersion_get_source`, Codex and the direct API the bare `get_source`.

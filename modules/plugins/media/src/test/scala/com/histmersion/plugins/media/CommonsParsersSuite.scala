@@ -17,7 +17,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 
 import java.nio.charset.StandardCharsets.UTF_8
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Wikimedia Commons as every Commons-backed collection reads it (#1446): file titles, the `imageinfo` URL and answer,
   * and each file's licence, author and credit line as Commons states them ([[CommonsFiles]]) — a file whose terms

@@ -16,8 +16,8 @@ import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.plugin.Plugin
 import com.histmersion.upstreams.PageSize
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** CORE's `search/works` with a key, through the server's CORE budget (`quota`) — the one way Histmersion calls CORE.
   * Asked once, never retried ([[Plugin.Http.fetch]]): the budget decides when CORE is asked again.

@@ -3,7 +3,7 @@ package domain
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.media.DataCredit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Whom and how a reuse must credit: the licence, its URL, the author to name and the credit line in the provider's own
   * form. A picture carries one, and so does a dataset (its licence and credit).

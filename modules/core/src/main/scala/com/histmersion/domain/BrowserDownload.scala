@@ -9,8 +9,8 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Not
 import io.github.iltotore.iron.constraint.string.{Blank, Match}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A gold open-access work whose publisher refuses scripts (`acquire.landing.browser-download-hosts`): the acquisition
   * list carries it as a download in the browser, where the person reads it under its licence, and then an ingest of the

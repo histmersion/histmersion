@@ -4,7 +4,7 @@ package plugins.media
 import io.github.iltotore.iron.constraint.any.Pure
 
 import PleiadesLink.Untaken
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A reference of a Pleiades place record that names a picture: the Commons file (`Right("File:…")`) or why it is not
   * taken, and the reference's CiTO type (`seeFurther`, `citesAsRelated`).

@@ -29,7 +29,7 @@ import com.histmersion.domain.media.links.AssetLinkService
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Media's agent tools, in their place among `/mcp`'s: a source's figures, a figure's description, its links. The
   * imports and the sources' pictures are not tools, on purpose (an operator's decision; a picture is for the reader).

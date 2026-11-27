@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A shape under the pointer: its set and its id. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

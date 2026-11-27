@@ -7,7 +7,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The carried kinds and merge rules an export, an import and a plan run over: every entry of the format once, in its
   * order, whoever registered first; the import's steps in stage and rank order; each kind of record's table.

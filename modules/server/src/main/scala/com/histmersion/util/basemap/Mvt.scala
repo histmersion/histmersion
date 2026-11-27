@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{External, Problem}
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Just enough of the Mapbox Vector Tile protobuf (https://github.com/mapbox/vector-tile-spec) to thin a tile WITHOUT
   * decoding its geometry: keep the named layers, and inside them drop the features whose `kind` is listed. Everything

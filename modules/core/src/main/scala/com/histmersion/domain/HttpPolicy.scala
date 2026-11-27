@@ -4,8 +4,8 @@ package domain
 import java.time.{Instant, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE outbound-HTTP policy (#1946): how every request the server makes to a third party — the acquisition APIs,
   * the media and event catalogues, the gazetteer downloads — identifies itself and what it does with a "slow down"

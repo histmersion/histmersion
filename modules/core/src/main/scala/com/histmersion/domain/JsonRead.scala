@@ -6,8 +6,8 @@ import com.histmersion.Period
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Shared reading helpers for the collection APIs. Pure. */
 @atBoundary(BoundaryKind.Json, "reads fields out of a stored JSON document for the collection APIs")

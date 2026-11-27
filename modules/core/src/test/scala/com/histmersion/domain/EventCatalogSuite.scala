@@ -25,7 +25,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.StoredEvent
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.CatalogProviderInfo
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1449, the host's pure half: the kind taxonomy, the thresholds, and the merge of records into one event per thing.
   * The catalogues' own answers are their plugins' suites'.

@@ -4,7 +4,7 @@ package util.database
 import com.augustnagro.magnum.DbCodec
 import java.lang.reflect.Proxy
 import java.sql.{PreparedStatement, ResultSet}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object ColumnProbe:
   def read[A](raw: String)(using codec: DbCodec[A]): A =

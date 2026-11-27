@@ -38,7 +38,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The library's sources: a record with its findings and the edges it makes, written and read whole or by part, its old
   * citekeys, its rename, its full-text chunks and body. Every method runs on the connection or in the transaction its
@@ -82,6 +82,7 @@ private[sources] object SourceRepo:
   import com.histmersion.api.library.SourceColumns.given
 
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[TocEntry] = DbCodec.derived
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Source.Detail] = DbCodec.derived

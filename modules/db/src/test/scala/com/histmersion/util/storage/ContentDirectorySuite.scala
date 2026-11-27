@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A content-addressed directory: found by digest, stored only when the content is its name, an unsafe extension
   * replaced; and the bytes of a file or an array read again from the start.

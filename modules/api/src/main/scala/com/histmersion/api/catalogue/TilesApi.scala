@@ -7,10 +7,13 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the tiles routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the tiles routes with their request and response bodies"
+)
 object TilesApi:
 
   final case class TileQuery(
@@ -78,7 +81,10 @@ object TilesApi:
   val ContentType = "application/vnd.mapbox-vector-tile"
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Database Frag.update")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Database Frag.update"
+  )
   lazy val tile: PublicEndpoint[TileQuery, Api.Error, TileAnswer, Any] =
     endpoint.get
       .in("api" / "tiles" / path[String]("layer") / path[Int]("z") / path[Long]("x") / path[Long]("y"))

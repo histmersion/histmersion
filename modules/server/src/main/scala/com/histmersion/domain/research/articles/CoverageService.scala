@@ -7,7 +7,7 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.api.research.Coverage
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an article's coverage reads of the library's sources: a filter's source set, which of a set of citekeys it
   * returns, the disagreement edges touching the cited sources. A mechanism over the library's filter SQL, so it has no

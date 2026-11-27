@@ -2,7 +2,7 @@ package com.histmersion
 package web.ui
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The UI's behavioural numbers: drag limits, fetch limits, timings, layout maths. Colours and looks are the
   * stylesheet's (`web/style.css`), not these.

@@ -8,7 +8,7 @@ import chimp.server.*
 import com.histmersion.api.Api
 import com.histmersion.api.log.{LogEvent, LogPage}
 import com.histmersion.util.mcp.McpOut
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class LogTools(log: LogControllers):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

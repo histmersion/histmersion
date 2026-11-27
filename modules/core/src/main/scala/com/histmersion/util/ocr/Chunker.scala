@@ -2,7 +2,7 @@ package com.histmersion
 package util.ocr
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Splits a Markdown body into FTS chunks — pure, no I/O, no config lookups.
   *

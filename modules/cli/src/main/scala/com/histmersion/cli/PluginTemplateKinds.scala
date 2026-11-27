@@ -1,7 +1,8 @@
 package com.histmersion
 package cli
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** The sources of each kind's new plugin, with the placeholders `PluginTemplate` fills in (`@Name@`, `@id@`,
   * `@Plugin@`, `@Contribution@`). Each one works as written: it compiles, its tests pass, and the server registers it
   * with its defaults alone.

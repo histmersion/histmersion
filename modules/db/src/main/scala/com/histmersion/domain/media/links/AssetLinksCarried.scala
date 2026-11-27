@@ -8,7 +8,7 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the figures' links: each line stamped with its rev; an import writes them after the blobs,
   * once every figure they name is here.

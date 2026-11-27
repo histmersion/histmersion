@@ -17,7 +17,7 @@ import java.time.Instant
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Agents
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Goal schedules into watchers (phase 3): what a goal's `goal_schedules` rows become, and how a watcher reads as the
   * schedules the goal surfaces still show.

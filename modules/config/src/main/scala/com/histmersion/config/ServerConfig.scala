@@ -5,7 +5,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings derivation. Defaults + env
   * overrides live in `reference.conf`; nothing is hardcoded elsewhere.

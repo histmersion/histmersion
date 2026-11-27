@@ -7,7 +7,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Stalls:
@@ -35,6 +35,7 @@ object Stalls:
     type Code = Code.T
     object Code extends Newtype[String, Pure]
     type Why = Why.T
+    @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
     object Why extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     type Action = Action.T

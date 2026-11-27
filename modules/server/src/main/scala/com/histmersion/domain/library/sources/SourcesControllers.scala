@@ -31,7 +31,7 @@ import com.histmersion.util.time.Timer
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -55,20 +55,29 @@ final class SourcesControllers(
 
   /** A citekey as a client sent it, or the 400 that refuses it: the one place a request's citekey becomes a domain one.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def parseCitekey(ck: com.histmersion.api.library.Citekey): Either[Api.Error, Citekey] =
     Citekey.parse(ck.value).left.map(p => Write.invalid(p))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiCk(c: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(c.value)
 
   private def currentOf(id: Citekey): Option[Citekey] =
     sources.current(id)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def notFound(citekey: Citekey): Api.Error =
     Api.Error(
       Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$citekey")),
@@ -76,11 +85,17 @@ final class SourcesControllers(
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def absolute(md: String, citekey: Citekey): String =
     AssetLinks.toAbsolute(AssetLinks.Body(md), apiCk(citekey), AssetLinks.Url(cfg().server.publicUrl.value)).value
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def issuesOf(summary: Option[Source.Summary], notes: Option[Source.Notes]): List[FormatIssue] =
     formatting.issues(
       summary.map(s => domain.library.Source.Summary(s.value)),
@@ -93,7 +108,10 @@ final class SourcesControllers(
   def canonical(id: Citekey): Citekey = currentOf(id).getOrElse(id)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def get(
       citekey: Citekey,
       body: SourcesControllers.GetBody = SourcesControllers.GetBody(true)
@@ -158,7 +176,10 @@ final class SourcesControllers(
         .map(withFormatting)
 
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def rename(citekey: Citekey, req: Rename.Request)(using Creator.New): Either[Api.Error, Source.Renamed] =
     maintenance.guard(WriteGate.OperationName("rename_source")):
       val from = current(AliasKinds.SourceRecords, citekey)
@@ -187,7 +208,10 @@ final class SourcesControllers(
     * an MCP tool, like deleting an article: a person's decision.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def delete(citekey: Citekey, req: Source.DeleteRequest)(using Creator.New): Either[Api.Error, Source.Deletion] =
     val ck = current(AliasKinds.SourceRecords, citekey)
     if !req.apply.value then
@@ -232,7 +256,10 @@ final class SourcesControllers(
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def importNote(req: NoteImport)(using Creator.New): Either[Api.Error, SeedResult] =
@@ -309,7 +336,10 @@ final class SourcesControllers(
     else formatting.refusal(issues).fold(Right(()))(m => Left(Write.invalid(m)))
 
   /** `GET /api/sources/{citekey}/lint`. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def lint(citekey: Citekey): Either[Api.Error, FormatReport] =
     get(citekey, body = SourcesControllers.GetBody(false)).left
       .map(Api.Error(_))
@@ -321,7 +351,10 @@ final class SourcesControllers(
     * guarded by the `updatedAt` just read, then the report of what is left.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def fix(citekey: Citekey)(using Creator.New): Either[Api.Error, FormatReport] =
     maintenance.guard(WriteGate.OperationName("fix_source_format")):
       val ck = canonical(citekey)
@@ -361,7 +394,10 @@ final class SourcesControllers(
     * `offset`/`chars` slice the body.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def markdown(
@@ -439,7 +475,10 @@ final class SourcesControllers(
     * a bad regex a 400.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def passages(q: Api.PassagesQuery): Either[Api.Error, PassageResult] =
     val lim = cfg().limits.passages
@@ -471,7 +510,10 @@ final class SourcesControllers(
 
   /** Read the body (from chunks or raw `ocr_markdown`), optionally filtered by heading and sliced. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def bodySlice(
       citekey: Citekey,
       heading: Option[SourceService.Heading],

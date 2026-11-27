@@ -5,8 +5,8 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonValueCodec}
 import sttp.tapir.{Schema, Validator}
 
 import util.json.JsonCodec
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Json, "encodes and decodes an enum as its wire string")
 @movesTo(FeaturePlace.UtilCommon)

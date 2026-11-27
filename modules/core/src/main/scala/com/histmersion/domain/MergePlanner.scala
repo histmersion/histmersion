@@ -59,8 +59,8 @@ import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.PlanMatches
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered

@@ -14,7 +14,7 @@ import com.histmersion.domain.media.imports.Target
 import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The figures' links' repository as the db suites reach it from outside the feature. */
 object AssetLinkFixtures:

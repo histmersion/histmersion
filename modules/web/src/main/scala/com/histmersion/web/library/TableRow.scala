@@ -8,7 +8,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.ItemKey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One row of a Library table, as it reads: the item's key (a citekey or a slug), its title and the line under it (a
   * source's authors, an article's regions), its year, its status (a source) or kind (an article), its period, and its

@@ -10,7 +10,7 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the approvals' lists read of a source proposal's payload is what the proposal says: its evidence and quote. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

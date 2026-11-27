@@ -6,7 +6,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.api.catalogue.EventCatalogueRef
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 // ── merging: one event per thing, whichever catalogues know it ──────────────────────────────────
 

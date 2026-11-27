@@ -8,8 +8,8 @@ import java.nio.file.{Files, Path}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.AgentTrees
 import com.histmersion.config.UserPaths.pathEquality
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where the gazetteer's files are, resolved from the config: the pinned extracts (a CACHE, rebuilt or copied, pinned
   * by sha256: the XDG cache directory), the Linked Places drop folder, the manifest of the pins, and `legacy`, where

@@ -10,7 +10,7 @@ import sttp.tapir.Schema
 import java.util.UUID
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class MergeResolutions(
     resolve: List[MergeResolution] = Nil,

@@ -5,7 +5,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A dated, placed finding near an event: how far, and the years between. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

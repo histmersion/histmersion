@@ -16,7 +16,7 @@ import com.histmersion.upstreams.dating.CatalogDating
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.upstreams.wikidata.WikidataItem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own event catalogues, from their answers RECORDED 2026-10-14 (trimmed): each read into the events the
   * SPI exchanges, and those as the host stores them (its check, its dating held inside the present and the catalogue's

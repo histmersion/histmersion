@@ -14,7 +14,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.ByteCount
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base map's choices and what each draws, on the fake engine's terms (no browser). */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

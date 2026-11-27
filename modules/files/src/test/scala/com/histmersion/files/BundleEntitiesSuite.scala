@@ -23,7 +23,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `.hmx` bundle's content in memory: its entities (blob and dangling references, the event-catalogue sets, a
   * decode round trip) and the reader's problem reports.

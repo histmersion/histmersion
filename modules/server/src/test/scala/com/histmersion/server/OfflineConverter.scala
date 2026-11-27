@@ -11,7 +11,7 @@ import com.histmersion.util.storage.Blob
 import com.histmersion.util.storage.Storage
 import com.histmersion.util.storage.Location
 import com.histmersion.util.storage.Store
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A converter for HTTP tests that never leaves the process. `Composition.server(cfg, host, port)` builds the REAL
   * client from `converter.url` — `http://localhost:8100`, the live sidecar on this machine — so a test that accepted an

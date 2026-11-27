@@ -26,7 +26,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.Html.Atoms
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pictures on the cards and the media layer (#1446): the place and event cards carry their first picture with its
   * credit and licence, an event element previews an event, the layer's filter menus and popup. Pure.

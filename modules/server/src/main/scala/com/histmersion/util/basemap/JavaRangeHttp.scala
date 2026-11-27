@@ -10,8 +10,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.{Duration, Instant}
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The real client: java.net.http over `client` (the composition root's: HTTP/1.1, one stream per request — the
   * providers are CDNs — following redirects), as the product's `userAgent`, a slow-down answer asked again when

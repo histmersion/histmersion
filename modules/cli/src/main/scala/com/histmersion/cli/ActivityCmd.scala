@@ -6,8 +6,8 @@ import com.histmersion.util.json.Cursor
 import com.histmersion.api.Api
 import com.histmersion.api.automation.{Activity, ActivityMarkdown}
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion activity [--kind k] [--running] [--since s] [--goal g] [--limit n] [--before c]` — Research › Activity:
   * agent runs, background jobs, worklog lines and a person's decisions, one list, newest first.

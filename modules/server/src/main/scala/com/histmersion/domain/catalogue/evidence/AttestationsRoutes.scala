@@ -9,12 +9,15 @@ import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The attestations' endpoints bound to their controllers, in their old order. */
 object AttestationsRoutes:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def apply(attestations: AttestationsControllers): List[ServerEndpoint[Any, Identity]] =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
     val me = Caller.Local

@@ -23,7 +23,7 @@ import com.histmersion.api.media.{
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host-side half of a source's cover (#1446): the cover the local Calibre library keeps beside a linked book is
   * READ here (the library is on the user's machine, like every `calibre` command) and uploaded to the server as the

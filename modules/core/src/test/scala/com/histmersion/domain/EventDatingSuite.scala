@@ -35,7 +35,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.StoredEvent
 import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.EventCatalogueRef
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The data-source assessment's P0 fixes, the host's pure half: the precision classes and the dating note; the
   * corrections' reconcile table and the event fields compared; and a merge that does not depend on the order of its

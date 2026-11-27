@@ -6,7 +6,7 @@ import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What approving a proposal does, contributed by the domain the proposal is about: a source's status or edge (the
   * library), an article's coverage filter (research). The engine claims the decision and records the outcome; the

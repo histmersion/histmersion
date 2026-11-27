@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Flat projection of `jobs` (positional, like the other write-path rows). */
 final private[jobs] case class JobRow(

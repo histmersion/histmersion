@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles' review ledgers: every finding the review panel raised on an article, with what became of it, read at
   * the start of a `review-article` run and written after each of its passes; and which articles passed their review.

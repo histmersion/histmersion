@@ -11,7 +11,7 @@ import com.histmersion.web.map.GeoBounds
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the mixed clusters: what a bubble holds, says and looks like. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

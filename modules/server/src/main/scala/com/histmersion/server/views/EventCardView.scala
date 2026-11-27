@@ -13,7 +13,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An event's page as the catalogue, the pictures and the articles show it together: the catalogue's event with its
   * evidence and context (the events' controllers, whose card [[EventCardView.cited]] gives the articles citing the

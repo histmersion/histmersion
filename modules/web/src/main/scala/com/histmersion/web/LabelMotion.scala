@@ -4,7 +4,7 @@ package web
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.web.LabelPlacement.{Pt, Rect}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a map name MOVES (#1447): pure, so the smoothing is a unit test and [[MapLabels]] only feeds it the clock and
   * writes the result.

@@ -13,7 +13,7 @@ import com.histmersion.api.catalogue.MatchSpan
 import com.histmersion.api.library.{PassageHit, PassageResult, PassagesMarkdown}
 import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PassageFinderSuite extends munit.FunSuite:

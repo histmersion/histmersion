@@ -3,7 +3,7 @@ package web.library
 
 import com.histmersion.api.research.Article
 import com.histmersion.web.ui.Layout
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The start of an article's body as plain reading text: its first paragraph of prose (no heading, list, table or
   * quotation), its Markdown and links reduced to their words, cut at a word near `limit`. Pure.

@@ -22,7 +22,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `/api/about` and `/api/config` report the plugins the server started with — their state and their settings, a secret
   * as its REFERENCE and never its value. Skipped without HISTMERSION_TEST_DB_URL.

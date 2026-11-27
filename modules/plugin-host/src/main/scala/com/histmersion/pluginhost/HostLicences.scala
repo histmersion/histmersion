@@ -3,7 +3,7 @@ package pluginhost
 
 import com.histmersion.domain.Licence
 import com.histmersion.plugin.LicenceReader
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's reading of licence statements, lent to every plugin ([[com.histmersion.plugin.Plugin.Context.licences]]):
   * the one shared [[Licence]] classification the host judges every stated licence with.

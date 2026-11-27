@@ -8,7 +8,7 @@ import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.LocalFiles
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Registry
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `calibre`: the local Calibre library as a source collection — searched and imported from, its gaps pushed, its
   * records audited and rewritten from the library's. On by default (its defaults resource); writing to the library is

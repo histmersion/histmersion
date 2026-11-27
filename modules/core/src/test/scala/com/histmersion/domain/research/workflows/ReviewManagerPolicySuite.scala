@@ -26,7 +26,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.ManagerPolicy.Item
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): every stop rule over the review ledger,
   * the settings over research's defaults, the selection and when an article is stale.

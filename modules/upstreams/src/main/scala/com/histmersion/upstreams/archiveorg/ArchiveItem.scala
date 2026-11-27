@@ -4,7 +4,7 @@ package upstreams.archiveorg
 import com.histmersion.upstreams.ArchiveId
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class ArchiveItem(
     identifier: ArchiveItem.Identifier,
     title: Option[ArchiveItem.Title] = None,

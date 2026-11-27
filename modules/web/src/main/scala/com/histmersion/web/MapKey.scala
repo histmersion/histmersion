@@ -10,7 +10,7 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's KEY to its shapes and icons (#1449): what each shape is, the findings' source kinds, and — while their
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.

@@ -9,7 +9,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.CoreQuota.*
 
 import java.time.{Instant, LocalDate}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** CORE's budget, pure: CORE's blocks (429, `Remaining` 0, its retry time), the per-minute pace, the daily budget and
   * the searches' share of it, and the day's rollover.

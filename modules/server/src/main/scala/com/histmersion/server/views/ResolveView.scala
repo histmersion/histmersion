@@ -7,7 +7,7 @@ import com.histmersion.api.library.ResolvedSource
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `GET /api/resolve/{id}`: what an identifier names across the library and research — a stored source, else an
   * article, else nothing; never an error.

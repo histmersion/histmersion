@@ -12,7 +12,7 @@ import com.histmersion.plugin.Processes
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.plugin.CollectionFile
 import com.histmersion.plugin.CollectionQuery
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Calibre plugin's reading and writing: both readers produce the same book, the metadata guard refuses junk, and
   * the commands assembled for `calibredb` are the ones we mean to run.

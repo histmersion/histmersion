@@ -1,7 +1,7 @@
 package com.histmersion
 package util.problem
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class AccumulationSuite extends munit.FunSuite:
   import Problem.*

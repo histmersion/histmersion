@@ -6,8 +6,8 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.{ConcurrentLinkedQueue, TimeUnit}
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One CLI process per step attempt: in an empty temporary working directory (no project `AGENTS.md`, `.codex/`,
   * `.claude/` or `opencode.json` is read), the user message on stdin, stdout read LINE BY LINE as it arrives (a quota

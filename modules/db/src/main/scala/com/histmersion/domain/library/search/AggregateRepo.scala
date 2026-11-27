@@ -20,8 +20,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.RegionNode
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Period bounds of everything matching a filter — the raw input of [[com.histmersion.api.library.Aggregate]].
   *

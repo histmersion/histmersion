@@ -8,8 +8,8 @@ import com.histmersion.domain.library.sources.referrers.*
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The work lists' items that mention a source (reported, never changed), and the log's entry of its deletion. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

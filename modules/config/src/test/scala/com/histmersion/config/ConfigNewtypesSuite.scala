@@ -4,7 +4,7 @@ package config
 import com.histmersion.config.testsupport.ComparedByValue.given
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ConfigNewtypesSuite extends munit.FunSuite:

@@ -2,7 +2,7 @@ package com.histmersion
 package domain.personal
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The shape of a bookmark's or a note's id, which the server gives them: a UUID in its lower-case text form. */
 object PersonalUuid:

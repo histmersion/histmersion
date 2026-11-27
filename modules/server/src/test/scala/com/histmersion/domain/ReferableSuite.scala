@@ -19,7 +19,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A reference resolves and describes the same way in memory and in the database (a scratch database of its own, gated
   * on HISTMERSION_TEST_DB_URL): the source a reference names now, after a rename, a merge and a deletion.

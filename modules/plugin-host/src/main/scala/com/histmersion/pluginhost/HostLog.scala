@@ -3,7 +3,7 @@ package pluginhost
 
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where host code writes a log line: scribe on the server, a buffer in a test. */
 trait HostLog:

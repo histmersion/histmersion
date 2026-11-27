@@ -7,7 +7,7 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Histmersion installed on THIS machine, as the plugin commands see it: the bundle (`bin/`, `kit/`) and the data
   * directory (`plugins/`, `signing/`).

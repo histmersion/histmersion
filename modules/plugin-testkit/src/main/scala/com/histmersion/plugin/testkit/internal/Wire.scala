@@ -13,8 +13,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.Locale
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One recorded exchange: the request's method and URL, and the answer — its status, the headers kept and the file its
   * body is in — or the error the request ended with.

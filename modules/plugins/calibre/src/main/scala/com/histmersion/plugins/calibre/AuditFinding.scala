@@ -2,7 +2,7 @@ package com.histmersion
 package plugins.calibre
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One Calibre entry that disagrees with the corpus, judged against the record it matches best (an entry shared by a
   * chapter and its volume is fine when it matches either).

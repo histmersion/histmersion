@@ -12,7 +12,7 @@ import com.histmersion.api.text.SafeName
 import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats the figures of the sources and their links: a figure belongs to its source, a link to its
   * figure's; in a pair of sources that fold, the same bytes are one figure, a name the survivor has gets the other

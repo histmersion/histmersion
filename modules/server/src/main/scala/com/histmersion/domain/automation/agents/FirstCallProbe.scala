@@ -5,7 +5,7 @@ import sttp.ai.core.agent.*
 import sttp.shared.Identity
 
 import scala.concurrent.duration.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The input of a step's FIRST model call — input + cache read + cache write tokens: the fixed part every turn re-sends
   * (the system prompt, the tool definitions) plus the step's own prompt. Measured per step attempt so a change to that

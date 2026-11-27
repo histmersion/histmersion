@@ -13,7 +13,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.SpatialHierarchyResult
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure halves of the list windows' filters (ListFilterBar, and the approvals, runs and jobs windows): the chips, a
   * typed or picked value, the query each window sends, the rows a filter shows before the server's page lands, and the

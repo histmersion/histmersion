@@ -5,7 +5,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The "open in a new tab" action of a list row or a detail. */
 object NewTabLink:

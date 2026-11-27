@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The kind of record a merge plan's matches are of, as its owner declares it: how one is written and read, which ones
   * the plan's Markdown lists, and how a line of it reads.

@@ -4,7 +4,7 @@ package web.library
 import com.histmersion.web.{LibrarySection, MergeView, Route, RouteLink, UploadView}
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** "Add sources": the menu in Library's header, and the page each way of adding has — upload a file, add a work by its
   * DOI, merge another collection. A book bought elsewhere comes in from Calibre on the computer that holds the Calibre

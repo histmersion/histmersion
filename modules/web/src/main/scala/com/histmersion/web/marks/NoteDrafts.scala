@@ -4,7 +4,7 @@ package web.marks
 import com.histmersion.api.personal.{Note, Target}
 import com.histmersion.web.Store
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A note not saved yet, kept by this browser until it is saved or cancelled — so a reload or a closed tab loses
   * nothing. Never sent anywhere.

@@ -37,8 +37,8 @@ import com.histmersion.api.text.WikiLinks
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.articles.ArticleSummaryRow
 import com.histmersion.domain.library.sources.SourceNote
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The FORMATTING lint: what in an agent's Markdown will not display as it was meant (pure).
   *

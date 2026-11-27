@@ -6,7 +6,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An article's version as a bundle reads it: its body by digest and length, carried as a blob. */
 final private[articles] case class BVersionRow(

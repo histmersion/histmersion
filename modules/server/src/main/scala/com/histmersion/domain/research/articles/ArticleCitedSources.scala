@@ -4,7 +4,7 @@ package domain.research.articles
 import com.histmersion.domain.library.acquisition.ArticleCitations
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's new-source search asks research which stored sources an article cites: research's own links. */
 final class ArticleCitedSources(articles: ArticleService) extends ArticleCitations:

@@ -11,7 +11,7 @@ import java.security.MessageDigest
 import javax.sql.DataSource
 import scala.collection.mutable
 import com.histmersion.db.TestDb
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The record of what each test of a scripted-model suite left in the database, compared with the one written on the
   * code before the automation engine moved: every row a test inserted or updated (its transaction id at or after the

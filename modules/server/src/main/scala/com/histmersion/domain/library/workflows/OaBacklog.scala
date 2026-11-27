@@ -44,7 +44,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.library.acquisition.{AcquireAttempt, AcquireAttemptRow, AcquireCheckService}
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"). A watcher with
   * auto-ingest on used to send every legal open-access pick past the day's allowance to the acquisition list — the

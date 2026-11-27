@@ -11,7 +11,7 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class UnreadRow(

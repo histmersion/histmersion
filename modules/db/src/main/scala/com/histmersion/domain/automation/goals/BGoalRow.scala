@@ -8,7 +8,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A goal's row as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BGoalRow(

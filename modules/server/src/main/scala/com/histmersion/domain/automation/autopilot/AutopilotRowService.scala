@@ -10,7 +10,7 @@ import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's one row, as the engine's other features reach it: the switch and the managers it paused, when it
   * last ensured the goals' managers and kept house, a person's scheduler strategy, the approval digest's day and the

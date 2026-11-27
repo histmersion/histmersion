@@ -16,7 +16,7 @@ import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A polite client of one run: requests go one at a time, at least `request-interval-ms` apart per host; every request
   * carries the configured User-Agent (the project and its repository — no e-mail, no personal data); slow-down answers

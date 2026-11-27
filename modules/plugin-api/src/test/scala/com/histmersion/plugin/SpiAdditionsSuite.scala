@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SPI members added within SPI 2 for the first-party plugins — an answer's status and headers, an upstream's
   * budget, the peers of a fetch, a catalogue's re-reading and its changing parts, an AI provider's request options —

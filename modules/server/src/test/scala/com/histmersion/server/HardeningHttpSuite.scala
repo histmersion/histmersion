@@ -16,7 +16,7 @@ import com.histmersion.config.ConverterConfig
 import com.histmersion.config.CorpusConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The hardening fixes, asserted through the wire because that is where they have to hold: citekey/slug validation, the
   * unbounded aggregation window, the inverted half-open range, and the page-size cap. Skipped without

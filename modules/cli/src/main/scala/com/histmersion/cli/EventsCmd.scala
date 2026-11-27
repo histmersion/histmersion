@@ -37,8 +37,8 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion events` arguments")
 object EventsCmd:

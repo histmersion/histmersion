@@ -8,7 +8,7 @@ import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import java.time.Instant
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the autopilot's row keeps: made off on first use; switched only when it changes; its times, strategy,
   * digest day and drain as written.

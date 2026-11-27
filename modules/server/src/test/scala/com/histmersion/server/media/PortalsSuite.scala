@@ -38,7 +38,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The store as a few maps, with the gazetteer facts and ids the keyless portals read. */
 final class PortalStore(

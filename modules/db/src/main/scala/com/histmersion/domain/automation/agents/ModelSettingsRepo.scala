@@ -13,8 +13,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The model chains and allowances saved over config (migration V060), and the spends an allowance counts — summed from
   * `agent_steps`, the one place tokens and cost are written. Stateless.

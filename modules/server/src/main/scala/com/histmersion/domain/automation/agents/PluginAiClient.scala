@@ -16,7 +16,7 @@ import sttp.client4.Backend
 import sttp.shared.Identity
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
   * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in

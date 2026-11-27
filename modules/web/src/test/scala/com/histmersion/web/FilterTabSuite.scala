@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.concurrent.{ExecutionContext, Promise}
 import com.histmersion.api.RowCount
 import com.histmersion.api.Plural
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[Latest]] and [[TabState]] (#1798 item 5): an older answer never overwrites a newer query's, a failed request ends
   * "Loading…" with an error, and "show more" reaches the rows past the first page by asking the server for the next

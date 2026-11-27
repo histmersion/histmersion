@@ -21,8 +21,8 @@ import com.histmersion.api.library.{Citekey, RepairAcquire}
 import com.histmersion.util.console.Console
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.Paging
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion media` arguments")
 object MediaCmd:

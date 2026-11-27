@@ -24,8 +24,8 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.edit.SettingKind.valueTypeEquality
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Reading `reference.conf`, the user config file and the environment into one HOCON tree, with the precedence
   * ENVIRONMENT > USER FILE > reference.conf.

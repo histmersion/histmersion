@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What one call answered: text (the final answer is JSON matching the answer schema), the tools the model called (the
   * host runs them and calls again), why it stopped, its usage, and the model that actually served it, when the provider

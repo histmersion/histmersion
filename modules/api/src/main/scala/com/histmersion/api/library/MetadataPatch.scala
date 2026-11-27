@@ -13,7 +13,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.MetadataPatch.absentOnly
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class MetadataPatch(
     @Schema.annotations.customise(absentOnly) title: Option[Title] = None,

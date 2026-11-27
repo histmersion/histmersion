@@ -16,8 +16,8 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The two gazetteer-cleanup lint rules (2026-10-09): `place-kind` — what a point-only seed region really is
   * ([[PlaceReview]]) — and `place-grid-point` — a better point than an atlas grid square's centre

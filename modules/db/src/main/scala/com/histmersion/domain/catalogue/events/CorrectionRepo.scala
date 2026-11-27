@@ -14,8 +14,8 @@ import com.histmersion.util.json.RawJson.equality
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target

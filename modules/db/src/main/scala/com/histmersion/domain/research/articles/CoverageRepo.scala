@@ -14,8 +14,8 @@ import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an article's coverage (#958) reads from the corpus: the whole source set of its filter (not a ranked page — no
   * FTS ranking, no snippets), which of a set of citekeys the filter returns, and the disagreement edges touching the

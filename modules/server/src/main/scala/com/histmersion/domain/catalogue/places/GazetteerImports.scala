@@ -21,7 +21,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How the gazetteer comes in: the bundled seed, the pinned extracts and the drop folder ([[GazetteerLoad]]), a source
   * a plugin registers ([[ImportRunner]]) and the land ([[NaturalEarthLand]]). The composition root gives the stores,
@@ -48,6 +48,7 @@ final class GazetteerImports(
   def importerOf(source: GazetteerSource): Creator.New =
     InTreeWorkflow.imported(owners().get(source), InTreeWorkflow.Catalogue, InTreeWorkflow.GazetteerImporting)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pointTolerance: GeocodeSettings.ToleranceKm =
     GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
 

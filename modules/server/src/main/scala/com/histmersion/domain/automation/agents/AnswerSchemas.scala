@@ -7,7 +7,7 @@ import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The typed answer of every LLM step the engine's own workflows run, one value each (the domains' are their
   * contributions' — today `domain.library.workflows.LibraryAnswers` and `ResearchAnswers`). A step names its schema

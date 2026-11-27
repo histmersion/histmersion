@@ -17,7 +17,7 @@ import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.sources.SourcesControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the library contributes to the workflow engine: its three pipelines as workflows (enrich-source,
   * currency-check, acquisition-sweep), the enrich and watch manager kinds, its agent tools, and the acquisition work

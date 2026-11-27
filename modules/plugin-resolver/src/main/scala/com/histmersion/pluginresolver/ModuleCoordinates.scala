@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class ModuleCoordinates(key: ModuleKey, version: ModuleVersion):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

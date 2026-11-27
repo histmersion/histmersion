@@ -3,7 +3,7 @@ package util.settings
 
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.config.UserConfigFile
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the wire says of the user config file: its line in `/api/about`. */
 object ConfigViews:

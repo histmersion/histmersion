@@ -13,7 +13,7 @@ import com.histmersion.config.given
 
 import com.histmersion.domain.catalogue.places.PointAreas.{Dating, Group, Listed}
 import com.histmersion.api.checks.Lint
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `lint --rule place-imported-point-area`'s pure half: how a period reads, the listing (group counts and every finding
   * holder always, then a sample) and the fix line.

@@ -9,7 +9,7 @@ import com.histmersion.domain.personal.reading.ReadingShow
 import com.histmersion.{Offset, PageSize, UserId}
 import com.histmersion.domain.personal.reading.ReadingService
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's read marks and what is not read yet, in memory and in the database. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

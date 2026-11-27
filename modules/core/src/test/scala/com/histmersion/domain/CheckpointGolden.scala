@@ -35,7 +35,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.research.Coverage
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Representative values of every record an agent step stores as JSON (the run's checkpoints and the patches it
   * writes), every case and optional field among them. Their encodings are the golden files under `golden/checkpoints/`,

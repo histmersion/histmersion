@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `ui.debounce`: the quiet periods before the page acts on typing and state changes; `previewMs` is the one before a
   * HOVERED suggestion's preview reloads the lists.

@@ -4,7 +4,7 @@ package web.marks
 import com.histmersion.web.NewTabLink
 import com.histmersion.web.ui.ContextMenu
 import com.raquo.laminar.api.L.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A list row's own actions — Bookmark and Open in a new tab — in a column of the row itself, at its right, as tall as
   * the row, lit with the row's hover and focus (so it is plain which row they belong to); and the row's menu (right

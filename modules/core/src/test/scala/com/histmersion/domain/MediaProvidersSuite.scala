@@ -16,7 +16,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.config.MediaConfig
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.RepairAcquire
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's half of the media providers (#1446): how a stated licence is read and judged, the card's role order, the
   * counts, a gazetteer id that is a Wikidata item, the media config and the import report — no network, no database.

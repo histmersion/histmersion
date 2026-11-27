@@ -11,7 +11,7 @@ import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a person decided on a blocking approval step — the step's checkpoint. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

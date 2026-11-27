@@ -10,8 +10,8 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion plugin` arguments")
 object PluginCmd:

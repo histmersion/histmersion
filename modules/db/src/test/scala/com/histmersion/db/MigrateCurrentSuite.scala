@@ -7,7 +7,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The schema version without a Flyway instance (#880), against a real Postgres (HISTMERSION_TEST_DB_URL); skipped
   * otherwise.

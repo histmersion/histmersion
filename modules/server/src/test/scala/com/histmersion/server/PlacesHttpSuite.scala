@@ -27,7 +27,7 @@ import com.histmersion.config.PlaceSourcesConfig
 import com.histmersion.config.StorageConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer over real HTTP (plan §1.6a): import a tiny Linked-Places document, then read it back through every
   * route. Gated on HISTMERSION_TEST_DB_URL like the other server suites.

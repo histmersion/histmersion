@@ -22,7 +22,7 @@ import com.histmersion.web.marks.SavedViews
 import com.histmersion.web.marks.NoteEditor
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.ui.Flash
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object App:
   /** Drops the answers to a superseded load ([[Latest]]). */

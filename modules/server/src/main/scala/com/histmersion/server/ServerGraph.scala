@@ -26,8 +26,8 @@ import scala.concurrent.duration.*
 import scala.util.control.NonFatal
 import com.histmersion.domain.library.acquisition.CoreBudget
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server's hot components (docs/research-plugins.md §3.6) and the config reload over them (§3.5):
   *

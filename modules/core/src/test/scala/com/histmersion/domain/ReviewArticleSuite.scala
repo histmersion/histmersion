@@ -27,7 +27,7 @@ import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of `review-article`: mechanical checks, reviewer validation, the merge (dedupe, worst verdict,
   * escalation), the gate, the rounds, the fixer's validation, the bookkeeping lines.

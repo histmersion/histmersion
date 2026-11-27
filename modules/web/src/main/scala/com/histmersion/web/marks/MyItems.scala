@@ -10,7 +10,7 @@ import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The person's bookmarks, notes and read marks, as the page holds them: read once when it opens, changed in place by
   * each write the server accepted, so every row, header and list shows the same state at once. A change refused says

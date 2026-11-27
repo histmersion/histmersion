@@ -23,7 +23,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The write paths against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance
   * lines of plan §1.9a that need a database: put→get, patch semantics, id allocation, the `ifUpdatedAt` precondition,

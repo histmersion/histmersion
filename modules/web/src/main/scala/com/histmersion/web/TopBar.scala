@@ -9,7 +9,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one bar at the top of every page: the logo's place, the four places (Explore · Library · Research · Settings) as
   * labelled links, one search field, what the research agents are doing, how many of their proposals wait for a person

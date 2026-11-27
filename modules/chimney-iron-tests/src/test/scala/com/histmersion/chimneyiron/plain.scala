@@ -1,7 +1,7 @@
 package com.histmersion
 package chimneyiron.plain
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class Score(value: Int) extends AnyVal
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 final case class ScoreView(value: Int) extends AnyVal

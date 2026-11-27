@@ -37,7 +37,7 @@ import com.histmersion.server.ServerPlugins
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The keyless portals (#1446) through the real server and database (HISTMERSION_TEST_DB_URL; skipped otherwise): the
   * Pleiades ids and gazetteer ids places carry, the places on the map an id names, the Pleiades import's targets

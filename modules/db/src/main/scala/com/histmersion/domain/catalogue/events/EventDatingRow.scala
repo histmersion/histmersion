@@ -9,7 +9,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's dating of an event. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

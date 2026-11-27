@@ -7,7 +7,7 @@ import chimp.protocol.ToolContent
 import chimp.server.{NoStructuredOutput, ToolResult}
 import com.histmersion.api.Api
 import com.histmersion.util.mcp.ChimpJson.structured
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one way an MCP tool answers: Markdown, or a refusal. A refusal (a value the handler returned as `Left`, or an
   * argument the tool itself found missing) is a result the protocol flags as an error (`isError`), so a harness or a

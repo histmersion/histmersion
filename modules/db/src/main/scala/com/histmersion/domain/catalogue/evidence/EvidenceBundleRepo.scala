@@ -19,8 +19,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The evidence as a bundle carries it (docs/research-merge-import.md §4, §7.3): the attestations, the sources that
   * possibly discuss an event and when they were last computed — read out in a deterministic order, and written in by an

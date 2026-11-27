@@ -18,7 +18,7 @@ import sttp.shared.Identity
 import sttp.tapir.model.ServerRequest
 import sttp.tapir.server.ServerEndpoint
 import sttp.tapir.server.interceptor.{EndpointInterceptor, RequestHandler, RequestInterceptor, RequestResult, Responder}
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** A pin on one generation: while it is held, none of that generation's components is closed. */
 @movesTo(FeaturePlace.Server)

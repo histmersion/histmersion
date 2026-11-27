@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The clustering of points on screen, pure: which points are drawn as one bubble at a zoom. */
 object Clustering:

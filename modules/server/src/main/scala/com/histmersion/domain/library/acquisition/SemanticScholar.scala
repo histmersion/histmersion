@@ -12,7 +12,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{FollowupRow, WorkRef}
 import com.histmersion.upstreams.Offset
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsClient:

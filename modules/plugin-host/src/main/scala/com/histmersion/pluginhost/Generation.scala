@@ -7,7 +7,7 @@ import org.ekrich.config.Config
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One load of the plugins for one config: the registries and the report. Built by [[PluginHost.build]] as a pure
   * function of (plugins, user config, environment, host services) — no global state, no static cache — so a later

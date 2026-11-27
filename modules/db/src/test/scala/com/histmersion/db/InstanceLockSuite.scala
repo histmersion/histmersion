@@ -6,7 +6,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.util.database.InstanceLock
 import com.histmersion.util.problem.Problem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One server per database (G90): the instance lock on the `*_test` database. Skipped without HISTMERSION_TEST_DB_URL.
   */

@@ -10,8 +10,8 @@ import java.nio.file.{Files, Path, StandardCopyOption}
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Resolution with coursier against Maven repositories, in the order given. The modules resolve to jars in coursier's
   * cache (`cache`, else coursier's own, `COURSIER_CACHE` or the platform's).

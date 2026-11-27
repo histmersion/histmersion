@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 
 import io.github.iltotore.iron.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where a new plugin project resolves the plugin API, the platform and the testkit from. */
 enum TemplateRepository:

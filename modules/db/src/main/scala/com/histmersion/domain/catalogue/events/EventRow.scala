@@ -10,7 +10,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An `events` row as the reads select it, with what its scale is derived from (its place's kind, its geometry's type)
   * and its tier.

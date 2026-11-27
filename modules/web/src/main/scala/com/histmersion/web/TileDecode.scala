@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:

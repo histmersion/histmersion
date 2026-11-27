@@ -16,7 +16,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one size cap at the `/mcp` edge: every tool's arguments and answer, over the protocol, and the edge as the only
   * place the MCP server is built.

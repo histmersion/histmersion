@@ -7,7 +7,7 @@ import com.histmersion.web.*
 import com.histmersion.web.library.LibraryAddress
 import com.histmersion.web.map.{LatLon, MapSurface, TheMap}
 import org.scalajs.dom
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Opening a bookmark or a note back where it was left: a source or an article in Library's reading pane, a goal on its
   * page, a place or an event in Explore's detail, a picture full size, a place on the map at its point (and its years),

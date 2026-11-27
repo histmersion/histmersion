@@ -20,8 +20,8 @@ import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `propose-articles` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (b), phase
   * 2): a planner proposes the articles a research area (a goal) should have — each a new slug, a title, a kind and the

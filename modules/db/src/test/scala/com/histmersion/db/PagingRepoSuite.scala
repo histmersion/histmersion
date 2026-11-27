@@ -25,7 +25,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.Run
 import com.histmersion.domain.automation.Goal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Keyset paging of the jobs, agent-runs and approvals lists (core `Paging`, V086) against a real Postgres
   * (HISTMERSION_TEST_DB_URL; skipped otherwise). Other suites write jobs and approvals at the same time, so each

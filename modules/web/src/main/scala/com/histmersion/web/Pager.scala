@@ -5,7 +5,7 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Offset
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A small OFFSET pager: "Items 26–50 of 112" with previous / next — for a list ordered by something other than time
   * (the manager window's items, most urgent first), where [[ListPaging]]'s newest-first keyset cursor does not apply.

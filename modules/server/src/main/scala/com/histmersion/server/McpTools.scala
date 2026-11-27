@@ -74,7 +74,7 @@ import com.histmersion.domain.library.acquisition.AcquisitionTools
 import com.histmersion.domain.library.collections.CollectionsTools
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{FeaturePlace, LintRule, movesTo, tolerated}
+import com.histmersion.lint.{movesTo, tolerated, FeaturePlace, LintRule}
 
 /** MCP tools (Chimp). Every tool returns Markdown and delegates to the same controllers as REST ([[ServerWiring]]). */
 @tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
@@ -770,6 +770,7 @@ object McpTools:
         _.description("Id of the acquisition-queue item this document fulfils; ticked off when the OCR job succeeds")
       )
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class JobControlInput(id: String, action: String, createdBy: Option[Creation.By] = None)
       extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 

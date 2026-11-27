@@ -10,7 +10,7 @@ import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.domain.library.acquisition.Endpoint
 
 import java.nio.charset.StandardCharsets.UTF_8
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** archive.org as a read-only source collection: its search and items as collection items (lending-only kept as
   * `restricted`), the file an import takes, and no writing at all. Answers are canned; nothing reaches the network.

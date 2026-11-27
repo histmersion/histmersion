@@ -2,7 +2,7 @@ package com.histmersion
 package web.ui
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 opaque type Px = Int
 object Px:

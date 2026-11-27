@@ -4,8 +4,8 @@ package util.storage
 import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server's files: a [[Store]] for each named [[Location]], and scratch stores that are removed when they close.
   * Where each location lives is the composition root's to say (from the configuration, read again at each call, so a

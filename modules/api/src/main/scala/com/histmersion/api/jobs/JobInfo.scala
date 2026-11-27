@@ -16,7 +16,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.Sha256
 import com.histmersion.api.automation.Queue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A job's row. `problems`: every problem a job that failed (or stopped) keeps, in order; none for one that did not. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

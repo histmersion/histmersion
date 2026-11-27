@@ -11,8 +11,8 @@ import io.scalaland.chimney.dsl.*
   * sent [[Http.once]], answered with its status and headers.
   */
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @atBoundary(BoundaryKind.Spi, "offers the host's HTTP client as the plugin API's HTTP client")
 final class HttpPlugin(http: Http) extends Plugin.Http:

@@ -6,7 +6,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.LeadFacts
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One event on the map before its outline is read (the map's events). */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

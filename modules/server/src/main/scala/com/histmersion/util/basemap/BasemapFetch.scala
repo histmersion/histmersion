@@ -29,7 +29,7 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Plural
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A regional extract of a remote PMTiles archive (a Protomaps build, Mapterhorn's planet), read with HTTP range
   * requests — the way `pmtiles extract` reads it, and what both providers document for a partial download — and written

@@ -10,7 +10,7 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.histmersion.domain.automation.agents.AgentStateRecord
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The engine's rows held in memory, one record the `InMemory` services of its features share (each reads and changes
   * its own part, through lenses): the autopilot's row; the goals, their links, the schedules not moved yet and what the

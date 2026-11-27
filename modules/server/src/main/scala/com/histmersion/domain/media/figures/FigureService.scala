@@ -5,7 +5,7 @@ import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.util.database.Transactor
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's figures take the source's licence: the figures with no licence whose source records one, counted, and
   * with `apply` given it.

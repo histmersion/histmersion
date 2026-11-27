@@ -29,7 +29,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events for agents: list or show one (its page, with its pictures and the articles citing its sources), and patch
   * one.

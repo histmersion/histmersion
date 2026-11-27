@@ -6,7 +6,7 @@ import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.archiveorg.ArchiveOrg
 import com.histmersion.upstreams.ArchiveId
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `archive-org` plugin's fetcher: a PUBLIC archive.org item's file, by its identifier — the format the caller
   * prefers (`WorkKey.format`), else an EPUB, a text PDF, a PDF. A lending-only (access-restricted) item is refused,

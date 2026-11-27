@@ -16,7 +16,7 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The citation graph of one source, in a window: a force layout on a canvas, a legend and the hovered node as a
   * [[SourceLink]].

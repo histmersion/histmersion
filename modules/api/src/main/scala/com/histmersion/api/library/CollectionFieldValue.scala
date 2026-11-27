@@ -6,7 +6,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A field to set on an item, by the collection's own field name. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

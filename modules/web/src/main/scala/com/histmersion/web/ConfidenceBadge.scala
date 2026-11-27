@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.js
 import com.histmersion.api.library.Confidence
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The confidence mark: the shared icon plus the colour the map's dots use for that level ([[ConfidenceStyle]]),
   * labelled for screen readers and on hover.

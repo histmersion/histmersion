@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A group of points drawn as ONE cluster layer: nearby points of every kind join one bubble ([[Clustering]]), the rest
   * are drawn alone; only what is in view (and a margin) has an element. The kinds' look is the caller's (and their

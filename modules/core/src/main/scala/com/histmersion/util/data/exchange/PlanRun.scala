@@ -13,7 +13,7 @@ import com.histmersion.util.text.MinHash
 
 import java.util.UUID
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One plan's run of a kind's rules ([[PlanRules]]): what the planner asks of the kind at each stage, in the planner's
   * order. A run may keep what it learns between the stages; every member defaults to "nothing of that kind".

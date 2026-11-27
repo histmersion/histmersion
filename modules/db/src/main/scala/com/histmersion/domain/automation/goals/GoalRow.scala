@@ -12,8 +12,10 @@ import com.histmersion.api.automation.{Creation, Goal}
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
 final private[histmersion] case class GoalRow(

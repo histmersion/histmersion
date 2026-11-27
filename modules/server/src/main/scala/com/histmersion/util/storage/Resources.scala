@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 trait Resources:
   def text(name: Resources.ResourceName): Either[Problem, Blob.Text]

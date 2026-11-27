@@ -7,7 +7,7 @@ import java.util.UUID
 import com.histmersion.util.data.exchange.{BundleFormat, BundleTar}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion bundle …`: the subcommands parse, and the manifest of a downloaded bundle is read locally (it is
   * printed after an export). No server.

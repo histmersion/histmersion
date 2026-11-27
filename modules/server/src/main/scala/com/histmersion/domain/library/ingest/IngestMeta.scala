@@ -4,7 +4,7 @@ package domain.library.ingest
 import com.histmersion.api.library.Edge
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The metadata an ingest carries, whatever the acquisition channel was. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

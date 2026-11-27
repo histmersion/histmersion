@@ -15,7 +15,7 @@ import com.histmersion.api.plugins.PluginDescription
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.config.MediaPluginCollectionsConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The collections `media import` can run, from the plugins' registry of the calling thread's generation: the
   * first-party ones and a third party's alike.

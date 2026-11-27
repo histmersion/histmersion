@@ -7,7 +7,7 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an import writes and what it reads of the map: media's own services in the server ([[MediaStore.apply]]); a
   * map in a test.

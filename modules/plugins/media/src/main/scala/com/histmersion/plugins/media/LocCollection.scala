@@ -10,8 +10,8 @@ import com.histmersion.plugin.*
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `loc`: the Library of Congress JSON API (https://www.loc.gov/apis/json-and-yaml/), no key: the maps format
   * (`/maps/?q=&fo=json`) narrowed to the Geography and Map Division, then each candidate's item (`/item/{id}/?fo=json`)

@@ -13,7 +13,7 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A merge apply as a job: it answers once done within the wait, or as running; a second is refused while one runs; its
   * row keeps how it ended. Over the in-memory rows.

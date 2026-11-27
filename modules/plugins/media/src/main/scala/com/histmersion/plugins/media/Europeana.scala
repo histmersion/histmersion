@@ -12,8 +12,8 @@ import com.histmersion.plugin.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Europeana APIs (Search, Record and Thumbnail), with a user's personal key sent as the `X-Api-Key` header
   * (Europeana's preferred form; the `wskey` parameter is deprecated). Search:

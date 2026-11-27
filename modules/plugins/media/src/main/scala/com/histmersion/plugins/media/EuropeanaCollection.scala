@@ -3,7 +3,7 @@ package plugins.media
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `europeana`: Europeana's Search API (a user's personal key, sent as a header): one search by the place's name,
   * openly reusable images only; a record to store is read again through the Record API, whose licence must be the

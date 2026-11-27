@@ -5,13 +5,16 @@ import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's source collections (the Calibre library, archive.org): what the server can run, and the operations
   * `histmersion calibre …` makes over HTTP. `{name}` is the collection's registered name.
   */
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the collections routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the collections routes with their request and response bodies"
+)
 object CollectionsApi:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
@@ -33,7 +36,10 @@ object CollectionsApi:
       )
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start"
+  )
   lazy val search
       : PublicEndpoint[(Collection.Name, Option[Query], Option[Limit], Boolean), Api.Error, CollectionSearch, Any] =
     (named.get
@@ -134,7 +140,10 @@ object CollectionsApi:
       )
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start"
+  )
   lazy val audit: PublicEndpoint[Collection.Name, Api.Error, CollectionAudit, Any] =
     (named.get
       .in("audit")

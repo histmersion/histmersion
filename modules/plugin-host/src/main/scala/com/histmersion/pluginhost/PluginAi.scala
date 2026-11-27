@@ -7,8 +7,8 @@ import com.histmersion.plugin.*
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin's AI provider as the host calls it: its check and each model call guarded, so an exception or a `null` from
   * plugin code is the provider's failure, never the host's.

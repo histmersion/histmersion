@@ -37,7 +37,7 @@ import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `watch:<goal>` manager kind (an acquisition-sweep and a currency-check item, re-opened by its cron; a sweep
   * ingests legal open-access picks when it opted in, within its daily cap), registered by this transition adapter until

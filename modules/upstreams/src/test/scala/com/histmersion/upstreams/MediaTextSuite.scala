@@ -9,7 +9,7 @@ import com.histmersion.upstreams.media.MediaText
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.WorkKey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaTextSuite extends munit.FunSuite:
 

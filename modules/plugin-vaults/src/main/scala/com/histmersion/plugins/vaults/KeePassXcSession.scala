@@ -9,7 +9,7 @@ import scala.concurrent.duration.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One `keepassxc-cli open` session answering several references (KeePassXC's interactive mode, in keepassxc-cli since
   * 2.6): the database is unlocked once — one password, one YubiKey touch — and each reference is one

@@ -10,8 +10,8 @@ import java.time.Instant
 import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Goal schedules are research-area watchers since phase 3 (docs/research-process-managers.md §4 (c)): the pure half of
   * moving a `goal_schedules` row into its goal's `watch:<goal>` manager, and of showing a watcher as the schedules the

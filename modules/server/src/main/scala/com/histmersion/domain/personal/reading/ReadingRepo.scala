@@ -8,8 +8,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.{PageSize, UserId}
 
 import com.augustnagro.magnum.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `read_marks` table. Takes the connection it runs on. */
 @atBoundary(BoundaryKind.Sql, "reads and writes the reading tables and their row codecs")

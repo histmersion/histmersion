@@ -7,7 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.api.Html
 import com.histmersion.api.given
 import com.histmersion.config.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class HighlightSuite extends munit.FunSuite:
 

@@ -24,7 +24,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
   * `GET /api/articles/{slug}/coverage`, the generated sections in `GET /api/articles/{slug}` (and so `article get`),

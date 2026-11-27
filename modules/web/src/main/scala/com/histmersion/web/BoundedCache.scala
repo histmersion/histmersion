@@ -3,7 +3,7 @@ package web
 
 import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A cache with a ceiling (#1949): at most `maxEntries` entries and at most `maxWeight` of their summed weight, the
   * least recently used going first. Every cache the page keeps for its life is one of these — a hover card per source,

@@ -13,7 +13,7 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.{Aggregate, Filter, SearchHit, SearchResult, TimeHistogram}
 import com.histmersion.api.catalogue.{Place, RegionNode}
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The search over REST and MCP: the sources a filter selects with their matched findings and why, the histogram and
   * its nested tree, and the counts of what a filter selects. The gazetteer (`places`) is the catalogue's: the tree's
@@ -30,14 +30,20 @@ final class SearchControllers(
     * the evidence, so there is ONE query path (FTS ranking and snippets included). New callers should use [[sources]].
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def search(q: Option[Search.Query], limit: Option[Filter.Limit]): List[SearchHit] =
     sources(
       Filter(q = q.map(_.value.trim).filter(_.nonEmpty).map(Filter.Q(_)), limit = limit.getOrElse(Filter.Limit(0)))
     ).hits.map(_.source)
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def sources(f: Filter): SearchResult =
     search.sources(filters.page(f), Search.SnippetWords(cfg().limits.snippetWords.value), filters.scope(f))
 
@@ -56,7 +62,10 @@ final class SearchControllers(
     * bucket and asks again, which is the same query with a smaller window.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def aggregate(q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     def norm(o: Option[String], dflt: String) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
@@ -90,7 +99,10 @@ final class SearchControllers(
     * arithmetic on top of that.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     val ui = cfg().ui
@@ -122,11 +134,17 @@ final class SearchControllers(
     * corpus covers; nothing outside it can have a non-empty answer anyway.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def clampToSpan(v: Year, min: Long, max: Long): Year = Year(math.max(min, math.min(max, v.value)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def aggregateWindow(
       axes: List[String],
       unit: String,
@@ -168,7 +186,10 @@ final class SearchControllers(
     else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf.map(a => Year(a.value)), base)
 
   /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def treeOn(
       axes: List[String],
       unit: String,

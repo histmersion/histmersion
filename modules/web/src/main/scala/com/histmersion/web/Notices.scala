@@ -12,7 +12,7 @@ import org.scalajs.dom
 import scala.collection.mutable
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The lists' notices ([[UiNotices]]), shown in Research's side navigation: each watched list's count (open approvals,
   * things to acquire, the open backlog) and whether it has something NEW since it was last opened — its button is bold

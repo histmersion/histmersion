@@ -26,7 +26,7 @@ import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pictures over REST and MCP: a source's figures listed, read, uploaded, described and patched (plan §1.8, §1.6);
   * the media list, its facets, one picture, its file and thumbnail, the map feed (#1446); the cards' pictures of a
@@ -42,12 +42,18 @@ final class AssetsControllers(
 
   private val Uuid = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def notFound(uid: AssetService.AssetUid) =
     Api.Error(Problem.Unclassified(Legacy.Text(s"No picture '$uid'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def canonical(citekey: Citekey): Citekey =
     sources.current(citekey).map(c => Citekey.assume(c.value)).getOrElse(citekey)
 
@@ -60,7 +66,10 @@ final class AssetsControllers(
   def figures(citekey: Citekey): List[AssetInfo] = assets.figures(canonical(citekey))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def figure(
@@ -78,7 +87,10 @@ final class AssetsControllers(
       )
 
   /** Add figures to the source a client named: a name that is no citekey is refused (400). */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def putFiguresAsked(
@@ -94,14 +106,20 @@ final class AssetsControllers(
     )
 
   /** Add figures to an existing source (the host-side seed path). */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def putFigures(citekey: Citekey, in: List[AssetInput])(using Creator.New): Either[Api.Error, AssetsStored] =
     maintenance.guard(WriteGate.OperationName("put_assets"))(
       storeFigures(citekey, com.histmersion.api.library.Citekey(citekey.value), in)
     )
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def storeFigures(
       citekey: Citekey,
@@ -125,7 +143,10 @@ final class AssetsControllers(
       }
 
   /** Wire figures → storable ones, failing the whole batch on the first unusable payload. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
     in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
       acc.flatMap(xs =>
@@ -137,7 +158,10 @@ final class AssetsControllers(
       )
     }
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def detail(citekey: Citekey, name: AssetService.AssetName): Either[Api.Error, AssetDetail] =
     assets
@@ -154,13 +178,19 @@ final class AssetsControllers(
 
   // ── the pictures ──
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(
     q,
     AssetService.Limit(cfg().limits.page(q.limit.flatMap(l => PageSize.option(l.value)), PageSize(200)).value)
   )
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def list(q: Api.MediaQuery): MediaList = assets.list(
     q,
     AssetService.Limit(cfg().limits.page(q.limit.flatMap(l => PageSize.option(l.value)), PageSize(50)).value)
@@ -180,7 +210,10 @@ final class AssetsControllers(
   // ── the cards' pictures ──
 
   /** A place's pictures for its card, through its equivalents. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def placeThumbs(placeId: Place.Id): List[MediaThumb] =
     assets.placeThumbs(
       placeId,
@@ -190,7 +223,10 @@ final class AssetsControllers(
 
   /** An event's pictures for its card. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def eventThumbs(eventId: Event.Id): List[MediaThumb] =
     assets.thumbs(
       AssetService.TargetType(PictureTarget.Event.wire.value),

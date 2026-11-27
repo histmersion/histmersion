@@ -8,8 +8,8 @@ import com.histmersion.util.storage.SafePath
 
 import java.nio.file.Files
 import com.histmersion.util.storage.HandedFile
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The files this server can see, for the MCP `ingest` tool's `path`: confined to `corpus.dir` when that is set; when
   * it is not, the old behaviour stands and the operator is told why.

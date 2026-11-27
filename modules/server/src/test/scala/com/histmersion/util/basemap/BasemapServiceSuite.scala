@@ -29,7 +29,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The fetch JOB end to end, with a fake provider (a local archive behind [[BasemapFixtures.LocalRange]]) and a fake
   * disk: a dry run, a fetch that writes both layers, the free-space refusal, the provider's list of builds. Job rows

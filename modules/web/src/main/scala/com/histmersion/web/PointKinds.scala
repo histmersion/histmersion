@@ -20,7 +20,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The four kinds of point (docs/map-layers.md): findings, sites, events, pictures — each a descriptor of
   * [[PointLayer]].
@@ -134,7 +134,10 @@ object PointKinds:
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def key(p: SitePoint): PointKind.PointKey = PointKind.PointKey(p.id.fold(s"${p.lat}|${p.lon}")(_.value))
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def at(p: SitePoint): (Geo.Latitude, Geo.Longitude) = (p.lat, p.lon)
+    @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def inner(p: SitePoint): Html =
       Glyphs.badge(CardIcons.siteMarker(p.known.map(t => Place.Entry.SiteType(t.id.value))))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

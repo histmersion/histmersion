@@ -16,8 +16,8 @@ import com.histmersion.api.library.Finding
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The proposed links of events to sources (`event_link_candidates`) and when each event's were computed
   * (`event_link_checks`). Every method runs on the connection it is given.

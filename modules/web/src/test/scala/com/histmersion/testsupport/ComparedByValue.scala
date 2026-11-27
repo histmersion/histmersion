@@ -4,7 +4,7 @@ package testsupport
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same
   * shape — the same type constructor, or one a subtype of the other (`Option` and `Some`, `Seq` and `List`, `Either`

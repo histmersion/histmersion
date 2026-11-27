@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.WebPaths
 import com.histmersion.config.AuthConfig
 import com.histmersion.util.problem.Problem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a request was let in. The wire spelling ([[wire]]) is what the gate tells the endpoints behind it. */
 enum Admission(val wire: String) derives CanEqual:

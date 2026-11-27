@@ -46,7 +46,7 @@ import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #986 `agents.auto-enrich` against a `*_test` database, the converter stubbed: an ingest job that stores a source
   * queues exactly one `enrich-source` run for it and says so in its progress line; nothing is queued with the switch

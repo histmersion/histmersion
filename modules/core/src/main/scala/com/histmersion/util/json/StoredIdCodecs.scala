@@ -7,8 +7,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Decoders for the ids a stored checkpoint, ledger or run output holds: they were plain text when those rows were
   * written, so a row still loads whatever its id looks like. Only data read from storage uses them; the ids a person or

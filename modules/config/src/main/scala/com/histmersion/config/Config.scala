@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import com.histmersion.Year
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Env-var overrides (`port = ${?HISTMERSION_PORT}`) always arrive as HOCON STRINGS; the derived readers below
   * therefore accept either a number or a numeric string. Lexical-scope givens take priority over the companion-scope

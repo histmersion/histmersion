@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Text.sentence
 import java.io.InputStream
 import java.net.{InetAddress, ServerSocket}
 import java.nio.charset.StandardCharsets.US_ASCII
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
 class ClientSuite extends munit.FunSuite:

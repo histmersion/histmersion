@@ -18,7 +18,7 @@ import java.net.InetSocketAddress
 import java.nio.file.{Files, Path}
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `calibre push`/`sync` take the original the SERVER stored when no file is given and no host-side `originals-dir`
   * holds one: it is downloaded over HTTP into a temporary directory, handed to `calibredb add`, and removed. A stand-in

@@ -16,7 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.{Creator, CreatorControllers}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The work lists' operations as REST, MCP and the CLI reach them: the list named by its word, the inputs checked, a
   * write refused during maintenance. A LOG item given no topic joins today's entry (`## 2026-08-25`, the UTC date of
@@ -24,7 +24,10 @@ import com.histmersion.lint.{LintRule, tolerated}
   */
 final class WorkListControllers(queues: QueueService, maintenance: WriteGate, clock: Clock):
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def kindOf(list: WorkListControllers.KindOfList): Either[Api.Error, Kind] =
     Kind
@@ -44,7 +47,10 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     creatorOf(in.createdBy, Creator.Surface.Mcp).left.map(Api.Error(_)).flatMap(record(list, in, _))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def record(list: ListName, in: QueueAdd, creator: Creator.New): Either[Api.Error, QueueItem] =
     maintenance.guard(WriteGate.OperationName("queue/add")):
@@ -87,12 +93,18 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     maintenance.guard(WriteGate.OperationName("queue/delete"))(queues.delete(id).left.map(WorkListControllers.error))
 
   /** The list rendered as its `meta/<FILE>.md`. Notes are included — they ARE the file's prose. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def exportText(list: Kind.Label): Either[Api.Error, Queue.Markdown] =
     kindOf(WorkListControllers.KindOfList(list.value)).map(k => Queue.render(k, queues.list(k, QueueScope.All)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def importText(list: Kind.Label, req: QueueImport): Either[Api.Error, QueueImported] =
@@ -145,7 +157,10 @@ object WorkListControllers:
       case _ => CreatorControllers.creatorOf(by, surface, Creator.New.Manual(surface))
 
   /** The code of a refusal for an item that is not there. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private val NotFound: Api.Error.Code = Api.Error.Code(Write.CodeNotFound)
 
   extension (lists: WorkListControllers)

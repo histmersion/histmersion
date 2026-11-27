@@ -3,7 +3,7 @@ package domain.media.covers
 
 import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources a run of covers looks at, on a collection that holds no source: none, on the database and in memory. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

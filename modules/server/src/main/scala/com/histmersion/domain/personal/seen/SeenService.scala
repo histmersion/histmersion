@@ -10,7 +10,7 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How far a person has seen each window's news: a mark that only moves forward. The table keeps one mark per board
   * while the server runs for one person, so every user's marks are the local person's until it gains a user column.

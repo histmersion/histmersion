@@ -40,7 +40,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `hint-effect <manager>` (docs/research-process-managers.md §3.6, phase 3): a person's hint, in words, read by the
   * planner model (the `hint-reader` definition: no tools — the hint, the manager's items and its settings are given as

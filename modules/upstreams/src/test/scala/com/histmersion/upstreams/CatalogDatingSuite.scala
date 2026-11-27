@@ -5,7 +5,7 @@ import com.histmersion.upstreams.dating.CatalogDating.{Bound, Limits, Span}
 import com.histmersion.upstreams.dating.CatalogDating
 import com.histmersion.upstreams.wikidata.WikidataClasses
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a catalogue's dating becomes a four-point span, and how it is held inside its limits. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

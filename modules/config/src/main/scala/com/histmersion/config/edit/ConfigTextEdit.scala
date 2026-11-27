@@ -8,8 +8,8 @@ import org.ekrich.config.parser.ConfigDocumentFactory
 
 import scala.annotation.tailrec
 import scala.util.Try
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Changes to the config file's TEXT that keep everything else as it is: its comments, its order, its layout, its
   * includes and its unknown keys (sconfig's `ConfigDocument`, which edits the parsed text, not a rendering of the

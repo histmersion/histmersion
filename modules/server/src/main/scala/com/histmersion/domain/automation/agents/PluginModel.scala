@@ -9,7 +9,7 @@ import sttp.ai.core.agent.*
 import sttp.ai.core.model.{AIModel, Capability}
 import sttp.client4.Backend
 import sttp.shared.Identity
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The model type a plugin provider's calls are built with: every capability, as the provider (not sttp-ai) decides
   * what it can do.

@@ -17,7 +17,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The synchronous, metadata-only half of an acquisition.
   *

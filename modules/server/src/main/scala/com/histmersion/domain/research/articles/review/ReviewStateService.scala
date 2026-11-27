@@ -8,7 +8,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.ArticleReviewStatus
 import com.histmersion.api.research.ReviewRound
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the review manager, the review ledgers, the runs and the goals record about articles, read for their review
   * state. A mechanism over the engine's tables and the ledgers' JSON, counted in SQL, so it has no in-memory twin.

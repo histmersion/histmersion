@@ -2,7 +2,7 @@ package com.histmersion
 package util.process
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a child process that was waited for ended: its exit code and its output, line by line. */
 final case class ProcessResult(exitCode: ProcessResult.ExitCode, lines: List[ProcessResult.Lines]):

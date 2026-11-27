@@ -2,8 +2,8 @@ package com.histmersion
 package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A keyless upstream service. */
 @movesTo(FeaturePlace.LibraryAcquisition)

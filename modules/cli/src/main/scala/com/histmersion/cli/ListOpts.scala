@@ -4,8 +4,8 @@ package cli
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.{Goal, ListFilters}
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter options of the three listings — `agent approvals`, `agent runs`, `jobs` — over core [[ListFilters]]: the
   * same names as the REST query (kebab-case here), every list option repeatable or comma-separated, and the server

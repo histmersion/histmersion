@@ -8,11 +8,14 @@ import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.ItemKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Activity
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the personal routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the personal routes with their request and response bodies"
+)
 object PersonalApi:
   type Search = Search.T
   object Search extends Newtype[String, Pure]

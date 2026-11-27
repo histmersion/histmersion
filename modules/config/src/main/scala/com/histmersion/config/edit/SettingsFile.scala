@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.config.LoadedConfig
 import org.ekrich.config.{Config, ConfigOrigin}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The settings file a [[ConfigFileWriter]] reads and changes, wherever it is kept: the server's in the store of its
   * directory, the command line's on the disk of the machine it runs on.

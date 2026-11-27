@@ -2,7 +2,7 @@ package com.histmersion
 package plugins.events
 
 import com.histmersion.plugin.{Plugin, Spi}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of Histmersion's own event catalogues: on by default (its defaults resource), switched off by
   * `histmersion.plugins.events-<catalogue>.enabled = false`. Its settings are Histmersion's own `events.<catalogue>.*`,

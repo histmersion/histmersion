@@ -18,7 +18,7 @@ import com.histmersion.plugin.Year
 import com.histmersion.upstreams.PageSize
 import com.histmersion.plugin.Doi
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** OpenAlex and Crossref: search, a work's metadata, its deposited reference list, its amendment notices, and
   * OpenAlex's own record of it — over the host's HTTP, for the host's discovery and for the fetchers that read an

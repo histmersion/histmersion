@@ -7,7 +7,7 @@ import com.histmersion.plugin.*
 import scala.util.control.NonFatal
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin's [[SourceCollection]] as the host calls it: every call guarded (an exception or a linkage error becomes
   * the operation's `Left`, naming the collection), and every write refused unless the collection declares the

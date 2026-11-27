@@ -9,7 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import java.time.Instant
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The five-field cron of a goal's schedules: parsing, the next firing in UTC, the day-of-month / day-of-week rule,
   * shortcuts, and what is refused.

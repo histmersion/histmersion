@@ -24,7 +24,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.automation.AgentMode
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The label dictionary covers every identifier the UI shows: a pipeline, an approval kind or a job kind added without
   * wording fails here, not in front of a reader.

@@ -3,7 +3,7 @@ package api.research
 
 import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 enum DraftMode(val wire: DraftMode.Wire) derives CanEqual:
   case Create extends DraftMode(DraftMode.Wire("create"))

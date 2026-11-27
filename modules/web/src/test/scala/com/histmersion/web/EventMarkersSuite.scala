@@ -30,7 +30,7 @@ import com.histmersion.web.map.LatLon
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.LeadFacts
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1449, the web's pure half: the one icon registry covers every kind and site type, an event marker carries its
   * kind's icon, its tier and its card's attribute, a typed site's icon its colour, the key names every icon, the menus

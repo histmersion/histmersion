@@ -4,7 +4,7 @@ import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.WorkKey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Plain text out of the bits of HTML a provider's metadata carries (Commons' `Artist` is a link to a user page). Pure.
   */

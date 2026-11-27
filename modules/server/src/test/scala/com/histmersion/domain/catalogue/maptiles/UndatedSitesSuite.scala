@@ -6,7 +6,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.*
 
 import java.util.concurrent.atomic.AtomicReference
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The undated sites of a tile, over sites held in memory: counted by squares, the counts adding up to every site, and
   * listed one by one but those the span already shows.

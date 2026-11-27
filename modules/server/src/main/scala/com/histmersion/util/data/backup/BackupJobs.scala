@@ -10,7 +10,7 @@ import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.Api
 import com.histmersion.api.backup.Backup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Backups run as a JOB, not inside the HTTP request. A dump of the corpus takes minutes, and the request that started
   * it used to be cut at 60 s (by the server and by any proxy in between): the handler thread was interrupted and the

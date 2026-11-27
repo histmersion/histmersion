@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every long-running worker of one server, as a restore holds them ([[Quiescent]]): the pools and loops register
   * themselves when the composition builds them, and work that runs once on a thread of its own is started through

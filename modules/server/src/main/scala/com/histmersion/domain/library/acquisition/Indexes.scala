@@ -8,7 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.pluginhost.upstreamSettings
 import com.histmersion.upstreams.core.CoreApi
 import com.histmersion.util.plugins.Plugins
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Indexes:
   /** The indexes `acquire.candidates.indexes` names, in its order (an unknown name is left out). `coreKey` is CORE's

@@ -7,7 +7,7 @@ import com.histmersion.domain.CoreQuota
 
 import java.time.{Instant, LocalDate}
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A metered upstream's budget, the same on the database and in memory: read back as it was saved but its recent call
   * slots (kept in memory only), and replaced by the next save.

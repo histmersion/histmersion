@@ -2,7 +2,7 @@ package com.histmersion
 package upstreams.dating
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object CatalogDating:
   type AstronomicalYear = AstronomicalYear.T
   object AstronomicalYear extends Newtype[Long, Pure]:

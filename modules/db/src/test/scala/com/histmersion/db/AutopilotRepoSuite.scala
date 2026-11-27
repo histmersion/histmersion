@@ -9,7 +9,7 @@ import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 
 import javax.sql.DataSource
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's one row: the migration makes it, a read only reads (it runs in a read-only transaction, where an
   * insert fails), a database without the row reads as the row the migration makes and writes nothing, and the first

@@ -4,8 +4,8 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Running an external program. Behind a trait so the parsers and the guards can be tested without a Calibre
   * installation.

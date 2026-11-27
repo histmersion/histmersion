@@ -15,7 +15,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the work lists' kernel keeps, run on [[QueueService.InMemory]] and on the database (a scratch database
   * per test, gated on HISTMERSION_TEST_DB_URL): a row survives unchanged — multi-line text, unicode headings, status

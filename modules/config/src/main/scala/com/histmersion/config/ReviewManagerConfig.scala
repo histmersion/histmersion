@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The review manager's defaults (a value saved in the manager's config wins). `staleAfterDays`: a converged article is
   * selected again (lowest priority) after this many days, or when its filter gained sources (0 = never); looked for at

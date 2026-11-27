@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.research.ReviewState
 import com.histmersion.api.automation.Goal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The colour tokens the code names ([[Palette]]) are defined in the stylesheet it ships. A token the stylesheet lacks
   * renders as nothing at all — a transparent dot, an invisible edge — and no other test would notice. Reads the served

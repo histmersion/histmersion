@@ -20,8 +20,8 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The places as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own places with
   * their names, parents, links and types, their old ids and the site types refined from outside — read out in a

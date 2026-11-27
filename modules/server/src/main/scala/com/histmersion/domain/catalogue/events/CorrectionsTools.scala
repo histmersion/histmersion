@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Correction
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The corrections by hand of catalogue events, for agents. The import and the re-derivation are not tools, on purpose:
   * an import is an operator's decision that sends traffic to a third party (`histmersion events import`), a

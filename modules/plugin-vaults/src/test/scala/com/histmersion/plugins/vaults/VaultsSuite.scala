@@ -21,7 +21,7 @@ import com.histmersion.plugin.Processes
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Secret
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The vaults against FAKE command-line tools: shell scripts in a temporary directory that the test context offers as
   * the whole PATH. No real vault, no real `keepassxc-cli`/`op`/`bw`, is ever run.

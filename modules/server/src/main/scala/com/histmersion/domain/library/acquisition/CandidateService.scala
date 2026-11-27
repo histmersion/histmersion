@@ -17,7 +17,7 @@ import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The new-source search's records: each goal's watches with their watermarks, and the candidates found, one per goal
   * and DOI.

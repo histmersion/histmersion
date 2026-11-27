@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait AcquireCheckService:

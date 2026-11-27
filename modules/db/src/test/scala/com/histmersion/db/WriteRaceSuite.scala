@@ -22,7 +22,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `ifUpdatedAt` is a compare-and-swap, and it was not one: `patch` read the row, compared the token, then wrote — with
   * nothing stopping a second patch from doing all three in between. Both saw the token they were given, both

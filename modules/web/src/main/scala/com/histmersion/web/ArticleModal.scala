@@ -8,7 +8,7 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object ArticleModal:
   val element: HtmlElement =

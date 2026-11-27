@@ -6,7 +6,7 @@ import com.histmersion.api.given
 
 import java.nio.file.Paths
 import com.histmersion.util.storage.SafePath
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Three surfaces take a SERVER-side path from the caller (`seed {dir}`, MCP `ingest {path}`, a note's `md_path`).
   * Confinement to `corpus.dir` is what stops them being a file-read primitive.

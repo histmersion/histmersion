@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import com.histmersion.api.Geo
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which shape is under a point: pure geometry over GeoJSON, so finding what the pointer is over never depends on what
   * the library has rendered yet.

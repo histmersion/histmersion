@@ -37,7 +37,9 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
+@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Article(
     slug: Article.Slug,
     title: Article.Title,
@@ -1311,7 +1313,10 @@ object Article:
       case other         => other
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G5TextBranch, "renders a review finding's outcome, a String vocabulary of the ledger (open, fixed, wont-fix, set-aside)")
+    @tolerated(
+      LintRule.G5TextBranch,
+      "renders a review finding's outcome, a String vocabulary of the ledger (open, fixed, wont-fix, set-aside)"
+    )
     def outcomeLine(f: ReviewFinding): String =
       val base = f.outcome.value match
         case "wont-fix"                                               => "won't fix"

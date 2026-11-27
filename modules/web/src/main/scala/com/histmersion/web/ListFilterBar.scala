@@ -4,7 +4,7 @@ package web
 import com.histmersion.api.{Paging, UiLabels, Wording}
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.library.Facet
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter controls of the three list windows — approvals, agent runs, jobs (core `ListFilters`): a facet's values
   * as toggle chips with the server's counts (multi-select), a `<select>` for a facet with many values, a text box

@@ -10,7 +10,7 @@ import com.histmersion.api.catalogue.Attestation
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

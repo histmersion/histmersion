@@ -4,7 +4,7 @@ package plugins.ai
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One HTTP provider's settings, Histmersion's own `agents.providers.<name>`: where it listens, its key (from the
   * server's environment: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`), whether tool schemas are sent in OpenAI's strict form,

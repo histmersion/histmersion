@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.workflows.ToolName
 import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Test helpers for the generated trees. */
 object Generated:

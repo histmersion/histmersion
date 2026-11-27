@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Files
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The stored originals over a store, on disk and in memory alike: found by digest, stored only when the content is its
   * name, under a safe extension, never half written.

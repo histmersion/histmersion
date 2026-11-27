@@ -7,7 +7,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** One entry of a source page's "Cites" / "Cited by" lists — edges AND article links, typed. */
 @movesTo(FeaturePlace.ResearchArticles)

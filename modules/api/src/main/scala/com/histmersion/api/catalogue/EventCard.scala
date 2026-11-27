@@ -14,7 +14,7 @@ import com.histmersion.api.catalogue.{
   EventSummary
 }
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an event's page shows of the catalogue: the event, its evidence and its context. The catalogue's own record
   * ([[EventEntry]]) and the page the server answers (`EventDetail`, which adds the event's pictures) both are one, so

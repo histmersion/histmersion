@@ -27,8 +27,8 @@ import scala.annotation.tailrec
 import scala.jdk.CollectionConverters.*
 import scala.util.Using
 import com.histmersion.util.basemap.PmTiles
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A store over a directory on disk: a key is a path below `root`. */
 @atBoundary(BoundaryKind.Process, "stores named files on disk")

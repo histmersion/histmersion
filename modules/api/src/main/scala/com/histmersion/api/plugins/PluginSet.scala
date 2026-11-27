@@ -7,7 +7,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** @param dependencies
   *   `None` in a record written before dependencies were recorded

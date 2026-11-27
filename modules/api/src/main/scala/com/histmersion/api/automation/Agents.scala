@@ -22,7 +22,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -920,6 +920,7 @@ object Agents:
     object Subject extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
 
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class DecisionRequest(
       note: Option[DecisionRequest.Note] = None,
       createdBy: Option[Creation.By] = None,

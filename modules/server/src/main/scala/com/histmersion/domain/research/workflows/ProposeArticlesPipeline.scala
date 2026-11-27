@@ -47,7 +47,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `propose-articles <goal>` (docs/research-process-managers.md §4 (b), phase 2): the seeding manager's planner step. A
   * model proposes the articles a research area should have; CODE keeps the ones that can be compiled and are new

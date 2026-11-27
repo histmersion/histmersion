@@ -23,7 +23,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Build an [[ArticlePatch]] from CLI flags — pure, so the flag semantics are unit-tested without a server. Mirrors
   * [[Patches]] on the source side: `--json` is the baseline, each flag overrides the part it names, and an absent part

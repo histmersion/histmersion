@@ -11,7 +11,7 @@ import com.histmersion.{Offset, PageSize}
 import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** REST wiring of the process managers — every route delegates to [[ManagersControllers]]. The fixed paths come before
   * `{id}/{action}`.
@@ -23,7 +23,10 @@ object ManagersRoutes:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def light(id: ManagerInfo.Id): ManagerLight.Id = id.transformInto[ManagerLight.Id]
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def pageSize(limit: Option[Int]): Option[PageSize] = limit.flatMap(PageSize.option(_))
 
   /** `switches` and `draining`: the autopilot's page's routes (read it, switch it, its mode; the drain), which show the
@@ -32,7 +35,10 @@ object ManagersRoutes:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def apply(
       m: ManagersControllers,

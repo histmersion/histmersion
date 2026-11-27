@@ -11,7 +11,7 @@ import dotty.tools.dotc.core.Phases.Phase
 import dotty.tools.dotc.fromtasty.TASTYCompiler
 import dotty.tools.dotc.quoted.QuotesCache
 import dotty.tools.dotc.reporting.{Diagnostic, Reporter}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the compiled code of the main modules says about the HTTP routes: every route a tapir endpoint is given its
   * logic in (`<endpoint>.serverLogic…(f)`), its method, and every write its logic can reach — read from the TASTy

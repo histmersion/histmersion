@@ -3,7 +3,7 @@ package api.exchange
 
 import com.histmersion.api.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 enum EditionsPolicy:
   /** Merge them (the year issue then takes the earliest year). */

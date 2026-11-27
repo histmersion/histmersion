@@ -23,8 +23,8 @@ import com.histmersion.util.console.Console
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion discover|refs|assess|followups|ingest|archive` — the acquisition & assessment commands (plan §5.2
   * stream 2.6), each a thin wrapper over one endpoint that prints the SHARED Markdown rendering, or the raw JSON with

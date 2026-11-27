@@ -19,7 +19,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats named periods of this collection's own: one id added on both sides is one period when its
   * span and label agree, else a question; one under another id here is one when its label and span are (the database

@@ -4,7 +4,7 @@ package domain.library.workflows
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.config.AgentEnrichGuardsConfig
 import com.histmersion.domain.EnrichSource
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: AgentEnrichGuardsConfig)
   /** The findings step's guards as `agents.enrich.guards` sets them, over the gazetteer `resolves` asks. */

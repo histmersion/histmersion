@@ -5,7 +5,7 @@ import com.histmersion.api.library.GeoHit
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The findings of a playback, fetched ahead in long stretches and cut to each frame's window locally (#3764). Playback
   * asked the server for the window's findings once per animation frame (~60 requests a second) and drew each answer as

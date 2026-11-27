@@ -5,7 +5,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What every approval's list shows of a proposal about a record of a domain (a source's status or edge, the library's
   * proposals): the evidence it rests on and the passage it quotes, read from its stored payload.

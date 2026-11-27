@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit
 import javax.net.ssl.{SSLContext, TrustManagerFactory, X509TrustManager}
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The roots an acquisition request trusts (#1568, [[HttpPolicy.trust]]): the JDK's, and — only when `acquire.tls` asks
   * — the operating system's and a PEM file's, merged into ONE trust store behind the JDK's own PKIX trust manager. So a

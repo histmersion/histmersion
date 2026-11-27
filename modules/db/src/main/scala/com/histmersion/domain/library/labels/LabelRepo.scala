@@ -8,8 +8,8 @@ import com.histmersion.domain.library.search.FilterSql
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Facet, Filter}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The labels' vocabulary: the values of one dimension (tags, authors, places, topics, statuses, provenances) with the
   * sources each would leave inside a filter.

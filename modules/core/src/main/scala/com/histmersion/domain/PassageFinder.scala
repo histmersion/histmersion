@@ -14,8 +14,8 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.time.Timer
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Finds passages inside ONE source's converted body (#954) — pure, no I/O.
   *

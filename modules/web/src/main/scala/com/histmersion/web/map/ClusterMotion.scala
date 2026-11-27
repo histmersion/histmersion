@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How the cluster layer moves on a zoom that regroups it (#3764: the raster map's cluster plugin animated it, the
   * MapLibre release drew the new groups in one step). A split slides each new marker out from where its bubble stood; a

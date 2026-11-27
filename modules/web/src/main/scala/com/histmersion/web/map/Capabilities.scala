@@ -6,7 +6,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the browser can draw: `software` when its WebGL is rasterised on the CPU (SwiftShader, llvmpipe…) — the GL map
   * then breaks the interaction budgets (docs/research-map-styles.md §3.2) and the app draws its cheapest map.

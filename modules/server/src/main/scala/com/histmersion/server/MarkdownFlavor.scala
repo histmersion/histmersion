@@ -6,7 +6,7 @@ import com.histmersion.domain.*
 import com.vladsch.flexmark.parser.Parser
 import com.vladsch.flexmark.ext.tables.TablesExtension
 import com.vladsch.flexmark.util.data.{DataHolder, MutableDataSet}
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The ONE Markdown dialect the server reads: CommonMark plus GFM pipe tables, configured the way GitHub and Obsidian
   * read them (the delimiter row must match the header's column count; a short row is padded, a long one cut). Both the

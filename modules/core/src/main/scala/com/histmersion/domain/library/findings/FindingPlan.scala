@@ -30,7 +30,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats findings (docs/research-merge-import.md §5.4): a finding belongs to its source; inside a
   * pair of sources that are (or may be) one, each of the bundle's findings is matched with at most one here — the same
@@ -250,8 +250,9 @@ object FindingPlan:
   /** A great-circle distance in km. */
   type Distance = Distance.T
   object Distance extends Newtype[Double, Pure]:
-    extension (d: Distance) @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-                            def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
+    extension (d: Distance)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
   enum Match:

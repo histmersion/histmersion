@@ -17,8 +17,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Edge
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SQL half of the articles' lint rules (the library's are its sources' `SourceCheckRepo`).
   *

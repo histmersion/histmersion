@@ -5,7 +5,7 @@ import com.histmersion.api.ItemKind
 import com.histmersion.web.ui.{Clipboard, ContextMenu}
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The actions on one item a row's and the reading pane's menu offer: copy it as text, as Markdown or as a link;
   * bookmark it; open it in a new tab. Each is also a button where the item is shown.

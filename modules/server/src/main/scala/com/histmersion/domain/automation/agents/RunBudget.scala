@@ -16,7 +16,7 @@ import java.util.concurrent.{ConcurrentHashMap, LinkedBlockingQueue, Semaphore}
 import javax.sql.DataSource
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The run's remaining budget, checked by the sttp-ai loop before every iteration: once the spend recorded before this
   * step plus this step's own calls reaches the run's cap (cost or tokens), the loop is told to finish, and the engine

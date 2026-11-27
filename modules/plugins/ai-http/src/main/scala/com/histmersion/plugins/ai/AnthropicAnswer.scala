@@ -10,8 +10,8 @@ import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import com.histmersion.plugin.AiTool
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the Anthropic Messages API answered, read as these providers have always read it: a message (its first text
   * block the answer's text, its `tool_use` blocks the tool calls, its usage with the cache reads and writes counted in

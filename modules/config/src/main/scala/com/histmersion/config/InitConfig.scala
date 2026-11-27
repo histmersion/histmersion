@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** First-run data (#720). With `auto`, a starting server imports the bundled gazetteer (`<dataDir>/places`) and period
   * presets (`<dataDir>/periods`) into whichever of those tables is EMPTY, as a background job; `histmersion init` runs

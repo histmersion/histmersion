@@ -13,7 +13,7 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.zip.ZipInputStream
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A gazetteer that is one file at a fixed address: downloaded whole through the host's client, unpacked when it is a
   * zip (its first file that is neither a directory nor macOS's `__MACOSX` metadata), read as UTF-8 and parsed.

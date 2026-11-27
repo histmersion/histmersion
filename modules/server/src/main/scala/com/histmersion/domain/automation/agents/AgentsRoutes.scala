@@ -13,7 +13,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** REST wiring of the embedded agents — every route delegates to [[AgentsControllers]]. */
 object AgentsRoutes:
@@ -22,7 +22,10 @@ object AgentsRoutes:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def apply(a: AgentsControllers): List[ServerEndpoint[Any, Identity]] = List(
     AgentsApi.generate.serverLogic[Identity](req => a.generate(req).left.map(Api.Error(_))),

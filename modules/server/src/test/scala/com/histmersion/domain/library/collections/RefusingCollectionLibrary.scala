@@ -18,7 +18,7 @@ import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A library a suite's collections write through that refuses everything; a suite overrides what it uses. */
 open class RefusingCollectionLibrary extends CollectionLibrary:

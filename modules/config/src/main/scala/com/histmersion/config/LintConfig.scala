@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `histmersion lint`: how much of each rule's offending set is LISTED (the count is always complete) and how many
   * citekey prefix candidates a dangling edge target is offered.

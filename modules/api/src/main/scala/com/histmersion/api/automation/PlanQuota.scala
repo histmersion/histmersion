@@ -12,7 +12,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plan is spent by every client of the account, and the provider says how much is left only as a percentage of each
   * window plus its reset, so a plan is governed by floors rather than budgets.

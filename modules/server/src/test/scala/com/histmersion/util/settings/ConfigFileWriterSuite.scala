@@ -15,7 +15,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.Store
 import com.histmersion.config.edit.SettingPolicy
 import com.histmersion.config.edit.SettingValue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The settings editor over each place a settings file is kept: the command line's file on its own disk, the server's
   * in the store of its directory. Both must change a file exactly alike.

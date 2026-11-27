@@ -8,8 +8,8 @@ import com.histmersion.api.personal.{ItemKey, MapZoom, Target, ViewState}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bookmark or a note points at, from the command line: `<kind> [<id>]` and the flags of a point on the map, a
   * view or a period.

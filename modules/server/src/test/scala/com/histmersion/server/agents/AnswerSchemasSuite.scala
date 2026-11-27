@@ -22,7 +22,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.automation.agents.LlmCall
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every step's answer schema as Codex is sent it — OpenAI's strict structured-output form, which the Responses API
   * demands with `strict: true` and answers anything else with a 400 before the model runs — and every answer Codex

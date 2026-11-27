@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */

@@ -38,7 +38,7 @@ import com.histmersion.domain.library.acquisition.RetractionWatchClient
 import com.histmersion.domain.Caller
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The recorded traffic of `archive search|info|import`: every request the server sends to archive.org for them, on the
   * wire below the outbound policy (URL and every header, in order), and what each answers — the search hits, an item,
@@ -244,10 +244,14 @@ object ArchiveTrafficSuite:
           Left(Problem.Unclassified(Legacy.Text("not used")))
       },
       chain,
-      new WikiClient { @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
-                       def refs(url: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used"))) },
-      new RetractionWatchClient { @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
-                                  def csv() = Left(Problem.Unclassified(Legacy.Text("not used"))) },
+      new WikiClient {
+        @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+        def refs(url: WikiClient.ArticleUrl) = Left(Problem.Unclassified(Legacy.Text("not used")))
+      },
+      new RetractionWatchClient {
+        @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
+        def csv() = Left(Problem.Unclassified(Legacy.Text("not used")))
+      },
       AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:

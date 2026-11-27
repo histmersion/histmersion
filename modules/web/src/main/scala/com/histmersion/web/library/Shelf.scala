@@ -2,7 +2,7 @@ package com.histmersion
 package web.library
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A shelf of My library: everything the filters select, the person's bookmarks, their notes, what they have not marked
   * read, and what they opened lately.

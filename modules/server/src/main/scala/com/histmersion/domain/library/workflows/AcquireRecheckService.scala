@@ -41,7 +41,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.scalaland.chimney.dsl.*
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"), a model-free pass of the managers' tick like the ingest backlog's drain, every

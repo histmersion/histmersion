@@ -19,7 +19,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `event_links` for agents: the sources that may discuss an event, their confirmation (an attestation from a passage
   * that names it), and the leads catalogue events raise.

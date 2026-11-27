@@ -5,8 +5,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.Html
 import com.vladsch.flexmark.html.HtmlRenderer
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** flexmark, configured once for every server page. flexmark copies raw HTML through, and the pages rely on it (the
   * wikilink anchors are spliced in as inline HTML before it runs), so what it writes goes through the allow-list

@@ -7,7 +7,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.library.Query.*
 import com.histmersion.api.library.Query
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the read-only query surface: the Markdown table and the generated tool description (plan §5.2
   * stream 2.8). Execution is the search's `QueryRepo`, tested against Postgres.

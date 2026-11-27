@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Text.sentence
 
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One LLM step's prompt. `system` is the step's prompt FILE(S) (bundled as resources, so one copy per prompt and its
   * hash recorded on every attempt); `user` carries the data.

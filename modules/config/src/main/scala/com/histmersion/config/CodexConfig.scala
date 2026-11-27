@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login of a
   * `CODEX_HOME` of its own (the generated `<runtimes>/codex/home`, or `home`), never a copied `auth.json`

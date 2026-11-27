@@ -10,7 +10,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class Period(start: Year, end: Year):
   def isPoint: Boolean = (start == end)
 

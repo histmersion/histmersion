@@ -6,7 +6,7 @@ import com.histmersion.domain.HttpPolicy
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What to do with a media or catalogue answer: [[HttpPolicy]], the one outbound policy, plus MediaWiki's `maxlag`
   * refusal (a 200 that means "slow down"). Pure.

@@ -7,7 +7,7 @@ import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.Icon
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE menu of actions on a thing — a row, the reading pane, the map, the timeline: opened by a right click, by the
   * keyboard's menu key or Shift+F10 on the thing, or by its "⋯" button. Every action in it is also somewhere a person

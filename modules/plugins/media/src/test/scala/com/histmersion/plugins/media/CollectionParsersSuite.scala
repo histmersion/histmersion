@@ -10,7 +10,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostLicences
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The collections' parsers (#1446): each API's answer read into a [[MediaItem]] — the licence as the record itself
   * states it, the place fields most specific first, the dates as signed years. Fixtures are trimmed real answers (Met,

@@ -4,7 +4,7 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What happened on the map. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

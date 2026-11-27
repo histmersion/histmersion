@@ -16,7 +16,7 @@ import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one-piece jobs' rows, the same on the database and in memory: created `queued`, moved by compare-and-set (a
   * second claim is refused), progress only while running, the error and progress of the last move kept.

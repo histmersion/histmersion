@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import com.histmersion.util.process.ProcessLaunch
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Plugin ids that were SPLIT, and how their settings are still honoured (docs/research-plugins.md §20.2).
   *

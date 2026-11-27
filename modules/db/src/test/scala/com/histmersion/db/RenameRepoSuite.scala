@@ -28,7 +28,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Renaming a citekey (V027): the foreign keys cascade, every column without one is rewritten, finding ids move,
   * `[[links]]` in articles (versioned) and source notes follow, parked edges waiting for the new name are promoted, and

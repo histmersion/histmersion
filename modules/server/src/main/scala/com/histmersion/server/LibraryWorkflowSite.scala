@@ -16,8 +16,8 @@ import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's workflows' site over the composition: its own wiring, the work lists, the write gate, the jobs, the
   * catalogue's geocoder and research's articles as the composition wires them.

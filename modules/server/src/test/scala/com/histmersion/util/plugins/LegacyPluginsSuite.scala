@@ -7,7 +7,7 @@ import com.histmersion.util.settings.SettingsService
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[LegacyPlugins.migrate]] alone: pure config in, config and warnings out (docs/research-plugins.md §20.2). What the
   * mapped config does to the plugins is in BuiltinFetchersSuite.

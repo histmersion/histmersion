@@ -8,7 +8,7 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion queue …`: each list and each verb is a subcommand (`queue acquire add "…"`, `queue done 3`, `queue
   * acquire recheck`), parsed into [[QueueCmd]].

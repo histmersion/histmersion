@@ -25,7 +25,7 @@ import java.util.UUID
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `bundle import` and `merge apply` over the registry's carried kinds (docs/research-merge-import.md §6–§7): ONE
   * transaction, holding the import lock, in two passes over the bundle:

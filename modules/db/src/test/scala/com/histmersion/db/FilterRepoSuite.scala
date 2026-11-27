@@ -23,7 +23,7 @@ import com.histmersion.api.library.{AuthorName, Citekey, Title}
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `sources(filter)` / `facets(...)` against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise.
   * Three synthetic sources exercise the plan §1.0 rules: the SOURCE is the unit, a source matches through its own

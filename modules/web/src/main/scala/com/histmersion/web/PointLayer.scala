@@ -7,7 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.Years
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** ONE layer of points of one kind (docs/map-layers.md): its points in the map's one cluster layer, diffed by key on
   * every [[show]] — new ones fade in, gone ones leave their bubble at once and fade out where they were drawn alone,

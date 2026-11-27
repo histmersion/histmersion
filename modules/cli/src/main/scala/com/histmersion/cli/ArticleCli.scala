@@ -28,8 +28,8 @@ import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.research.Articles
 import com.histmersion.api.research.ReviewGoal
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion article …` — the compiled wiki over HTTP (plan §5.2 stream 2.7).
   *
@@ -37,7 +37,10 @@ import com.histmersion.lint.{LintRule, tolerated}
   * `/api/articles/import`, exactly as `histmersion seed` does for source notes, because the containerised server cannot
   * see the host filesystem.
   */
-@atBoundary(BoundaryKind.CliArgs, "parses `histmersion article` arguments and reads the body and filter files they name")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "parses `histmersion article` arguments and reads the body and filter files they name"
+)
 object ArticleCli:
   type Exported = Exported.T
   object Exported extends Newtype[Int, Pure]

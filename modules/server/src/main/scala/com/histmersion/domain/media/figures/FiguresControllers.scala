@@ -4,7 +4,7 @@ package domain.media.figures
 import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `media fill-licences`: the figures with no licence take their source's — counted, and written with `apply`. */
 final class FiguresControllers(figures: FigureService, maintenance: WriteGate):

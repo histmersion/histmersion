@@ -6,7 +6,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.research.{Backlink, CitedSource, Coverage}
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Everything an `/article/{slug}` page shows, typed. */
 @movesTo(FeaturePlace.ResearchArticles)

@@ -12,7 +12,7 @@ import com.histmersion.util.database.WritePermit
 import java.util.concurrent.{CompletableFuture, TimeoutException, TimeUnit}
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `merge apply` in the background (docs/research-merge-import.md §7.7, open question 3): the apply takes a `pg_dump`
   * before it writes, which on a large collection outlasts an HTTP request. One apply at a time — a second is refused

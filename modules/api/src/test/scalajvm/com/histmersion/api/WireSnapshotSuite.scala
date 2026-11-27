@@ -75,7 +75,7 @@ import com.histmersion.api.exchange.MergePlan
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.catalogue.EventsJobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Markdown and JSON of the wire records slice 12 moves, over synthetic fixture values: the renderers no other
   * suite asserts on (the brief search, a source's findings, the graph, the contradictions, the map feed, the body

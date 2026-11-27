@@ -4,7 +4,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.domain.library.acquisition.{CoreEndpoint, Endpoint, LandingSettings, SearchDefaults}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition upstreams as `histmersion.acquire` configures them: their endpoints, the landing-page rules, the
   * contact e-mail and the identity the PMC hosts see. Decoded by the first-party fetcher plugins from the settings the

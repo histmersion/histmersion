@@ -8,7 +8,7 @@ import com.histmersion.server.{LinkTarget, MarkdownLint}
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.Source
 import com.histmersion.domain.library.sources.SourceNote
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's summary and notes checked with the prose lint the articles are checked with, their `[[links]]` resolved
   * by `links` (the corpus's sources and articles).

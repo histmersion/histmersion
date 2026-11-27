@@ -6,7 +6,7 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `GET|POST /api/settings`, `POST /api/server/restart`, the `config` tool's `get`, `set`, `unset` and `restart`, and
   * `histmersion config get|set|unset|restart` over the server. `knownKeys`: keys of open blocks listed although the
@@ -20,7 +20,10 @@ final class SettingsControllers(
 ):
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def page(prefix: Option[SettingsService.ConfigPath]): Either[Api.Error, ConfigEdit.Page] =
     for
@@ -57,7 +60,10 @@ final class SettingsControllers(
 
   /** [[write]], once `allowed` let the parsed changes through. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def writeChecked(
       w: ConfigEdit.Write,
@@ -90,7 +96,10 @@ final class SettingsControllers(
       val reloaded = Option.when(w.reload.value && outcome.wrote)(reload())
       SettingsViews.written(outcome, reloaded, restarts.available)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def restart(): Either[Api.Error, ConfigEdit.Restart] =
     restarts
       .restart()

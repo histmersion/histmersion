@@ -15,7 +15,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats events: one changed on both sides, or added under an id an event here has, is one when its
   * dating and place agree (its datings and participants unioned), else a question; one added on both sides under two

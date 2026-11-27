@@ -17,8 +17,8 @@ import io.github.iltotore.iron.constraint.string.StartWith
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.LocalFiles
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Running a vault's command-line tool: an argument vector, NEVER a shell (a reference cannot inject anything), a time
   * limit after which the process is killed, and the output kept in memory only. Error texts come from the tool's

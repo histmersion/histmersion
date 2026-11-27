@@ -12,7 +12,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SourceNoteParseSuite extends munit.FunSuite:

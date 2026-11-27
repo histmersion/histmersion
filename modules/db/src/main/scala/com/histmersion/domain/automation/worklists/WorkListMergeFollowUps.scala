@@ -11,7 +11,7 @@ import com.histmersion.util.data.exchange.MergeFollowUps
 
 import com.augustnagro.magnum.DbCon
 import java.util.UUID
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a merge leaves on the work lists: a `/review-article` task per merged article (a merged text is not reviewed),
   * and a worklog line.

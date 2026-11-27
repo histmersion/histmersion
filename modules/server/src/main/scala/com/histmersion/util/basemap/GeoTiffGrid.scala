@@ -8,7 +8,7 @@ import io.github.iltotore.iron.*
 
 import java.nio.{ByteBuffer, ByteOrder}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A single-band elevation grid in a GeoTIFF, as far as reading it by range needs: where it lies (its north-west corner
   * and the size of a pixel, in degrees), its size in pixels, where each row's signed 16-bit samples begin in the file,

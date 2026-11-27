@@ -9,7 +9,7 @@ import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of the goals windows: the tree, the open plan of a goal, the schedule editor's defaults, and a link
   * to add.

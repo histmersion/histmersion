@@ -8,7 +8,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.web.map.{Capabilities, NoMap}
 import com.histmersion.web.map.maplibre.MapLibreEngine
 import com.histmersion.web.map.NoMapSurface
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map without WebGL 2: why it cannot be drawn, and what its place says. Pure (the DOM half is the browser test "no
   * WebGL 2").

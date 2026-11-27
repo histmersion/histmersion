@@ -8,7 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Citekey shape for a rename. */
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")

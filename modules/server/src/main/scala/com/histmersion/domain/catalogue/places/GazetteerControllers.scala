@@ -18,7 +18,7 @@ import com.histmersion.api.catalogue.PlacesJobKinds
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's background work as REST, MCP and the CLI reach it: a source a plugin registers fetched, the land
   * fetched, the hierarchy built from spatial containment — one at a time (each rewrites places the others read), each a
@@ -34,7 +34,10 @@ final class GazetteerControllers(
   private val slot = BackgroundJob.Slot()
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def job(kind: Job.Kind, about: String)(
       // runs on the job's thread, under the job's unit permit (never the caller's, whose block has ended by then)
       run: WritePermit ?=> Either[Problem, String]
@@ -60,7 +63,10 @@ final class GazetteerControllers(
     * reasonable HTTP timeout).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def fetch(
       caller: Caller,
       source: Api.ExternalPlaces.Source,
@@ -99,7 +105,10 @@ final class GazetteerControllers(
     * is a background job — two downloads and a re-clip of every polity.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def land(
       dryRun: GazetteerControllers.DryRun
   )(using WritePermit)(using Creator.New): Either[Api.Error, Place.ImportResult] =
@@ -113,7 +122,10 @@ final class GazetteerControllers(
 
   private def refused(problem: Problem): Api.Error = Api.Error(problem)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def importStarted(j: JobInfo): Place.ImportResult =
     Place.ImportResult(
       Place.ImportResult.Places(0),
@@ -126,7 +138,10 @@ final class GazetteerControllers(
     * across thousands of polygons is slow): the answer carries its id, the finished job's summary the counts.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def buildHierarchy(caller: Caller)(using Creator.New): Either[Api.Error, SpatialHierarchyResult] =
     maintenance.guard(WriteGate.OperationName("places/build-hierarchy")):
       job(

@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a set of shapes is drawn: a fill (`fillOpacity` 0: none) and an outline in the feature's colour (or `colour`, a
   * fixed CSS colour), `dash` for the features marked dashed, points as circles of `circleRadius`. `interactive`: the

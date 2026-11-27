@@ -10,7 +10,7 @@ import com.histmersion.domain.Title
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles a person has not marked read, by title, as "Not read yet" lists them. */
 final class ArticleReadable(db: Transactor) extends Readable:

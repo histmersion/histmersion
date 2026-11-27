@@ -6,7 +6,7 @@ import com.histmersion.domain.{CompileArticle, FilterInference, PlanArticles, Re
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The typed answers of research's LLM steps (compile, review, infer-filter, propose), one value each, beside its
   * pipelines (the engine's own are `AnswerSchemas`, the library's `LibraryAnswers`).

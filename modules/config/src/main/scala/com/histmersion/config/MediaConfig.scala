@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Media from outside providers (#1446): the polite-client settings, the stored sizes and, per provider, its API and
   * the licence families it may be stored under ([[com.histmersion.domain.Licence]]).

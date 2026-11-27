@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One shape: its id (unique in its set), GeoJSON geometry, colour, whether it is drawn dashed, and its visibility
   * (0…1).

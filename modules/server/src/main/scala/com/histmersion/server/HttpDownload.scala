@@ -12,8 +12,8 @@ import java.util.zip.ZipInputStream
 import scala.annotation.tailrec
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The plain downloads the gazetteer, the land and PeriodO use: a generic User-Agent ([[HttpPolicy]]), never a personal
   * one; redirects followed by THIS connection (the JVM-wide default it used to flip as well changed every other

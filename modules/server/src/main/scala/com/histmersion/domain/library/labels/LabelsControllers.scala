@@ -7,11 +7,14 @@ import com.histmersion.api.library.{Facet, Filter}
 import com.histmersion.api.Api
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `GET /api/facets` — the vocabulary of one dimension inside the current filter. */
 final class LabelsControllers(labels: LabelService, filters: SearchFilters):
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def facets(
       field: Facet.Field.Wire,

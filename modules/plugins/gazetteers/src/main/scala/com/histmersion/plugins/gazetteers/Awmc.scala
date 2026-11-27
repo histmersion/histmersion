@@ -8,8 +8,8 @@ import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Classical-world geographic features from the Ancient World Mapping Center (AWMC).
   *

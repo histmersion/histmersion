@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A collection that needs a key of the user's own: registered with its key resolved from its secret reference, or
   * none. Without one its import is refused with what to set, and the API is not asked.

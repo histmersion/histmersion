@@ -4,8 +4,8 @@ package api
 import com.histmersion.api.Html.html
 import com.histmersion.api.library.Confidence
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @movesTo(FeaturePlace.ApiUi)

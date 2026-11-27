@@ -9,7 +9,7 @@ import com.histmersion.domain.automation.agents.Toolbox
 
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.server.ServerWiring
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The toolbox of the domains' agent tools over `h` (no upstream attached), in the toolbox's order, as the engine holds
   * it.

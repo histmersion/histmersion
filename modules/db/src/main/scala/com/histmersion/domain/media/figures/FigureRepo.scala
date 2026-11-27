@@ -6,8 +6,8 @@ import com.histmersion.api.media.{FigureLicenceFill, MediaCount}
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's figures take the source's licence (#1446): the figures with no licence whose source records one. Runs on
   * the connection it is given.

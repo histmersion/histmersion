@@ -5,7 +5,7 @@ import com.histmersion.config.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What `plugin add` is told. `repos`: repositories named for this install (`--repo`), as URLs, looked up before the
   * configured ones — for the plugin itself and for its dependencies.

@@ -7,7 +7,7 @@ import sttp.tapir.{Schema, SchemaType}
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.library.Filter
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[FilterDocs]] (#1946): the filter is described once, and that description reaches a schema. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

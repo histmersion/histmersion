@@ -3,7 +3,7 @@ package util.data.backup
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.data.TableName
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one database question backup and restore ask: how many rows a table a restore must not drop unasked holds.
   */

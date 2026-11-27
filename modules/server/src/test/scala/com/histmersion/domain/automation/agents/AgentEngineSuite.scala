@@ -72,7 +72,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A scripted stand-in for a provider: each LLM step (each `run`) consumes the next script — the real sttp-ai loop runs
   * against it, the real tools execute in process. Records every request and counts the steps it served. `fail` makes

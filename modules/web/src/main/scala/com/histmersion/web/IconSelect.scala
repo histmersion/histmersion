@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** THE menu with icons (a native `<select>` cannot show one): a button showing the current choice — its icon and label
   * — that opens a listbox of the options, each with the icon the map draws for it (an event kind's square badge, a site

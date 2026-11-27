@@ -18,7 +18,7 @@ import com.histmersion.plugin.CollectionFile
 import com.histmersion.plugin.Processes
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Calibre library read and written through Calibre's own tools.
   *

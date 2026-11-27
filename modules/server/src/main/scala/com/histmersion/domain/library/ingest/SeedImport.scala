@@ -15,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Seed the library from a folder of `wiki/sources/` notes. Idempotent (a put by citekey).
   *

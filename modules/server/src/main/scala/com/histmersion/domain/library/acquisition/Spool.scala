@@ -7,7 +7,7 @@ import com.histmersion.util.storage.{ByteSource, Store}
 import com.histmersion.util.storage.Blob
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where a fetched file waits for the converter (`acquire.spool-dir`; empty is the JVM temp directory's
   * `histmersion-acquire`, which is what a container gets): `<citekey>/paper.<ext>`.

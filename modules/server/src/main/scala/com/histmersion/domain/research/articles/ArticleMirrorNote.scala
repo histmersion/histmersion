@@ -8,7 +8,7 @@ import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.data.mirror.Frontmatter
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.Write
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An article's note in the Markdown mirror, with its generated coverage sections, as the articles' controllers render
   * it.

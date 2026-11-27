@@ -7,8 +7,8 @@ import org.ekrich.config.Config
 import java.nio.file.Path
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where Histmersion keeps its per-user files: the data directory (the bundle's cluster, logs and backups; the agent
   * trees) and the user config file. ONE resolver, so the server, the bundle supervisor, the agent trees and the CLI

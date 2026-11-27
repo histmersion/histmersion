@@ -1,7 +1,8 @@
 package com.histmersion
 package util.data
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** A table one owner holds: only its repositories write it, and data management sizes, vacuums and checks it as that
   * owner's.
   */

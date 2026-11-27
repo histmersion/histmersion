@@ -7,7 +7,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import scala.annotation.targetName
 import com.histmersion.plugin.MediaCollection
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One collection's `histmersion.media.<collection>` block: its switch, its API, how many records it reads and keeps
   * per place, its pace and its patience with a refusal, the rendition width, the last year an object or map may be made

@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by heading where the
   * source has a table of contents); the classify step sees the first `headChars`. `upstream` = check the record against

@@ -11,8 +11,8 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.library.Source
 import com.histmersion.api.personal.UnreadPage
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @movesTo(FeaturePlace.UtilCommon)
 object Markdown:

@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `oa-unpaywall`'s settings. `contact-email`: the e-mail Unpaywall requires with every request (its `email` parameter,
   * nothing else); `null` = Histmersion's own `acquire.contact-email`, and with neither Unpaywall is not asked (it

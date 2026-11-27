@@ -6,7 +6,7 @@ import com.histmersion.api.Wording
 import com.histmersion.api.jobs.{JobKinds, JobState}
 import com.histmersion.api.given
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ActivityMarkdown:

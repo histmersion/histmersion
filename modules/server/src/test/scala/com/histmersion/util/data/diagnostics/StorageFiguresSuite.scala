@@ -7,7 +7,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.server.Deps
 import com.histmersion.util.storage.{ByteSource, Location, MeasureBudget, Storage}
 import com.histmersion.util.storage.Store
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** About › Storage over stores in memory: an entry per registered store (the install's only when named), in About's
   * order, the base map's files and its registered caches in its detail.

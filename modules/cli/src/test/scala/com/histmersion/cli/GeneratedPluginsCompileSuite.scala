@@ -4,7 +4,7 @@ package cli
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.cli.{Cli, ExitCode}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The plugin projects `histmersion plugin new` writes, compiled against the plugin API of THIS build: a template that
   * names a type, a constructor or a method the SPI no longer has fails here, offline, in the normal test run. The main

@@ -9,8 +9,8 @@ import java.time.format.DateTimeFormatter
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.TimeEquality.dayEquality
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The budget Histmersion keeps for CORE's API (api.core.ac.uk), shared by its two uses: the `core` step of the
   * acquisition chain (a PDF lookup by DOI) and the `core` index of the new-source search (a goal's saved query). Pure:

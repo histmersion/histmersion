@@ -36,7 +36,7 @@ import com.histmersion.api.aliases.AliasKind
 import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events' operations as REST, MCP and the CLI reach them. An old event id answers as the event it was renamed to,
   * and a write to one goes to that event. `card` is what an event's page shows beside its own fields (its catalogues,
@@ -56,7 +56,10 @@ final class EventsControllers(
 
   /** What only an event is narrowed by: tier, the catalogue context, the area of the map. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def narrow(q: Api.EventQuery): EventSql.Narrow =
     EventSql.Narrow(
       q.tier.map(_.value.trim).filter(_.nonEmpty).map(EventSql.Narrow.Tier(_)),
@@ -66,7 +69,10 @@ final class EventsControllers(
 
   /** The selection a query makes; `None` when it names a place no event can be at (an id that is no place id). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def selection(q: Api.EventQuery, f: Filter): Option[EventSelection] =
     def of(place: Option[Place.Id]) =
       EventSelection(
@@ -83,7 +89,10 @@ final class EventsControllers(
       case Some(p) => Place.Id.option(p).map(id => of(Some(id)))
 
   /** `GET /api/events` — the events related to the filter's sources. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def list(q: Api.EventQuery): EventList =
     val f = resolve(q.filter)
     selection(q, f).fold(
@@ -101,14 +110,23 @@ final class EventsControllers(
     val (limit, tolerance) = mapView()
     selection(q, q.filter).fold(EventGeo.List(Nil))(events.geo(_, limit, tolerance))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def invalid(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid)))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def notFound(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeNotFound)))
 
   /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def validScale(scale: Option[EventSummary.Scale]): Either[Api.Error, Unit] =
     scale match
       case Some(v) if EventScale.parse(v).isEmpty =>
@@ -127,7 +145,10 @@ final class EventsControllers(
     * problem, not a failed statement. Blank passes (none / clear).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def validGeometry(g: Option[EventPut.Geometry]): Either[Api.Error, Unit] =
     g.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(())
@@ -145,7 +166,10 @@ final class EventsControllers(
 
   /** An event's Wikidata item is a `Q…` id; `""` clears it. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def validWikidata(q: Option[EventPatch.Wikidata]): Either[Api.Error, Unit] =
     q.map(_.value.trim) match
       case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
@@ -159,7 +183,10 @@ final class EventsControllers(
 
   private def now(id: Event.Id): Event.Id = current(AliasKinds.EventRecords, id)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def get(id: Event.Id): Either[Api.Error, EventEntry] =
     events
       .get(now(id))
@@ -183,7 +210,10 @@ final class EventsControllers(
         .flatMap(_ => validGeometry(p.geometry))
         .flatMap(_ => events.patch(to, p).flatMap(_ => get(to)))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def delete(caller: Caller, id: Event.Id): Either[Api.Error, EventDeleted] =
     maintenance.guard(WriteGate.OperationName("delete_event")):
@@ -199,7 +229,10 @@ final class EventsControllers(
     */
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def renamed(id: Event.Id, req: LabelRename): Either[Api.Error, LabelRenamed] =
     rename(
       Caller.Local,

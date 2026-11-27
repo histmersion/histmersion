@@ -13,7 +13,7 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.SchedulerPolicy.*
 
 import java.time.Instant
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The central scheduler, pure: each strategy's order, aging, the max wait, the minimum share per job type, the
   * gathering places, the resources (room, plan pools, a manager's own cap, a block, a stop), a start that fails, and

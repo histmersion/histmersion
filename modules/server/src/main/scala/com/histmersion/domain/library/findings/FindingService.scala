@@ -4,7 +4,7 @@ package domain.library.findings
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
 import com.histmersion.api.library.{Filter, GeoHit}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map feed (`geo-when`): the findings that themselves satisfy a filter's finding-level criteria, of the sources
   * that satisfy its source-level ones, and how many. A mechanism over the filter's SQL (PostGIS boxes, the gazetteer's

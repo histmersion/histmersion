@@ -16,7 +16,7 @@ import java.time.{Instant, ZoneOffset}
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The work lists held in memory: every item in id order, and the last id handed out. The rules are the database's: an
   * item is stamped when it is made (or keeps the instant it was imported with) and when it is first done, its times

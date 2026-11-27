@@ -4,7 +4,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Data management's upkeep jobs, as it registers them: the database's clean-up. */
 object MaintenanceJobKinds:

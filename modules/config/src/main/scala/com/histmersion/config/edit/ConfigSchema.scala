@@ -7,8 +7,8 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigObject, ConfigResolveOpti
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import com.histmersion.config.HotPlan
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every setting of the config file, from reference.conf: its kind, default, documentation, environment variable,
   * whether it waits for a restart and whether it is a credential — what Settings' "Advanced" form is generated from and

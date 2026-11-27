@@ -8,7 +8,7 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the work lists: their items, written after every goal (rank 50). */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

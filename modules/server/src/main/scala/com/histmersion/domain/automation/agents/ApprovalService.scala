@@ -24,7 +24,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The approvals, as the engine's features reach them: what a run proposed for a person to decide — open until decided
   * (once), or recorded approved when it was applied at once — and the reads the lists, the digest, the autopilot and
@@ -138,9 +138,11 @@ object ApprovalService:
       AgentRepo.approval(ApprovalInfo.Id(id.value))
     private def now: Instant = Instant.now(clock)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def proposed(id: Approval.Id): Option[(Jsonb.JsonText, Jsonb.JsonText)] =
       db.read(AgentRepo.payload(ApprovalInfo.Id(id.value)))
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def payload(id: Approval.Id): Option[Payload] = proposed(id).map((p, _) => Payload(p.value))
 
     def creatorOf(id: Approval.Id): Option[Creator.New] = proposed(id).flatMap((_, c) => StoredCreator.recorded(c))
@@ -300,8 +302,10 @@ object ApprovalService:
 
     private def decidedAt(st: ApprovalState): Option[Instant] = Option.when(st != ApprovalState.Open)(now)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def row(id: Approval.Id): Option[ApprovalRecord] = rows.find(_.id.value == id.value)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def payload(id: Approval.Id): Option[Payload] = row(id).map(r => Payload(r.proposal.value))
 
     def creatorOf(id: Approval.Id): Option[Creator.New] = row(id).flatMap(_.creator)

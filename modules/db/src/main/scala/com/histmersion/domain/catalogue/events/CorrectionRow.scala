@@ -7,7 +7,7 @@ import com.histmersion.api.catalogue.Correction
 import com.histmersion.util.database.Jsonb
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A `corrections` row: a person's value for one field, with what upstream said then and at the last refresh. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

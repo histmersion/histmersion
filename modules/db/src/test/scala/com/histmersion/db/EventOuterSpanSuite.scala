@@ -22,7 +22,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.events.EventSelection
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** V089 (#1768) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the generated `events.outer_span`
   * is TimeSpan.outer — an open-ended event covers the end it states, not every year after it — and the map's feed

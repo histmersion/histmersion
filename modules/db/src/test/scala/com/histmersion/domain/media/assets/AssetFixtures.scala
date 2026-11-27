@@ -23,7 +23,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pictures' repositories as the db suites reach them from outside the feature: each call on a connection or in a
   * transaction of its own, as the service runs it.

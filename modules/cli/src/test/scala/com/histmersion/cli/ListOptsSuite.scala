@@ -10,7 +10,7 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter options of `agent approvals`, `agent runs` and `jobs`: repeatable or comma-separated, parsed into the
   * core filters the request carries, and repeated by the next-page line.

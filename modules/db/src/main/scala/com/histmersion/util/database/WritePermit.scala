@@ -11,7 +11,7 @@ import java.util.logging.Logger
 import javax.sql.DataSource
 import scala.concurrent.duration.Deadline
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The right to write to the database for the extent of one block. Only a [[WritePermit.Gate]] issues one: every write
   * transaction ([[Transactor.write]], [[Transactor.writeAutocommit]]) takes one, so a write cannot be opened without

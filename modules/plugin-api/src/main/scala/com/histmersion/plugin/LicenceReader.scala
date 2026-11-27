@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's reading of licence statements, lent to a plugin that must decide on one before it states it — whom a
   * licence requires to be credited, which of two statements a record means, how to name it in a credit line. The host

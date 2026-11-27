@@ -9,7 +9,7 @@ import com.histmersion.util.database.Transactor
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.Timer
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The read-only SQL escape hatch and the live schema it reads. A statement runs on the read-only role's pool
   * (`queries`) in a read-only transaction of its own, with a timeout and caps; the schema is read on the application's

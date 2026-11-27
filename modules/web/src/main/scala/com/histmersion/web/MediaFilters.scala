@@ -9,7 +9,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.media.MediaCount
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The media layer's two filter menus (#1446): provider and licence, each "all" or one value, their options the
   * server's counts (`/api/media/facets`, fetched once when the layer is first shown).

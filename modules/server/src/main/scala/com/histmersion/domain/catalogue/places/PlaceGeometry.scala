@@ -10,7 +10,7 @@ import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's geometry operations, a mechanism over PostGIS with no in-memory twin (as the map's tiles): which
   * places each finding belongs to rebuilt from scratch, the hierarchy built from spatial containment, the land the

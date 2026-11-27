@@ -16,7 +16,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.

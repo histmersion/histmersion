@@ -9,7 +9,7 @@ import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
 import com.histmersion.config.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the hot component graph (docs/research-plugins.md §3.6) and of a config reload (§3.5): order,
   * cycles, what a set of changed keys rebuilds; which keys changed, which apply in place and which wait for a restart.

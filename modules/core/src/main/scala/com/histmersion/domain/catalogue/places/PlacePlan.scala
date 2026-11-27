@@ -17,7 +17,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats places of this collection's own: one the bundle renamed is renamed here too — unless its new
   * id is a different place's here, then ours keeps its id and what the bundle points at the new id points at ours; one

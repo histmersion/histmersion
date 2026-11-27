@@ -21,7 +21,7 @@ import com.histmersion.chimneyiron.domain.Excerpt
 import com.histmersion.chimneyiron.domain.Note
 import com.histmersion.chimneyiron.api.ExcerptView
 import com.histmersion.chimneyiron.api.NoteView
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class IronNewtypeToNewtypeSuite extends munit.FunSuite:

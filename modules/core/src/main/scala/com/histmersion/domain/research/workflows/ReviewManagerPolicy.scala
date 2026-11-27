@@ -17,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.ManagerPolicy.Item
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): its settings over research's defaults,
   * what to do with a review item after its run settled — the stop rules over the article's review ledger —, the

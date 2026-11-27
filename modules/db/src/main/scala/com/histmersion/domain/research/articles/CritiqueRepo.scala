@@ -17,8 +17,8 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The critique checklist's stored reasons (V091): why one disagreement between two sources does not bear on an
   * article. The checklist itself is computed (`core.Critiques`); only the reasons are stored. Every method runs on the

@@ -52,7 +52,7 @@ import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `review-article <slug> [fix] [rounds]` (docs/research-embedded-agents.md §4.3, docs/research-review-convergence.md
   * §6): the adversarial review panel of the `review-article` skill, run by the server, around the article's REVIEW
@@ -830,6 +830,7 @@ final class ReviewArticlePipeline(
       o.line
     }
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fixerStep(r: Int): AgentRepo.StepRecord.Name = AgentRepo.StepRecord.Name(s"fixer-$r")
 
   /** The fixer: every open finding to answer, with the ledger's history, and the critique work code worked out (§6.9) —

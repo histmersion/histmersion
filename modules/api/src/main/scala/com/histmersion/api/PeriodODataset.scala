@@ -7,8 +7,8 @@ import com.histmersion.api.catalogue.{PresetRegion, SkippedPeriod}
 import com.histmersion.api.catalogue.PeriodO
 import com.histmersion.api.catalogue.HistoricalPeriod
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @movesTo(FeaturePlace.Kernel)
 final case class PeriodODataset(

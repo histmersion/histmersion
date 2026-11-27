@@ -26,7 +26,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Query
 import com.histmersion.config.QueryConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The read-only query path against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

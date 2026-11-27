@@ -14,7 +14,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.Years
 import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Explore's chrome (the redesign's phase 3), its pure parts: the filter panel's fold and count, the layers button, the
   * timeline's speeds in words, the results' tabs, the detail's page and kind, the credits' fold, the places list's

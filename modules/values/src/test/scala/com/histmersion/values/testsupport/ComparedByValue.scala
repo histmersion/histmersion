@@ -3,7 +3,7 @@ package values.testsupport
 
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object ComparedByValue:
   given comparedByValue: [A, B] => (byValue: ByValue[A, B]) => Compare[A, B] = Compare.defaultCompare[A, B]

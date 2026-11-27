@@ -7,7 +7,7 @@ import org.scalajs.dom
 
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which layout the page is in. At or below `ui.narrow-max-width-px` it is NARROW — the phone layout: the map first,
   * the sidebar a bottom sheet, windows full-screen. Wider, but at or below `ui.tablet-max-width-px`, it is TABLET — the

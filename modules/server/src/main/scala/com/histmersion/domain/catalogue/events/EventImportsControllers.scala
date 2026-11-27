@@ -24,7 +24,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.util.jobs.BackgroundJob
 import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The event catalogues' operations as REST, MCP and the CLI reach them: the catalogues, an import (a job, dry run or
   * not), a re-derivation of the stored records' dating (a job), and the corrections by hand. `page` is the page size a
@@ -38,13 +38,19 @@ final class EventImportsControllers(
     jobs: CatalogueJobs,
     page: (Option[PageSize], PageSize) => PageSize
 ):
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def invalid(m: Problem) = Api.Error(m, Some(Api.Error.Code(Write.CodeInvalid)))
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def importJob(caller: Caller, req: EventImportRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     for
       provider <- imports
@@ -82,7 +88,10 @@ final class EventImportsControllers(
     yield job
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def rederiveJob(caller: Caller, req: EventRederiveRequest)(using Creator.New): Either[Api.Error, JobInfo] =
@@ -112,7 +121,10 @@ final class EventImportsControllers(
 
   /** `GET /api/events/corrections`: the corrections of catalogue events, conflicts first. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def corrections(
       status: Option[Correction.StatusValue],
       event: Option[Event.Id],
@@ -142,8 +154,14 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(EventsJobKinds.EventsImport.kind.value)
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   val RederiveJobKind: Job.Kind =
     Job.Kind.applyUnsafe(EventsJobKinds.EventsRederive.kind.value)

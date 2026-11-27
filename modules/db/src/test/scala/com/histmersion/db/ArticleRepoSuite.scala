@@ -30,7 +30,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.config.Limits
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.sources.Citekeys
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The article store against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the acceptance lines
   * of plan §5.2 stream 2.7 that need a database: put/patch, the link graph maintained from the body, backlinks in both

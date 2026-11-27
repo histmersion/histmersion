@@ -9,7 +9,7 @@ import scala.scalajs.js
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one source link: `<a class="src-ref" data-ck data-doi href="/source/ck">`, the shape the server renders too.
   * Hovering previews it ([[Preview]]'s delegated handler); clicking opens the source in a window (plain navigation with

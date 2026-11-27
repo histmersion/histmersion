@@ -24,7 +24,7 @@ import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.

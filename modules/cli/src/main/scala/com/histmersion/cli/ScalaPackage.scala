@@ -4,7 +4,7 @@ package cli
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A Scala package name the project's sources are written in. */
 type ScalaPackage = ScalaPackage.T

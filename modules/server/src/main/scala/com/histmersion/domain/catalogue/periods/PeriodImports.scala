@@ -11,7 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled

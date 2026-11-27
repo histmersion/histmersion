@@ -16,7 +16,7 @@ import java.util.UUID
 import com.histmersion.api.personal.Bookmark
 import com.histmersion.api.personal.Note
 import com.histmersion.api.ItemKind
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PersonalTypesSuite extends munit.FunSuite:

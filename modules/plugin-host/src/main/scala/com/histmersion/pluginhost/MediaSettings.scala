@@ -6,7 +6,7 @@ import com.histmersion.domain.media.figures.FigurePick
 import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.config.MediaPluginCollectionsConfig
 import com.histmersion.domain.Licence
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: MediaIllustrationsConfig)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

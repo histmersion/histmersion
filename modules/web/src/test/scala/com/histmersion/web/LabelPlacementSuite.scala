@@ -5,7 +5,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Geo.{Latitude, Longitude}
 import com.histmersion.web.LabelPlacement.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1442 / #1447 — every region and polity is named at its shape's centre or, near the screen edge, in its visible
   * part; sized by the whole shape on screen; hidden only by collisions (larger shapes first). The placement is pure;

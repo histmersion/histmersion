@@ -6,7 +6,7 @@ import com.histmersion.plugin.Plugin
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.util.Try
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host settings a first-party plugin reads: the paths of Histmersion's own configuration (`histmersion.acquire`,
   * `histmersion.events.gvp`, …) the host supplies it, each under the same path in the plugin's settings without the

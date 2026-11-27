@@ -11,7 +11,7 @@ import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.api.media.{AssetInfo, AssetsMarkdown}
 import com.histmersion.api.given
 import com.histmersion.api.RowCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object IngestMarkdown:
 

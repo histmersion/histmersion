@@ -58,7 +58,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The process managers against a `*_test` database (docs/research-process-managers.md §6): the supervisor's tick with
   * a fixed clock — selection, dispatch, evaluation and the stop rules over several runs, holds, pause (with and without

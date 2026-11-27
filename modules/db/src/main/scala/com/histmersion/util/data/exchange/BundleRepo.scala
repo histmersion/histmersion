@@ -16,8 +16,8 @@ import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 @atBoundary(BoundaryKind.Sql, "reads and writes the bundle bookkeeping rows")
@@ -64,7 +64,10 @@ object BundleRepo:
   // ── the schema ─────────────────────────────────────────────────────────────────────────────
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
-  @tolerated(LintRule.TotalOrder, "flyway_schema_history: installed_rank is its key (Flyway's table, not in the migrations)")
+  @tolerated(
+    LintRule.TotalOrder,
+    "flyway_schema_history: installed_rank is its key (Flyway's table, not in the migrations)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private[histmersion] def schemaVersion(using
       DbCon

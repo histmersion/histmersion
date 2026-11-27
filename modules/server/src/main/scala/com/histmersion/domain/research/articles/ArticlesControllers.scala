@@ -52,7 +52,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -79,28 +79,46 @@ final class ArticlesControllers(
     maintenance: WriteGate
 ):
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def error(message: Problem, code: String): Api.Error =
     Api.Error(message, Some(Api.Error.Code(code)))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def notFound(slug: Slug): Api.Error = Articles.notFound(Article.Slug(slug.value))
 
   /** The slug of an article read back from the store. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def slugOf(a: Article): Slug = Slug.assume(a.slug.value)
 
   /** The slug an old slug was renamed to, as the alias tables hold it. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def currentSlug(slug: Slug): Slug =
     Slug.assume(current(AliasKinds.ArticleRecords, AliasTable.Id(slug.value)).value)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiCitekey(ck: Citekey): com.histmersion.api.library.Citekey =
     com.histmersion.api.library.Citekey(ck.value)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private val disagreementKinds: List[Edge.Kind.Wire] =
     Article.Coverage.DisagreementKinds.map(k => Edge.Kind.Wire(k.value))
 
@@ -110,7 +128,10 @@ final class ArticlesControllers(
   // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
 
   /** The formatting problems of an article's body and summary, its links resolved as the page resolves them. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def formatting(body: Article.Body, summary: Option[Article.SummaryText]): List[FormatIssue] =
     val links = pageLinks(
       MarkdownLint
@@ -135,7 +156,10 @@ final class ArticlesControllers(
     else MarkdownLint.refusal(issues).fold(Right(()))(m => Left(error(m, Write.CodeInvalid)))
 
   /** `GET /api/articles/{slug}/lint`. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def lint(slug: Slug): Either[Api.Error, FormatReport] =
     get(slug).map(v => FormatReport(FormatReport.Subject(v.article.slug.value), v.formatting))
 
@@ -143,7 +167,10 @@ final class ArticlesControllers(
     * token, then the lint again.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def fix(slug: Slug)(using Creator.New): Either[Api.Error, FormatReport] =
     maintenance.guard(WriteGate.OperationName("fix_article_format")):
       store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
@@ -196,7 +223,10 @@ final class ArticlesControllers(
     * position-free line each. `generated`: the article records a filter, so its Not used list and Method note are
     * generated and must not be written into the body.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def bodyCorpus(
       texts: List[domain.research.Article.Body],
       generated: ReviewArticle.BodyCorpus.Generated = ReviewArticle.BodyCorpus.Generated(false)
@@ -228,7 +258,10 @@ final class ArticlesControllers(
     * function the review pipeline validates its fixer with.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def check(slug: Slug, in: Article.Edits.ArticleCheckRequest): Either[Api.Error, Article.Edits.ArticleCheck] =
     in.draft.left.map(m => error(m, Write.CodeInvalid)).flatMap { draft =>
       val stored = store.load(store.canonical(slug))
@@ -261,7 +294,10 @@ final class ArticlesControllers(
   /** `GET /api/articles` — the compiled articles citing the filter's sources, narrowed by kind and searched with
     * `text`, each with its review badge.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def list(q: Api.ArticleQuery): Article.List =
     val f = resolve(q.filter)
     val list = search.list(
@@ -297,7 +333,10 @@ final class ArticlesControllers(
     * rather than an empty history.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def reviewOf(slug: Slug): Either[Problems, Article.ReviewView] =
     ledgers(slug).map { ledger =>
       val (facts, updatedAt) =
@@ -321,7 +360,10 @@ final class ArticlesControllers(
     * every surface renders the generated Not used list and Method note.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def get(
       slug: Slug,
       brief: ArticlesControllers.GetBrief = ArticlesControllers.GetBrief(false)
@@ -343,7 +385,10 @@ final class ArticlesControllers(
   /** `GET /api/articles/{slug}/coverage`. An article that records no filter has no coverage: 404 saying so and how to
     * set one.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def coverage(slug: Slug): Either[Api.Error, Coverage] =
     store.load(store.canonical(slug)).toRight(notFound(slug)).flatMap { a =>
       coverageOf(a).toRight(
@@ -361,7 +406,10 @@ final class ArticlesControllers(
     */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def coverageOf(a: Article): Option[Coverage] =
     a.filter.map { af =>
       val f = af.toFilter
@@ -403,11 +451,17 @@ final class ArticlesControllers(
   def citedSources(body: Article.Body): List[Citekey] = citedOf(body, bodyLinks(body))
 
   /** How the links of a body (outside a hand-written Not used section) resolve. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def bodyLinks(body: Article.Body): WikiLinks.Occurrence.Target => Option[LinkTarget] =
     pageLinks(Article.Links.targets(WikiLinks.Body(Article.Coverage.withoutNotUsed(body).value)))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def citedOf(body: Article.Body, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): List[Citekey] =
     Article.Links
       .targets(WikiLinks.Body(Article.Coverage.withoutNotUsed(body).value))
@@ -429,7 +483,10 @@ final class ArticlesControllers(
   /** THE PAIRING RULE of a body (lint `article-critique-pairing`): each paragraph that cites one side of a disagreement
     * edge and names the other side's author without citing it, and how its links resolve. Read only.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def pairing(
       body: Article.Body
@@ -453,7 +510,10 @@ final class ArticlesControllers(
     * of its sources (by citekey) — what the managers' code checks measure (infer-filter, propose-articles).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def filterReach(
       af: Article.Filter,
       citekeys: List[Citekey],
@@ -480,7 +540,10 @@ final class ArticlesControllers(
     * article, or it records no filter.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def newFilterSources(slug: Slug): Option[ArticlesControllers.NewSourceCount] =
     store
       .load(store.canonical(slug))
@@ -500,7 +563,10 @@ final class ArticlesControllers(
   /** How many pairs of the article's critique checklist are open now and bear on a work it cites (None: no such
     * article). An open pair on a work the article does not cite is background: no run owes it anything.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def openCritiques(slug: Slug): Option[ReviewManagerPolicy.OpenPairs] =
     store
       .load(store.canonical(slug))
@@ -510,7 +576,10 @@ final class ArticlesControllers(
         )
       )
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def critiquesOf(
       body: Article.Body,
       links: WikiLinks.Occurrence.Target => Option[LinkTarget],
@@ -533,7 +602,10 @@ final class ArticlesControllers(
 
   /** Reasons are stored under the citekey a source has NOW (an old one resolves). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def canonicalReasons(rs: List[Coverage.Reason]): List[Coverage.Reason] =
     rs.map { r =>
@@ -555,7 +627,10 @@ final class ArticlesControllers(
     * rather than a link to a 404.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def pageLinks(targets: List[WikiLinks.Occurrence.Target]): WikiLinks.Occurrence.Target => Option[LinkTarget] =
     val aliases = sourceStore.resolveLinks(targets)
     val sourceRefs = sourceStore.refs(aliases.values.toList).map(r => (r.citekey.value: String) -> r).toMap
@@ -565,7 +640,10 @@ final class ArticlesControllers(
   /** `GET /api/sources/{ck}/articles` — the compiled articles that cite this source. 404 when the citekey itself is
     * unknown, so "no articles yet" and "no such source" are different answers.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def sourceArticles(citekey: Citekey): Either[Api.Error, List[Backlink]] =
     sources
       .get(citekey)
@@ -588,7 +666,10 @@ final class ArticlesControllers(
   /** Create or REPLACE one article. The response carries its formatting problems; `strict` refuses the write when one
     * of them is an error.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def put(
       slug: Slug,
       in: Article.Put,
@@ -641,7 +722,10 @@ final class ArticlesControllers(
         }
         .flatMap(_ => get(slug))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def delete(slug: Slug): Either[Api.Error, Article.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_article")):
       val now = currentSlug(slug)
@@ -653,7 +737,10 @@ final class ArticlesControllers(
     * is rewritten (each a new version).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def rename(slug: Slug, req: LabelRename)(using Creator.New): Either[Api.Error, LabelRenamed] =
     maintenance.guard(WriteGate.OperationName("rename_article")):
@@ -682,7 +769,10 @@ final class ArticlesControllers(
 
   /** The note of the article an old slug or its own names, as the mirror writes it. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def articleNote(slug: Slug): Either[Api.Error, domain.research.Article.Note] =
     store
       .load(currentSlug(slug))
@@ -695,12 +785,18 @@ final class ArticlesControllers(
   /** The edit history of one article. 404 when the slug itself is unknown (so "no versions yet" and "no such article"
     * are different answers).
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def versions(slug: Slug): Either[Api.Error, List[Article.Version]] =
     get(slug).map(v => store.versions(Slug.assume(v.article.slug.value)))
 
   /** One historical version's full body. 404 when the slug or the version id is unknown. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def version(slug: Slug, versionId: ArticleRepo.VersionId): Either[Api.Error, Article.VersionFull] =
     get(slug).flatMap(v =>
       store
@@ -723,7 +819,10 @@ final class ArticlesControllers(
     maintenance.guard(WriteGate.OperationName("import_article"))(importNow(req))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def importNow(req: Article.Import)(using WritePermit)(using Creator.New): Either[Api.Error, SeedResult] =

@@ -13,7 +13,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.{HistoricalPeriod, Lpf, Period, PeriodsMarkdown}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one year module (#1798 item 4): parsing what a person types, the astronomical conversion, and every formatter
   * agreeing on BCE/CE and on year 0 (shown as 1 BCE, never "0 CE").

@@ -18,7 +18,7 @@ import scala.annotation.{nowarn, tailrec}
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE way the server runs work longer than a request as a background job (#1946): a `jobs` row (`histmersion jobs
   * <id>` follows it; a restart fails it as `interrupted` like every other unfinished job), on its own daemon thread, at

@@ -3,7 +3,7 @@ package domain.automation.agents
 
 import com.histmersion.server.agents.Codex
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What one tool call of an agent step may return (`agents.tools`). Every later turn of a step re-sends every earlier
   * result, so a step that reads ten records pays for them on each of its turns: a Codex review step averaged ~8 turns

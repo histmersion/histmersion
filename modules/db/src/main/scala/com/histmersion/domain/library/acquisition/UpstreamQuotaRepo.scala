@@ -8,8 +8,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.time.{Instant, LocalDate}
 import com.histmersion.domain.automation.ProviderKind
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A metered upstream's budget (migration V103), one row per upstream. The recent call slots (pacing within a minute)
   * are not kept: see [[CoreQuota.State]]. Every method runs on the connection it is given.

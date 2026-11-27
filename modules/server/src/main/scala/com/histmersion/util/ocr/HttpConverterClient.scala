@@ -12,8 +12,8 @@ import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import java.time.Duration
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.ocr.ConvertedDoc
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Multipart `POST /convert` against the sidecar. Stateless and thread-safe: one `HttpClient` is shared by the worker
   * pool, and every request carries its own body.

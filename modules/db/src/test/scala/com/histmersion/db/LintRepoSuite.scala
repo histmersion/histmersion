@@ -31,7 +31,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.util.ocr.Chunker
 import com.histmersion.domain.library.sources.SourceRepairs
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every lint rule, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise.
   *

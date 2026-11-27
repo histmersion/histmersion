@@ -9,7 +9,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE spelling of a deep-time `int8range` column in SQL (#1798 item 9): how its inclusive bounds are read, how
   * optional bounds are written, and how a PATCH that names one bound merges with the stored other one.

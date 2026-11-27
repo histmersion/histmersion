@@ -8,7 +8,7 @@ import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun}
 import com.histmersion.util.data.diagnostics.DataCount
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events' share of the catalogue's data contribution: their count, and the check of the corrections a catalogue's
   * later import contradicts.

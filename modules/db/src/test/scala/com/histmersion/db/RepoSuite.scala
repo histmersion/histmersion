@@ -21,7 +21,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Round-trips against a real Postgres/PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

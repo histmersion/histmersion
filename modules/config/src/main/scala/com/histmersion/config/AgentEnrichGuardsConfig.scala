@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The findings step's guards against the failure kinds a smaller extractor showed (#1424): an answer whose places
   * mostly do not resolve in the gazetteer — fewer than `minPlacedShare` (0..1) of the findings that name a place — is

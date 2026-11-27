@@ -27,8 +27,8 @@ import com.histmersion.api.Api
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base map wired into the server: its store, the configuration read at each use, its fetch run as a background
   * job, the sea floor the settings choose, and the providers' client under the product's outbound-HTTP policy.

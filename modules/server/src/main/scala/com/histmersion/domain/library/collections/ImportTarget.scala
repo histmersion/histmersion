@@ -10,7 +10,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an import writes, once the citekey is known. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

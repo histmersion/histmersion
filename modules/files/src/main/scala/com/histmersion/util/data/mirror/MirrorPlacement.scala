@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.mirror
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where the Markdown mirror puts the notes of one kind of record, under the directory `histmersion export <dir>` is
   * given (and `histmersion seed <dir>` reads back): the source notes in `<dir>/sources/<citekey>.md`, each article in

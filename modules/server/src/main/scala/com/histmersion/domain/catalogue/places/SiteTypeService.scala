@@ -12,7 +12,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The refined types of the Wikidata sites on the map (those a finding or a picture is placed at): which are still to
   * be asked, and what each was found to be.

@@ -18,7 +18,7 @@ import java.util.concurrent.{CompletableFuture, ConcurrentHashMap, Semaphore, Ti
 import com.histmersion.api.basemap.Basemap
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.annotation.nowarn
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A layer's tiles read when a page shows them, beyond what was downloaded (docs/research-terrain-basemap.md,
   * "On-demand relief"; #3760 for the map and the sea floor): the server reads just those tiles from the provider — by

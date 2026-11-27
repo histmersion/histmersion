@@ -49,7 +49,7 @@ import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.media.FigureLicenceFill
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.media.assets.MediaThumbRow
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pictures from outside providers (V082, #1446) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   * the reshaped `assets` key (a source's figures keep `(citekey, name)` and their links; a provider's picture has no

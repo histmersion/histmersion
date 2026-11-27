@@ -3,7 +3,7 @@ package web.marks
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The little Markdown a note is written in, read for its preview: headings (`#`), paragraphs, lists (`-`, `*`, `1.`),
   * quotes (`>`), code blocks (```), and in a line `**strong**`, `*emphasis*`, `` `code` ``, `[text](https://…)` and

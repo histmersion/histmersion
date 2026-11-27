@@ -17,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.MergeJobState
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `jobs` rows of merge applies (kind `merge-apply`): one is `running` from its start (it runs on its own thread,
   * never queued), with its bundle and its plan; it ends `done` with its report or `failed` with why. A restart fails an

@@ -10,7 +10,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import java.util.UUID
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class PeriodPlanSuite extends munit.FunSuite:
 

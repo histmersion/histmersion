@@ -31,8 +31,8 @@ import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What `bundle import` and `merge apply` write for each kind of record (docs/research-merge-import.md §7.3): the
   * [[Writer]] whose steps the carried kinds register. The transaction, the lock, the plan's checks, the blob pass and

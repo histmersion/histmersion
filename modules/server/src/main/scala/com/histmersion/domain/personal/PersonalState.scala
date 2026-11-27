@@ -6,7 +6,7 @@ import com.histmersion.domain.personal.seen.SeenBoard
 import com.histmersion.UserId
 import com.histmersion.api.personal.Bookmark
 import com.histmersion.api.personal.Note
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the in-memory bookmarks, notes, read marks and seen marks hold together, as the database's tables hold it:
   * every row with its tombstone.

@@ -3,7 +3,7 @@ package util.basemap
 import com.histmersion.util.problem.{External, Problem}
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A decoder of LOSSLESS WebP (the `VP8L` bitstream, RFC 9649) to ARGB pixels — the format the relief's terrarium tiles
   * are stored in (Mapterhorn's 512-pixel tiles, a focus region's, the on-demand cache's). The server reads elevation
@@ -36,8 +36,9 @@ object Vp8l:
     type Height = Height.T
     object Height extends Newtype[Int, Pure]
 
-    extension (i: Image) @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-                         def isSquare: Boolean = i.width.value == i.height.value
+    extension (i: Image)
+      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      def isSquare: Boolean = i.width.value == i.height.value
 
   /** A WebP file (`RIFF … WEBP VP8L …`) or a bare `VP8L` bitstream, decoded. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

@@ -3,8 +3,8 @@ package config
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.problem.{Problem, Problems}
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The graph logic of a config reload, pure: which nodes a set of changed keys touches, what has to be rebuilt with
   * them (every node that depends on one, transitively), and in which order. The server's `hot.HotGraph` builds and

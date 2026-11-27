@@ -35,7 +35,7 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `enrich` manager kind (library-wide: source-enrich items, what `agents.auto-enrich` feeds), registered by this
   * transition adapter until the library contributes it: a source already enriched is settled without a run, unless a

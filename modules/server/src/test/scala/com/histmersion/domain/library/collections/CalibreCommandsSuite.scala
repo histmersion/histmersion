@@ -29,7 +29,7 @@ import com.histmersion.pluginhost.Registries
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every `histmersion calibre …` command, run end to end over a fixture library: a server on port 0 over a database of
   * this suite's own, seeded with sources, and the CLI as a separate process (its stdout, stderr and exit code are what

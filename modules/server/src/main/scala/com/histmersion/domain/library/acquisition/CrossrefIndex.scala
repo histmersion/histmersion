@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 
 import java.time.LocalDate
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Crossref: what was DEPOSITED since (`from-created-date`), newest first — a watermark on deposits. */
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:

@@ -1,8 +1,9 @@
 package com.histmersion
 package api
 
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** A minimal RFC 4180 reader (quoted fields, doubled quotes, embedded commas and newlines, CRLF): enough for the
   * Retraction Watch export.
   */

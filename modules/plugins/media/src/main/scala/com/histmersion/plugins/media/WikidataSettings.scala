@@ -5,7 +5,7 @@ import com.histmersion.plugin.{MediaCollection, MediaItem}
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion.media.wikidata`: the API, ids per call, `maxlag`, and the picture properties of a place and an event
   * with the role each plays (`P18:image,P242:locator-map`).

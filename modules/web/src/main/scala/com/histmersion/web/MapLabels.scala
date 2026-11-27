@@ -18,7 +18,7 @@ import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.Geo
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that would collide are
   * thinned out, events first, then larger shapes ([[LabelPlacement]] decides where and which, [[LabelMotion]] how they

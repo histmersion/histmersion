@@ -15,7 +15,7 @@ import com.histmersion.api.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import MergeIssue.Rationale
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MergeIssue(

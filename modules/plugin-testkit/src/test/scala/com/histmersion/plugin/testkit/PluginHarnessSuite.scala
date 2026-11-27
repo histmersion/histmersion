@@ -16,7 +16,7 @@ import java.nio.file.{Files, Path}
 import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters.*
 import com.histmersion.plugin.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The harness against the test plugins in `kit/`: loading as the server loads, each runner, and each HTTP mode against
   * a local server.

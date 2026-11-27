@@ -3,7 +3,7 @@ package domain.library.sources.referrers
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a referrer asks of a source a delete or a rename touches. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

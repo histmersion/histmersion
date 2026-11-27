@@ -8,7 +8,7 @@ import com.histmersion.Period
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a collection record is tied to a place on the map — conservatively, and with the reason recorded (#1446). Pure.
   *

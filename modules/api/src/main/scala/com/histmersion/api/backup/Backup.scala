@@ -20,7 +20,7 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Backup:
   type JdbcUrl = JdbcUrl.T
@@ -283,13 +283,11 @@ object Backup:
     export Result.{DurationMs, File, File as FailedFile, File as RunningFile}
     export Result.Pruned
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status =
       Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, problems: Problems): Status =
       Status(file, State.Failed.wire, elapsedMs, problems = Some(problems.toNonEmpty))

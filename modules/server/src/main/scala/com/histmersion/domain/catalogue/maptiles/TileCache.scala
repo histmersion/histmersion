@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The tiles a server keeps, by key, the least recently asked for going first once they hold more than `maxBytes`. A
   * tile's key carries the versions of what it was cut from, so a write makes the tiles it touched unreachable at once;

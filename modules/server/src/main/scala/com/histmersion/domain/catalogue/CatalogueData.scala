@@ -12,7 +12,7 @@ import com.histmersion.util.data.maintenance.{CacheEvent, CacheHolding, CacheNam
 import com.histmersion.util.storage.Location
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.storage.Store
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the catalogue says about the data it owns: its tables, the gazetteer's stores and the base map's, the caches of
   * the map, what a bundle carries of it and how a merge treats it, its counts and its checks.

@@ -16,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobDetail
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Acquire:
   object Intent:

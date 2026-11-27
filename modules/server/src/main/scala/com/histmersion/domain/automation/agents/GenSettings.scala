@@ -4,7 +4,7 @@ package domain.automation.agents
 import com.histmersion.server.agents.Codex
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the generated trees depend on besides the definitions: where the runtimes reach this server, and which optional
   * parts to write.

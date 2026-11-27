@@ -2,7 +2,7 @@ package com.histmersion
 package web.settings
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › Calibre and files: the Calibre library the command line reads and fills, and where the server keeps
   * uploads and backups.

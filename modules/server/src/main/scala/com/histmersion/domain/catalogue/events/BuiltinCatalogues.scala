@@ -8,7 +8,7 @@ import com.histmersion.api.catalogue.CatalogProviderInfo
 import com.histmersion.plugin.*
 
 import scala.collection.immutable.ListMap
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own event catalogues — first-party plugins (`events-gvp`, `events-noaa`, `events-wikidata`), each
   * enabled by default and switched off by `histmersion.plugins.events-<catalogue>.enabled = false`, its settings

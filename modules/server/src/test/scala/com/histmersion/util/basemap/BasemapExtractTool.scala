@@ -22,7 +22,7 @@ import java.nio.file.{Files, Path}
 import java.security.MessageDigest
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.util.problem.Text.sentences
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Measuring tools for docs/research-terrain-basemap.md (and how the browser fixture's vector extract was made), with
   * the fetch's own code — never run by the tests:

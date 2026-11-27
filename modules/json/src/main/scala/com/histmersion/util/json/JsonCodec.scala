@@ -8,7 +8,7 @@ import scala.collection.immutable.ListMap
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonKeyCodec, JsonReader, JsonValueCodec, JsonWriter}
 import hearth.kindlings.jsoniterderivation.{JsoniterConfig, KindlingsJsonValueCodec}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** A record's JSON codec, derived by Kindlings (`derives JsonCodec`): every field written, `None` as `null`, an enum
   * whose cases all lack fields as its case's name (`"Case"`), any other sum type wrapped in its case's name

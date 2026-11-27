@@ -53,7 +53,7 @@ import com.histmersion.domain.automation.agents.PoolSink
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `claude-code` provider without a model: the argument vector, the environment, the stream-json output read back
   * (rate-limit readings, the quota guard's abort, the last of two results), the plan's usage limit — and the whole

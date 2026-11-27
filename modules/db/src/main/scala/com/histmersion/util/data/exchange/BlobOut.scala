@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import java.io.OutputStream
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A blob a bundle carries for a kind's lines: its digest, its size, and where its bytes are read from as it is written
   * into the archive.

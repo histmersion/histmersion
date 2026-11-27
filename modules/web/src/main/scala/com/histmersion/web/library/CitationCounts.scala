@@ -3,7 +3,7 @@ package web.library
 
 import com.histmersion.api.library.{Edge, NeighborRow}
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the reading pane counts of a source's place in the citation graph: what it cites (as its page's "Cites" lists
   * it), the sources that answer it — challenge, refute, update or supersede it — and the articles that cite it. Pure.

@@ -9,7 +9,7 @@ import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.domain.automation.agents.Prompts
 import com.histmersion.util.storage.Location
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `just plugin`: writes the checked-in Claude Code plugin under the repository root, its definitions holding the agent
   * tools and roles the engine is given today.

@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A module whatever its version: what the server and a plugin can both have, once each. */
 final case class ModuleKey(group: GroupId, artifact: ArtifactId):

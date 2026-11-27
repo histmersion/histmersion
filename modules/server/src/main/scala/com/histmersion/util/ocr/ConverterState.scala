@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import scala.jdk.OptionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.jobs.Job
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What `/api/health` says about the OCR sidecar (#692). */
 enum ConverterState:

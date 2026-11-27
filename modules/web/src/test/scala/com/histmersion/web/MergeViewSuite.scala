@@ -28,7 +28,7 @@ import com.histmersion.api.exchange.{
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.PlanMatches
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of the merge review screen: grouping and counting the issues, the filter, keeping a decision, the
   * field table's result column, the diff3 editor's starting text, the span bars.

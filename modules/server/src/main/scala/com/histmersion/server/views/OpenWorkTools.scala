@@ -12,7 +12,7 @@ import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.util.problem.Problem.{Raw, TypeName}
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class OpenWorkTools(view: OpenWorkView):
   import OpenWorkTools.WhyInput

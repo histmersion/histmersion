@@ -18,7 +18,7 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.sources.SourceRepairs
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Full-text search against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers the point of plan
   * §1.4: bodies far bigger than tsvector's 1 MB per-row limit are searchable because they are chunked, and every hit

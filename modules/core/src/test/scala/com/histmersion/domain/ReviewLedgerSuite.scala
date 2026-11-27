@@ -18,7 +18,7 @@ import com.histmersion.domain.ReviewLedger.*
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The review ledger's pure half: matching, every status transition, the lessons, what a prompt shows, the edited
   * passages and the one backlog line.

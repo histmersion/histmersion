@@ -8,7 +8,7 @@ import scala.scalajs.js
 import org.scalajs.dom
 
 import sttp.client4.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The placeholders of a tile URL template ([[ApiClient.tileTemplate]]). Pure. */
 object TilePlaceholder:

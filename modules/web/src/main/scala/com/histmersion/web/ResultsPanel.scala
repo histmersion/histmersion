@@ -11,7 +11,7 @@ import com.histmersion.api.instance.UiConfig
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The results on Explore's right: "On the map" (what the map's view holds) or "Everywhere", the tabs — sources,
   * articles, events, places, pictures, each with its count —, the sort, and the rows, every one a real link (a plain

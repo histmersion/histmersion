@@ -12,7 +12,7 @@ import com.histmersion.pluginhost.HttpTransport
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.Registries
 import com.histmersion.plugin.CatalogueEvent
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own event catalogues run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does (the host's own `histmersion.events` settings supplied to a

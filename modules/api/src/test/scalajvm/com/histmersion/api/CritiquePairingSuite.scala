@@ -10,7 +10,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.{AuthorName, Citekey}
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pairing rule (docs/research-review-convergence.md §6.9), pure: the names a source is called by, the paragraphs
   * that name a disagreement partner they do not cite, which of them code may repair, the repair itself, the instruction

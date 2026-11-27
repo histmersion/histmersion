@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{HistoricalPeriod, Latitude, Longitude, Period, PresetMenu, PresetRegion, Year}
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure halves of the shared controls: the playback speed menu, and the period-preset menu's grouping by region.
   */

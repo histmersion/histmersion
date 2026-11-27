@@ -41,8 +41,8 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.CollectionEntry
 import com.histmersion.api.library.CollectionAudit
 import com.histmersion.api.library.AcquireApi
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion calibre search|import|link|push|update|set|audit|sync|gaps`.
   *

@@ -13,7 +13,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import java.nio.file.Path
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Processes
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class KeePassXcVault(
     val name: Secret.Vault.Name,

@@ -35,7 +35,7 @@ import com.histmersion.api.ByteCount
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The portable bundle and the merge (docs/research-merge-import.md, milestones M0–M7): this instance's identity, the
   * export, verify and import of a `.hmx` bundle, the bundles kept to be planned, the plan, the apply, the review

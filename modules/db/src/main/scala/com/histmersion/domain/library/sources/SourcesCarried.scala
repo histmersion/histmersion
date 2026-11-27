@@ -28,7 +28,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.augustnagro.magnum.sql
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the library: the sources (each line stamped with its rev, its body and its stored original
   * blobs), their findings, the edges they make and the ones still parked, their assessments and their old citekeys.

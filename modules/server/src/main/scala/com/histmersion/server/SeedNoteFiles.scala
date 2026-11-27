@@ -11,8 +11,8 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.storage.SafePath
 import com.histmersion.util.storage.TextFiles
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The notes of a folder the person names for a seed, read where they are: the frontmatter of each `*.md` (its
   * converted body from `md_path`, confined to `corpus.dir` when that is set) and the figures beside it.

@@ -4,7 +4,7 @@ package files
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.library.Isbn
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where a book's cover comes from ([[CoverChoice]], [[OpenLibrary]]). */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

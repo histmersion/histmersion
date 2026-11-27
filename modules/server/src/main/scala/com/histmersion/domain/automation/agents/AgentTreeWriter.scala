@@ -11,7 +11,7 @@ import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 private[agents] object AgentTreeWriter:

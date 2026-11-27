@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.api.catalogue.{Latitude, Longitude, ManualPlaceName, Period, Year}
 import com.histmersion.api.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's gazetteer edits (#987): what a name, a language tag and a hand-added place may be. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

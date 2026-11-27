@@ -3,7 +3,7 @@ package config.edit
 
 import org.ekrich.config.{Config, ConfigOrigin}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The config file as read: its text (`None`: not there yet), its version, and its settings as parsed with its
   * includes, unresolved — what a change is made against. `own` says which origins are the file itself (not a file it

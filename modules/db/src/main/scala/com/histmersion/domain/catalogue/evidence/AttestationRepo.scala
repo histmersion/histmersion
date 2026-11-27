@@ -12,8 +12,8 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The attestations (`attestations`): which passage of a source attests a finding, an event, a dating, a place or an
   * edge. Every method runs on the connection it is given.

@@ -5,7 +5,7 @@ import com.histmersion.{Ascii, WireEnumValues}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Place:
 

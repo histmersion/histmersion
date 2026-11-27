@@ -8,7 +8,7 @@ import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half: a point's marker markup. */
 object PointMarker:

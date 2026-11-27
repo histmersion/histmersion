@@ -11,8 +11,8 @@ import com.histmersion.plugin.Header
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (http: Plugin.Http)
   /** One GET answered as text (UTF-8). */

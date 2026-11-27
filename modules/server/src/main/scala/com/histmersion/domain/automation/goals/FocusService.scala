@@ -10,7 +10,7 @@ import hearth.kindlings.optics.syntax.*
 import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The focus's reads of every goal at once, as the engine's other features reach them — each goal with what the focus
   * recorded about it, the goals linked to sources and articles, each goal's last stop and its sources — and what the

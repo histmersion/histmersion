@@ -10,7 +10,7 @@ import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.api.automation.ModelChains
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Plan floors (docs/research-plan-quotas.md §5): the pick with plan readings — floors, a provider refusal, a missing
   * window, a stale reading, a hold, a window whose reset passed.

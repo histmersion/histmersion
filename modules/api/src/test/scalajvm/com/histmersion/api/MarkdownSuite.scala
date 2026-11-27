@@ -27,7 +27,7 @@ import com.histmersion.api.library.Search
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.library.Edge
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[SourcesMarkdown.source]] — what MCP `get_source` returns and what the HTML article page renders. Pure. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -5,8 +5,8 @@ import com.histmersion.api.automation.Activity
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One page of the activity list asked for: what to show, from when on, of which research goal, how many entries, and
   * older than which.

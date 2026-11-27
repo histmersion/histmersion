@@ -12,7 +12,7 @@ import com.histmersion.plugin.*
 import org.ekrich.config.ConfigFactory
 
 import scala.collection.immutable.ListMap
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The names `places fetch` and `init.fetch-sources` take: the first-party gazetteers in today's order, then a
   * plugin's; a first-party one switched off answers so, naming its switch; any other name is unknown.

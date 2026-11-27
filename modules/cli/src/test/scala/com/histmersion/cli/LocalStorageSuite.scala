@@ -11,7 +11,7 @@ import com.histmersion.api.jobs.JobCounts
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
 import com.histmersion.config.UserPaths
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion about`'s own locations: added only when the server is on this machine, never twice. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

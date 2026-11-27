@@ -12,8 +12,8 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body, the set of

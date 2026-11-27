@@ -43,7 +43,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `plan-goal <goal>` (docs/research-embedded-agents.md §7 P3, §14): the planner proposes sub-goals, search queries and
   * candidate works for one goal, as a typed answer. Code checks the vocabulary (slugs, DOIs, caps), looks every DOI up

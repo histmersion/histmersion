@@ -3,8 +3,8 @@ package api
 
 import com.histmersion.api.exchange.PlanMatchKind
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The kind whose records a merge plan matches across collections, registered by its owner (as `Api.all` lists the
   * features' endpoints): the library's sources.

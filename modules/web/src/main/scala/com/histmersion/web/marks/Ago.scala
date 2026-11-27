@@ -2,7 +2,7 @@ package com.histmersion
 package web.marks
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** When something was written, as a person says it: "just now", "5 minutes ago", "3 days ago", or the date. Pure.
   */

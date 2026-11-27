@@ -20,7 +20,7 @@ import com.histmersion.domain.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the goals keep: put and read back (sub-goals, a refused period), links in their order with what they
   * point at, plans and caps, the schedules not moved yet and their move.

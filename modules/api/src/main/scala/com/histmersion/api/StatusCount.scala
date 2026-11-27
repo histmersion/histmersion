@@ -7,8 +7,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @movesTo(FeaturePlace.Kernel)
 final case class StatusCount(status: Source.Status, count: StatusCount.Count)

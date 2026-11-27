@@ -13,7 +13,7 @@ import org.scalajs.dom
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.Paging
 import com.histmersion.api.Offset
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A shelf of My library in place of the table: the person's bookmarks, notes, what they have not marked read (the
   * tab's sources or articles, a page at a time) or what they opened lately. A row opens back where it was left — a

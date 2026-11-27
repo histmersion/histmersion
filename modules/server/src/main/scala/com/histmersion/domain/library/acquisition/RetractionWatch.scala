@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class RetractionWatch(cfg: AcquireConfig, http: Http) extends RetractionWatchClient:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

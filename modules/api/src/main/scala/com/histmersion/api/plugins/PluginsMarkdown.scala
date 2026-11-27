@@ -4,7 +4,7 @@ package api.plugins
 import com.histmersion.api.Plural
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object PluginsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

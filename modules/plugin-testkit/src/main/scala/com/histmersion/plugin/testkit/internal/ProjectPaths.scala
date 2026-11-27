@@ -3,7 +3,7 @@ package plugin.testkit.internal
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Paths a test names relative to its project. A build tool starts the test JVM in the directory it was itself started
   * in, which need not be the project's (`scala-cli test /path/to/plugin`); a path relative to the working directory

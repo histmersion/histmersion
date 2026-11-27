@@ -3,7 +3,7 @@ package plugin.testkit
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.Registries
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the plugin registered, by extension point, each under the id the server lists it by. */
 final case class Contributions(

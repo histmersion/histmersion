@@ -15,7 +15,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
 import com.histmersion.api.research.Article.Plans
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** propose-articles' code checks: the shape of each proposed article, then the seeding rules — a free slug, a filter
   * returning at least minSources, less than maxOverlap shared with any article of the area or with a proposal kept

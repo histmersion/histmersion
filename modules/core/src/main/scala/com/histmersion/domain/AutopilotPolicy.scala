@@ -11,8 +11,8 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
   * decide an approval without a person, the rule that moves a research goal's status on from the facts, the managers

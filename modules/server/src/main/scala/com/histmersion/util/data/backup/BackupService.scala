@@ -19,7 +19,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Sha256
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The database's dumps: `pg_dump` / `pg_restore` against the database this server is configured for (the CLI holds no
   * credentials, so the dump is taken here), the archives in the backups store (`backups.dir`), their listing and

@@ -11,7 +11,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.text.WikiLinks
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object CritiquePairing:
   object Instruction:

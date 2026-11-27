@@ -44,7 +44,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —

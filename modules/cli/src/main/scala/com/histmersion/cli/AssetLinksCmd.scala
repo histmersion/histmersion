@@ -12,8 +12,8 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.media.MediaTarget
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion asset-links` arguments")
 object AssetLinksCmd:

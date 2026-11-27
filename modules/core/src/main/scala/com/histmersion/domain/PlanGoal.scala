@@ -20,8 +20,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,

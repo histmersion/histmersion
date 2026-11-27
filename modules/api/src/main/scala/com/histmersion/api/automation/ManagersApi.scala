@@ -9,12 +9,15 @@ import com.histmersion.api.given
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.UnreadPage
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the managers routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the managers routes with their request and response bodies"
+)
 object ManagersApi:
   type Action = Action.T
   object Action extends Newtype[String, Pure]

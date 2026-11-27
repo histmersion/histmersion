@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.{Bucket, Citekey, TimeHistogram, Title}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Place.Relation.{ChildId, ParentId}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The §1.6 / §1.6a nesting, purely: adaptive time levels, the as-of hierarchy walk, non-additive counts with their
   * `overlap`, the `unlocated` leaf, samples and the depth clamp. No database.

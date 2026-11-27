@@ -7,7 +7,7 @@ import com.histmersion.api.problem.Answer.entry
 
 import com.histmersion.api.automation.Agents.PauseReason
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a job stopped, as the problems its `jobs.error` keeps say it: a pause for a reason ([[Problem.Run.Halted]], with
   * the problem it stopped on), a restart's cut ([[Problem.Run.Interrupted]]), the autopilot's drain

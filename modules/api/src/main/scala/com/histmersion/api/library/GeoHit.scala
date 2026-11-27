@@ -10,7 +10,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class GeoHit(

@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Anthropic Messages API's request and answer, as pure functions: what is sent for a turn, what an answer says. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

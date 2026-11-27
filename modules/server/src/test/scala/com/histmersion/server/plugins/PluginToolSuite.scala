@@ -16,7 +16,7 @@ import java.nio.file.{Files, Path}
 import java.util.jar.{JarEntry, JarFile, JarOutputStream}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.plugins.PluginDescription
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The relink kit's JVM tool against a REAL third-party plugin jar: modules/plugin-fixtures/hello, built by sbt and
   * never on the server's class path.

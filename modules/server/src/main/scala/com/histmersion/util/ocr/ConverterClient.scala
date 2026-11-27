@@ -7,7 +7,7 @@ import com.histmersion.util.storage.Blob
 
 import java.time.Duration
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The seam between the server and the Python OCR sidecar (plan §1.8).
   *

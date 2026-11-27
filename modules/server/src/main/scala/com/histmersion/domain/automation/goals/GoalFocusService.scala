@@ -32,7 +32,7 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"): while the autopilot is on and the
   * cap (`agents.autopilot.max-active-goals`, or a person's `focus max`) is above 0, at most that many research goals

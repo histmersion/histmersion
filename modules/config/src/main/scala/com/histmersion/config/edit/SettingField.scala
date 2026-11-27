@@ -2,8 +2,8 @@ package com.histmersion
 package config.edit
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One setting the config file may hold, as reference.conf documents it.
   *

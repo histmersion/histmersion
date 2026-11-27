@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** A layer read tile by tile when a page shows an area the download does not hold (the relief deeper than the extract;
   * the map and the sea floor outside it, #3760), cached to `cacheGb`.

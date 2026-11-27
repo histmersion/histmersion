@@ -12,7 +12,7 @@ import com.histmersion.api.library.Title
 import com.histmersion.domain.library.LibraryStores
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the citation graph answers, the same on the database and in memory: a source's edges both ways by kind, the
   * graph around it to a depth, the disagreements by edge and by status.

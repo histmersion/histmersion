@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Text.sentence
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ManagersMarkdown:

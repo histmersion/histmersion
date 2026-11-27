@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 enum TargetKind(val wire: TargetKind.Wire):
   case Source extends TargetKind(TargetKind.Wire("source"))
   case Article extends TargetKind(TargetKind.Wire("article"))

@@ -16,7 +16,7 @@ import com.histmersion.api.exchange.{Bundle, BundleMarkdown}
 import com.histmersion.domain.library.Source
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Sha256
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the `.hmx` bundle: the tar container, canonical lines and revs, the bundle id, manifest checks, the
   * bundle's kinds and the import report.

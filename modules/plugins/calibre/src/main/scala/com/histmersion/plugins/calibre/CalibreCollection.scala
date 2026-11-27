@@ -8,7 +8,7 @@ import java.nio.file.Path
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Calibre library as a [[SourceCollection]]: [[Calibre]] read and written, its books as collection items. Writes
   * only with `writeBack`, and then refused while the Calibre GUI holds the library.

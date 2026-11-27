@@ -21,8 +21,8 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.DeepTime
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the events' leads and cards are computed from: the sources attesting an event, the findings near it, the facts
   * of its lead, the catalogue events an article's region and period hold. Every method runs on the connection it is

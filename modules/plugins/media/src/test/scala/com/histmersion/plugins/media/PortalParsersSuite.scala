@@ -15,7 +15,7 @@ import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.pluginhost.{HostLicences, PluginMedia}
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.media.imports.MediaRecord
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The keyless portals' parsers (#1446): gazetteer ids in their URI forms, Open Context's search records and media
   * items (the licence stated as the record's own Creative Commons URL, read by the host), and the picture links of a

@@ -12,7 +12,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Approval
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The paged list windows (jobs, runs, approvals): the heading's wording, when "Show older" is there, what a poll asks
   * for and how its answer, or an older page, lands.

@@ -3,8 +3,8 @@ package config.edit
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What reference.conf says about a setting, read from its text: the comment lines just above the key, the comment at
   * the end of its line and of its environment line (`key = ${?VAR}` right under it), and the comment lines under those

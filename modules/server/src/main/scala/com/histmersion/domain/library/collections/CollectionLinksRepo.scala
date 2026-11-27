@@ -4,7 +4,7 @@ package domain.library.collections
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** The sources linked to Calibre entries: a numeric `calibre_id`, by citekey. Takes the connection it runs on. */
 @atBoundary(BoundaryKind.Sql, "reads and writes the collection links tables and their row codecs")

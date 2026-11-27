@@ -17,7 +17,7 @@ import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.ArxivId
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A work's metadata by its DOI, as an ingest looks it up before asking the acquisition chain: OpenAlex first (richer,
   * keyless), Crossref as the fallback, with Unpaywall's open-access status when Crossref answered. `json` is the

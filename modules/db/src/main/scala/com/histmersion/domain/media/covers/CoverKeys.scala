@@ -3,7 +3,7 @@ package domain.media.covers
 
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A book's identifiers the Open Library Covers API answers by. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

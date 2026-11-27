@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.collections
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's original as the server stores it: its bytes and the `Content-Disposition` it is served with (which names
   * its format).

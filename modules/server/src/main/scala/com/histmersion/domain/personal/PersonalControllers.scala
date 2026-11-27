@@ -36,7 +36,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The bookmarks', notes' and read marks' endpoints, the `bookmarks` and `notes` tools (reads only) and
   * `histmersion bookmarks|notes`: what was asked checked, then the caller's own. Writes wait while a restore holds the
@@ -52,7 +52,10 @@ final class PersonalControllers(
 ):
 
   private def bad(why: Problem): Api.Error = Api.Error(why)
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def missing(typeName: Problem.TypeName, key: Problem.Raw): Api.Error =
     Api.Error(Problem.NotFound.Entity(typeName, key), Some(Api.Error.Code(Write.CodeNotFound)))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
@@ -63,7 +66,10 @@ final class PersonalControllers(
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def kindOf(raw: Option[MarkKind.Wire], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
     raw.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
@@ -82,14 +88,23 @@ final class PersonalControllers(
             )
           )
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def size(raw: Option[Paging.Limit]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw).value)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def search(q: Option[PersonalApi.Search]): SearchWords =
     SearchWords.of(q.map(w => SearchWords.Query(w.value)))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def label(title: Option[Title]): Option[TargetLabel] =
     TargetLabel.tidy(title.map(t => TargetLabel.Label(t.value)))
 
@@ -156,7 +171,10 @@ final class PersonalControllers(
   // ── notes ───────────────────────────────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def listNotes(
       caller: Caller,
       kind: Option[MarkKind.Wire],
@@ -190,7 +208,10 @@ final class PersonalControllers(
       yield notes.add(user, t, text, label(in.title), now()).wire
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def editNote(
       caller: Caller,
@@ -244,7 +265,10 @@ final class PersonalControllers(
 
   // ── read marks ──────────────────────────────────────────────────────────────────────────────────
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def readMarks(
       caller: Caller,
       kind: Option[MarkKind.Wire],
@@ -258,7 +282,10 @@ final class PersonalControllers(
     yield reading.list(user, k.map(MarkTarget.itemKind), s, size(max)).map(_.wire)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def readable(kind: MarkKind, key: WireKey): Either[Api.Error, ItemKey] =
     if !MarkKind.Readable.contains(kind) then
       Left(
@@ -276,7 +303,10 @@ final class PersonalControllers(
         .map(ItemKey(_))
         .toRight(bad(Problem.Invalid.Missing.here(Problem.Field("id"))))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def setRead(caller: Caller, in: ReadMark.Set): Either[Api.Error, WireReadMark] =
     maintenance.guard(WriteGate.OperationName("set_read")):
       for
@@ -294,7 +324,10 @@ final class PersonalControllers(
       yield reading.opened(user, MarkTarget.itemKind(in.kind), key, label(in.title), now()).wire
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def unread(
       caller: Caller,
       kind: Option[MarkKind.Wire],

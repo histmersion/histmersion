@@ -9,8 +9,8 @@ import java.time.zone.ZoneRulesProvider
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.TimeEquality.offsetEquality
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The binary's time zones come from the JDK's own tzdb (`lib/tzdb.dat`, which native-image embeds). The build excludes
   * `scala-java-time-tzdb` — a time-zone database for Scala.js that scribe's perfolation drags onto the JVM class path,

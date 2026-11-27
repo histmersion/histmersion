@@ -16,7 +16,7 @@ import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of a citekey rename: which new keys are acceptable, which short forms pointed at the old key, how
   * finding ids and composite ids move, and the link rewrite that must change the link target and nothing else.

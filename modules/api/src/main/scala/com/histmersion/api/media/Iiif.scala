@@ -12,7 +12,7 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.ArchiveFile
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** IIIF Image API Level 1, served at `/iiif/{identifier}/{region}/{size}/{rotation}/{quality}.{format}`. Level 1
   * requires:

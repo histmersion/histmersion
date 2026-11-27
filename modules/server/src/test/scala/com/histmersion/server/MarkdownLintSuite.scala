@@ -19,7 +19,7 @@ import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Filter
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The formatting lint, pure: real-looking article and note Markdown in, findings out — and, for each problem the lint
   * calls an error, the rendered HTML to prove the page really does get it wrong (the lint parses with the page's own

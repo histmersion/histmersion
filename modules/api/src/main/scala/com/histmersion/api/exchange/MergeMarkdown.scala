@@ -5,7 +5,7 @@ import com.histmersion.api.library.MatchOutcome
 import com.histmersion.api.{Plural, RegisteredPlanMatches}
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MergeMarkdown:

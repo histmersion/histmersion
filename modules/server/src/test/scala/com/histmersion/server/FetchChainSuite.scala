@@ -12,7 +12,7 @@ import com.histmersion.plugin.*
 import scala.collection.immutable.ListMap
 import com.histmersion.config.CommaList
 import com.histmersion.domain.library.ArxivId
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host side of source fetching (docs/research-plugins.md §5.1): order, the legal gate, the PDF check, the memo and
   * how answers combine — over fake fetchers, no network.

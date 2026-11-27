@@ -20,8 +20,8 @@ import com.histmersion.domain.research.workflows.ReviewComparison
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer

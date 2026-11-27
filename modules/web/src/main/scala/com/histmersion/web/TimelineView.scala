@@ -19,7 +19,7 @@ import com.histmersion.api.personal.Bookmark
 import com.histmersion.api.UiLabels
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.marks.PeriodMarks
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object TimelineView:
   private val OH = Layout.overviewHeight.value

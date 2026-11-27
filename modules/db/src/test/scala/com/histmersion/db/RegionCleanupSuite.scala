@@ -15,7 +15,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.catalogue.places.GeocodeSettings
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Point-only seed regions (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise):
   *   - a region, polity or people known only by a point, and any atlas grid square's centre, takes a finding only by an

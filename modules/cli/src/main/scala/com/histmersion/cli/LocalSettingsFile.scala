@@ -11,8 +11,8 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.attribute.PosixFileAttributeView
 import java.nio.file.{AtomicMoveNotSupportedException, Files, LinkOption, Path, StandardCopyOption}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The settings file at `path` on this machine's disk, as `histmersion config` changes it without a server. */
 @atBoundary(BoundaryKind.Config, "reads and replaces the settings file on this machine's disk")

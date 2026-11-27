@@ -4,7 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How wide a source's or an article's own page sets its text: at a reading width, or across the page. Kept per
   * browser.

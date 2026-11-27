@@ -7,8 +7,8 @@ import com.histmersion.api.library.Citekey
 import hearth.kindlings.jsoniterderivation.JsoniterConfig
 
 import util.json.JsonCodec
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a record's schema is derived: a field with a default is optional, as its codec reads it (`JsonCodec`) — a patch
   * like `{"tags":{"add":["sea-peoples"]}}` must not be described as needing `remove`. The domain and config packages

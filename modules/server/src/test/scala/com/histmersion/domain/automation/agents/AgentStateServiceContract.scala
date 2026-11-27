@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the agents' scratch state keeps: set, replace and read back by key (the value as `jsonb` prints it),
   * the listing by key, a delete, a value that is not JSON refused.

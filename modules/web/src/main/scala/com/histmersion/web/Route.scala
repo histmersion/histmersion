@@ -7,7 +7,7 @@ import com.histmersion.api.automation.Queue
 import scala.scalajs.js
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A page of the web UI, by its address. Every page and every item has a real path, so each can be bookmarked, shared,
   * and opened in a new tab; the open windows and the filters ride along in the hash ([[UiState]]). `/source/…` and

@@ -13,7 +13,7 @@ import com.histmersion.plugin.LocalFiles
 import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.plugin.Processes
 import com.histmersion.pluginhost.SystemProcesses
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A Calibre library for the suites, built in a scratch directory: its books (`books.json`, which the fake `calibredb`
   * answers from and writes to), the books' files and covers, the `metadata.db` the `sqlite3` fallback reads (the same

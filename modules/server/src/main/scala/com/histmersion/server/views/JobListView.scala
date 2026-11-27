@@ -13,7 +13,7 @@ import com.histmersion.util.jobs.{JobListing, JobQuery}
 import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `GET /api/jobs` (and `job_status` without an id) filtered ([[ListFilters.JobFilter]]): the background jobs and the
   * agent runs, which are jobs too, in one page, newest first, with the per-state and the kind counts under the same

@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `ui.map-tiles`: the map's point layers as vector tiles — the deepest tile cut (MapLibre's zoom), the most items a
   * shallower tile keeps alone, the side of the cells it counts the rest by (pixels of a 512-pixel tile), the server's

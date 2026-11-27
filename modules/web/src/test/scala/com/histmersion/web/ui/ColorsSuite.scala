@@ -10,7 +10,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.Wcag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The palettes are the stylesheet's; the code holds their names and reads their values. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

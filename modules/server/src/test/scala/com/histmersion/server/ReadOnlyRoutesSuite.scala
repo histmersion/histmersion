@@ -14,9 +14,9 @@ import scala.jdk.CollectionConverters.*
   * endpoint's definition, and every write its logic's call graph reaches.
   *
   * A route that writes today carries a `tolerated` annotation for `LintRule.GetWrites` on its endpoint, exact both
-  * ways: a write of an endpoint without it fails, and so does the annotation on an endpoint none of whose routes writes.
-  * `HISTMERSION_GET_WRITES_REPORT=<file>` also writes each write's chain of calls there. A route whose method the check
-  * cannot read fails the suite: it could not vouch for it.
+  * ways: a write of an endpoint without it fails, and so does the annotation on an endpoint none of whose routes
+  * writes. `HISTMERSION_GET_WRITES_REPORT=<file>` also writes each write's chain of calls there. A route whose method
+  * the check cannot read fails the suite: it could not vouch for it.
   */
 class ReadOnlyRoutesSuite extends munit.FunSuite:
   override val munitTimeout: Duration = 20.minutes

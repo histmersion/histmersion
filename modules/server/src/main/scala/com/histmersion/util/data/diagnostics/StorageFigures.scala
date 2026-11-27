@@ -12,7 +12,7 @@ import com.histmersion.util.storage.{Blob, Location, MeasureBudget, Storage, Sto
 import java.time.Instant
 import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Storage part of About, from the registry: an entry for every store an owner registered and every place of the
   * install, where `storage` puts them, each measured with a bounded walk (`MeasureBudget`); the database's size and its

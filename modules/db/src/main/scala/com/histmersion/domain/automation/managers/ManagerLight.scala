@@ -7,7 +7,7 @@ import com.histmersion.util.database.Jsonb
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
   * plan-goal item (any status).

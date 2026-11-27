@@ -18,7 +18,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The citation graph: a source's typed edges both ways (each far end classified), the graph around it, the
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.

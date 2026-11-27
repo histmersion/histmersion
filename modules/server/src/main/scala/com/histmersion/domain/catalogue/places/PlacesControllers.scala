@@ -21,7 +21,7 @@ import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's operations as REST, MCP and the CLI reach them: search, a place and the hierarchy around it, the
   * map's shapes, imports, a person's names, kinds, periods and points, merges, removals and renames, the matching of
@@ -38,26 +38,44 @@ final class PlacesControllers(
     limit: (Option[PageSize], PageSize) => PageSize,
     maintenance: WriteGate
 ):
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def modernFrom: DeepTime.SignedYear = DeepTime.SignedYear(cfg().places.modernFrom.value)
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def tolKm: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def page(raw: Int): PageSize = PageSize.applyUnsafe(math.max(1, raw))
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def notFound(id: String): Api.Error =
     Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Place.Id), Problem.Raw(s"$id")))
 
   /** A place's id now: an old id (renamed, V055 — e.g. by a merge that followed a rename made in the other collection)
     * resolves to the place it names, as an old citekey does.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def placeId(id: Place.Id): Place.Id = current(AliasKinds.PlaceRecords, PlacesControllers.Alias(id.value))
 
   private def named(id: Option[Place.Id]): Option[Place.Id] = id.map(_.trimmed).filterNot(_.isBlank).map(placeId)
 
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def geocode(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
     geocoder.resolve(name, hint, at, GeocodeSettings.PlaceholderMin(cfg().places.geocodePlaceholderMin.value))
 
@@ -73,7 +91,10 @@ final class PlacesControllers(
 
   /** `GET /api/places/geo` — the map layers' shapes for the time [[GeoPick.resolve]] makes of the query. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def shapes(q: Api.PlacesGeoQuery): Either[Problems, Api.PlacesGeo.Json] =
     q.pick.map(p => GeoPick.Wire(p.value.trim)).filter(_.value.nonEmpty) match
       case Some(p) if GeoPick.parse(p).isEmpty =>
@@ -119,7 +140,10 @@ final class PlacesControllers(
 
   /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def tree(
       id: Place.Id,
@@ -154,7 +178,10 @@ final class PlacesControllers(
     * all-or-nothing: a malformed document is a 400, never a half import.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def importPlaces(
       caller: Caller,
@@ -182,7 +209,10 @@ final class PlacesControllers(
         yield places.importPlaces(in, set)
 
   /** `POST /api/places/{id}/names` (#987) — a name a person gives a place, stored as MANUAL: no re-seed deletes it. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def addName(
       caller: Caller,
@@ -197,7 +227,10 @@ final class PlacesControllers(
       yield r
 
   /** `POST /api/places/{id}/names/remove` — only a name a person added; an imported one is refused. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def removeName(
       caller: Caller,
@@ -230,7 +263,10 @@ final class PlacesControllers(
 
   /** `POST /api/places/{id}/merge` (V080) — the place is `into`; its id resolves there from then on. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def merge(
       caller: Caller,
@@ -290,7 +326,10 @@ final class PlacesControllers(
     * `GET /api/places/{old}` and in a `place=<old>` filter alike.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def renamed(id: Place.Id, req: LabelRename): Either[Api.Error, LabelRenamed] =
     rename(
       Caller.Local,

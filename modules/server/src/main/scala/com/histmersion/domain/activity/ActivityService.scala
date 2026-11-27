@@ -8,8 +8,8 @@ import com.augustnagro.magnum.connect
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import javax.sql.DataSource
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Research › Activity: what the agents, the server and the person did, one list, newest first. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

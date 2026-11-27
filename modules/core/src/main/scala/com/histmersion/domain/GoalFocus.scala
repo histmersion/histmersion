@@ -10,8 +10,8 @@ import com.histmersion.domain.automation.ItemStatus
 import com.histmersion.domain.automation.Goal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research goals are
   * ACTIVE for model work — at most `max` at a time — which wait and why, which of their items are held, and in which

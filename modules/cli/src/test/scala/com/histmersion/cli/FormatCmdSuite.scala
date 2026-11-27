@@ -3,7 +3,7 @@ package cli
 
 import com.histmersion.config.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatReport, FormatRule, FormatSeverity}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The formatting-lint commands parse (`article lint <slug> [--fix]`, `lint --source/--article/--file`, `--strict` on
   * the writes, `places rename`), and `lint --file` checks a note's BODY: its own frontmatter is the metadata

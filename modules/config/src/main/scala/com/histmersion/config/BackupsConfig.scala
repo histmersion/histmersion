@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Where `pg_dump` archives are written (plan §1.10). `pgBinDir` is empty by default — the binaries are looked up on
   * PATH — and points at a directory holding `pg_dump`/`pg_restore` when they are installed off PATH (homebrew's libpq

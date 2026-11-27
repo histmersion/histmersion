@@ -13,7 +13,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.{
   ReaderConfig
 }
 import hearth.kindlings.jsoniterjson.{Json, JsonNumber, JsonObject}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** JSON whose shape no record of ours describes (a model's answer, a tool's input schema, a place's properties, an
   * upstream's reply), as Kindlings' AST. A number keeps the text it was read with, so a document read and written again

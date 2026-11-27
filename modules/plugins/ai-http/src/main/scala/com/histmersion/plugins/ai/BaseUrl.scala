@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import sttp.model.Uri
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A provider's base URL (`agents.providers.<name>.base-url`), parsed as the provider APIs have always been addressed:
   * an endpoint's path segments are appended to it, any query it has kept after them.

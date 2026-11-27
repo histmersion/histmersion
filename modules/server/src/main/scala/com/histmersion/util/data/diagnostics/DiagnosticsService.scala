@@ -6,7 +6,7 @@ import com.histmersion.util.data.{DataContributions, DataOwner, TableName}
 import com.histmersion.util.database.Transactor
 import com.histmersion.ByteCount
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The figures of the 360° view, read from the registry: each owner's counts, the database's size, its largest
   * registered tables and how much each owner's tables hold.

@@ -8,7 +8,7 @@ import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import java.util.Locale
 import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE ServiceLoader service (`META-INF/services/com.histmersion.plugin.Plugin`). A plugin may add to several parts
   * of the app at once; it does so in [[register]], through the context's registries.

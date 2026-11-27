@@ -6,7 +6,7 @@ import com.histmersion.domain.automation.goals.ObjectiveProgress
 import com.histmersion.domain.research.articles.ArticleService
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Research's measure of a goal's progress: the articles linked to the goal that exist, finished once their review
   * ledger holds no open MAJOR and the review manager has no item open on them.

@@ -10,7 +10,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import scala.concurrent.duration.*
 import com.histmersion.plugin.Processes
 import com.histmersion.plugin.Secret
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class OnePasswordVault(
     val name: Secret.Vault.Name,

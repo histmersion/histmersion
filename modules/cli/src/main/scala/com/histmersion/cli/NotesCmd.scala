@@ -10,8 +10,8 @@ import com.histmersion.api.ItemKind
 import com.histmersion.api.library.Title
 import com.histmersion.util.console.Console
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion notes list|show|add|edit|rm` — your notes (Markdown), each left on an item or a place on the map.
   */

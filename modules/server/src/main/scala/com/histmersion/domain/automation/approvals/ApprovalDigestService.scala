@@ -23,7 +23,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The approval digest (#3762 proposal 3): everything waiting for a person in one view ([[digest]]), ONE worklog line a
   * UTC day after `agents.autopilot.digest-hour` ([[tick]], from the managers' tick), and a whole group decided at once

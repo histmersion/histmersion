@@ -6,7 +6,7 @@ import com.histmersion.api.library.CalibreEntryCheck
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.config.CalibreCliConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion delete <citekey> [--apply] [--json]` (#969): a dry run unless `--apply`, no `--force`. */
 @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")

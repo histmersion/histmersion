@@ -9,8 +9,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import com.histmersion.server.instance.WebBundle
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pure helpers for the article pages. */
 @movesTo(FeaturePlace.Server)

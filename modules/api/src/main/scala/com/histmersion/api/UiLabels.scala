@@ -9,8 +9,8 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The label the UI shows for an identifier of any of the vocabularies — job types, wait codes, strategies, job kinds,
   * approval kinds, pipelines, manager kinds, statuses and states — else the identifier humanised.

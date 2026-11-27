@@ -23,7 +23,7 @@ import com.histmersion.domain.library.LibraryTools
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles' MCP tools, in their place among `/mcp`'s: the list, one article read, its writes, a draft checked, its
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge

@@ -6,7 +6,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
 import java.security.MessageDigest
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The lossless-WebP decoder against `libwebp`'s own (`dwebp`: the digests below are of its output for the same files),
   * the terrarium resampling, and the PNG round trip.

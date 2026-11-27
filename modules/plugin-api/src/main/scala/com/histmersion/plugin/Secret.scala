@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.{Problem, Problems, Raised}
 import hearth.kindlings.sconfigderivation.{ConfigDecodingError, ConfigReader}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A credential in a config: a REFERENCE to the value, parsed when the config is read and resolved by the host when the
   * plugin is registered (through [[Plugin.Context.secret]]). `toString` shows the reference —

@@ -9,7 +9,7 @@ import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 
 import java.nio.{ByteBuffer, ByteOrder}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The GeoTIFF reader over grids written the way GEBCO writes its own (little-endian, one band of uncompressed signed
   * 16-bit rows in strips, a tie point and a pixel scale), and the ones it refuses.

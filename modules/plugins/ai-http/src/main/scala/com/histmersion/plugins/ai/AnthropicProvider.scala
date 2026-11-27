@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Anthropic Messages API (`anthropic:<model>`) over the host's [[AiHttp]]: one call per turn, keyed by
   * `x-api-key`. Its failures read as they always have (`RuntimeException: Claude API error: …`), whole: the provider

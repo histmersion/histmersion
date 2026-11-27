@@ -15,8 +15,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind stored with
   * only a point — what the importer no longer creates ([[Gazetteer.dropsPointArea]]). The listing reads; [[remove]]

@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one article link: `<a class="art-ref" data-slug href="/article/slug">` — the shape the server renders
   * ([[Atoms.articleLink]]), so [[Preview]] previews it the same everywhere.

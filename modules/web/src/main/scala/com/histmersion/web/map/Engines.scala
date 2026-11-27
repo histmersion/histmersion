@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.web.map.maplibre.MapLibreEngine
 import scala.util.control.NonFatal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The engine the app runs on: the one place outside the adapter that names it. */
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")

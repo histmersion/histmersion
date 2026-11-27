@@ -13,8 +13,8 @@ import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, Wikid
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.
   * Pure.

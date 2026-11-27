@@ -17,7 +17,7 @@ import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Filter
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #958 — an article's coverage is computed and rendered by code from its recorded filter: the uncited remainder, the
   * status breakdown, the counts sentence, the reasons (present or missing), the Method note, the drift, and Markdown

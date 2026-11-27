@@ -24,7 +24,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** This server's upkeep as REST, MCP and the CLI reach it: the backups (a `pg_dump` as a job, its status, the listing
   * and an archive), the restore under the maintenance lock, the vacuum and the reindex the registry runs, and why a
@@ -42,7 +42,10 @@ final class MaintenanceControllers(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val backupJobs =
     BackupJobs(backups, deps.cfg.backups.requestWaitSeconds.value, deps.pins, deps.maintenance.workers)
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private val vacuumJobs =
     VacuumJobs(ds, deps.maintenance, Deps.data, () => cfg.maintenance.tables.map(t => Vacuum.Table(t.value)), deps.pins)
 
@@ -59,7 +62,10 @@ final class MaintenanceControllers(
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def reindex(after: Option[MaintenanceControllers.Cursor], limit: Option[PageSize]): Either[Api.Error, ReindexResult] =
     maintenance.guard(WriteGate.OperationName("reindex")):
@@ -87,7 +93,10 @@ final class MaintenanceControllers(
     else if vacuumJobs.isRunning then Some(Problem.Unclassified(Legacy.Text("a vacuum is still running")))
     else None
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def backupStatus: Either[Api.Error, Backup.Status] =
     backupJobs.status.toRight(
@@ -100,7 +109,10 @@ final class MaintenanceControllers(
   def backupList: Either[Api.Error, List[Backup.Info]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def backupFile(file: MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] =
     backups.archive(PreparedBackup.File(file.value))
 
@@ -118,7 +130,10 @@ final class MaintenanceControllers(
     )(quiet ?=> restoreNow(req, quiet))
 
   /** Why the restore must not start, if it must not. */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def refusedNow(req: RestoreRequest): Option[Api.Error] =
     if backupJobs.running then
@@ -141,7 +156,10 @@ final class MaintenanceControllers(
 
   /** The archive, when the database holds no source or the restore is forced (`pg_restore --clean` DROPS them). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def forced(req: RestoreRequest): Either[Api.Error, (Store.Key, RowCount)] =
     val before = backups.guardedRows
     for
@@ -150,7 +168,10 @@ final class MaintenanceControllers(
     yield (archive, before)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def restoreNow(req: RestoreRequest, quiet: WriteGate.Quiet)(using
       WritePermit

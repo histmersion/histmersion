@@ -10,7 +10,7 @@ import com.raquo.airstream.ownership.ManualOwner
 import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.web.ui.Layout
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The typed UiState: codecs, the hash round trip, merging a filter link, local persistence — and the reported layer
   * bug (#383). Runs in Node: no `location`, no `localStorage`, so the hash is not mirrored and the store is in memory.

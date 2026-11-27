@@ -10,7 +10,7 @@ import com.raquo.laminar.api.L.*
 import scala.concurrent.Future
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.{Agents, AgentsMarkdown, PlanQuota}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent models window (docs/research-embedded-agents.md §15): each step role's model CHAIN — the models tried in
   * order, the one the next call would use, why the others are passed over — and each allowance (tokens/USD per rolling

@@ -10,7 +10,7 @@ import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixR
 import com.histmersion.util.data.diagnostics.DataCount
 import com.augustnagro.magnum.DbCon
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles' share of research's data contribution: their count and their checks, with the one repair safe to make
   * without a person when it is named — the citekey of a disagreement partner a paragraph names and does not cite.

@@ -2,7 +2,7 @@ package com.histmersion
 package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Tunables that used to be `discover:` defaults and inline thresholds in `assess.py`. */
 /** Deterministic new-source search (#3761): the `indexes` a goal's queries are read from, how far back a watch reads

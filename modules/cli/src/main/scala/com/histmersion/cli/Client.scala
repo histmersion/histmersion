@@ -100,8 +100,8 @@ import com.histmersion.api.instance.CorpusCounts
 import com.histmersion.api.media.AssetLinks
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api.HttpMethod.equality
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Typed HTTP client over the `Api` contract: each call is derived from the same Tapir endpoint the server interprets,
   * so request/response shapes cannot drift. Sync (java.net.http), native-safe. `token` is the

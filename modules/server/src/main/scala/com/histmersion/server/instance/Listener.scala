@@ -6,7 +6,7 @@ import sttp.tapir.server.netty.sync.{NettySyncServer, NettySyncServerBinding}
 
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.nonempty.NonEmptyVector
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A configured server and every address it listens on (`server.host`): one netty listener per address, all serving the
   * same endpoints, each behind the same access gate, all on the one configured port (or each on an ephemeral port of

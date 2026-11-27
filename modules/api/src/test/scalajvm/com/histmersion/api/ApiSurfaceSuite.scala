@@ -10,7 +10,7 @@ import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.EventsApi
 import com.histmersion.api.instance.UiApi
 import com.histmersion.api.library.AcquireApi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The REST surface written down once (#1946): every endpoint the core API objects define is in [[Api.all]] (the list
   * the review found unused and incomplete), and every one of them appears in the documentation's REST index — so

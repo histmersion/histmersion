@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.media.AssetLink
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.personal.UnreadPage
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[OffsetPage]] (#1798 item 8): one page shape — total, offset, next — and one Markdown header and footer for every
   * offset-paged list, so a list that is cut says how to get the rest.

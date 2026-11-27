@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a layer's items become a tile's features ([[com.histmersion.api.catalogue.TileLayer]]): below `maxZoom` a tile
   * holding more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at

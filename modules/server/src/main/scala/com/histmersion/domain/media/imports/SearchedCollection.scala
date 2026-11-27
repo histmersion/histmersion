@@ -10,7 +10,7 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.media.MediaRole
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An open-access collection (#1446): how to search it for a place, read its records, and tie one to a place
   * ([[MediaMatch]]). The import around it is [[CollectionImport]]; a plugin's is a [[PluginCollection]].

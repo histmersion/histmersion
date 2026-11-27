@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.util.problem.Problems.traverseAll
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the server's class path holds (the relink kit's `modules`), and the modules the build keeps off every class
   * path (`excludes`): a plugin gets neither from its own dependencies.

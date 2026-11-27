@@ -14,7 +14,7 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The rows of the jobs that run as checkpointed steps (agent runs), recorded through the jobs area that owns the
   * `jobs` table: created, moved from state to state by compare-and-set, marked alive, annotated, reconciled at a start.

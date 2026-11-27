@@ -3,8 +3,8 @@ package domain.catalogue.places
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Sql, "reads and writes the place precision column")
 private[places] object PlaceColumns:

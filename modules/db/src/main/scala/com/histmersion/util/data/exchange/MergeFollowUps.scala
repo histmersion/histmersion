@@ -7,7 +7,7 @@ import com.augustnagro.magnum.DbCon
 import java.util.UUID
 import com.histmersion.api.automation.Queue
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a merge leaves to do, written in the merge's own transaction by the owner of the work lists: a review of each
   * article the merge changed, and a line in the worklog.

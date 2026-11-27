@@ -8,7 +8,7 @@ package domain.catalogue.places
   */
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object PlaceSeed:
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */

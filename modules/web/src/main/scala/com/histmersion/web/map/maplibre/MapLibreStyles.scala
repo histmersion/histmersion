@@ -17,7 +17,7 @@ import com.histmersion.web.map.BaseMapSpec
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.basemap.BaseMapSource
 import com.histmersion.api.BBox
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's styles for the app's base maps ([[BaseMapSpec]]): the two vector styles are MapLibre style documents
   * in the web resources (`web/styles/<style>.json`, every value with the rule it follows, docs/research-map-styles.md),

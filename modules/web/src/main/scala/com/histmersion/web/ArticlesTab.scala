@@ -17,7 +17,7 @@ import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.library.Title
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Markdown
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object ArticlesTab:
 

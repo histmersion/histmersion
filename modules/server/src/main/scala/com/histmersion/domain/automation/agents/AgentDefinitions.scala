@@ -16,7 +16,7 @@ import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.util.storage.SafePath
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the definitions: parsing a definition and a skill, the placeholders, and the system prompt a
   * headless run of a definition gets (the same function for every runtime, so the generated Claude Code agent and the

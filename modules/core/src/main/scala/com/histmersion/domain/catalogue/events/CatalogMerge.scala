@@ -9,7 +9,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.EventSummary
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of events from catalogues: the providers' identities and terms, the mapping of their datings onto the
   * four-point time-span, and how records from several catalogues and the events already stored are merged into ONE

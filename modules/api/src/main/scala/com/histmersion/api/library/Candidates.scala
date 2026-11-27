@@ -8,7 +8,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Candidates:
   type AuthorId = AuthorId.T

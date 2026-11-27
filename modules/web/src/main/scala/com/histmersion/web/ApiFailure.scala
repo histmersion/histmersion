@@ -12,7 +12,7 @@ import org.scalajs.dom
 import sttp.client4.*
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A request the server answered with an error status: the status and the server's own message. `unauthorized` is a
   * request the server let in only with its API key, sent without it or with a wrong one (401; a 403 is a refusal the

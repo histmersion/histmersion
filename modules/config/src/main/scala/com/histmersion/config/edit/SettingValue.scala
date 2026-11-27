@@ -15,8 +15,8 @@ import org.ekrich.config.{
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One value to write into the config file. */
 @atBoundary(BoundaryKind.Config, "turns a typed setting value into the HOCON value written to the file")

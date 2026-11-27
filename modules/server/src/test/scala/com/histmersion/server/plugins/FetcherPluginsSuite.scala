@@ -23,7 +23,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.plugin.Doi
 import com.histmersion.config.ConfigReload
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own acquisition plugins, found on the class path and registered through the plugin host like any
   * plugin, with the host's `histmersion.acquire` settings supplied: on by default in today's order, each one switched

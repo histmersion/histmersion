@@ -9,7 +9,7 @@ import com.histmersion.api.UiLabels
 import com.histmersion.api.Plural
 import com.histmersion.api.Paging
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a filter-driven list tab shows: the rows loaded from the server (a page at a time), how many the list reveals,
   * the server's total, the count line's extras, and whether a request is out or failed. Pure.

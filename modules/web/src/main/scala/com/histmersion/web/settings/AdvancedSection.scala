@@ -9,7 +9,7 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › Advanced (all settings): every setting of the settings file, generated from the defaults
   * (reference.conf), grouped by its block with the words that document each — for what the other pages do not show. One

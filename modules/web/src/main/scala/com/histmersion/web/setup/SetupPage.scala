@@ -24,7 +24,7 @@ import com.histmersion.api.ByteCount
 import com.histmersion.web.ErrorLine
 import com.histmersion.api.BBox
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The first-run setup (`/setup`): seven steps with safe defaults — finding open papers, the maps, the background data,
   * research agents and Calibre (both optional) — then Ready. Nothing is written or downloaded until it is finished;

@@ -6,7 +6,7 @@ import com.histmersion.domain.personal.PersonalState.StoredMark
 import com.histmersion.domain.personal.{MarkTarget, MarkTime}
 import com.histmersion.domain.{Described, ItemRef}
 import com.histmersion.domain.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Whether the person has read a record, and when they last opened it, as they see it: the record's key and title now.
   */

@@ -16,7 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the library's workflows are given by the composition: the work lists, the write gate, the library's own
   * controllers, the jobs, and what they ask of the other domains — a place name's point, the stored sources an article

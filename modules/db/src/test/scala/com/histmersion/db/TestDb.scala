@@ -12,7 +12,7 @@ package db
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.database.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object TestDb:
   val Env = "HISTMERSION_TEST_DB_URL"
 

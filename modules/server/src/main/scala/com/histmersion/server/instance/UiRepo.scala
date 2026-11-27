@@ -9,7 +9,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Timestamps
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** The web UI's toolbar notices (migration V083, core [[UiNotices]]): each watched list's count and newest change, read
   * in ONE statement; the per-window "seen" marks are the person's (`domain.personal.seen`). Stateless.

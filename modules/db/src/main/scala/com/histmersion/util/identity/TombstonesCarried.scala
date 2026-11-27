@@ -7,7 +7,7 @@ import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank,
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the identity area: the tombstones, written before every other row (a row the other side
   * deleted makes room for one it created in its place).

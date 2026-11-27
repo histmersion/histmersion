@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.api.Offset
 import com.histmersion.api.RowCount
 import com.histmersion.web.ErrorLine
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One page of a Library list as the server answered it: its rows, where it starts, and how many the filter selects in
   * all; `loading` while a newer page is on its way, `error` when the last one failed.

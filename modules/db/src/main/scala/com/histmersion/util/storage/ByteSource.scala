@@ -4,8 +4,8 @@ package util.storage
 import java.io.{BufferedInputStream, ByteArrayInputStream, InputStream}
 import java.nio.file.{Files, Path}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Bytes that can be read from their start as often as needed, and their length: a bundle on disk, a file a store
   * keeps, an upload. The bundle code reads one through this, never a path.

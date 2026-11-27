@@ -9,7 +9,7 @@ import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
 import com.histmersion.api.MapStack
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `window.histmersionMap`: the map from the browser's console and the browser regressions (modules/web/test), in the
   * app's own terms — whatever library draws it. Read-mostly: the view can be set; nothing here writes data. Zooms are

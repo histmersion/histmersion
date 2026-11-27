@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object MarkerMotion:
 
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")

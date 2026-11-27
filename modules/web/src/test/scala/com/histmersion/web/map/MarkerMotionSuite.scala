@@ -1,7 +1,7 @@
 package com.histmersion
 package web.map
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class MarkerMotionSuite extends munit.FunSuite:
 

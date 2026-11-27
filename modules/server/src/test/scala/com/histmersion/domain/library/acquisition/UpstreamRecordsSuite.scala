@@ -11,7 +11,7 @@ import com.histmersion.upstreams.identifiers.Identifiers
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The upstreams' records as the wire shows them: a work keyed by the citekey the corpus gives it, a citing work and a
   * reference with the wire's defaults; and the upstreams' identifier rules equal to the wire's own over the same

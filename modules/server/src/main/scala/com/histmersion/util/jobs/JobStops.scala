@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The person's requests to stop running background jobs, and how each paused job goes on. Held in memory by the server
   * for its lifetime: a stop is asked of a job running in this process, and a restart loses every paused job's way to go

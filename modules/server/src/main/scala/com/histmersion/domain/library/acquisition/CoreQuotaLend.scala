@@ -7,7 +7,7 @@ import com.histmersion.plugin.Header
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.UpstreamQuota
 import com.histmersion.domain.library.acquisition.CoreBudget
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server's CORE budget as the plugin SPI lends it ([[UpstreamQuota]], `core`): the same [[CoreBudget]] the
   * new-source search's CORE index spends, under the limits `acquire.core.*` sets. A purpose is `lookup` or `search`.

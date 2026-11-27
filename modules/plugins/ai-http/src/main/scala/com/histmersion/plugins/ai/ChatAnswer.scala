@@ -11,8 +11,8 @@ import com.histmersion.plugin.{AiStop, AiTurn, AiUsage}
 import com.histmersion.plugin.AiTool
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiMessage
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an OpenAI-compatible chat-completions API answered, read as these providers have always read it: the first
   * choice's text and tool calls (a call without an id is `call_<n>`, without a name `unknown`), its finish reason, the

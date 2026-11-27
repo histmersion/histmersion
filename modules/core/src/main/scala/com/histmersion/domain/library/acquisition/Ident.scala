@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem.{Invalid, Raw}
 
 import com.histmersion.domain.library.{ArxivId, Doi as DoiValue}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An identifier a person gives for a work: a DOI, an arXiv id, or the citekey of a source in the corpus. */
 enum Ident:

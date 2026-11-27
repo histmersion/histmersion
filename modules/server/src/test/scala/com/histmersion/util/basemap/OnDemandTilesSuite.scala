@@ -16,7 +16,7 @@ import com.histmersion.util.storage.{ByteSource, Reservation}
 import java.nio.file.{Files, Path}
 import java.util.concurrent.atomic.AtomicInteger
 import com.histmersion.api.basemap.Basemap
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The on-demand relief: the bounded tile cache (eviction by last use, kept across a restart) and the reads from a fake
   * provider — once per tile, a missing tile remembered, nothing asked while offline, a replaced planet file read again,

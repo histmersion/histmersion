@@ -12,8 +12,8 @@ import sttp.tapir.{Schema, SchemaType}
 import io.github.iltotore.iron.constraint.any.Pure
 
 import util.json.{JsonCodec, RawJson}
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A write input's JSON codec (`derives StrictJson`): a derived decoder ignores keys it does not know, so a misplaced
   * or misspelt key decodes to "change nothing"; a write input refuses unknown keys instead, naming the keys it takes.

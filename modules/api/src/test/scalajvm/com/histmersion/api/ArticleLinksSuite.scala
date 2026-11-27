@@ -10,7 +10,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ArticleLinksSuite extends munit.FunSuite:
 

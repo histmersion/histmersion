@@ -27,7 +27,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.time.SystemTimer
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `lint --rule place-imported-point-area` (2026-10-09), against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the listing (counts, every finding holder, evidence keeping a place) and `--fix` — bounded per call,

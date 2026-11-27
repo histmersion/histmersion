@@ -8,7 +8,7 @@ import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Fanning a bubble's points out around it (the "spiderfy" of the marker-cluster plugins): a ring for a few, a spiral
   * for more, each point on a thin leg back to the spot. Pure but for the legs' markup.

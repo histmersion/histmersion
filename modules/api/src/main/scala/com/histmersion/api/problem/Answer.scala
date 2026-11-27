@@ -16,15 +16,18 @@ import util.problem.{Problem, Problems}
 import util.problem.Problem.*
 import util.problem.Text.sentence
 import Answer.Entry
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The body of every failed request: `{"problems": [{"group", "case", "data", "text"}]}`, always a list. `data` is the
   * case's fields as its derived codec writes them; `text` is its English sentence, for `curl` and for clients that do
   * not render problems themselves. The companion maps a problem to its HTTP status, by group (and by case where a group
   * mixes them).
   */
-@atBoundary(BoundaryKind.Render, "maps every problem to its HTTP status and to the JSON body that lists the problems with their derived data")
+@atBoundary(
+  BoundaryKind.Render,
+  "maps every problem to its HTTP status and to the JSON body that lists the problems with their derived data"
+)
 final case class Answer(problems: Vector[Entry]) derives JsonCodec, KindlingsSchema
 
 object Answer:
@@ -43,7 +46,10 @@ object Answer:
     /** The status of a response that fails with this problem. A path outside the directory it is confined to is one the
       * caller chose: refused (403), not a failure of the server.
       */
-    @tolerated(LintRule.Unclassified, "pending G60 step 7 (the api's renderer names every case until Unclassified goes)")
+    @tolerated(
+      LintRule.Unclassified,
+      "pending G60 step 7 (the api's renderer names every case until Unclassified goes)"
+    )
     def status: StatusCode = problem match
       case _: Invalid                     => StatusCode.BadRequest
       case _: NotFound                    => StatusCode.NotFound
@@ -211,7 +217,10 @@ object Answer:
     def current: Entry = translations.get(Former(entry.group, entry.`case`)).fold(entry)(_(entry))
 
     /** The problem one entry of the body names. */
-    @tolerated(LintRule.Unclassified, "pending G60 step 7 (the api's renderer names every case until Unclassified goes)")
+    @tolerated(
+      LintRule.Unclassified,
+      "pending G60 step 7 (the api's renderer names every case until Unclassified goes)"
+    )
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def problem: Either[String, Problem] =
       val now = entry.current
@@ -267,7 +276,10 @@ object Answer:
 
   extension (problem: Problem)
     /** The case's name and its fields, as the group's derived codec writes them. */
-    @tolerated(LintRule.Unclassified, "pending G60 step 7 (the api's renderer names every case until Unclassified goes)")
+    @tolerated(
+      LintRule.Unclassified,
+      "pending G60 step 7 (the api's renderer names every case until Unclassified goes)"
+    )
     private def encoded: (String, Json) =
       val wrapped: JsonObject = problem match
         case p: Invalid      => p.asJson(using invalid).asObject.getOrElse(JsonObject.empty)

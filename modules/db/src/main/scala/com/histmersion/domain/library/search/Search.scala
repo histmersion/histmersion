@@ -7,7 +7,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Postgres full-text search, as composable SQL fragments (plan §1.4).
   *

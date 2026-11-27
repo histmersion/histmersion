@@ -10,7 +10,7 @@ import com.histmersion.domain.catalogue.periods.PeriodOFetch
 import scala.collection.immutable.ListMap
 import com.histmersion.api.catalogue.Gazetteer
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own network gazetteers — first-party plugins (`gazetteer-cliopatria`, `gazetteer-awmc`,
   * `gazetteer-chronontology`), each enabled by default and switched off by

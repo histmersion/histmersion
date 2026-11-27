@@ -10,14 +10,17 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Period
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The periods' operations as REST, MCP and the CLI reach them: one period with what it is part of and how it is
   * divided, the search, and the seed, a sent dataset and the live dump written in.
   */
 final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, maintenance: WriteGate):
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def period(id: HistoricalPeriod.Id): Either[Api.Error, Period.Detail] =
     periods
@@ -49,7 +52,10 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def importDataset(
       caller: Caller,
       collections: List[PeriodSources.Collections],
@@ -64,7 +70,10 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
 
   /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def fetch(
       caller: Caller,

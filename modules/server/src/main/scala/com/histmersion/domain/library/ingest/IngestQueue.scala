@@ -49,7 +49,7 @@ import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ingest's job queue (plan §1.8): a job is created and queued, and a worker of the bounded pool calls the
   * converter on the stored original, then writes body + figures — a `patch` when the source already exists (so agent

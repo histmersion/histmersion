@@ -3,7 +3,7 @@ package web.library
 
 import com.histmersion.api.library.Sort
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How Library's table of sources is ordered — its own choice, kept in the address (`lsort=`), apart from Explore's:
   * the reader names an order of publication here, not a ranking of the map's results.

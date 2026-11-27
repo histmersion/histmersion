@@ -18,7 +18,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the collections' operations read and write of the library, lent by the composition: the records (as their
   * endpoints write them), the Calibre push metadata and gaps, the stored originals, the acquisition list, the ingest

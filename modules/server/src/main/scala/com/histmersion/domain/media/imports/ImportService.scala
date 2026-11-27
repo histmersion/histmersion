@@ -17,7 +17,7 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.catalogue.places.Wikidata
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the media imports ask about and what they recorded asking (#1446): the places on the map and the events a
   * provider has not been asked about, the facts a collection's match reads of a place, and the checks — that a provider
