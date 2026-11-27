@@ -309,7 +309,7 @@
       "Doe, Jane"
     ],
     "citekey" : "zzhill1990_battle",
-    "createdAt" : "2026-11-24",
+    "createdAt" : "2026-01-02",
     "creator" : {
       "agent" : null,
       "job" : null,
@@ -379,7 +379,7 @@
       "Doe, Jane"
     ],
     "citekey" : "zzvolc2004_ash",
-    "createdAt" : "2026-11-24",
+    "createdAt" : "2026-01-02",
     "creator" : {
       "agent" : null,
       "job" : null,

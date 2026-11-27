@@ -745,7 +745,7 @@ exit 0
       "agent" : null,
       "job" : null
     },
-    "createdAt" : "2026-11-24"
+    "createdAt" : "2026-01-02"
   },
   "findings" : [
   ],
