@@ -12,3 +12,4 @@ object Uses:
   def plain(copies: Int): String = s"$copies copies"
   def counting(): Int = 3
   def called(title: Title): String = s"$title, ${counting()} times"
+  def numbered(count: Count): String = s"entry ${count.value}"

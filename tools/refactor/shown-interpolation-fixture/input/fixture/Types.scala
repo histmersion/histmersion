@@ -14,3 +14,7 @@ object Wire extends RefinedType[String, Pure]:
 
 type Name = Name.T
 object Name extends RefinedType[String, Pure]
+
+type Count = Count.T
+object Count extends RefinedType[Int, Pure]:
+  given Display[T] = Display(count => s"${count.value}")
