@@ -18,7 +18,7 @@ import com.histmersion.util.time.Pause
 import com.histmersion.config.UserPaths
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.domain.automation.approvals.ApprovalEffects
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the composition root gives the engine as it builds it: the settings and the database of the generation it runs
   * on, the work lists, how work keeps its generation, the plugins' AI providers, the agent roster, and — asked once the

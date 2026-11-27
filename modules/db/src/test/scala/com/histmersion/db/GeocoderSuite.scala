@@ -28,7 +28,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The geocoder against a real gazetteer (HISTMERSION_TEST_DB_URL; skipped otherwise), seeded to mirror the failures of
   * 2026-10-06 (#981). Every fixture name starts with "Zz" and every id with `zzgeo_`, so whatever else the shared test

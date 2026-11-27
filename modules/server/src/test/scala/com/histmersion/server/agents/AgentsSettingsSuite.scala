@@ -23,7 +23,7 @@ import com.histmersion.domain.automation.AgentRole
 import com.histmersion.domain.automation.Approval
 import com.histmersion.config.AgentApprovalsConfig
 import com.histmersion.config.Minutes
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agents' settings as the server reads them from config: approval modes, roles, providers and their defaults, the
   * enrichment guards, a plan pool's read schedule.

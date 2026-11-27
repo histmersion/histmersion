@@ -5,7 +5,7 @@ import com.histmersion.api.plugins.PluginStatus
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.plugin.Access
 import com.histmersion.pluginhost.{FetchChain, Registries}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the LEGAL acquisition chain is, as the acquisition list's re-check compares it: the legal fetchers in the order
   * they run, each fetcher plugin's version, state and effective settings (secrets as their references, as every report

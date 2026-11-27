@@ -9,7 +9,7 @@ import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's half of the keyless portals (#1446): licences given as Creative Commons URLs, gazetteer ids in their URI
   * forms and the id a place id carries, and the rule that ties a record to a place by its own place id. The real Open

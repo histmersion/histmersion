@@ -12,7 +12,7 @@ import com.histmersion.api.Years
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.Geo
 import com.histmersion.api.RowCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object TiledPoints:
   /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown

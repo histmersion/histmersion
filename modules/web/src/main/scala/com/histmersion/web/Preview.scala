@@ -31,7 +31,7 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.Paging
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.ImageSize
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
   * source) or `data-slug` (an article) — server-rendered anchors in a window or on a standalone page, and the web UI's

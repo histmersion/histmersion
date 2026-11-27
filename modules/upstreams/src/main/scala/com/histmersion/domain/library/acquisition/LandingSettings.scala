@@ -4,7 +4,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.upstreams.landing.RepositoryLanding
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion.acquire.landing`: whether a fetch resolves repository landing pages, how many it reads per work, and
   * the host and platform lists of [[RepositoryLanding.Rules]] (each comma-separated).

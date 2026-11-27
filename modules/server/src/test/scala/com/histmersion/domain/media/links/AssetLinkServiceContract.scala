@@ -15,7 +15,7 @@ import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the figures' links answer, the same on the database and in memory: a link needs its figure, follows its rename
   * and goes with it.

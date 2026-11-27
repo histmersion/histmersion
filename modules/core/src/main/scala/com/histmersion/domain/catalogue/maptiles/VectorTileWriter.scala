@@ -4,7 +4,7 @@ package domain.catalogue.maptiles
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Writes Mapbox vector tiles (version 2, https://github.com/mapbox/vector-tile-spec) of point layers. Each key and
   * value is stored once per layer. Pure.

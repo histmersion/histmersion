@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class InitPlan(
     gazetteer: InitPlan.Gazetteer = InitPlan.Gazetteer(false),

@@ -4,7 +4,7 @@ package domain.catalogue.periods
 import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetRegion}
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A `periods` row as the reads select it: the span's inclusive bounds read back. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

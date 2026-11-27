@@ -4,8 +4,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.Paging
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Keyset paging of a newest-first list (`core.Paging`): rows ordered by `created_at DESC, id DESC`, a cursor being the
   * id of a row of the same table. The cursor's `created_at` is looked up by a row subquery, so the comparison is at the

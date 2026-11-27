@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and OCR converter as child
   * processes (`com.histmersion.server.Supervisor`). `home` is the bundle root holding `pg/` and `converter/` (empty =

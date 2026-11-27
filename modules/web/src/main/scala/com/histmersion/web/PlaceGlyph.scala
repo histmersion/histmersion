@@ -9,7 +9,7 @@ import com.histmersion.api.UiLabels
 import com.histmersion.api.Geo
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a gazetteer place is drawn on the map, from its kind and its geometry:
   *   - [[Area]]: a polygon — its outline, as before;

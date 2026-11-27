@@ -14,7 +14,7 @@ import java.time.Instant
 import javax.sql.DataSource
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class JobRunsDbSuite extends JobRunsContract("db"):
   private val testDb = TestDb.url

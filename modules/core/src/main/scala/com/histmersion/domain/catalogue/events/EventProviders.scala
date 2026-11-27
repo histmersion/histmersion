@@ -12,7 +12,7 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.EventSummary
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The rules the host's event import runs every catalogue's records through (#1449) — the thresholds, the parts read
   * under them — and Wikidata's `wbgetentities`, which the host asks for the labels and aliases of Wikidata's events and

@@ -3,7 +3,7 @@ package api.catalogue
 
 import com.histmersion.api.{Plural, YearFmt}
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object PeriodsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

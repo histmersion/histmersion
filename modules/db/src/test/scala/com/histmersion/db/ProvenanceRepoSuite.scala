@@ -17,7 +17,7 @@ import com.histmersion.api.library.{MetadataPatch, Provenance, Source}
 import com.histmersion.util.database.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A provenance is free text: every write path stores it as written. Against a real Postgres (HISTMERSION_TEST_DB_URL);
   * skipped otherwise.

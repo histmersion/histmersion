@@ -24,7 +24,7 @@ import com.histmersion.domain.automation.AgentRole
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.ModelChains
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):

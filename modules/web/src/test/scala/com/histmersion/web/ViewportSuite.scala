@@ -3,7 +3,7 @@ package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.instance.UiConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The narrow (phone) layout's decisions, purely: which mode a width is, and how the bottom sheet steps and snaps. What
   * the modes look like is the stylesheet's.

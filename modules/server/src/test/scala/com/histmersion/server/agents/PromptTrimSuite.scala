@@ -17,7 +17,7 @@ import com.histmersion.domain.automation.agents.{
 import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a headless step is sent every turn, and that trimming it lost no rule (2026-10-09): the audience markers, the
   * reviewers' edition of the writing guide, and a ceiling per review role so the prompt does not grow back unnoticed.

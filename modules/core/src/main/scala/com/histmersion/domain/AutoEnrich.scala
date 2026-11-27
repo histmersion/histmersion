@@ -8,8 +8,8 @@ import com.histmersion.api.given
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Manager
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `agents.auto-enrich`: after an ingest job stores a source, an `enrich-source` run is queued for it — unless agents
   * are off, the switch is off, or the source is ALREADY ENRICHED. Pure: the server gathers the facts, this decides and

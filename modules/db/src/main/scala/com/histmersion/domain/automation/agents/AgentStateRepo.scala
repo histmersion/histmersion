@@ -6,8 +6,8 @@ import com.histmersion.api.automation.AgentStateEntry
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agents' scratch state (`agent_state`): a JSON value under a key, with when it was last set. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

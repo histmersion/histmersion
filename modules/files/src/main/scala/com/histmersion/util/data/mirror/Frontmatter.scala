@@ -3,8 +3,8 @@ package util.data.mirror
 
 import org.yaml.snakeyaml.{DumperOptions, Yaml}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A Markdown mirror note's YAML frontmatter: its keys in the order they are written (a value is a plain or Java value
   * snakeyaml writes; `null` writes `null`), and the note it heads.

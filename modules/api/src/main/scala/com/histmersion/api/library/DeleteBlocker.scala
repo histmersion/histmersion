@@ -11,7 +11,7 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.catalogue.{EventEdge, EventParticipant}
 import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class DeleteBlocker(

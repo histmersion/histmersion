@@ -15,7 +15,7 @@ import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.marks.ItemMenu
 import com.histmersion.web.marks.ItemActions
 import com.histmersion.web.marks.NoteList
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An item chosen in the results or on the map, shown in place of the results: "← Results" back to them, its card, "Pin
   * as window" (it floats over whatever is shown next) and "Open in a new tab"; for a place, what its record holds

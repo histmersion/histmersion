@@ -32,8 +32,8 @@ import com.histmersion.domain.catalogue.places.GazetteerControllers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Named periods (#719) and first-run data (#720): the period-preset write path and the `init` job.
   *

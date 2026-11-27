@@ -13,7 +13,7 @@ import com.histmersion.api.catalogue.Lpf
 
 import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The committed Pleiades seed and `lint --rule place-kind` agree (2026-10-09): `db/places/build.py` derives every kind
   * with the same type rules as [[PlaceReview]], so the lint proposes no change to a freshly seeded place — a re-seed

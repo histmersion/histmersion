@@ -30,7 +30,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The JSON schemas sttp-ai sends to a provider come from the same Kindlings-derived Tapir schemas the MCP tools
   * advertise — no second schema stack.

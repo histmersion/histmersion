@@ -6,7 +6,7 @@ import com.histmersion.plugin.Year
 import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Licence
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class WorkRef(
     doi: Option[Doi] = None,
     openalexId: Option[WorkRef.OpenalexId] = None,

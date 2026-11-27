@@ -5,7 +5,7 @@ import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
 import com.histmersion.api.jobs.JobDetail
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's jobs, as the catalogue registers them: a gazetteer's download, the place hierarchy, the sites'
   * types.

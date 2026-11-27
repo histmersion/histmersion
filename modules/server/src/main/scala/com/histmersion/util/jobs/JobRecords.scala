@@ -18,7 +18,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.Queue
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The rows of the jobs that run as one piece (an OCR, a re-OCR): created `queued`, moved from state to state by
   * compare-and-set, annotated with their progress. The jobs area owns the `jobs` table; a domain that runs such jobs

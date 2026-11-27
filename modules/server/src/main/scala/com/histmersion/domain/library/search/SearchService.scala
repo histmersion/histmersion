@@ -8,7 +8,7 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.api.library.{Filter, SearchResult}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter's reads over sources: the search, the counts of what a filter selects, and the rows the histogram and its
   * tree bucket. A mechanism over the filter's SQL (full-text ranking and headlines, PostGIS boxes, the gazetteer's

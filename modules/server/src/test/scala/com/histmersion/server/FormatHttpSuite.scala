@@ -24,7 +24,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The formatting lint over real HTTP and MCP: an article write answers with its formatting problems (and
   * `?strict=true` refuses one with an error), `GET …/lint` and `POST …/lint/fix` for an article and a source,

@@ -5,7 +5,7 @@ import com.histmersion.api.media.AssetLink
 import com.histmersion.domain.media.assets.{HeldAsset, HeldMediaLink}
 import com.histmersion.domain.media.imports.HeldCheck
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Media's rows held in memory, one record the `InMemory` services of its features share (each reads and changes its
   * own part, through lenses): the pictures, where they are shown, the figures' links and the last id given one, and

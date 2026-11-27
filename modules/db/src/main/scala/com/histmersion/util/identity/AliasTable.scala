@@ -6,7 +6,7 @@ import javax.sql.DataSource
 import com.histmersion.api.aliases.AliasKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an owner keeps a kind's records and their old identifiers: the table and its identifier column, the alias
   * table and its column naming the record. ONE resolution of an old identifier for every kind, so the rule cannot

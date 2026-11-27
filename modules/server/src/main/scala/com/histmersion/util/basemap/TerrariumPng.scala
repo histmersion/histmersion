@@ -6,7 +6,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.util.zip.{CRC32, Deflater, Inflater}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Elevation tiles as Terrarium PNGs (the encoding MapLibre's `raster-dem` reads as `terrarium`): metres + 32768 spread
   * over red (×256), green (×1) and blue (×1/256), one 8-bit RGB pixel a sample.

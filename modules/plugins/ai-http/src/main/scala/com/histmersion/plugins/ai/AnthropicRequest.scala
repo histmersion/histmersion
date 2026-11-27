@@ -12,8 +12,8 @@ import com.histmersion.plugin.AiTurn
 import com.histmersion.plugin.AiHttp
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.AiTool
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One call to the Anthropic Messages API (`POST v1/messages`), its body as the API takes it: the model, the
   * conversation as user and assistant messages of content blocks (tool calls as `tool_use`, their results as

@@ -11,7 +11,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.instance.BuildId
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Boots the whole server on an ephemeral port against a real Postgres (HISTMERSION_TEST_DB_URL) and hits every
   * surface. Skipped when no test DB is configured.

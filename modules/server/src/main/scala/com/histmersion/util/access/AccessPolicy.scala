@@ -9,7 +9,7 @@ import scala.util.Try
 import com.histmersion.config.{AuthConfig, ServerConfig}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Problem, Problems}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Who the server lets in, read from the `auth` settings once, when the listener is bound: each listed network and what
   * a request from it gets, the names a request may give as its `Host`, the page origins that may send changes besides

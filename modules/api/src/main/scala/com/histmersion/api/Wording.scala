@@ -15,8 +15,8 @@ import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.api.automation.AgentMode
 import com.histmersion.api.automation.ProviderKind
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @movesTo(FeaturePlace.UtilCommon)

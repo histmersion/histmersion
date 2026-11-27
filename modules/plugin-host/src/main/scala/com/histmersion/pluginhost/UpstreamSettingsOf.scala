@@ -4,7 +4,7 @@ package pluginhost
 import com.histmersion.config.{AcquireConfig, LandingConfig}
 import com.histmersion.domain.library.acquisition.{CoreEndpoint, Endpoint, LandingSettings, SearchDefaults}
 import com.histmersion.upstreams.settings.UpstreamSettings
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: AcquireConfig)
   /** The upstreams' settings as `histmersion.acquire` holds them: what the host's own upstream clients are built with,

@@ -8,7 +8,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Stalls.*
 import com.histmersion.api.automation.StallsMarkdown
 import com.histmersion.api.automation.Stalls
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The stall report, pure (#3762 proposal 4): which goals count as stalled, the one reason each stands still (in order:
   * draining, a person, a hold, paused managers, a budget, quota, the queue, a block, running, a failed item, no

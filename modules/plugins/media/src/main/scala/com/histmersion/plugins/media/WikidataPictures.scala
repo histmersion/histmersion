@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `wikidata`: the pictures of places and events from their Wikidata items, licensed on Wikimedia Commons.
   *

@@ -3,7 +3,7 @@ package util.basemap
 import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The relief deeper than any tile the server holds (docs/research-map-styles.md §4.4): a relief tile of zoom `z` that
   * neither the extract, a focus region nor the on-demand relief has is cut from its nearest ancestor that exists and

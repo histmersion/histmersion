@@ -15,8 +15,8 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Changes an agent run PROPOSES to the corpus rather than makes — a source's status, a typed disagreement edge — and
   * the pure rules that decide whether code applies one at once or records it for a person

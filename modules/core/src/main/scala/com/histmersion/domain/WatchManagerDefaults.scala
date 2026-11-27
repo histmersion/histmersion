@@ -3,8 +3,8 @@ package domain
 
 import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A research area's watcher when it saves no settings of its own (`agents.managers.watch`): its runs at once and the
   * daily cap of its opt-in auto-ingest.

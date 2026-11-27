@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One collection. Called by the host from one import at a time; keep no per-place state of your own. Failures are
   * values (`Left`); an exception is caught by the host and reported for that place.

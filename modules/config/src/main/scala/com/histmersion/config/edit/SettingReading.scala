@@ -2,7 +2,7 @@ package com.histmersion
 package config.edit
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** One setting as it stands: what the settings file writes for it, what applies (the environment, the file, the
   * default), and where that comes from. For a credential, `credential` is how it is held (`shown` the reference, where

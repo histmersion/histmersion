@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `compile-article`: the filter is read up to `maxSources` sources (one extraction each), each extraction sees
   * `recordChars` of the record (summary, findings, notes, then the body) and keeps at most `maxClaims` claims; the

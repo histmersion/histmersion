@@ -4,7 +4,7 @@ package api.library
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key: ExternalId.Key = ExternalId.Key(s"${scheme.wire}:$id")

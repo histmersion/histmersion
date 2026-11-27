@@ -3,7 +3,7 @@ package db
 
 import com.histmersion.domain.media.assets.{NewFigure, Reconciled}
 import com.histmersion.util.database.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a re-conversion does to the asset rows already stored (#826) — pure, no database. */
 class AssetReconcileSuite extends munit.FunSuite:

@@ -21,7 +21,7 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
   * its cron and its selection put in its queue, the run each of its items starts, what a finished run left and what

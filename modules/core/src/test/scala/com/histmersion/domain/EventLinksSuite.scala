@@ -37,7 +37,7 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.api.catalogue.Place
 import com.histmersion.domain.catalogue.events.EventProviders
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1449: the deterministic matcher (time/space overlap, name matches, no attestation without a passage), the leads, an
   * article's catalogue leads, and the site types from each gazetteer.

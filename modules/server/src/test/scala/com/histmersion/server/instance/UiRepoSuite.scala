@@ -17,7 +17,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The toolbar's notices against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise: an approval's proposal
   * and its decision both count as a change, a goal's edit does, the open ones are counted, V083 left a baseline mark

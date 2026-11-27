@@ -29,7 +29,7 @@ import java.nio.file.{Files, Path}
 import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What every turn of an agent step re-sends before the model reads the user message: the role's system prompt, its MCP
   * tool definitions (as `/mcp/agent/<role>` lists them) and the typed answer's schema (Claude Code's `StructuredOutput`

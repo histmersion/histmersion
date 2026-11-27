@@ -6,7 +6,7 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.CandidateWatch
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition's records the in-memory services share: the Retraction Watch mirror, the recorded assessments (each
   * with its stamp), each goal's candidates and watches, the metered upstreams' budgets and the acquisition list's

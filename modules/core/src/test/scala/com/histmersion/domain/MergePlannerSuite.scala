@@ -40,7 +40,7 @@ import com.histmersion.api.RegisteredPlanMatches
 import com.histmersion.api.library.Citekey
 import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `merge plan` as a pure function over the crafted fixture (docs/research-merge-import.md §8): the whole issue list in
   * one run, conditional issues, resolutions (stale, invalid, partial), the editions policy, and the properties —

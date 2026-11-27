@@ -23,7 +23,7 @@ import com.histmersion.api.library.{
 }
 import com.histmersion.api.Api
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The typed client for the library's source collections (`CollectionsApi`), over [[Client]]'s transport. */
 final class CollectionsClient(c: Client, name: Collection.Name):

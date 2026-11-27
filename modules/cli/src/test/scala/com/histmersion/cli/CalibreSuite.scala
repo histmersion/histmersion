@@ -25,7 +25,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionUpdateAll
 import com.histmersion.api.media.MediaImportRequest
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host-side Calibre integration: both readers produce the same book, the metadata guard refuses junk, and the
   * commands assembled for `calibredb` are the ones we mean to run.

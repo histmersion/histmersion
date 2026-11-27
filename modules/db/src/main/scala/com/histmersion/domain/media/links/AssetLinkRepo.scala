@@ -11,8 +11,8 @@ import com.histmersion.domain.media.imports.Target
 import com.histmersion.domain.media.assets.AssetInfoRow
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's figure tied to a place, an event, a finding, a source or an article (plan §1.6): what it depicts, where
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.

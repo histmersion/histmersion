@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.plugin.Plugin
 import com.histmersion.pluginhost.PluginHost
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A first-party plugin the host still supplies itself, with settings `C` decoded from its block by `C`'s reader: the
   * command-line AI runtimes, which read the host's own settings at each use. Its defaults resource

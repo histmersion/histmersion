@@ -25,7 +25,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.
@@ -43,6 +43,7 @@ private[citations] object CitationRepo:
     NeighborTarget.Unresolved
   )
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[NeighborRow] = DbCodec.derived
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[ContradictionRow] = DbCodec.derived

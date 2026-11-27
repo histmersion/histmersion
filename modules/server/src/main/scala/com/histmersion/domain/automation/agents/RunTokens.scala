@@ -5,7 +5,7 @@ import io.netty.handler.codec.http.*
 
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Per-step run tokens (docs/research-agent-runtimes.md §2.4): each CLI step attempt gets a fresh random token bound to
   * its agent definition, and the agent MCP endpoint serves ONLY that agent's tools to it — the layer no runtime can

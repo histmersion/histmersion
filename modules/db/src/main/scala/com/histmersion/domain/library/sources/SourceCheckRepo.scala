@@ -17,7 +17,7 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SQL half of the library's lint rules: what each rule reads of the sources, their findings and edges, and the
   * safe repairs.

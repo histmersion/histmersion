@@ -24,7 +24,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.config.CodexConfig
 import com.histmersion.util.storage.Location
 import com.histmersion.domain.automation.workflows.ToolName
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The canonical definitions and the per-runtime trees generated from them (docs/research-agent-runtimes.md §2):
   * parsing, placeholders, the system prompt every runtime gets, the trees' restrictions, the writer — and that the

@@ -2,7 +2,7 @@ package com.histmersion
 package util.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A job that runs as checkpointed steps (an agent run): what its row records when it is created. Its `status`, `kind`
   * and `params` are the owner's words, stored as given; `citekey` is the source it works on, when it works on one.

@@ -21,8 +21,8 @@ import com.histmersion.util.storage.Stores
 import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.agents.GenSettings
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the CLI runtimes (`claude-code`, `codex`, `opencode`) share: the definitions, the generated trees they launch,
   * the run tokens their steps reach the agent MCP endpoint with, and the plan pools their streams report to. One per

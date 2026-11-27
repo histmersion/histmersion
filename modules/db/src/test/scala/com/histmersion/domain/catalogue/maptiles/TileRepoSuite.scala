@@ -30,7 +30,7 @@ import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.db.DbSuite
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.catalogue.events.BEventRow
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's tiles (`TileRepo`, V105) against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): which sites,
   * events and pictures a tile holds for a span (a RANGE: every item whose dates overlap it), the grouping that keeps a

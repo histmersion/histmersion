@@ -26,8 +26,8 @@ import com.histmersion.util.storage.Store
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.Environment
 import com.histmersion.util.plugins.PluginKit
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The native bundle (nothing installed system-wide): the server runs the bundled PostgreSQL and OCR converter as its
   * own child processes. Enabled by `runtime.enabled` (`HISTMERSION_RUNTIME=true`).

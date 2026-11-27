@@ -13,7 +13,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object Vacuum:
   type DeadRows = DeadRows.T
   object DeadRows extends Newtype[Long, Pure]

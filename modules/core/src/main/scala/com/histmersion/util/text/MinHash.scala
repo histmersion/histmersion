@@ -2,7 +2,7 @@ package com.histmersion
 package util.text
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A MinHash signature (Broder 1997): the minimum of each of `k` hash functions over a text's word shingles. */
 final case class MinHash(mins: Vector[MinHash.Mins]):

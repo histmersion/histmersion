@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class UndatedCellsSuite extends munit.FunSuite:
 

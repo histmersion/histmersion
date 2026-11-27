@@ -20,7 +20,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *

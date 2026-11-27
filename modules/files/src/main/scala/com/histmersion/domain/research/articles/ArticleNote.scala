@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.catalogue.{Period, Year}
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.{Article, Articles, Coverage}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
   * [[Frontmatter.parseNote]], for articles.

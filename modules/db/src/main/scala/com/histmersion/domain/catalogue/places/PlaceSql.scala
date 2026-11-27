@@ -6,7 +6,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.DeepTime
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The places' SQL other queries embed, over a `places` row by its alias (a fragment: `sql"p"`): what an import brought
   * in, how a place is dated, its time basis and the time rule of a view at a year or over a window, the base layers'

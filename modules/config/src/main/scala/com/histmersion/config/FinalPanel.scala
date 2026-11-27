@@ -2,8 +2,8 @@ package com.histmersion
 package config
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** When a fixing `review-article` run ends with a full panel: only when the re-checks left no MAJOR open (`clear`, the
   * default), after every fix (`always`), or never.

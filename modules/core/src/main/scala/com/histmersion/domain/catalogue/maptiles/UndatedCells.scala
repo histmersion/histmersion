@@ -3,7 +3,7 @@ package domain.catalogue.maptiles
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A crowded sites tile with the sites of no known date in it: the dated sites the span shows and the undated ones,
   * each counted by the squares of the tile's grid ([[GridCell]]), as ONE count a square. An undated site the span shows

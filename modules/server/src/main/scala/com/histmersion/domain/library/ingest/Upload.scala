@@ -3,7 +3,7 @@ package domain.library.ingest
 
 import com.histmersion.util.storage.{Blob, ByteSource, HandedFile}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A document handed to the ingest: its file name, its length and its bytes, read from the start as often as needed —
   * an upload the HTTP layer kept, a file the acquisition spooled, a payload a model sent.

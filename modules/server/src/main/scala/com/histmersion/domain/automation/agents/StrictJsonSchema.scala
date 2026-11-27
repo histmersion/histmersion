@@ -7,8 +7,8 @@ import com.histmersion.server.agents.{CliOutcomes, Codex}
 
 import com.histmersion.api.VocabularyCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A step's answer schema in OpenAI's STRICT structured-output form — the only form the Codex CLI's `--output-schema`
   * is accepted in. Codex sends the file as `text.format` with `strict: true`, and the Responses API refuses anything

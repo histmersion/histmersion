@@ -3,7 +3,7 @@ package util.basemap
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The rows `first` … `last` of a grid and the columns `firstCol` … `lastCol` (inclusive). */
 final case class GridWindow(

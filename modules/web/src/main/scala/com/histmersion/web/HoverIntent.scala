@@ -4,7 +4,7 @@ package web
 import com.histmersion.web.map.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A hover that waits: `enter(k)` fires `k` only after `delayMs` without a `leave(k)` or another `enter`, so sweeping
   * the pointer across twenty polygons fetches nothing and the one it rests on fetches once. `later`/`cancel` are

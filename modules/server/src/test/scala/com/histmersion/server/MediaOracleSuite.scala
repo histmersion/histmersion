@@ -73,7 +73,7 @@ import com.histmersion.cli.Client
 import com.histmersion.cli.MediaCovers
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What media answers, recorded on the code before media moved into its own domain:
   *

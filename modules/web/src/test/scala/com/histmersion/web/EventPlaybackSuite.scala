@@ -11,7 +11,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events in playback (#1440): when an event shows and how strongly — 0 before its span, 1 inside it, a linear fade
   * after it measured in seconds of PLAYBACK — and the label it is drawn with: the point-only region label of

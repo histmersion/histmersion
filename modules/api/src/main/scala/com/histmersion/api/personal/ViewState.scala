@@ -7,7 +7,7 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 type ViewState = ViewState.T
 

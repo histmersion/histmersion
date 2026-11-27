@@ -11,7 +11,7 @@ import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Why a run stopped before its pipeline finished. A value, threaded through the pipeline's for-comprehension: a step
   * either produces its output or halts the run.

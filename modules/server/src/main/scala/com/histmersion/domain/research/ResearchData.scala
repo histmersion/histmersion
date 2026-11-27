@@ -9,7 +9,7 @@ import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.util.data.mirror.MirrorPlacement
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.data.mirror.Mirror
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What research says about the data it owns: its tables, what a bundle carries of it and how a merge treats it, the
   * articles' notes in the mirror, its counts and its checks.

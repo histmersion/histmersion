@@ -14,7 +14,7 @@ import com.histmersion.api.library.RepairAcquire
 import com.histmersion.pluginhost.Polite
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.Event
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1491: what a running media import job says — `n/total` asked — and which requests name ONE place or event (the only
   * real import the synchronous endpoint still runs). Pure.

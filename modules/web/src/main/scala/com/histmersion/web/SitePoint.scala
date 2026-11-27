@@ -9,7 +9,7 @@ import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(

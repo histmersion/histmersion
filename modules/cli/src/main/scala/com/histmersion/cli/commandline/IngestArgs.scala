@@ -18,10 +18,13 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** The command line of [[IngestCmd]]. */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion ingest`: declares its options, parses them into typed commands")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter of `histmersion ingest`: declares its options, parses them into typed commands"
+)
 object IngestArgs:
   object ReocrEntry extends CommandLine.Entry:
     val name = "reocr"

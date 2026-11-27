@@ -7,7 +7,7 @@ import com.histmersion.domain.{ItemKey, ItemKind, ItemRef, ItemUid}
 import com.histmersion.{Offset, PageSize}
 
 import java.util.concurrent.atomic.AtomicReference
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Implemented by a domain whose records a person marks read (sources, articles): what of them is not read yet. The
   * person's marks stay personal's; the owner is told only which records they name.

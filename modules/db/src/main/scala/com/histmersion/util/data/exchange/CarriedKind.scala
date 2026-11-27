@@ -12,7 +12,7 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A kind of record a bundle carries for its owner: one entry of the archive, its lines out for a scope (with the blobs
   * they use and where their bytes are read from), the blobs it takes in, and its rows in.

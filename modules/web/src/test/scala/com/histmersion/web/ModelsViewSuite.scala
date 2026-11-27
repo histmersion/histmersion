@@ -11,7 +11,7 @@ import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.api.automation.ModelChains
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.PlanQuota
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of the agent models window: what a person types (a chain, limits, a reserve), the used-share of a
   * limit, a chained model's state, and an allowance paused run's words.

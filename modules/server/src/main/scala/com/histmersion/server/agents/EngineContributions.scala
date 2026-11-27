@@ -19,8 +19,8 @@ import com.histmersion.api.automation.AgentRole
 import com.histmersion.domain.automation.workflows.Contributions
 import com.histmersion.server.{Deps, ServerWiring}
 import com.histmersion.server.views.AutopilotView
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the domains register into the engine, in the order the engine has always listed them: the library's
   * contribution ([[LibraryWorkflows]]: its three workflows, the enrich and watch kinds, its tools), research's

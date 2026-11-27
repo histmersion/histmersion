@@ -13,8 +13,8 @@ import java.sql.SQLException
 import javax.sql.DataSource
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Postgres connection pools from the HOCON config (see [[AppConfig]] / reference.conf).
   *

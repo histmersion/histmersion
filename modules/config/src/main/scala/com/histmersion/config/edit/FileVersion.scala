@@ -6,8 +6,8 @@ import io.github.iltotore.iron.constraint.string.Match
 
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which text of the config file a change was made against: the SHA-256 of its bytes (`none` for a file that is not
   * there yet). A write that names a version the file no longer has is refused.

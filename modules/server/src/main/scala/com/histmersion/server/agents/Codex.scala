@@ -26,8 +26,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.api.backup.Backup
 import com.histmersion.config.UserPaths.pathEquality
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 @tolerated(LintRule.Process, "pending G39 (processes only through util.process)")

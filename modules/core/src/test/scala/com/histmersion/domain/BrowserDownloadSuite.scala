@@ -14,7 +14,7 @@ import com.histmersion.api.library.WorkRef
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A gold open-access work whose publisher refuses scripts, as an acquisition item: which works qualify and what the
   * item says.

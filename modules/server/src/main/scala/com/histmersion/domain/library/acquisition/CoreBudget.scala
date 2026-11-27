@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicReference
 import scala.util.control.NonFatal
 import com.histmersion.plugin.UpstreamQuota
 import com.histmersion.domain.library.acquisition.CoreQuotaLend
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server's ONE budget for CORE ([[CoreQuota]]): the acquisition chain's `core` step and the new-source search's
   * `core` index both call CORE through it, across every plugin generation and config reload of the process — so a

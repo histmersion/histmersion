@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The bounded OCR worker pool (plan §1.8).
   *

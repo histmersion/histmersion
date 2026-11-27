@@ -19,7 +19,7 @@ import com.histmersion.api.RowCount
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.media.MediaTarget
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A figure's links over REST and MCP: listed, made and removed. A citekey or a target named by an old identifier is
   * resolved first (`current`, the alias tables), as every read and write of a renamed kind is.
@@ -33,14 +33,20 @@ final class AssetLinksControllers(
 
   /** The identifier a target of `targetType` answers to now. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def refId(targetType: String, id: String): String =
     AliasKinds
       .ofTarget(Activity.Entry.TargetKind(targetType))
       .fold(id)(kind => current(kind, AliasTable.Id(id)).value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def list(
       citekey: Option[Citekey],
       asset: Option[AssetService.AssetUid],
@@ -59,7 +65,10 @@ final class AssetLinksControllers(
         )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def create(in: AssetLink.Put)(using Creator.New): Either[Api.Error, AssetLink] =
     maintenance.guard(WriteGate.OperationName("create_asset_link"))(
@@ -74,7 +83,10 @@ final class AssetLinksControllers(
       )
     )
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def delete(id: AssetLinkService.LinkId): Either[Api.Error, AssetLink.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_asset_link")):

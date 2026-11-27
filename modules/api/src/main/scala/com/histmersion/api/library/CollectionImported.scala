@@ -10,7 +10,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An import: the record written (`source`), the item it is linked to, the entry it was linked to before
   * (`relinkedFrom`), the file taken (left in the collection, never modified), the cover, and the conversion queued

@@ -5,8 +5,8 @@ import com.histmersion.util.problem.Problem
 
 import java.io.InputStream
 import java.nio.file.{Files, Path, StandardCopyOption}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A [[ContentStore]] in a directory: `<dir>/<sha256>.<ext>`. */
 @atBoundary(BoundaryKind.Process, "stores and finds content files named by hash in a directory")

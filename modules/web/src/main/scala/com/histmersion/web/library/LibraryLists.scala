@@ -17,7 +17,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.Offset
 import com.histmersion.web.ErrorLine
 import com.histmersion.api.RowCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Library's two lists, a page at a time: the sources and the articles the filter panel selects (the map's view never
   * narrows them: Library lists everywhere), the sources in [[LibrarySort]]'s order. Both are read whenever the filter

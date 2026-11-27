@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.personal.ReadMark
 import com.histmersion.api.personal.Target
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An item's own actions where it is read — Library's reading pane, Explore's detail: Bookmark (pressed while it is),
   * Add note, Mark as read / unread (a source or an article), and "⋯" with the copies. A change that needs the API key

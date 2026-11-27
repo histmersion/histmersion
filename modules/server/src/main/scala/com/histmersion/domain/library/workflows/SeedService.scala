@@ -22,7 +22,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** SEED BEFORE THE PLAN (#3762 proposal 5): a research goal with no source does not wait for its plan to be approved
   * before it gathers. Each managers' tick (the autopilot on, not draining), up to

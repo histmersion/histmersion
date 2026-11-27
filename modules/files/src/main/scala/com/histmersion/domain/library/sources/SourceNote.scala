@@ -24,7 +24,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's note in the Markdown mirror (`wiki/sources/<citekey>.md`): its YAML frontmatter carries the catalog
   * fields and findings, its body [[Source.notes]], the agent-written article about the source. [[note]] renders a

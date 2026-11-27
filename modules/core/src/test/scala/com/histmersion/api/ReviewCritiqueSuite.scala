@@ -25,7 +25,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.ReviewLedger
 import com.histmersion.domain.automation.Run
 import com.histmersion.api.research.Coverage
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The critique checklist in the review (docs/research-review-convergence.md §6.8), pure: what a missing-critique MAJOR
   * is held to in each kind of pass, the skeptic's rulings on the open pairs, the fixer's set-asides and how the ledger

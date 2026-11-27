@@ -3,7 +3,7 @@ package web
 
 import com.histmersion.web.ui.Layout
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The width of Explore's results column: wide enough by default for its five tabs and their counts, dragged or moved
   * with the arrow keys, kept by this browser, and never narrower than [[min]] nor wider than [[max]] of the window.

@@ -32,7 +32,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of the tool windows: window keys, the write gate, the jobs poll, the upload form, the bookkeeping
   * lists' text and order.

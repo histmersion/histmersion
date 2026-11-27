@@ -10,7 +10,7 @@ import com.histmersion.server.Deps
 import com.histmersion.domain.library.LibraryData
 import com.histmersion.util.data.DataOwner
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The mirror over the registered notes: a kind's note from its owner's renderer, an unregistered kind refused; today's
   * registration — the library's source notes in `sources/`, research's article notes by kind.

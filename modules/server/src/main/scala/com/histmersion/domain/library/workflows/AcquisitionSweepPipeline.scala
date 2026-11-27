@@ -38,7 +38,7 @@ import com.histmersion.domain.automation.managers.ManagerContext
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
   * linked queries (its title when it has none) and drops every work the corpus or the acquisition queue already has;

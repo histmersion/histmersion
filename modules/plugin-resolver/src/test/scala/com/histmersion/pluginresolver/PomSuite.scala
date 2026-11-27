@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import java.nio.file.{Files, Path}
 import java.util.zip.{ZipEntry, ZipOutputStream}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PomSuite extends munit.FunSuite:

@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigFactory, ConfigValueFactory}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object PluginConfigSuite:
   final case class Settings(

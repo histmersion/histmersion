@@ -5,7 +5,7 @@ import com.histmersion.api.automation.Queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an acquisition item names, read best-effort from its text so that "Upload…" and "Link existing source…" start
   * from a filled-in form rather than a blank one. Everything it returns is a SUGGESTION the reader edits before

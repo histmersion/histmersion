@@ -16,7 +16,7 @@ import java.time.{Instant, LocalDate}
 import com.histmersion.db.DbSuite
 import com.histmersion.config.DbConfig
 import com.histmersion.domain.automation.ProviderKind
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A metered upstream's budget survives the database unchanged (HISTMERSION_TEST_DB_URL; skipped otherwise): the day,
   * both counts, the block and the last window — and a later save replaces it.

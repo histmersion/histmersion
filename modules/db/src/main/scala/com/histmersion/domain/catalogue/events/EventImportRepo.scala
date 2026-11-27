@@ -24,8 +24,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The event catalogues' records (`event_catalogue`) and the parts of each catalogue an import has read
   * (`event_import_parts`): what an import merges with and writes. Every method runs on the connection it is given.

@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.web.ui.Flash
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** "Save this view": Explore as it is now — the filters, the span, the layers and where the map is — kept as a bookmark
   * to come back to, under a name. Listed here (Explore's filter panel) and in My library › Bookmarks.

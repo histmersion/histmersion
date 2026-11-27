@@ -42,7 +42,7 @@ import com.histmersion.domain.library.sources.SourceDeletePlan
 import com.histmersion.util.time.SystemTimer
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles' controllers over the in-memory services, with no source stored: a slug that is not one and a strict
   * write refused by the formatting check, an old slug followed by every read and write, a coverage with no source, a

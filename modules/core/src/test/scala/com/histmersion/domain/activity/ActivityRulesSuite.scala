@@ -15,7 +15,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ActivityRulesSuite extends munit.FunSuite:

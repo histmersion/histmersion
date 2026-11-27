@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.map.TheMap
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the page holds, readable from outside (#1949): `window.histmersionDiagnostics()` answers every bounded cache's
   * entries and weight against its ceilings, the names the map places, and the findings kept for time-only redraws. The

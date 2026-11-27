@@ -36,7 +36,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.library.Facet
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Offset
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The process managers (docs/research-process-managers.md §5): the managers window (each one's state — with what the
   * supervisor derived: starved, at capacity, idle — its items, runs in flight and last event) and one window per

@@ -3,7 +3,7 @@ package util.storage
 
 import java.util.concurrent.atomic.AtomicLong
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The caps of one measurement of stores: at most `maxEntries` visited entries over all its walks, and no walk past
   * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.

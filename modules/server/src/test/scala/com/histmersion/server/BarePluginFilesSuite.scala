@@ -8,7 +8,7 @@ import scala.jdk.CollectionConverters.*
 
 import com.histmersion.util.plugins.PluginKit
 import Supervisor.{rewrittenOnce, PluginFile}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The once-only rewrite, at the server's start, of the plugin files an earlier version wrote with a bare problem: on
   * files in a temporary directory, never the install's.

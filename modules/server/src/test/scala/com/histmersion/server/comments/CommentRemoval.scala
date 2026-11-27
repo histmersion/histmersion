@@ -2,7 +2,7 @@ package com.histmersion
 package server
 package comments
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class CommentRemoval(text: String, chosen: Vector[CommentBlock]):
   import CommentRemoval.*
 

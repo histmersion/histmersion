@@ -3,7 +3,7 @@ package util.system
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 final case class JvmHome(path: Path):

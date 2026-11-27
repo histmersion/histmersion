@@ -27,7 +27,7 @@ import com.histmersion.api.catalogue.EventGeo
 import com.histmersion.api.catalogue.EventsMarkdown
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

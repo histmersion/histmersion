@@ -8,7 +8,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Goal, GoalsExport, ItemStatus}
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `meta/GOALS.md` (task #906): the pure renderer. The fixture mirrors the live goals' shape — a few top-level goals
   * with nested sub-goals, article and queue-item links (done and open), one goal with a period — plus the parts the

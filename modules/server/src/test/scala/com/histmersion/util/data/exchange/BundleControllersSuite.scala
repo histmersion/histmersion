@@ -15,7 +15,7 @@ import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of the bundle endpoints, and the stored-originals directory a bundle reads and fills. No database.
   */

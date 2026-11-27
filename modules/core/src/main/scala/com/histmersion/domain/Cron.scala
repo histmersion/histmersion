@@ -6,8 +6,8 @@ import com.histmersion.util.problem.Problem.{Count, Invalid, Raw}
 import java.time.{Instant, LocalDate, ZoneOffset}
 import java.time.temporal.ChronoUnit
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A five-field cron expression, in UTC — the schedule of a goal's currency check or acquisition sweep
   * (docs/research-embedded-agents.md §14). `minute hour day-of-month month day-of-week`, each `*`, a number, a range

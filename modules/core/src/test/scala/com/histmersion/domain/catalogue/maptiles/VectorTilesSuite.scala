@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's vector tiles, pure: the grid (which tiles exist, their bounds, where a point falls), the grouping rule,
   * and the writer read back as MapLibre reads it.

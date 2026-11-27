@@ -2,7 +2,7 @@ package com.histmersion
 package util.storage
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A store's file as the supporting areas hand it to another program (a child process's directory or log), and a file
   * the HTTP layer hands in (an upload, kept where the server put it).

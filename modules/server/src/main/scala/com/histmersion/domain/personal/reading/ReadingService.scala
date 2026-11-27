@@ -13,7 +13,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Whether a person has read a source or an article — only what they marked ("Mark as read") — and when they last
   * opened it, which marks nothing read. Marking unread keeps the row, with no read time. What is not read yet is the

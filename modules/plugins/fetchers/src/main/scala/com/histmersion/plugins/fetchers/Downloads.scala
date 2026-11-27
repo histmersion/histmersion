@@ -9,7 +9,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
 import Downloads.NotPdf
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One download the fetchers make, checked: a copy only when it is a PDF. Any other answer is logged and is no copy. */
 final class Downloads(http: Plugin.Http):

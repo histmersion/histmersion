@@ -9,7 +9,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Sort
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `search` as an agent calls it: the filters steps use, mapped onto the same [[Filter]]. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

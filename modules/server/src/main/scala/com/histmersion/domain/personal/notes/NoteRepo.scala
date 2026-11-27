@@ -14,8 +14,8 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.Timestamps
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

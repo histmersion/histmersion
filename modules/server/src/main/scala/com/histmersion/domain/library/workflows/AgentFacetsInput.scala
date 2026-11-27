@@ -8,7 +8,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.search.FilterSql
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `facets` as an agent calls it: one field's values, optionally by prefix. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

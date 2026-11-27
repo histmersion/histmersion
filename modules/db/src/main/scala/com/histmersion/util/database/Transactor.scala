@@ -8,7 +8,7 @@ import javax.sql.DataSource
 import scala.annotation.nowarn
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The database's entry points, split by what they may do. A read needs nothing; a write needs a [[WritePermit]], so
   * writing without one does not compile (X4 / G89): the permit comes from the maintenance gate's `guard` (an operation

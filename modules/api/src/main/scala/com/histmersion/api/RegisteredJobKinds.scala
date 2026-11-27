@@ -18,8 +18,8 @@ import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.maintenance.VacuumPlan
 import com.histmersion.api.library.Acquire
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every kind of background job the server runs, each registered by its owner, in the order the jobs window has always
   * listed them (as `Api.all` lists the features' endpoints): what the server, the web page and the CLI name a job by;

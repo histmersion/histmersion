@@ -7,7 +7,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Ingest
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** "Add by DOI": a DOI or an arXiv id, looked up and brought in through the legal open-access chain only
   * ([[DoiIngest]]); the answer says what was found and links to the new source.

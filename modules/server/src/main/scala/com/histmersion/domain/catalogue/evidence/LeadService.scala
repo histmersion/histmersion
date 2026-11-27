@@ -23,7 +23,7 @@ import com.histmersion.domain.catalogue.events.EventService
 import com.histmersion.api.catalogue.Year
 import com.augustnagro.magnum.sql
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an event's card and the leads are computed from: the sources attesting an event, the dated findings near it,
   * the facts of each event's lead (its size, the findings around it, the sources proposed and confirmed), and the

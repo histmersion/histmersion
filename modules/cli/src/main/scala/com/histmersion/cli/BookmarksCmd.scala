@@ -6,8 +6,8 @@ import com.histmersion.api.personal.*
 import com.histmersion.api.ItemKind
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion bookmarks list|add|rm` — your bookmarks: items of the collection, places on the map, saved views of
   * Explore and periods.

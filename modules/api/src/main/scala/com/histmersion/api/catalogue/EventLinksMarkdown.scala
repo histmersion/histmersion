@@ -1,7 +1,7 @@
 package com.histmersion
 package api.catalogue
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object EventLinksMarkdown:
   private def km(d: Double): String = s"${math.round(d)} km"

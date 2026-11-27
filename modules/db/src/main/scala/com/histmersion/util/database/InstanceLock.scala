@@ -8,7 +8,7 @@ import com.histmersion.config.DbConfig
 import java.sql.Connection
 import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One server per database: a session-level advisory lock, held on a connection of its own (never a pooled one, which
   * the pool may close and so release it) for as long as the server runs on the database. A second server finds it held

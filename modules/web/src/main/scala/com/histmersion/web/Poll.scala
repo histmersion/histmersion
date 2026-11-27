@@ -4,7 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The polling schedule of every polled window (jobs, agent runs, a manager): a quick first look, then slower while
   * nothing changes, and none once nothing is live. Pure.

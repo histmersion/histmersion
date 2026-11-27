@@ -26,7 +26,7 @@ import com.histmersion.config.AgentRolesConfig
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The New research area as one server operation (G105, review finding W2), against a `*_test` database: the goal is
   * created and never replaced, and the goal, its plan run, its seeding manager and its watcher are written together or

@@ -24,7 +24,7 @@ import com.histmersion.api.GeoPick
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's controllers over the in-memory records, no server and no database: an LPF document imported (a bad
   * kind or document refused whole), an old id answering as its place, the tree's configured depth, a person's names and

@@ -13,7 +13,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the focus's reads and records keep: every goal with what the focus recorded; the goals of linked
   * sources and articles; each goal's last stop and its sources.

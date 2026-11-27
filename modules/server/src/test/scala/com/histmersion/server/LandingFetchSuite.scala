@@ -13,7 +13,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.acquisition.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Repository landing pages in the OA chain (#1580), against a fake upstream answering from records and pages captured
   * on 2026-10-16 (`acquire/landing/`; the publisher, journal and challenge pages are synthetic and say so) — no

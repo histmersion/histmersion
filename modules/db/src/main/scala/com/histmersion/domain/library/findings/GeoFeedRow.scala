@@ -12,7 +12,7 @@ import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

@@ -2,7 +2,7 @@ package com.histmersion
 package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Research's settings among `agents.managers.*`: the review manager. */
 @movesTo(FeaturePlace.ResearchWorkflows)

@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The generated per-runtime trees (docs/research-agent-runtimes.md §2.2): written under `dir` ("" =
   * `<data dir>/agents`) when the server starts if `generate`; `claudeMod` puts the quota-guard mod in the headless

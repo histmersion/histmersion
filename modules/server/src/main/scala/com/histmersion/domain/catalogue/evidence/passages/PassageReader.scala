@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.evidence.passages
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One source's text, searched for passages: a phrase or a regular expression, each hit with its context; `limit`
   * passages at most.

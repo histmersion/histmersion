@@ -6,7 +6,7 @@ import com.histmersion.upstreams.jats.Jats
 
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A JATS article (`*.xml` whose root is `<article>` — PMC's full text, fetched when no PDF exists, #1523) is rendered
   * to Markdown here, by [[Jats]]: it is already text, so OCR would only lose its structure. Everything else goes to the

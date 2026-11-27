@@ -21,7 +21,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` ([[TilesApi]]): a layer's tile cut from the database, kept ([[TileCache]])
   * under the versions of what it reads, and answered 304 when the browser holds it. The sites and the events are the

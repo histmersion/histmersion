@@ -11,11 +11,14 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The command line of [[ActivityCmd]]. */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion activity`: declares its options, parses them into typed commands")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter of `histmersion activity`: declares its options, parses them into typed commands"
+)
 object ActivityArgs:
   object ActivityEntry extends CommandLine.Entry:
     val name = "activity"

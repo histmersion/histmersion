@@ -17,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,
   * topics, regions, tags, the period it is about, and the summary. Sent as ONE `PATCH` carrying only what changed, with
@@ -26,6 +26,7 @@ import com.histmersion.lint.{LintRule, tolerated}
   */
 object SourceEditor:
   type FieldName = FieldName.T
+  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FieldName extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
 

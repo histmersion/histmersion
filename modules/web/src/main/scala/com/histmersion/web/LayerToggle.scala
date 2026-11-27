@@ -4,7 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A toggle BUTTON (never a checkbox) whose pressed state is a signal: it cannot disagree with the thing it switches,
   * because it shows that thing's state rather than keeping its own.

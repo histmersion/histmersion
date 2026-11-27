@@ -8,7 +8,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.domain.catalogue.Event
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The corrections by hand of what an importer wrote: a person's value for one field, kept over the catalogue's. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

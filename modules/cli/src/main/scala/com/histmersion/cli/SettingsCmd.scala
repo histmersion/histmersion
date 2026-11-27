@@ -10,8 +10,8 @@ import com.histmersion.config.edit.*
 import org.ekrich.config.ConfigFactory
 import com.histmersion.api.settings.{ConfigEdit, ConfigEditMarkdown}
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion config get|set|unset|restart` — the settings file. Through the server, which writes the file it reads
   * and reloads it; with `--local`, or when the server does not answer, the file on THIS machine is read and changed

@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Runs `f` once the calls have stopped for `quietMs`, with the latest arguments — for work too heavy to repeat while a
   * drag goes on (a whole range's boundaries: megabytes per answer), where [[Throttle]] would still fire every interval.

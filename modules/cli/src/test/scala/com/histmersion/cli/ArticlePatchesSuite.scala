@@ -16,7 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.Citekey
 import com.histmersion.cli.Cli
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion article patch` flag → [[ArticlePatch]]. Pure: the semantics of "only what you pass changes" is asserted
   * without a server.

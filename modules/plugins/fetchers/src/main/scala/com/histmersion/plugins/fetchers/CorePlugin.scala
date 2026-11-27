@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 /** `oa-core`: CORE's download URLs for a DOI, with an API key, through the server's CORE budget. */
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Registry
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final class CorePlugin extends FetcherPlugin("oa-core"):
   type Config = CoreConfig
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

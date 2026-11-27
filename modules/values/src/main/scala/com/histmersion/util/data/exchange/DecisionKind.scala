@@ -3,7 +3,7 @@ package util.data.exchange
 
 import com.histmersion.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 enum DecisionKind:
   case KeepLeft
 

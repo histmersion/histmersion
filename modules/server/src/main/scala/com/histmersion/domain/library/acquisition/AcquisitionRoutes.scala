@@ -18,7 +18,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.Write
 import com.histmersion.api.Api
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The REST wiring of [[AcquireApi]] — every route delegates to the [[AcquisitionControllers]] the MCP tools also call;
   * `archive search|info|import` to the library's collections, which run archive.org, and the Calibre gaps to theirs.
@@ -31,7 +31,10 @@ final class AcquisitionRoutes(
 
   private given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   val endpoints: List[ServerEndpoint[Any, Identity]] = List(

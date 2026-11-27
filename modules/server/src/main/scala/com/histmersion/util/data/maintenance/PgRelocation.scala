@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *

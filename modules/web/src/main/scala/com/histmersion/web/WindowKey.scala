@@ -6,7 +6,7 @@ import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Wording
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a window shows — the typed form of an entry of [[UiState.open]]. The wire spelling (`source:ck`, `jobs`, …) is
   * what the URL hash carries, so a reload or a shared link reopens the same windows; everything else in the UI works

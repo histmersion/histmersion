@@ -14,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the events in playback (#1440): when an event shows and how strongly. */
 object EventPlayback:

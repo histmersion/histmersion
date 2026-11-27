@@ -17,7 +17,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.places.BPlaceRow
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map layer draws each state ONCE (`PlaceFixtures.geoJson`): pure checks of the query, and — against a disposable
   * Postgres (`TestDb`) — the de-duplication on real shapes. Fixtures sit around 150–171°E, 36–41°S, where no other

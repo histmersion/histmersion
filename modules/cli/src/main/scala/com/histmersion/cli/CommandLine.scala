@@ -47,8 +47,8 @@ import com.histmersion.cli.commandline.NoteArgs
 import com.histmersion.cli.commandline.ConfigArgs
 import com.histmersion.cli.commandline.BasemapArgs
 import com.histmersion.cli.commandline.PluginArgs
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The command line as scallop parses it. Scallop's configuration is mutable — options are declared on an object and
   * read back after `verify()` — so it stays in this file, the core every command group shares, and in the groups'
@@ -56,7 +56,10 @@ import com.histmersion.lint.{LintRule, tolerated}
   * the rest of the CLI a typed [[Cli.Command]] (or the help, or a [[Problem]]). Every argument is parsed once, there,
   * into its newtype; scallop's exit and output go through its per-instance hooks, so the parser never ends the process.
   */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter: the one file that declares scallop options and parses a command line into a typed command")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter: the one file that declares scallop options and parses a command line into a typed command"
+)
 object CommandLine:
   type HelpText = HelpText.T
   object HelpText extends Newtype[String, Pure]:
@@ -513,6 +516,7 @@ object CommandLine:
     private def caller: AgentIdentity =
       AgentIdentity(byPlugin.toOption, byWorkflow.toOption, byAgent.toOption, byProvider.toOption, byModel.toOption)
 
+    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     private val askedJson = jsonOutput(args.contains("--json"))
 
     /** Scallop's own errors, typed. Help and version still go through the output and exit hooks. */

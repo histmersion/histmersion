@@ -18,7 +18,7 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.catalogue.{Place, Year}
 import com.histmersion.api.ByteCount
 import com.histmersion.api.plugins.PluginDescription
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #716/#717/#718 — the map's place card, click-to-filter and the About window, in their pure parts. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

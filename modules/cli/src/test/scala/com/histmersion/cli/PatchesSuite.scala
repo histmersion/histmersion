@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion patch` flags must produce a patch whose ABSENT parts stay absent — a flag nobody passed must not turn
   * into an empty list that wipes the stored value.

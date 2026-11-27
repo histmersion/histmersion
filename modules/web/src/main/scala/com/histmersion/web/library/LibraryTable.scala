@@ -11,7 +11,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.web.marks.MyItems
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.marks.ItemMenu
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A page of a Library list as a table: a source's title and authors, year, status and period; an article's title and
   * kind, and period. Every title is a real link to the item's page: a plain click chooses the row (the reading pane

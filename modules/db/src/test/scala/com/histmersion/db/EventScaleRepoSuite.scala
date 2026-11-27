@@ -31,7 +31,7 @@ import com.histmersion.domain.catalogue.events.EventSelection
 import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.util.data.exchange.TestExchange
 import com.histmersion.util.storage.ContentStore
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An event's scale (V078, #1440) and the map's events feed against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped
   * otherwise): the column and its check, the scale derived from the kind, the sub-event rule, the place's kind and the

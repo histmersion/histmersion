@@ -9,8 +9,8 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources a run of covers and illustrations looks at (#1446): those with figures and no illustration yet, those
   * with an ISBN or OCLC number and no cover yet. Every method runs on the connection it is given.

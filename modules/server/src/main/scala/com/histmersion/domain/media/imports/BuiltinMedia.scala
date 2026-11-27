@@ -7,7 +7,7 @@ import com.histmersion.pluginhost.Registries
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.config.MediaPluginCollectionsConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own media collections, by name only — the plugins of `plugins/media` implement them; the host keeps
   * what it says about one whose plugin is switched off, the names it records and stores their pictures under, the

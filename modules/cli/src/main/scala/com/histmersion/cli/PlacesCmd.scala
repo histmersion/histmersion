@@ -17,8 +17,8 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Place, Year}
 import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.util.console.Console
 import com.histmersion.api.SpatialHierarchyResult
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion places …` — the gazetteer subcommands (plan §1.6a). Kept in its own file so the shared `Cli` only gains
   * one line.

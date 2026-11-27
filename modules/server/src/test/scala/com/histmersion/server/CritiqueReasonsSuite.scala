@@ -30,7 +30,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.research.Coverage
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** V091 — the critique checklist's stored reasons (docs/research-review-convergence.md §6.8) against a `*_test`
   * database: written and read through `patch_article`'s one path, refused without a disagreement edge, kept under the

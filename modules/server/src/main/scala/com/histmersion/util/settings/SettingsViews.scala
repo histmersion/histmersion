@@ -7,7 +7,7 @@ import com.histmersion.config.{PgBytes, PgParameter}
 import com.histmersion.config.edit.*
 import com.histmersion.api.Api
 import com.histmersion.api.settings.ReloadReport
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings as the wire shows them ([[SettingShown]]: a credential's value never crosses). */
 object SettingsViews:

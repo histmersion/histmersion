@@ -3,7 +3,7 @@ package domain.automation.autopilot
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's one row as [[AutopilotRowService.InMemory]] holds it: the switch and who turned it, the managers it
   * paused, its housekeeping times, a person's scheduler strategy, the digest's time and the drain.

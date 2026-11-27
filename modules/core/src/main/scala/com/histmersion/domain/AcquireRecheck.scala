@@ -12,8 +12,8 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"). An item on the acquisition list — the person's buy/borrow list — was put there because no legal copy was

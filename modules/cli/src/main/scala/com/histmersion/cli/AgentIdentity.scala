@@ -3,7 +3,7 @@ package cli
 
 import com.histmersion.config.CliConfig
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class AgentIdentity(
     plugin: Option[Creation.Plugin] = None,

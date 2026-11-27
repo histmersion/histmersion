@@ -20,7 +20,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.{OpenWork, ResearchApi}
 import com.histmersion.api.automation.AgentScheduler
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Research › Overview: the agents' state as ONE three-way control with what they are doing and the AI plan's weekly
   * allowance; the oldest decisions waiting for the person, each with its reason and what to read first BEFORE the

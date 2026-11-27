@@ -11,7 +11,7 @@ import java.time.{Clock, Instant, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The work lists' controllers over the in-memory kernel: the list parsed from its word, the inputs checked, a log item
   * dated by the clock it is given.

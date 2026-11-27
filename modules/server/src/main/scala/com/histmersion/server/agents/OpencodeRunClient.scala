@@ -8,8 +8,8 @@ import com.histmersion.config.OpencodeConfig
 import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `opencode` provider: `opencode run --agent <role> --format json -m <provider/model>` on the GENERATED config
   * (`XDG_CONFIG_HOME` and `OPENCODE_CONFIG_DIR` pointed at it, the Claude Code folders and autoupdate off, an empty

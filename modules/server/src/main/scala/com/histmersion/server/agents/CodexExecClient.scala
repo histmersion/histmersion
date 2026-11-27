@@ -22,8 +22,8 @@ import sttp.ai.core.agent.*
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `codex` provider: `codex exec --json -p <role>` per step attempt, on the GENERATED Codex home
   * (docs/research-agent-runtimes.md §2.4): the role's profile carries its prompt (includes and skills inlined — with

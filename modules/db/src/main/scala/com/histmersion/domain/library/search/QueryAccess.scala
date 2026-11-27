@@ -9,8 +9,8 @@ import com.zaxxer.hikari.HikariDataSource
 import java.sql.SQLException
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The read-only `histmersion_query` role behind `POST /api/query`: its pool and its provisioning. */
 @atBoundary(BoundaryKind.Sql, "opens the read-only query pool and provisions its role")

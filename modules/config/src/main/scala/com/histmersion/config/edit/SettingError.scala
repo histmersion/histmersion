@@ -3,8 +3,8 @@ package config.edit
 
 import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Why a change to the config file was refused, in words a person acts on. The file is never written when one of these
   * is the answer.

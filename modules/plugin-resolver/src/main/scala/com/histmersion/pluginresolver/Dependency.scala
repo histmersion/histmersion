@@ -5,7 +5,7 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
 import java.nio.file.Path
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One module a plugin's dependencies need that the server does not ship, and the plugin jars it is there for.
   */

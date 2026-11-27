@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a gazetteer dataset says about reuse, as its provider states it — never judged by the plugin.
   *

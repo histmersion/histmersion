@@ -9,7 +9,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import java.util.UUID
 import com.histmersion.util.data.exchange.BundleFormat
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The entity content of a bundle, in memory — every NDJSON file of [[BundleFiles.all]] as its line type. Small by
   * construction: the large things (OCR bodies, version bodies, asset bytes, originals) are blobs, referenced by sha256

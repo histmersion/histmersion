@@ -7,7 +7,7 @@ import com.histmersion.api.media.MediaRole
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its
   * title, its authors, its status, its period, its regions and its summary. A row of the table already holds most of

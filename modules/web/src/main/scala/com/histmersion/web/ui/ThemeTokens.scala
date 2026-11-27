@@ -7,7 +7,7 @@ import org.scalajs.dom
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Wcag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The stylesheet's colour tokens, for the code that must COMPUTE with a colour rather than name it: the period ramp a
   * marker's colour is interpolated on, and the graph's canvas, which cannot see CSS. Values are read from `:root`'s

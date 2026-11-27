@@ -8,7 +8,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.automation.ApprovalDigest.*
 import com.histmersion.api.automation.ApprovalDigestMarkdown
 import com.histmersion.api.automation.Approval
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The approval digest, pure (#3762 proposal 3): the grouping by kind, what a bulk decision matches, the worklog line
   * and the Markdown.

@@ -5,7 +5,7 @@ import com.histmersion.config.{AppConfig, Environment, LoadedConfig, UserConfigF
 import com.histmersion.util.data.backup.BackupService
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.process.Processes
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The backups of a server over `cfg` with no database behind them (nothing here counts guarded rows). */
 object BackupFixtures:

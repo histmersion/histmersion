@@ -5,7 +5,7 @@ import com.histmersion.api.personal.{MapZoom, ViewState}
 import com.histmersion.domain.{ItemKey, ItemUid}
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.api.ItemKind
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A target as the tables' columns hold it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

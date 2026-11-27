@@ -14,7 +14,7 @@ import org.ekrich.config.ConfigFactory
 import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HttpTransport
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own media collections run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does (the host's own `histmersion.media` settings supplied to a first-party

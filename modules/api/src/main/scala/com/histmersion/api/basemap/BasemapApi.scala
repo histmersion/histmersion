@@ -8,11 +8,14 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.given
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the basemap routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the basemap routes with their request and response bodies"
+)
 object BasemapApi:
   object Tile:
     type Bytes = Bytes.T
@@ -31,7 +34,10 @@ object BasemapApi:
 
   private lazy val base = endpoint.in("api" / "basemap").errorOut(Api.problemOut)
 
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.deleteIfExists")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.deleteIfExists"
+  )
   lazy val status: PublicEndpoint[Unit, Api.Error, Basemap.Status, Any] =
     base.get.out(jsonBody[Basemap.Status])
 
@@ -94,7 +100,10 @@ object BasemapApi:
       .out(jsonBody[Basemap.Removed])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.createDirectories, GET: File Files.createTempFile, GET: File Files.deleteIfExists, GET: File Files.move, GET: File Files.newOutputStream, GET: File Files.setLastModifiedTime, GET: File Files.setPosixFilePermissions, GET: File Files.write")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.createDirectories, GET: File Files.createTempFile, GET: File Files.deleteIfExists, GET: File Files.move, GET: File Files.newOutputStream, GET: File Files.setLastModifiedTime, GET: File Files.setPosixFilePermissions, GET: File Files.write"
+  )
   lazy val tile: PublicEndpoint[
     (
         Basemap.Layer.Wire,

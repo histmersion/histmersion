@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import java.time.LocalDate
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** arXiv: newest submissions first; the Atom feed has no date filter, so what is older than `since`'s year is dropped
   * here (the stored candidates keep a work found twice from counting as new).

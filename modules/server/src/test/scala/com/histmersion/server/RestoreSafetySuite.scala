@@ -29,7 +29,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** G90, G89 and G123 on the `*_test` database: one server per database, enforced at start; a restore that waits for the
   * writes in flight, refuses the writes and connections asked while it runs, holds every registered worker and has each

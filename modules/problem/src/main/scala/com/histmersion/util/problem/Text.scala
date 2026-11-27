@@ -5,15 +5,18 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import java.time.Instant
 
 import Problem.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The English sentence of every problem: what the HTTP body's `text`, the CLI's `error:` line, the MCP tool's error
   * and the web's error line show. It may change wording freely; what a column stores is [[Stored]]'s, frozen.
   *
   * Outside text ([[External]]) follows the case's own words after an em dash.
   */
-@atBoundary(BoundaryKind.Render, "writes the English sentence of every problem, the one the HTTP body, the CLI, MCP, the web, the logs and the plugin resolver show")
+@atBoundary(
+  BoundaryKind.Render,
+  "writes the English sentence of every problem, the one the HTTP body, the CLI, MCP, the web, the logs and the plugin resolver show"
+)
 object Text:
 
   extension (problem: Problem)
@@ -496,8 +499,9 @@ object Text:
 
   private def path(at: Vector[Field]): String = if at.isEmpty then "" else s"${at.mkString(".")}: "
 
-  extension (at: EpochMs) @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-                          private def iso: String = s"${Instant.ofEpochMilli(s"$at".toLong)}"
+  extension (at: EpochMs)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    private def iso: String = s"${Instant.ofEpochMilli(s"$at".toLong)}"
 
   private def until(at: Option[EpochMs]): String = at.fold("")(t => s" until ${t.iso}")
 
@@ -522,8 +526,9 @@ object Text:
     s"$n$suffix"
 
   /** `1 source`, `3 sources`. */
-  extension (n: Count) @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-                       private def sources: String = if s"$n" == "1" then s"$n source" else s"$n sources"
+  extension (n: Count)
+    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
+    private def sources: String = if s"$n" == "1" then s"$n source" else s"$n sources"
 
   private def oneOf(known: Vector[Raw]): String = if known.isEmpty then "" else s" (one of: ${known.mkString(", ")})"
 

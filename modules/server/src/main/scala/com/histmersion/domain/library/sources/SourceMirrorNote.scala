@@ -8,7 +8,7 @@ import com.histmersion.util.data.mirror.MirrorPlacement
 import com.histmersion.util.data.mirror.Frontmatter
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.Write
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's note in the Markdown mirror: its frontmatter and its notes, as the sources' controllers render it. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

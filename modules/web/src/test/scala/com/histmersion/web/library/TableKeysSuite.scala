@@ -3,7 +3,7 @@ package web.library
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.personal.ItemKey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class TableKeysSuite extends munit.FunSuite:
 

@@ -7,8 +7,8 @@ import com.histmersion.util.json.Cursor
 
 import com.histmersion.plugin.{Latitude, Longitude, Year}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Reading a catalogue's JSON: a field as text, a whole number or a number, whatever the catalogue wrote it as. */
 @atBoundary(BoundaryKind.Json, "reads a catalogue JSON field as text or number whatever it was written as")

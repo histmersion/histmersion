@@ -11,8 +11,8 @@ import org.ekrich.config.{Config, ConfigFactory}
 import java.io.IOException
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.util.Using
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The settings file `key` of `store` (the settings file's directory), named `shown` in messages: the file the server
   * read its settings from. Its text and its includes are read as a load reads them, which needs the file on disk; a

@@ -9,8 +9,8 @@ import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The goals' links to a source, which go with it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

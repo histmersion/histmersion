@@ -14,7 +14,7 @@ import util.problem.Problem.*
 import util.problem.Text.{sentence, word}
 import Answer.{current, entry, problem}
 import json.NewtypeCodecs.{problemCodec, vector}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the store holds, read back on the JVM. A column keeps every problem as its derived entry, in an array: every
   * case's entry, generated from the cases' examples, reads back as the case. A text a master version stored (a bare

@@ -6,7 +6,7 @@ import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.settings.ConfigEdit
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.settings.StartPlace
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The settings and the downloads a setup's choices come to. Pure. */
 object SetupPlan:

@@ -9,8 +9,8 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.GoalFocus
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a

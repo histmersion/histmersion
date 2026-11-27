@@ -26,7 +26,7 @@ import com.histmersion.domain.library.search.Search
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to

@@ -13,8 +13,8 @@ import java.nio.charset.Charset
 import scala.annotation.nowarn
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Flyway schema versioning. Migrations are SQL resources under `db/migration/V###__name.sql`, enumerated by the
   * build-generated `db/migration/index.txt` (Flyway's classpath scanning does not work inside a native image; this

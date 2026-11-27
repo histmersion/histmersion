@@ -8,7 +8,9 @@ import comments.CommentScope
 class CommentGrowthSuite extends munit.FunSuite:
   import CommentGrowthSuite.*
 
-  test("G22: no file has more comments than at the merge base with the pilot, and a file the base does not have has none"):
+  test(
+    "G22: no file has more comments than at the merge base with the pilot, and a file the base does not have has none"
+  ):
     val git = GitRepo(Path.of("."))
     git.base(sys.env) match
       case Left(why)   => fail(why)

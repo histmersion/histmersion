@@ -16,7 +16,7 @@ import sttp.shared.Identity
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A model's allowance, inside one step: once the step's own calls have spent what the model had left above its reserve
   * (tokens or USD, as [[ModelPicker]] measured at the pick), the loop is told to finish, and the engine hands the step

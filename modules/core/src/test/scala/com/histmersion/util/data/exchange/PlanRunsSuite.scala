@@ -19,7 +19,7 @@ import com.histmersion.domain.MergePlanner
 import com.histmersion.api.exchange.MergeTally
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Several kinds' runs of a plan as one: each stage in the given order; the first answer wins where one is asked for.
   */

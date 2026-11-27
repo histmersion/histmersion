@@ -17,7 +17,7 @@ import com.histmersion.api.Years
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object TimelinePlayback:
 

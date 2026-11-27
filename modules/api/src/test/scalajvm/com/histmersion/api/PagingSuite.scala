@@ -16,7 +16,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Approval
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The paged lists' pure parts: the heading's wording, the counts header, the page from the counts, and how the jobs /
   * runs / approvals listings say there is more.

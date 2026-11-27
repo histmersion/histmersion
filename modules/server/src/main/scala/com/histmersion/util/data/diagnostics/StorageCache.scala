@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.maintenance.Storage
 import io.github.iltotore.iron.constraint.any.Pure
 import scala.util.control.NonFatal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The last [[StorageFigures]] measurement, reused for `ttl` and measured again in the background after it — ONE
   * measurement at a time, however many Abouts ask. A request that finds nothing measured yet waits up to `wait` for the

@@ -13,7 +13,7 @@ import com.histmersion.{ByteCount, ByteOffset}
 import com.histmersion.util.storage.{Blob, RandomReader}
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The PMTiles v3 archive format (https://github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md): one file holding a
   * tile pyramid, addressed by a Hilbert-curve tile id, readable with HTTP range requests. The terrain base map's two

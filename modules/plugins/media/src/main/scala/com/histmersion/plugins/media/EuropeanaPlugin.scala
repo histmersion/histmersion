@@ -5,7 +5,7 @@ package plugins.media
   * key.
   */
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class EuropeanaPlugin extends KeyedPlugin(KeyedPlugin.Id("media-europeana"), KeyedPlugin.Name("europeana")):
   protected def collection(c: KeyedPlugin.Config, key: Option[KeyedCollection.Key], ctx: Plugin.Context) =

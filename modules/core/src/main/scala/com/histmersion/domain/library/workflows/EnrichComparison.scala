@@ -10,7 +10,7 @@ import com.histmersion.domain.EnrichSource.{Classified, Findings, Geocoded, Veri
 import com.histmersion.domain.automation.agents.OutputComparison
 
 import scala.annotation.tailrec
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** enrich-source's runs compared by their outputs (`agent compare`, #992): the findings each kept, the verifier's quote
   * check, the places asked and resolved, the dated findings, the period, the lengths of the summary and the notes, and

@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place (a Pleiades site has
   * no extent) to count as inside it; polygons use exact containment. The limits bound what `/api/places` and the

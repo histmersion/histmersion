@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How the gazetteer resolved a [[Filter]]'s `places` values. Computing it needs the database, so it is done ONCE per
   * query by the handler ([[PlaceRepo.scopeFor]]) and passed into the pure `Filter → SQL` builders; an empty scope means

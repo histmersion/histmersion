@@ -14,7 +14,7 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What an assessment rests on and what it leaves: the local Retraction Watch mirror, and the verdict recorded against
   * a stored source.

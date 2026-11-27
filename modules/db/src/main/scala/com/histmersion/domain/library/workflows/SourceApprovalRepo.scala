@@ -11,8 +11,8 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @atBoundary(BoundaryKind.Sql, "reads and writes the source approval tables and their row codecs")

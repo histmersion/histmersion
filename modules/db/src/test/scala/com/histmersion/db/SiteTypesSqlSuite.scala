@@ -17,7 +17,7 @@ import com.histmersion.api.catalogue.CatalogRecord.Wikidata
 import com.histmersion.api.catalogue.SiteTypes.{Geonames, Pleiades, SiteType}
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `SiteTypesSql.expr` — the map tiles' site type in SQL — answers what [[SiteTypes.of]] answers, for every entry of
   * its tables and the cases between them (HISTMERSION_TEST_DB_URL; skipped otherwise).

@@ -29,7 +29,7 @@ import com.histmersion.domain.library.acquisition.CoreBudget
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The recorded traffic and the stored results of the event catalogues: imports of GVP, NOAA and Wikidata from the
   * fixtures (no socket) on the stock generation's catalogues — every request with its headers, in order — then the

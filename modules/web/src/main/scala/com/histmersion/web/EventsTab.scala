@@ -21,7 +21,7 @@ import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.library.Title
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Markdown
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object EventsTab:
   type When = When.T

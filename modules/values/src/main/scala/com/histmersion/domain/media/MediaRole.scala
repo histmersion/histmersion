@@ -2,7 +2,7 @@ package com.histmersion
 package domain.media
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object MediaRole:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]

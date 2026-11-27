@@ -59,8 +59,8 @@ import com.histmersion.domain.catalogue.events.EventAliasTable
 import com.histmersion.domain.automation.goals.GoalAliasTable
 import com.histmersion.domain.catalogue.places.PlaceAliasTable
 import com.histmersion.server.instance.WebBundle
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Everything the handlers need. Built once in `Main` (the composition root) and passed down — no object-initialisation
   * side effects anywhere below this.

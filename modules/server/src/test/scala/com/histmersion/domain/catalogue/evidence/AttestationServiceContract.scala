@@ -11,7 +11,7 @@ import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the attestations keep: ids in the order they were made, every field read back, the list narrowed by
   * source, target kind and target and paged, a patch changing only what it names, a delete once.

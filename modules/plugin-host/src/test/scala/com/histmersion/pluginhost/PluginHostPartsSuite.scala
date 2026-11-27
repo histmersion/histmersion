@@ -17,7 +17,7 @@ import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiProvider
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin's settings, read by a derived reader. */
 final case class HelloSettings(greeting: String, contactEmail: String)

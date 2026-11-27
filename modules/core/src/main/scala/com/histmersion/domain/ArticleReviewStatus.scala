@@ -7,8 +7,8 @@ import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
 import com.histmersion.domain.automation.ItemStatus
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an article stands with the review panel, derived from what the review manager and the review ledger record
   * about it — pure; the server reads the facts (one cheap query for a whole list page, the ledger itself for one

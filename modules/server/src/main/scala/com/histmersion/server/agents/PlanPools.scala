@@ -33,8 +33,8 @@ import com.histmersion.util.system.JvmHome
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every

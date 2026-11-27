@@ -4,8 +4,8 @@ package config
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.domain.automation.Pipeline
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Per run defaults (overridable per run) and the global caps checked before every LLM call. */
 @movesTo(FeaturePlace.AutomationAgents)

@@ -7,7 +7,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** THE answer to "should the map animate now?" (#4718). Every motion of the map reads it: the clusters' regroup on a
   * zoom ([[ClusterMotion]]), the names' easing (`MapLabels`), the camera's zoom and pan easing (`MapLibreSurface`:
@@ -70,9 +70,11 @@ object MotionPref:
   def animate(): Boolean = { install(); MapMotion.animates(choice, systemNow) }
 
   /** Whether the map animates, as it changes. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val animates: Signal[Animates] = state.signal.map((m, r) => Animates(MapMotion.animates(m, r)))
 
   /** Whether the menu says the map is still because the system asks for it. */
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val heldBySystem: Signal[HeldBySystem] = state.signal.map((m, r) => HeldBySystem(MapMotion.heldBySystem(m, r)))
 
   /** For a test: the system's setting as if the browser had reported it. */

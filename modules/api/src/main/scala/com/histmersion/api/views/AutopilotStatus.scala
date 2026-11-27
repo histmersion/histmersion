@@ -10,7 +10,7 @@ import com.histmersion.api.library.{AcquireChecksMarkdown, UpstreamQuota, Upstre
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Acquire
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot as `GET /api/agents/autopilot` shows it: the automation's [[Autopilot.EngineStatus]], then the
   * library's upstreams' quotas and the acquisition list's re-check.

@@ -26,7 +26,7 @@ import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *

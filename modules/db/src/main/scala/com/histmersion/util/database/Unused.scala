@@ -1,7 +1,8 @@
 package com.histmersion
 package util.database
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** A write's answer its caller has no use for, said so with why (G94). A write answers whether it changed, found or
   * moved something, or how many rows it touched; dropping that answer silently is refused by the guideline inventory
   * (`discardedOutcome`, pinned at 0). Where every answer leaves the same state, the site says which case it is, and the

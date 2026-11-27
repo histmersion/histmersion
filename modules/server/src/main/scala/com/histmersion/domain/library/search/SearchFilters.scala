@@ -7,7 +7,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.{PlaceScope, PlaceService}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How the library reads a filter: its page, and the places its `places` values name. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

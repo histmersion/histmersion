@@ -25,7 +25,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.domain.library.acquisition.CandidateDedupe
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.research.ReviewGoal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The deterministic new-source search's pure half (#3761): keys, watermarks, deduplication, the indexes' answers, the
   * Markdown.

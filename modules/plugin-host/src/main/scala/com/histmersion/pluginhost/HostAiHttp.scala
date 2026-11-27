@@ -10,8 +10,8 @@ import java.nio.charset.StandardCharsets
 import scala.jdk.CollectionConverters.*
 import scala.util.control.NonFatal
 import scala.concurrent.duration.DurationInt
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's [[AiHttp]]: java.net.http over HTTP/1.1 (as every client of the server), the host's User-Agent (no e-mail
   * can reach it, [[HttpPolicy.userAgent]]), a timeout per call, and nothing sent or received logged.

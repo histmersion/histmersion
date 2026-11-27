@@ -6,8 +6,8 @@ import org.scalajs.dom
 import scala.scalajs.js
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Copying text for a person: the browser's clipboard, else the older copy command; what happened is said ([[Flash]]).
   */

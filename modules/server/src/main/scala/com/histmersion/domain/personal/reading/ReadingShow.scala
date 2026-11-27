@@ -3,7 +3,7 @@ package domain.personal.reading
 import com.histmersion.util.problem.Problem
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
 enum ReadingShow(val wire: ReadingShow.Wire):

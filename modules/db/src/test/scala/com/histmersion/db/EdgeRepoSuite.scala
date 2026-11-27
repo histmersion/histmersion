@@ -22,7 +22,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `edges` connects stored sources only (V026): the migration's data move, the write-path routing into
   * `unresolved_edges`, promotion when the target arrives, and the graph/neighbors reads built on that invariant.

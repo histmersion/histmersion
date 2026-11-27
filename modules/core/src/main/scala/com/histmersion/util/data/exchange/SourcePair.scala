@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source of the bundle (`right`) and one here (`left`) that the sources' rules found to be, or perhaps to be, one
   * work: `gate` is the question that decides it when a person must, `byKey` whether a strong key (a DOI, the original

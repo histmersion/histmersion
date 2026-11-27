@@ -17,7 +17,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The attestations for agents: list or show, create, delete. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

@@ -36,7 +36,7 @@ import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -609,6 +609,7 @@ object AgentRepo:
         }
 
   /** The payload an approval was recorded with, as stored, and the creator that proposed it. */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def payload(id: ApprovalInfo.Id)(using DbCon): Option[(Jsonb.JsonText, Jsonb.JsonText)] =
     sql"SELECT proposal::text, creator::text FROM approvals WHERE id = $id"
       .query[(Jsonb.JsonText, Jsonb.JsonText)]

@@ -17,7 +17,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.media.ImportJobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1491: `histmersion media import wikidata` starts the server's import JOB — the request answers at once — and
   * follows it with the `n/total` progress line the job reports, to its summary; `--no-wait` prints the id and returns;

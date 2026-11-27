@@ -14,7 +14,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.Lpf
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A one-ended LPF timespan is stored OPEN (#1403): `[start,)` / `(,end]`, never the one known year — for the place,
   * its names and its relations. Against a real PostGIS (HISTMERSION_TEST_DB_URL).

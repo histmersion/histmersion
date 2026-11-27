@@ -28,7 +28,7 @@ import com.histmersion.config.AgentRuntimesConfig
 import com.histmersion.config.UserPaths
 import com.histmersion.util.data.diagnostics.ShownStore
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Storage part of About: the locations come from the config (the same resolvers the writers use), are measured
   * within the caps, and the cache measures once per TTL, in the background. All of it in a temp directory: no live data

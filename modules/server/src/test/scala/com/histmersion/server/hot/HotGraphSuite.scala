@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 import com.histmersion.config.HotNode
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The hot component graph without a database (docs/research-plugins.md §3.6): nodes built in scopes of their own, a
   * reload rebuilding what the changed keys concern and its dependents, a failed build publishing nothing, pins keeping

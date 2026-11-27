@@ -11,7 +11,7 @@ import java.time.{Clock, Instant}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.domain.library.Doi
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The work lists' kernel: one table of items, a list per owner — ACQUIRE (the library's), TASKS and LOG (the
   * engine's). Each owner adds its own rules on top (a log item's dated topic, an acquisition item's DOI); the kernel

@@ -3,7 +3,7 @@ package plugins.fetchers
 
 import com.histmersion.upstreams.settings.UpstreamSettings
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `oa-landing`'s settings: the host's `histmersion.acquire` (its landing-page rules among them), and the contact
   * `oa-unpaywall` asks Unpaywall with — the landing step reads Unpaywall's record with the very same contact, so the

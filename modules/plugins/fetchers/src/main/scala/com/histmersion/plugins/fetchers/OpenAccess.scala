@@ -19,7 +19,7 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Access
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The fetchers of the four open-access index plugins, all by DOI: Unpaywall's best OA location (`oa-unpaywall`),
   * CORE's download URLs with a key (`oa-core`), OpenAlex's OA locations (`oa-openalex`), and the repository landing

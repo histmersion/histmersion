@@ -13,8 +13,8 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.

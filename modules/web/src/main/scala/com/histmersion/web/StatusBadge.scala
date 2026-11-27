@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's standing, the one status code everywhere: a mark whose colour AND shape say the status (the stylesheet's
   * `.status-badge.st-<status>`) and the word ([[Wording.status]]); the stored value on hover.

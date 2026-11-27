@@ -11,7 +11,7 @@ import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun, FixR
 import com.histmersion.util.data.diagnostics.DataCount
 import com.histmersion.util.database.Transactor
 import com.augustnagro.magnum.DbCon
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The places' share of the catalogue's data contribution: their count, and their checks with the repairs safe to make
   * without a person — a kind the record contradicts, a point at a grid square's centre, an imported area known only by

@@ -24,7 +24,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
@@ -667,7 +667,6 @@ object Bundle:
   object EventSets:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def candidateStatus(here: EventCandidate.Status, there: EventCandidate.Status): EventCandidate.Status =
       if here == EventCandidate.Status("proposed") then there
       else here

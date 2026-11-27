@@ -3,7 +3,7 @@ package web
 
 import com.histmersion.api.instance.{About, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The About window offers everyone who uses the server the source of the running version (the AGPL's network clause):
   * the licence, and a link to the repository at the commit.

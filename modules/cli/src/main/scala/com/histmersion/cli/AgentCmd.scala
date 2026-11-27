@@ -23,8 +23,8 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.Approval
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion agent …` — the embedded research agents (docs/research-embedded-agents.md). The server runs them; this
   * only starts, follows and steers runs over HTTP. Off unless the SERVER has `HISTMERSION_AGENTS_ENABLED=true`.
@@ -38,7 +38,6 @@ object AgentCmd:
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
   private[cli] def follow(c: Client, id: Agents.RunInfo.Id, last: String)(using

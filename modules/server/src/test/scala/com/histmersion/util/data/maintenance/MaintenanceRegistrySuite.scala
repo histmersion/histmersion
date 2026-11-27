@@ -6,7 +6,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.data.DataOwner
 import com.histmersion.server.Deps
 import com.histmersion.util.storage.Location
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What today's owners register for backup, maintenance and the storage figures. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

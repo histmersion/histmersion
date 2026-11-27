@@ -3,8 +3,8 @@ package config.edit
 
 import com.histmersion.util.problem.{Problem, Problems}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A setting as it may be SHOWN — to a person, a client or an agent: its values as HOCON writes them, and for a
   * credential none of them (neither what the file writes, nor what applies, nor the default), only the rule it is

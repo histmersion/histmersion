@@ -7,7 +7,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An asset as a bundle reads it: its line's fields, the size of its bytes, its period's inclusive bounds. */
 final private[assets] case class AssetBundleRow(

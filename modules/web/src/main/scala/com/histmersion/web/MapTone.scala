@@ -8,7 +8,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Whether the base map under the names is light or dark — what the map's label colours follow (`.map-tone-light` /
   * `.map-tone-dark`: dark text on a light halo, or the inverse).

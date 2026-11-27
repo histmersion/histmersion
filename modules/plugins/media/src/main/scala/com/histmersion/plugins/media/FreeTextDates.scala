@@ -3,7 +3,7 @@ package plugins.media
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Free-text object dates as museums write them (`1550-1196 BCE`, `100 BCE-100 CE`, `ca. 3300-ca. 2250 BCE`,
   * `12th-13th century`, `5th century BCE`, `2nd millennium BCE`, `1883 or 1884`) read as a signed span, BCE negative.

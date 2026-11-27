@@ -7,7 +7,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A [[MapSurface]] in memory: Web Mercator on the 256-pixel grid, a fixed size, its events fired by hand, its shapes
   * kept as data, its base maps recorded. The test double of the map engine — the view-model's logic (clustering, what

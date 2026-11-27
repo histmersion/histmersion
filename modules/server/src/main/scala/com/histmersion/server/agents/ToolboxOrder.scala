@@ -4,8 +4,8 @@ package server.agents
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.domain.library.workflows.LibraryAgentTools
 import com.histmersion.domain.research.workflows.ResearchAgentTools
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The order the engine's toolbox lists the domains' agent tools in — the library's and research's interleaved, as the
   * toolbox has always listed them (the definitions, their generator and the toolbox snapshot name them so); the tools

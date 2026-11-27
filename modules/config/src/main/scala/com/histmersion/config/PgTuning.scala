@@ -6,8 +6,8 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.numeric.Interval
 
 import PgTuning.Connections
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Memory and connection settings the bundled Postgres is started with (`-c`, so an existing cluster gets them on its
   * next start; nothing is written to its `postgresql.conf`). Each memory setting is a [[PgSize]]: a size Postgres reads

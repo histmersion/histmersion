@@ -17,7 +17,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `SourceNote.note` must be the inverse of `SourceNote.parseNote` — that round trip is what lets the Markdown wiki
   * stay a faithful mirror of the database (plan §1.9a `export` / `seed --force`).

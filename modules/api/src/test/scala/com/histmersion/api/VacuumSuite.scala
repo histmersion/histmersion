@@ -12,7 +12,7 @@ import com.histmersion.api.library.IngestMarkdown
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.jobs.JobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion maintenance vacuum` (#1445): which tables a request names, the statement for each, and how a job says
   * what it does.

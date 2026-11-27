@@ -18,7 +18,7 @@ import com.histmersion.config.PgTuning
 import com.histmersion.config.ServerConfig
 import com.histmersion.config.BundlesConfig
 import com.histmersion.config.InitConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SupervisorSuite extends munit.FunSuite:

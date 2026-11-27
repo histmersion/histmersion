@@ -42,7 +42,7 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.library.Citekey
 import com.histmersion.web.ui.ThemeTokens
 import com.histmersion.web.map.MapStart
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The merge review screen (`/merge`, docs/research-merge-import.md §6.5, milestone M6): upload another collection's
   * bundle, read its plan — the matched sources, every issue grouped (open first, then decided, conditional, defaults,

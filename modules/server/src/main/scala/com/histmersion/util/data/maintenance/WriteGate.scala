@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import scala.concurrent.duration.FiniteDuration
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The maintenance lock. A restore drops and recreates every table, so nothing else may touch the database while it
   * runs, and nothing begun before it may write after it:

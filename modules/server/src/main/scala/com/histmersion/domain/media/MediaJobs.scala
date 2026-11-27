@@ -13,7 +13,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.media.ImportJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Media's runs — an import, the sources' pictures, as one request or as a job — one at a time: the polite pace is per
   * run, and two runs would ask twice as fast. A job is a `jobs` row a person may pause, resume or cancel between its

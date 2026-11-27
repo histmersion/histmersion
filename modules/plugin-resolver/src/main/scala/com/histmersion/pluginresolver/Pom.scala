@@ -14,8 +14,8 @@ import javax.xml.parsers.DocumentBuilderFactory
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one thing read from a plugin's POM here: whose it is. Everything else in it (dependencies, properties, parents,
   * dependency management) is coursier's to read.

@@ -23,7 +23,7 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A work list as `GET /api/queue/{list}` shows it: its items (open, all, a goal's or a job's) as the automation keeps
   * them, the goals each belongs to or is linked from, and — for the ACQUIRE list — the library's last legal check of

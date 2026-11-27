@@ -8,7 +8,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Years
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The span the tiled layers are drawn for in playback: the playhead's window widened to whole buckets of the years
   * `ui.map-tiles.playback-bucket-seconds` of playback cover (a round number of years), so the tiles' URL — and the

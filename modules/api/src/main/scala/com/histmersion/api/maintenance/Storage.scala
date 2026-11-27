@@ -14,7 +14,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object Storage:
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]

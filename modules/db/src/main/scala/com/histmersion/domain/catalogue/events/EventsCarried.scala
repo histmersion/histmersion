@@ -9,7 +9,7 @@ import com.histmersion.util.data.{DataOwner, TableName}
 import com.histmersion.util.data.exchange.{BundleEntry, CarriedKind, ImportRank, ImportStage, RowsIn}
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the events: the events (renamed first, as the other side renamed them, after the places and
   * periods they point at), their old ids, what the catalogues say about them and the corrections by hand.

@@ -4,7 +4,7 @@ package config
 import io.github.iltotore.iron.constraint.numeric.{Multiple, Positive}
 
 import scala.util.Try
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** A memory size of the bundled Postgres, in bytes: a whole number of kilobytes, the smallest unit Postgres reads a
   * size in, so every value is written exactly ([[written]]).

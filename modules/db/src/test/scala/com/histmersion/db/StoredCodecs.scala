@@ -10,7 +10,7 @@ import org.scalacheck.Gen
 
 import com.histmersion.util.data.exchange.BundleFormat
 import com.histmersion.util.database.Jsonb
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How [[StoredShapesSuite]] writes and reads a stored document: through the store's own functions (`Jsonb`,
   * `BundleFormat`) and the codecs they take.

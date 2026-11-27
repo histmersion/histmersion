@@ -23,7 +23,7 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Period
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every card kind leads with an icon from the one registry (#1449): sources by what they are, places by kind and site
   * type, regions and polities a map, events their kind, articles and pictures theirs. And the map's clusters: what a

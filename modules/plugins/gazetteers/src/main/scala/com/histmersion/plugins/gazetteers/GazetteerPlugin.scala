@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.plugin.{Plugin, Spi}
 import com.histmersion.plugin.Registry
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of Histmersion's own network gazetteers: on by default (its defaults resource), switched off by
   * `histmersion.plugins.gazetteer-<source>.enabled = false`. It has no settings of its own: the host lends its download

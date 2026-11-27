@@ -19,7 +19,7 @@ import com.histmersion.db.DbSuite
 import com.histmersion.api.automation.Goal
 import com.histmersion.db.TestDb
 import com.histmersion.config.DbConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The activity list merges runs, jobs, worklog lines and a person's decisions into one time-ordered list: the same
   * answers from the in-memory service and from the database's (on a scratch database of its own, gated on

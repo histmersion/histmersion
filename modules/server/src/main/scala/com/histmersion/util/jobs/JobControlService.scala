@@ -16,7 +16,7 @@ import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobActions
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pause, resume and cancel a job: a long background job cooperatively (it stops at its next part boundary, keeping
   * what it did; resumed, it skips that), an agent run by its own control.

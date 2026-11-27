@@ -32,8 +32,8 @@ import com.histmersion.api.exchange.MergePlan
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** OCR jobs (plan §1.8). The row is the durable part of a job; the queue itself is in memory, which is precisely why a
   * restart must reconcile: [[failInterrupted]] turns every `running` row into `failed: interrupted` at startup, so no

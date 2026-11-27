@@ -3,7 +3,7 @@ package pluginhost
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Gazetteer
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The names a plugin's contribution may not take, because Histmersion's own providers answer to them: a plugin's
   * pictures, events or models would be taken for theirs. The server's built-in registries define the same sets; a

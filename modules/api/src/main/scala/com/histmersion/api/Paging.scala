@@ -8,8 +8,8 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Filter
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.catalogue.CatalogRecord
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Paging travels in response headers so the JSON body stays the plain array older CLIs and MCP clients read. */
 @movesTo(FeaturePlace.Kernel)

@@ -13,8 +13,8 @@ import java.util.Locale
 import scala.concurrent.duration.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition transport: java.net.http through sttp, which follows redirects. `tls` is the trust `acquire.tls`
   * configured ([[OutboundTls.configure]]); `None` keeps the client's default, the JDK's roots.

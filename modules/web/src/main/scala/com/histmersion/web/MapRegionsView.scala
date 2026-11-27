@@ -15,7 +15,7 @@ import com.histmersion.api.basemap.Basemap
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.MapArea
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The About window's "Map regions" panel: pick a named region or type a box, see what it would download zoom by zoom
   * (a dry run of the fetch job), download it and follow the job, and remove what was downloaded. Over the base map's

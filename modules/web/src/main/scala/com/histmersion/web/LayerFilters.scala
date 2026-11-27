@@ -9,7 +9,7 @@ import scala.scalajs.js
 import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy, EventTier, SiteTypes}
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events and sites layers' menus (#1449): fixed vocabularies — the kind taxonomy, listed under its two groups
   * (each group's "all" first), and the tiers; the site types. "all" is no filter. Each option shows what the map draws

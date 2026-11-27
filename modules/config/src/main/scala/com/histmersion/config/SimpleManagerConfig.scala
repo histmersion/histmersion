@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** A library-wide or per-area manager with nothing but its runs at once to set: the enrich manager
   * (`agents.managers.enrich`) and the seeding managers (`agents.managers.seed`).

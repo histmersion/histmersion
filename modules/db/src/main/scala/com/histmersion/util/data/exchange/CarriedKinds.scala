@@ -13,7 +13,7 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The carried kinds an export and an import run over, from the registry. The entries come in the bundle format's order
   * (the manifest lists them so, and a bundle is byte for byte the same whoever registered first); the steps of an

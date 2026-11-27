@@ -7,7 +7,7 @@ import com.histmersion.util.jobs.{Quiescent, Workers}
 
 import javax.sql.DataSource
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One agent server per database (docs/research-process-managers.md §2): the server that holds the lease `agents` runs
   * the engine, the scheduler and the managers; another one pointed at the same database runs none of them, and takes

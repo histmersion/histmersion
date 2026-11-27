@@ -8,7 +8,7 @@ import com.histmersion.util.storage.{ByteSource, Store}
 import java.io.IOException
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A store of tiles bounded in bytes, least recently used dropped first — an on-demand layer's cache. A tile is a file
   * `<z>/<x>/<y>.<ext>`; a tile the provider does not have is an empty `<z>/<x>/<y>.none`, so it is not asked for again.

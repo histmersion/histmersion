@@ -7,7 +7,7 @@ import com.histmersion.api.media.{AssetInput, AssetLinks, ImageSize}
 
 import scala.annotation.tailrec
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One figure of a source as the caller supplies it — decoded bytes, not base64 — to be stored with the source's
   * Markdown (plan §1.8): keyed by `(citekey, name)`, which is exactly the `assets/<name>` link the body carries.

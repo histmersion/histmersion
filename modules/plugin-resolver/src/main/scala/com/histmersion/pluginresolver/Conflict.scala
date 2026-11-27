@@ -4,7 +4,7 @@ package pluginresolver
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin needs a module the server ships, at a NEWER version than the server's. One class loader holds one version,
   * and the server's would win, so the plugin cannot be linked.

@@ -4,7 +4,7 @@ package domain.library.sources.referrers
 import com.histmersion.api.library.Rename
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source given a new citekey: `from` becomes `to`; `shortForms` are the short citekeys (`beckman2025` for
   * `beckman2025_ahhiyawa`) that resolved to it before the rename.

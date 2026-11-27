@@ -3,8 +3,8 @@ package config
 
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How often a plan pool is read while the autopilot is on and queued work wants it, besides the reading a run's own
   * pick takes.

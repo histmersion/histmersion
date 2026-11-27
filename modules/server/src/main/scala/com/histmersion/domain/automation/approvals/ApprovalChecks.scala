@@ -9,7 +9,7 @@ import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.agents.AgentRepo
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a manager kind's checks of an approval its items wait for are given ([[AutoApprovals]] is one): what was
   * approved by code since a moment, the output a run's step recorded, the caps.

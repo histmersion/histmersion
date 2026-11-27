@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 /** `media-opencontext`: `histmersion media import opencontext` — Open Context's excavation media. */
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.Registry
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final class OpenContextPlugin extends MediaPlugin("media-opencontext"):
   type Config = MediaPlugin.Config

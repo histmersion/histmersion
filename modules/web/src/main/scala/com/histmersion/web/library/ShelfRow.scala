@@ -5,7 +5,7 @@ import com.histmersion.api.personal.{Bookmark, Note, PersonalMarkdown, ReadMark,
 import com.histmersion.api.ItemKind
 import com.histmersion.api.YearFmt
 import com.histmersion.web.marks.Ago
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One row of a shelf of My library, as it reads: what it points at, its name, what it is (`kind`), the line under it
   * (where it is, a note's first line, the authors), when, and whether it is a source or an article not marked read.

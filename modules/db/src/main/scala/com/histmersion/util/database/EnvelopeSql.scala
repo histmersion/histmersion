@@ -3,7 +3,7 @@ package util.database
 
 import com.histmersion.api.BBox
 import com.augustnagro.magnum.{sql, Frag}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The PostGIS predicate for a viewport over a geometry column. A box with `minLon > maxLon` crosses the antimeridian
   * and becomes two envelopes OR'ed together (`minLon…180` and `-180…maxLon`).

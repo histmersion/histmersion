@@ -24,7 +24,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the

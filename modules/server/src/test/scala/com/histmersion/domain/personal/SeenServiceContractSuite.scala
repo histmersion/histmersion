@@ -5,7 +5,7 @@ import com.histmersion.domain.personal.seen.SeenBoard
 
 import java.time.Instant
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How far a person has seen each window's news, in memory and in the database. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

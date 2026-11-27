@@ -42,7 +42,7 @@ import com.histmersion.api.library.CandidateList
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition's MCP tools. Every tool returns Markdown and delegates to the same [[AcquisitionControllers]] the
   * REST routes call, so the two surfaces cannot drift.
@@ -309,6 +309,7 @@ object AcquisitionTools:
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
 
+  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class RefsInput(
       id: RefsRequest.Id,
       apply: RefsRequest.Apply = RefsRequest.Apply(false),

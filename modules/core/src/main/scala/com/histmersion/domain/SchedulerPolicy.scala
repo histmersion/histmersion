@@ -8,8 +8,8 @@ import com.histmersion.api.automation.ManagersMarkdown
 
 import java.time.{Duration, Instant}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The central agent scheduler, pure (docs/research-goal-advancement.md "As built"): ONE decision per managers' tick
   * about which pending manager items start a run now, across every job type — goal plans, article proposals, candidate

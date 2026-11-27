@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SPI's own newtypes: what each accepts, at compile time for a literal and at run time for a value read from a
   * provider; and the SPI generation compiled into the plugin.

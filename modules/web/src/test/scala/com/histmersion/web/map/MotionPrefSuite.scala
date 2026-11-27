@@ -4,7 +4,7 @@ package web.map
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.{Store, UiState}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The reader's "Map motion" (#4718): what each choice decides with and without the system's reduced-motion setting,
   * what MapLibre is told, the stylesheet's attribute, when the menu's note shows — and the choice kept per device. Runs

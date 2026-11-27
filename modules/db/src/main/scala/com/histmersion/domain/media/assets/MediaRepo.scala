@@ -37,8 +37,8 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pictures (#1446, V082): one `assets` row each — a provider's with `provider` set instead of a `citekey`, a source's
   * figure with its citekey — and the places, events and sources they are shown on (`media_links`); the read paths every

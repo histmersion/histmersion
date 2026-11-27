@@ -7,7 +7,7 @@ import com.histmersion.pluginhost.HttpTransport
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where a [[PluginHarness]]'s requests go. Whatever the mode, every request passes through the server's own HTTP
   * policy first — its User-Agent, its timeouts and TLS trust, `Retry-After`, bot challenges ending the request — so a

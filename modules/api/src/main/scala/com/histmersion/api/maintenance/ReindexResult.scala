@@ -6,7 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Re-indexing the whole corpus takes minutes, far past any HTTP timeout, so one call does a bounded slice. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

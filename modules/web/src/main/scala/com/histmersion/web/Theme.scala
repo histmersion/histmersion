@@ -7,8 +7,8 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import scala.util.Try
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** THE theme (the stylesheet's two token sets). The choice is kept per browser in `localStorage` under [[StorageKey]]
   * and written to `<html data-theme>`, which the stylesheet reads; "system" leaves the choice to its

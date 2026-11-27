@@ -12,7 +12,7 @@ import com.histmersion.api.library.{Citekey, Edge}
 import com.histmersion.api.research.Article
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The lint classifiers (plan §5.2 stream 2.8) — everything that decides whether a row offends and what the report says
   * about it, with no database in sight.

@@ -9,8 +9,8 @@ import com.histmersion.util.problem.Problem
 
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A `jsonb` column holding a wire DTO, crossing through that DTO's own JSON codec (#1946) — the Vocab.codec rule for
   * JSON: select the column as `col::text`, bind the value as `$v::jsonb`, and a stored document this build cannot read

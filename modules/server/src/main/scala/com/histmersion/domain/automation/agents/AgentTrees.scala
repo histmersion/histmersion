@@ -19,7 +19,7 @@ import com.histmersion.config.Environment
 import com.histmersion.util.system.JvmHome
 import com.histmersion.util.storage.Store
 import com.augustnagro.magnum.sql
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Writes the generated per-runtime trees (docs/research-agent-runtimes.md §2.2) under the runtimes directory:
   * `<data dir>/agents/{claude-code,codex,opencode}/` and `manifest.json`.

@@ -3,7 +3,7 @@ package config
 
 import com.histmersion.Year
 import hearth.kindlings.sconfigderivation.ConfigReader
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 @movesTo(FeaturePlace.LibraryAcquisition)
 final case class AcquireDefaults(

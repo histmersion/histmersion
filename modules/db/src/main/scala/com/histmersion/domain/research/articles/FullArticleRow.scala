@@ -7,7 +7,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Flat projection of the whole article row, for the domain read (`load`). */
 final private[articles] case class FullArticleRow(

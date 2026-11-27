@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.augustnagro.magnum.{sql, Frag}
 import hearth.kindlings.jsoniterjson.Json
 import StoredCreator.Agent
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final private[histmersion] case class StoredCreator(
     kind: String,
@@ -36,6 +36,7 @@ object StoredCreator:
         modelOf(Some(definition), Some(s"$provider"), Some(s"$model"))
       case Creator.Agent.RunModels(definition) => modelOf(definition, None, None)
 
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def modelOf(
         definition: Option[Creator.Definition.Name],
         provider: Option[String],

@@ -70,7 +70,7 @@ import com.histmersion.util.database.TestPermits.given
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition list's legal re-check against a `*_test` database (docs/research-process-managers.md "As built: the
   * acquisition list's re-check"): an item the corpus holds with its text is closed, a metadata-only source is fetched

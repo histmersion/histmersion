@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Whether this page must send the API key. A page opened from a network the server trusts (this machine, by default)
   * never needs it; from any other, the server answers nothing but the page itself without `Authorization: Bearer <key>`

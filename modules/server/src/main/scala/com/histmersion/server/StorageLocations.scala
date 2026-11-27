@@ -10,8 +10,8 @@ import com.histmersion.util.storage.{Location, Storage, Store}
 import java.nio.file.Path
 import com.histmersion.config.RuntimeConfig
 import com.histmersion.config.AcquireConfig
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where each storage location lives, worked out from today's settings at each call — so the directories are where they
   * always were, and a reload that moves one is followed.

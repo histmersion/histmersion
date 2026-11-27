@@ -10,8 +10,8 @@ import com.histmersion.plugin.{GazetteerPlace, Plugin}
 
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pictures a Pleiades place record links (https://pleiades.stoa.org/places/{id}/json, no key). A place's `references`
   * (`accessURI`, `alternateURI`) sometimes name a Wikimedia Commons file — those are the pictures; their licence is

@@ -8,8 +8,8 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `aic`: the Art Institute of Chicago API (https://api.artic.edu/docs/), no key. A search answers the fields asked
   * for; `is_public_domain` marks the works whose images are released under CC0 — any other is refused. Images come from

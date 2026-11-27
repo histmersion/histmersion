@@ -28,8 +28,8 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Title
 import com.histmersion.api.library.ArchiveId
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The typed client for the acquisition endpoints — the same `AcquireApi` values the server interprets, so the CLI
   * cannot drift from the REST/MCP surface. It reuses [[Client]]'s transport rather than opening a second one.

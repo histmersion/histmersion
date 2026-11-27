@@ -16,7 +16,7 @@ import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
 import com.histmersion.api.automation.ModelChains.*
 import com.histmersion.api.automation.{Agents, AgentsMarkdown}
 import com.histmersion.api.automation.ModelChains
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")

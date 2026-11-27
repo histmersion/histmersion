@@ -2,7 +2,7 @@ package com.histmersion
 package web
 
 import scala.collection.mutable
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 class ThrottleSuite extends munit.FunSuite:
 

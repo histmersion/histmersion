@@ -8,7 +8,7 @@ import com.histmersion.api.plugins.PluginSet
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.jar.{JarEntry, JarOutputStream}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The plugin set inside a binary (docs/research-plugins.md §7.3): `META-INF/histmersion/plugin-set.json` in a small
   * generated jar that a relink (and the JVM launcher) puts on the class path. The jar carries its own reachability

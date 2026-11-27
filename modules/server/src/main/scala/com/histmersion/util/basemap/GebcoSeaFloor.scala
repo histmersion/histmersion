@@ -14,7 +14,7 @@ import java.io.IOException
 import java.nio.{ByteBuffer, ByteOrder}
 import scala.util.Using
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sea floor from the GEBCO grid (15 arc-seconds, ~460 m; public domain), made into Terrarium tiles here: GEBCO
   * publishes the grid as eight 90° GeoTIFFs of uncompressed rows, so the rows a region needs are read by range, kept

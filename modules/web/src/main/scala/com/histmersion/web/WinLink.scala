@@ -4,7 +4,7 @@ package web
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 import org.scalajs.dom.window
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A link to something that opens as a window (a run, a goal, a manager) or as a page that took over an old toolbar
   * window (the backlog, the approvals): the address of its page, so it can be opened in a new tab, and a plain click

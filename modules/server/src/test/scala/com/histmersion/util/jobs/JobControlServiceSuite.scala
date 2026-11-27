@@ -31,7 +31,7 @@ import com.histmersion.api.jobs.JobState
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Pause, resume and cancel: the in-memory service, then a long background job on a test database (gated on
   * HISTMERSION_TEST_DB_URL) that stops at a part boundary and, resumed, does only the parts it had not done.

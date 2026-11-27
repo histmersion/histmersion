@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.storage.{ByteSource, Resources, SafePath, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object PluginTree:
   type Owned = OwnedValue

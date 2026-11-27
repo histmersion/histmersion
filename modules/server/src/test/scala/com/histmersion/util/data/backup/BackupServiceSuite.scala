@@ -13,7 +13,7 @@ import com.histmersion.util.storage.{ByteSource, Location, Storage}
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.storage.Store
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The backups in memory: named, listed, pruned and refused as the database implementation does. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

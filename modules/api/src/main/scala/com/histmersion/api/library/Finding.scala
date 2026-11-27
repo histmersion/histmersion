@@ -18,7 +18,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class Finding(
     id: Finding.Id,

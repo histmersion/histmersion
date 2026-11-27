@@ -10,8 +10,8 @@ import java.util.Locale
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The real client: `java.net.http`, following redirects, the URL used exactly as built (the provider URLs are already
   * percent-encoded). `timeoutSeconds` bounds the wait for an answer, `connectSeconds` (when given; else the same) the

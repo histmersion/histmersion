@@ -11,8 +11,8 @@ import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.time.Timer
 import com.histmersion.api.library.Query
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The read-only SQL escape hatch (`POST /api/query`, `histmersion query`, MCP `query`; plan §5.2 2.8), plus the live
   * `information_schema` shape the tool description is generated from.

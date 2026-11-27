@@ -3,7 +3,7 @@ package web
 
 import scala.collection.mutable
 import com.histmersion.api.Geo
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where a region's or polity's NAME goes on the map, and which names are shown — all pure, so the placement is a unit
   * test and the map only applies the answer ([[MapLabels]]).

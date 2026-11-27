@@ -3,7 +3,7 @@ package api.automation
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule, GoalView}
 import com.histmersion.api.YearFmt
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object GoalsExport:
 

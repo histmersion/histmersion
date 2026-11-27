@@ -12,7 +12,7 @@ import com.histmersion.util.data.exchange.{BundleScope, MergeRules}
 
 import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge treats places: the ledger names one by its id; a plan knows which of the bundle's place ids and old ids
   * name a place here, which of the bundle's places with no uid here are one here — by id, or by label and geometry (the

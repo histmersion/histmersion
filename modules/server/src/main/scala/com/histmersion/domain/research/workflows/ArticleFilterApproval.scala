@@ -7,7 +7,7 @@ import com.histmersion.domain.automation.approvals.{ApprovalEffects, SubjectEffe
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What approving an article's inferred filter does (#8817): the filter recorded on the article, unless it records one
   * by now ([[InferFilterPipeline.applyProposal]]).

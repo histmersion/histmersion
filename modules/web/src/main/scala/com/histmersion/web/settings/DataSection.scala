@@ -22,7 +22,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.web.ErrorLine
 import com.histmersion.web.{:=, given}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › Data and downloads: the reference data Histmersion keeps on this computer — the background map, places,
   * periods and events, pictures — each with what it is, whether it is there, and Update / Remove; the downloads under
@@ -212,7 +212,6 @@ object DataSection:
   final private class Starter:
     val said = Var(Option.empty[Either[String, String]])
     @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def act(text: ActionLabel, what: ActionWhat, job: => Future[JobInfo], primary: Boolean = false): HtmlElement =
       button(
         typ := "button",

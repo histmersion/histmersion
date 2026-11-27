@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 
 import LogEvent.{Actor, At, Id, Kind, Label, Subject, Trace, What}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final case class LogEvent(
     id: Id,

@@ -16,7 +16,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Upload a document for OCR ingest (`POST /api/ingest`): pick or drop a file, give it a citekey and the metadata the
   * endpoint takes, watch the upload, then follow the OCR job in the jobs window. The form can start from an item of the
@@ -295,7 +295,6 @@ object UploadView:
       .foreach(l => openItems.set(l.items.filter(_.status == Queue.QueueItem.Status(Queue.Open))))
 
   /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemPicker: HtmlElement =
     val optionsId = "upload-acquire-items"
     div(

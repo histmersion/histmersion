@@ -9,7 +9,7 @@ import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.*
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object Trace:

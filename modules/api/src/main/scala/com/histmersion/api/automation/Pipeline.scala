@@ -2,7 +2,7 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 enum Pipeline(
     val wire: Pipeline.Wire,

@@ -7,13 +7,16 @@ import com.histmersion.api.exchange.MergeResolutions
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.cli.CommandLine.{given, *}
 import org.rogach.scallop.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The flags several command groups share, declared once: the merge resolutions, a bookmark's or a note's target, the
   * filters of the three listings. Each returns the value to read after the command line is verified.
   */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of the flags several command groups share: declares its options, parses them into typed commands")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter of the flags several command groups share: declares its options, parses them into typed commands"
+)
 private[cli] trait SharedFlags extends CommandLine.Declares:
 
   /** `--resolutions`, `--resolve ID=decision`…, `--editions` (`merge plan|apply`, `bundle import`). */

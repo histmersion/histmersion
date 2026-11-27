@@ -2,7 +2,7 @@ package com.histmersion
 package api.personal
 
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object PersonalIds:
 

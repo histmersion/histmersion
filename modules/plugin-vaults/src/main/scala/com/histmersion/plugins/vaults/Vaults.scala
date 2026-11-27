@@ -11,7 +11,7 @@ import scala.concurrent.duration.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.plugin.Secret
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The first-party secret vaults (docs/research-plugins.md §3.7): each a plugin, built into the server and DISABLED
   * until `histmersion.plugins.<id>.enabled = true`. Each one runs the vault's own CLI as a subprocess ([[Subprocess]])

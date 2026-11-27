@@ -8,7 +8,7 @@ package api.aliases
   */
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.automation.Activity
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object AliasKinds:

@@ -42,8 +42,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources as a bundle carries them (docs/research-merge-import.md §4): each source with its findings, its edges in
   * and out, its parked edges, its old citekeys and its assessment, read out in a deterministic order (by uid; owned

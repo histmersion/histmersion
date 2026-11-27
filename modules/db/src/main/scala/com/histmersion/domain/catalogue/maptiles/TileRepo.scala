@@ -15,8 +15,8 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.given
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's point layers cut into vector tiles (`GET /api/tiles/…`, [[TileGrid]]): each layer's selection in a tile's
   * box ([[siteCandidates]], [[EventSql.tileCandidates]], another domain's layer's — every item, never a limit), placed

@@ -10,8 +10,8 @@ import com.histmersion.config.*
 import java.nio.file.{Files, Path}
 import com.histmersion.api.catalogue.PeriodsMarkdown
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion periods …` — named historical periods, the web timeline's presets (#719) — and `histmersion init`, the
   * first-run import (#720). Kept in its own file so the shared `Cli` only gains one line.

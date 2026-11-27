@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion plugin new`: the names it derives, the files it writes and what they say. Whether the project compiles
   * and its tests pass is checked with scala-cli outside the build, as a plugin author runs it.

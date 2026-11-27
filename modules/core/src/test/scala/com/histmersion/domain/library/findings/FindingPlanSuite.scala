@@ -17,7 +17,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.MergeSettings
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Finding
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The findings of a pair that is one matched, folded and numbered (docs/research-merge-import.md §5.4). */
 class FindingPlanSuite extends munit.FunSuite:

@@ -7,7 +7,7 @@ import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Years
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
   * the app's links do, with the same card ([[Preview]]):

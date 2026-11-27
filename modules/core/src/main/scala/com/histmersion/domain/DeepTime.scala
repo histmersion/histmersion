@@ -3,7 +3,7 @@ package domain
 
 import com.histmersion.{Period, Year}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Years as the corpus stores them (signed `Long`s, BCE negative) made into the model's `Year` and `Period`.
   */

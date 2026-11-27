@@ -14,7 +14,7 @@ import com.histmersion.util.ocr.Chunker
 import com.augustnagro.magnum.DbCon
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources' share of the library's data contribution: their counts, the rebuild of their full-text chunks, and
   * their checks with the repairs safe to make without a person — the short edge targets unified, the stale chunks

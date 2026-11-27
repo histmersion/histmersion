@@ -5,8 +5,8 @@ import com.histmersion.util.problem.{External, Problem, Problems}
 import com.histmersion.plugin.LocalFiles
 import java.nio.file.{Files, Path}
 import scala.util.Try
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Process, "gives plugins the local file operations on disk")
 final class DiskLocalFiles extends LocalFiles:

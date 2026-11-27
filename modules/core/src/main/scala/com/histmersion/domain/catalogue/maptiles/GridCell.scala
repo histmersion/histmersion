@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The items of one layer in one square of a tile's grid (the squares a crowded tile counts its items by: `gx`/`gy` on
   * the grid of the whole world at the tile's zoom), summed so that two such counts of the same square add up: how many

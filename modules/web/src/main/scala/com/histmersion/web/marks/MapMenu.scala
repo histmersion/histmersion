@@ -18,7 +18,7 @@ import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's own actions, at a point (a right click there) or at its centre (its "⋯" button, or the menu key while the
   * map has the focus): bookmark the place, leave a note there, lock the map, start the map here, bookmark this view of

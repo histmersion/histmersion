@@ -6,7 +6,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
 import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Registries}
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own network gazetteers run as any plugin author runs theirs: through the plugin testkit, which loads a
   * plugin from the class path as the server does and runs its source's download through the server's gazetteer client,

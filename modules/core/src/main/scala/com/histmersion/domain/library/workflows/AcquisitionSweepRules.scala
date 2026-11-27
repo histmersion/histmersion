@@ -19,7 +19,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.Goal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure rules of an acquisition sweep (docs/research-embedded-agents.md §14): what a sweep may offer the ranking
   * model (never a work already in the corpus or the queue), the model's answer and its check, which open-access picks

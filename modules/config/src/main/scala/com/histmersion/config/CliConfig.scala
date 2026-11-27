@@ -8,7 +8,7 @@ import scala.concurrent.duration.{DurationLong, FiniteDuration}
 
 import CliConfig.{Agent, FollowTimeoutSeconds, ServerUrl, TokenFile}
 import CliConfig.Agent.Name
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 @movesTo(FeaturePlace.Config)
 final case class CliConfig(

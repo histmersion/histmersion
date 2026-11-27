@@ -9,7 +9,7 @@ import sttp.shared.Identity
 
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** Chimp, the MCP server library, reads a tool's arguments with circe; our records have jsoniter codecs. This is the
   * one place the two meet: a tool's input is read through its record's own codec, and a tool that takes raw JSON gets

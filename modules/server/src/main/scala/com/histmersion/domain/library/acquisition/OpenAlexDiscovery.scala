@@ -9,7 +9,7 @@ import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.domain.library.search.Search
 import com.histmersion.upstreams.PageSize
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Discovery over OpenAlex and Crossref ([[upstreams.OpenAlexCrossref]]), its records as the wire shows them. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

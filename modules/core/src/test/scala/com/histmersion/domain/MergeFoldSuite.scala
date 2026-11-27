@@ -23,7 +23,7 @@ import com.histmersion.domain.library.Source
 import com.histmersion.util.data.exchange.Issue
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Folding two records that are one into one (docs/research-merge-import.md §5.4): goals, queue items, events and
   * articles (a source's and a finding's folds are the library's: `SourcePlanSuite`, `FindingPlanSuite`).

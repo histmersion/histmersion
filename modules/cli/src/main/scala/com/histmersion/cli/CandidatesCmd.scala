@@ -8,7 +8,7 @@ import com.histmersion.util.console.Console
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.CandidateList
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** `histmersion candidates` (#3761): the new sources the deterministic search found for the research goals — list them,
   * sweep a goal's watches now, mark what was decided. A pure HTTP client of `AcquireApi`.

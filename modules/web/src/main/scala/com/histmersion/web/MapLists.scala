@@ -19,7 +19,7 @@ import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.personal.Target
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Places and Pictures tabs of the results: "On the map", what the map's sites and pictures layers hold in its view
   * (with what they only count there); "Everywhere", the places named by the filter's words, or every picture of the

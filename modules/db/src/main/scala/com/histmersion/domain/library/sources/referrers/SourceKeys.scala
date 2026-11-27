@@ -5,7 +5,7 @@ import com.histmersion.api.library.Rename
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source a delete would touch: its citekey, and every key it answers to (the citekey and its old ones). `resolve`
   * gives the citekey each wikilink target names now, as the library resolves `[[x]]` (an unambiguous short form

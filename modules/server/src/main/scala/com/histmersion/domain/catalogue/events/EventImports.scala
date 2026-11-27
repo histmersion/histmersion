@@ -31,7 +31,7 @@ import com.histmersion.upstreams.dating.CatalogDating
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;

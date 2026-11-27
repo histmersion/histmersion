@@ -16,7 +16,7 @@ import com.histmersion.domain.ItemUid
 import com.histmersion.{Latitude, Longitude, Year}
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bookmark or a note is left on, or what a read mark is about: a record of some domain (personal knows only its
   * reference), a point on the map, a saved view of Explore, or a span of years.

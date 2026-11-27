@@ -10,8 +10,8 @@ import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `agent compare` (#992): the pure half. Reads two or more runs' recorded steps (their FULL outputs) and lays them
   * side by side; `billing` names how a configured model is paid for (a plan pool or a price — the server knows, from

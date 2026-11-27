@@ -9,7 +9,7 @@ import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
 
 import scala.annotation.tailrec
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** review-article's runs compared by their outputs (`agent compare`, #992): the last round's verdict, the rounds, round
   * 1 per reviewer and by kind, its major findings, and the ones two runs share.

@@ -19,7 +19,7 @@ import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.research.Articles
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent tools research offers the engine: an article, a dry run of edits to it, its coverage — each a thin, typed
   * wrapper over the same controller method REST and MCP call, returning the same Markdown. Only READ tools:

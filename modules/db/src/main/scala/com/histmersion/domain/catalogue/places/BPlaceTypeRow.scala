@@ -7,7 +7,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of a place's types, as its bundle line reads it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

@@ -20,7 +20,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Api
 import com.histmersion.api.research.Article
 import com.histmersion.api.views.QueueListing
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One research goal's page: its question, state and schedule ("checked for new publications 3 days ago · next check
   * …"), its actions (check for new publications now, pause the goal, edit), its plan — each step linked to the agent

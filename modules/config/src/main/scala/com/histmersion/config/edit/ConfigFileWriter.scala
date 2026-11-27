@@ -2,7 +2,7 @@ package com.histmersion
 package config.edit
 
 import org.ekrich.config.Config
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
 
 /** The user's config file, changed in place: the change is made to the file's text ([[ConfigTextEdit]]: comments,
   * order, includes and unknown keys kept), checked against the schema ([[SettingPolicy]]), written beside the file,

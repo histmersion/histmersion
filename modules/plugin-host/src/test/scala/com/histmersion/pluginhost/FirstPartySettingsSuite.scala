@@ -5,7 +5,7 @@ import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
 import com.histmersion.config.ConfigReload
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one table of host settings the first-party plugins read: what each is supplied, and which changed keys rebuild
   * it.

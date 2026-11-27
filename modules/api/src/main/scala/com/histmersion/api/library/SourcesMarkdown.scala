@@ -4,7 +4,7 @@ import com.histmersion.api.Plural
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object SourcesMarkdown:
 

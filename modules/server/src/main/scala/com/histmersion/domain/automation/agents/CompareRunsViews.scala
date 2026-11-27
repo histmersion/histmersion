@@ -10,7 +10,7 @@ import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.Step
 import com.histmersion.domain.automation.Run
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `agent compare` at the server's edge: the recorded runs, as the store reads them, into what the domain compares; the
   * domain's comparison into what the wire shows.

@@ -8,7 +8,7 @@ import io.netty.handler.codec.http.*
 import io.netty.util.ReferenceCountUtil
 
 import com.histmersion.config.AuthConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The netty gate every request passes first, whatever its method ([[Admission.decide]] says how a request is let in).
   * A request it lets in carries the admission in [[Admission.Header]] (any value the client sent is removed first); a

@@ -16,7 +16,7 @@ import com.histmersion.domain.automation.{AgentRole, ProviderKind}
 
 import java.time.Duration
 import com.histmersion.domain.automation.Approval
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: AgentApprovalsConfig)
   @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.Problem
 import scala.compiletime.deferred
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One extension point. `add` refuses an id already taken in this registry. */
 trait Registry[A]:

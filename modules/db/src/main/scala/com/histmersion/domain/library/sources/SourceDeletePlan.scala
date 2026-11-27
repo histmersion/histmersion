@@ -4,7 +4,7 @@ package domain.library.sources
 import com.histmersion.domain.library.sources.referrers.DeleteReport
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What deleting a source does: the answer, plus what finding its stored original needs — its digest, and whether
   * another source still holds the same file (then the file stays). `keys` = the citekey and its old citekeys (the

@@ -5,7 +5,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The web UI's shared building blocks. Each thing the UI shows in more than one place — a source link, a chip, a
   * confidence mark, a layer switch, an icon — is built HERE, once, so the sidebar, the tabs, the map popup and the

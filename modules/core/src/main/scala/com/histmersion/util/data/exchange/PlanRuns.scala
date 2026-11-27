@@ -14,7 +14,7 @@ import com.histmersion.util.text.MinHash
 import scala.annotation.tailrec
 import java.util.UUID
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Several runs as one, each stage in the order the runs are given: what one kind's run answers first is the answer. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

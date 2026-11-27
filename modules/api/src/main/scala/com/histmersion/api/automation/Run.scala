@@ -2,7 +2,7 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An agent run's vocabularies as the wire spells them (the api's own copies of the model's). */
 object Run:

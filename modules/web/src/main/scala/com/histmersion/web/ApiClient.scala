@@ -101,8 +101,8 @@ import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.ItemStatus
 import com.histmersion.api.Api.HttpMethod.equality
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Http, "sends the web UI's HTTP requests and decodes the answers")
 object ApiClient:
@@ -151,6 +151,7 @@ object ApiClient:
             }
         case _ => req
 
+  @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private[web] def call[I, O](ep: PublicEndpoint[I, Api.Error, O, Any])(in: I): Future[O] =
     val req = authorize(viaWeb(interp.toRequest(ep, None).apply(in), in))
     // no answer at all (the fetch itself failed) is a transport failure, never a problem the server sent
@@ -243,6 +244,7 @@ object ApiClient:
   def basemapFetch(q: Basemap.FetchQuery): Future[JobInfo] = call(BasemapApi.fetch)(q)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def basemapRemove(q: Basemap.RemoveQuery): Future[Basemap.Removed] = call(BasemapApi.remove)(q)
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def job(id: JobInfo.Id): Future[JobInfo] = call(Api.job)(id)
   def uiCounters(): Future[UiNotices.Counters] = call(UiApi.counters)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

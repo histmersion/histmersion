@@ -9,7 +9,7 @@ import com.histmersion.config.given
 
 import CodexRetention.FileInfo
 import com.histmersion.api.maintenance.Storage
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a retention pass of the runs' Codex home may remove (#2582). Pure. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

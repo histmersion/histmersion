@@ -5,7 +5,7 @@ import com.histmersion.api.media.{AssetLinks, ImageSize}
 import com.histmersion.domain.media.assets.NewFigure
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The figures the OLD file pipeline already produced (plan §1.8, last bullet).
   *

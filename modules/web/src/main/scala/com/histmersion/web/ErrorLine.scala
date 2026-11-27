@@ -8,7 +8,7 @@ import com.histmersion.api.Html
 import com.histmersion.api.Html.html
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE error line of a window: always announced (`role="alert"`), always the `form-error` look. */
 object ErrorLine:

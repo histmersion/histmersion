@@ -24,7 +24,7 @@ import com.histmersion.api.automation.Managers.ManagerInfo
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The migration chain since its squash ([[Migrate.squashHistory]]): a fresh database gets the squash, then each later
   * migration; a database the chain before it built keeps every row and has its history replaced by a baseline at 109,

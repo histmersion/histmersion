@@ -3,7 +3,7 @@ package domain.library.acquisition
 import com.histmersion.api.library.{Candidates, WorkRef}
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The works an acquisition search found, one per work: keyed by DOI, the richer record kept. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

@@ -60,7 +60,7 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The process managers' supervisor (docs/research-process-managers.md §3): a daemon thread that ticks every
   * `agents.managers.tick-seconds`, and at once when a manager's run settles ([[Engine.onSettled]] → [[nudge]]). One

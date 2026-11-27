@@ -4,8 +4,8 @@ package domain.catalogue.places
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.Vocab
 import com.histmersion.api.catalogue.Place
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An unknown dating is `unknown` (it used to read as `stated`, a date the place does not have). */
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")

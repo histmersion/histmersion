@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A region: south, west, north, east (east may pass 180 across the antimeridian). */
 final case class GeoBounds(south: GeoBounds.South, west: GeoBounds.West, north: GeoBounds.North, east: GeoBounds.East)

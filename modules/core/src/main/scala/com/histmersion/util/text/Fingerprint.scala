@@ -5,7 +5,7 @@ import com.histmersion.api.LatinFold
 import io.github.iltotore.iron.*
 
 import java.text.Normalizer
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** OpenRefine's key-collision fingerprint of a text: its folded tokens, de-duplicated, sorted, joined. Two labels with
   * one fingerprint are one label written two ways.

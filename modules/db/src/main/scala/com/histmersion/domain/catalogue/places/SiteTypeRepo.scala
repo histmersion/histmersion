@@ -8,8 +8,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The refined site types of the Wikidata sites (`places.site_type`, `site_type_checked_at`). Every method runs on the
   * connection it is given.

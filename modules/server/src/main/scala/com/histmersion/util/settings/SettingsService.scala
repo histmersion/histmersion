@@ -9,7 +9,7 @@ import org.ekrich.config.{Config, ConfigFactory, ConfigParseOptions, ConfigSynta
 
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The settings file — read and changed. Settings live there and nowhere else (never in the database), so a person can
   * repair them with a text editor while the server, the database or this page is broken.

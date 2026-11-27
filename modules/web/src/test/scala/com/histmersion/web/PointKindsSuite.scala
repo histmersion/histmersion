@@ -22,7 +22,7 @@ import com.histmersion.api.catalogue.Event
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.catalogue.SiteTile
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The four kinds of point are four descriptors of ONE layer (docs/map-layers.md): the same assertions run over every
   * one of them, so they cannot drift apart — the marker's shape, glyph, fill and accessible name, what a bubble counts,

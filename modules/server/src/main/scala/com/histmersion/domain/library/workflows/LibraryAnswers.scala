@@ -6,7 +6,7 @@ import com.histmersion.domain.EnrichSource
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The typed answers of the library's LLM steps (enrich-source, the acquisition sweep's ranking), one value each,
   * beside its pipelines until the library contributes its workflows (the engine's own are `AnswerSchemas`, research's

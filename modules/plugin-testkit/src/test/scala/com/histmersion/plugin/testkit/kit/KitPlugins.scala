@@ -7,7 +7,7 @@ import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import java.nio.charset.StandardCharsets.UTF_8
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 // Test plugins, one per extension point, found by ServiceLoader on the test class path as a plugin
 // author's own plugin is in its tests.
@@ -30,7 +30,10 @@ final class KitFetcherPlugin extends Plugin:
             Registry.AddId("kit-fetcher"),
             new SourceFetcher:
               val access = Access.Open
-              @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+              @tolerated(
+                LintRule.G44,
+                "pending G44 (raw value only in the newtype's companion or at a lifted boundary)"
+              )
               def fetch(work: WorkKey, fc: Fetch.Context): Fetch =
                 work.doi match
                   case None =>
@@ -108,8 +111,9 @@ final class KitEventsPlugin extends Plugin:
         Registry.AddId("kit-events"),
         new EventCatalogue:
           val title = EventCatalogue.Title("Kit events"); val licence = Licence("CC0");
-          val citation = EventCatalogue.Citation("Kit"); @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-                                                         val home = EventCatalogue.Home(c.baseUrl)
+          val citation = EventCatalogue.Citation("Kit");
+          @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+          val home = EventCatalogue.Home(c.baseUrl)
           override def requestIntervalMs = EventCatalogue.RequestIntervalMs(0)
           def parts(q: CatalogueQuery) = List(EventCatalogue.ReadPart("p1"))
           @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -155,7 +159,10 @@ final class KitAiPlugin extends Plugin:
                     Problem.Config
                       .Setting(Problem.SettingKey("histmersion.plugins.kit-ai.api-key"), Problem.Config.Fault.Empty)
                   )
-              @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+              @tolerated(
+                LintRule.G44,
+                "pending G44 (raw value only in the newtype's companion or at a lifted boundary)"
+              )
               def turn(r: AiTurn.Request, http: AiHttp) =
                 http
                   .post(

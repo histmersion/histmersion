@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The Claude plan pool: [[PlanPoolConfig]]'s two, and how it takes a fresh reading when a run wants the pool and its
   * last one is too old to decide on (docs/research-plan-quotas.md §8). `refresh` is `auto` (a zero-cost read if the CLI

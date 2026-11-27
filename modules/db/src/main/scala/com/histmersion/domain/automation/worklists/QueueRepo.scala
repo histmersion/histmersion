@@ -14,8 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The store of the work lists (`queue_items`, migration `V009__queue.sql`): one table, every list in it by its `list`.
   * Every method runs on the connection it is given; the service ([[QueueService]], in the server) or the import that

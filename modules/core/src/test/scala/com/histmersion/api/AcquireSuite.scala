@@ -17,7 +17,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.acquisition.Ident
 import com.histmersion.domain.library.ArxivId
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure rules of stream 2.6: citekeys, identifier parsing, verdicts, follow-up classification and the Retraction
   * Watch CSV. No network, no database.

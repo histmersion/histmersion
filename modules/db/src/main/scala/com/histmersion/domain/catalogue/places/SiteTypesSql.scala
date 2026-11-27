@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.joined
 import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[SiteTypes.of]] in SQL, over a `places` row aliased `a` (a site or a feature): the stored type, else the Pleiades
   * feature types (the most specific by [[SiteTypes]]' preference), else the GeoNames feature code, else the Wikidata

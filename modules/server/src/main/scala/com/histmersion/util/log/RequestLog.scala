@@ -13,7 +13,7 @@ import sttp.tapir.server.interpreter.BodyListener
 import sttp.tapir.server.model.ServerResponse
 
 import RequestLog.{LabelHeader, TraceHeader, Unmatched}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class RequestLog(writer: LogWriter, settings: () => LogConfig) extends RequestInterceptor[Identity]:
   private val matched = ThreadLocal[LogEvent.Operation | Null]()

@@ -5,7 +5,7 @@ import com.histmersion.domain.library.sources.{FindingMergeRules, SourceMergeRul
 import com.histmersion.util.data.exchange.{CarriedKind, MergeRules}
 import com.histmersion.domain.library.sources.referrers.SourceReferrers
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the library carries in a bundle and how a merge treats its records: the sources and what they own. */
 object LibraryExchange:

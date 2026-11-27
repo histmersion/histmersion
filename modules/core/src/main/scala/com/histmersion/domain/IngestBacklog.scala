@@ -11,8 +11,8 @@ import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"): the legal
   * open-access works a sweep picked past the day's ingest allowance wait as `oa-ingest` items of the watcher that found

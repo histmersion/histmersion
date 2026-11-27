@@ -13,7 +13,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
 class DomainSuite extends munit.FunSuite:

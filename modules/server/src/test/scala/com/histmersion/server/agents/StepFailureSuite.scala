@@ -30,7 +30,7 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.agents.LlmCall
 import com.histmersion.domain.automation.agents.AgentsControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a step reads an attempt that did not produce its typed answer: an answer over the output cap (#1450, a
   * configuration error), and an answer that did not decode (#941, the decoder's path and message, for the record and

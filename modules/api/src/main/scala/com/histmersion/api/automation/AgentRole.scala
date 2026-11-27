@@ -2,7 +2,7 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 enum AgentRole(val wire: AgentRole.Wire) derives CanEqual:
   case Probe extends AgentRole(AgentRole.Wire("probe"))
   case Extractor extends AgentRole(AgentRole.Wire("extractor"))

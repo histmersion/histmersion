@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Isbn
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Open Library Covers API (#1446): a book's cover by ISBN or OCLC number, at
   * `<base>/b/<isbn|oclc>/<id>-<S|M|L>.jpg`; `?default=false` makes a missing cover a 404 instead of a blank picture.

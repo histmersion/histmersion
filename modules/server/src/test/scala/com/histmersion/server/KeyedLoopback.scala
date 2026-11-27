@@ -4,7 +4,7 @@ package server
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.AuthConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `auth` settings of a test that stands for a client on another network: the API key `key`, and loopback listed as
   * an AUTHENTICATED network, not a trusted one, so the test's own requests (all from 127.0.0.1) need the key — reads

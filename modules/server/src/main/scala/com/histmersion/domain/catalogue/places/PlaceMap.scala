@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.GeoTime
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's area and site layers as one GeoJSON FeatureCollection for a time the map picked: each state drawn once,
   * the best source's shape among those that describe it, the largest first up to `limit`. A mechanism over PostGIS with

@@ -16,7 +16,7 @@ import com.histmersion.plugin.GazetteerSource
 import com.histmersion.plugin.GazetteerRights
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.Plugin
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's reading of a plugin's gazetteer places: each converted to the store's shape unchanged (its source its
   * own, else the dataset's credit), what the store could not keep refused with the reason, a source's failure or

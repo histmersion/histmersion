@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `onDemand`: the deeper relief read from `url` as a page needs it ([[BasemapOnDemandConfig]]); `focusRegions`: "name
   * minLon,minLat,maxLon,maxLat" — the regions `fetch --focus <name>` keeps to that depth.

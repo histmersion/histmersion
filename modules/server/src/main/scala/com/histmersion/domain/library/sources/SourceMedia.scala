@@ -3,7 +3,7 @@ package domain.library.sources
 
 import com.histmersion.domain.media.MediaSources
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources as media reads them for their figures and covers: a citekey followed through its old ones, whether a
   * source is stored under a citekey, its converted text.

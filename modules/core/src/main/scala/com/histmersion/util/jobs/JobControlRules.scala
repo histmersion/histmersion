@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobActions
 import com.histmersion.api.RegisteredJobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which background jobs a person may pause and cancel, and what an action on a job in a given state does. Pure.
   */

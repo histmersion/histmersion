@@ -8,7 +8,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.data.mirror.MirrorPlacement
 import io.github.iltotore.iron.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final class Mirror(exports: List[Mirror.Export], notes: List[Mirror.Note]):
   def kinds: List[Mirror.Records] = exports.map(_.records)
 

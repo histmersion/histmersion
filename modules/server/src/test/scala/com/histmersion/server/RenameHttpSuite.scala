@@ -16,7 +16,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `POST /api/sources/{ck}/rename` over real HTTP, with a write key configured: the write gate, the answer, and the old
   * citekey still answering every read — the JSON routes, the resolver, the export, the article page's links, the MCP

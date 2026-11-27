@@ -18,7 +18,7 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.config.UserPaths.pathEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the automation engine is fed and what it generates, recorded on the code before the engine took contributions:
   * the agent definitions generator's trees for every runtime, written into a scratch directory (every file's path, size

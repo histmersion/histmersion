@@ -7,7 +7,7 @@ import com.histmersion.domain.*
 
 import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a Pleiades "region" really is (2026-10-09) — the survey's own examples. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

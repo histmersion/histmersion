@@ -3,7 +3,7 @@ package domain.catalogue.places
 
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.util.database.Transactor
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A place NAME → its gazetteer point (#981): the one geocoder, for a finding about a place of kind `hint` dated `at`
   * (`None` = no gazetteer place by that name; nothing is ever guessed). A mechanism over PostGIS — a point on a shape's

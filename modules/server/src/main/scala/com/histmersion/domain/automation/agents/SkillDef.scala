@@ -6,7 +6,7 @@ import scala.annotation.tailrec
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One canonical skill, `skills/<name>/SKILL.md`: its YAML header as written (kept line by line, so the rendered file
   * stays the author's) and its body.

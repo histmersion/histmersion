@@ -29,7 +29,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.domain.library.search.FilterSql
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent tools the library offers the engine: a source, its passages, the search, the facets, a source's edges, the
   * read-only query and a source's follow-ups — each a thin, typed wrapper over the same controller REST and MCP call,
@@ -47,6 +47,7 @@ import com.histmersion.lint.{LintRule, tolerated}
 final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstream, caps: => AgentToolsConfig):
   import ToolResultCap.cap
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def max: ToolResultCap.CapMax = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
   /** The body slice an agent reads: what it asked for, or `body-chars`, and never past the result cap. */

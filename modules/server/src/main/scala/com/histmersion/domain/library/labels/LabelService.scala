@@ -5,7 +5,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.util.database.Transactor
 import com.histmersion.api.library.{Facet, Filter}
 import com.histmersion.domain.library.search.FilterSql
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The labels' vocabulary inside a filter: the values of one dimension (tags, authors, places, topics, statuses,
   * provenances), each with the number of distinct sources it would leave. A mechanism over the filter's SQL, so it has

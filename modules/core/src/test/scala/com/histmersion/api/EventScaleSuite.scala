@@ -33,7 +33,7 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An event's scale (#1440): parsing, the defaults from the kind, the sub-event rule, the place's kind and the
   * geometry; the point an event can be given; the years it covers on the map; the Markdown.

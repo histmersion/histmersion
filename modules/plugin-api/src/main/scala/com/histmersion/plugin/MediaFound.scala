@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a collection with its own targets' pictures ([[MediaMatchRule.Own]]) found for a batch of targets.
   *

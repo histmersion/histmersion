@@ -3,7 +3,7 @@ package util.database
 
 import com.augustnagro.magnum.SqlLiteral
 import io.github.iltotore.iron.RefinedType
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The numbers that may be written into SQL text instead of bound: `Int`, `Long`, `Double`, and every newtype over one
   * of them. Text never qualifies, so nothing a person typed reaches a statement this way.

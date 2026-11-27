@@ -11,8 +11,8 @@ import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

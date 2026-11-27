@@ -31,7 +31,7 @@ import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.ShapeStyle
 import com.histmersion.web.ui.ThemeTokens
 import com.histmersion.api.Geo
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Gazetteer place picker for the filter bar. Ported from places.js (241 lines).
   *

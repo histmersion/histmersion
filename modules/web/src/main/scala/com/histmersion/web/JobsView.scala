@@ -20,7 +20,7 @@ import com.histmersion.api.library.Facet
 import com.histmersion.api.UiLabels
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.AgentJobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The background (OCR) jobs window: `GET /api/jobs`, filtered by state through [[UiState.jobStatus]] (on the server),
   * a page at a time ([[ListPaging]]: the heading says how many of how many, "Show older" loads the next page, the

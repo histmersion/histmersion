@@ -12,8 +12,8 @@ import com.histmersion.domain.library.acquisition.{
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.research.articles.{ArticleCitedSources, ArticleService}
 import com.histmersion.server.hot.Hot
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's acquisition over one server's `deps`: its stores, and the operations over the acquisition node's
   * clients (a hot node, read at each use: a reload that changed `acquire.*` or the plugins takes effect without

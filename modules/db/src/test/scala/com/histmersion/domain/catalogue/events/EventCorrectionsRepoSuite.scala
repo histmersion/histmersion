@@ -38,7 +38,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The data-source assessment's P0 fixes against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): V088's
   * generated uncertainty agrees with core.EventPrecision; the map's feed leaves the imprecise events out (and counts

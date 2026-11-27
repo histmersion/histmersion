@@ -8,8 +8,8 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.instance.MapStartMode
 import com.histmersion.api.basemap.BaseMapSource
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the wire says of the `ui` block: the page's settings as `/api/config` serves them, and the tile servers the
   * page fetches from as the Content-Security-Policy names them.

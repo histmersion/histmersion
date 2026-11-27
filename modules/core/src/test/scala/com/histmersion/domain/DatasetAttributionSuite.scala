@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.media.{DataCredit, DataCredits}
 import com.histmersion.api.media.MediaItem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The datasets' credits read as the reuse they allow: the stated licence classified, its URL read when the statement
   * names none, the credit line kept, and what the credits page shows unchanged.

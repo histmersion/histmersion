@@ -20,7 +20,7 @@ import com.histmersion.api.automation.Queue
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The toolbar's notices over HTTP: `GET /api/ui/counters` counts what waits and says what is new,
   * `POST /api/ui/seen/{board}` marks a window read, and the mark only moves forward. From a network the server does not

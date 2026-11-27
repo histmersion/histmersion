@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The timeline's span (`ui.time`): the earliest and latest year it reaches, and the years it opens on. */
 @movesTo(FeaturePlace.ServerInstance)

@@ -27,7 +27,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The small, sharp-edged repo fixes: the `ts_headline` word bounds, the assets contract, and the `findings_flat` upper
   * bound.

@@ -39,11 +39,14 @@ import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
 import com.histmersion.cli.ExitCode
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The command line of [[EventsCmd]]. */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion events`: declares its options, parses them into typed commands")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter of `histmersion events`: declares its options, parses them into typed commands"
+)
 object EventsArgs:
   object EventsEntry extends CommandLine.Entry:
     val name = "events"

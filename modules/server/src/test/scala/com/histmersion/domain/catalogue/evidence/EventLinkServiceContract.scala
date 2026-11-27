@@ -13,7 +13,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the events' proposed links keep: the confirmed first then by score, a source that is gone left out, the
   * rejected only when asked; saving again replaces the proposals and keeps a decided status; the check recorded; the

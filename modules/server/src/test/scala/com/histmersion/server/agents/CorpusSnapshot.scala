@@ -4,7 +4,7 @@ package server.agents
 import com.augustnagro.magnum.*
 
 import javax.sql.DataSource
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every row of the tables an agent run could write — the corpus, the queues, the approvals, the goals and their links
   * — as one fingerprint per table. Two equal snapshots: nothing was written between them (what a dry run promises,

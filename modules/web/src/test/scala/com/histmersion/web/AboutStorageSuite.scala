@@ -10,7 +10,7 @@ import com.histmersion.api.instance.{About, BuildStamp, Health}
 import com.histmersion.api.jobs.JobCounts
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The About window's Storage and Disk space sections, in their pure part. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -5,7 +5,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.text.SafeName
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object AssetLinks:
@@ -134,10 +134,12 @@ object AssetLinks:
     Body(kept.mkString("\n"))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def normalizeBody(md: NormalizeBodyMd, title: NormalizeBodyTitle = NormalizeBodyTitle("")): Body =
     dropBoilerplateHeadings(collapsePictureText(fromFigures(md)), title)
 
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def toWeb(md: ToWebMd, citekey: AssetLinks.ToWebCitekey): Body = retarget(md, Url(Prefix), webBase(citekey))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

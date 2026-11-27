@@ -14,7 +14,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the engine asks of the rest of the server (a port the engine owns): its goals, a run's target and options, a
   * link's reference and the probe's subject in the domains' terms, the plan's works and vocabulary, and the

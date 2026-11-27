@@ -27,7 +27,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+@tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Place(
     id: Place.Id,
     label: Place.Label,
@@ -1077,6 +1078,7 @@ object Place:
 
   object Record:
     type DateSourceText = DateSourceText.T
+    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object DateSourceText extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
 

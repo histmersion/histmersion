@@ -20,7 +20,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Manager
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.automation.Approval
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The process managers' pure policy (docs/research-process-managers.md §3.4): the one-run items' rules, the backoff,
   * the dispatch order and fairness, capacity with pools, holds, hints, the cron and the daily cap.

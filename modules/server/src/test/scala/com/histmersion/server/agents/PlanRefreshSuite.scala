@@ -25,7 +25,7 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.config.ClaudePlanConfig
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.config.CodexConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A fresh reading of a plan pool (#989) without a database or a real CLI: the probe's argument vector and environment,
   * its output read into readings, the single-flight gate, the login checks — and the probe end to end against a FAKE

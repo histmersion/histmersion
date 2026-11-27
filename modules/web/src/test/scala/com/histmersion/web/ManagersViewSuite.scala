@@ -20,7 +20,7 @@ import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.WireEnumValues
 import com.histmersion.web.ui.Choices
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The managers window's pure parts: the badge, the item actions per status, the settings form, the hint box, the pager
   * and the window keys.

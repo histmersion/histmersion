@@ -3,8 +3,8 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The OCR sidecar (plan §1.8). `dpi`/`maxImagePx` are passed through to `POST /convert`; `spoolDir` is where the
   * server keeps an uploaded original so `reocr` can re-convert it without a second upload.

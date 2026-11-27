@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.web.RangeLabels.*
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The timeline overview's "from" and "to" years never overlap and never leave the bar. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

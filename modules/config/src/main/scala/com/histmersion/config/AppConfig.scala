@@ -7,8 +7,8 @@ import com.histmersion.util.log.LogConfig
 import org.ekrich.config.{ConfigFactory, ConfigResolveOptions}
 import hearth.kindlings.sconfigderivation.ConfigReader
 import hearth.kindlings.sconfigderivation.annotations.configKey
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Config, "reads the HOCON layers into the typed application config")
 @movesTo(FeaturePlace.Config)

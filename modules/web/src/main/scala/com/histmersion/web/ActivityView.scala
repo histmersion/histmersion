@@ -18,7 +18,7 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.jobs.{JobActions, JobKinds}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Research › Activity: ONE time-ordered list of agent runs, background jobs, worklog lines and the person's own
   * decisions ([[Activity]], merged and paged by the server), filtered by chips, each entry linked to what it touched.

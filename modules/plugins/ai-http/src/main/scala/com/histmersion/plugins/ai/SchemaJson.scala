@@ -4,7 +4,7 @@ import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** A JSON Schema as a provider must be sent it: a tool's input or the step's answer, with the repairs each API needs —
   * an object type and properties for Anthropic's tools, `additionalProperties: false` on Anthropic's answer, and

@@ -21,7 +21,7 @@ import com.histmersion.plugin.MediaTarget
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The import of a collection of its targets' own pictures ([[MediaMatchRule.Own]]: a Wikidata item's statements, the
   * files a gazetteer record or a depiction search names): the collection is asked about the whole batch at once
@@ -216,7 +216,10 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
       persist(base, uses, verdicts, answered, refresh, store, failed, found.categories, byId)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G5TextBranch, "reads the wording a plugin gives for a refused item (its SPI has no closed reason)")
+  @tolerated(
+    LintRule.G5TextBranch,
+    "reads the wording a plugin gives for a refused item (its SPI has no closed reason)"
+  )
   private def persist(
       base: MediaImportReport,
       uses: List[MediaUse],

@@ -3,7 +3,7 @@ package util.text
 
 import java.text.Normalizer
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The form two texts are compared in when one should be found in the other — an OCR'd body and a model's quote, two
   * reviewers' wordings: NFKC, lower case, ASCII quotes and dashes, ligatures unfolded, soft hyphens dropped, words

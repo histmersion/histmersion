@@ -7,7 +7,7 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one alias rule's words (#1799): every kind's rename says the same thing, and an answer to a call that named an
   * old identifier says where it went.

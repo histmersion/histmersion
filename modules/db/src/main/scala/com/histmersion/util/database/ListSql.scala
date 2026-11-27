@@ -4,7 +4,7 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SQL of the list filters (core `ListFilters`): one ` AND …` fragment per filter, named, so a page applies them
   * all and a facet's count applies all but its own. Pure, but for [[facet]].

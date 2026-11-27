@@ -31,7 +31,7 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.Doi
 import com.histmersion.api.library.WorkRef
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A strict-schema provider (Codex) sends `""` or `null` for a field it has nothing for, and `null` decodes like an
   * absent field. An answer whose NEEDED field is empty or null must fail its step's check with a problem that says

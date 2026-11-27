@@ -11,7 +11,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.Capabilities
 import com.histmersion.web.map.MapEngine
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map engine: MapLibre GL JS (docs/research-map-styles.md, option C). The ONLY code that knows the library; the
   * app speaks [[MapSurface]].

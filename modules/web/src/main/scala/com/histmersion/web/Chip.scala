@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.*
 import scala.scalajs.js
 import com.histmersion.api.library.Label
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The one chip: a readable label (never an underscore — [[Label.display]]), an optional prefix, and an optional remove
   * button. Editable chip inputs, the empty-state list, article cards and the link preview all draw theirs with it.

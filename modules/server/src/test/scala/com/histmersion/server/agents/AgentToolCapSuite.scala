@@ -38,7 +38,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.workflows.LibraryAgentTools
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent tools under `agents.tools` against a real Postgres (#token-diet, 2026-10-16): a record keeps its findings
   * and loses the notes' tail, a body read without `chars` is a short slice that says where to read on, `passages` still

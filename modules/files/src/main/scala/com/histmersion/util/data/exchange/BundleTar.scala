@@ -8,8 +8,8 @@ import java.io.{EOFException, FilterInputStream, InputStream, OutputStream}
 import java.nio.charset.StandardCharsets.{US_ASCII, UTF_8}
 import java.util.zip.{GZIPInputStream, GZIPOutputStream}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The container of a `.hmx` bundle: a POSIX ustar archive, gzip-compressed — written and read as a STREAM, so 1.6 GB
   * of assets never sit in memory, and DETERMINISTIC, so two exports of an unchanged database are byte-identical: every

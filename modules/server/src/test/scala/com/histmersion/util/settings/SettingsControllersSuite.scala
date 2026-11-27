@@ -11,7 +11,7 @@ import org.ekrich.config.ConfigFactory
 
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class SettingsControllersSuite extends munit.FunSuite:

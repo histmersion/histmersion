@@ -8,7 +8,7 @@ import com.histmersion.api.plugins.PluginState
 import com.histmersion.plugin.Access
 import com.histmersion.pluginhost.FetchChain
 import com.histmersion.api.plugins.PluginDescription
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The legal chain's generation, which makes the acquisition list due for a re-check again: a legal fetcher or a
   * fetcher plugin's setting changes it; a fetcher the config marks unauthorised never does. Pure.

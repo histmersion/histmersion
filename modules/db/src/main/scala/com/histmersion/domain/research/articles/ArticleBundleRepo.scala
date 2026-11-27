@@ -18,8 +18,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles as a bundle carries them (docs/research-merge-import.md §4): each article, its versions (their bodies
   * as blobs) and its old slugs, read out in a deterministic order (by uid; the old slugs by alias, in the "C"

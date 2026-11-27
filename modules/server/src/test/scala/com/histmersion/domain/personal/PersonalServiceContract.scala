@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.db.DbSuite
 import com.histmersion.db.TestDb
 import com.histmersion.util.database.TestPermits.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract a service of the person's keeps: it behaves the same in memory and in the database (a scratch database
   * of the suite's own, gated on HISTMERSION_TEST_DB_URL) — each scenario runs over both, the collection's sources

@@ -9,7 +9,7 @@ import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.web.ErrorLine
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › Backups: how many backups are kept, a backup now, and the backups there are. Restoring one replaces
   * everything in the database, so it is done from the command line (`histmersion restore`), never with a click.

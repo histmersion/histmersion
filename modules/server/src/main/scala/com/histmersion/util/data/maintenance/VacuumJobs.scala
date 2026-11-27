@@ -17,7 +17,7 @@ import com.histmersion.api.ByteCount
 import com.histmersion.api.maintenance.Storage
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `POST /api/maintenance/vacuum`: VACUUM of registered tables as a [[BackgroundJob]] (kind `vacuum`) — a vacuum of
   * `place_names` (3.7 GB) runs for minutes, past any request timeout. It answers at once with the job; `histmersion

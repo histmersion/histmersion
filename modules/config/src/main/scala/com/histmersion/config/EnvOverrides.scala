@@ -14,7 +14,7 @@ import com.histmersion.config.edit.SettingKind.valueTypeEquality
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
 
 /** The environment as a layer of HOCON: for every key of `defaults` whose value is exactly a `${?VAR}` the environment
   * sets, that variable's value. Laid OVER a user's settings, it makes the precedence environment > user file > defaults

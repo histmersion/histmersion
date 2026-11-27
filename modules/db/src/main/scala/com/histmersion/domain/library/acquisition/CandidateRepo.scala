@@ -18,8 +18,8 @@ import com.histmersion.domain.AuthorName
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The deterministic new-source search's store (V099, #3761): each goal's watches with their watermarks, and the
   * candidates found, one per goal and DOI. Every method runs on the connection it is given.

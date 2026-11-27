@@ -15,8 +15,8 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The named periods as a bundle carries them (docs/research-merge-import.md §4, §7.3): this collection's own, read out
   * in a deterministic order, and written in by an import.

@@ -13,7 +13,7 @@ import java.time.Instant
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.jobs.JobState
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition list's legal re-check, pure: when an item is due (its window, a new fetcher generation), what a pass
   * does with it (close, fetch into the metadata-only source, nothing without a DOI), the reason it carries, how many

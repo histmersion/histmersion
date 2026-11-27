@@ -7,7 +7,7 @@ import com.histmersion.api.Api
 
 import scala.concurrent.{ExecutionContext, Promise}
 import scala.util.{Failure, Success}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The views' one request type (G107, review finding W4): answers delivered in any order leave the newest one's state,
   * a server's problems stay typed with their status, no answer at all is "unreachable" keeping what was shown, and a

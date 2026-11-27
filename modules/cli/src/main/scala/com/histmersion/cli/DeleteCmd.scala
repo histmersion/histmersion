@@ -10,8 +10,8 @@ import com.histmersion.api.library.Source
 import com.histmersion.util.console.Console
 import com.histmersion.api.Api
 import com.histmersion.config.CalibreCliConfig
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion delete <citekey> [--apply]` — delete a source (`POST /api/sources/{ck}/delete`, #969).
   *

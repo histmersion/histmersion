@@ -9,7 +9,7 @@ import com.histmersion.domain.library.search.SearchControllers
 import com.histmersion.domain.library.sources.{SourcesControllers, SourceService}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What research's workflows are given by the composition: the work lists, research's own articles (their controllers
   * and their store) and review ledgers, and what they read of the library — its sources, citations, search and labels —

@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.instance.UiNotices.{Board, Counter}
 import com.histmersion.api.instance.UiNotices
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of the toolbar's notices: which window watches which board, which open windows are marked read and at
   * what, and what a button says.

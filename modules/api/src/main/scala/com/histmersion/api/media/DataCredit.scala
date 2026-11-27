@@ -2,7 +2,7 @@ package com.histmersion
 package api.media
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class DataCredit(
     name: DataCredit.Name,
     usedFor: DataCredit.UsedFor,

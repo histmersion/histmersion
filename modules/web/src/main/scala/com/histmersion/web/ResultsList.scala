@@ -24,7 +24,7 @@ import com.histmersion.web.marks.ItemRef
 import com.histmersion.api.library.Title
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object ResultsList:
   type Busy = Busy.T

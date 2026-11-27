@@ -6,7 +6,7 @@ import com.histmersion.pluginhost.FetchChain
 import com.histmersion.util.plugins.Plugins
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.Plugin
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition chain over the first-party fetchers (archive.org, Unpaywall, CORE, OpenAlex, PMC, arXiv, landing
   * pages, PMC's JATS text) — discovered and registered through the plugin host exactly as the server registers them,

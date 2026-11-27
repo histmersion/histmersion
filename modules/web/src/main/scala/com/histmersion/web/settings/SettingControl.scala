@@ -5,7 +5,7 @@ import com.histmersion.api.Wording
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One setting in a form: its name and what it does, the control for its kind, and where its value comes from — the
   * default, the settings file, or an environment variable that wins over the file. A setting the file writes with a

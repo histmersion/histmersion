@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Shapes drawn by the map itself (areas, outlines). Updates are DIFFS: a shape whose geometry is the same keeps its
   * tile data, its colour and visibility change in place — so a timeline drag recolours 1 600 states without the map

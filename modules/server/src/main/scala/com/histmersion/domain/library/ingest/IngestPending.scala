@@ -6,7 +6,7 @@ import com.histmersion.util.jobs.Job
 import com.histmersion.util.storage.Store
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The part of a queued job that lives in memory: the stored original and the metadata the uploader supplied. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

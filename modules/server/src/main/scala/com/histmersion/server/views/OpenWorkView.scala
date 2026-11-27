@@ -18,7 +18,7 @@ import io.scalaland.chimney.dsl.*
 
 import java.time.Instant
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckService):
 

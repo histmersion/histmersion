@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.api.basemap.BasemapJobKinds
 import com.histmersion.api.library.AcquisitionJobKinds
 import com.histmersion.api.exchange.ExchangeJobKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")

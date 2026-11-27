@@ -24,7 +24,7 @@ import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.library.Citekey
 import com.augustnagro.magnum.Frag
 import com.augustnagro.magnum.sql
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SQL the filter's builders generate, recorded for every combination the search exercises: each criterion alone
   * (text, tags, authors, places by name and by gazetteer id, topics, statuses, publication years, deep time, a box and

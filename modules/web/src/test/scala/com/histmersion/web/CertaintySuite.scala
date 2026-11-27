@@ -9,7 +9,7 @@ import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.ConfidenceStyle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[Certainty]] (#1946): a finding that states no confidence is drawn in its own neutral look — grey, dashed, its own
   * legend pip — never as high, and never lets a bubble look high. Pure.

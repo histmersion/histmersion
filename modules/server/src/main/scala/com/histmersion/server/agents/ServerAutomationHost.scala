@@ -28,8 +28,8 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.automation.managers.ManagerContext
 import com.histmersion.domain.Title
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The engine's [[AutomationHost]] over the composition: the goals through the automation's own controllers, a run's
   * target, options and links checked against the library's sources and research's articles, the plan's works looked up

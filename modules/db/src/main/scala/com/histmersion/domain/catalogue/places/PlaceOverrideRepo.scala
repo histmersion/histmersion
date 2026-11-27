@@ -21,8 +21,8 @@ import com.histmersion.api.catalogue.Place.Rationale as PlaceRationale
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *

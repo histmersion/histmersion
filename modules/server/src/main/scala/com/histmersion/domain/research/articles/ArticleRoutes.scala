@@ -16,7 +16,7 @@ import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.Title
 import com.histmersion.domain.Creator
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The articles over HTTP: the REST routes of the compiled wiki, the rendered page at `/article/{slug}` and the
   * `/articles` redirect, in the order route matching needs (`…/export`, `…/versions` and `…/import` before `…/{slug}`).
@@ -32,20 +32,29 @@ import com.histmersion.lint.{LintRule, tolerated}
 object ArticleRoutes:
   /** A slug that names an article to read: one that is no slug names no article. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def read(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(_ => Articles.notFound(Article.Slug(slug.value)))
 
   /** A slug a write names: one that is no slug is refused. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
     Slug.parse(slug.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   def apply(
       articles: ArticlesControllers,
       pages: PageBuilder,

@@ -10,7 +10,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.web.map.MapSurface
 import com.histmersion.web.map.ShapeFeature
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One [[ShapeSet]] as a GeoJSON source and its layers. Its features carry numeric ids (feature state needs them) and
   * their own id as `hid`; colour and visibility live in feature state, so a restyle never sends the geometry again.

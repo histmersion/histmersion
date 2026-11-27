@@ -4,7 +4,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.{Described, ItemKey, ItemKind, ItemRef, Referable}
 import com.histmersion.util.database.Transactor
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A [[Referable]] over the owner's tables: each kind's [[RecordTable]], read on a connection of its own. */
 abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends Referable:

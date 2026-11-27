@@ -4,7 +4,7 @@ package plugins.events
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion.events.wikidata`: the query service, the pace, the classes read (`Q178561:battle,…`, the most specific
   * first) and the label languages.

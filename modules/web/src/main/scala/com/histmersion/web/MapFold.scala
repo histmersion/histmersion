@@ -6,7 +6,7 @@ import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map's overlays that fold away on a phone: its foot (the past-landscape notice and the credits) and its legend
   * (the colour ramp and the key). In the narrow layout each is a small button until the reader opens it; opened, it

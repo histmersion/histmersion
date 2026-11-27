@@ -2,7 +2,7 @@ package com.histmersion
 package domain.media.figures
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which of a paper's own figures illustrates it on a hover card (#1446). Pure: the figures come from the OCR
   * conversion (the converter names them after their page, `fig-0004-03.png` = page 4, picture 3; docling's scans

@@ -8,7 +8,7 @@ import com.histmersion.api.automation.ListFilters
 import io.github.iltotore.iron.constraint.any.Pure
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the approvals list is filtered by (core `ListFilters.ApprovalFilter`, validated): `state` None = every state;
   * the lists match any of their values.

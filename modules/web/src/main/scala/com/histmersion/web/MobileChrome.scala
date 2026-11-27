@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The narrow (phone) layout's own controls. There the page is the map; everything else is shown on demand:
   *   - the app bar: ☰ filters, the search box, ⏱ the timeline, and the map & tools drawer;

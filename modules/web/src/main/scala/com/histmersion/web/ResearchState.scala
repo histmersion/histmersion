@@ -12,7 +12,7 @@ import hearth.kindlings.optics.syntax.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class ResearchState:
   import ResearchState.*

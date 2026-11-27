@@ -4,7 +4,7 @@ package plugin
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** SPI-11, the source collections: a context written before them refuses a collection, and a collection that declares
   * nothing but reading refuses every write by default, naming why.

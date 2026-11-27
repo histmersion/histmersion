@@ -10,8 +10,8 @@ import java.time.Instant
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.{joined, Timestamps}
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The activity list in SQL: the jobs (agent runs among them), the worklog and a person's decisions as one relation,
   * filtered and cut into pages by the rules of [[ActivityRules]]. Takes the connection it runs on.

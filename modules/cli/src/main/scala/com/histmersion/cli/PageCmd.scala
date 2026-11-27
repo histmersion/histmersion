@@ -5,7 +5,7 @@ import com.histmersion.util.json.Cursor
 
 import com.histmersion.api.Paging
 import io.github.iltotore.iron.RefinedType
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The "next page" line of a paged listing (`jobs`, `agent runs`, `agent approvals`): the same command with the same
   * options, plus `--before <the last row's id>`. Pure.

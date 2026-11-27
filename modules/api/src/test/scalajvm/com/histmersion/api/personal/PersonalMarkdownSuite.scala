@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.ItemKind
 import com.histmersion.api.library.Title
 import com.histmersion.api.checks.FormatIssue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class PersonalMarkdownSuite extends munit.FunSuite:

@@ -26,7 +26,7 @@ import com.histmersion.api.library.AuthorName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ingest surface (plan §1.8) — REST routes, MCP tools and the CLI all reach these:
   *
@@ -62,7 +62,10 @@ final class IngestControllers(
     Write.invalid(p, Api.Error.InvalidCitekey)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def ingestNow(p: Ingest.Params, upload: Upload)(using
@@ -104,7 +107,10 @@ final class IngestControllers(
     * bind-mounted corpus) OR a base64 payload bounded by `limits.inlineBytes`. Both end up in the same [[ingest]].
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def fromTool(
       citekey: Citekey,
@@ -168,7 +174,10 @@ final class IngestControllers(
   /** `POST /api/sources/{ck}/reocr` — convert the stored original again (a scan first read on the fast path, re-run
     * under docling with `quality`).
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def reocr(citekey: Citekey, quality: Ingest.Params.Quality)(using Creator.New): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(WriteGate.OperationName("reocr"))(
@@ -176,7 +185,10 @@ final class IngestControllers(
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def reocrValid(citekey: Citekey, quality: Ingest.Params.Quality)(using
       WritePermit
@@ -209,7 +221,10 @@ final class IngestControllers(
   /** `GET /api/sources/{ck}/original` — the stored original and its download name. Read-only, so no maintenance guard;
     * 404 when the source or its stored file is missing.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def original(citekey: Citekey): Either[Api.Error, (Blob, Ingest.Disposition)] =
@@ -235,7 +250,10 @@ final class IngestControllers(
   /** Refuse an upload that names an item it cannot fulfil — BEFORE the file is stored and a long OCR is started for
     * nothing.
     */
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def acquireItemOk(item: Option[Ingest.Params.AcquireItem]): Either[Api.Error, Unit] =
     item.fold(Right(()))(id =>
       Queue
@@ -251,7 +269,10 @@ final class IngestControllers(
     * original from `sources.sha256` alone.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def store(upload: Upload, sha: Sha256, filename: String): Either[Api.Error, Store.Key] =
     val ext = AssetLinks.safeName(filename).value.reverse.takeWhile(_ != '.').reverse match
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
@@ -282,11 +303,17 @@ final class IngestControllers(
 
   /** The stored original of content hash `sha`: `<sha>.<ext>`, if it is there. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def storedFor(sha: Sha256): Option[Store.Key] =
     originals().names().find(_.value.startsWith(sha.value + ".")).map(n => Store.Key.applyUnsafe(n.value))
 
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def digest(upload: Upload): Either[Api.Error, Sha256] =
     scala.util
       .Try {
@@ -311,7 +338,10 @@ final class IngestControllers(
 
   /** 409 unless `force`: the same bytes are already stored under another citekey. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def duplicate(sha: Sha256, citekey: Citekey, force: Ingest.Params.Force): Either[Api.Error, Unit] =
     sources.holderOf(sha) match
       case Some(other) if other != citekey && !force.value =>

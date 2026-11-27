@@ -3,8 +3,8 @@ package domain
 
 import com.histmersion.api.automation.Managers.ManagerConfig
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The checks a seeding manager's plan is held to when it saves none (`agents.seed.*`). */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

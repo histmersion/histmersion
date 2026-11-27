@@ -4,7 +4,7 @@ package domain.media.assets
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final private[assets] case class MediaThumbRow(
     uid: MediaThumbRow.Uid,

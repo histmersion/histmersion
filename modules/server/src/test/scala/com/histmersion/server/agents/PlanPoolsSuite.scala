@@ -15,7 +15,7 @@ import com.histmersion.util.storage.Resources
 import com.histmersion.util.system.JvmHome
 import com.histmersion.config.CodexConfig
 import com.histmersion.config.AgentsConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Reading the plan pools without spending anything: Claude's `rate_limit_event`, a mod's report, and Codex's
   * `account/rateLimits/read` — the last through a STUB `codex app-server` answering the response captured on 2026-10-05

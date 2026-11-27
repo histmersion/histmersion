@@ -27,7 +27,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.Limits
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #406 against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. The Articles and Events lists are the
   * items RELATED to the sources the global filter selects: an article that cites a matching source is listed, one

@@ -3,8 +3,8 @@ package api
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @movesTo(FeaturePlace.Kernel)
 enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label) derives CanEqual:

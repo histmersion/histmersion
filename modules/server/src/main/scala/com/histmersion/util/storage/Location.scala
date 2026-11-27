@@ -1,7 +1,8 @@
 package com.histmersion
 package util.storage
 
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+
 /** The server's named places on disk. Configuration decides where each lives; the composition root works the
   * directories out from today's settings, so no install changes. The pictures, their thumbnails and the figures are
   * rows of the database, not files, and have no location.

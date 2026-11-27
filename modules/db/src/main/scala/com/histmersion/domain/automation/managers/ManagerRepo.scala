@@ -32,8 +32,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up

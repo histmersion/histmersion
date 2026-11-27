@@ -4,8 +4,8 @@ package plugin
 import com.histmersion.util.problem.{Problem, Problems}
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Local filesystem operations supplied by the host. Path construction alone performs no I/O. Read failures preserve
   * the underlying IOException so a plugin can explain its own operation.

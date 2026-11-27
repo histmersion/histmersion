@@ -7,7 +7,7 @@ import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.augustnagro.magnum.Frag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Which events a list, the map's events or the leads select: those related to the filter's sources (read with the
   * gazetteer's `scope` of its places), narrowed by the event's own text (label or description), kind, historicity,

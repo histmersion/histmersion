@@ -3,7 +3,7 @@ package pluginresolver
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure decisions of a resolution: which of a plugin's modules conflict with the server's, which go into the
   * plugins directory's `lib/`, and the files that record the outcome.

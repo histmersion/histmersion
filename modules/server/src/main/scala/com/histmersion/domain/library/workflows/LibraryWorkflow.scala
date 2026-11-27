@@ -16,7 +16,7 @@ import com.histmersion.domain.automation.AgentRole
 import com.histmersion.api.automation.Pipeline
 import com.histmersion.domain.automation.TargetKind
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of the library's pipelines as the workflow it registers: its identifier, version, target, roles and description
   * are the pipeline's; a role's agents may use the tools the definitions of the pipeline's step agents in that role
@@ -35,6 +35,7 @@ final class LibraryWorkflow(
   def contributor: Creator.Plugin.Name = InTreeWorkflow.Library
   def stepDefinitions: List[Creator.Definition.Name] =
     agents.flatMap(a => Creator.Definition.Name.from(a.wire).toOption)
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def version: domain.automation.Pipeline.Version =
     domain.automation.Pipeline.Version(pipeline.version.value)
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")

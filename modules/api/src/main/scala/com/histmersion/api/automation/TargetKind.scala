@@ -2,7 +2,7 @@ package com.histmersion
 package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 enum TargetKind(val wire: TargetKind.Wire) derives CanEqual:
   case Source extends TargetKind(TargetKind.Wire("source"))

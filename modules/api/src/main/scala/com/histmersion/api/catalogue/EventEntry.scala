@@ -16,7 +16,7 @@ import com.histmersion.api.catalogue.{
 }
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The catalogue's record of one event: the row with its geometry, the hierarchy, the evidence and the context its card
   * shows (the articles citing its sources, filled by whoever shows the card). Not on the wire: the server answers the

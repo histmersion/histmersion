@@ -4,7 +4,7 @@ package web
 import com.histmersion.web.map.*
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure rules of a pinned place card (#1441). */
 object PinRules:

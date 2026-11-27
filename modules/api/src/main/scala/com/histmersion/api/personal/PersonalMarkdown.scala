@@ -2,7 +2,7 @@ package com.histmersion
 package api.personal
 
 import com.histmersion.api.checks.FormatIssue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object PersonalMarkdown:
   def minute(at: String): String = at.take(16).replace('T', ' ')

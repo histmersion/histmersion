@@ -10,7 +10,7 @@ import hearth.kindlings.optics.syntax.*
 import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A metered upstream's budget as it is kept across restarts (CORE's), one per upstream. */
 trait UpstreamQuotaService:

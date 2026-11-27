@@ -6,7 +6,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.library.{FollowupRow, WorkRef}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Papers CITING a work, with whatever intent signal the backend has. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

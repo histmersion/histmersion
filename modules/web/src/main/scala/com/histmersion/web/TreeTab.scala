@@ -17,7 +17,7 @@ import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
 import com.histmersion.api.Paging
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object TreeTab:
   private var config: Option[UiConfig] = None
@@ -284,7 +284,6 @@ object TreeTab:
     kidElements.set(kidNodes ++ sampleNodes ++ empty)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderSample(s: Bucket.Sample, depth: Int): HtmlElement =
     div(
       cls := "tsample",

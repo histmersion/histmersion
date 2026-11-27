@@ -15,7 +15,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The research goals (docs/research-embedded-agents.md §14): the goals window (the goals as a tree) and one window per
   * goal — its sub-goals and links (sources, articles, search queries, queue items), the plan waiting for approval with

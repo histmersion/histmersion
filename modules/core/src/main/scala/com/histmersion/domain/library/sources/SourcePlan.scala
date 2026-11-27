@@ -35,7 +35,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan treats the sources themselves (docs/research-merge-import.md §5.2–§5.3): the bundle's sources
   * matched with the ones here ([[SourceMatcher]]), the question whether a pair is one work, the fields of a pair that

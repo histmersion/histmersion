@@ -9,7 +9,7 @@ import com.histmersion.{Latitude, Longitude, PageSize}
 import com.histmersion.api.personal.Bookmark
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's bookmarks, in memory and in the database. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

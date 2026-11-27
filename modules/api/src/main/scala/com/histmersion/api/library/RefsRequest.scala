@@ -8,7 +8,10 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
+import com.histmersion.lint.{tolerated, LintRule}
 
+@tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
+@tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class RefsRequest(
     id: RefsRequest.Id,
     apply: RefsRequest.Apply = Api.Apply(false),

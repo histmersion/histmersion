@@ -3,7 +3,7 @@ package cli
 
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source linked to a Calibre entry, with what the corpus would send there. */
 final case class LinkedRecord(citekey: LinkedRecord.Citekey, calibreId: LinkedRecord.CalibreId, meta: Calibre.Push)

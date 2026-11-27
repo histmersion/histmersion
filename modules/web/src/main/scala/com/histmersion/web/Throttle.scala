@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Runs `f` at most once per `intervalMs`: the first call runs at once, calls inside the window collapse into one
   * trailing run with the latest arguments. Unlike a debounce it keeps firing during a continuous drag, so live views

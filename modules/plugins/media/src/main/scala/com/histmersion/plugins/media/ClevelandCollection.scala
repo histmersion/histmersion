@@ -7,8 +7,8 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `cleveland`: The Cleveland Museum of Art Open Access API (https://openaccess-api.clevelandart.org/), no key. A
   * search answers the records themselves (`/api/artworks/?q=&cc0=1&has_image=1`). A record's `share_license_status` is

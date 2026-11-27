@@ -10,8 +10,8 @@ import com.histmersion.api.library.Query
 import com.histmersion.api.views.QueueListing
 import scala.`package`.List
 import com.histmersion.api.automation.Goal
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the ops routes with their request and response bodies")
 @movesTo(FeaturePlace.Api)

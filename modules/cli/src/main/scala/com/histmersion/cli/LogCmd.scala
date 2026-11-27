@@ -3,7 +3,7 @@ package cli
 
 import com.histmersion.api.log.{LogApi, LogPage}
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object LogCmd:
 

@@ -7,8 +7,8 @@ import com.histmersion.api.given
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure parts of a goal's schedules (docs/research-embedded-agents.md §14): whether a due schedule may start a run
   * now (the previous run, the daily/monthly cost caps, `max-concurrent-runs`), its cost cap, and the DOIs an

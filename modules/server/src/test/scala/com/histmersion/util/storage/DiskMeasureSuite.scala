@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
 import java.util.Comparator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A store on disk measured by a bounded walk: what About › Storage reports of each directory. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

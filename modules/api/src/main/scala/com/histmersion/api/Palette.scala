@@ -7,8 +7,8 @@ import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Source
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @movesTo(FeaturePlace.ApiUi)
 object Palette:

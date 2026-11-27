@@ -24,7 +24,7 @@ import com.histmersion.domain.{
 }
 import com.histmersion.domain.research.workflows.SeedManagerKind
 import com.histmersion.config.AppConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ManagerDefaultsViewsSuite extends munit.FunSuite:

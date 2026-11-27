@@ -13,7 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
 import com.histmersion.api.Years
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read from the server's
   * tiles (`/api/tiles/events/…`, the filter's selection: its sources, the span, the kind and tier menus); the points

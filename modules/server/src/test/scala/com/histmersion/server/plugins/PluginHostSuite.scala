@@ -30,7 +30,7 @@ import com.histmersion.plugin.Secret
 import com.histmersion.plugin.Registry
 import com.histmersion.pluginhost.Registries
 import com.histmersion.config.ConfigReload
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 // ── test plugins (their defaults are under src/test/resources/META-INF/histmersion/plugins/) ──────
 

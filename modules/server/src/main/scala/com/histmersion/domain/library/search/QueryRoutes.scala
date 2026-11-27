@@ -5,7 +5,7 @@ import com.histmersion.api.OpsApi
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `POST /api/query` and `GET /api/schema/tables`. */
 object QueryRoutes:

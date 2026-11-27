@@ -5,7 +5,7 @@ import io.github.iltotore.iron.*
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What `histmersion plugin new` writes: a scala-cli project whose build is `project.scala`, whose two Scala files are
   * the plugin and its tests, and the resources a plugin jar carries beside its classes. Pure: the caller writes the

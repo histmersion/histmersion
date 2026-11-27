@@ -26,7 +26,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).

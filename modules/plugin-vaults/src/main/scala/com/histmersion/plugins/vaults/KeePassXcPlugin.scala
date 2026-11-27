@@ -11,7 +11,7 @@ import scala.concurrent.duration.*
 import com.histmersion.plugin.Plugin
 import com.histmersion.plugin.LocalFiles
 import com.histmersion.plugin.Processes
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig

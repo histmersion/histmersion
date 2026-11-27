@@ -4,7 +4,7 @@ package web
 import com.histmersion.api.ConfidenceStyle
 import com.histmersion.api.library.Confidence
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How sure the map's dots for some findings are (#1946): a STATED confidence, or [[Certainty.Unstated]] — a finding
   * that states none. An unstated one is drawn in its own neutral look (its period colour turned grey, a dashed edge, a

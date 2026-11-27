@@ -3,7 +3,7 @@ package domain.library.ingest
 
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A note a seed reads: the source its frontmatter and body describe, and when its file last changed. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

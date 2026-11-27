@@ -13,7 +13,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.CollectionEntry
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")

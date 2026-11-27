@@ -33,8 +33,8 @@ import com.histmersion.api.library.{Citekey, Finding}
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge

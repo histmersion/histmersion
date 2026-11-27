@@ -8,7 +8,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article.Edits.*
 import com.histmersion.api.research.Article
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Edits anchored on an article's own text: the four operations, the anchor rules (exactly once, whitespace
   * normalised), the order they apply in, and skipped edits.

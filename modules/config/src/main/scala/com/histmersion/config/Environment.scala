@@ -3,8 +3,8 @@ package config
 
 import org.ekrich.config.Config
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The process environment, read once by the entry point and passed to whatever needs a variable. */
 @movesTo(FeaturePlace.Config)

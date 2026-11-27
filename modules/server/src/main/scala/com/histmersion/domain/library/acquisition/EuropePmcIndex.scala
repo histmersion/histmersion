@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import java.time.LocalDate
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Europe PMC: first publication since, newest first. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

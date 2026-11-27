@@ -14,7 +14,7 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 import com.histmersion.util.time.Timer
 import com.histmersion.util.database.Transactor
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The db suites' reads of the search on a database of their own. */
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")

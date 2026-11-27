@@ -13,7 +13,7 @@ import com.histmersion.util.database.TestPermits.given
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.time.SystemTimer
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The lint runner over registered rules, without a database: the stated order whatever the registration order, the
   * selection and its refusal, one run per report, and the fixes — every call's and the named ones — summed in fix

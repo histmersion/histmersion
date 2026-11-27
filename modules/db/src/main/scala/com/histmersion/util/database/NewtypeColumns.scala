@@ -13,8 +13,8 @@ import util.nonempty.NonEmptyVector
 import util.json.RawJson
 import util.json.RawJson.*
 import com.histmersion.api.json.NewtypeCodecs.{problemCodec, vector}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The column codec of every newtype, from its base type's. A value its constraint refuses fails the read, naming the
   * column and the value: the stored data breaks a rule the code relies on, and that should be loud. NULL passes

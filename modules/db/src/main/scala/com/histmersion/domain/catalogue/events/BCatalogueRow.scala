@@ -6,7 +6,7 @@ import com.augustnagro.magnum.DbCodec
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a catalogue says about an event, as its bundle line reads it. */
 final private[events] case class BCatalogueRow(

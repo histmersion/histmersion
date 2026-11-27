@@ -8,8 +8,8 @@ import com.histmersion.config.*
 import java.nio.file.Files
 import com.histmersion.api.settings.ReloadMarkdown
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion config …` — the user config file. */
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion config` arguments")

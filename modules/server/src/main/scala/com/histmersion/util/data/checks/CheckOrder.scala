@@ -2,7 +2,7 @@ package com.histmersion
 package util.data.checks
 
 import com.histmersion.api.checks.Lint
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The order of the checks whichever owner registered them: the report lists the rules in `report` order (by rule name;
   * a rule it does not name comes after them, in registration order), and the safe fixes run by their rank.

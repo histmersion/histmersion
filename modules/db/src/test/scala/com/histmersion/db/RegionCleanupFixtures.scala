@@ -21,7 +21,7 @@ import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The fixtures of [[RegionCleanupSuite]] and [[PlaceReviewSuite]]: a city with two Regiones, an Athenian tribe beside
   * Athens, provinces and a site on atlas grid squares' centres, a withdrawn duplicate and its replacement, a deme filed

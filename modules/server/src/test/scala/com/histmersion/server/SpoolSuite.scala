@@ -6,7 +6,7 @@ import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Storage}
 import java.nio.file.{Files, Path}
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `Spool.write` writes `<citekey>/paper.<ext>` in the acquisition spool. Defence in depth: the citekey must parse, AND
   * the store's key must stay inside it — a path-traversal guard should not rest on one regex being read correctly. Pure

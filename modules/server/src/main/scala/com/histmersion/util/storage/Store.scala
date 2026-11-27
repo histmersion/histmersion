@@ -11,8 +11,8 @@ import io.github.iltotore.iron.constraint.string.Match
 import java.io.InputStream
 import java.security.{DigestOutputStream, MessageDigest}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One named place's files: what a supporting area or a domain is given instead of a path. Keys are relative and
   * checked ([[StoreKey]]); nothing outside the store can be named. A write either lands whole or not at all ([[put]],

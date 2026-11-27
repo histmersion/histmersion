@@ -5,7 +5,7 @@ import com.histmersion.api.library.CalibreGap
 import com.histmersion.api.library.CollectionGapRow
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.AuthorName
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

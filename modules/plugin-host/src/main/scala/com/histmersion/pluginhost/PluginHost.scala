@@ -32,7 +32,7 @@ import scala.util.control.NonFatal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.config.edit.SettingKind.valueTypeEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
   * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
@@ -128,7 +128,10 @@ object PluginHost:
     * `Spi.Version`, which SPI 2 compiles into the plugin); `None` for another SPI type when the generation cannot be
     * told.
     */
-  @tolerated(LintRule.G5TextBranch, "a plugin that fails to link throws a NoSuchMethodError whose only description of the missing SPI member is the JVM's message")
+  @tolerated(
+    LintRule.G5TextBranch,
+    "a plugin that fails to link throws a NoSuchMethodError whose only description of the missing SPI member is the JVM's message"
+  )
   def foreignSpi(e: Throwable): Option[Option[Plugin.Info.SpiVersion]] = e match
     case e: (NoSuchMethodError | NoSuchFieldError | AbstractMethodError | IncompatibleClassChangeError) =>
       val message = Option(e.getMessage).getOrElse("").replace('/', '.')

@@ -6,8 +6,8 @@ import org.ekrich.config.{Config, ConfigObject, ConfigUtil}
 
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every setting as it stands, from the schema, the settings file as read and the merged settings it loaded into
   * (`merged`: environment > file > reference.conf, `histmersion { … }`). The keys a file writes in an open block (a

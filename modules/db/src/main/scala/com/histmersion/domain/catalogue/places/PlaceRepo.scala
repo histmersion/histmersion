@@ -32,7 +32,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.

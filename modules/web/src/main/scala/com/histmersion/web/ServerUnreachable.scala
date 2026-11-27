@@ -3,7 +3,7 @@ package web
 
 import com.histmersion.api.Api
 import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A request that got no answer at all: the browser could not reach the server (it is down or restarting, the network
   * is gone). Not an answer of the server, so no [[ApiFailure]]: a view keeps what it showed and says the server could

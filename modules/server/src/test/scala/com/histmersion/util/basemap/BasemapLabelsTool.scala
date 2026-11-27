@@ -10,7 +10,7 @@ import com.histmersion.domain.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.util.storage.Store
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Builds a physical-names archive from Natural Earth GeoJSON files already on disk, with the fetch's own code — how
   * the browser fixture (modules/web/test/fixtures/basemap/labels.pmtiles) was made and how the sizes in

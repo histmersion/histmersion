@@ -12,7 +12,7 @@ import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Goal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The overview's pure parts: what to read before a decision, the oldest first, a goal's progress and what blocks it,
   * the weekly allowance.

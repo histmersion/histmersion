@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.MatchSpan
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A passage of a source's text a search found: where it starts in the body, its text, and where in it the matches are.
   */

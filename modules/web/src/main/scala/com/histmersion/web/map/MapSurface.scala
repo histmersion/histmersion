@@ -6,7 +6,7 @@ import org.scalajs.dom
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 trait MapSurface:
   // ── the view ───────────────────────────────────────────────────────────────────────────────

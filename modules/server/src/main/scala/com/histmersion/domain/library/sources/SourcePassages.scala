@@ -8,7 +8,7 @@ import com.histmersion.domain.catalogue.evidence.passages.{Passage, PassageReade
 import com.histmersion.util.time.Timer
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources' bodies as the catalogue's evidence reads them: by their current citekey, searched chunk by chunk, and
   * the sources that name a phrase (the full-text index's phrase search, a mechanism over SQL).

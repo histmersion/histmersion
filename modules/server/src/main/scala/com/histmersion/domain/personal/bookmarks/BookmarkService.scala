@@ -14,7 +14,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A person's bookmarks. A target reaches here checked; an item is bookmarked once, so bookmarking it again answers its
   * bookmark (renamed when a label is given). A removed bookmark is kept as its tombstone. An item's key and title are

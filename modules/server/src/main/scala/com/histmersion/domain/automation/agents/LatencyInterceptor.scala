@@ -16,7 +16,7 @@ import sttp.shared.Identity
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.time.Timer
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Times each LLM call of a step and holds one of the server-wide `max-llm-calls-in-flight` slots while it runs, so
   * parallel steps and concurrent runs together never exceed the cap.

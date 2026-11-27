@@ -48,7 +48,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Deleting a source (#969), against a real Postgres: the dry run lists everything and changes nothing; an article
   * citing the source (by its citekey, an old citekey or a short form), an event sourced to it, or a job still writing

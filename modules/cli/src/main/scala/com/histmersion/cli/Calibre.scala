@@ -31,7 +31,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.library.CollectionUpdateAll
 import com.histmersion.api.library.CollectionFieldChange
 import com.histmersion.api.library.CollectionUpdatedOne
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Host-side Calibre integration — the ONE local integration the CLI is allowed, because the Calibre library lives on
   * the user's machine and the server (possibly a container) cannot see it.

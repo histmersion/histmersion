@@ -12,7 +12,7 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object WindowManager:
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
@@ -52,7 +52,6 @@ object WindowManager:
   private var resizeOw = 0.0
   private var resizeOh = 0.0
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def element: HtmlElement =
     div(
       cls := "wm-container",

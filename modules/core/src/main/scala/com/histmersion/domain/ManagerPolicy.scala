@@ -18,8 +18,8 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.domain.automation.Pipeline
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the process managers (docs/research-process-managers.md §3.4): what to do with an item after its
   * run settled, the order items are dispatched in, how many runs a manager may start, the backoff, and the hold

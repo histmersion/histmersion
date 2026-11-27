@@ -10,7 +10,7 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.ConfigFactory
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** SPI-11 on the host: a plugin registers a source collection (its report says so); a third party may not take the name
   * of one of Histmersion's own; and every call the host makes is guarded, a write refused unless the collection

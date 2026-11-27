@@ -11,8 +11,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Wikidata's `wbgetentities` (props=claims): the URL of a batch of items and their picture statements. Read by the
   * media collections and by the host's label lookup alike. Pure.

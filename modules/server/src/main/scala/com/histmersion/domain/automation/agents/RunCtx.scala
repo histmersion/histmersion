@@ -30,7 +30,7 @@ import com.histmersion.domain.automation.approvals.ApprovalQuery
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a running pipeline sees: its run, and the two kinds of step. Every step is checkpointed in `agent_steps`;
   * before running step `n` the context looks for a finished attempt of `n` and, if there is one, REPLAYS its output

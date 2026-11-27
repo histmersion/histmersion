@@ -3,7 +3,7 @@ package web.library
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.library.Ingest
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DoiIngestSuite extends munit.FunSuite:
 

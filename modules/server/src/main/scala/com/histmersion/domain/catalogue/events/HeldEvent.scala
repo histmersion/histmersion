@@ -20,7 +20,7 @@ import com.histmersion.{Latitude, Longitude}
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Event
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An event as the in-memory catalogue keeps it: the columns of its `events` row, with its datings, edges and
   * participants. `geometry` is its own GeoJSON geometry; `attested` whether an attestation names it (its tier).

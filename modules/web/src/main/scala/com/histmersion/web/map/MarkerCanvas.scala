@@ -5,7 +5,7 @@ import org.scalajs.dom
 
 import scala.collection.mutable
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class MarkerCanvas(root: dom.HTMLElement, before: dom.Node, frame: dom.HTMLElement):
   val canvas: dom.html.Canvas = dom.document.createElement("canvas").asInstanceOf[dom.html.Canvas]

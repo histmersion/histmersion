@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.{Transactor, WritePermit}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The lint runner over the registered checks: selects rules, runs them on one connection into the report, and applies
   * the safe fixes into one fix result.

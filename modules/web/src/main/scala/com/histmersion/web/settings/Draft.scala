@@ -4,7 +4,7 @@ package web.settings
 import com.histmersion.api.settings.ConfigEdit
 import com.raquo.laminar.api.L.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The changes a Settings form holds before they are saved: each key's text to write, or `None` to take the setting out
   * of the file (back to its default).

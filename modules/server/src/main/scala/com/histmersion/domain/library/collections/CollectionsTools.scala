@@ -26,7 +26,7 @@ import com.histmersion.api.Api
 import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:

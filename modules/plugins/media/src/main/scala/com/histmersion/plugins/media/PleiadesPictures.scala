@@ -3,7 +3,7 @@ package plugins.media
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `pleiades`: pictures a Pleiades place record links. For each place on the map that carries a Pleiades id, its place
   * record is read once; the Wikimedia Commons files its references name ([[PleiadesLinks]]) — at most `per-place`, in

@@ -42,8 +42,8 @@ import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.storage.Location
 import com.histmersion.PageSize
 import com.histmersion.api.catalogue.CatalogRecord
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The catalogue's places, events, their catalogues and their links to the corpus, and the refinement of site types,
   * built over one server's `deps`: `http` fetches the event catalogues and Wikidata, `presentYear` is the year datings

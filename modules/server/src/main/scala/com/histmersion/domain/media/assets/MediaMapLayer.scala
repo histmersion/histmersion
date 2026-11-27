@@ -9,7 +9,7 @@ import com.histmersion.domain.catalogue.periods.BPeriodRow
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.maptiles.MapTiles
 import com.augustnagro.magnum.Frag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pictures as a layer of the map: those placed in a tile's box, of the kind, provider and licence asked for, dated
   * in the span when one is asked for.

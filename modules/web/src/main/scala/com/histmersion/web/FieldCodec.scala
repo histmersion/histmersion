@@ -13,8 +13,8 @@ import com.histmersion.api.automation.Agents
 import com.histmersion.api.jobs.JobState
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Run
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a field's value crosses a string boundary — the URL hash (repeated keys for a list) or the browser's storage.
   * `decode` of nothing, or of garbage, is `None`: the field falls back to its default rather than to a half-parsed

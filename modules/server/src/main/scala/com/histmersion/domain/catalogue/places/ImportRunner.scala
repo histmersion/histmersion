@@ -11,7 +11,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.plugin.Plugin
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Imports a gazetteer source a plugin registered (Cliopatria, AWMC and ChronOntology are Histmersion's own): the
   * source downloads and reads its dataset through the client the host lends it, the host checks and converts each place

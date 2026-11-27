@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import java.nio.charset.StandardCharsets
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Reads back the point layers [[VectorTileWriter]] writes — the tests' view of a tile, as MapLibre decodes it: each
   * layer's name, extent and point features (place and properties).

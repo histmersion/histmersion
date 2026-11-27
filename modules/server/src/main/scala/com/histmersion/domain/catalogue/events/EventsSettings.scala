@@ -6,7 +6,7 @@ import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy}
 import com.histmersion.config.{EventsConfig, EventsLinksConfig, EventsWikidataConfig}
 import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.upstreams.wikidata.{WikidataClasses, WikidataItem}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: EventsWikidataConfig)
   /** The configured classes and their kinds (canonical), the most specific first. */

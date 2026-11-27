@@ -5,8 +5,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One line of an article's "Sources cited" footer; `number` is its citation number in the prose (first appearance),
   * `None` for a source cited only outside it (e.g. under "Not used").

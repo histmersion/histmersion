@@ -14,7 +14,7 @@ import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sources a person has not marked read, by title, as "Not read yet" lists them. */
 final class SourceReadable(db: Transactor) extends Readable:

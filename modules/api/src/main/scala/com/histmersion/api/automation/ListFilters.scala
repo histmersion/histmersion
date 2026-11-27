@@ -17,7 +17,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.RowCount
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The facet counts travel in the [[FacetsHeader]] response header, so the JSON body stays the plain array older
   * clients read.

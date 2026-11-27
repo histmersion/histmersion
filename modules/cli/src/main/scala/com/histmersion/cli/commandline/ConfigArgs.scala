@@ -12,10 +12,13 @@ import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*
 import scala.util.chaining.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 /** The command line of [[ConfigCmd]]. */
-@atBoundary(BoundaryKind.CliArgs, "the scallop adapter of `histmersion config`: declares its options, parses them into typed commands")
+@atBoundary(
+  BoundaryKind.CliArgs,
+  "the scallop adapter of `histmersion config`: declares its options, parses them into typed commands"
+)
 object ConfigArgs:
   object ConfigEntry extends CommandLine.Entry:
     val name = "config"

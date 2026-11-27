@@ -13,7 +13,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.exchange.ExchangeJobKinds
 import com.histmersion.api.exchange.MergePlan
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #888: a merge apply is a `jobs` row, so `GET /api/merge/apply/{job}` answers across a restart. How a stored row
   * reads back ([[MergeApplyJob.of]]) — above all, an apply a restart cut short is `interrupted`, never `running`

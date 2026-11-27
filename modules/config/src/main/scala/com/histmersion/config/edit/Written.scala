@@ -4,7 +4,7 @@ package config.edit
 import org.ekrich.config.ConfigValue
 
 import scala.annotation.tailrec
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Where a value of the config file, as read with its includes, was written: in the file itself, or in a file it
   * includes.

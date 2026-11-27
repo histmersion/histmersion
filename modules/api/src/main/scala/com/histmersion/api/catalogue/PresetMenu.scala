@@ -4,7 +4,7 @@ package api.catalogue
 import com.histmersion.api.BBox
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object PresetMenu:
   type PeriodSource = PeriodSource.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

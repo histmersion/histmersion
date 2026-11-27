@@ -6,8 +6,8 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Invalid, Raw, TypeName}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Signed years in historical reckoning (no year 0: −1 is 1 BCE, 1 is 1 CE), as the corpus stores them, and the
   * astronomical years of ISO/XSD dates (0 is 1 BCE, −1 is 2 BCE) that Wikidata, LPF and PeriodO answer with.

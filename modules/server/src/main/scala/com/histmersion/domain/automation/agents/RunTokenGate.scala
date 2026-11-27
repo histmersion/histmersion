@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Problem
 import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandlerAdapter}
 import io.netty.handler.codec.http.*
 import io.netty.util.ReferenceCountUtil
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The netty gate in front of the agent MCP endpoint, on every request whatever the method: no live run token → 401; a
   * token for another agent's path → 403; the bare `/mcp/agent` is routed to the token's own agent

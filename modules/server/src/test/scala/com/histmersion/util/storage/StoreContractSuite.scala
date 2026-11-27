@@ -10,7 +10,7 @@ import java.nio.file.Files
 import java.time.Instant
 import scala.util.Using
 import com.histmersion.util.basemap.PmTiles
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What every [[Store]] does, run on a store on disk and on one in memory: the in-memory store is what tests of the
   * code given a store run on, so it must answer as the disk does.

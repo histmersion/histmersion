@@ -15,7 +15,7 @@ import com.histmersion.plugin.MediaCollection
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A provider that never opens a socket (#1446): answers come from `route`, every request is recorded with its headers,
   * and the waits a polite client would sleep are recorded instead.

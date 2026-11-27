@@ -3,7 +3,7 @@ package domain.research.articles
 
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.aliases.AliasKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an article's old slugs are kept: the alias table its old slugs are followed through. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

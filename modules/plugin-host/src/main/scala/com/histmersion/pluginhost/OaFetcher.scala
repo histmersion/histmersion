@@ -6,7 +6,7 @@ import com.histmersion.plugin.{Access, FetchedFile, WorkKey}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Resolve a legal copy of a work: the acquisition chain ([[FetchChain]]) — the source fetchers the plugins registered,
   * in `acquire.chain` order. Built in: archive.org, Unpaywall → CORE → OpenAlex OA locations → Europe PMC / PMC → arXiv

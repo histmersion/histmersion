@@ -2,8 +2,8 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.automation.Approval
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 @movesTo(FeaturePlace.AutomationApprovals)
 object ApprovalModes:
   /** A value that is not `auto` — a typo included — is the safe one. */

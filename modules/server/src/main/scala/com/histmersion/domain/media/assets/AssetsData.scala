@@ -8,7 +8,7 @@ import com.histmersion.util.data.checks.{CheckContext, CheckRule, CheckRun}
 
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pictures' share of the media's data contribution: the check of their licences. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

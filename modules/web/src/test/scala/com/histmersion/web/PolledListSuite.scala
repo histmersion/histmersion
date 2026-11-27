@@ -16,7 +16,7 @@ import com.histmersion.api.library.Ingest
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.automation.Agents
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** [[PolledList]] (#1798 item 6) — the one controller of the jobs, runs and approvals windows — with a fake server
   * (promises completed by hand) and a fake clock: a poll keeps the pages loaded, a gone cursor restarts, a closed

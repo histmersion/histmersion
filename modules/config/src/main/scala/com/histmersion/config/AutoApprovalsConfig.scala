@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at most
   * `articlesPerGoalPerDay` planned articles of one research area, `publishPerDay` article drafts and `goalPlansPerDay`

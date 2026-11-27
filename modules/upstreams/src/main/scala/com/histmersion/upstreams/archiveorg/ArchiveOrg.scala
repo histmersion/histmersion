@@ -13,7 +13,7 @@ import com.histmersion.plugin.Plugin
 import com.histmersion.upstreams.ArchiveId
 import com.histmersion.upstreams.PageSize
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** archive.org's search, an item's metadata and a file of a public item. */
 final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):

@@ -24,7 +24,7 @@ import com.histmersion.util.storage.ContentStore
 
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the figures: each asset's line stamped with its rev, its bytes a blob; an import writes the
   * metadata of an asset whose bytes are here already among the rows, the rest as their bytes arrive.

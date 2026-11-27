@@ -6,7 +6,7 @@ package domain.library.sources.referrers
   */
 import com.histmersion.api.library.Rename
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class RenamedReferences(
     columns: List[Rename.Count] = Nil,

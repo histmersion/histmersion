@@ -22,8 +22,8 @@ import com.histmersion.util.time.Timer
 import com.histmersion.util.time.Pause
 import com.histmersion.config.UserPaths
 import com.histmersion.util.plugins.Plugin
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The engine's [[EngineSite]] over the composition: the `Deps` of the server, the domains' contributions
   * ([[EngineContributions]]), the approval effects they contribute (the library's source proposals, research's article

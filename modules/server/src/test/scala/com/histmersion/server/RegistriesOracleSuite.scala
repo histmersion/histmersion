@@ -22,7 +22,7 @@ import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every job kind and every alias table the server registers, written as text to `src/test/resources/oracle/` and
   * compared byte for byte: for a job kind its identifier, the name a person reads, whether it can be paused and

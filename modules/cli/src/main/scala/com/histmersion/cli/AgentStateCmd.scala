@@ -11,8 +11,8 @@ import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.AgentStatePut
 import com.histmersion.util.console.Console
 import com.histmersion.api.Api
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.CliArgs, "parses `histmersion agent-state` arguments")
 object AgentStateCmd:

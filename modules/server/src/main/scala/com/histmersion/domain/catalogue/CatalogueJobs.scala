@@ -13,7 +13,7 @@ import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.catalogue.EventsJobKinds
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The catalogue's background runs — an event catalogue's import, a re-derivation, the event links' candidates, the
   * refinement of site types — one at a time (a run's pace is per run; two would ask twice as fast). Starting one takes

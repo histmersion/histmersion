@@ -6,8 +6,8 @@ import com.histmersion.util.problem.Problem.Io
 
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Process, "runs the install's scripts and curl as child processes and captures their output")
 trait Runner:

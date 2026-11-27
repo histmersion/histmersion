@@ -12,7 +12,7 @@ import com.histmersion.util.data.exchange.MergeRules
 
 import com.augustnagro.magnum.{sql, DbCon, Frag}
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge treats events: lines of other kinds point at them by uid, the ledger names one by its id; a plan knows
   * which of the bundle's event ids and old ids name an event here.

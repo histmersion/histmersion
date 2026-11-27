@@ -12,7 +12,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.Article
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.exchange.Bundle
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An item the person can bookmark, leave a note on or mark read, as the page knows it: what it points at and what it
   * is called. Pure.

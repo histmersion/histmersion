@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.all.*
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin jar to resolve the dependencies of, with the text of the POM that lists them when it was published with
   * one. Without a POM it has no dependencies of its own.

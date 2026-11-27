@@ -9,7 +9,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
   */
 import com.histmersion.api.library.Ingest
 import com.histmersion.web.ErrorLine
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 object DoiIngest:
   private val DoiLink = "(?i)^(https?://)?(dx\\.)?doi\\.org/"
   private val Doi = "(?i)^10\\.\\d{4,9}/\\S+$"

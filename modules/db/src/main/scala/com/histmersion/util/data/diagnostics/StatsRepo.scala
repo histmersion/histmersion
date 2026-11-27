@@ -5,8 +5,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.data.TableName
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The counts and sizes the diagnostics read: rows of a table, the database's size and its tables'. Plain `count(*)`s
   * over whole tables — the About panel is opened by hand, not polled.

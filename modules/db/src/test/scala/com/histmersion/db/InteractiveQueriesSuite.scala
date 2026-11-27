@@ -37,7 +37,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.domain.research.Slug
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The interactive-latency rewrites (docs/research-interactive-performance.md) return EXACTLY what the shapes they
   * replaced returned, against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. Each test runs the new

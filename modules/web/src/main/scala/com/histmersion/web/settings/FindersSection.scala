@@ -5,7 +5,7 @@ import com.histmersion.api.Wording
 import com.histmersion.api.instance.UiConfig
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.plugins.PluginStatus
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › Where to look for sources: the open-access finders the acquisition asks, in order, for a paper's free
   * copy — each on or off — and the contact e-mail the scholarly indexes ask for.

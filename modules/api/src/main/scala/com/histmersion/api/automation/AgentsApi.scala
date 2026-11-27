@@ -10,12 +10,15 @@ import com.histmersion.api.Api
 import com.histmersion.api.research.ReviewGoal
 import scala.`package`.List
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the agents routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the agents routes with their request and response bodies"
+)
 object AgentsApi:
   type Actions = ActionsValue
   export Agents.Action as ActionsValue
@@ -66,7 +69,10 @@ object AgentsApi:
       )
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start"
+  )
   lazy val doctor: PublicEndpoint[Option[DoctorReport.Online], Api.Error, DoctorReport, Any] =
     (base.get
       .in("doctor")

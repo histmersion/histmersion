@@ -18,7 +18,7 @@ import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `POST /api/maintenance/vacuum` and the MCP `vacuum` tool (#1445) over real HTTP: the request answers at once with a
   * `vacuum` job, the job runs VACUUM (ANALYZE) outside any transaction (inside one, Postgres refuses it: "VACUUM cannot

@@ -8,8 +8,8 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.plugin.AiMessage
 import com.histmersion.plugin.AiTurn
 import com.histmersion.plugin.AiHttp
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One call to an OpenAI-compatible chat-completions API (`POST chat/completions`), its body as the API takes it: the
   * system prompt as the first message, the conversation (tool calls on the assistant's messages, their results as

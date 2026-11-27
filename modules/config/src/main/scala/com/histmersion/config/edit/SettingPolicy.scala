@@ -3,8 +3,8 @@ package config.edit
 
 import com.histmersion.util.problem.Problem
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Whether a change may be written at all, against the schema: the key is a setting, the value is of its kind, a
   * credential is a reference (`value:` only with `literalConsent`). The warnings say what works but should be known (a

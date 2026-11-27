@@ -7,12 +7,15 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Goal
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A DOI contains a `/`, so identifiers travel as `id=` query parameters rather than in the path. */
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the acquire routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the acquire routes with their request and response bodies"
+)
 object AcquireApi:
   type Filter = Filter.T
   object Filter extends Newtype[String, Pure]
@@ -94,7 +97,10 @@ object AcquireApi:
     base.post.in("ingest").in(jsonBody[Ingest.Request]).out(jsonBody[Ingest.Report])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start"
+  )
   lazy val archiveSearch: PublicEndpoint[(Query, Option[Limit]), Api.Error, ArchiveSearchResult, Any] =
     (base.get
       .in("archive" / "search")
@@ -108,7 +114,10 @@ object AcquireApi:
       )
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start"
+  )
   lazy val archiveInfo: PublicEndpoint[ArchiveId, Api.Error, ArchiveItem, Any] =
     (base.get
       .in("archive" / "info")

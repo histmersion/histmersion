@@ -2,7 +2,7 @@ package com.histmersion
 package domain.personal
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The words a search over marks asks for, lower-cased, each to be found (case does not matter). */
 final case class SearchWords(words: List[SearchWords.Words]):

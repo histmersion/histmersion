@@ -4,7 +4,7 @@ package domain.library.acquisition
 import com.histmersion.config.{AcquireConfig, LandingConfig}
 import com.histmersion.domain.HttpPolicy
 import com.histmersion.upstreams.landing.RepositoryLanding
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: AcquireConfig)
   /** The identifier every acquisition upstream sees: the product, never the contact. */

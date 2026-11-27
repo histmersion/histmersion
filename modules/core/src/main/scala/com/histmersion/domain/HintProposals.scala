@@ -14,8 +14,8 @@ import sttp.tapir.Schema
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** LLM-proposed hint effects (docs/research-process-managers.md §3.6, phase 3): a person writes a hint in words; a
   * model reads it and proposes the structured action it asks for — hold, prioritise or skip some of the manager's

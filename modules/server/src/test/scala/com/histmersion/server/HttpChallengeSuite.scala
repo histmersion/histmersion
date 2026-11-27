@@ -17,7 +17,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.config.AcquireConfig
 import com.histmersion.pluginhost.PolicyHttp
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acquisition HTTP client against a FAKE upstream on a loopback port (#1523): a bot-protection challenge is "no
   * copy" at once — never retried, never worked around — and a caller's own User-Agent (the PMC hosts get the project's

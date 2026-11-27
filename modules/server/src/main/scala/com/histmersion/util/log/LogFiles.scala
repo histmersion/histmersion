@@ -8,7 +8,7 @@ import com.histmersion.util.storage.LineFiles
 import java.time.Instant
 
 import LogFiles.{dayOf, daysOf, fileOf, Problems}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class LogFiles(files: LineFiles):
 

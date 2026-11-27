@@ -7,8 +7,8 @@ import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One catalogue request answered as JSON, through the host's polite client: an answer that is no JSON says so, by the
   * catalogue's host, as the host's own client words it.

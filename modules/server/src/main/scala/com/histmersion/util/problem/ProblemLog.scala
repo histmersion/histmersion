@@ -4,7 +4,7 @@ package util.problem
 import util.problem.Text.sentence
 import com.histmersion.api.log.LogEvent
 import com.histmersion.util.log.TraceScope
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 @atBoundary(BoundaryKind.Render, "writes a problem's log line: its group and case, its fields by name, its sentence")
 object ProblemLog:

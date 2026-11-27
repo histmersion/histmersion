@@ -23,7 +23,7 @@ import com.histmersion.api.automation.ApprovalDigest
 import com.histmersion.api.automation.Stalls
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The managers' phase 2 over real HTTP and MCP (agents off: managing works without them, nothing runs): a seeding
   * manager is created paused with its first propose item, `/api/agents/enqueue` routes review / extend / enrich / seed,

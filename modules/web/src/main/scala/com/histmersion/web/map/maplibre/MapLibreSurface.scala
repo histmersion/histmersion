@@ -13,7 +13,7 @@ import com.histmersion.web.map.BaseMapSpec
 import com.histmersion.web.Auth
 import com.histmersion.web.HtmlSink
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A [[MapSurface]] over one MapLibre map. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -325,7 +325,10 @@ final class MapLibreSurface(
   override def credits: Seq[BaseMapSpec.Raster.Attribution] = creditsV
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G5TextBranch, "the browser reports a fetch cut short on purpose only as a JS error named AbortError, which Scala.js hands over as the exception's message")
+  @tolerated(
+    LintRule.G5TextBranch,
+    "the browser reports a fetch cut short on purpose only as a JS error named AbortError, which Scala.js hands over as the exception's message"
+  )
   def setBaseMap(b: BaseMapSpec): Unit =
     generation += 1
     b match

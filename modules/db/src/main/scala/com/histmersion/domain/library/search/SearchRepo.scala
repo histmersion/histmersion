@@ -14,7 +14,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.SearchHit
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter's queries over sources: the search with its matched findings and passages, and the counts of what a
   * filter selects.

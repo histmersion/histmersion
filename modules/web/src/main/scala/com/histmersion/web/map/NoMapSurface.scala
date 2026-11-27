@@ -8,7 +8,7 @@ import scala.collection.mutable
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.web.HtmlSink
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map that could not be drawn: the browser has no WebGL 2 (or WebGL is off), or the engine failed to start.
   * Instead of a blank or a crashing page, the map's place says why and what to do ([[NoMap.message]]), and the app

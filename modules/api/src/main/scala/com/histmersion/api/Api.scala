@@ -126,8 +126,8 @@ import com.histmersion.api.media.Iiif
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -336,7 +336,10 @@ object Api:
   lazy val about: PublicEndpoint[Unit, Error, About, Any] =
     base.get.in("about").out(jsonBody[About])
 
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.deleteIfExists")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.deleteIfExists"
+  )
   lazy val config: PublicEndpoint[Unit, Error, UiConfig, Any] =
     base.get.in("config").out(jsonBody[UiConfig])
 
@@ -729,6 +732,7 @@ object Api:
         (((refactorEncoded10)._1).value, (refactorEncoded10)._2, ((refactorEncoded10)._3).value)
       )
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val patchSource: PublicEndpoint[(Citekey, Source.Patch.Request, Apply), Error, Source.WithFindings, Any] =
     (endpoint.patch
       .in("api" / "sources" / path[String]("citekey"))
@@ -855,7 +859,10 @@ object Api:
     base.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.GetWrites, "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.createDirectories, GET: File Files.createTempFile, GET: File Files.deleteIfExists, GET: File Files.move, GET: File Files.newOutputStream, GET: File Files.setPosixFilePermissions")
+  @tolerated(
+    LintRule.GetWrites,
+    "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: File Files.createDirectories, GET: File Files.createTempFile, GET: File Files.deleteIfExists, GET: File Files.move, GET: File Files.newOutputStream, GET: File Files.setPosixFilePermissions"
+  )
   lazy val exportBundle: PublicEndpoint[Option[Bundle.Name], Error, (TapirFile, FileName), Any] =
     (endpoint.get
       .in("api" / "bundle")

@@ -3,7 +3,7 @@ package plugins.media
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `opencontext`: Open Context's excavation media. One search by the place's name answers the records with their
   * licences, creators, subjects and spatial coverage; a record to store is completed from its media item

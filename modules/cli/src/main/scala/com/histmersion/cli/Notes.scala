@@ -11,7 +11,7 @@ import com.histmersion.api.media.{AssetInput, AssetLinks}
 import com.histmersion.api.Api
 import com.histmersion.api.ByteCount
 import com.histmersion.api.Paging
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Host-side note handling for `histmersion seed` / `put` / `export` (plan §1.9a, §2.5).
   *

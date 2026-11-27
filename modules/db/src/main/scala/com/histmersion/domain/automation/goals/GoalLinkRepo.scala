@@ -12,8 +12,8 @@ import com.histmersion.api.automation.Goal
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What hangs off a goal (migrations V046, V049): its links (sources, articles, search queries, queue items), its
   * approved plan and run cap, and its schedules. Stateless, like every repo.

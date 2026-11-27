@@ -4,7 +4,7 @@ package web.map
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final class MarkerLook(ops: List[MarkerPaint], val w: Double, val h: Double):
   private val pad = 12.0

@@ -10,8 +10,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.given
 import com.histmersion.util.database.literal
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sites with no known date, for the map when a viewer asks for them (V106): every site whose period is open on
   * both sides, in a tile's box ([[candidates]], over the partial index `places_site_undated`), and their counts by the

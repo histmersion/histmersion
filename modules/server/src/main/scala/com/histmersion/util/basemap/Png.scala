@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import java.io.ByteArrayOutputStream
 import java.util.zip.{CRC32, Deflater, Inflater}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** PNG, as much as the relief needs: encoding RGB tiles, decoding 8-bit RGB(A) non-interlaced ones. Pure. */
 object Png:

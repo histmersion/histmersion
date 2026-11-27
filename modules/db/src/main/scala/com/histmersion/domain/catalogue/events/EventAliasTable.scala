@@ -3,7 +3,7 @@ package domain.catalogue.events
 
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.aliases.AliasKinds
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Where an event's old ids are kept: the alias table they are followed through. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

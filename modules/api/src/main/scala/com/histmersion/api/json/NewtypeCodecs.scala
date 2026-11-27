@@ -13,8 +13,8 @@ import util.problem.Problem
 import util.json.RawJson.asJson
 import api.problem.Answer
 import api.problem.Answer.{asProblem, entry}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 @atBoundary(BoundaryKind.Json, "gives every newtype its JSON codec from its base type")

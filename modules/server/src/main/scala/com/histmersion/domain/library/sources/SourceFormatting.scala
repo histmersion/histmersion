@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.api.checks.{FormatField, FormatIssue}
 import com.histmersion.domain.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a source's agent-written Markdown (its summary and notes) will display: what will not display as meant, its
   * wording-safe repair, and the refusal a strict write gets for a formatting error. Research implements it with its

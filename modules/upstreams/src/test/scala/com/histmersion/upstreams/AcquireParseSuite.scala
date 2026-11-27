@@ -8,7 +8,7 @@ import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.unpaywall.OaAccess
 import com.histmersion.upstreams.testsupport.ComparedByValue.given
 import com.histmersion.upstreams.landing.RepositoryLanding
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The upstream JSON parsers, driven by REAL responses captured from OpenAlex, Crossref, Unpaywall, Semantic Scholar,
   * archive.org and Wikipedia (trimmed, in `src/test/resources/acquire`). Fixtures rather than mocks: when an upstream

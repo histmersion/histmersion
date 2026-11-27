@@ -14,8 +14,8 @@ import com.histmersion.api.catalogue.{Event, Place}
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.exchange.MergeMarkdown
 import com.histmersion.util.console.Console
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion article|events|goals rename <old> <new>` — a new slug or id; the old one keeps resolving (an alias).
   * The label is checked here with the server's own rule ([[LabelRenames]]).

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.media
 import com.histmersion.api.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object DataCredits:
   private val odbl = Some("https://opendatacommons.org/licenses/odbl/1-0/")

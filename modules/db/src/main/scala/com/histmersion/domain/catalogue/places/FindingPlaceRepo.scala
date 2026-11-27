@@ -14,8 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The MATERIALISATION of `finding_places` — the only place that decides which findings belong to which places: the
   * whole table rebuilt, one source's findings or some places' findings placed again inside the caller's transaction,

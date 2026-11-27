@@ -3,7 +3,7 @@ package cli
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Histmersion's own artifacts in that repository, at the version of the install this CLI belongs to: the plugin API (a
   * jar, its sources, its POM) and the plugin platform (a POM whose dependencies are the libraries the server provides

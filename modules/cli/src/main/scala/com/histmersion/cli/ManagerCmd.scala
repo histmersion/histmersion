@@ -27,8 +27,8 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Stalls
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion agent managers` and `histmersion agent manager <id> …` — the persistent process managers
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.

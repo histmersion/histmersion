@@ -7,7 +7,7 @@ import com.histmersion.domain.library.search.FilterSql
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Filter, GeoHit}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The map feed (`geo-when`): the findings a filter selects, and how many. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

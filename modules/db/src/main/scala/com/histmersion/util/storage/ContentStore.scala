@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import java.io.InputStream
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A content-addressed set of files, each kept as `<sha256>.<ext>`: found by its digest, and stored only when its
   * content hashes to its name.

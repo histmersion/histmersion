@@ -16,7 +16,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Queue:

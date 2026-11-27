@@ -4,7 +4,7 @@ package domain.library.collections
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.AuthorName
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source linked to an item of the Calibre library (`sources.calibre_id`), with what an audit compares. */
 final case class LinkedSource(

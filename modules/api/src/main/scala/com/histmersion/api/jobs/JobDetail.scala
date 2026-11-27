@@ -12,7 +12,7 @@ import com.histmersion.util.json.RawJson.equality
 import sttp.tapir.SchemaType.SProductField
 import sttp.tapir.{FieldName, Schema}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a job records about itself beyond its kind and state: each field its kind's owner declares
   * ([[JobDetailField]]), kept as JSON. The wire shows every field the kinds' registry lists, in its order, each job's

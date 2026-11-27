@@ -12,8 +12,8 @@ import com.augustnagro.magnum.*
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Sql, "reads and writes the acquire check tables and their row codecs")
 private[acquisition] object AcquireCheckRepo:

@@ -6,7 +6,7 @@ import com.histmersion.web.{ResearchSection, Route, RouteLink}
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.SettingsSection
 import com.histmersion.api.Wording
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › AI agents: whether this server runs research agents, how many at once, and the AI providers' addresses
   * and time limits. Which model does which task is Research › AI models and limits; the providers' keys are Keys and

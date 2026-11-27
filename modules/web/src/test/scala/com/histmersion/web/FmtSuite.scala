@@ -8,7 +8,7 @@ import com.histmersion.api.library.Confidence
 import com.histmersion.api.Years
 import com.histmersion.api.Markdown
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class FmtSuite extends munit.FunSuite:

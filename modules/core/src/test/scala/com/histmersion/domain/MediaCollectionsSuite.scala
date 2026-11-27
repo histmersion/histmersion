@@ -8,7 +8,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.media.imports.MediaRecord
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The host's match rules for collection records (#1446) — a record tied to a place by its most specific place field,
   * by any location of a map, and by the dates — and the deep-time spans they read. The records are built here as the

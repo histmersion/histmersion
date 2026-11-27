@@ -8,7 +8,7 @@ import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.{AiHttp, Plugin, WorkKey}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An [[AiHttp]] that sends nothing: it answers each request with the next of `answers` (once they run out, with a
   * refused `Left`, "no scripted answer") and keeps every request, to assert on what the provider sent.

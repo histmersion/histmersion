@@ -13,8 +13,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Smithsonian Global Volcanism Program's Holocene eruptions: its WFS
   * (`GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions`), CQL-filtered, one request per window of start years — the

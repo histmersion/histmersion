@@ -39,7 +39,7 @@ import com.histmersion.util.database.Unused
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{BoundaryKind, LintRule, atBoundary, tolerated}
+import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 
 /** Magnum codecs for the article wire DTOs (the types live in `core`, which knows nothing about JDBC). */
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
@@ -77,6 +77,7 @@ private[articles] object ArticleRepo:
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Article.VersionFull] = DbCodec.derived
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
+  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Article.Row] = DbCodec.derived
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[CitedSource] = DbCodec.derived

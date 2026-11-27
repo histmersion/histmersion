@@ -30,7 +30,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.IssueSide
 import com.histmersion.util.text.MinHash
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The merge plan's source and finding stages, recorded (`oracle/merge/plans.txt`, written on the code before the
   * library's rules of the plan left the planner): the crafted fixture under no resolutions, under a set that answers

@@ -42,7 +42,7 @@ import com.histmersion.api.automation.Autopilot
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The autopilot (docs/research-process-managers.md "As built: the autopilot"): ONE switch, kept in the database, that
   * lets the process managers carry every research goal from planned to reviewed with no person in the loop — within the

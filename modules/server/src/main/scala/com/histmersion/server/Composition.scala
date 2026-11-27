@@ -55,8 +55,8 @@ import com.histmersion.domain.HttpPolicy
 import com.histmersion.upstreams.openalex.OpenAlexCrossref
 import com.histmersion.util.plugins.Plugins
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The server's wiring: the hot component graph (pools, migrations, plugins) → ServerWiring → HTTP (REST + pages +
   * static) and MCP endpoints → bind. The entry point ([[histmersionServer]]) loads the config and calls it; a test

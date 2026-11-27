@@ -55,7 +55,7 @@ import com.histmersion.domain.library.acquisition.HttpPlugin
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What acquisition, ingest and the collections answer, recorded on the code before they moved into the library's
   * domain. A server on its own scratch database, every upstream a fixture on a loopback port (never the network), the

@@ -6,7 +6,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 
 import scala.concurrent.duration.FiniteDuration
 import java.util.concurrent.TimeUnit
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** @param instanceLockCheckSeconds
   *   how often the server looks whether the session holding its database's instance lock (one server per database) is

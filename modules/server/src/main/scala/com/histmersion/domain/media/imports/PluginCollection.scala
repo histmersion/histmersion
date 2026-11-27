@@ -9,7 +9,7 @@ import com.histmersion.domain.media.imports.{MediaMatch, MediaRecord}
 import com.histmersion.plugin.*
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.domain.catalogue.places.Wikidata
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A collection searched by a place's name, run by the host's own collection import ([[CollectionImport]]): the plugin
   * searches and describes; the host reads each stated licence ([[PluginMedia.rights]]) and judges it against `allowed`

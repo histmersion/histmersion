@@ -10,7 +10,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.HostLicences
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The parsers of the two key-gated collections: Smithsonian Open Access and Europeana. The Smithsonian fixture's rows
   * are three real records of the Smithsonian's open-data dump (National Museum of Asian Art, read 2026-10-26;

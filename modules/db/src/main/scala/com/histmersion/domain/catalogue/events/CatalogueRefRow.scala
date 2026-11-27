@@ -4,7 +4,7 @@ package domain.catalogue.events
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A catalogue's row of one event, as its card lists it. */
 final private[events] case class CatalogueRefRow(

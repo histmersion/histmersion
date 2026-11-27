@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger, AtomicReferenc
 import java.util.concurrent.locks.ReentrantLock
 import scala.concurrent.duration.*
 import scala.util.control.NonFatal
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** What a node's build is given: the config being switched to, the values of its dependencies in the generation being
   * built, and — on a rebuild — its own previous value and config (so a node may carry over what did not change, as the

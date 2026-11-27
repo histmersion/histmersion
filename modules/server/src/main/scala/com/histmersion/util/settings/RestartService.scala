@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.api.settings.ConfigEdit
 import java.util.concurrent.atomic.AtomicInteger
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Restarting the server for the settings only a restart applies: the process ends, and the service it runs under (the
   * LaunchAgent, the systemd unit) starts it again.

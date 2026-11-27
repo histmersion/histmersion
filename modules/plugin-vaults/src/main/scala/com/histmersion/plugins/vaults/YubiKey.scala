@@ -7,7 +7,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import org.ekrich.config.{ConfigValue, ConfigValueType}
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** KeePassXC's YubiKey challenge-response (`keepassxc-cli … -y <slot>[:<serial>]`): which keys the `yubikey` setting
   * lists, which of them are connected, and what a failed attempt means — the next key, or stop. All pure;

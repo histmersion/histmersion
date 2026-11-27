@@ -22,7 +22,7 @@ import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaImportRepo
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of a source's picture (#1446): which figure illustrates a paper ([[FigurePick]]) — on the fixture the
   * converter produced from a generated journal paper (converter/tests/test_figures.py) and on hand-made cases — and the

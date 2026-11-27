@@ -13,7 +13,7 @@ import com.histmersion.util.data.maintenance.WriteGate
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.library.Citekey
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MediaSourceBoundarySuite extends munit.FunSuite:

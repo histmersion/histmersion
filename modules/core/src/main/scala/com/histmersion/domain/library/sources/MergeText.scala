@@ -8,7 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.Title
 import com.histmersion.domain.AuthorName
 import com.histmersion.domain.library.Isbn
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
   * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of

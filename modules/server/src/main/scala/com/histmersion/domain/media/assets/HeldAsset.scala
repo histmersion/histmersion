@@ -5,7 +5,7 @@ import java.time.Instant
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.DeepTime
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A picture as the in-memory store holds it: a row of `assets` — a source's figure (its `citekey`) or a provider's
   * picture (its `provider` and key) — with its point and inclusive span when it has them.

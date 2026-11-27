@@ -5,7 +5,7 @@ import com.histmersion.api.catalogue.Place
 
 import java.nio.file.{Files, Path}
 import com.histmersion.config.PlacesConfig
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion places seed`'s file walk is a pure function of a directory, so it is tested as one. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

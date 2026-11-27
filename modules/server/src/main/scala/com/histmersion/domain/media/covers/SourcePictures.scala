@@ -38,7 +38,7 @@ import com.histmersion.plugin.WorkKey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a

@@ -15,7 +15,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.TargetKind
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What every agent pipeline does the same way (#1946) — each had its own copy:
   *   - [[log]]: a run ends with one line in the worklog (`queue log`), written through the run's write gate, so a dry

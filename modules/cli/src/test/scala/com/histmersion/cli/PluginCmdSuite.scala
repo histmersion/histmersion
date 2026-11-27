@@ -20,7 +20,7 @@ import com.histmersion.config.CliPluginsConfig
 import com.histmersion.config.RuntimeConfig
 import com.histmersion.config.UserPaths
 import com.histmersion.api.plugins.PluginSet
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion plugin …` against a TEMPORARY install and data directory: the kit's scripts are fakes
   * (`histmersion-relink --describe` prints the JSON the test chose, `--resolve` records its arguments and answers what

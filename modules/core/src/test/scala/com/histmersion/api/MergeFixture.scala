@@ -25,7 +25,7 @@ import com.histmersion.util.text.MinHash
 import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.api.exchange.IssueSide
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A crafted pair of collections, in memory (docs/research-merge-import.md §8): "work" exported a bundle, "home" plans
   * it. One case per row of the scenario catalogue the pure planner can see. The database twin of this fixture is

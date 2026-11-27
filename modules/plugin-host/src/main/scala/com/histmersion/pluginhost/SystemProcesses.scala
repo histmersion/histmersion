@@ -14,8 +14,8 @@ import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @atBoundary(BoundaryKind.Process, "runs external programs for plugins")
 final class SystemProcesses extends Processes:
@@ -96,7 +96,6 @@ final class SystemProcesses extends Processes:
           Left(Problem.Io.Process(Problem.Io.Tool(s"$tool"), Problem.Io.Ending.NotStarted(External.Reported.of(e))))
 
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def awaitOut(timeout: FiniteDuration)(
         ready: Processes.Result.Out => Boolean
     ): Boolean =

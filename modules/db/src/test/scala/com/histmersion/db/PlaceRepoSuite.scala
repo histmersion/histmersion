@@ -32,7 +32,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer against a real PostGIS (HISTMERSION_TEST_DB_URL); skipped otherwise. Covers what cannot be asserted
   * purely: containment, the point tolerance, period overlap, the recursive hierarchy and the `Filter.places` resolution

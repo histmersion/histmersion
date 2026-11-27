@@ -9,8 +9,8 @@ import org.ekrich.config.ConfigUtil
 import scala.jdk.CollectionConverters.*
 import scala.util.Try
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The full path of one setting in the config file, `histmersion.<block>.<key>`: segments of letters, digits, `_` and
   * `-` (the plugin ids and HOCON's kebab-case keys).

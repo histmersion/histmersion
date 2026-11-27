@@ -6,7 +6,7 @@ import com.raquo.laminar.api.L.*
 import org.scalajs.dom
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The settings line a manager window shows (the server's own wording). */
 object ManagersHandlersText:

@@ -4,7 +4,7 @@ package domain.personal.marks
 import com.histmersion.domain.ItemKey
 import com.histmersion.domain.{AuthorName, Title}
 import com.histmersion.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A record a person has not marked read, as "Not read yet" lists it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

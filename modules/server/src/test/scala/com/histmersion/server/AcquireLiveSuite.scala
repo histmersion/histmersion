@@ -15,7 +15,7 @@ import com.histmersion.pluginhost.upstreamSettings
 import com.histmersion.pluginhost.HostLog
 import com.histmersion.domain.library.Doi
 import com.histmersion.upstreams.jats.Jats
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** ONE live call to the real upstreams, gated on `HISTMERSION_LIVE_APIS=1`.
   *

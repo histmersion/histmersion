@@ -11,7 +11,7 @@ import com.histmersion.upstreams.core.CoreApi
 import java.time.LocalDate
 import com.histmersion.api.library.Candidates
 import com.histmersion.domain.library.search.Search
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** CORE: only with a key (its search refuses anonymous use) — the `oa-core` plugin's resolved `api-key`, else
   * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.

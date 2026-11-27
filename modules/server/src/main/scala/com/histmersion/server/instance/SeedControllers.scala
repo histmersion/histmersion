@@ -13,7 +13,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.domain.library.ingest.SeedFolder
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion seed <dir>`: an exported tree of notes on this server's disk read back into the library. The directory
   * is a SERVER-side path the caller chooses, so it is confined to `corpus.dir` when that is configured; when it is not,
@@ -24,12 +24,18 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
 
   /** `corpus.dir` as an `Option`: empty string = not configured. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   private def corpusRoot: Option[SafePath.Base] =
     Option(cfg.corpus.dir.value).map(_.trim).filter(_.nonEmpty).map(SafePath.Base(_))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44Conversion, "pending G44 (a controller hands the wire value to the domain's parse, not .value)")
+  @tolerated(
+    LintRule.G44Conversion,
+    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
+  )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def seed(req: SeedRequest)(using Creator.New): Either[Api.Error, SeedResult] =
     deps.maintenance.guard(WriteGate.OperationName("seed")):

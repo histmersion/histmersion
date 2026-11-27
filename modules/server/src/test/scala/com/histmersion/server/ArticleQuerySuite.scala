@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.Highlight
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `?q=` article surface (plan §1.4): links keep the query, the match control appears only when something matched,
   * and highlighting survives the flexmark output (links included).

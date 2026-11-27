@@ -19,8 +19,8 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The gazetteer's external sources in the store (#1064, V071): joining a batch of [[GazRecord]]s to the places already
   * here BY IDENTIFIER, writing what each record says (its place, if it is the first to bring it; its names and links,

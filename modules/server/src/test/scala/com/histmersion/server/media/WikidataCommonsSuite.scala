@@ -23,7 +23,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Wikidata → Commons provider (#1446) end to end against a FAKE provider (captured answers, trimmed) and an
   * in-memory store — the `media-wikidata` plugin's collection, as the host builds it, run by the host's import of a

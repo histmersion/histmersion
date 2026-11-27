@@ -9,7 +9,7 @@ import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventGeometry:

@@ -19,7 +19,7 @@ import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.library.ArxivId
 import com.histmersion.util.storage.Blob
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Europe PMC / PMC Article Datasets step of the OA chain (#1523), against a fake upstream that answers from the
   * responses captured on 2026-10-11 — no network.

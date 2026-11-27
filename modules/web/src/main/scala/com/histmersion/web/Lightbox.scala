@@ -6,7 +6,7 @@ import org.scalajs.dom
 import org.scalajs.dom.document
 import com.histmersion.api.{Href, Html}
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A picture opened full-screen: a figure in a page (its `/assets/` image), or a stored picture shown small on the map
   * or a card — any `<img>` that names its full size in `data-full` ([[attrs]]), shown with its title, who made it, its

@@ -3,7 +3,7 @@ package api
 package problem
 
 import util.problem.Problem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bare string is on the JVM, where a problem is otherwise read from its typed entry by the one codec both
   * platforms share (`NewtypeCodecs.problemCodec`, [[Answer.asProblem]]). A bare string is how a master version kept a

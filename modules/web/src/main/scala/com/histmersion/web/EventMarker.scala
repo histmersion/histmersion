@@ -11,7 +11,7 @@ import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the map's EVENT markers (#1449). */
 object EventMarker:

@@ -13,7 +13,7 @@ import com.histmersion.domain.library.acquisition.agent
 import com.histmersion.domain.library.acquisition.*
 import com.histmersion.config.LoadedConfig
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contact e-mail is a per-install setting: the repo's default is blank. Blank must mean "anonymous" — no
   * `(mailto:)` stub in the User-Agent, and no Unpaywall call, which Unpaywall would refuse without an e-mail — while a

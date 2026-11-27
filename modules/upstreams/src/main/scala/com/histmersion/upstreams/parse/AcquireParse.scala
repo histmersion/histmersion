@@ -20,8 +20,8 @@ import com.histmersion.upstreams.ArxivId
 import com.histmersion.plugin.Doi
 import com.histmersion.upstreams.jats.Jats
 import com.histmersion.upstreams.ArchiveId
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** PURE parsers for the JSON the acquisition upstreams return (OpenAlex, Crossref, Unpaywall, CORE, Semantic Scholar,
   * Europe PMC, PMC Article Datasets, archive.org, Wikipedia).

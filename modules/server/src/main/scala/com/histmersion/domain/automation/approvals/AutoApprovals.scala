@@ -28,7 +28,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The checked auto approvals (docs/research-process-managers.md "As built: the autopilot"): on every managers' tick,
   * each OPEN approval of the kinds a person used to decide by hand — an `article-plan` (propose-articles), a

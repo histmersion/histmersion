@@ -4,8 +4,8 @@ package server.agents
 import com.histmersion.domain.automation.agents.AgentGenerator
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The quota-guard mod (docs/research-agent-runtimes.md §2.5, §3a P3): a Claude Code mod module that POSTs every
   * rate-limit reading to Histmersion. In a headless run it carries the run token, and when Histmersion answers that the

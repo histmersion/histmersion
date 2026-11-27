@@ -12,8 +12,8 @@ import com.histmersion.api.maintenance.Storage
 import com.histmersion.api.ByteCount
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.config.StorageConfig
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How much a directory holds, measured by a BOUNDED walk — the Storage part of About ([[StorageReport]]) on the
   * server, and the CLI's own locations. Reads the file system and nothing else; writes nothing.

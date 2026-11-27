@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `review-article`: at most `maxRounds` panel rounds per run (a run may ask for fewer, never more than `roundsCap`),
   * the article body is sent up to `articleChars` characters (a longer one is reviewed cut, and never revised), and the

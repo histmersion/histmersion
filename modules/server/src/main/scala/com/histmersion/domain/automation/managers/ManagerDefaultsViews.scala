@@ -4,7 +4,7 @@ package domain.automation.managers
 import com.histmersion.config.{AgentManagersConfig, AgentSchedulerConfig}
 import com.histmersion.domain.{ManagerDefaults, SchedulerDefaults}
 import io.scalaland.chimney.dsl.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object ManagerDefaultsViews:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

@@ -24,7 +24,7 @@ import com.histmersion.server.ListQueries
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The approval gate (docs/research-embedded-agents.md §5.2): what an agent run PROPOSES — a status, a disagreement
   * edge, a filter, a plan — becomes an `approvals` row a person decides from the web UI or the CLI (the library routes
@@ -251,6 +251,7 @@ final class Approvals(
   private def proposer(id: Approval.Id)(using decider: Creator.New): Creator.New =
     store.creatorOf(id).getOrElse(decider)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decideSource(
       id: Approval.Id,
       d: Decision,

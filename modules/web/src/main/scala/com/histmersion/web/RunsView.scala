@@ -22,7 +22,7 @@ import com.histmersion.api.automation.Managers
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.Api
 import com.histmersion.api.jobs.JobInfo
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The embedded agent runs (docs/research-embedded-agents.md §5.3): the runs window (`GET /api/agents/runs`, filtered
   * on the server through [[UiState.runStatus]], a page at a time: [[ListPaging]]) and one window per run (`GET
@@ -44,6 +44,7 @@ object RunsView:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A run still moving: worth polling for. (A `waiting` run waits for a person, not for the server.) */
+  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def stateWire(status: RunInfo.Status): RunState.Wire = status
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

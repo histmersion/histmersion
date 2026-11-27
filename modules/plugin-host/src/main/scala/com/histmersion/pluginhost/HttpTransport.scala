@@ -6,7 +6,7 @@ import com.histmersion.util.problem.{External, Problem}
 import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One GET on the wire: the seam between the host's HTTP policies ([[Polite]], [[PolicyHttp]]) and the network. A test
   * supplies one that answers from fixtures or recordings and never opens a socket. Failures to talk at all are `Left`;

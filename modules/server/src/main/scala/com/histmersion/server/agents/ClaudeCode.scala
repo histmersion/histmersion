@@ -21,8 +21,8 @@ import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.config.ServerConfig
 import com.histmersion.server.agents.CliOutcomes.finishEquality
 import com.histmersion.util.database.WritePermit
-import com.histmersion.lint.{BoundaryKind, FeaturePlace, atBoundary, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP config, and the
   * `stream-json` output read back into sttp-ai's result types.

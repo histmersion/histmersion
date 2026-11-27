@@ -21,7 +21,7 @@ import com.histmersion.api.catalogue.{Period, Place, Year}
 import com.histmersion.api.ocr.ConvertedDoc
 import com.histmersion.util.storage.Blob
 import com.histmersion.util.ocr.Pixels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The answers of every first-party media collection's provider, the settings that switch them all on at no pause, the
   * places and events a map holds for them, and what an import stored — the fixtures the media traffic and the media

@@ -9,7 +9,7 @@ import java.nio.file.Path
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.api.instance.About
 import com.histmersion.api.maintenance.Storage
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The Storage part of `histmersion about` that only the CLI can see: the locations on the machine the CLI runs on that
   * the server knows nothing of — the host directory of Calibre originals (`cli.calibre.originals-dir`) and the install

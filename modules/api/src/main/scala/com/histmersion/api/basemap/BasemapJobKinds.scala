@@ -5,7 +5,7 @@ import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.jobs.JobKindMeaning
 import com.histmersion.api.jobs.JobDetail
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base map's jobs, as it registers them: the download of its layers for an area. */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

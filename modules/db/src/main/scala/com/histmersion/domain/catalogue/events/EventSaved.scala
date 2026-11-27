@@ -5,7 +5,7 @@ package domain.catalogue.events
   * and what became of the refreshed events' corrections by hand.
   */
 import com.histmersion.api.catalogue.Correction
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class EventSaved(
     created: EventSaved.Created,

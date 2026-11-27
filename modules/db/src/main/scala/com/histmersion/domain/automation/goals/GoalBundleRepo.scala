@@ -21,8 +21,8 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the goals (docs/research-merge-import.md §4), read as the bundle's lines in a deterministic
   * order (by uid; their links and schedules by their goal's uid, then their own key, in the "C" collation), and the

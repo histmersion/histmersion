@@ -18,7 +18,7 @@ import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.AgentVerify
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1424: the findings step's guards against what a smaller extractor (Haiku) got wrong — places the gazetteer does not
   * know, centuries stored as years, claims that point at a table. Each sends the answer back while attempts remain and

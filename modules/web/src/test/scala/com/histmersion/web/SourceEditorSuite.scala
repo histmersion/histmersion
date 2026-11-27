@@ -19,7 +19,7 @@ import com.histmersion.api.Write
 import com.histmersion.api.Api
 import com.histmersion.api.library.Doi
 import com.histmersion.api.Years
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,
   * and where a server refusal is shown.

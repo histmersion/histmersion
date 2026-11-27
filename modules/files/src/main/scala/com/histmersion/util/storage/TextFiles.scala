@@ -3,7 +3,7 @@ package util.storage
 
 import java.nio.file.Path
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
 
 @atBoundary(BoundaryKind.Process, "reads text files")
 trait TextFiles:

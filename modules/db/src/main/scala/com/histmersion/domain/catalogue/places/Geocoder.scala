@@ -21,8 +21,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Place NAME → gazetteer point (#981): the ONE geocoder. It fetches the places a name can mean and hands them to
   * [[Geocode]] (core), which reads the name ([[Geocode.attempts]]) and ranks the candidates ([[Geocode.rank]]) — the

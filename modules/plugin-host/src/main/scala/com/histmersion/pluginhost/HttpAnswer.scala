@@ -8,7 +8,7 @@ import scala.jdk.CollectionConverters.*
 import com.histmersion.domain.CoreQuota
 import com.histmersion.plugin.Plugin
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One HTTP answer: the status, the headers (names in lower case, first value) and the body. */
 final case class HttpAnswer(

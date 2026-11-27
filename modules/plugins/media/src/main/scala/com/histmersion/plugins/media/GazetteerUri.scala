@@ -5,7 +5,7 @@ import com.histmersion.plugin.GazetteerRef
 
 import com.histmersion.plugin.MediaItem
 import com.histmersion.plugin.GazetteerPlace
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Gazetteer ids in the URI forms providers write them: `(scheme, id)` of a Pleiades, GeoNames or Wikidata URI, as a
   * [[com.histmersion.plugin.MediaItem]]'s `ids` carry them. Pure.

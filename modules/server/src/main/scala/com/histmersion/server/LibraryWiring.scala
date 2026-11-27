@@ -23,8 +23,8 @@ import com.histmersion.domain.library.sources.{
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.media.assets.AssetsControllers
 import com.histmersion.util.identity.AliasTable
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The library's services and controllers, built over one server's `deps`: the figures are media's, the gazetteer the
   * catalogue's, the formatting check and the "Mentioned in articles" part research's, the stored originals the

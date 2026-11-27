@@ -25,7 +25,7 @@ import com.histmersion.util.storage.ContentStore
 import com.augustnagro.magnum.DbCon
 import hearth.kindlings.optics.syntax.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of research: the articles (each line stamped with its rev), their versions (each body a blob)
   * and their old slugs.

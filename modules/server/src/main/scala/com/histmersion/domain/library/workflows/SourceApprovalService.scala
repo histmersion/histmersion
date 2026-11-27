@@ -14,7 +14,7 @@ import com.histmersion.util.database.Jsonb
 import com.histmersion.domain.automation.Approval
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 trait SourceApprovalService:

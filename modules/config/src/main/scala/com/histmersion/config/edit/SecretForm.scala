@@ -2,8 +2,8 @@ package com.histmersion
 package config.edit
 
 import com.histmersion.util.problem.Problem
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.

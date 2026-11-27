@@ -5,8 +5,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent lease (V087): one agent server per database, the one that holds the named lease. Every statement runs on
   * the connection it is given (`AgentLease` opens it).

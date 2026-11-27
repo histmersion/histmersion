@@ -23,7 +23,7 @@ import com.histmersion.pluginhost.HostLog
 import com.histmersion.domain.library.search.Search
 import com.histmersion.domain.library.acquisition.DiscoveryClient
 import com.histmersion.domain.library.Doi
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** OpenAlex pauses anonymous search under heavy load (HTTP 503, 2026-09-27): discovery must not go dark with it. The
   * search falls back to Crossref's keyless `works?query=`.

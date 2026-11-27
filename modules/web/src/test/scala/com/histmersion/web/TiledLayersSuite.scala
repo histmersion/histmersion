@@ -18,7 +18,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.Years
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The tiled layers' pure half: a tile feature read back as the app's records (an item, a cell), the playback buckets,
   * the tile URL template, and what a cell counts for in a bubble.

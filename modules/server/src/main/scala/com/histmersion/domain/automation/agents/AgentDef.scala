@@ -8,7 +8,7 @@ import com.histmersion.domain.automation.workflows.ToolName
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One canonical agent definition, `agents/<name>.md`: a runtime-neutral manifest in the YAML header and the prompt
   * body, which speaks of tools by `{{tool:<name>}}` placeholder.

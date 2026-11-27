@@ -3,12 +3,12 @@ package web
 
 import com.histmersion.api.Html
 import org.scalajs.dom
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The page's only ways to put markup into the document. Each takes an [[Html]], which only escaping, the code's own
   * literal markup or the allow-list makes, so no text from outside (a title, a credit, a fetched page) reaches a DOM
-  * sink as markup. `ContractLint` rule `HtmlSink` keeps every other `innerHTML`, `insertAdjacentHTML` and `setHTML`
-  * out of the page; a map popup gets its content as a fragment built here ([[fragment]]).
+  * sink as markup. `ContractLint` rule `HtmlSink` keeps every other `innerHTML`, `insertAdjacentHTML` and `setHTML` out
+  * of the page; a map popup gets its content as a fragment built here ([[fragment]]).
   */
 object HtmlSink:
   /** `el`'s content replaced by `html`. */

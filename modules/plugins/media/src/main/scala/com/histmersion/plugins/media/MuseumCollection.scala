@@ -4,7 +4,7 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of the open-access collections searched by a place's name, with its own `media.<collection>` block: its pace,
   * its patience with a refusal, how many records it keeps per place, and its own switch.

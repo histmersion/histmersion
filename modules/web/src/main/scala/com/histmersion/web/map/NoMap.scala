@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object NoMap:
   type MessageText = MessageText.T

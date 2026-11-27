@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A corpus source as the audit sees it: the Calibre entry it names and what the corpus says. */
 final case class AuditRecord(

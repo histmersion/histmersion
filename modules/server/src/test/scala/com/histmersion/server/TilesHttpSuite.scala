@@ -19,7 +19,7 @@ import com.histmersion.util.database.Db
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `GET /api/tiles/{layer}/{z}/{x}/{y}` through the wire: a vector tile of the layer, its ETag and the browser's
   * revalidation (304), a write that makes the kept tile stale, a filter that changes the tile, and a bad layer or tile

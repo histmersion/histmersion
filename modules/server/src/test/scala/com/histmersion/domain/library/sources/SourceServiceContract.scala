@@ -34,7 +34,7 @@ import com.histmersion.api.library.Doi
 import com.histmersion.domain.Licence
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the library's sources answer, the same on the database and in memory: a source written whole and in part, its
   * findings kept by id, its edges routed and promoted, its body read by part, renamed with its old citekey kept and its

@@ -9,7 +9,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Which standalone page a document is — the web bundle's page entry point reads it from `<body data-page>` to wire
   * that page's behaviour (link previews, match navigation).

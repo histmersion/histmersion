@@ -10,7 +10,7 @@ import com.histmersion.domain.library.Source
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A source's row as a write path reads it back (Magnum maps a SELECT's columns positionally). */
 final private[sources] case class FullSourceRow(

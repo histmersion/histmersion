@@ -8,7 +8,7 @@ import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
 import com.histmersion.api.catalogue.Year
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The ONE pagination look of the sidebar's result tabs (sources, articles, events, by time, by region): a count line
   * on top — `showing 1–20 of 285 sources · 491 findings · 1475 BCE → 1465 BCE` — and under the rows one

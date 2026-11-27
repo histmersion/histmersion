@@ -6,7 +6,7 @@ import com.histmersion.util.database.{Transactor, WritePermit}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import scala.annotation.tailrec
 import com.histmersion.util.database.Unused
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The sites with no known date in a map tile: counted by the squares of its grid, or listed one by one. */
 trait UndatedSites:

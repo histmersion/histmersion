@@ -10,8 +10,8 @@ import scala.annotation.tailrec
 import com.histmersion.api.Api
 import com.histmersion.util.time.TimeEquality.instantEquality
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{FeaturePlace, movesTo}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{movesTo, FeaturePlace}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the activity list's filters mean, entry by entry, and how a page of it is cut: the rules the database's query
   * follows in SQL, and the in-memory list follows here. Pure.

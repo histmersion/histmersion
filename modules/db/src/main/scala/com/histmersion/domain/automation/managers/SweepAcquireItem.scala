@@ -7,7 +7,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** An open acquisition item a watcher's sweep created, found by structure: the sweep run that picked the DOI, the
   * watcher, the goal it linked the item to, and the pick as the ranking saw it (`isOa` = it marked the work open

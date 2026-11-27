@@ -13,7 +13,7 @@ import com.histmersion.api.exchange.EditionsPolicy
 import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, MergeResolutions}
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.ValidUUID
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The resolution file of `merge plan --resolutions` (docs/research-merge-import.md §6.3): read it, and write the
   * template `--write-template` starts one from. Pure.

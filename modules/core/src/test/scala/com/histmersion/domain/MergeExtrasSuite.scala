@@ -30,7 +30,7 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.exchange.IssueField
 import com.histmersion.api.research.Article
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What the merge carries and decides beyond M4–M5 (docs/research-merge-import.md §7.8): places and named periods of a
   * collection's own, events matched across two ids, a goal's plan, links and schedules (#881), old article slugs, and

@@ -71,7 +71,7 @@ import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.domain.Creator
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Answers from fixtures: DOI metadata, citing papers, searches; counts what was asked. */
 final class StubUpstream extends AgentUpstream:

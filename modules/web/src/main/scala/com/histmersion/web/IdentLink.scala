@@ -10,7 +10,7 @@ import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.UiLabels
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A bare corpus identifier met in free text (`cline2014_year`, `achilles_origins`): shown readable at once, then —
   * when it names a stored source or article — upgraded to that link ("Cline 2014", the article's title). Lookups are

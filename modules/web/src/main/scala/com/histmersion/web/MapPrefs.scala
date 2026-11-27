@@ -16,7 +16,7 @@ import org.scalajs.dom.window
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A viewer's options over the vector styles ([[BaseMaps]]): names on or off, their language, the contours (Physical),
   * the sea's depth in each style (`depthPhysical`, `depthReadable`). `None`: the default (names on, English — or

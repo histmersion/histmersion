@@ -19,7 +19,7 @@ import com.histmersion.api.catalogue.{
   SkippedPeriod,
   Year
 }
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The PeriodO reader (#719): pure, so every rule is pinned here — ISO years, outer bounds, English labels, regions,
   * unreadable spans, the parent rules and the parents-first order — plus the committed seed itself, which is what a

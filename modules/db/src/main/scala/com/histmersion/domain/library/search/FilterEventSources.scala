@@ -6,7 +6,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.events.EventSourceFilter
 import com.augustnagro.magnum.Frag
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The events related to what a filter selects, by the search's own reading of the filter's sources. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

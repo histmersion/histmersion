@@ -11,7 +11,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Wcag
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Markdown
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object Fmt:
   type PeriodText = PeriodText.T

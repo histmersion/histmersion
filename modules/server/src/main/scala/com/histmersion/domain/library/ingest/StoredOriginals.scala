@@ -4,7 +4,7 @@ package domain.library.ingest
 import com.histmersion.domain.library.sources.{SourceDeletePlan, SourceOriginals}
 import com.histmersion.util.storage.Store
 import com.histmersion.domain.library.Citekey
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The files the server keeps of a source's original (#969), which a delete removes after its commit:
   *

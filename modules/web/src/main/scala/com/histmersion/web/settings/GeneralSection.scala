@@ -9,7 +9,7 @@ import com.histmersion.web.map.MapMotion
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Settings › General: the theme and the map's motion (this browser's own), and where the map opens (the settings
   * file's `ui.map-start`, for every browser).

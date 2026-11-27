@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeoutException
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** #1650: a CLI step must never outlive its timeout, whatever the CLI does — not read its stdin, sleep, or leave a
   * grandchild holding its stdout — and a kill takes the whole process tree. Fake CLIs are shell scripts; nothing is

@@ -6,7 +6,7 @@ import com.histmersion.api.automation.{Activity, ListFilters}
 import java.time.Instant
 import com.histmersion.api.Api
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** `GET /api/activity`, the `activity` tool and `histmersion activity`: the filters checked, then a page. */
 @movesTo(FeaturePlace.AutomationActivity)

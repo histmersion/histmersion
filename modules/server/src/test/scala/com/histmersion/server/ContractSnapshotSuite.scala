@@ -30,7 +30,7 @@ import com.histmersion.domain.library.collections.CollectionsService
 import com.histmersion.domain.library.collections.RefusingCollectionLibrary
 import com.histmersion.server.agents.ClaudeCode
 import com.histmersion.domain.library.acquisition.CoreBudget
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The surfaces clients and agents depend on, written to `src/test/resources/contract/` and compared byte for byte: the
   * OpenAPI document of every REST endpoint, the MCP `tools/list`, every agent role's tools and answer schemas, the

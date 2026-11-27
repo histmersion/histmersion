@@ -6,7 +6,7 @@ import com.histmersion.web.{LibrarySection, Pages, Route}
 
 import scala.scalajs.js
 import scala.util.control.NonFatal
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a Library list shows and has chosen, in the address: `/library?item=<citekey>`,
   * `/library/articles?item=<slug>`, a shelf of My library (`/library?shelf=bookmarks`) — so the choice survives a

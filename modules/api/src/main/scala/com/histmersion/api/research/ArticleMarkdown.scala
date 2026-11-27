@@ -7,7 +7,8 @@ import com.histmersion.api.library.Label
 import com.histmersion.api.given
 import com.histmersion.api.library.Source
 import com.histmersion.api.automation.Creation
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
+@tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ArticleMarkdown:
 
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")

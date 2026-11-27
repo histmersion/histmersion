@@ -11,7 +11,7 @@ import java.time.Instant
 import com.histmersion.db.DbSuite
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The contract the runs' rows keep, on [[JobRuns.InMemory]] and on the database (a scratch database per test, gated on
   * HISTMERSION_TEST_DB_URL): a run is created queued, moves only from the state it is in, is annotated, is paused and

@@ -2,7 +2,7 @@ package com.histmersion
 package plugin
 
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a provider can do. A provider without `tools` is offered no tools (a step that needs them should not chain its
   * models); without `structuredOutput` the schema still travels in the request.

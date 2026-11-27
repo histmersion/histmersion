@@ -9,7 +9,7 @@ import com.histmersion.plugin.Secret
 import hearth.kindlings.sconfigderivation.ConfigReader
 import com.histmersion.plugin.Registry
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One of the collections that need a key of the user's own: OFF by default, its key a secret reference in its block
   * (`api-key`). Registered without a key, the collection is listed and its import says what is missing; it is never

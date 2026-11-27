@@ -3,7 +3,7 @@ package config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** Who the server lets in. A request from a network in `trustedNetworks` acts as `trustedAs` with no credential; one
   * from a network in `authenticatedNetworks` needs `Authorization: Bearer <apiKey>`, reads and writes alike; one from a

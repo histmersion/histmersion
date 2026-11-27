@@ -8,7 +8,7 @@ import com.augustnagro.magnum.*
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

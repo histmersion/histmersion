@@ -3,8 +3,8 @@ package util.database
 import com.augustnagro.magnum.*
 
 import java.sql.{PreparedStatement, ResultSet, Types}
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Magnum DbCodec instances for the domain vocabularies. Each reads/writes the lowercase wire string that Postgres
   * stores. Placed here (db module) because core has no Magnum dependency.

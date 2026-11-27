@@ -4,7 +4,7 @@ package web
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** THE icon registry of the map (#1449): monochrome inline SVG, drawn with `currentColor`, so a marker keeps the colour
   * its dot has (the period ramp, the confidence desaturation) and only its SHAPE says what it is — an event's kind

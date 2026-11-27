@@ -14,8 +14,8 @@ import com.augustnagro.magnum.*
 import javax.sql.DataSource
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.text.MinHash
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a merge plan is put together (docs/research-merge-import.md §5–§6, milestone M3): the bundle read, what this
   * collection knows gathered ([[MergeState]]), the OCR bodies the matcher and the folds need — this collection's from

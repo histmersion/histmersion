@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.personal.UnreadPage
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The pure write rules for articles (plan §5.2 stream 2.7): validation, full replace, and the selective merge that
   * makes `patch_article` safe to call without re-uploading the prose.

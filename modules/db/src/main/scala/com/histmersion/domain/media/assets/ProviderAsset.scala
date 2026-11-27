@@ -4,7 +4,7 @@ package domain.media.assets
 import com.histmersion.api.media.AssetKind
 import com.histmersion.domain.media.MediaRole
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A provider's picture to store. `bytes` are the capped rendition, `thumb` the card's thumbnail. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")

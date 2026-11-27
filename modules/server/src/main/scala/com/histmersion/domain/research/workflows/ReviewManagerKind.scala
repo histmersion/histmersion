@@ -43,7 +43,7 @@ import com.histmersion.api.research.Article
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The `review` manager kind (library-wide: article-review, infer-filter and article-extend items), research's: the
   * review's own evaluation over the article's review ledger, the selection that refills the queue (open MAJORs,

@@ -6,7 +6,7 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.api.RegisteredPlanMatches
 import sttp.tapir.Schema
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How each of the bundle's records of the kind that matches records across collections was matched, as a merge plan
   * lists it: kept as the kind's JSON ([[PlanMatchKind]]), which the kind writes and reads.

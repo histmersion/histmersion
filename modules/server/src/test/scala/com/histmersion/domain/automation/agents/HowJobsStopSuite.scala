@@ -13,7 +13,7 @@ import Halt.Stopped
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How a job stopped, as the problem its `jobs.error` keeps: a pause (its reason and what it stopped on), a restart's
   * cut, the drain's stop, or a failure. What the engine writes now is typed; what a master version wrote as a sentence

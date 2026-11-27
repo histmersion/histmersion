@@ -7,7 +7,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A stored candidate link of an event to a source, its passages as JSON. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

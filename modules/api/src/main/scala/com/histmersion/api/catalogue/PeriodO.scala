@@ -10,8 +10,8 @@ import com.histmersion.api.given
 import com.histmersion.util.json.{Cursor, RawJson}
 import com.histmersion.util.json.RawJson.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** PeriodO writes ISO 8601 years, which count a year 0 (`"-2999"` is 3000 BC, `"0000"` is 1 BC). The store's signed
   * years have no year 0, so a year `≤ 0` moves down by one.

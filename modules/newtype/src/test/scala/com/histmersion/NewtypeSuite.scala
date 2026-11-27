@@ -4,7 +4,7 @@ import scala.language.strictEquality
 
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 object NewtypeSuite:
   type Count = Count.T

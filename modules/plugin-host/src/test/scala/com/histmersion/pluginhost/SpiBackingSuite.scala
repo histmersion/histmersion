@@ -12,7 +12,7 @@ import org.ekrich.config.{Config, ConfigFactory}
 import com.histmersion.plugin.Plugin.Config.given
 import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** How the host backs the SPI members added within SPI 2: an answer with its status and headers sent once, the budget
   * of a metered upstream, the plugins a fetch is told of, the settings it supplies a first-party plugin from its own

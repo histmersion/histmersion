@@ -7,7 +7,7 @@ import com.histmersion.api.instance.BuildId
 import com.histmersion.domain.Title
 import com.histmersion.server.instance.WebBundle
 import com.histmersion.util.storage.{Blob, Resources}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Regression guards for how the web UI is shipped. The UI itself is Scala.js (`modules/web`, with its own suites);
   * these read the served assets off the classpath — exactly as `Static.read` serves them — and assert the properties

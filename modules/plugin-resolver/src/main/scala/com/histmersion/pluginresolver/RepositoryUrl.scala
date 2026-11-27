@@ -6,7 +6,7 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.all.*
 
 import java.nio.file.Path
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A Maven repository the dependencies are looked up in: an `https://` or `file:` URL. */
 type RepositoryUrl = RepositoryUrl.T

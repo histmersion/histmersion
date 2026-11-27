@@ -3,7 +3,7 @@ package api
 package problem
 
 import util.problem.Problem
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bare string is in the browser, where a problem is otherwise read from its typed entry by the one codec both
   * platforms share (`NewtypeCodecs.problemCodec`, [[Answer.asProblem]]), so a problem nested in another's fields keeps

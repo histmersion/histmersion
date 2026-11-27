@@ -29,7 +29,7 @@ import com.histmersion.util.storage.Blob
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The two key-gated collections end to end against FAKE providers and an in-memory store: what is matched, what is
   * refused and why, that the key travels only as a header to the API's own host — never in a URL, never to an image

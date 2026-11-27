@@ -26,7 +26,7 @@ import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 final private[exchange] case class MergeRow(
     id: UUID,

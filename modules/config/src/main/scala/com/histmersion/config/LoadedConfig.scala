@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 import org.ekrich.config.{Config, ConfigFactory}
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{FeaturePlace, movesTo}
+import com.histmersion.lint.{movesTo, FeaturePlace}
 
 /** @param user
   *   the user config file as parsed (empty when there is none): the plugin host cuts each plugin's block,

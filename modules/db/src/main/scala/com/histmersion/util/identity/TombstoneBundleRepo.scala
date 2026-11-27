@@ -9,7 +9,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Timestamps
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a bundle carries of the tombstones: the records deleted here, read as the bundle's lines by uid (the import
   * writes them first, `BundleImport.Writer.tombstones`, as only it knows which rows its plan deletes).

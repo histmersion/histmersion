@@ -30,7 +30,7 @@ import com.histmersion.config.ServerConfig
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The acceptance line of plan §4 wave 2.5: `backup` then `restore --force` reproduces `search` results. Runs
   * `pg_dump`/`pg_restore` for real, over the real HTTP endpoints, against a SCRATCH database created next to

@@ -1,7 +1,7 @@
 package com.histmersion
 package api.library
 import com.histmersion.api.checks.Lint.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The citations' lint rules: edges to no stored source, and short citekeys an edge never resolved. */
 object CitationLint:

@@ -11,7 +11,7 @@ import util.problem.Problem.*
 import Answer.{answer, decoded, entry, problem, retryAfter, status}
 import util.problem.Text.{label, sentence, sentences}
 import json.NewtypeCodecs.{list, problemCodec}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Every case of [[Problem]], through every renderer the api owns: its HTTP status, its English sentence and its JSON
   * entry (which decodes back to the case; a stored column keeps the same entry). The renderers' matches name every

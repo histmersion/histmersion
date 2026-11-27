@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 trait RetractionWatchClient:

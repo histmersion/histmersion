@@ -54,7 +54,7 @@ import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.api.Api
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A THIRD-PARTY AI provider end to end (docs/research-plugins.md §23): the hello-ai test plugin's own jar
   * (modules/plugin-fixtures/hello-ai — compiled against plugin-api alone, never on the server's class path) is

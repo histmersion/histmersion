@@ -6,7 +6,7 @@ import com.histmersion.plugin.Doi
 import com.histmersion.plugin.WorkKey
 import com.histmersion.upstreams.ArxivId
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 final case class FollowupRow(
     title: Option[FollowupRow.Title] = None,
     year: Option[Year] = None,

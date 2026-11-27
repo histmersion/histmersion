@@ -11,7 +11,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.library.sources.SourcesControllers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `get_source` as an agent calls it: no `fullText` (`section: "body"` says the same), and a body slice (`offset`,
   * `chars`, `heading`) without a section reads the body — the MCP tool would answer the summary and ignore the slice.

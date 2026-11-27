@@ -8,7 +8,7 @@ import com.histmersion.config.testsupport.ComparedByValue.given
 import org.ekrich.config.ConfigFactory
 
 import scala.jdk.CollectionConverters.*
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The bundled Postgres' settings (`runtime.postgres`): sizes ([[PgSize]], [[PgBytes]]), what `auto` comes to
   * ([[PgParameter]]), the defaults, the refusal of what is no size, and the pool against the connections

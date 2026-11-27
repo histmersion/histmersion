@@ -4,8 +4,8 @@ package domain.library.sources
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
 import com.histmersion.util.database.Vocab
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Concept, "pending G5 (one concept, one type within a layer)")
 @atBoundary(BoundaryKind.Sql, "reads and writes the source status column")

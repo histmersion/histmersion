@@ -3,7 +3,7 @@ package upstreams.http
 import sttp.model.Uri
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.upstreams.landing.RepositoryLanding
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** URL assembly that keeps query values escaped. `Uri`'s interpolator would try to parse the value as a URI; building
   * the query from pairs is what makes `q=sea peoples & co` safe.

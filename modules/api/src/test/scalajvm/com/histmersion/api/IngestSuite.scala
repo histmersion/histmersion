@@ -22,7 +22,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Queue
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class IngestSuite extends munit.FunSuite:
 

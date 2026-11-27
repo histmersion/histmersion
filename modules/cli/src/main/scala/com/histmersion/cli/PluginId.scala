@@ -4,7 +4,7 @@ package cli
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** A plugin id: the settings key (`histmersion.plugins.<id>`) and the source of the project's names. Stricter than the
   * host's `[a-z0-9][a-z0-9-]*`: it must also make a Scala class name.

@@ -8,7 +8,7 @@ import hearth.kindlings.jsoniterjson.Json
 import util.problem.Problem
 import util.problem.Problem.*
 import json.NewtypeCodecs.{list, problemCodec}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** In the browser a problem written bare is outside text, kept as it came ([[Problem.Relayed]]), even a text a master
   * version stored in one of the shapes the JVM reads as a case: the page reads no stored shape ([[StoredShapes]] is the

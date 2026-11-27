@@ -10,7 +10,7 @@ import scala.scalajs.js
 import scala.scalajs.js.JSConverters.*
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.TileProps
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** One [[PointTiles]] layer as a vector source of the server's tiles. MapLibre fetches, caches and decodes the tiles
   * (in its workers) only for a source a style layer reads: an invisible circle layer does. The features are read from

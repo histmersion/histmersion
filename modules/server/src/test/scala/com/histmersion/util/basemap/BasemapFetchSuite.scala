@@ -21,7 +21,7 @@ import com.histmersion.util.storage.Store
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.util.problem.Text.sentences
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The base-map extract (plan → download → assemble) against a local archive behind a fake range server — no network —
   * and its pure parts.

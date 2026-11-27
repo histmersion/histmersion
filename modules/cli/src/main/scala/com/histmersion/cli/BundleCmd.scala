@@ -11,8 +11,8 @@ import com.histmersion.api.exchange.{Bundle, BundleMarkdown, MergeImportRequest}
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.InstanceLabel
 import com.histmersion.util.problem.Problems
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion bundle export|verify|import|instance` — the portable bundle (docs/research-merge-import.md, milestones
   * M0–M2). The server builds and reads bundles; the CLI moves the file: an export is streamed to disk, a verify/import

@@ -6,8 +6,8 @@ import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** Repository LANDING PAGES (#1580): an open-access location whose URL is an HTML record page rather than the PDF — a
   * Zenodo record, a DSpace/EPrints/Pure item, a DataCite DOI that resolves to one. The fetch resolves such a page ONE

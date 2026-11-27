@@ -19,7 +19,7 @@ import com.histmersion.pluginhost.DiskLocalFiles
 import com.histmersion.pluginhost.SystemProcesses
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.plugin.UpstreamQuota
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The plugin generations: discover the providers on the server's class path — the first-party fetchers, event
   * catalogues, media collections, gazetteers, HTTP AI providers and vaults among them, as any plugin — add the plugins

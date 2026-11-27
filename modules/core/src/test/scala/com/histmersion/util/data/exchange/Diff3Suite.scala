@@ -6,7 +6,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The three-way merge of article bodies (docs/research-merge-import.md §5.4): clean when the two sides changed
   * different places, a conflict when they changed one place differently.

@@ -7,7 +7,7 @@ import com.histmersion.api.catalogue.Year
 import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The SQL every carried kind's lines are read with: a range as three columns, the rows a scope selects, and the uid of
   * whatever a label names (a clock as the wire carries it is [[Timestamps.iso]]).

@@ -15,7 +15,7 @@ import com.histmersion.config.AppConfig
 
 import javax.sql.DataSource
 import com.histmersion.api.Api
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The background jobs as `job_status` and `GET /api/jobs` list them: one job, or a page newest first under a query,
   * with the per-state and per-kind counts under the same query.

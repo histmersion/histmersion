@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.library.Doi
 import com.histmersion.api.automation.Managers
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `histmersion agent manager new review|enrich|seed …`, `agent enqueue <kind> <target>` and the --json flags parse
   * (phase 2 of docs/research-process-managers.md); a bad setting is refused before any request is sent.

@@ -26,7 +26,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Confidence
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** `agent compare` (#992), the pure half: what can be compared, the step union, the verifier's quote check read back
   * from accepted AND rejected answers, the claims only one run made, and the major findings two review runs share.

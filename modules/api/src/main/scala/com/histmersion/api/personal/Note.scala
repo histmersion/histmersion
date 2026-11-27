@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Title
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Note(

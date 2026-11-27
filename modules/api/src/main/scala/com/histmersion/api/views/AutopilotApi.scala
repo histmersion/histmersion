@@ -5,14 +5,17 @@ import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.automation.{AgentMode, Autopilot, ManagersApi}
 import com.histmersion.api.given
 import com.histmersion.api.Api
-import com.histmersion.lint.{BoundaryKind, atBoundary}
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{atBoundary, BoundaryKind}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** The endpoints that answer the autopilot's page ([[AutopilotStatus]]): read it, switch the autopilot, set the
   * three-way mode, drain. Their errors are the managers'.
   */
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
-@atBoundary(BoundaryKind.Http, "declares the Tapir endpoints of the autopilot routes with their request and response bodies")
+@atBoundary(
+  BoundaryKind.Http,
+  "declares the Tapir endpoints of the autopilot routes with their request and response bodies"
+)
 object AutopilotApi:
 
   lazy val autopilot: PublicEndpoint[Unit, Api.Error, AutopilotStatus, Any] =

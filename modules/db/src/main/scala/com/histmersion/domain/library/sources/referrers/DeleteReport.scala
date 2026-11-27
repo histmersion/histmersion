@@ -3,7 +3,7 @@ package domain.library.sources.referrers
 
 import com.histmersion.api.library.{DeleteBlocker, DeleteCount}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.lint.{LintRule, tolerated}
+import com.histmersion.lint.{tolerated, LintRule}
 
 /** What a delete would touch of a referrer's records: what refuses it, how many go, the records whose reasons name it
   * (`coverage`) and the items that mention it and stay (`mentions`).
