@@ -18,6 +18,7 @@ object BridgeTypes {
       semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}", "target/out/sjs1/scala-{scalaVersion}"),
       paths: List[String] = Nil,
       aliases: List[Alias] = Nil,
+      aliasesFrom: String = "",
       report: String = ""
   )
   object Config {
@@ -28,7 +29,11 @@ object BridgeTypes {
   val ironValue = "io/github/iltotore/iron/"
   val constructions = Set("apply", "applyUnsafe", "assume")
   def norm(sym: String): String = sym.replaceAll("[^/.#]*\\$package\\.", "")
-  def qualified(sym: String): String = norm(sym).stripSuffix(".").replace('/', '.')
+  def split(sym: String): (String, List[String]) = {
+    val n = norm(sym).stripSuffix(".")
+    val i = n.lastIndexOf('/')
+    (n.take(i), n.drop(i + 1).split('.').toList)
+  }
 
   def buildIndex(roots: List[String]): ConcurrentHashMap[String, s.SymbolInformation] = {
     val index = new ConcurrentHashMap[String, s.SymbolInformation]()
@@ -41,6 +46,7 @@ object BridgeTypes {
       s.TextDocuments.parseFrom(Files.readAllBytes(f)).documents.foreach { d =>
         d.symbols.foreach { i =>
           index.putIfAbsent(if (i.symbol.startsWith("local")) d.uri + "::" + i.symbol else i.symbol, i)
+          if (!i.symbol.startsWith("local")) index.putIfAbsent("uri::" + i.symbol, s.SymbolInformation(symbol = i.symbol, displayName = d.uri))
         }
       }
     }
@@ -65,7 +71,12 @@ class BridgeTypes(config: BridgeTypes.Config, index: ConcurrentHashMap[String, s
       new BridgeTypes(cfg, buildIndex(cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion))))
     }
 
-  private val aliasOf: Map[String, String] = config.aliases.map(a => norm(a.from) -> a.to).toMap
+  private val listed: List[Alias] =
+    if (config.aliasesFrom.isEmpty || !Files.isRegularFile(Paths.get(config.aliasesFrom))) Nil
+    else Files.readAllLines(Paths.get(config.aliasesFrom), UTF_8).asScala.toList.map(_.split("\t")).collect {
+      case Array(from, to) => Alias(from, to)
+    }
+  private val aliasOf: Map[String, String] = (config.aliases ++ listed).map(a => norm(a.from) -> a.to).toMap
   private val log = new ConcurrentLinkedQueue[String]()
 
   override def afterComplete(): Unit =
@@ -136,6 +147,31 @@ class BridgeTypes(config: BridgeTypes.Config, index: ConcurrentHashMap[String, s
       case _ => None
     }
     def isIronValue(n: Name): Boolean = n.value == "value" && n.symbol.value.startsWith(ironValue)
+    def termsIn(stats: List[Tree]): List[(String, String)] = stats.flatMap {
+      case d: Defn.Object => List(d.name.value -> d.symbol.value)
+      case d: Defn.Def => List(d.name.value -> d.symbol.value)
+      case d: Defn.Enum => List(d.name.value -> d.symbol.value)
+      case d: Defn.Class if d.mods.exists(_.is[Mod.Case]) => List(d.name.value -> d.symbol.value)
+      case d: Defn.Val => d.pats.collect { case Pat.Var(n) => n.value -> n.symbol.value }
+      case i: Import => i.importers.flatMap(_.importees).collect {
+          case Importee.Name(n) => n.value -> n.symbol.value
+          case Importee.Rename(n, r) => r.value -> n.symbol.value
+        }
+      case e: Export => e.importers.flatMap(_.importees).collect {
+          case Importee.Name(n) => n.value -> n.symbol.value
+          case Importee.Rename(n, r) => r.value -> n.symbol.value
+        }
+      case _ => Nil
+    }
+    def shadowed(t: Tree, head: String, top: String): Boolean =
+      Iterator.iterate(t.parent)(_.flatMap(_.parent)).takeWhile(_.nonEmpty).flatten.exists {
+        case tp: Template => termsIn(tp.stats).exists { case (n, s) => n == head && norm(s) != norm(top) }
+        case pk: Pkg => termsIn(pk.stats).exists { case (n, s) => n == head && norm(s) != norm(top) }
+        case src: Source => termsIn(src.stats).exists { case (n, s) => n == head && norm(s) != norm(top) }
+        case o: Defn.Object => o.name.value == head && norm(o.symbol.value) != norm(top)
+        case _ => false
+      }
+    def moduleOf(sym: String): String = infoS("uri::" + sym).map(_.displayName.split("/src/").head).getOrElse("?")
     def lineRemoval(t: Tree): Patch = {
       val tokens = doc.tree.tokens
       val first = tokens.indexWhere(_.start == t.pos.start)
@@ -153,26 +189,43 @@ class BridgeTypes(config: BridgeTypes.Config, index: ConcurrentHashMap[String, s
             termType(q).flatMap(newtypeOf).filter(from => norm(from) != norm(to)).foreach { from =>
               val (fb, fc, fd) = shape(from).getOrElse(("?", "?", -1))
               val (tb, tc, _) = shape(to).getOrElse(("?", "?", -1))
-              log.add(s"bridge\t${norm(from)}\t${norm(to)}\t$fb\t$tb\t$fc\t$tc\t$fd\t$path:${a.pos.startLine + 1}")
+              log.add(s"bridge\t${norm(from)}\t${norm(to)}\t$fb\t$tb\t$fc\t$tc\t$fd\t$path:${a.pos.startLine + 1}\t" +
+                s"${moduleOf(from)}\t${moduleOf(to)}")
             }
           case _ =>
         }
         Patch.empty
       case o: Defn.Object if aliasOf.contains(norm(o.symbol.value)) =>
-        val target = qualified(aliasOf(norm(o.symbol.value)))
+        val from = norm(o.symbol.value)
+        val (targetPackage, targetPath) = split(aliasOf(from))
         if (o.templ.stats.nonEmpty) {
-          log.add(s"skipped-body\t${norm(o.symbol.value)}\t$path:${o.pos.startLine + 1}")
+          log.add(s"skipped-body\t$from\t$path:${o.pos.startLine + 1}")
+          Patch.empty
+        } else if (targetPath.size < 2) {
+          log.add(s"skipped-top-level-target\t$from\t$path:${o.pos.startLine + 1}")
+          Patch.empty
+        } else if (shadowed(o, targetPath.head, s"$targetPackage/${targetPath.head}.")) {
+          log.add(s"skipped-shadowed\t$from\t$path:${o.pos.startLine + 1}")
           Patch.empty
         } else {
-          log.add(s"alias\t${norm(o.symbol.value)}\t$target\t$path:${o.pos.startLine + 1}")
-          Patch.replaceTree(o, s"val ${o.name.value}: $target.type = $target")
+          val name = o.name.value
+          val exported = s"export ${targetPath.mkString(".")}" + (if (targetPath.last != name) s" as $name" else "")
+          val imported =
+            if (split(from)._1 == targetPackage) Patch.empty
+            else Patch.addGlobalImport(Symbol(s"$targetPackage/${targetPath.head}."))
+          log.add(s"alias\t$from\t${aliasOf(from)}\t$path:${o.pos.startLine + 1}")
+          Patch.replaceTree(o, exported) + imported
         }
       case t: Defn.Type if t.body.syntax == s"${t.name.value}.T" && aliasOf.contains(norm(t.symbol.value.stripSuffix("#") + ".")) &&
+            split(aliasOf(norm(t.symbol.value.stripSuffix("#") + ".")))._2.size >= 2 &&
             t.parent.exists(_.children.exists {
-              case o: Defn.Object => o.name.value == t.name.value && o.templ.stats.isEmpty
+              case o: Defn.Object =>
+                val (targetPackage, targetPath) = split(aliasOf(norm(t.symbol.value.stripSuffix("#") + ".")))
+                o.name.value == t.name.value && o.templ.stats.isEmpty &&
+                  !shadowed(o, targetPath.head, s"$targetPackage/${targetPath.head}.")
               case _ => false
             }) =>
-        Patch.replaceTree(t, s"type ${t.name.value} = ${qualified(aliasOf(norm(t.symbol.value.stripSuffix("#") + ".")))}")
+        lineRemoval(t)
     }.asPatch
   }
 }
