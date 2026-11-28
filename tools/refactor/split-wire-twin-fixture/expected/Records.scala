@@ -37,6 +37,12 @@ object Classification:
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
 
+final case class Notes(text: Notes.Text)
+
+object Notes:
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]
+
 enum Status:
   case Open, Closed
 

@@ -48,6 +48,14 @@ object Classification:
     .modify(_.summary)(_.description("3-6 sentences"))
     .modify(_.period)(_.description("null if none"))
 
+final case class Notes(text: Notes.Text) derives JsonCodec
+
+object Notes:
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]
+
+  given Schema[Notes] = KindlingsSchema.derived[Notes].schema.modify(_.text)(_.description("Markdown"))
+
 enum Status derives JsonCodec:
   case Open, Closed
 
