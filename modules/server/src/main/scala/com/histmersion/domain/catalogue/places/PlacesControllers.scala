@@ -42,7 +42,7 @@ final class PlacesControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def modernFrom: DeepTime.SignedYear = DeepTime.SignedYear(cfg().places.modernFrom.value)
+  private def modernFrom: DeepTime.SignedYear = api.catalogue.Year(cfg().places.modernFrom.value)
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"

@@ -27,7 +27,7 @@ final private[events] case class EventDatingRow(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def toDto: EventDating =
-    def year(y: Option[DeepTime.SignedYear]) = y.map(v => Year(v.value))
+    def year(y: Option[DeepTime.SignedYear]) = y.map(v => v)
     EventDating(
       com.histmersion.api.catalogue.Event.Id(eventId.value),
       com.histmersion.api.library.Citekey(citekey.value),

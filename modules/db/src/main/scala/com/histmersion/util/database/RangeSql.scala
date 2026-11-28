@@ -84,9 +84,8 @@ object RangeSql:
     )
 
   /** A closed [[Period]] from two inclusive bounds read back with [[cols]]: `None` unless both are known. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def period(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): Option[Period] =
-    for a <- start; b <- end yield Period(Year(a.value), Year(b.value))
+    for a <- start; b <- end yield Period(a, b)
 
   /** A patch's bounds merged with the stored ones: a bound the patch names replaces the stored one, the other stays as
     * it is (#1798: a goal patch that named one bound was silently ignored). `None` when the patch names neither

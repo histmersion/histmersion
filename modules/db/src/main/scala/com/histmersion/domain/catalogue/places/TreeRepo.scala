@@ -28,11 +28,10 @@ private[places] object TreeRepo:
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both are present — an
     * int8range with an open end is "always", which is what `None` means here.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodOf(start: Option[DeepTime.SignedYear], end: Option[DeepTime.SignedYear]): Option[Period] =
     (start, end) match
       case (Some(a), Some(b)) =>
-        val (lo, hi) = (Year(a.value), Year(b.value))
+        val (lo, hi) = (a, b)
         Some(if a <= b then Period(lo, hi) else Period(hi, lo))
       case _ => None
 
