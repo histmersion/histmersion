@@ -5,6 +5,7 @@ import com.histmersion.server.agents.Codex
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What the generated trees depend on besides the definitions: where the runtimes reach this server, and which optional
   * parts to write.
@@ -32,7 +33,7 @@ final case class GenSettings(
     /** The Codex home carries Histmersion's own base prompt ([[AgentGenerator.CodexBaseFile]]) instead of Codex's
       * built-in one (`agents.providers.codex.base-instructions = lean`).
       */
-    codexLeanBase: GenSettings.CodexLeanBase = GenSettings.CodexLeanBase(false)
+    codexLeanBase: GenSettings.LeanBase = GenSettings.LeanBase.Full
 )
 
 object GenSettings:
@@ -42,15 +43,20 @@ object GenSettings:
   object McpUrl extends Newtype[String, Pure]
   type QuotaUrl = QuotaUrl.T
   object QuotaUrl extends Newtype[String, Pure]
-  type ClaudeMod = ClaudeMod.T
-  object ClaudeMod extends Newtype[Boolean, Pure]
-  type InteractiveMod = InteractiveMod.T
-  object InteractiveMod extends Newtype[Boolean, Pure]
+  enum ClaudeMod derives CanEqual:
+    case On, Off
+  object ClaudeMod extends TwoCases[ClaudeMod]:
+    extension (claudeMod: ClaudeMod) def claudeMod: Boolean = claudeMod == On
+  enum InteractiveMod derives CanEqual:
+    case On, Off
+  object InteractiveMod extends TwoCases[InteractiveMod]:
+    extension (interactiveMod: InteractiveMod) def interactiveMod: Boolean = interactiveMod == On
   type Version = Version.T
   object Version extends Newtype[String, Pure]
   type CodexToolOutputTokens = CodexToolOutputTokens.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object CodexToolOutputTokens extends Newtype[Int, Pure]
-  type CodexLeanBase = CodexLeanBase.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object CodexLeanBase extends Newtype[Boolean, Pure]
+  enum LeanBase derives CanEqual:
+    case Lean, Full
+  object LeanBase extends TwoCases[LeanBase]:
+    extension (codexLeanBase: LeanBase) def codexLeanBase: Boolean = codexLeanBase == Lean

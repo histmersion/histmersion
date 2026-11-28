@@ -27,6 +27,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The collections as one MCP tool, `collection`: the same controllers the REST routes call, every answer Markdown. */
 object CollectionsTools:
@@ -41,10 +42,10 @@ object CollectionsTools:
       citekey: Option[Citekey] = None,
       format: Option[CollectionInput.Format] = None,
       limit: Option[CollectionInput.Limit] = None,
-      unlinked: CollectionInput.Unlinked = CollectionInput.Unlinked(false),
-      convert: CollectionInput.Convert = CollectionInput.Convert(true),
-      replace: CollectionInput.Replace = CollectionInput.Replace(false),
-      apply: CollectionInput.Apply = CollectionInput.Apply(false),
+      unlinked: CollectionInput.Unlinked = CollectionInput.Unlinked.All,
+      convert: CollectionInput.Convert = CollectionInput.Convert.Convert,
+      replace: CollectionInput.Replace = CollectionInput.Replace.Keep,
+      apply: CollectionInput.Apply = CollectionInput.Apply.DryRun,
       fields: List[CollectionInput.Fields] = Nil,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
@@ -61,14 +62,22 @@ object CollectionsTools:
     object Format extends Newtype[String, Pure]
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
-    type Unlinked = Unlinked.T
-    object Unlinked extends Newtype[Boolean, Pure]
-    type Convert = Convert.T
-    object Convert extends Newtype[Boolean, Pure]
-    type Replace = Replace.T
-    object Replace extends Newtype[Boolean, Pure]
-    type Apply = Apply.T
-    object Apply extends Newtype[Boolean, Pure]
+    enum Unlinked derives CanEqual:
+      case Unlinked, All
+    object Unlinked extends TwoCases[Unlinked]:
+      extension (unlinked: Unlinked) def unlinked: Boolean = unlinked == Unlinked
+    enum Convert derives CanEqual:
+      case Convert, AsIs
+    object Convert extends TwoCases[Convert]:
+      extension (convert: Convert) def convert: Boolean = convert == Convert
+    enum Replace derives CanEqual:
+      case Replace, Keep
+    object Replace extends TwoCases[Replace]:
+      extension (replace: Replace) def replace: Boolean = replace == Replace
+    enum Apply derives CanEqual:
+      case Apply, DryRun
+    object Apply extends TwoCases[Apply]:
+      extension (apply: Apply) def applies: Boolean = apply == Apply
     type Fields = Fields.T
     object Fields extends Newtype[String, Pure]
 
@@ -106,8 +115,17 @@ object CollectionsTools:
               case "list"   => answer(c.collections(me).left.map(Api.Error(_)))(CollectionsMarkdown.collections)
               case "info"   => answer(c.collection(me, name))(CollectionsMarkdown.collection)
               case "search" =>
-                answer(c.search(me, name, in.query, limit, CollectionsService.SearchUnlinked(in.unlinked.value)))(s =>
-                  if in.unlinked.value then
+                answer(
+                  c.search(
+                    me,
+                    name,
+                    in.query,
+                    limit,
+                    (if in.unlinked.unlinked then CollectionsService.SearchUnlinked.Unlinked
+                     else CollectionsService.SearchUnlinked.All)
+                  )
+                )(s =>
+                  if in.unlinked.unlinked then
                     CollectionsMarkdown.unlinked(s.entries, CollectionsMarkdown.Total(s.total.value))
                   else CollectionsMarkdown.search(s.entries)
                 )
@@ -121,7 +139,7 @@ object CollectionsTools:
                         CollectionImportRequest.Id(id.value),
                         in.citekey,
                         in.format.map(f => CollectionImportRequest.Format(f.value)),
-                        (if in.convert.value then CollectionImportRequest.Convert.Convert
+                        (if in.convert.convert then CollectionImportRequest.Convert.Convert
                          else CollectionImportRequest.Convert.AsIs)
                       )
                     )
@@ -145,7 +163,7 @@ object CollectionsTools:
                       name,
                       CollectionPushRequest(
                         ck,
-                        (if in.replace.value then CollectionPushRequest.Replace.Replace
+                        (if in.replace.replace then CollectionPushRequest.Replace.Replace
                          else CollectionPushRequest.Replace.Keep)
                       )
                     )
@@ -162,7 +180,7 @@ object CollectionsTools:
                       c.updateAll(
                         me,
                         name,
-                        CollectionUpdateAll.Request((if in.apply.value then CollectionUpdateAll.Request.Apply.Apply
+                        CollectionUpdateAll.Request((if in.apply.applies then CollectionUpdateAll.Request.Apply.Apply
                                                      else CollectionUpdateAll.Request.Apply.DryRun))
                       )
                     )(u => CollectionsMarkdown.updateAll(u.rows, u.applied.applied))
@@ -186,7 +204,7 @@ object CollectionsTools:
                     me,
                     name,
                     CollectionSync.Request(
-                      (if in.apply.value then CollectionSync.Request.Apply.Apply
+                      (if in.apply.applies then CollectionSync.Request.Apply.Apply
                        else CollectionSync.Request.Apply.DryRun),
                       in.limit.map(l => CollectionSync.Request.Limit(l.value))
                     )

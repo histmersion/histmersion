@@ -127,8 +127,8 @@ object PromptBudget:
       GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
       None,
       GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
-      claudeMod = GenSettings.ClaudeMod(false),
-      interactiveMod = GenSettings.InteractiveMod(false),
+      claudeMod = GenSettings.ClaudeMod.Off,
+      interactiveMod = GenSettings.InteractiveMod.Off,
       GenSettings.Version(AgentGenerator.PluginVersion)
     )
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
@@ -148,11 +148,11 @@ object PromptBudget:
           GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
           None,
           GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
-          claudeMod = GenSettings.ClaudeMod(false),
-          interactiveMod = GenSettings.InteractiveMod(false),
+          claudeMod = GenSettings.ClaudeMod.Off,
+          interactiveMod = GenSettings.InteractiveMod.Off,
           GenSettings.Version(AgentGenerator.PluginVersion),
           codexToolOutputTokens = GenSettings.CodexToolOutputTokens(6000),
-          codexLeanBase = GenSettings.CodexLeanBase(true)
+          codexLeanBase = GenSettings.LeanBase.Lean
         )
         AgentGenerator.codex(d, s).foreach { (rel, text) =>
           val p = root.resolve(rel)

@@ -7,6 +7,7 @@ import com.histmersion.util.process.{Processes, ProcessLaunch, ProcessOutput}
 import com.histmersion.util.storage.{ByteSource, Store}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Makes the bundled PostgreSQL work from wherever the bundle was put.
   *
@@ -27,8 +28,10 @@ object PgRelocation:
   object BytePattern extends Newtype[Array[Byte], Pure]
   type FileBytes = FileBytes.T
   object FileBytes extends Newtype[Array[Byte], Pure]
-  type MacOsMode = MacOsMode.T
-  object MacOsMode extends Newtype[Boolean, Pure]
+  enum MacOsMode derives CanEqual:
+    case MacOs, Portable
+  object MacOsMode extends TwoCases[MacOsMode]:
+    extension (macOsMode: MacOsMode) def macOsMode: Boolean = macOsMode == MacOs
   type PatchCount = PatchCount.T
   object PatchCount extends Newtype[Int, Pure]
   type Replacement = Replacement.T
@@ -106,7 +109,7 @@ object PgRelocation:
               .foreach(e => throw java.io.IOException(e.message.sentence)) // in place: keeps the permissions
             files += 1
             tooLong += skipped.value
-            if macOS.value && isMachO(out.value) then
+            if macOS.macOsMode && isMachO(out.value) then
               val file = pg.onDisk(k).fold(e => throw java.io.IOException(e.message.sentence), _.toString)
               val rc = processes
                 .start(

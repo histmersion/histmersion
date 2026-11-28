@@ -292,7 +292,7 @@ object PlaceService:
             if i < 0 then rows(tail, held :+ HeldPlace(shown, dataset))
             else
               val before = held(i)
-              val manual = before.names.filter(_.manual.value)
+              val manual = before.names.filter(_.manual.manual)
               rows(tail, held.updated(i, HeldPlace(shown, dataset, manual, Vector.empty, before.links)))
         val written = rows(kept, s0.places)
         val withNames = written.map { p =>
@@ -558,7 +558,7 @@ object PlaceService:
         WritePermit
     ): Either[Api.Error, Place.NameChanged] =
       find(apiId(id)).toRight(notFound(id.value)).map { p =>
-        val before = p.names.find(n => n.name == name && n.lang == lang).map(_.manual.value)
+        val before = p.names.find(n => n.name == name && n.lang == lang).map(_.manual.manual)
         if !before.contains(true) then
           val _ = state.updateAndGet(_.modify(_.places).using(_.map { q =>
             if q.id != p.id then q
@@ -566,11 +566,11 @@ object PlaceService:
               q.modify(_.names)
                 .using(
                   _.map(n =>
-                    if n.name == name && n.lang == lang then n.modify(_.manual).setTo(HeldPlace.Name.Manual(true))
+                    if n.name == name && n.lang == lang then n.modify(_.manual).setTo(HeldPlace.Name.Manual.Manual)
                     else n
                   )
                 )
-            else q.modify(_.names).using(_ :+ HeldPlace.Name(name, lang, None, manual = HeldPlace.Name.Manual(true)))
+            else q.modify(_.names).using(_ :+ HeldPlace.Name(name, lang, None, manual = HeldPlace.Name.Manual.Manual))
           }))
         Place.NameChanged(
           p.id,
@@ -598,12 +598,12 @@ object PlaceService:
                 Problem.Raw.of(p.place.label),
                 Problem.Raw.of(name),
                 Problem.Raw.of(lang),
-                p.names.filter(n => n.name == name && n.manual.value).map(n => Problem.Raw.of(n.lang))
+                p.names.filter(n => n.name == name && n.manual.manual).map(n => Problem.Raw.of(n.lang))
               ),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )
-        else if !same.exists(_.manual.value) then
+        else if !same.exists(_.manual.manual) then
           Left(
             invalid(
               Problem.Invalid.Broken.here(
@@ -614,7 +614,7 @@ object PlaceService:
         else
           val _ = state.updateAndGet(_.modify(_.places).using(_.map { q =>
             if q.id != p.id then q
-            else q.modify(_.names).using(_.filterNot(n => n.name == name && n.lang == lang && n.manual.value))
+            else q.modify(_.names).using(_.filterNot(n => n.name == name && n.lang == lang && n.manual.manual))
           }))
           Right(
             Place.NameChanged(
@@ -634,7 +634,7 @@ object PlaceService:
         .filter(p => id.forall(_.value == p.id.value))
         .flatMap(p =>
           p.names
-            .filter(_.manual.value)
+            .filter(_.manual.manual)
             .map(n =>
               ManualPlaceName(
                 p.id,
@@ -859,7 +859,7 @@ object PlaceService:
           Problem.Conflict.Referrer.Attestations -> s.attestations
             .count(a => a.targetType.value == "place" && a.targetId.value == id.value),
           Problem.Conflict.Referrer.ChildPlaces -> places.count(_.parents.exists(r => parentIs(r, p.id))),
-          Problem.Conflict.Referrer.ManualNames -> p.names.count(_.manual.value)
+          Problem.Conflict.Referrer.ManualNames -> p.names.count(_.manual.manual)
         ).filter(_._2 > 0)
         NonEmptyVector.from(refs.map((by, c) => Problem.Conflict.Reference(Problem.Count(c.toLong), by))) match
           case Some(referred) =>

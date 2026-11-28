@@ -37,6 +37,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The library's MCP tools, in their place among `/mcp`'s: the search and its vocabulary, one source read whole or by
   * part and its passages, the map feed, the histogram, the citation graph, and the writes of one source. `exportNote`
@@ -106,7 +107,7 @@ object LibraryTools:
             case None =>
               val f = in.toFilter
               val r = search.sources(f)
-              ToolResult.text(if in.verbose.value then SearchMarkdown.searchResults(r)
+              ToolResult.text(if in.verbose.verbose then SearchMarkdown.searchResults(r)
               else SearchMarkdown.briefResults(r))
             case Some(by) =>
               // A5/A26: MCP defaults depth:1, samples:0 unless asked, so a bare groupBy never overwhelms
@@ -160,7 +161,8 @@ object LibraryTools:
           sources
             .markdown(
               in.citekey,
-              SourcesControllers.MarkdownFullText(in.fullText.value),
+              (if in.fullText.fullText then SourcesControllers.MarkdownFullText.FullText
+               else SourcesControllers.MarkdownFullText.SummaryOnly),
               in.section,
               in.heading,
               in.offset,
@@ -283,7 +285,11 @@ object LibraryTools:
         .input[PutSourceInput]
         .handle { in =>
           CreatorControllers.mcp(in) {
-            sources.put(in.citekey, in.source, SourcesControllers.PutStrict(in.strict.value)) match
+            sources.put(
+              in.citekey,
+              in.source,
+              (if in.strict.strict then SourcesControllers.PutStrict.Strict else SourcesControllers.PutStrict.Lenient)
+            ) match
               case Right(sw) =>
                 ToolResult.text(
                   Aliases
@@ -318,7 +324,12 @@ object LibraryTools:
         .input[PatchSourceInput]
         .handle { in =>
           CreatorControllers.mcp(in) {
-            sources.patch(in.citekey, in.patch, SourcesControllers.PatchStrict(in.strict.value)) match
+            sources.patch(
+              in.citekey,
+              in.patch,
+              (if in.strict.strict then SourcesControllers.PatchStrict.Strict
+               else SourcesControllers.PatchStrict.Lenient)
+            ) match
               case Right(sw) =>
                 ToolResult.text(
                   Aliases
@@ -414,7 +425,7 @@ object LibraryTools:
       depth: Option[Api.AggregateQuery.Depth] = None,
       asOf: Option[Api.AggregateQuery.TreeAsOf] = None,
       samples: Option[Api.AggregateQuery.TreeSamples] = None,
-      verbose: SearchInput.Verbose = SearchInput.Verbose(true)
+      verbose: SearchInput.Verbose = SearchInput.Verbose.Verbose
   ) derives JsonCodec:
     def toFilter: Filter = Filter.of(
       query,
@@ -438,8 +449,10 @@ object LibraryTools:
     )
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
-    type Verbose = Verbose.T
-    object Verbose extends Newtype[Boolean, Pure]
+    enum Verbose derives CanEqual:
+      case Verbose, Brief
+    object Verbose extends TwoCases[Verbose]:
+      extension (verbose: Verbose) def verbose: Boolean = verbose == Verbose
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
@@ -506,15 +519,17 @@ object LibraryTools:
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class GetSourceInput(
       citekey: Citekey,
-      fullText: GetSourceInput.FullText = GetSourceInput.FullText(false),
+      fullText: GetSourceInput.FullText = GetSourceInput.FullText.SummaryOnly,
       section: Option[com.histmersion.api.library.Source.Section.Wire] = None,
       heading: Option[SourceService.Heading] = None,
       offset: Option[GetSourceInput.Offset] = None,
       chars: Option[SourcesControllers.Chars] = None
   ) derives JsonCodec
   object GetSourceInput:
-    type FullText = FullText.T
-    object FullText extends Newtype[Boolean, Pure]
+    enum FullText derives CanEqual:
+      case FullText, SummaryOnly
+    object FullText extends TwoCases[FullText]:
+      extension (fullText: FullText) def fullText: Boolean = fullText == FullText
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     type Offset = com.histmersion.Offset
@@ -696,12 +711,14 @@ object LibraryTools:
   final case class PutSourceInput(
       citekey: Citekey,
       source: com.histmersion.api.library.Source.Put,
-      strict: PutSourceInput.Strict = PutSourceInput.Strict(false),
+      strict: PutSourceInput.Strict = PutSourceInput.Strict.Lenient,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives StrictJson
   object PutSourceInput:
-    type Strict = Strict.T
-    object Strict extends Newtype[Boolean, Pure]
+    enum Strict derives CanEqual:
+      case Strict, Lenient
+    object Strict extends TwoCases[Strict]:
+      extension (strict: Strict) def strict: Boolean = strict == Strict
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
@@ -714,12 +731,14 @@ object LibraryTools:
   final case class PatchSourceInput(
       citekey: Citekey,
       patch: com.histmersion.api.library.Source.Patch,
-      strict: PatchSourceInput.Strict = PatchSourceInput.Strict(false),
+      strict: PatchSourceInput.Strict = PatchSourceInput.Strict.Lenient,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives StrictJson
   object PatchSourceInput:
-    type Strict = Strict.T
-    object Strict extends Newtype[Boolean, Pure]
+    enum Strict derives CanEqual:
+      case Strict, Lenient
+    object Strict extends TwoCases[Strict]:
+      extension (strict: Strict) def strict: Boolean = strict == Strict
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")

@@ -65,7 +65,13 @@ object CatalogueStoreSuite:
         def site(id: String, onMap: Boolean, cls: Option[String]): Unit =
           val _ = state.updateAndGet(
             _.modify(_.sites)
-              .using(_ :+ HeldSite(HeldSite.Id(id), HeldSite.OnMap(onMap), cls.map(HeldSite.ImportClass(_))))
+              .using(
+                _ :+ HeldSite(
+                  HeldSite.Id(id),
+                  (if onMap then HeldSite.OnMap.OnMap else HeldSite.OnMap.OffMap),
+                  cls.map(HeldSite.ImportClass(_))
+                )
+              )
           )
         @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
         def seedRows(): List[String] =

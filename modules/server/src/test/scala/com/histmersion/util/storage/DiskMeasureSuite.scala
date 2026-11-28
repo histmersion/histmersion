@@ -67,7 +67,7 @@ class DiskMeasureSuite extends munit.FunSuite:
     val r = at(d).measure(
       MeasureBudget(MeasureBudget.MaxEntries(Long.MaxValue), MeasureBudget.DeadlineNanos(5L), () => { t += 1; t })
     )
-    assert(r.partial.value && r.files.value < 20L, r)
+    assert(r.partial.partial && r.files.value < 20L, r)
 
   tmp.test("an unreadable directory is skipped and counted, the rest is measured"): d =>
     file(d.resolve("ok/a.bin"), 10)

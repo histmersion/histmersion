@@ -73,6 +73,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The ONE implementation of the embedded-agent operations (docs/research-embedded-agents.md): the model check, the
   * probe and (through [[Engine]]) pipeline runs. REST ([[AgentsRoutes]]) and the CLI reach it; it is held as
@@ -438,7 +439,7 @@ final class AgentsControllers(
       .map { ps =>
         val cooled = picker.cooldowns().map(_._1)
         val done =
-          ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = PlanPools.Force(true)))
+          ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = PlanPools.Force.Force))
         val after = pools.statuses(covers).map(st => st.pool -> st).toMap
         // a model parked after its plan's limit comes back as soon as a reading taken now says so (#1827)
         val still = picker.cooldowns().map(_._1).toSet
@@ -451,7 +452,7 @@ final class AgentsControllers(
                   case Right(x) =>
                     PlanQuota.PoolRefreshed(
                       p.wire,
-                      (if x.ok.value then PlanQuota.PoolRefreshed.Refreshed.Refreshed
+                      (if x.ok.ok then PlanQuota.PoolRefreshed.Refreshed.Refreshed
                        else PlanQuota.PoolRefreshed.Refreshed.Unchanged),
                       PlanQuota.PoolRefreshed.Detail(x.text.value),
                       st
@@ -770,7 +771,7 @@ final class AgentsControllers(
         aiHttp = aiHttp,
         paths = site.userPaths
       )
-        .report(online = (if !offline.value then DoctorReport.Online.Online else DoctorReport.Online.Offline))
+        .report(online = (if !offline.offline then DoctorReport.Online.Online else DoctorReport.Online.Offline))
     val held = lease.status match
       case Some((o, u, false, true)) =>
         DoctorCheck(
@@ -963,7 +964,7 @@ final class AgentsControllers(
         BudgetTokens(tok.value.toLong),
         params,
         goal,
-        RunService.DryRun(dry)
+        (if dry then RunService.DryRun.DryRun else RunService.DryRun.Applied)
       )
 
   /** `--model-for role=provider:model`, checked before the run is queued: a role the pipeline uses, once, with a model
@@ -1645,8 +1646,10 @@ object AgentsControllers:
   object BudgetUsd extends Newtype[Double, Pure]
   type ModelName = ModelName.T
   object ModelName extends Newtype[String, Pure]
-  type Offline = Offline.T
-  object Offline extends Newtype[Boolean, Pure]
+  enum Offline derives CanEqual:
+    case Offline, Online
+  object Offline extends TwoCases[Offline]:
+    extension (offline: Offline) def offline: Boolean = offline == Offline
   type PositiveAmount = PositiveAmount.T
   object PositiveAmount extends Newtype[Double, Pure]
   type RoundsCap = RoundsCap.T

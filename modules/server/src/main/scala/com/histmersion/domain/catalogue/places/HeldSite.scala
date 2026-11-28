@@ -3,6 +3,7 @@ package domain.catalogue.places
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A Wikidata site as the in-memory catalogue keeps it for the refinement of its type: whether it is on the map (a
   * finding or a picture is placed there), the class its import kept, the type refined and when it was asked (epoch ms).
@@ -18,8 +19,10 @@ final case class HeldSite(
 object HeldSite:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type OnMap = OnMap.T
-  object OnMap extends Newtype[Boolean, Pure]
+  enum OnMap derives CanEqual:
+    case OnMap, OffMap
+  object OnMap extends TwoCases[OnMap]:
+    extension (onMap: OnMap) def onMap: Boolean = onMap == OnMap
   type ImportClass = ImportClass.T
   object ImportClass extends Newtype[String, Pure]
   type SiteType = SiteType.T

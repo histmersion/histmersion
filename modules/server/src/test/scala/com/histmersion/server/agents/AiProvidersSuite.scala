@@ -611,7 +611,7 @@ class AiProvidersSuite extends munit.FunSuite:
       ref,
       Wired(Nil, Left(Problem.Unclassified(Legacy.Text("no Gemini key — set GEMINI_KEY")))),
       AiHttp.Offline,
-      PluginAiClient.Loopback(true)
+      PluginAiClient.Loopback.Loopback
     )
     assertEquals(refused.left.toOption.map(_.sentence), Some("no Gemini key — set GEMINI_KEY"))
     // any other provider's error names the model, and keeps the provider's problem as it is

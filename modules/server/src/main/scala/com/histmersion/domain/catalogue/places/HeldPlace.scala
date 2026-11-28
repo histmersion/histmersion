@@ -12,6 +12,7 @@ import java.util.Locale
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A place as the in-memory catalogue holds it: the row an import or a person wrote, the dataset it came in with, its
   * names (a name a person added is `manual`, which no import deletes), the edges to its parents and its links.
@@ -71,10 +72,12 @@ object HeldPlace:
   )
 
   object Name:
-    type Manual = Manual.T
-    object Manual extends Newtype[Boolean, Pure]
+    enum Manual derives CanEqual:
+      case Manual, Imported
+    object Manual extends TwoCases[Manual]:
+      extension (manual: Manual) def manual: Boolean = manual == Manual
 
-    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Manual(false))
+    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Manual.Imported)
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
   def covers(period: Option[Period], asOf: Option[DeepTime.SignedYear]): Boolean =

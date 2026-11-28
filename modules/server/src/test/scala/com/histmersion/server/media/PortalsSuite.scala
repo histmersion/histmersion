@@ -190,10 +190,10 @@ class PortalsSuite extends munit.FunSuite:
   private def target(f: PlaceFacts) =
     Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
-  private val DryOn = CollectionImport.DryRun(true)
-  private val DryOff = CollectionImport.DryRun(false)
-  private val PlDryOn = MediaImporter.DryRun(true)
-  private val PlDryOff = MediaImporter.DryRun(false)
+  private val DryOn = CollectionImport.DryRun.DryRun
+  private val DryOff = CollectionImport.DryRun.Applied
+  private val PlDryOn = MediaImporter.DryRun.DryRun
+  private val PlDryOff = MediaImporter.DryRun.Applied
 
   private val Bowls7 = "f589a368-62ed-43df-5738-4c84d2f5f765"
   private val Bowls6 = "d9feb4e7-3ec6-444f-6a85-2b6873c8822a"
@@ -224,7 +224,7 @@ class PortalsSuite extends munit.FunSuite:
     CollectionImport(col, polite, cfg, conv).run(
       List(target(t)),
       dryRun,
-      refresh = CollectionImport.Refresh(false),
+      refresh = CollectionImport.Refresh.Reuse,
       store
     )
 
@@ -425,7 +425,7 @@ class PortalsSuite extends munit.FunSuite:
       polite,
       cfg
     )
-      .run(List(zygouries), dryRun, refresh = ImportService.Refresh(false), store)
+      .run(List(zygouries), dryRun, refresh = ImportService.Refresh.Reuse, store)
 
   private def plStore() = PortalStore(
     Map.empty,
@@ -503,6 +503,6 @@ class PortalsSuite extends munit.FunSuite:
       polite,
       c
     )
-      .run(List(zygouries), dryRun = MediaImporter.DryRun(false), refresh = ImportService.Refresh(false), store)
+      .run(List(zygouries), dryRun = MediaImporter.DryRun.Applied, refresh = ImportService.Refresh.Reuse, store)
     assert(r.failed.exists(_.value.contains("Pleiades place 757208100")), r.failed.toString)
     assert(store.checks.isEmpty)

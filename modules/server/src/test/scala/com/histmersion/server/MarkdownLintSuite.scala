@@ -28,7 +28,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MarkdownLintSuite extends munit.FunSuite:
 
-  private val article = Context(article = Context.Article(true))
+  private val article = Context(article = Context.Article.Article)
   private def body(md: Scan.Text, ctx: Context = article) = MarkdownLint.issues(md, FormatField.Body, ctx)
   private def rules(md: Scan.Text, ctx: Context = article): List[FormatRule] = body(md, ctx).map(_.rule)
   private def fixed(md: Scan.Text, ctx: Context = article): Scan.Text = MarkdownLint.fix(md, FormatField.Body, ctx)._1

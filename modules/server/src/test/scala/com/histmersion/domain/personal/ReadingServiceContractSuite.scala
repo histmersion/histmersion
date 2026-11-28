@@ -22,9 +22,9 @@ class ReadingServiceContractSuite extends PersonalServiceContract("reading"):
     val b = ItemKey("zz_r_b")
     val o = w.reading.opened(me, source, b, None, at(0))
     assertEquals((o.readAt, o.title.value: String), (None, "Zz Beta"))
-    val r = w.reading.setRead(me, source, b, read = ReadingService.Read(true), None, at(1))
+    val r = w.reading.setRead(me, source, b, read = ReadingService.Read.Read, None, at(1))
     assert(r.readAt.isDefined && r.openedAt.isDefined)
-    w.reading.setRead(me, source, b, read = ReadingService.Read(true), None, at(2))
+    w.reading.setRead(me, source, b, read = ReadingService.Read.Read, None, at(2))
     assertEquals(
       w.reading.list(me, None, ReadingShow.Read, all).flatMap(_.readAt.map(_.iso)),
       List("2026-10-30T12:01:00.123456Z")
@@ -39,7 +39,7 @@ class ReadingServiceContractSuite extends PersonalServiceContract("reading"):
     w.rename("zz_r_b", "zz_r_b2")
     assertEquals(unread(me), List("zz_r_a", "zz_r_c"), "a read source stays read under its new key")
     assertEquals(w.reading.list(me, None, ReadingShow.Read, all).map(_.item.ref.key.value: String), List("zz_r_b2"))
-    w.reading.setRead(me, source, b, read = ReadingService.Read(false), None, at(3))
+    w.reading.setRead(me, source, b, read = ReadingService.Read.Unread, None, at(3))
     assertEquals(w.reading.list(me, None, ReadingShow.Read, all), Nil)
     assertEquals(w.reading.list(me, None, ReadingShow.Opened, all).map(_.title.value: String), List("Zz Beta"))
     val article = MarkTarget.itemKind(MarkKind.Article)

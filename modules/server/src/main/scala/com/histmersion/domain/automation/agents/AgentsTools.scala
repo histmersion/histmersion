@@ -53,6 +53,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The MCP half of the embedded agents: an external session can hand a whole pipeline to the server with ONE call
   * (`start_run` — e.g. the whole review panel of an article, instead of spawning four subagents), check on it
@@ -60,8 +61,10 @@ import com.histmersion.lint.{tolerated, LintRule}
   * tool: a thin wrapper over [[AgentsControllers]], Markdown out.
   */
 object AgentsTools:
-  type RepairAcquire = RepairAcquire.T
-  object RepairAcquire extends Newtype[Boolean, Pure]
+  enum RepairAcquire derives CanEqual:
+    case Repair, Leave
+  object RepairAcquire extends TwoCases[RepairAcquire]:
+    extension (repairAcquire: RepairAcquire) def repairAcquire: Boolean = repairAcquire == Repair
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -340,7 +343,8 @@ object AgentsTools:
         .input[ModelsInput]
         .handle { in =>
           ToolResult.text(if in.doctor then
-            AgentsMarkdown.doctor(a.doctor(offline = AgentsControllers.Offline(in.offline)))
+            AgentsMarkdown.doctor(a.doctor(offline = (if in.offline then AgentsControllers.Offline.Offline
+                                                      else AgentsControllers.Offline.Online)))
           else if in.quota then AgentsMarkdown.quota(a.quota)
           else AgentsMarkdown.models(a.models))
         }
@@ -571,7 +575,7 @@ object AgentsTools:
                       .map(Api.Error(_))
                       .map(autopilotPage)
               case "repair-acquire" =>
-                repairAcquire(RepairAcquire(in.dryRun))
+                repairAcquire((if in.dryRun then RepairAcquire.Repair else RepairAcquire.Leave))
               case "drain" =>
                 m.drain(
                   Autopilot.DrainSet(

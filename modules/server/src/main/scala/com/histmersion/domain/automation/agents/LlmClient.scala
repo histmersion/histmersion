@@ -57,7 +57,6 @@ object LlmClient:
     * other registered provider — the HTTP APIs' first-party plugins among them — runs through the host's tool loop
     * ([[PluginAiClient]]); a switched-off or unregistered one is refused, saying which.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def factory(
       rt: CliRuntime,
       providers: () => scala.collection.immutable.ListMap[Plugin.Id, AiProvider],
@@ -72,7 +71,12 @@ object LlmClient:
           case _: HostAiProvider => host(rt)(cfg, ref)
           case p                 =>
             PluginAiClient
-              .client(ref, p, http, PluginAiClient.Loopback(rt.loopback))
+              .client(
+                ref,
+                p,
+                http,
+                (if rt.loopback then PluginAiClient.Loopback.Loopback else PluginAiClient.Loopback.Remote)
+              )
         }
 
   /** The host's own providers: the command-line runtimes on `rt`. */

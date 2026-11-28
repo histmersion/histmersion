@@ -155,7 +155,10 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
       val tokens = o.tokens
       val initEnd = o.templ.inits.last.pos.end
       val header = tokens.filter(_.end <= initEnd)
-      val ext = s"extension (${name.head.toLower}${name.tail}: $name) def ${e.test}: Boolean = ${name.head.toLower}${name.tail} == ${e.yes}"
+      val lower = s"${name.head.toLower}${name.tail}"
+      // a parameter named after a keyword (`Import` -> `import`) is quoted
+      val param = if (lower.parse[Term].toOption.exists(_.is[Term.Name])) lower else s"`$lower`"
+      val ext = s"extension ($param: $name) def ${e.test}: Boolean = $param == ${e.yes}"
       val enumText = s"enum $name derives CanEqual:\n$ind  case ${e.yes}, ${e.no}\n$ind"
       log.add(s"$path:${o.pos.startLine + 1}\tdefinition\t${e.newtype}")
       val parent = if (e.parent.nonEmpty) e.parent else config.parent

@@ -39,6 +39,7 @@ import com.histmersion.domain.research.articles.ArticleSummaryRow
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The FORMATTING lint: what in an agent's Markdown will not display as it was meant (pure).
   *
@@ -65,14 +66,16 @@ object MarkdownLint:
     *   is this token a stored citekey? `None` = do not look for bare citekeys
     */
   final case class Context(
-      article: Context.Article = Context.Article(false),
+      article: Context.Article = Context.Article.Other,
       resolves: Option[WikiLinks.Occurrence.Target => Boolean] = None,
       isCitekey: Option[WikiLinks.Occurrence.Target => Boolean] = None
   )
 
   object Context:
-    type Article = Article.T
-    object Article extends Newtype[Boolean, Pure]
+    enum Article derives CanEqual:
+      case Article, Other
+    object Article extends TwoCases[Article]:
+      extension (article: Article) def article: Boolean = article == Article
 
   /** One applied repair, as the line that reports it. */
   type Repair = Repair.T
@@ -104,10 +107,9 @@ object MarkdownLint:
       .distinct
       .map(WikiLinks.Occurrence.Target(_))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolving(links: WikiLinks.Occurrence.Target => Option[LinkTarget], article: Boolean): Context =
     Context(
-      article = Context.Article(article),
+      article = (if article then Context.Article.Article else Context.Article.Other),
       resolves = Some(t => links(t).nonEmpty),
       isCitekey = Some(t => links(t).exists(_.isInstanceOf[Source.Ref]))
     )
@@ -1023,7 +1025,6 @@ object MarkdownLint:
 
     // ── headings ───────────────────────────────────────────────────────────────────────────────
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def headings(): Unit =
       val hs = nodes.collect { case h: Heading => h }
       // `##Heading`: a paragraph line that wanted to be a heading
@@ -1104,13 +1105,13 @@ object MarkdownLint:
       // levels, H1s, duplicates — over the top-level structure
       val top = hs.filter(h => h.getParent.isInstanceOf[Document] && !h.isSetextHeading)
       val h1s = top.filter(_.getLevel == 1)
-      val extraH1 = if ctx.article.value then h1s.drop(1) else h1s.drop(1)
+      val extraH1 = if ctx.article.article then h1s.drop(1) else h1s.drop(1)
       extraH1.foreach { h =>
         add(
           FormatRule.HeadingLevel,
           h.getStartOffset,
           h.getEndOffset - h.getStartOffset,
-          if ctx.article.value then
+          if ctx.article.article then
             "a second `#` title: the page shows the first as the title and this one as a second, equally large title — use `##`"
           else "a second `#` heading — use `##` for sections"
         )
@@ -1138,7 +1139,7 @@ object MarkdownLint:
                 s"`${"#" * h.getLevel} ${h.getText.toString.trim}` already appears at line ${lineOf(first.getStartOffset) + 1} — the section is written twice"
               )
             case None => seen(key) = h
-        if ctx.article.value && field == FormatField.Body && """^sources\s+cited\b""".r.findFirstIn(key._2).isDefined
+        if ctx.article.article && field == FormatField.Body && """^sources\s+cited\b""".r.findFirstIn(key._2).isDefined
         then
           add(
             FormatRule.SourcesCitedSection,

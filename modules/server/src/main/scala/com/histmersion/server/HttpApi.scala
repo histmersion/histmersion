@@ -217,7 +217,8 @@ final class HttpApi(
           h.placeCard(
             p,
             asOf.map(a => DeepTime.SignedYear(a.value)),
-            PlaceCardView.WithCounts(counts.map(_.detail).getOrElse(false))
+            (if counts.map(_.detail).getOrElse(false) then PlaceCardView.WithCounts.WithCounts
+             else PlaceCardView.WithCounts.WithoutCounts)
           )
         )
     ),
@@ -225,7 +226,7 @@ final class HttpApi(
     (source, apply) =>
       h.bootstrap.loadGazetteer(
         Gazetteer.Kind.Wire(source.value),
-        GazetteerLoad.LoadApply(apply.applies)
+        (if apply.applies then GazetteerLoad.LoadApply.Apply else GazetteerLoad.LoadApply.DryRun)
       )
   ) ++ PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
     Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch.fetches))
@@ -359,7 +360,7 @@ final class HttpApi(
             else
               pages.source(
                 ck,
-                PageBuilder.SourceFull(full),
+                (if full then PageBuilder.SourceFull.Full else PageBuilder.SourceFull.SummaryOnly),
                 q.map(Search.Query(_))
               ) match
                 case Some((title, inner)) =>

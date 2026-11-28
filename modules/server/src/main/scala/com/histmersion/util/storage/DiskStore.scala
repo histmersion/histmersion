@@ -115,11 +115,10 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     stored(p)
   }
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def reserve(key: Store.Key, temp: TempName, throughLink: Store.ThroughLink): Either[Store.Error, Reservation] =
     io(Problem.Io.Access.Create, key) {
       val asked = path(key)
-      val target = if throughLink.value && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
+      val target = if throughLink.throughLink && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
       val dir = target.toAbsolutePath.getParent
       Files.createDirectories(dir)
       val file = temp match
@@ -137,11 +136,11 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
   }
 
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] =
     io(Problem.Io.Access.Write, to) {
       val options =
-        if keepAttributes.value then List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+        if keepAttributes.keepPermissions then
+          List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
         else List(StandardCopyOption.REPLACE_EXISTING)
       Files.copy(path(from), path(to), options*): Unit
     }
@@ -186,14 +185,14 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       Store.Measure(
         ByteCount.applyUnsafe(scala.util.Try(Files.size(root)).getOrElse(0L)),
         Store.Measure.Files(1L),
-        exists = Store.Measure.Exists(true)
+        exists = Store.Measure.Exists.Exists
       )
     else if budget.exhausted then
       Store.Measure(
         ByteCount.zero,
         Store.Measure.Files(0L),
-        exists = Store.Measure.Exists(true),
-        partial = Store.Measure.Partial(true)
+        exists = Store.Measure.Exists.Exists,
+        partial = Store.Measure.Partial.Partial
       )
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
@@ -222,8 +221,8 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       Store.Measure(
         ByteCount.applyUnsafe(bytes),
         Store.Measure.Files(files),
-        Store.Measure.Exists(true),
-        Store.Measure.Partial(partial),
+        Store.Measure.Exists.Exists,
+        (if partial then Store.Measure.Partial.Partial else Store.Measure.Partial.Complete),
         Store.Measure.Unreadable(unreadable)
       )
 
@@ -369,10 +368,9 @@ private[storage] object DiskStore:
 
     def size: ByteCount = ByteCount.applyUnsafe(if Files.exists(file) then Files.size(file) else 0L)
 
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def commit(keepPermissions: Store.KeepPermissions): Either[Store.Error, Stored] =
       try
-        if keepPermissions.value && Files.exists(asked) then
+        if keepPermissions.keepPermissions && Files.exists(asked) then
           Option(Files.getFileAttributeView(asked, classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS))
             .foreach(v => Files.setPosixFilePermissions(file, v.readAttributes.permissions))
         try Files.move(file, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)

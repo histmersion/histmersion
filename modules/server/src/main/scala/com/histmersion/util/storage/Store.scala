@@ -13,6 +13,7 @@ import java.security.{DigestOutputStream, MessageDigest}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** One named place's files: what a supporting area or a domain is given instead of a path. Keys are relative and
   * checked ([[StoreKey]]); nothing outside the store can be named. A write either lands whole or not at all ([[put]],
@@ -65,7 +66,7 @@ trait Store:
   def reserve(
       key: Store.Key,
       temp: TempName = TempName.Fixed,
-      throughLink: Store.ThroughLink = Store.ThroughLink(false)
+      throughLink: Store.ThroughLink = Store.ThroughLink.Direct
   ): Either[Store.Error, Reservation]
 
   /** `from` moved to `to`, replacing it. */
@@ -78,7 +79,7 @@ trait Store:
   def copy(
       from: Store.Key,
       to: Store.Key,
-      keepAttributes: Store.KeepPermissions = Store.KeepPermissions(false)
+      keepAttributes: Store.KeepPermissions = Store.KeepPermissions.DefaultPermissions
   ): Either[Store.Error, Unit]
 
   /** `prefix` made a directory, with its parents. */
@@ -131,10 +132,14 @@ trait Store:
 object Store:
   type EntryName = EntryName.T
   object EntryName extends Newtype[String, Pure]
-  type KeepPermissions = KeepPermissions.T
-  object KeepPermissions extends Newtype[Boolean, Pure]
-  type ThroughLink = ThroughLink.T
-  object ThroughLink extends Newtype[Boolean, Pure]
+  enum KeepPermissions derives CanEqual:
+    case KeepPermissions, DefaultPermissions
+  object KeepPermissions extends TwoCases[KeepPermissions]:
+    extension (keepPermissions: KeepPermissions) def keepPermissions: Boolean = keepPermissions == KeepPermissions
+  enum ThroughLink derives CanEqual:
+    case ThroughLink, Direct
+  object ThroughLink extends TwoCases[ThroughLink]:
+    extension (throughLink: ThroughLink) def throughLink: Boolean = throughLink == ThroughLink
 
   /** A [[ContentStore]] over a store: `<sha256>.<ext>` at its top. */
 
@@ -262,21 +267,25 @@ object Store:
       bytes: ByteCount,
       files: Measure.Files,
       exists: Measure.Exists,
-      partial: Measure.Partial = Measure.Partial(false),
+      partial: Measure.Partial = Measure.Partial.Complete,
       unreadable: Measure.Unreadable = Measure.Unreadable(0)
   )
 
   object Measure:
     type Files = Files.T
     object Files extends Newtype[Long, Pure]
-    type Exists = Exists.T
-    object Exists extends Newtype[Boolean, Pure]
-    type Partial = Partial.T
-    object Partial extends Newtype[Boolean, Pure]
+    enum Exists derives CanEqual:
+      case Exists, Missing
+    object Exists extends TwoCases[Exists]:
+      extension (exists: Exists) def exists: Boolean = exists == Exists
+    enum Partial derives CanEqual:
+      case Partial, Complete
+    object Partial extends TwoCases[Partial]:
+      extension (partial: Partial) def partial: Boolean = partial == Partial
     type Unreadable = Unreadable.T
     object Unreadable extends Newtype[Int, Pure]
 
-    val absent: Measure = Measure(ByteCount.zero, Files(0L), exists = Exists(false))
+    val absent: Measure = Measure(ByteCount.zero, Files(0L), exists = Exists.Missing)
 
   /** The disk a store is (or would be) on: its name, its size and the space this process may still use. */
   final case class Volume(id: Volume.Id, total: ByteCount, usable: ByteCount)

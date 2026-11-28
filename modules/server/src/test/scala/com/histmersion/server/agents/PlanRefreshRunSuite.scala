@@ -636,7 +636,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reads.probes.get(), 0)
     // logged in with an API key where the plan is wanted is no plan login either
     reads.auth = """{"loggedIn":true,"authMethod":"api_key"}"""
-    assert(a.pools.login(PoolId.ClaudePlan, force = PlanPools.Force(true)).isInstanceOf[Login.Missing])
+    assert(a.pools.login(PoolId.ClaudePlan, force = PlanPools.Force.Force).isInstanceOf[Login.Missing])
 
   test("#989: the ChatGPT plan — a stale reading is refreshed through the app-server; no codex login is unavailable"):
     val home = Files.createTempDirectory("hm-codex-refresh-")
@@ -683,7 +683,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)._3, None)
     assertEquals(reads.codexReads.get(), 0)
     Files.writeString(home.resolve("auth.json"), "") // a stand-in: only its presence is looked at
-    val _ = pools.login(PoolId.ChatgptPlan, force = PlanPools.Force(true))
+    val _ = pools.login(PoolId.ChatgptPlan, force = PlanPools.Force.Force)
     assertEquals(pools.unavailable(ModelRef(ProviderKind.Codex, Agents.ModelRef.Model("gpt-5"))), None)
     assert(!pools.verdict(PoolId.ChatgptPlan, None)._1.usable, "28% left, stale: needs 35%")
     val (v, states, r) = pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)

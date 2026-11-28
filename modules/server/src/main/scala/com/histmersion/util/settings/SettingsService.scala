@@ -79,11 +79,12 @@ object SettingsService:
       loaded.fold(p => p.sentences.toList, l => l.file.warnings.map(_.sentence)).map(SettingsSnapshot.Problems(_))
     SettingsSnapshot(
       file,
-      SettingsSnapshot.Exists(state.text.isDefined),
+      (if state.text.isDefined then SettingsSnapshot.Exists.Exists else SettingsSnapshot.Exists.Missing),
       state.version,
       SettingsReader.read(schema, state, merged, env, prefix, extra),
       problems,
-      setupDue = SettingsSnapshot.SetupDue(!completed.value && !ConfigSchema.setsAnything(state.parsed)),
+      setupDue = (if !completed.value && !ConfigSchema.setsAnything(state.parsed) then SettingsSnapshot.SetupDue.Due
+                  else SettingsSnapshot.SetupDue.Done),
       automatic = loaded.toOption.toList.flatMap(_.config.runtime.postgres.automatic(memory))
     )
 
@@ -227,8 +228,7 @@ object SettingsService:
             )
       }
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def setupDue: Boolean = read(None).fold(_ => false, _.setupDue.value)
+    def setupDue: Boolean = read(None).fold(_ => false, _.setupDue.setupDue)
 
   object InMemory:
     /** The name the file held in memory goes by. */

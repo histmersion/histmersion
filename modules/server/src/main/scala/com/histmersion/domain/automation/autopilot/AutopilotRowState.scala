@@ -4,6 +4,7 @@ package domain.automation.autopilot
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The autopilot's one row as [[AutopilotRowService.InMemory]] holds it: the switch and who turned it, the managers it
   * paused, its housekeeping times, a person's scheduler strategy, the digest's time and the drain.
@@ -27,8 +28,10 @@ final case class AutopilotRowState(
 
 object AutopilotRowState:
   /** The row as the database makes it: off, changed by nobody at `now`, nothing paused. */
-  type Enabled = Enabled.T
-  object Enabled extends Newtype[Boolean, Pure]
+  enum Enabled derives CanEqual:
+    case Enabled, Disabled
+  object Enabled extends TwoCases[Enabled]:
+    extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
   type ChangedBy = ChangedBy.T
   object ChangedBy extends Newtype[String, Pure]
   type Paused = Paused.T
@@ -43,7 +46,7 @@ object AutopilotRowState:
 
   def made(now: Instant): AutopilotRowState =
     AutopilotRowState(
-      Enabled(false),
+      Enabled.Disabled,
       now,
       ChangedBy(""),
       Nil,

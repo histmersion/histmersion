@@ -63,12 +63,12 @@ class StepFailureSuite extends munit.FunSuite:
           Problem.Run.Model("claude-code:haiku"),
           Problem.Count.of(Engine.OutputCapLimit(4096)),
           Problem.Count(4096L),
-          Engine.ceiling(Engine.CapKeyOverridden(false))
+          Engine.ceiling(Engine.CapKeyOverridden.Default)
         )
       )
       .sentence
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
-    assertEquals(Engine.ceiling(Engine.CapKeyOverridden(true)), Problem.Run.Ceiling.StepOwn)
+    assertEquals(Engine.ceiling(Engine.CapKeyOverridden.Overridden), Problem.Run.Ceiling.StepOwn)
 
   test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
     val ok =

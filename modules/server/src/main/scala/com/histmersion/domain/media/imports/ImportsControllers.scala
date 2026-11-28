@@ -140,7 +140,7 @@ final class ImportsControllers(
                 place,
                 event,
                 ImportService.TargetsLimit(cfg().limit(req.limit.map(l => MediaConfig.Limit(l.value))).value),
-                ImportService.Refresh(req.refresh.refresh),
+                (if req.refresh.refresh then ImportService.Refresh.Refresh else ImportService.Refresh.Reuse),
                 None
               )
               .left
@@ -148,7 +148,11 @@ final class ImportsControllers(
               .map { targets =>
                 val run = imp.start()
                 val report =
-                  run.run(targets, MediaImporter.DryRun(req.dryRun.dryRun), ImportService.Refresh(req.refresh.refresh))
+                  run.run(
+                    targets,
+                    (if req.dryRun.dryRun then MediaImporter.DryRun.DryRun else MediaImporter.DryRun.Applied),
+                    (if req.refresh.refresh then ImportService.Refresh.Refresh else ImportService.Refresh.Reuse)
+                  )
                 scribe.info(
                   s"media import ${imp.check} (${if req.dryRun.dryRun then "dry run" else "stored"}): ${targets.size} target(s), " +
                     s"${report.files} file(s), ${report.stored} stored, ${run.requests} request(s)"
@@ -196,7 +200,7 @@ final class ImportsControllers(
         )
       else
         val single = ImportsControllers.single(req)
-        val refresh = ImportService.Refresh(req.refresh.refresh)
+        val refresh = (if req.refresh.refresh then ImportService.Refresh.Refresh else ImportService.Refresh.Reuse)
         targetsOf(req).flatMap { (place, event) =>
           // the one target must exist (and have an item) before a job is started for it
           val check =
@@ -266,7 +270,7 @@ final class ImportsControllers(
                 )
               )
           case Right(targets) =>
-            scala.util.Try(run.run(targets, dryRun = MediaImporter.DryRun(false), refresh)) match
+            scala.util.Try(run.run(targets, dryRun = MediaImporter.DryRun.Applied, refresh)) match
               case scala.util.Failure(e: InterruptedException) => throw e
               case scala.util.Failure(e)                       =>
                 scribe.error(s"media import job: batch ${acc.batches.value + 1} failed: ${e.getMessage}", e)

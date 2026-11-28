@@ -202,7 +202,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       "nothing applied before approval"
     )
     def queued = h.workListView
-      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -298,7 +298,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     )
     assertEquals(c.steps.size, 2, "the invented DOI was refused and the ranking asked again")
     val items = h.workListView
-      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -313,7 +313,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     assertEquals(again.status, "done", again.error)
     assertEquals(
       h.workListView
-        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -367,7 +367,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
           CandidateSweep.Again(stored.size),
           Map.empty,
           CandidateSweep.Unseen(stored.count(_.state == Source.Candidate.State("new"))),
-          (if dryRun.value then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply)
+          (if dryRun.sweepCandidatesDryRun then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply)
         )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -419,7 +419,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     )
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -577,7 +577,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       ev.head.text
     )
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -631,7 +631,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     a.engine.execute(ApiIds.run(id))
     assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
     def tasks = h.workListView
-      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.OpenOnly)
       .toOption
       .get
       .items

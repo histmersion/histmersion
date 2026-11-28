@@ -331,7 +331,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   lazy val resolveView = ResolveView(
     id =>
       library.sources
-        .get(id, body = SourcesControllers.GetBody(false))
+        .get(id, body = SourcesControllers.GetBody.WithoutBody)
         .left
         .map(Api.Error(_))
         .toOption
@@ -578,7 +578,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             MarkdownLint.Scan.Text(text),
             field,
             MarkdownLint.Context(
-              article = MarkdownLint.Context.Article(article),
+              article = (if article then MarkdownLint.Context.Article.Article else MarkdownLint.Context.Article.Other),
               isCitekey = Some(isCitekey)
             )
           ),

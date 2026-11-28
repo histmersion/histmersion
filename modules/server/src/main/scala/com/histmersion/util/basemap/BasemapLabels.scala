@@ -458,7 +458,7 @@ object BasemapLabels:
       PmTiles.Header.AddressedTiles(0L),
       PmTiles.Header.TileEntries(0L),
       PmTiles.Header.TileContents(0L),
-      PmTiles.Header.Clustered(true),
+      PmTiles.Header.Clustered.Clustered,
       PmTiles.Compression.Gzip,
       PmTiles.Compression.Gzip,
       PmTiles.TileType.Mvt,

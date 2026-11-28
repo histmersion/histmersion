@@ -89,8 +89,8 @@ class CommonsDepictionsSuite extends munit.FunSuite:
       cfg
     ).run(
       List(kadesh),
-      dryRun = MediaImporter.DryRun(true),
-      refresh = ImportService.Refresh(false),
+      dryRun = MediaImporter.DryRun.DryRun,
+      refresh = ImportService.Refresh.Reuse,
       store
     )
     assertEquals(r.provider, MediaProvider.CommonsDepicts)
@@ -114,8 +114,8 @@ class CommonsDepictionsSuite extends munit.FunSuite:
       cfg
     ).run(
       List(kadesh),
-      dryRun = MediaImporter.DryRun(false),
-      refresh = ImportService.Refresh(false),
+      dryRun = MediaImporter.DryRun.Applied,
+      refresh = ImportService.Refresh.Reuse,
       store
     )
     assertEquals((r.stored, r.linked), (3, 3))
@@ -145,8 +145,8 @@ class CommonsDepictionsSuite extends munit.FunSuite:
       cfg
     ).run(
       List(kadesh),
-      dryRun = MediaImporter.DryRun(false),
-      refresh = ImportService.Refresh(false),
+      dryRun = MediaImporter.DryRun.Applied,
+      refresh = ImportService.Refresh.Reuse,
       store
     )
     assert(r.failed.exists(_.value.contains("Commons search for battle_of_kadesh")), r.failed.toString)

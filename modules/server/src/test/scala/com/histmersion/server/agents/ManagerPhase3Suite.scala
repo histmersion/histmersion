@@ -236,7 +236,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
     h.workListView
-      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -341,7 +341,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       h.library.sources
-        .get(Citekey("zzagent105555zzagenta"), body = SourcesControllers.GetBody(false))
+        .get(Citekey("zzagent105555zzagenta"), body = SourcesControllers.GetBody.WithoutBody)
         .left
         .map(Api.Error(_))
         .map(_.source.title),
@@ -835,7 +835,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         Some(Goal),
         None,
         Origin.Manager,
-        dryRun = RunService.DryRun(false),
+        dryRun = RunService.DryRun.Applied,
         Some(ApiIds.manager(m.id)),
         None
       )

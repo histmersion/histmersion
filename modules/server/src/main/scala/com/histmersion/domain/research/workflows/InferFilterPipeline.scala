@@ -80,7 +80,12 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               Prompt.UserText(input(loaded)),
               ResearchAnswers.filter
             )((a, last) =>
-              check(slug, loaded, a, (if last.value then FilterInference.Last.Last else FilterInference.Last.More))
+              check(
+                slug,
+                loaded,
+                a,
+                (if last.lastAttempt then FilterInference.Last.Last else FilterInference.Last.More)
+              )
                 .map(Checked(_))
             )
             recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(

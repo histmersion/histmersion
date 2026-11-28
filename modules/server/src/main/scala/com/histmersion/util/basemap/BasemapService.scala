@@ -995,7 +995,10 @@ final class BasemapService(
         BasemapFetch.FetchedAt(Instant.now(clock).toString),
         l,
         Option.when(l == Basemap.Layer.Vector)(
-          (BasemapFetch.Filtered(keepAll), BasemapFetch.FilterSpec(cfg.vector.drop.value))
+          (
+            (if keepAll then BasemapFetch.Filtered.Filtered else BasemapFetch.Filtered.Whole),
+            BasemapFetch.FilterSpec(cfg.vector.drop.value)
+          )
         )
       )
       written <- BasemapFetch.assemble(plan, work, store, target, transform, BasemapFetch.localHeader(plan), meta, note)
@@ -1258,7 +1261,7 @@ object BasemapService:
       PmTiles.Header.AddressedTiles(0L),
       PmTiles.Header.TileEntries(0L),
       PmTiles.Header.TileContents(0L),
-      PmTiles.Header.Clustered(true),
+      PmTiles.Header.Clustered.Clustered,
       PmTiles.Compression.Gzip,
       PmTiles.Compression.None,
       PmTiles.TileType.Png,
@@ -1492,7 +1495,7 @@ object BasemapService:
   def mvtRules(rules: List[Basemap.DropRule]): Map[Mvt.LayerName, Mvt.Rule] =
     rules
       .map(r =>
-        Mvt.LayerName(r.layer.value) -> (if r.whole.whole then Mvt.Rule(none = Mvt.Rule.Empty(true))
+        Mvt.LayerName(r.layer.value) -> (if r.whole.whole then Mvt.Rule(none = Mvt.Rule.Empty.Empty)
                                          else
                                            Mvt.Rule(
                                              keep = r.spare.map(k => Mvt.Rule.Keep(k.value)),
@@ -1514,7 +1517,7 @@ object BasemapService:
       if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then
         PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
       else Right(PmTiles.PlainBytes(stored.value))
-    raw.flatMap(Mvt.filter(_, rules, others = Mvt.Others(true))).map { t =>
+    raw.flatMap(Mvt.filter(_, rules, others = Mvt.Others.Others)).map { t =>
       Option.when(t.value.nonEmpty)(PmTiles.TileBytes(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t).value
       else t.value))
     }

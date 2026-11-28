@@ -79,7 +79,7 @@ class BootstrapSuite extends DbSuite:
   /** The periods as the server's controllers reach them, over `b`'s service and imports. */
   extension (b: Bootstrap)
     private def ctl: PeriodsControllers = PeriodsControllers(b.periods, b.periodImports, WriteGate())
-    def seedPeriods(replace: PeriodImports.Replace = PeriodImports.Replace(false)) = ctl.seed(Caller.Local, replace)
+    def seedPeriods(replace: PeriodImports.Replace = PeriodImports.Replace.Merge) = ctl.seed(Caller.Local, replace)
     def period(id: HistoricalPeriod.Id) = ctl.period(id)
     def fetchPeriods(source: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections]) =
       ctl.fetch(Caller.Local, source, collections)

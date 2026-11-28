@@ -32,6 +32,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The import of one collection (#1446): for each place, a search by its name; each record judged — its own licence
   * statement first (never assumed), the collection's allowlist, then the match ([[SearchedCollection.matches]]) — and
@@ -160,7 +161,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     val base = MediaImportReport(
       provider = MediaItem.Provider(col.provider.value),
       dryRun =
-        (if dryRun.value then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
+        (if dryRun.dryRun then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
       targets = MediaImportReport.Targets(places.size),
       items = MediaImportReport.Items(records.size),
       statements = MediaImportReport.Statements(kept.size),
@@ -182,7 +183,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       samples = samples.take(cfg.samples.value.max(0))
     )
 
-    if dryRun.value then base.modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
+    if dryRun.dryRun then base.modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
     else persist(base, kept, judged, answered.map(_._1), refresh, store, failed)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -226,7 +227,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     kept.distinctBy(_.rec.key).foreach { j =>
       knownOf(j.rec) match
         case Some(k) =>
-          if refresh.value then
+          if refresh.refresh then
             each(s"${j.rec.key} (licence re-read)")(
               db.refreshRights(AssetService.AssetUid(k.uid.value), rightsOf(j.rec))
             )
@@ -376,7 +377,11 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       }
 
 object CollectionImport:
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
-  type Refresh = Refresh.T
-  object Refresh extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Applied
+  object DryRun extends TwoCases[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
+  enum Refresh derives CanEqual:
+    case Refresh, Reuse
+  object Refresh extends TwoCases[Refresh]:
+    extension (refresh: Refresh) def refresh: Boolean = refresh == Refresh

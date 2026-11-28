@@ -5,6 +5,7 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The sources a run of covers and illustrations looks at: those with figures and no illustration yet, those with an
   * ISBN or OCLC number and no cover yet (not asked of Open Library yet).
@@ -25,8 +26,10 @@ trait CoverService:
 object CoverService:
   type CandidatesLimit = CandidatesLimit.T
   object CandidatesLimit extends Newtype[Int, Pure]
-  type CandidatesRefresh = CandidatesRefresh.T
-  object CandidatesRefresh extends Newtype[Boolean, Pure]
+  enum CandidatesRefresh derives CanEqual:
+    case Refresh, Reuse
+  object CandidatesRefresh extends TwoCases[CandidatesRefresh]:
+    extension (candidatesRefresh: CandidatesRefresh) def candidatesRefresh: Boolean = candidatesRefresh == Refresh
 
   def apply(db: Transactor): CoverService = Implementation(db)
 
@@ -40,7 +43,7 @@ object CoverService:
       db.read(
         CoverRepo.illustrationCandidates(
           only.map(c => CoverRepo.Only(c.value)),
-          (if refresh.value then CoverRepo.Refresh.Refresh else CoverRepo.Refresh.Reuse),
+          (if refresh.candidatesRefresh then CoverRepo.Refresh.Refresh else CoverRepo.Refresh.Reuse),
           CoverRepo.Limit(limit.value)
         )
       ).map(Citekey.assume(_))
@@ -49,7 +52,7 @@ object CoverService:
       db.read(
         CoverRepo.coverCandidates(
           only.map(c => CoverRepo.Only(c.value)),
-          (if refresh.value then CoverRepo.Refresh.Refresh else CoverRepo.Refresh.Reuse),
+          (if refresh.candidatesRefresh then CoverRepo.Refresh.Refresh else CoverRepo.Refresh.Reuse),
           CoverRepo.Limit(limit.value)
         )
       )

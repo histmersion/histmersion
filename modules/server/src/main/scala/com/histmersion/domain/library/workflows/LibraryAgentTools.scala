@@ -76,7 +76,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         site.sources
           .markdown(
             in.citekey,
-            fullText = SourcesControllers.MarkdownFullText(false),
+            fullText = SourcesControllers.MarkdownFullText.SummaryOnly,
             section,
             in.heading,
             in.offset,

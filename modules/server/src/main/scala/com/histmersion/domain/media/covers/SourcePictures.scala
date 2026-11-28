@@ -39,6 +39,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a
@@ -107,7 +108,7 @@ final class SourcePictures(
             MediaItem.Provider(MediaProvider.Source),
             MediaSourceLine.Detail(pick.name.value)
           )
-          if !dryRun.value then
+          if !dryRun.dryRun then
             if !row.hasThumb.hasThumb then
               assets
                 .file(uid)
@@ -151,7 +152,7 @@ final class SourcePictures(
           MediaItem.Provider(MediaProvider.OpenLibrary),
           MediaSourceLine.Detail(s"${kind.value}:${id.value}")
         )
-        if dryRun.value then Right(line)
+        if dryRun.dryRun then Right(line)
         else
           val c = cfg.covers
           val url = OpenLibrary.coverUrl(
@@ -321,8 +322,9 @@ final class SourcePictures(
   def run(req: MediaCoversRequest, progress: JobInfo.Progress => Unit = _ => ())(using
       WritePermit
   )(using Creator.New): MediaCoversReport =
-    val dryRun = SourcePictures.DryRun(req.dryRun.dryRun)
-    val refresh = CoverService.CandidatesRefresh(req.refresh.refresh)
+    val dryRun = (if req.dryRun.dryRun then SourcePictures.DryRun.DryRun else SourcePictures.DryRun.Applied)
+    val refresh =
+      (if req.refresh.refresh then CoverService.CandidatesRefresh.Refresh else CoverService.CandidatesRefresh.Reuse)
     val named = req.citekey.map(_.value.trim).filter(_.nonEmpty)
     val only = named.flatMap(c =>
       Citekey.option(c).map(k => sources.current(k).map(cur => Citekey.assume(cur.value)).getOrElse(k))
@@ -345,7 +347,9 @@ final class SourcePictures(
           covers.coverCandidates(only, refresh, limit) match
             case Nil =>
               hinted
-                .filter(k => refresh.value || assets.sourcePicture(k.citekey, MediaRole.Wire(MediaRole.Cover)).isEmpty)
+                .filter(k =>
+                  refresh.candidatesRefresh || assets.sourcePicture(k.citekey, MediaRole.Wire(MediaRole.Cover)).isEmpty
+                )
                 .toList
             case cs => cs
       val fetch = openLibraryClient
@@ -390,11 +394,11 @@ final class SourcePictures(
   def afterIngest(citekey: Citekey)(using WritePermit)(using Creator.New): Option[SourcePictures.AfterIngestText] =
     try
       val ill =
-        illustrate(citekey, dryRun = SourcePictures.DryRun(false)).toOption.map(l => s"illustration ${l.detail}")
+        illustrate(citekey, dryRun = SourcePictures.DryRun.Applied).toOption.map(l => s"illustration ${l.detail}")
       val cover = covers
-        .coverCandidates(Some(citekey), CoverService.CandidatesRefresh(false), CoverService.CandidatesLimit(1))
+        .coverCandidates(Some(citekey), CoverService.CandidatesRefresh.Reuse, CoverService.CandidatesLimit(1))
         .headOption
-        .flatMap(k => openLibrary(k, SourcePictures.DryRun(false), openLibraryClient).toOption)
+        .flatMap(k => openLibrary(k, SourcePictures.DryRun.Applied, openLibraryClient).toOption)
         .map(l => s"cover ${l.detail}")
       Option(List(ill, cover).flatten).filter(_.nonEmpty).map(l => SourcePictures.AfterIngestText(l.mkString(" · ")))
     catch
@@ -406,8 +410,10 @@ final class SourcePictures(
 object SourcePictures:
   type AfterIngestText = AfterIngestText.T
   object AfterIngestText extends Newtype[String, Pure]
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Applied
+  object DryRun extends TwoCases[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type IllustrateText = IllustrateText.T
   object IllustrateText extends Newtype[String, Pure]
   type OpenLibraryText = OpenLibraryText.T

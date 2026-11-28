@@ -134,7 +134,7 @@ final class EventLinksControllers(
         text
           .find(
             PassageReader.Query(rx),
-            regex = PassageReader.Regex(true),
+            regex = PassageReader.Regex.Regex,
             limit = PageSize(5),
             context = PassageReader.Context(160),
             maxMatches = PassageReader.MaxMatches(50),

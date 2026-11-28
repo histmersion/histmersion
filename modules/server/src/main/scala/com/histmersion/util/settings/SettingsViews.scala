@@ -29,12 +29,12 @@ object SettingsViews:
       )
     ConfigEdit.Page(
       s.file.map(f => ConfigEdit.Page.File(f.value)),
-      (if s.exists.value then ConfigEdit.Page.Exists.Exists else ConfigEdit.Page.Exists.Missing),
+      (if s.exists.exists then ConfigEdit.Page.Exists.Exists else ConfigEdit.Page.Exists.Missing),
       ConfigEdit.Page.Version(s.version.value),
       sections,
       s.problems.map(p => ConfigEdit.Page.Problems(p.value)),
       (if restartable then ConfigEdit.Page.Restartable.Restartable else ConfigEdit.Page.Restartable.Manual),
-      (if s.setupDue.value then ConfigEdit.Page.SetupDue.SetupDue else ConfigEdit.Page.SetupDue.SetUp)
+      (if s.setupDue.setupDue then ConfigEdit.Page.SetupDue.SetupDue else ConfigEdit.Page.SetupDue.SetUp)
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

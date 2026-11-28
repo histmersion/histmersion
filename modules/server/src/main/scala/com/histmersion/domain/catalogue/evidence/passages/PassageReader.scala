@@ -3,6 +3,7 @@ package domain.catalogue.evidence.passages
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** One source's text, searched for passages: a phrase or a regular expression, each hit with its context; `limit`
   * passages at most.
@@ -25,7 +26,9 @@ object PassageReader:
   object MaxMatches extends Newtype[Int, Pure]
   type Query = Query.T
   object Query extends Newtype[String, Pure]
-  type Regex = Regex.T
-  object Regex extends Newtype[Boolean, Pure]
+  enum Regex derives CanEqual:
+    case Regex, Literal
+  object Regex extends TwoCases[Regex]:
+    extension (regex: Regex) def regex: Boolean = regex == Regex
   type TimeoutMs = TimeoutMs.T
   object TimeoutMs extends Newtype[Long, Pure]

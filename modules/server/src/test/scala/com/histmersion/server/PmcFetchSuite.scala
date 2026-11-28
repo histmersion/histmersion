@@ -252,7 +252,7 @@ class PmcFetchSuite extends munit.FunSuite:
         .convert(
           OfflineConverter.blob(xml),
           ConverterClient.Filename("paper.xml"),
-          quality = ConverterClient.HighQuality(false)
+          quality = ConverterClient.HighQuality.Fast
         )
         .fold(e => fail(e.sentence), identity)
       assert(doc.markdown.value.startsWith("# The first horse herders"), doc.markdown.value.take(200))
@@ -262,7 +262,7 @@ class PmcFetchSuite extends munit.FunSuite:
           .convert(
             OfflineConverter.blob(pdf),
             ConverterClient.Filename("paper.pdf"),
-            quality = ConverterClient.HighQuality(false)
+            quality = ConverterClient.HighQuality.Fast
           )
           .map(_.markdown),
         Right("from the sidecar")
@@ -272,7 +272,7 @@ class PmcFetchSuite extends munit.FunSuite:
           .convert(
             OfflineConverter.blob(other),
             ConverterClient.Filename("list.xml"),
-            quality = ConverterClient.HighQuality(false)
+            quality = ConverterClient.HighQuality.Fast
           )
           .map(_.markdown),
         Right("from the sidecar")

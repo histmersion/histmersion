@@ -101,7 +101,7 @@ final class PmTilesWriter(out: Reservation):
       .modify(_.tileContents)
       .setTo(PmTiles.Header.TileContents(seen.size.toLong))
       .modify(_.clustered)
-      .setTo(PmTiles.Header.Clustered(true))
+      .setTo(PmTiles.Header.Clustered.Clustered)
       .modify(_.internalCompression)
       .setTo(ic)
     val headerBytes: Array[Byte] = PmTiles.encodeHeader(header).value

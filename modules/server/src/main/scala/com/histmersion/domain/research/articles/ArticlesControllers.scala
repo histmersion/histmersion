@@ -53,6 +53,7 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The articles' operations, each the one implementation REST, MCP and the agents' tools call: the list and one article
   * in every view, the writes (put, patch, delete, rename, a note imported) with the strict formatting gate, the
@@ -177,7 +178,7 @@ final class ArticlesControllers(
         val (body, fb) = MarkdownLint.fix(
           MarkdownLint.Scan.Text(a.body.value),
           FormatField.Body,
-          MarkdownLint.Context(article = MarkdownLint.Context.Article(true))
+          MarkdownLint.Context(article = MarkdownLint.Context.Article.Article)
         )
         val (summary, fs) =
           a.summary
@@ -360,19 +361,18 @@ final class ArticlesControllers(
   /** One article, with its backlinks, the sources it cites, and — when it records a filter — its coverage, from which
     * every surface renders the generated Not used list and Method note.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def get(
       slug: Slug,
-      brief: ArticlesControllers.GetBrief = ArticlesControllers.GetBrief(false)
+      brief: ArticlesControllers.GetBrief = ArticlesControllers.GetBrief.Full
   ): Either[Api.Error, Article.View] =
     val view = store.view(slug).toRight(notFound(slug))
     // `brief`: the row and its links only — the lint and the coverage are most of a read's cost
     // (a hover card waited ~20 ms on the lint alone) and a preview shows neither
-    if brief.value then view
+    if brief.getBrief then view
     else
       view.map(v =>
         v.modify(_.formatting)
@@ -658,7 +658,7 @@ final class ArticlesControllers(
 
   /** The article an identifier names, as `GET /api/resolve/{id}` shows it. */
   def resolved(id: Slug): Option[ResolvedArticle] =
-    get(id, brief = ArticlesControllers.GetBrief(true)).toOption.map(a =>
+    get(id, brief = ArticlesControllers.GetBrief.Brief).toOption.map(a =>
       ResolvedArticle(a.article.slug, a.article.title)
     )
 
@@ -877,7 +877,9 @@ final class ArticlesControllers(
 object ArticlesControllers:
   type NewSourceCount = NewSourceCount.T
   object NewSourceCount extends Newtype[Int, Pure]
-  type GetBrief = GetBrief.T
-  object GetBrief extends Newtype[Boolean, Pure]
+  enum GetBrief derives CanEqual:
+    case Brief, Full
+  object GetBrief extends TwoCases[GetBrief]:
+    extension (getBrief: GetBrief) def getBrief: Boolean = getBrief == Brief
   type FilterReachCap = FilterReachCap.T
   object FilterReachCap extends Newtype[Int, Pure]

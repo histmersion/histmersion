@@ -56,7 +56,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
               .modify(_.detail)
               .setTo(
                 IngestOutcome.Detail(
-                  s"${if base.created.value then "created" else "updated"} source from metadata — " +
+                  s"${if base.created.created then "created" else "updated"} source from metadata — " +
                     "no file was acquired, so there is nothing to convert"
                 )
               )
@@ -97,7 +97,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
           .modify(_.detail)
           .setTo(
             IngestOutcome.Detail(
-              s"${if base.created.value then "created" else "updated"} source from metadata; " +
+              s"${if base.created.created then "created" else "updated"} source from metadata; " +
                 s"queued OCR job ${a.jobId} for ${file.where} — poll `job_status`"
             )
           )

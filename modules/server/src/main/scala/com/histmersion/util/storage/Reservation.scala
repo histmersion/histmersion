@@ -25,7 +25,9 @@ trait Reservation extends AutoCloseable:
   /** Move the file over the key in one step, replacing what is there; with `keepPermissions`, the replaced file's
     * permissions carry over.
     */
-  def commit(keepPermissions: Store.KeepPermissions = Store.KeepPermissions(false)): Either[Store.Error, Stored]
+  def commit(
+      keepPermissions: Store.KeepPermissions = Store.KeepPermissions.DefaultPermissions
+  ): Either[Store.Error, Stored]
 
   /** Remove the file; nothing happens to the key. */
   def discard(): Unit

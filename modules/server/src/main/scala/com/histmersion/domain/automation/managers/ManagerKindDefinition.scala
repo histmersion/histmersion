@@ -22,6 +22,7 @@ import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A kind of manager a domain contributes (`review`, `enrich`, `seed`, `watch`): the items it drives, what a firing of
   * its cron and its selection put in its queue, the run each of its items starts, what a finished run left and what
@@ -169,7 +170,9 @@ trait ManagerKindDefinition:
 object ManagerKindDefinition:
   type FirePhrase = FirePhrase.T
   object FirePhrase extends Newtype[String, Pure]
-  type RefillForce = RefillForce.T
-  object RefillForce extends Newtype[Boolean, Pure]
+  enum RefillForce derives CanEqual:
+    case Force, Safe
+  object RefillForce extends TwoCases[RefillForce]:
+    extension (refillForce: RefillForce) def refillForce: Boolean = refillForce == Force
   type ExpandSkipped = ExpandSkipped.T
   object ExpandSkipped extends Newtype[String, Pure]

@@ -4,6 +4,7 @@ import com.histmersion.domain.GoalFocus
 
 import java.time.Instant
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** What the focus recorded about one goal, as [[FocusService.InMemory]] holds it. */
 final case class FocusRecord(
@@ -17,11 +18,15 @@ final case class FocusRecord(
 )
 
 object FocusRecord:
-  type Active = Active.T
-  object Active extends Newtype[Boolean, Pure]
-  type Pinned = Pinned.T
-  object Pinned extends Newtype[Boolean, Pure]
+  enum Active derives CanEqual:
+    case Active, Inactive
+  object Active extends TwoCases[Active]:
+    extension (active: Active) def active: Boolean = active == Active
+  enum Pinned derives CanEqual:
+    case Pinned, Unpinned
+  object Pinned extends TwoCases[Pinned]:
+    extension (pinned: Pinned) def pinned: Boolean = pinned == Pinned
   type Priority = Priority.T
   object Priority extends Newtype[Int, Pure]
 
-  val none: FocusRecord = FocusRecord(Active(false), Pinned(false), Priority(0), None, None, None, None)
+  val none: FocusRecord = FocusRecord(Active.Inactive, Pinned.Unpinned, Priority(0), None, None, None, None)

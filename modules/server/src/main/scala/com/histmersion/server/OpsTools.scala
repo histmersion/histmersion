@@ -103,7 +103,7 @@ object OpsTools:
               case _ =>
                 h.checks.lintWithFix(
                   in.rules.map(CheckRule.Name(_)),
-                  CheckControllers.ApplyFix(in.fix)
+                  (if in.fix then CheckControllers.ApplyFix.Apply else CheckControllers.ApplyFix.DryRun)
                 ) match
                   case Right(rep) => ToolResult.text(Lint.markdown(rep).value)
                   case Left(e)    => McpOut.error(e)
@@ -153,7 +153,7 @@ object OpsTools:
     def render(list: String) =
       h.workListView.list(
         WorkListControllers.KindOfList(list),
-        WorkListView.IncludeAll(in.all)
+        (if in.all then WorkListView.IncludeAll.All else WorkListView.IncludeAll.OpenOnly)
       ) match
         case Right(l) =>
           l.markdown.map(_.value).fold(McpOut.unknown(Problem.TypeName("Queue.Kind"), s"${l.list}"))(McpOut.text)

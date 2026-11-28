@@ -61,11 +61,11 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
       GenSettings.AgentMcpUrl(agentMcp),
       Some(GenSettings.McpUrl(s"$publicUrl/mcp")),
       GenSettings.QuotaUrl(s"$publicUrl/api/agents/quota/claude"),
-      GenSettings.ClaudeMod(cfg.runtimes.claudeMod.value),
-      GenSettings.InteractiveMod(cfg.runtimes.interactiveMod.value),
+      (if cfg.runtimes.claudeMod.value then GenSettings.ClaudeMod.On else GenSettings.ClaudeMod.Off),
+      (if cfg.runtimes.interactiveMod.value then GenSettings.InteractiveMod.On else GenSettings.InteractiveMod.Off),
       version,
       GenSettings.CodexToolOutputTokens(cfg.providers.codex.toolOutputTokens.value),
-      GenSettings.CodexLeanBase(cfg.providers.codex.leanBase)
+      (if cfg.providers.codex.leanBase then GenSettings.LeanBase.Lean else GenSettings.LeanBase.Full)
     )
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */

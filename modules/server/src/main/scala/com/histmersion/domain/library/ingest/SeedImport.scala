@@ -16,6 +16,7 @@ import scala.util.control.NonFatal
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Seed the library from a folder of `wiki/sources/` notes. Idempotent (a put by citekey).
   *
@@ -37,7 +38,7 @@ final class SeedImport(
       WritePermit
   )(using Creator.New): SeedResult =
     val stored =
-      if force.value then Map.empty[Citekey, CitekeyMillis.Millis] else sources.updatedAtMillis
+      if force.runForce then Map.empty[Citekey, CitekeyMillis.Millis] else sources.updatedAtMillis
     val outcomes = folder.notes.map { listed =>
       val name = SeedFolder.Name(listed.value)
       try
@@ -80,8 +81,10 @@ final class SeedImport(
     )
 
 object SeedImport:
-  type RunForce = RunForce.T
-  object RunForce extends Newtype[Boolean, Pure]
+  enum RunForce derives CanEqual:
+    case Force, Safe
+  object RunForce extends TwoCases[RunForce]:
+    extension (runForce: RunForce) def runForce: Boolean = runForce == Force
 
   /** True when the stored source is strictly newer than the file — writing the file would lose work. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -98,7 +98,7 @@ final class PlanGoalPipeline(
             taken,
             loaded.queries.toSet,
             caps(ctx),
-            (if last.value then PlanGoal.LastRound.Last else PlanGoal.LastRound.More)
+            (if last.lastAttempt then PlanGoal.LastRound.Last else PlanGoal.LastRound.More)
           )
           .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.sentence))))
       )
@@ -207,7 +207,7 @@ final class PlanGoalPipeline(
   private def apply(ctx: RunCtx, slug: DomainGoal.Slug, plan: Plan, d: Decided)(using
       WritePermit
   )(using Creator.New): Either[Problems, Applied] =
-    if !d.approved.value then
+    if !d.approved.approved then
       log(
         ctx,
         PlanGoal

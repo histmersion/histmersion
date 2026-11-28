@@ -44,7 +44,8 @@ object AgentsRoutes:
       a.removeAllowance(ModelChains.AllowanceSet.Target(target.value)).left.map(Api.Error(_))
     ),
     AgentsApi.doctor.serverLogicSuccess[Identity](offline =>
-      a.doctor(AgentsControllers.Offline(offline.exists(_.online)))
+      a.doctor((if offline.exists(_.online) then AgentsControllers.Offline.Offline
+                else AgentsControllers.Offline.Online))
     ),
     AgentsApi.probe.serverLogic[Identity](req => a.probe(req)),
     AgentsApi.startRun.serverLogic[Identity](req => CreatorControllers.rest(req)(a.startRun(req))),

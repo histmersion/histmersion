@@ -25,6 +25,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.ModelChains
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
+import com.histmersion.TwoCases
 
 /** The model chains and allowances in effect — config (`agents.roles.*`, `agents.allowances`) with what was saved in
   * the database over it — and the choice the engine makes before every LLM call (docs/research-embedded-agents.md §15):
@@ -105,7 +107,8 @@ final class ModelPicker(
         ModelPicker.lifts(
           PlanQuotaRepo.EpochMillis(since),
           pools.lastObserved(p).map(o => PlanQuotaRepo.EpochMillis(o.value)),
-          PoolUsable(read(p, poolModel(model), poolInstant(now), Want.Unwanted)._1.usable)
+          (if read(p, poolModel(model), poolInstant(now), Want.Unwanted)._1.usable then PoolUsable.Usable
+           else PoolUsable.Unusable)
         )
       }
       if until > now.value && !lifted then Some(PlanQuotaRepo.EpochMillis(until))
@@ -254,24 +257,32 @@ final class ModelPicker(
       freesAt: Option[PlanQuotaRepo.EpochMillis],
       headroomTokens: Option[Picked.HeadroomTokens],
       headroomUsd: Option[BigDecimal],
-      planBlocked: ModelState.PlanBlocked = ModelState.PlanBlocked(false),
-      unavailable: ModelState.Unavailable = ModelState.Unavailable(false),
+      planBlocked: ModelState.PlanBlocked = ModelState.PlanBlocked.Unblocked,
+      unavailable: ModelState.Unavailable = ModelState.Unavailable.Available,
       refreshed: Option[ModelState.Refreshed] = None,
       held: Option[PlanQuota.PoolId] = None,
-      cooling: ModelState.Cooling = ModelState.Cooling(false)
+      cooling: ModelState.Cooling = ModelState.Cooling.Ready
   )
 
   object ModelState:
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
-    type PlanBlocked = PlanBlocked.T
-    object PlanBlocked extends Newtype[Boolean, Pure]
-    type Unavailable = Unavailable.T
-    object Unavailable extends Newtype[Boolean, Pure]
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoCases[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
+    enum PlanBlocked derives CanEqual:
+      case Blocked, Unblocked
+    object PlanBlocked extends TwoCases[PlanBlocked]:
+      extension (planBlocked: PlanBlocked) def planBlocked: Boolean = planBlocked == Blocked
+    enum Unavailable derives CanEqual:
+      case Unavailable, Available
+    object Unavailable extends TwoCases[Unavailable]:
+      extension (unavailable: Unavailable) def unavailable: Boolean = unavailable == Unavailable
     type Refreshed = Refreshed.T
     object Refreshed extends Newtype[String, Pure]
-    type Cooling = Cooling.T
-    object Cooling extends Newtype[Boolean, Pure]
+    enum Cooling derives CanEqual:
+      case Cooling, Ready
+    object Cooling extends TwoCases[Cooling]:
+      extension (cooling: Cooling) def cooling: Boolean = cooling == Cooling
 
   /** `read`: how the plan pool `m` draws on is read — as stored ([[stored]], a view), or as a call that runs work reads
     * it ([[working]]: when the caller WANTS the model, a pool that would wait only on a stale reading, or was never
@@ -311,10 +322,10 @@ final class ModelPicker(
       )
     (noLogin, NonEmptyVector.from(broken.toVector), cool, blocked) match
       case (Some(_), _, _, _) =>
-        ModelState(ModelState.Usable(false), noLogin, None, ht, hu, unavailable = ModelState.Unavailable(true))
+        ModelState(ModelState.Usable.Unusable, noLogin, None, ht, hu, unavailable = ModelState.Unavailable.Unavailable)
       case (_, Some(unread), _, _) =>
         ModelState(
-          ModelState.Usable(false),
+          ModelState.Usable.Unusable,
           Some(Problem.Run.Skipped(Problem.Run.Skip.AllowanceUnread(unread))),
           None,
           ht,
@@ -322,28 +333,28 @@ final class ModelPicker(
         )
       case (_, _, Some(until), _) =>
         ModelState(
-          ModelState.Usable(false),
+          ModelState.Usable.Unusable,
           Some(Problem.Run.Skipped(Problem.Run.Skip.Cooling(Problem.EpochMs(until.value)))),
           cool,
           ht,
           hu,
-          planBlocked = ModelState.PlanBlocked(plan.isDefined),
-          cooling = ModelState.Cooling(true)
+          planBlocked = (if plan.isDefined then ModelState.PlanBlocked.Blocked else ModelState.PlanBlocked.Unblocked),
+          cooling = ModelState.Cooling.Cooling
         )
       case (_, _, _, Some((p, reading, until))) =>
         ModelState(
-          ModelState.Usable(false),
+          ModelState.Usable.Unusable,
           Some(Problem.Run.Skipped(Problem.Run.Skip.BelowFloor(Problem.Raw.of(p.title), Problem.Raw.of(reading)))),
           until.map(u => PlanQuotaRepo.EpochMillis(u.value)),
           ht,
           hu,
-          planBlocked = ModelState.PlanBlocked(true),
+          planBlocked = ModelState.PlanBlocked.Blocked,
           refreshed = refreshed,
           held = Option.when(pools.held(p))(p)
         )
       case _ if !ok =>
         ModelState(
-          ModelState.Usable(false),
+          ModelState.Usable.Unusable,
           NonEmptyVector
             .from(spent.toVector)
             .map(limits => Problem.Run.Skipped(Problem.Run.Skip.BelowAllowance(limits))),
@@ -352,7 +363,7 @@ final class ModelPicker(
           hu,
           refreshed = refreshed
         )
-      case _ => ModelState(ModelState.Usable(true), None, None, ht, hu, refreshed = refreshed)
+      case _ => ModelState(ModelState.Usable.Usable, None, None, ht, hu, refreshed = refreshed)
 
   private def fmt(v: BigDecimal, m: Measure): String = m match
     case Measure.Tokens => Limit.compact(v.setScale(0, BigDecimal.RoundingMode.HALF_UP))
@@ -449,8 +460,8 @@ final class ModelPicker(
               case Right((client, billing)) =>
                 val st = state(m, effective, now, read)
                 st.refreshed.foreach(onRefresh)
-                if st.unavailable.value then go(tail, notReady ++ st.why.map(passed(m, _)), exhausted, planHit)
-                else if st.usable.value then
+                if st.unavailable.unavailable then go(tail, notReady ++ st.why.map(passed(m, _)), exhausted, planHit)
+                else if st.usable.usable then
                   Right(
                     Picked(
                       client,
@@ -465,7 +476,7 @@ final class ModelPicker(
                     tail,
                     notReady,
                     exhausted ++ st.why.map(why => Exhaust(m, passed(m, why), st.freesAt, st.held)),
-                    planHit || st.planBlocked.value
+                    planHit || st.planBlocked.planBlocked
                   )
       go(chain, Nil, Nil, planHit = false)
     }
@@ -512,11 +523,11 @@ final class ModelPicker(
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
                   ready = ModelChains.ChainEntry.Ready.Ready,
-                  (if st.usable.value then ChainEntry.Usable.Usable else ChainEntry.Usable.Unusable),
+                  (if st.usable.usable then ChainEntry.Usable.Usable else ChainEntry.Usable.Unusable),
                   st.why.toList,
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
                   Some(ChainEntry.Billing(billing.describe)),
-                  cooling = (if st.cooling.value then ChainEntry.Cooling.Cooling else ChainEntry.Cooling.Warm)
+                  cooling = (if st.cooling.cooling then ChainEntry.Cooling.Cooling else ChainEntry.Cooling.Warm)
                 )
           }
           RoleChain(
@@ -582,8 +593,10 @@ final class ModelPicker(
 object ModelPicker:
 
   /** Whether the plan pool a model draws on is usable for it, as its newest verdict says. */
-  type PoolUsable = PoolUsable.T
-  object PoolUsable extends Newtype[Boolean, Pure]
+  enum PoolUsable derives CanEqual:
+    case Usable, Unusable
+  object PoolUsable extends TwoCases[PoolUsable]:
+    extension (poolUsable: PoolUsable) def poolUsable: Boolean = poolUsable == Usable
 
   /** Whether a pick wants a model, so a fresh reading of its plan pool may be taken for it. */
   enum Want derives CanEqual:
@@ -615,13 +628,12 @@ object ModelPicker:
     * was reported (`observed`, the pool's newest reading) — the reading the limit came with, or an older one, says
     * nothing about a reset — and only when that pool's verdict for the model is usable (#1827).
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def lifts(
       since: PlanQuotaRepo.EpochMillis,
       observed: Option[PlanQuotaRepo.EpochMillis],
       usable: PoolUsable
   ): Boolean =
-    usable.value && observed.exists(_ > since)
+    usable.poolUsable && observed.exists(_ > since)
 
   /** When a chain whose every model is out of headroom gets one back by itself, and the clause the pause message says
     * it with: the EARLIEST time any of its models frees — a model that never frees by itself (a held pool, a reserve as

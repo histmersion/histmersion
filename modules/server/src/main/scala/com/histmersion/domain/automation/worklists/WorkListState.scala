@@ -40,7 +40,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
         )
       case QueueScope.ForGoal(goal, linked, withDone) =>
         ofKind.filter(i =>
-          i.status.value != Queue.Note && (withDone.value || i.status.value == Queue.Open) &&
+          i.status.value != Queue.Note && (withDone.withDone || i.status.value == Queue.Open) &&
             (i.goal.exists(_.value == goal.value) || linked.contains(QueueScope.ForGoal.Linked(i.id.value.toString)))
         )
 

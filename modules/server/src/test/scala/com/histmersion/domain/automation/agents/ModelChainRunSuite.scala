@@ -544,7 +544,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         AgentsControllers(
           ServerEngineSite(deps, ServerWiring(deps))
         ) // the server's own factory: real clients, nothing called
-      val d = a.doctor(offline = AgentsControllers.Offline(false))
+      val d = a.doctor(offline = AgentsControllers.Offline.Online)
       val local = d.providers.find(_.provider.value == "local").get
       assert(local.used.used && local.upstreamModels.map(_.value).contains("zzA"), local)
       assert(
@@ -580,7 +580,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       // offline: no request at all
       requests.clear()
       assert(
-        a.doctor(offline = AgentsControllers.Offline(true))
+        a.doctor(offline = AgentsControllers.Offline.Offline)
           .providers
           .find(_.provider.value == "local")
           .get
@@ -592,7 +592,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       val lan =
         cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo(NonEmptyVector.of(ServerConfig.Host("0.0.0.0"))))
       val ld = AgentsControllers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds))))
-        .doctor(offline = AgentsControllers.Offline(true))
+        .doctor(offline = AgentsControllers.Offline.Offline)
       val bind = ld.providers.find(_.provider.value == "claude-code").get.checks.find(_.name.value == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
       assert(

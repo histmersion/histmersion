@@ -17,3 +17,7 @@ object Flags:
     extension (write: Write) def fold[A](changes: => A, reads: => A): A = if write.changes then changes else reads
   type Quiet = Quiet.T
   object Quiet extends Newtype[Boolean, Pure]
+  enum Import derives CanEqual:
+    case Import, Inspect
+  object Import:
+    extension (`import`: Import) def imports: Boolean = `import` == Import

@@ -222,8 +222,8 @@ final class AcquisitionControllers(
     goalSlug(r.goal.value.trim).flatMap { g =>
       // a dry run runs the same sweep (it stores nothing): under the gate too
       maintenance.guard(WriteGate.OperationName("candidates/sweep"))(
-        if r.dryRun.dryRun then search.sweep(g, dryRun = CandidateSearch.SweepDryRun(true))
-        else search.sweep(g, dryRun = CandidateSearch.SweepDryRun(false))
+        if r.dryRun.dryRun then search.sweep(g, dryRun = CandidateSearch.SweepDryRun.DryRun)
+        else search.sweep(g, dryRun = CandidateSearch.SweepDryRun.Applied)
       )
     }
 
@@ -813,7 +813,7 @@ final class AcquisitionControllers(
       arxiv.map(a => upstreams.ArxivId(a.value)),
       work.map(_.upstream)
     )
-    val chain = Option.when(skip.isEmpty)(oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.value)))
+    val chain = Option.when(skip.isEmpty)(oa.fetchWorkExplained(key, FetchChain.LegalOnly(path.legalChain.legalChain)))
     val answers = chain.fold(Nil)(_.answers)
     if skip.isEmpty && path == IngestPath.PersonLegal && acq.allowUnauthorised.value then
       steps += step(
@@ -874,7 +874,7 @@ final class AcquisitionControllers(
     }
 
     // a watcher's auto-ingest brings a work in only WITH its legal file: no metadata-only source
-    if path.needsFile.value && fetched.isLeft then
+    if path.needsFile.needsFile && fetched.isLeft then
       Left(
         err(
           Problem.NotFound.Copy(
@@ -926,7 +926,7 @@ final class AcquisitionControllers(
         )
         // an open-access work no script may download goes to the acquisition list once, as a download
         // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
-        if fetched.isLeft && skip.isEmpty && !path.needsFile.value && browserOnly.isEmpty then
+        if fetched.isLeft && skip.isEmpty && !path.needsFile.needsFile && browserOnly.isEmpty then
           for
             d <- doi
             w <- work
@@ -961,7 +961,7 @@ final class AcquisitionControllers(
         // retracted paper must never keep a curated "current".
         val assessment = doi.flatMap { _ =>
           assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply.DryRun)).toOption.map { a =>
-            val shouldApply = outcome.created.value || a.verdict == Acquire.Verdicts.Retracted
+            val shouldApply = outcome.created.created || a.verdict == Acquire.Verdicts.Retracted
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
               _ <- setStatus(citekey, status.transformInto[domain.library.Source.Status]).toOption
@@ -975,7 +975,7 @@ final class AcquisitionControllers(
           citekey = com.histmersion.api.library.Citekey(citekey.value),
           doi = doi.map(d => com.histmersion.api.library.Doi(d.value)),
           title = work.flatMap(_.title),
-          created = (if outcome.created.value then Ingest.Report.Created.Created else Ingest.Report.Created.Existing),
+          created = (if outcome.created.created then Ingest.Report.Created.Created else Ingest.Report.Created.Existing),
           pdf = fetched.toOption.map(f =>
             PdfInfo(
               PdfInfo.Source(f.source.value),
@@ -1108,7 +1108,7 @@ final class AcquisitionControllers(
                 com.histmersion.api.library.Citekey(citekey.value),
                 None,
                 title,
-                (if outcome.created.value then Ingest.Report.Created.Created else Ingest.Report.Created.Existing),
+                (if outcome.created.created then Ingest.Report.Created.Created else Ingest.Report.Created.Existing),
                 Some(
                   PdfInfo(
                     PdfInfo.Source("archive_org"),

@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Just enough of the Mapbox Vector Tile protobuf (https://github.com/mapbox/vector-tile-spec) to thin a tile WITHOUT
   * decoding its geometry: keep the named layers, and inside them drop the features whose `kind` is listed. Everything
@@ -25,8 +26,10 @@ object Mvt:
   object LayerBytes extends Newtype[Array[Byte], Pure]
   type LayerName = LayerName.T
   object LayerName extends Newtype[String, Pure]
-  type Others = Others.T
-  object Others extends Newtype[Boolean, Pure]
+  enum Others derives CanEqual:
+    case Others, ListedOnly
+  object Others extends TwoCases[Others]:
+    extension (others: Others) def others: Boolean = others == Others
   type PointX = PointX.T
   object PointX extends Newtype[Int, Pure]
   type PointY = PointY.T
@@ -123,7 +126,7 @@ object Mvt:
   final case class Rule(
       keep: Set[Rule.Keep] = Set.empty,
       drop: Set[Rule.Drop] = Set.empty,
-      none: Rule.Empty = Rule.Empty(false),
+      none: Rule.Empty = Rule.Empty.Filled,
       geoms: Set[Rule.Geoms] = Set.empty,
       props: Option[Set[Rule.Props]] = scala.None
   ):
@@ -135,8 +138,7 @@ object Mvt:
     def keeps(kind: Option[Kind]): Boolean = kind match
       case scala.None => keep.isEmpty
       case Some(k)    => (keep.isEmpty || keepKinds(k.value)) && !dropKinds(k.value)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def all: Boolean = keep.isEmpty && drop.isEmpty && !none.value && geoms.isEmpty && props.isEmpty
+    def all: Boolean = keep.isEmpty && drop.isEmpty && !none.empty && geoms.isEmpty && props.isEmpty
 
   object Rule:
 
@@ -144,8 +146,10 @@ object Mvt:
     object Keep extends Newtype[String, Pure]
     type Drop = Drop.T
     object Drop extends Newtype[String, Pure]
-    type Empty = Empty.T
-    object Empty extends Newtype[Boolean, Pure]
+    enum Empty derives CanEqual:
+      case Empty, Filled
+    object Empty extends TwoCases[Empty]:
+      extension (empty: Empty) def empty: Boolean = empty == Empty
     type Geoms = Geoms.T
     object Geoms extends Newtype[Int, Pure]
     type Props = Props.T
@@ -156,7 +160,11 @@ object Mvt:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def filter(tile: TileBytes, rules: Map[LayerName, Rule], others: Others = Others(false)): Either[Problem, TileBytes] =
+  def filter(
+      tile: TileBytes,
+      rules: Map[LayerName, Rule],
+      others: Others = Others.ListedOnly
+  ): Either[Problem, TileBytes] =
     val bytes = tile.value
     attempt {
       val out = ByteArrayOutputStream(bytes.length)
@@ -164,8 +172,8 @@ object Mvt:
         if f.number == 3 && f.wireType == 2 then
           rules
             .get(LayerName(name(bytes, f)))
-            .orElse(Option.when(others.value)(Rule()))
-            .filterNot(_.none.value)
+            .orElse(Option.when(others.others)(Rule()))
+            .filterNot(_.none.empty)
             .foreach { rule =>
               if rule.all then out.write(bytes, f.start, f.end - f.start)
               else thinLayer(bytes, f, rule).foreach(l => writeField(out, 3, l))

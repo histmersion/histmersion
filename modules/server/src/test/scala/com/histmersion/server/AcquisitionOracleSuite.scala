@@ -411,7 +411,7 @@ class AcquisitionOracleSuite extends DbSuite:
       Right(
         ConvertedDoc(
           ConvertedDoc.Markdown(
-            s"# Converted $filename\n\nA body of ${file.size} bytes (quality: $quality).\n\n![fig](assets/zq-fig.png)\n"
+            s"# Converted $filename\n\nA body of ${file.size} bytes (quality: ${quality.highQuality}).\n\n![fig](assets/zq-fig.png)\n"
           ),
           pages = ConvertedDoc.Pages(2),
           images = List(

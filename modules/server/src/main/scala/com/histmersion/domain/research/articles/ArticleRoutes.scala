@@ -78,7 +78,10 @@ object ArticleRoutes:
       Api.articleCoverage.serverLogic[Identity](slug => read(slug).flatMap(articles.coverage)),
       Api.articleReview.serverLogic[Identity](slug => read(slug).flatMap(articles.review)),
       Api.getArticle.serverLogic[Identity]((slug, brief) =>
-        read(slug).flatMap(articles.get(_, ArticlesControllers.GetBrief(brief.fullText)))
+        read(slug).flatMap(
+          articles
+            .get(_, (if brief.fullText then ArticlesControllers.GetBrief.Brief else ArticlesControllers.GetBrief.Full))
+        )
       ),
       Api.putArticle.serverLogic[Identity]((slug, in, strict) =>
         CreatorControllers.rest(in) {

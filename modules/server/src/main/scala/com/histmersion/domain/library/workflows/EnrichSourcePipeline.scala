@@ -74,7 +74,11 @@ final class EnrichSourcePipeline(
         LibraryAnswers.classification
       )((c, last) =>
         accepted(
-          checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), (if last.value then Last.Last else Last.More))
+          checkClassification(
+            c,
+            MaxAbsYear(lib.verify.maxAbsYear.value),
+            (if last.lastAttempt then Last.Last else Last.More)
+          )
         )
       )
       verified <- findings(ctx, loaded, classified)
@@ -110,7 +114,7 @@ final class EnrichSourcePipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(ck: Citekey): Either[Problems, Loaded] =
     site.sources
-      .get(ck, body = SourcesControllers.GetBody(true))
+      .get(ck, body = SourcesControllers.GetBody.WithBody)
       .left
       .map(Api.Error(_))
       .left
@@ -192,7 +196,7 @@ final class EnrichSourcePipeline(
                 l.period.orElse(c.period),
                 existing ++ sofar.map(v => Loaded.ExistingClaims(v.claim.value)),
                 guards,
-                (if last.value then Last.Last else Last.More)
+                (if last.lastAttempt then Last.Last else Last.More)
               )
             )
           }
@@ -248,7 +252,7 @@ final class EnrichSourcePipeline(
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
   private def isCitekey(s: Citekey): Boolean =
-    site.sources.get(s, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
+    site.sources.get(s, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
@@ -333,7 +337,10 @@ final class EnrichSourcePipeline(
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(why))
       case None      =>
-        upstream().refs(l.citekey, apply = AgentUpstream.RefsApply(!ctx.dryRun)) match
+        upstream().refs(
+          l.citekey,
+          apply = (if !ctx.dryRun then AgentUpstream.RefsApply.Apply else AgentUpstream.RefsApply.DryRun)
+        ) match
           case Left(m) =>
             ctx.warn(s"refs: ${m.sentences.mkString("; ")}")
             Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(m.sentences.mkString("; ")))
@@ -354,7 +361,10 @@ final class EnrichSourcePipeline(
     upstreamBlocked(l) match
       case Some(why) => Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(why))
       case None      =>
-        upstream().assess(l.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
+        upstream().assess(
+          l.citekey,
+          apply = (if !ctx.dryRun then AgentUpstream.AssessApply.Apply else AgentUpstream.AssessApply.DryRun)
+        ) match
           case Left(m) =>
             ctx.warn(s"assess: ${m.sentences.mkString("; ")}")
             Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(m.sentences.mkString("; ")))
@@ -413,13 +423,19 @@ final class EnrichSourcePipeline(
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
-      site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption.toList.flatMap { s =>
-        closeLint(
-          FindingCount(s.findings.size),
-          (if s.source.periodStart.isDefined then Loaded.HasPeriod.Dated else Loaded.HasPeriod.Undated),
-          s.source.status
-        )
-      }
+      site.sources
+        .get(ck, body = SourcesControllers.GetBody.WithoutBody)
+        .left
+        .map(Api.Error(_))
+        .toOption
+        .toList
+        .flatMap { s =>
+          closeLint(
+            FindingCount(s.findings.size),
+            (if s.source.periodStart.isDefined then Loaded.HasPeriod.Dated else Loaded.HasPeriod.Undated),
+            s.source.status
+          )
+        }
     lint.foreach(l => ctx.warn(s"lint: $l"))
     val acquire = ctx.run.acquireItem.map(id =>
       ctx.write(

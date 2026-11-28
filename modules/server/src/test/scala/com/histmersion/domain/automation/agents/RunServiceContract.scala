@@ -185,7 +185,7 @@ abstract class RunServiceContract extends EngineStoreSuite:
     )
     assertEquals(r(s).forManager(ManagerLight.Id("watch:zz-g")).map(_.id.value: String), Vector(c, b))
     assertEquals(
-      r(s).forManager(ManagerLight.Id("watch:zz-g"), active = RunService.Active(true)).map(_.id.value: String),
+      r(s).forManager(ManagerLight.Id("watch:zz-g"), active = RunService.Active.Active).map(_.id.value: String),
       Vector(c)
     )
     assertEquals(

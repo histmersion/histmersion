@@ -73,6 +73,7 @@ import com.histmersion.plugin.CollectionUpdateEntry
 import com.histmersion.plugin.CollectionChange
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
@@ -143,10 +144,14 @@ object CollectionsService:
   /** A source collection, by the name the registry knows it under. */
   type CollectionName = CollectionName.T
   object CollectionName extends Newtype[String, Pure]
-  type SearchUnlinked = SearchUnlinked.T
-  object SearchUnlinked extends Newtype[Boolean, Pure]
-  type UpdateAllApply = UpdateAllApply.T
-  object UpdateAllApply extends Newtype[Boolean, Pure]
+  enum SearchUnlinked derives CanEqual:
+    case Unlinked, All
+  object SearchUnlinked extends TwoCases[SearchUnlinked]:
+    extension (searchUnlinked: SearchUnlinked) def searchUnlinked: Boolean = searchUnlinked == Unlinked
+  enum UpdateAllApply derives CanEqual:
+    case Apply, DryRun
+  object UpdateAllApply extends TwoCases[UpdateAllApply]:
+    extension (updateAllApply: UpdateAllApply) def updateAllApply: Boolean = updateAllApply == Apply
 
   /** The collection the library links its sources to (`sources.calibre_id`). */
   val Calibre: CollectionName = CollectionName("calibre")
@@ -284,8 +289,8 @@ object CollectionsService:
         unlinked: SearchUnlinked
     ): Either[Api.Error, CollectionSearch] =
       val max = limit.getOrElse(SearchLimit)
-      if q.isEmpty && !unlinked.value then Left(usage("give a query, or --unlinked"))
-      else if !unlinked.value then
+      if q.isEmpty && !unlinked.searchUnlinked then Left(usage("give a query, or --unlinked"))
+      else if !unlinked.searchUnlinked then
         lookup(name).flatMap(
           _.search(
             CollectionQuery(Some(CollectionQuery.Text(q.fold("")(_.value))), Some(CollectionQuery.Limit(max.value)))
@@ -338,7 +343,12 @@ object CollectionsService:
           case Left(e) if e.isNotFound => Right(None)
           case Left(e)                 => Left(e)
         target <- ImportTarget
-          .of(ck, ImportTarget.Id(req.id.value), ImportTarget.OfExplicit(req.citekey.isDefined), existing)
+          .of(
+            ck,
+            ImportTarget.Id(req.id.value),
+            (if req.citekey.isDefined then ImportTarget.OfExplicit.Explicit else ImportTarget.OfExplicit.Implicit),
+            existing
+          )
           .left
           .map(usageOf)
         record <- upsert(ck, item, target)
@@ -627,10 +637,10 @@ object CollectionsService:
       for
         c <- linking(name)
         ls <- links(linked(), Nil)
-        entries <- c.updateAll(ls, SourceCollection.UpdateAllApply(apply.value)).left.map(failed)
+        entries <- c.updateAll(ls, SourceCollection.UpdateAllApply(apply.updateAllApply)).left.map(failed)
       yield CollectionUpdateAll(
         entries.map(updateRow),
-        (if apply.value then CollectionUpdateAll.Applied.Applied else CollectionUpdateAll.Applied.Previewed)
+        (if apply.updateAllApply then CollectionUpdateAll.Applied.Applied else CollectionUpdateAll.Applied.Previewed)
       )
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

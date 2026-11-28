@@ -80,7 +80,7 @@ class GazetteerStoreSuite extends DbSuite:
       http,
       PlaceService(db, TestCreators.clock),
       PlaceGeometry(db)(using new SystemTimer),
-      dryRun = GazetteerControllers.DryRun(false),
+      dryRun = GazetteerControllers.DryRun.Applied,
       GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
     )
 

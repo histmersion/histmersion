@@ -11,6 +11,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Source
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Where an import writes, once the citekey is known. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -32,9 +33,10 @@ object ImportTarget:
   object Volume extends Newtype[Int, Pure]
   type Previous = Previous.T
   object Previous extends Newtype[String, Pure]
-
-  type OfExplicit = OfExplicit.T
-  object OfExplicit extends Newtype[Boolean, Pure]
+  enum OfExplicit derives CanEqual:
+    case Explicit, Implicit
+  object OfExplicit extends TwoCases[OfExplicit]:
+    extension (ofExplicit: OfExplicit) def ofExplicit: Boolean = ofExplicit == Explicit
 
   private val VolumeText = """(?i)\b(?:volume\s*|vol\.\s*|vol\s+)([0-9]+|[ivxlc]+)\b""".r
 
@@ -90,7 +92,7 @@ object ImportTarget:
     existing match
       case None                                           => Right(Create)
       case Some(Some(linked)) if linked.value == id.value => Right(Update(None))
-      case Some(linked) if explicit.value                 => Right(Update(linked))
+      case Some(linked) if explicit.ofExplicit            => Right(Update(linked))
       case Some(linked)                                   =>
         val what = linked.fold("a record that is not linked to Calibre")(l => s"the record of Calibre id $l")
         Left(

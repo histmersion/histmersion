@@ -58,7 +58,6 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
       ConverterClient.PageCount.Scanned(json.cursor.get[Int]("scanned").getOrElse(0))
     )).toOption
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def convert(
@@ -69,7 +68,7 @@ final class HttpConverterClient(cfg: => ConverterSettings, http: HttpClient)
     val boundary = "histmersion-" + java.util.UUID.randomUUID().toString.replace("-", "")
     val allowed = ConverterClient.timeoutFor(cfg, pages(file, filename), quality)
     (for
-      body <- multipart(boundary, file, filename, quality.value)
+      body <- multipart(boundary, file, filename, quality.highQuality)
       req = HttpRequest
         .newBuilder(URI.create(s"$base/convert"))
         .timeout(allowed)

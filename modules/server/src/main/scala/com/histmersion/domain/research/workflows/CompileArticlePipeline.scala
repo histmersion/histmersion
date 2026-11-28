@@ -49,6 +49,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -196,7 +197,7 @@ final class CompileArticlePipeline(
     }
 
   private def isCitekey(ck: Citekey): Boolean =
-    site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
+    site.sources.get(ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)).isRight
 
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -236,7 +237,7 @@ final class CompileArticlePipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def record(ck: Citekey): Option[String] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(Api.Error(_)).toOption.map { s =>
+    site.sources.get(ck, body = SourcesControllers.GetBody.WithBody).left.map(Api.Error(_)).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
         Option.when(s.findings.nonEmpty)("Findings:\n" + s.findings.map(f => s"- ${f.claim}").mkString("\n")),
@@ -270,7 +271,7 @@ final class CompileArticlePipeline(
                   AgentVerify.SourceBody(text),
                   AgentVerify.MinRatio(lib.verify.quoteMinRatio.value),
                   MaxClaims(research.compile.maxClaims.value),
-                  (if last.value then CompileArticle.Last.Last else CompileArticle.Last.More)
+                  (if last.lastAttempt then CompileArticle.Last.Last else CompileArticle.Last.More)
                 )
                 .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
             }
@@ -337,7 +338,7 @@ final class CompileArticlePipeline(
           t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined,
           ck =>
             site.sources
-              .get(ck, body = SourcesControllers.GetBody(false))
+              .get(ck, body = SourcesControllers.GetBody.WithoutBody)
               .left
               .map(Api.Error(_))
               .toOption
@@ -356,7 +357,7 @@ final class CompileArticlePipeline(
             ev,
             found.filter,
             corpus,
-            (if last.value then CompileArticle.Last.Last else CompileArticle.Last.More)
+            (if last.lastAttempt then CompileArticle.Last.Last else CompileArticle.Last.More)
           )
           .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
       }
@@ -380,8 +381,8 @@ final class CompileArticlePipeline(
       val _ = ctx.write("tasks item", item.asJson)(
         site.workLists.record(WorkListControllers.ListName("tasks"), item, ctx.creator).map(_ => ())
       )(Right(()))
-    if !decided.approved.value then
-      Right(Written(written = Written.Value(false), Rationale("the draft was rejected"), None))
+    if !decided.approved.approved then
+      Right(Written(written = Written.Value.Unwritten, Rationale("the draft was rejected"), None))
     else
       d.mode match
         case DraftMode.Create =>
@@ -389,7 +390,7 @@ final class CompileArticlePipeline(
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
             Right(
               Written(
-                written = Written.Value(false),
+                written = Written.Value.Unwritten,
                 Rationale("the slug was taken meanwhile"),
                 None
               )
@@ -409,11 +410,11 @@ final class CompileArticlePipeline(
                 .put(s.slug, put)
                 .left
                 .map(_.problems)
-                .map(_ => Written(written = Written.Value(true), Rationale("created"), None))
+                .map(_ => Written(written = Written.Value.Written, Rationale("created"), None))
             )(
               Right(
                 Written(
-                  written = Written.Value(false),
+                  written = Written.Value.Unwritten,
                   Rationale(AgentsMarkdown.DryRunNote),
                   None
                 )
@@ -438,7 +439,7 @@ final class CompileArticlePipeline(
             case Right(false) =>
               Right(
                 Written(
-                  written = Written.Value(false),
+                  written = Written.Value.Unwritten,
                   Rationale(AgentsMarkdown.DryRunNote),
                   None
                 )
@@ -446,7 +447,7 @@ final class CompileArticlePipeline(
             case Right(_) =>
               Right(
                 Written(
-                  written = Written.Value(true),
+                  written = Written.Value.Written,
                   Rationale("appended"),
                   site.articleStore.latestVersion(s.slug).map(v => Written.PreviousVersion(v.value))
                 )
@@ -457,7 +458,7 @@ final class CompileArticlePipeline(
               )
               Right(
                 Written(
-                  written = Written.Value(false),
+                  written = Written.Value.Unwritten,
                   Rationale("the article changed meanwhile"),
                   None
                 )
@@ -469,8 +470,8 @@ final class CompileArticlePipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def review(ctx: RunCtx, s: Snap, w: Written)(using WritePermit, Creator.New): Option[String] =
-    if !w.written.value || !ctx.run.params.chainReview.map(_.chainReview).getOrElse(research.compile.review.value) then
-      None
+    if !w.written.written || !ctx.run.params.chainReview.map(_.chainReview).getOrElse(research.compile.review.value)
+    then None
     else
       // the run's per-role models carry over to the roles the review uses
       val overrides =
@@ -495,7 +496,7 @@ final class CompileArticlePipeline(
   private def close(ctx: RunCtx, d: ArticleDraft, w: Written, review: Option[String])(using
       WritePermit
   )(using Creator.New): Either[Problems, String] =
-    if w.written.value then
+    if w.written.written then
       Pipelines
         .goalOf(ctx.run)
         .foreach(g =>
@@ -516,7 +517,7 @@ final class CompileArticlePipeline(
       CompileArticle
         .logLine(
           d,
-          (if w.written.value then CompileArticle.Written.Written else CompileArticle.Written.Unwritten),
+          (if w.written.written then CompileArticle.Written.Written else CompileArticle.Written.Unwritten),
           w.why,
           review.map(Run.Id.assume(_)),
           ctx.runId
@@ -567,7 +568,9 @@ object CompileArticlePipeline:
       derives JsonCodec
 
   object Written:
-    type Value = Value.T
-    object Value extends Newtype[Boolean, Pure]
+    enum Value derives CanEqual:
+      case Written, Unwritten
+    object Value extends TwoCases[Value]:
+      extension (value: Value) def written: Boolean = value == Written
     type PreviousVersion = PreviousVersion.T
     object PreviousVersion extends Newtype[Long, Pure]

@@ -18,6 +18,7 @@ import com.histmersion.domain.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Assembles the typed page models from the library's and research's controllers — the one impure step between the
   * database and [[Pages]]. Each page resolves its links with ONE [[ArticlesControllers.pageLinks]] call.
@@ -92,7 +93,7 @@ final class PageBuilder(
         cites = rows.filter(_.direction.value == "out").flatMap(entry),
         citedBy = rows.filter(_.direction.value == "in").flatMap(entry) ++ citingArticles,
         fullText =
-          if !full.value then FullText.Hidden
+          if !full.sourceFull then FullText.Hidden
           else
             s.ocrMarkdown
               .filter(_.value.trim.nonEmpty)
@@ -105,7 +106,7 @@ final class PageBuilder(
         List(
           s.summary.map(_.value),
           s.notes.map(_.value),
-          if full.value then s.ocrMarkdown.map(_.value) else None
+          if full.sourceFull then s.ocrMarkdown.map(_.value) else None
         ).flatten
           .mkString("\n\n")
       val links = articles.pageLinks(Article.Links.targets(WikiLinks.Body(md)))
@@ -146,5 +147,7 @@ final class PageBuilder(
     case None => html
 
 object PageBuilder:
-  type SourceFull = SourceFull.T
-  object SourceFull extends Newtype[Boolean, Pure]
+  enum SourceFull derives CanEqual:
+    case Full, SummaryOnly
+  object SourceFull extends TwoCases[SourceFull]:
+    extension (sourceFull: SourceFull) def sourceFull: Boolean = sourceFull == Full

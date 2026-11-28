@@ -173,7 +173,7 @@ class CandidateSearchSuite extends DbSuite:
     )
     val day = LocalDate.of(2026, 10, 24)
     val s = search(List(oa, cr), FakeAlerts(), day)
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
     assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
@@ -205,13 +205,13 @@ class CandidateSearchSuite extends DbSuite:
       if crFails then Left(Problem.Unclassified(Legacy.Text("HTTP 503"))) else Right(Nil)
     )
     val s1 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 1))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .toOption
       .get
     assertEquals(s1.added, 1)
     crFails = true
     val s2 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 24))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .toOption
       .get
     assertEquals((s2.added, s2.again, s2.unseen), (0, 1, 1))
@@ -235,13 +235,13 @@ class CandidateSearchSuite extends DbSuite:
       Right(List(work(Doi("10.5555/zzcand.a")), work(Doi("10.5555/zzcand.b"))))
     )
     val dry = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(true))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.DryRun)
       .toOption
       .get
     assertEquals((dry.added, dry.unseen, dry.dryRun), (2, 0, true))
     assertEquals(store.watches(Goal), Nil)
     val s = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .toOption
       .get
     assertEquals(s.unseen, 2)
@@ -258,7 +258,7 @@ class CandidateSearchSuite extends DbSuite:
     )
     // found again later: still decided, not new
     val again = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 25))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .toOption
       .get
     assertEquals((again.added, again.again, again.unseen), (0, 2, 0))
@@ -299,7 +299,7 @@ class CandidateSearchSuite extends DbSuite:
     )
     val alerts = FakeAlerts()
     val s = search(Nil, alerts, LocalDate.of(2026, 10, 24))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .toOption
       .get
     assertEquals(alerts.asked.toArray.toList, List("citing 10.5555/zzcand.src", "author A1", "author A3"))
@@ -317,7 +317,7 @@ class CandidateSearchSuite extends DbSuite:
       search(Nil, alerts, LocalDate.of(2026, 10, 24))
         .sweep(
           domain.automation.Goal.Slug("zzcand-nowhere"),
-          dryRun = CandidateSearch.SweepDryRun(false)
+          dryRun = CandidateSearch.SweepDryRun.Applied
         )
         .isLeft
     )
@@ -361,7 +361,7 @@ class CandidateSearchSuite extends DbSuite:
       }
     val core = Throttled()
     val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(false))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.Applied)
       .toOption
       .get
     assertEquals(core.asked.size, 1, "asked once, then left out")
@@ -382,7 +382,7 @@ class CandidateSearchSuite extends DbSuite:
       override def unavailable = Some(Problem.Unclassified(Legacy.Text("CORE's daily budget for searches is spent")))
       def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) = fail("asked")
     val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24))
-      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun(true))
+      .sweep(Goal, dryRun = CandidateSearch.SweepDryRun.DryRun)
       .toOption
       .get
     assert(

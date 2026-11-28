@@ -16,6 +16,7 @@ import com.histmersion.util.time.Timer
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problems
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The registered checks as REST, MCP and the CLI reach them: the lint report (an unknown rule name is a 400: a typo
   * must never read as a clean corpus), the safe fixes (a write, under the maintenance guard) and the report after them.
@@ -63,18 +64,19 @@ final class CheckControllers(
   /** Lint, optionally after applying the safe fixes — what `histmersion lint --fix` and the MCP tool do, so the report
     * the caller sees is the state AFTER the repair.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def lintWithFix(rules: List[CheckRule.Name], fix: CheckControllers.ApplyFix): Either[Api.Error, LintReport] =
-    if !fix.value then lint(rules).left.map(Api.Error(_))
+    if !fix.applyFix then lint(rules).left.map(Api.Error(_))
     else
       guardedLintFix(rules).flatMap(f =>
         lint(rules).left.map(Api.Error(_)).map(_.modify(_.fixed).setTo(f.applied.map(a => LintReport.Fixed(a.value))))
       )
 
 object CheckControllers:
-  type ApplyFix = ApplyFix.T
-  object ApplyFix extends Newtype[Boolean, Pure]
+  enum ApplyFix derives CanEqual:
+    case Apply, DryRun
+  object ApplyFix extends TwoCases[ApplyFix]:
+    extension (applyFix: ApplyFix) def applyFix: Boolean = applyFix == Apply

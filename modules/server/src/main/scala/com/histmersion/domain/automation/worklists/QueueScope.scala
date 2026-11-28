@@ -2,6 +2,7 @@ package com.histmersion
 package domain.automation.worklists
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** Which items of a list a listing shows. Every scope reads in id order; only [[All]] shows the `note` blocks. */
 enum QueueScope:
@@ -32,5 +33,7 @@ object QueueScope:
     object Goal extends Newtype[String, Pure]
     type Linked = Linked.T
     object Linked extends Newtype[String, Pure]
-    type WithDone = WithDone.T
-    object WithDone extends Newtype[Boolean, Pure]
+    enum WithDone derives CanEqual:
+      case WithDone, OpenOnly
+    object WithDone extends TwoCases[WithDone]:
+      extension (withDone: WithDone) def withDone: Boolean = withDone == WithDone

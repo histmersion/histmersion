@@ -595,13 +595,13 @@ final class ReviewArticlePipeline(
     t => resolve(WikiLinks.Occurrence.Target(t.value)).isDefined
 
   private def isCitekey(ck: Citekey): Boolean =
-    site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).isRight
+    site.sources.get(ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def recordText(ck: Citekey): Option[AgentVerify.SourceBody] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(true)).left.map(Api.Error(_)).toOption.map { s =>
+    site.sources.get(ck, body = SourcesControllers.GetBody.WithBody).left.map(Api.Error(_)).toOption.map { s =>
       AgentVerify.SourceBody(
         (s.source.summary.toList.map(_.value) ++ s.findings.map(_.claim.value) ++ s.source.notes.toList.map(_.value) ++
           s.source.ocrMarkdown.toList.map(_.value)).mkString("\n\n")
@@ -685,7 +685,7 @@ final class ReviewArticlePipeline(
             checked(
               checkRules(
                 a,
-                (if last.value then LastRound.Last else LastRound.More),
+                (if last.lastAttempt then LastRound.Last else LastRound.More),
                 evidenceCheck(isCitekey, records(), minRatio),
                 prior(Reviewer.Rules),
                 spotRule(s, calls),
@@ -703,7 +703,11 @@ final class ReviewArticlePipeline(
             ResearchAnswers.coldReader
           )((a, last) =>
             checked(
-              checkColdReader(a, (if last.value then LastRound.Last else LastRound.More), prior(Reviewer.ColdReader))
+              checkColdReader(
+                a,
+                (if last.lastAttempt then LastRound.Last else LastRound.More),
+                prior(Reviewer.ColdReader)
+              )
             )
           ),
         () =>
@@ -717,7 +721,7 @@ final class ReviewArticlePipeline(
             checked(
               checkSkeptic(
                 a,
-                (if last.value then LastRound.Last else LastRound.More),
+                (if last.lastAttempt then LastRound.Last else LastRound.More),
                 isCitekey,
                 records(),
                 minRatio,
@@ -798,7 +802,7 @@ final class ReviewArticlePipeline(
               prior,
               edited.text,
               ev,
-              (if last.value then LastRound.Last else LastRound.More),
+              (if last.lastAttempt then LastRound.Last else LastRound.More),
               s.critiques
             )
           )
@@ -948,7 +952,7 @@ final class ReviewArticlePipeline(
           isCitekey,
           records(),
           minRatio,
-          (if last.value then LastRound.Last else LastRound.More),
+          (if last.lastAttempt then LastRound.Last else LastRound.More),
           s.coverage,
           s.critiques,
           Some(guards)
@@ -1081,7 +1085,7 @@ final class ReviewArticlePipeline(
       st.unwritten
         .orElse(
           site.articles
-            .get(slug, brief = ArticlesControllers.GetBrief(true))
+            .get(slug, brief = ArticlesControllers.GetBrief.Brief)
             .toOption
             .map(v => ReviewArticle.Fix.Body(v.article.body.value))
         )

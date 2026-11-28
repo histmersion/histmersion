@@ -45,6 +45,8 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
+import com.histmersion.TwoCases
 
 /** The run pool: `agents.max-concurrent-runs` workers draining a queue of run ids, on one daemon thread hosting an Ox
   * scope (the same arrangement as the OCR [[com.histmersion.server.Jobs]]). Runs are durable — `jobs` + `agent_steps` —
@@ -137,15 +139,16 @@ final class Engine(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pruneTrace(
-      force: Engine.PruneTraceForce = Engine.PruneTraceForce(false),
+      force: Engine.PruneTraceForce = Engine.PruneTraceForce.Safe,
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(agents.clock.millis())
   )(using WritePermit): RowCount =
     val every = math.max(1, cfg.trace.pruneEveryMinutes.value).toLong * 60000L
     val last = lastPrune.get()
-    if cfg.trace.keepMessagesDays.value <= 0 || (!force.value && now.value - last < every) || !lastPrune.compareAndSet(
-        last,
-        now.value
-      )
+    if cfg.trace.keepMessagesDays.value <= 0 || (!force.pruneTraceForce && now.value - last < every) || !lastPrune
+        .compareAndSet(
+          last,
+          now.value
+        )
     then RowCount(0)
     else
       try RowCount(agents.runs.pruneMessages(RunService.RetentionDays(cfg.trace.keepMessagesDays.value)).value)
@@ -178,10 +181,14 @@ final class Engine(
     val procs: java.util.Set[Process] = ConcurrentHashMap.newKeySet[Process]()
 
   object Control:
-    type Pause = Pause.T
-    object Pause extends Newtype[Boolean, Pure]
-    type Cancel = Cancel.T
-    object Cancel extends Newtype[Boolean, Pure]
+    enum Pause derives CanEqual:
+      case Pause, Resume
+    object Pause extends TwoCases[Pause]:
+      extension (pause: Pause) def pause: Boolean = pause == Pause
+    enum Cancel derives CanEqual:
+      case Cancel, Continue
+    object Cancel extends TwoCases[Cancel]:
+      extension (cancel: Cancel) def cancel: Boolean = cancel == Cancel
     type LastBeat = LastBeat.T
     object LastBeat extends Newtype[Long, Pure]
     type Persisted = Persisted.T
@@ -276,7 +283,7 @@ final class Engine(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start()(using WritePermit)(using Creator.New): Int =
     val (paused, queued) = reconcile()
-    logPruned(pruneTrace(force = Engine.PruneTraceForce(true)))
+    logPruned(pruneTrace(force = Engine.PruneTraceForce.Force))
     queued.foreach(submit)
     if scope.isEmpty then
       stopping = false
@@ -806,13 +813,16 @@ object Engine:
   object Stall extends Newtype[String, Pure]
 
   /** How long a run waits for a slot before it beats again (waiting behind other runs is not a stall). */
-
-  type PruneTraceForce = PruneTraceForce.T
-  object PruneTraceForce extends Newtype[Boolean, Pure]
+  enum PruneTraceForce derives CanEqual:
+    case Force, Safe
+  object PruneTraceForce extends TwoCases[PruneTraceForce]:
+    extension (pruneTraceForce: PruneTraceForce) def pruneTraceForce: Boolean = pruneTraceForce == Force
   type BeatSeq = BeatSeq.T
   object BeatSeq extends Newtype[Int, Pure]
-  type CapKeyOverridden = CapKeyOverridden.T
-  object CapKeyOverridden extends Newtype[Boolean, Pure]
+  enum CapKeyOverridden derives CanEqual:
+    case Overridden, Default
+  object CapKeyOverridden extends TwoCases[CapKeyOverridden]:
+    extension (capKeyOverridden: CapKeyOverridden) def capKeyOverridden: Boolean = capKeyOverridden == Overridden
 
   val BeatWhileWaitingSeconds = 30L
 
@@ -838,9 +848,8 @@ object Engine:
   /** The setting that sets a step's output cap: `agents.step.max-tokens`, unless the pipeline passed the step its own
     * cap (the fixer's and the writer's).
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ceiling(overridden: CapKeyOverridden): Problem.Run.Ceiling =
-    if overridden.value then Problem.Run.Ceiling.StepOwn else Problem.Run.Ceiling.StepMaxTokens
+    if overridden.capKeyOverridden then Problem.Run.Ceiling.StepOwn else Problem.Run.Ceiling.StepMaxTokens
 
   private val OutputCap = "exceeded the (\\d+) output token maximum".r
 

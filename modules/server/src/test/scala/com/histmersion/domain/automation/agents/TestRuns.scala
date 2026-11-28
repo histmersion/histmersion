@@ -56,7 +56,7 @@ object TestRuns:
       goal: Option[Goal.Slug] = None,
       parent: Option[Run.Id] = None,
       origin: Origin = Origin.Person,
-      dryRun: RunService.DryRun = RunService.DryRun(false)
+      dryRun: RunService.DryRun = RunService.DryRun.Applied
   ): RunInfo =
     val id = runs(ds).create(
       RunService
@@ -147,7 +147,7 @@ object TestRuns:
       a.config,
       ck =>
         h.library.sources
-          .get(ck, body = SourcesControllers.GetBody(false))
+          .get(ck, body = SourcesControllers.GetBody.WithoutBody)
           .left
           .map(Api.Error(_))
           .toOption
