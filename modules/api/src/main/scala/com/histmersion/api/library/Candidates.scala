@@ -76,7 +76,7 @@ object Candidates:
       .modify(_.venue)
       .setTo(a.venue.orElse(b.venue))
       .modify(_.isOa)
-      .setTo(WorkRef.IsOa(a.isOa.value || b.isOa.value))
+      .setTo((if a.isOa.isOa || b.isOa.isOa then WorkRef.IsOa.OpenAccess else WorkRef.IsOa.Closed))
       .modify(_.abstractText)
       .setTo(a.abstractText.orElse(b.abstractText))
       .modify(_.arxivId)
@@ -104,7 +104,8 @@ object Candidates:
           .filled
           .orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption))
           .map(Source.Venue.apply),
-        isOa = Source.Candidate.IsOa(c.downField("isOpenAccess").filled.contains("Y")),
+        isOa = (if c.downField("isOpenAccess").filled.contains("Y") then Source.Candidate.IsOa.OpenAccess
+                else Source.Candidate.IsOa.Closed),
         abstractText = c
           .downField("abstractText")
           .filled
@@ -135,7 +136,7 @@ object Candidates:
           .flatMap(a => a.cursor.downField("name").filled))
           .map((com).histmersion.api.library.AuthorName.apply),
         venue = (c.downField("publisher").filled).map((com).histmersion.api.library.Venue.apply),
-        isOa = WorkRef.IsOa(c.downField("downloadUrl").filled.isDefined),
+        isOa = (if c.downField("downloadUrl").filled.isDefined then WorkRef.IsOa.OpenAccess else WorkRef.IsOa.Closed),
         abstractText = c.downField("abstract").filled.map(WorkRef.AbstractText(_)),
         arxivId = c.downField("arxivId").filled.map(WorkRef.ArxivId(_))
       )
@@ -164,7 +165,7 @@ object Candidates:
           .map(AuthorName.apply),
         doi = (tag((e), ("arxiv:doi"))).map((com).histmersion.api.library.Doi.apply),
         venue = (Some("arXiv")).map(Source.Venue.apply),
-        isOa = WorkRef.IsOa(true),
+        isOa = WorkRef.IsOa.OpenAccess,
         abstractText = tag(e, "summary").map(unescape).map(WorkRef.AbstractText(_))
       )
     }

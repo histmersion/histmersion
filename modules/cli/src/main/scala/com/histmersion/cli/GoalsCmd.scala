@@ -89,7 +89,7 @@ object GoalsCmd:
           )
         case Command.Unlink(slug, kind, ref) =>
           c.call(AgentsApi.removeGoalLink)((ReviewGoal.Slug(slug), kind, Citekey(ref)))
-            .map(r => Cli.out.println(if r.removed.value then "unlinked" else "there was no such link"))
+            .map(r => Cli.out.println(if r.removed.removed then "unlinked" else "there was no such link"))
         case Command.Schedules() =>
           c.call(AgentsApi.schedules)(()).map(ss => Cli.out.println(AgentsMarkdown.schedules(ss)))
         case Command.Link(slug, kind, ref, note) =>
@@ -98,7 +98,7 @@ object GoalsCmd:
           ).map(l => Cli.out.println(AgentsMarkdown.linkLine(l)))
         case Command.Schedule(slug, kind, ScheduleChange.Remove) =>
           c.call(AgentsApi.removeSchedule)((ReviewGoal.Slug(slug), kind))
-            .map(r => Cli.out.println(if r.removed.value then "removed" else "there was no such schedule"))
+            .map(r => Cli.out.println(if r.removed.removed then "removed" else "there was no such schedule"))
         case Command.Schedule(slug, kind, ScheduleChange.Set(cron, off, budget)) =>
           c.call(AgentsApi.setSchedule)(
             (
@@ -106,7 +106,7 @@ object GoalsCmd:
               kind,
               ScheduleSet(
                 ScheduleSet.Cron(cron),
-                enabled = ScheduleSet.Enabled(!off),
+                enabled = (if !off then ScheduleSet.Enabled.Enabled else ScheduleSet.Enabled.Disabled),
                 budget.map(ScheduleSet.BudgetUsd(_))
               )
             )

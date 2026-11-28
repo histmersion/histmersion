@@ -201,7 +201,7 @@ class SourcesControllersSuite extends munit.FunSuite:
       Right(List("/spool/zqa1990_walls.pdf"))
     )
     assertEquals(c.get(Walls90).left.map(Api.Error(_)).isRight, true)
-    val gone = c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).toOption.get
+    val gone = c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply)).toOption.get
     assertEquals((gone.applied, gone.filesFailed, removed.get), (true, Nil, List("/spool/zqa1990_walls.pdf")))
     assertEquals(
       c.get(Walls90).left.map(Api.Error(_)).left.map(_.problems.head).left.map(_.sentence),
@@ -218,7 +218,7 @@ class SourcesControllersSuite extends munit.FunSuite:
           c.put(Cove, put).isLeft,
           c.patch(Walls90, Source.Patch(summary = Some(Source.Summary("x")))).isLeft,
           c.rename(Walls90, Rename.Request(Walls91)).isLeft,
-          c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).isLeft,
+          c.delete(Walls90, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply)).isLeft,
           c.fix(Walls90).isLeft,
           c.importNote(NoteImport(NoteImport.Text("---\ncitekey: zqn2000_n\ntitle: N\n---\n"))).isLeft
         )

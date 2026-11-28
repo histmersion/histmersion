@@ -56,7 +56,7 @@ final case class HeldPlace(
       place.period.map(_.end),
       place.source,
       namesAt(None),
-      Place.Summary.Contested(contested),
+      (if contested then Place.Summary.Contested.Contested else Place.Summary.Contested.Settled),
       Place.Dating.Stated,
       None
     )

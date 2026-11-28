@@ -399,11 +399,12 @@ private[places] object PlaceRepo:
         kids(id, asOf, Limit(Int.MaxValue), modernFrom).toList,
         Place.Counts.Findings(r.findings.value),
         asOf.map(y => Year(y.value)),
-        Place.Entry.Contested(r.contested.value),
+        (if r.contested.contested then Place.Entry.Contested.Contested else Place.Entry.Contested.Settled),
         fps,
         lks,
         tps,
-        hasBoundary = Place.Entry.HasBoundary(r.hasBoundary.value),
+        hasBoundary =
+          (if r.hasBoundary.value then Place.Entry.HasBoundary.Bounded else Place.Entry.HasBoundary.Unbounded),
         descriptions = descriptionsOf(id),
         timeBasis = r.timeBasis,
         locationPrecision = r.precision.transformInto[Place.Precision],
@@ -785,7 +786,7 @@ private[places] object PlaceRepo:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def pickVersionSql(w: GeoTime.Within): Frag =
     val (lo, hi) = (sql"${w.from.literal}::bigint", sql"${w.to.literal}::bigint")
-    val (edge, anchor) = if w.latest.value then (sql"ee", sql"max") else (sql"es", sql"min")
+    val (edge, anchor) = if w.latest.latest then (sql"ee", sql"max") else (sql"es", sql"min")
     sql", kept AS (SELECT live.*, greatest($lo, coalesce(${RangeSql.start(sql"per")}, $lo)) AS es, least($hi, coalesce(${RangeSql.end(sql"per")}, $hi)) AS ee FROM live WHERE id NOT IN (SELECT id FROM shadowed)), shown AS (SELECT id, kind, tier, norm, area, bb, basis FROM (SELECT kept.*, $anchor($edge) OVER (PARTITION BY kind, coalesce(nullif(norm, ''), id)) AS anchor FROM kept) v WHERE v.$edge = v.anchor)"
 
   /** `GET /api/places/geo` — a FeatureCollection for the map. When `asOf` is given, each state is drawn ONCE: of shapes
@@ -1120,9 +1121,10 @@ private[places] object PlaceRepo:
       Place.NameChanged.Label(label.value),
       Place.NameChanged.Name(name.value),
       Place.NameChanged.Lang(lang.value),
-      added = Place.NameChanged.Added(added),
-      changed = Place.NameChanged.Changed(changed),
-      wasImported = Place.NameChanged.WasImported(wasImported)
+      added = (if added then Place.NameChanged.Added.Added else Place.NameChanged.Added.Kept),
+      changed = (if changed then Place.NameChanged.Changed.Changed else Place.NameChanged.Changed.Unchanged),
+      wasImported =
+        (if wasImported then Place.NameChanged.WasImported.Imported else Place.NameChanged.WasImported.Local)
     )
 
   /** Give place `id` the name `name` in `lang`, as a MANUAL name (V068): no import deletes it. A name the place already

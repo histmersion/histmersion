@@ -215,7 +215,7 @@ final class SourcesControllers(
   )
   def delete(citekey: Citekey, req: Source.DeleteRequest)(using Creator.New): Either[Api.Error, Source.Deletion] =
     val ck = current(AliasKinds.SourceRecords, citekey)
-    if !req.apply.value then
+    if !req.apply.applies then
       sources
         .deletion(ck)
         .map(p => p.deletion.modify(_.files).setTo(originals.find(p).map(f => Source.Deletion.Files(f.value))))
@@ -279,7 +279,7 @@ final class SourcesControllers(
               case Right(ck)     =>
                 if sources.aliasOf(ck).isDefined then
                   notAnAlias(ck).map(_ => SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), Nil))
-                else if !req.force.value && req.mtime.exists(m =>
+                else if !req.force.force && req.mtime.exists(m =>
                     SeedImport.isStale(sources.updatedAtMillis, ck, SeedNote.ModifiedMillis(m.value))
                   )
                 then
@@ -499,7 +499,7 @@ final class SourcesControllers(
             ck,
             sources.bodyChunks(ck),
             PassageFinder.Query(q.q.value),
-            PassageFinder.Regex(q.regex.value),
+            PassageFinder.Regex(q.regex.regex),
             PassageFinder.Limit(lim.limitOf(q.limit.map(l => PassageLimits.Limit(l.value))).value),
             PassageFinder.ContextChars(lim.contextOf(q.context.map(c => PassageLimits.Context(c.value))).value),
             PassageFinder.MaxMatches(lim.maxMatches.value),

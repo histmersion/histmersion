@@ -284,7 +284,7 @@ class DataTreeOracleSuite extends DbSuite:
       (Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(4L), Basemap.Tile.Row(3L))
     )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
-    assert(svc.status.available.value)
+    assert(svc.status.available.available)
     assert(
       svc
         .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("crete"))))

@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 /** @param lendingOnly
   *   the item must be borrowed on archive.org; it is never downloaded (no DRM circumvention)
@@ -18,7 +19,7 @@ final case class ArchiveItem(
     year: Option[Year] = None,
     publisher: Option[ArchiveItem.Publisher] = None,
     description: Option[ArchiveItem.Description] = None,
-    lendingOnly: ArchiveItem.LendingOnly = ArchiveItem.LendingOnly(false),
+    lendingOnly: ArchiveItem.LendingOnly = ArchiveItem.LendingOnly.Public,
     files: List[ArchiveFile] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
@@ -34,5 +35,7 @@ object ArchiveItem:
   object Publisher extends Newtype[String, Pure]
   type Description = Description.T
   object Description extends Newtype[String, Pure]
-  type LendingOnly = LendingOnly.T
-  object LendingOnly extends Newtype[Boolean, Pure]
+  enum LendingOnly derives CanEqual:
+    case LendingOnly, Public
+  object LendingOnly extends TwoStates[LendingOnly]:
+    extension (lendingOnly: LendingOnly) def lendingOnly: Boolean = lendingOnly == LendingOnly

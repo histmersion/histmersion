@@ -509,7 +509,7 @@ class CatalogueOracleSuite extends DbSuite:
         Caller.Local,
         EventImportRequest(
           EventImportRequest.Provider("gvp"),
-          dryRun = EventImportRequest.DryRun(false),
+          dryRun = EventImportRequest.DryRun.Apply,
           from = Some(EventImportRequest.From(-2000)),
           to = Some(EventImportRequest.To(-1000))
         )

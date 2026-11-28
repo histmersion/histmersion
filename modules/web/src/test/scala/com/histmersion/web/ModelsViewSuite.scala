@@ -52,7 +52,7 @@ class ModelsViewSuite extends munit.FunSuite:
       ModelChains.LimitStatus.Used(250),
       ModelChains.LimitStatus.Remaining(750),
       ModelChains.LimitStatus.Reserve(0),
-      usable = ModelChains.LimitStatus.Usable(true)
+      usable = ModelChains.LimitStatus.Usable.Usable
     )
     assertEquals(ModelsView.usedPct(l), 25)
     assertEquals(ModelsView.usedPct(l.modify(_.used).setTo(LimitStatus.Used(5000.0))), 100)
@@ -60,8 +60,8 @@ class ModelsViewSuite extends munit.FunSuite:
       ModelsView.entryState(
         ChainEntry(
           ModelChains.ChainEntry.Model("local:a"),
-          ready = ModelChains.ChainEntry.Ready(true),
-          usable = ModelChains.ChainEntry.Usable(true)
+          ready = ModelChains.ChainEntry.Ready.Ready,
+          usable = ModelChains.ChainEntry.Usable.Usable
         )
       ),
       "is-usable"
@@ -70,8 +70,8 @@ class ModelsViewSuite extends munit.FunSuite:
       ModelsView.entryState(
         ChainEntry(
           ModelChains.ChainEntry.Model("local:a"),
-          ready = ModelChains.ChainEntry.Ready(true),
-          usable = ModelChains.ChainEntry.Usable(false)
+          ready = ModelChains.ChainEntry.Ready.Ready,
+          usable = ModelChains.ChainEntry.Usable.Unusable
         )
       ),
       "is-paused"
@@ -80,8 +80,8 @@ class ModelsViewSuite extends munit.FunSuite:
       ModelsView.entryState(
         ChainEntry(
           ModelChains.ChainEntry.Model("local:a"),
-          ready = ModelChains.ChainEntry.Ready(false),
-          usable = ModelChains.ChainEntry.Usable(false)
+          ready = ModelChains.ChainEntry.Ready.Unready,
+          usable = ModelChains.ChainEntry.Usable.Unusable
         )
       ),
       "is-unready"
@@ -93,7 +93,7 @@ class ModelsViewSuite extends munit.FunSuite:
           ModelChains.SettingSource.Wire("saved"),
           ModelChains.AllowanceStatus.ReservePct(0),
           List(l, l.modify(_.limit).setTo(ModelChains.LimitStatus.Limit("5 usd/1d"))),
-          usable = ModelChains.AllowanceStatus.Usable(true)
+          usable = ModelChains.AllowanceStatus.Usable.Usable
         )
       ),
       "1k tokens/1h, 5 usd/1d"
@@ -125,8 +125,8 @@ class ModelsViewSuite extends munit.FunSuite:
       PlanQuota.WindowStatus.UsedPct(62.4),
       PlanQuota.WindowStatus.LeftPct(37.6),
       PlanQuota.WindowStatus.Floor(25),
-      usable = PlanQuota.WindowStatus.Usable(true),
-      stale = PlanQuota.WindowStatus.Stale(false),
+      usable = PlanQuota.WindowStatus.Usable.Usable,
+      stale = PlanQuota.WindowStatus.Stale.Fresh,
       Some(PlanQuota.WindowStatus.ResetsAt("2026-10-05T21:40:00Z")),
       PlanQuota.WindowStatus.ObservedAt("2026-10-05T19:00:00Z"),
       PlanQuota.WindowStatus.AgeSeconds(90),

@@ -64,7 +64,8 @@ object App:
       Viewport.init(ui)
       MobileChrome.install()
       Auth.start(ui.keyRequired)
-      RunsView.enabled.set((if ui.agentsEnabled.value then RunsView.Enabled.Enabled else RunsView.Enabled.Disabled))
+      RunsView.enabled.set((if ui.agentsEnabled.agentsEnabled then RunsView.Enabled.Enabled
+                            else RunsView.Enabled.Disabled))
       Notices.install(ui)
       MergeView.configure(ui)
       MapRegionsView.configure(ui)
@@ -74,7 +75,7 @@ object App:
       Router.init()
       MyItems.load()
       // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
-      if ui.setupDue.value && Router.now() != Route.Setup && !SetupPage.left then
+      if ui.setupDue.setupDue && Router.now() != Route.Setup && !SetupPage.left then
         Router.go(Route.Setup, push = Router.Push.Replace)
       val appEl = div(
         cls := "histmersion-app",

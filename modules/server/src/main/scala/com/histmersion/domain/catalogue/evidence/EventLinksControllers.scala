@@ -227,7 +227,7 @@ final class EventLinksControllers(
     maintenance.guard(WriteGate.OperationName("event_links")) {
       eventOrFail(id).map { d =>
         val eid = idOf(d)
-        if req.recompute.value then compute(d)
+        if req.recompute.recompute then compute(d)
         val names = namesOf(d)
         val existing = attestations
           .list(
@@ -333,11 +333,11 @@ final class EventLinksControllers(
         jobs.start(
           EventLinksControllers.CandidatesJobKind,
           JobKinds.Subject(
-            s"candidate links of ${if req.all.value then "every event" else "the events not checked yet"}"
+            s"candidate links of ${if req.all.all then "every event" else "the events not checked yet"}"
           )
         ) { (_, progress) =>
           val ids = links.eventsToCheck(
-            if req.all.value then EventsToCheck.Every else EventsToCheck.Unchecked,
+            if req.all.all then EventsToCheck.Every else EventsToCheck.Unchecked,
             req.limit.flatMap(l => PageSize.option(l.value)).getOrElse(PageSize(Int.MaxValue))
           )
           // `var`s: the counts of the walk
@@ -398,7 +398,7 @@ final class EventLinksControllers(
       place,
       EventSql.Narrow(
         Some(EventSql.Narrow.Tier(q.tier.fold(EventTier.Catalogue)(_.value))),
-        context = EventSql.Narrow.Context(q.context.fold(true)(_.value)),
+        context = EventSql.Narrow.Context(q.context.fold(true)(_.context)),
         q.area.flatMap(a => BBox.parse(BBox.Text(a.value)))
       )
     )

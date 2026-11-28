@@ -55,7 +55,7 @@ object PeriodsCmd:
           c.period(Period.Id(id)).map(d => Cli.out.println(PeriodsMarkdown.detail(d)))
         case Command.Seed(file, replace) =>
           val r = file.map(Path.of(_)) match
-            case None               => c.seedPeriods(Api.Overwrite(replace))
+            case None               => c.seedPeriods((if replace then Api.Overwrite.Overwrite else Api.Overwrite.Keep))
             case Some(_) if replace =>
               Left(
                 Cli.Error(
@@ -76,7 +76,7 @@ object PeriodsCmd:
           c.fetchPeriods(PeriodsApi.Source(source), cols.map(PeriodsApi.Collection(_)))
             .map(r => Cli.out.println(PeriodsMarkdown.imported(r)))
         case Command.Init(fetch, following) =>
-          c.init(Api.Overwrite(fetch)).flatMap { j =>
+          c.init((if fetch then Api.Fetching.Fetch else Api.Fetching.BundledOnly)).flatMap { j =>
             Cli.out.println(s"init job `${j.id}` started (`histmersion jobs` lists it)")
             following.follow(IngestCmd.pollJob(c, j.id, 0))
           }

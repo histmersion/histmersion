@@ -357,7 +357,7 @@ object Preview:
   def card(d: PlaceDetail): Card =
     val p = d.place
     val contested =
-      Option.when(d.contested.value && !p.label.value.toLowerCase.contains("contested"))("contested extent")
+      Option.when(d.contested.contested && !p.label.value.toLowerCase.contains("contested"))("contested extent")
     val description = d.descriptions match
       case Nil           => None
       case first :: rest =>
@@ -610,11 +610,11 @@ object Preview:
   def fetch(t: Target): Future[Card] = t match
     case Target.Source(ck) =>
       cached(sourceCache, CacheKey(ck.value))(
-        ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false)).map(card)
+        ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText.SummaryOnly).map(card)
       )
     case Target.Article(slug) =>
       cached(articleCache, CacheKey(slug.value))(
-        ApiClient.getArticle(slug, brief = Article.FullText(true)).map(card)
+        ApiClient.getArticle(slug, brief = Article.FullText.FullText).map(card)
       )
     case Target.Place(id, asOf) =>
       cached(placeCache, CacheKey(s"$id@${asOf.map(_.value.toString).getOrElse("")}"))(
@@ -622,7 +622,7 @@ object Preview:
           .place(
             Place.Id(id.value),
             asOf.map(a => Api.AggregateQuery.AsOf(a.value)),
-            counts = Place.Detail(true)
+            counts = Place.Detail.Detail
           )
           .map(card)
       )

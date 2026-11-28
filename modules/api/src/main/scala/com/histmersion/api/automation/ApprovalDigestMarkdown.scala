@@ -42,10 +42,10 @@ object ApprovalDigestMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def bulk(r: BulkResult): String =
-    val verb = if r.dryRun.value then s"would ${r.decision}"
+    val verb = if r.dryRun.dryRun then s"would ${r.decision}"
     else if r.decision.value == "approve" then "approved"
     else "rejected"
-    s"# ${Plural.count(Plural.CountN(r.matched.value.toLong), Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun.value
+    s"# ${Plural.count(Plural.CountN(r.matched.value.toLong), Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun.dryRun
                                                                                                                                            then
                                                                                                                                              " (dry run: nothing decided)"
                                                                                                                                            else

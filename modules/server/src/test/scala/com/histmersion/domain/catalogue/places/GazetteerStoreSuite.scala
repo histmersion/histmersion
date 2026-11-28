@@ -130,7 +130,7 @@ class GazetteerStoreSuite extends DbSuite:
     // the names the server takes, and what it says to one it does not know
     val h = ServerWiring(Deps(cfg, ds))
     sb ++= s"## names\ninit.fetch-sources: ${Bootstrap.sources.mkString(", ")}\n"
-    sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(Caller.Local, Api.ExternalPlaces.Source("nowhere"), dryRun = Api.Apply(true)).left.map(e => s"Error(${e.problems.sentences.mkString("; ")},${e.code})")}\n"
+    sb ++= s"places fetch nowhere: ${h.gazetteer.fetch(Caller.Local, Api.ExternalPlaces.Source("nowhere"), apply = Api.Apply.DryRun).left.map(e => s"Error(${e.problems.sentences.mkString("; ")},${e.code})")}\n"
     sb.result()
 
   private val transcriptFile = Path.of("modules/server/src/test/resources/traffic/gazetteers-stored.txt")

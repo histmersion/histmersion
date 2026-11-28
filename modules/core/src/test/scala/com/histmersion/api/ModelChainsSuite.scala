@@ -218,11 +218,11 @@ class ModelChainsSuite extends munit.FunSuite:
     val s = limitState(l, ModelChains.Allowance.ReservePct(0), spends, LimitState.Now(now))
     assertEquals(s.used, BigDecimal(700)) // the one two hours ago has left the window
     assertEquals(s.remaining, BigDecimal(300))
-    assert(s.usable.value)
+    assert(s.usable.usable)
     // a 40% reserve: 400 must stay, so 700 used is over the line
     val r = limitState(l, ModelChains.Allowance.ReservePct(40), spends, LimitState.Now(now))
     assertEquals(r.reserve, BigDecimal(400))
-    assert(!r.usable.value)
+    assert(!r.usable.usable)
 
   test("freesAt: when enough of the window's oldest spend has aged out"):
     val l = Limit(BigDecimal(1000), Measure.Tokens, Window(ModelChains.Window.Seconds(3600)))
@@ -232,7 +232,7 @@ class ModelChainsSuite extends munit.FunSuite:
       Spend(Spend.At(now - 10 * 60000L), ModelChains.Spend.Tokens(500), 0)
     )
     val s = limitState(l, ModelChains.Allowance.ReservePct(0), spends, LimitState.Now(now))
-    assert(!s.usable.value)
+    assert(!s.usable.usable)
     // the 600 leaves the window 10 minutes from now: 500 < 1000 then
     assertEquals(s.freesAt, Some(now + 10 * 60000L))
     // with a 60% reserve (threshold 400) the 500 must leave too: 50 minutes from now
@@ -254,7 +254,7 @@ class ModelChainsSuite extends munit.FunSuite:
       limitState(day, ModelChains.Allowance.ReservePct(0), spends, LimitState.Now(now)),
       limitState(hour, ModelChains.Allowance.ReservePct(0), spends, LimitState.Now(now))
     )
-    assert(!ss.head.usable.value && !ss(1).usable.value)
+    assert(!ss.head.usable.usable && !ss(1).usable.usable)
     val (ok, frees) = verdict(ss)
     assert(!ok)
     assertEquals(frees, Some(now - 20 * H + 86400L * 1000L), "the day limit frees last")
@@ -278,14 +278,14 @@ class ModelChainsSuite extends munit.FunSuite:
       List(Spend(ModelChains.Spend.At(1000), ModelChains.Spend.Tokens(0), BigDecimal("0.2"))),
       ModelChains.LimitState.Now(2000)
     )
-    assert(!s.usable.value)
+    assert(!s.usable.usable)
     assertEquals(s.freesAt, Some(1000 + 3600L * 1000L)) // 0 < 0.1 once the spend leaves
     assertEquals(verdict(List(s.modify(_.freesAt).setTo(None))), (false, None))
 
   test("Markdown: the chains with the model a call would use, the allowances with use and reset, the doctor"):
     import com.histmersion.api.automation.Agents.*
     val m = ModelsInfo(
-      enabled = ModelsInfo.Enabled(true),
+      enabled = ModelsInfo.Enabled.Enabled,
       Nil,
       List(ModelsInfo.Pipelines("enrich-source")),
       ModelsInfo.MaxConcurrentRuns(4),
@@ -297,15 +297,15 @@ class ModelChainsSuite extends munit.FunSuite:
           List(
             ChainEntry(
               ModelChains.ChainEntry.Model("claude-code:sonnet"),
-              ready = ModelChains.ChainEntry.Ready(true),
-              usable = ModelChains.ChainEntry.Usable(false),
+              ready = ModelChains.ChainEntry.Ready.Ready,
+              usable = ModelChains.ChainEntry.Usable.Unusable,
               List(Problem.Unclassified(Legacy.Text("below its allowance"))),
               Some(ModelChains.LimitStatus.FreesAt("2026-10-05T14:00:00Z"))
             ),
             ChainEntry(
               ModelChains.ChainEntry.Model("local:qwen"),
-              ready = ModelChains.ChainEntry.Ready(true),
-              usable = ModelChains.ChainEntry.Usable(true)
+              ready = ModelChains.ChainEntry.Ready.Ready,
+              usable = ModelChains.ChainEntry.Usable.Usable
             )
           ),
           Some(ModelChains.RoleChain.Active("local:qwen"))
@@ -325,11 +325,11 @@ class ModelChainsSuite extends munit.FunSuite:
               ModelChains.LimitStatus.Used(1900000),
               ModelChains.LimitStatus.Remaining(100000),
               ModelChains.LimitStatus.Reserve(400000),
-              usable = ModelChains.LimitStatus.Usable(false),
+              usable = ModelChains.LimitStatus.Usable.Unusable,
               Some(ModelChains.LimitStatus.FreesAt("2026-10-05T14:00:00Z"))
             )
           ),
-          usable = ModelChains.AllowanceStatus.Usable(false),
+          usable = ModelChains.AllowanceStatus.Usable.Unusable,
           Some(ModelChains.LimitStatus.FreesAt("2026-10-05T14:00:00Z")),
           Some(ModelChains.AllowanceStatus.Note("counts what claude -p reported"))
         )
@@ -362,12 +362,12 @@ class ModelChainsSuite extends munit.FunSuite:
     )
     assert(none.contains("| writer | — | no model | config |") && none.contains("No allowance"), none)
     val d = DoctorReport(
-      enabled = DoctorReport.Enabled(false),
-      online = DoctorReport.Online(false),
+      enabled = DoctorReport.Enabled.Disabled,
+      online = DoctorReport.Online.Offline,
       List(
         ProviderDoctor(
           ProviderDoctor.Provider("claude-code"),
-          used = ProviderDoctor.Used(true),
+          used = ProviderDoctor.Used.Used,
           List(ProviderDoctor.Models("claude-code:sonnet")),
           List(
             DoctorCheck(

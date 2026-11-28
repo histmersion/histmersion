@@ -234,9 +234,9 @@ object PlacesCmd:
         case Command.SiteTypes(writes, limit, refresh, following) =>
           c.call(EventsApi.refineSiteTypes)(
             SiteTypes.Request(
-              SiteTypes.Request.DryRun(writes.dry),
+              (if writes.dry then SiteTypes.Request.DryRun.DryRun else SiteTypes.Request.DryRun.Apply),
               limit.map(SiteTypes.Request.Limit(_)),
-              SiteTypes.Request.Refresh(refresh)
+              (if refresh then SiteTypes.Request.Refresh.Refresh else SiteTypes.Request.Refresh.Reuse)
             )
           ).flatMap(EventsCmd.follow(c, _, following))
         case Command.NameAdd(id, name, lang) =>
@@ -262,7 +262,7 @@ object PlacesCmd:
                 from.map(Year(_)),
                 to.map(Year(_)),
                 reason.map((text => Place.Rationale(text))),
-                Place.OverrideSet.Reset(reset),
+                (if reset then Place.OverrideSet.Reset.Reset else Place.OverrideSet.Reset.Set),
                 point.map(_._1),
                 point.map(_._2)
               )
@@ -362,7 +362,10 @@ object PlacesCmd:
         case Command.Sources() =>
           c.placeSources.map(rows => Cli.out.println(PlacesMarkdown.gazetteerSources(rows)))
         case Command.Load(source, writes, following) =>
-          c.loadPlaces(Api.ExternalPlaces.Source(source), Api.Apply(writes.applies)).flatMap { j =>
+          c.loadPlaces(
+            Api.ExternalPlaces.Source(source),
+            (if writes.applies then Api.Apply.Apply else Api.Apply.DryRun)
+          ).flatMap { j =>
             Cli.out.println(
               s"${if writes.applies then "import" else "dry run"} of $source: job `${j.id}` started (`histmersion jobs` lists it)"
             )

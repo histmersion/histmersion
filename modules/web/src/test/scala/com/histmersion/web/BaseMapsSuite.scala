@@ -63,26 +63,26 @@ class BaseMapsSuite extends munit.FunSuite:
       sea: Boolean = true
   ) =
     Basemap.Status(
-      Basemap.Status.Available(available),
+      (if available then Basemap.Status.Available.Available else Basemap.Status.Available.Unavailable),
       Basemap.Status.Dir("/x"),
       Basemap.Status.Bbox("-12,20,90,62"),
       List(
         Basemap.LayerInfo(
           Basemap.LayerInfo.Layer("vector"),
-          Basemap.LayerInfo.Present(available),
+          (if available then Basemap.LayerInfo.Present.Present else Basemap.LayerInfo.Present.Absent),
           Basemap.LayerInfo.File("/x/vector.pmtiles"),
           maxZoom = Some(Basemap.LayerInfo.MaxZoom(10)),
           version = Some(Basemap.LayerInfo.Version("v1"))
         ),
         Basemap.LayerInfo(
           Basemap.LayerInfo.Layer("terrain"),
-          Basemap.LayerInfo.Present(available),
+          (if available then Basemap.LayerInfo.Present.Present else Basemap.LayerInfo.Present.Absent),
           Basemap.LayerInfo.File("/x/terrain.pmtiles"),
           maxZoom = Some(Basemap.LayerInfo.MaxZoom(8)),
           version = Some(Basemap.LayerInfo.Version("t1")),
           onDemand = Some(
             Basemap.OnDemand(
-              Basemap.OnDemand.Enabled(onDemand),
+              (if onDemand then Basemap.OnDemand.Enabled.Enabled else Basemap.OnDemand.Enabled.Disabled),
               Basemap.OnDemand.MaxZoom(12),
               Basemap.OnDemand.Dir("/x/terrain-cache"),
               Basemap.OnDemand.Tiles(0),
@@ -106,7 +106,7 @@ class BaseMapsSuite extends munit.FunSuite:
         ),
         Basemap.LayerInfo(
           Basemap.LayerInfo.Layer("bathymetry"),
-          Basemap.LayerInfo.Present(available && sea),
+          (if available && sea then Basemap.LayerInfo.Present.Present else Basemap.LayerInfo.Present.Absent),
           Basemap.LayerInfo.File("/x/bathymetry.pmtiles"),
           maxZoom = Some(Basemap.LayerInfo.MaxZoom(7)),
           version = Some(Basemap.LayerInfo.Version("b1"))
@@ -169,7 +169,7 @@ class BaseMapsSuite extends munit.FunSuite:
     val (spec, notice, z) = BaseMaps.plan(
       BaseMap.Physical,
       Some(status(true)),
-      MapPrefs(language = Some(MapPrefs.Language("el")), contours = Some(MapPrefs.Contours(false))),
+      MapPrefs(language = Some(MapPrefs.Language("el")), contours = Some(MapPrefs.Contours.Hidden)),
       ui,
       local = false,
       soft = false
@@ -289,22 +289,39 @@ class BaseMapsSuite extends munit.FunSuite:
       )
     )
 
+  test("the options a viewer stored as Booleans read back as the same choices; they are written as words"):
+    val codec = summon[FieldCodec[MapPrefs]]
+    val stored = MapPrefs(
+      names = Some(MapPrefs.Names.Hidden),
+      contours = Some(MapPrefs.Contours.Shown),
+      depthReadable = Some(MapPrefs.DepthReadable.Shown)
+    )
+    assertEquals(
+      codec.decode(List(FieldCodec.Token("""{"names":false,"contours":true,"depthReadable":true}"""))),
+      Some(stored)
+    )
+    assertEquals(
+      codec.encode(stored).map(_.value).mkString,
+      """{"names":"Hidden","language":null,"contours":"Shown","depthPhysical":null,"depthReadable":"Shown"}"""
+    )
+    assertEquals(codec.decode(codec.encode(stored)), Some(stored))
+
   test(
     "the sea's depth: on in Physical and off in Readable by default, the viewer's choice per style; needs the sea floor and a GPU"
   ):
     assert(MapPrefs().seaDepth(VectorStyle.Physical))
     assert(!MapPrefs().seaDepth(VectorStyle.Readable))
-    val r = MapPrefs().withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth(true))
-    assertEquals(r, MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))
+    val r = MapPrefs().withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth.Shown)
+    assertEquals(r, MapPrefs(depthReadable = Some(MapPrefs.DepthReadable.Shown)))
     assert(r.seaDepth(VectorStyle.Readable) && r.seaDepth(VectorStyle.Physical))
     assertEquals(
-      r.withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth(false)),
+      r.withSeaDepth(VectorStyle.Readable, on = MapPrefs.SeaDepth.Hidden),
       MapPrefs(),
       "the default again is no choice"
     )
     assertEquals(
-      MapPrefs().withSeaDepth(VectorStyle.Physical, on = MapPrefs.SeaDepth(false)),
-      MapPrefs(depthPhysical = Some(MapPrefs.DepthPhysical(false)))
+      MapPrefs().withSeaDepth(VectorStyle.Physical, on = MapPrefs.SeaDepth.Hidden),
+      MapPrefs(depthPhysical = Some(MapPrefs.DepthPhysical.Hidden))
     )
     BaseMaps.plan(BaseMap.Readable, Some(status(true)), r, ui, local = false, soft = false)._1 match
       case v: BaseMapSpec.Vector => assert(v.seaDepth.shown)
@@ -373,16 +390,16 @@ class BaseMapsSuite extends munit.FunSuite:
     val c = summon[FieldCodec[MapPrefs]]
     assertEquals(c.encode(MapPrefs()), Nil)
     assertEquals(
-      c.decode(c.encode(MapPrefs(names = Some(MapPrefs.Names(false)), language = Some(MapPrefs.Language("local"))))),
-      Some(MapPrefs(Some(MapPrefs.Names(false)), Some(MapPrefs.Language("local"))))
+      c.decode(c.encode(MapPrefs(names = Some(MapPrefs.Names.Hidden), language = Some(MapPrefs.Language("local"))))),
+      Some(MapPrefs(Some(MapPrefs.Names.Hidden), Some(MapPrefs.Language("local"))))
     )
     assertEquals(c.decode(List(FieldCodec.Token("{oops"))), Some(MapPrefs()))
     assertEquals(
-      c.decode(c.encode(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))),
-      Some(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable(true))))
+      c.decode(c.encode(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable.Shown)))),
+      Some(MapPrefs(depthReadable = Some(MapPrefs.DepthReadable.Shown)))
     )
     assertEquals(
       c.decode(List(FieldCodec.Token("""{"names":false}"""))),
-      Some(MapPrefs(names = Some(MapPrefs.Names(false)))),
+      Some(MapPrefs(names = Some(MapPrefs.Names.Hidden))),
       "kept before the depth existed"
     )

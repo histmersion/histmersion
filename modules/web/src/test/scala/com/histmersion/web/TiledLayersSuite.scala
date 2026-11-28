@@ -205,7 +205,7 @@ class TiledLayersSuite extends munit.FunSuite:
     val q = EventMarkers.query(f, (Year(-1200L), Year(-1100L)), Some(Api.EventQuery.Kind("battle")), None)
     assertEquals(q.layer, "events")
     assertEquals(q.filter, Filter(tags = List(Filter.Tags("bronze")), period = Some(Period(Year(-1200), Year(-1100)))))
-    assertEquals((q.kind, q.tier, q.context), (Some("battle"), None, Some(true)))
+    assertEquals((q.kind, q.tier, q.context.map(_.context)), (Some("battle"), None, Some(true)))
 
   test("a read at the same URL and zoom keeps what was shown near the view and is in no tile held now"):
     val fresh = List("a" -> 1, "b" -> 2)

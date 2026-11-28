@@ -313,7 +313,7 @@ final class PersonalControllers(
         user <- person(caller)
         key <- readable(in.kind, in.id)
       yield reading
-        .setRead(user, MarkTarget.itemKind(in.kind), key, ReadingService.Read(in.read.value), label(in.title), now())
+        .setRead(user, MarkTarget.itemKind(in.kind), key, ReadingService.Read(in.read.read), label(in.title), now())
         .wire
 
   def opened(caller: Caller, in: ReadOpened): Either[Api.Error, WireReadMark] =

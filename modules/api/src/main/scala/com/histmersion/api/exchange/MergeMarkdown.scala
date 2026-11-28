@@ -83,14 +83,14 @@ object MergeMarkdown:
     def count(k: Bundle.Kind)(f: Bundle.KindCounts => Bundle.KindCounts.Inserted): Bundle.KindCounts.Inserted =
       r.counts.find(_.kind == k).fold(Bundle.KindCounts.Inserted(0))(f)
     val head =
-      if ((r.applied) == MergeApplyResult.Applied(true)) && r.mergeId.isEmpty then
+      if ((r.applied) == MergeApplyResult.Applied.Applied) && r.mergeId.isEmpty then
         s"**Nothing to merge** — the bundle of ${who(r.from)} is merged already (plan ${r.planHash})."
-      else if (r.applied) == MergeApplyResult.Applied(true) then
+      else if (r.applied) == MergeApplyResult.Applied.Applied then
         s"**Merged** the bundle of ${who(r.from)} as merge ${r.mergeId.fold("—")(_.toString)}" +
           r.backup.fold("")(b => s" (backup $b)")
       else s"**Not merged** (plan ${r.planHash}): nothing was written."
     val body = Option
-      .when(((r.applied) == MergeApplyResult.Applied(true)) && r.mergeId.isDefined)(
+      .when(((r.applied) == MergeApplyResult.Applied.Applied) && r.mergeId.isDefined)(
         List(
           s"**sources** +${count(Bundle.Kind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
             s"${t.sourcesRenamed} renamed · aliases +${t.aliases}",

@@ -296,7 +296,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assertEquals(chain.active, Some("hello-ai:echo"))
     val d = a.doctor(offline = AgentsControllers.Offline(true))
     val sec = d.providers.find(_.provider.value == "hello-ai").get
-    assert(sec.used.value, sec.toString)
+    assert(sec.used.used, sec.toString)
     assert(sec.checks.exists(c => c.name.value == "plugin" && c.detail.value.contains("Hello AI")), sec.checks)
     assert(sec.checks.exists(c => c.name.value == "token" && c.detail.value.contains("never shown")), sec.checks)
     assert(sec.checks.exists(c => c.name.value == "model hello-ai:echo" && c.level == CheckLevel.Ok), sec.checks)

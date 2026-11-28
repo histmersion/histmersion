@@ -315,7 +315,7 @@ class MapViewSuite extends munit.FunSuite:
         GeoPick.Latest,
         playback = MapView.Playback.Stopped
       ),
-      GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(true))
+      GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Latest)
     )
     GeoPick.values.foreach(p =>
       assertEquals(
@@ -329,7 +329,7 @@ class MapViewSuite extends munit.FunSuite:
     import com.histmersion.api.catalogue.GeoTime
     import com.histmersion.web.ui.Layout
     assertEquals(
-      MapView.overlayLimit(GeoTime.Within(Year(-3000), Year(2000), latest = GeoTime.Within.Latest(false))).value,
+      MapView.overlayLimit(GeoTime.Within(Year(-3000), Year(2000), latest = GeoTime.Within.Latest.Earliest)).value,
       Layout.overlayRangeFetchLimit.value
     )
     assertEquals(MapView.overlayLimit(GeoTime.At(Year(1500))).value, Layout.overlayFetchLimit.value)
@@ -384,7 +384,7 @@ class MapViewSuite extends munit.FunSuite:
     assertEquals(
       MapView.geoQuery(
         Place.Kind.Wire("polity"),
-        GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
+        GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Earliest),
         Paging.Limit(400)
       ),
       Api.PlacesGeoQuery(

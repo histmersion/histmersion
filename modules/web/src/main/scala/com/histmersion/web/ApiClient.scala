@@ -199,7 +199,7 @@ object ApiClient:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def getSource(
       ck: Citekey,
-      body: Api.SourceViewQuery.FullText = Api.SourceViewQuery.FullText(true)
+      body: Api.SourceViewQuery.FullText = Api.SourceViewQuery.FullText.FullText
   ): Future[Source.WithFindings] =
     call(Api.getSource)((ck, body))
 
@@ -213,7 +213,7 @@ object ApiClient:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def ingestId(req: Ingest.Request): Future[Ingest.Report] =
-    call(AcquireApi.ingest)(req.modify(_.legalOnly).setTo(Ingest.Request.LegalOnly(true)))
+    call(AcquireApi.ingest)(req.modify(_.legalOnly).setTo(Ingest.Request.LegalOnly.LegalOnly))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def neighbors(ck: Citekey, kinds: List[Edge.Kind.Wire] = Nil): Future[List[NeighborRow]] =
     call(Api.neighbors)((ck, kinds))
@@ -221,7 +221,7 @@ object ApiClient:
   def articles(q: Api.ArticleQuery): Future[Article.List] = call(Api.articles)(q)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def getArticle(slug: Article.Slug, brief: Article.FullText = Article.FullText(false)): Future[Article.View] =
+  def getArticle(slug: Article.Slug, brief: Article.FullText = Article.FullText.SummaryOnly): Future[Article.View] =
     call(Api.getArticle)((ReviewGoal.Slug(slug.value), brief))
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def places(
@@ -235,9 +235,9 @@ object ApiClient:
   def place(
       id: Place.Id,
       asOf: Option[Api.AggregateQuery.AsOf],
-      counts: Place.Detail = Place.Detail(false)
+      counts: Place.Detail = Place.Detail.Brief
   ): Future[PlaceDetail] =
-    call(Api.place)((id, asOf, Option.when(counts.value)(counts)))
+    call(Api.place)((id, asOf, Option.when(counts.detail)(counts)))
   def about(): Future[About] = call(Api.about)(())
   def basemap(): Future[Basemap.Status] = call(BasemapApi.status)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -328,18 +328,18 @@ object ApiClient:
   def backupNow(): Future[Backup.Status] = call(Api.backup)(())
   def backups(): Future[List[Backup.Info]] = call(Api.backups)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def initData(fetch: Api.Overwrite): Future[JobInfo] = call(Api.init)(fetch)
+  def initData(fetch: Api.Fetching): Future[JobInfo] = call(Api.init)(fetch)
   def placeSources(): Future[List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def loadPlaces(source: Api.ExternalPlaces.Source): Future[JobInfo] = call(Api.loadPlaces)((source, Api.Apply(true)))
+  def loadPlaces(source: Api.ExternalPlaces.Source): Future[JobInfo] = call(Api.loadPlaces)((source, Api.Apply.Apply))
   def eventCatalogues(): Future[List[CatalogProviderInfo]] = call(EventsApi.catalogues)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def importEvents(provider: EventImportRequest.Provider): Future[JobInfo] =
-    call(EventsApi.importEvents)(EventImportRequest(provider, dryRun = EventImportRequest.DryRun(false)))
+    call(EventsApi.importEvents)(EventImportRequest(provider, dryRun = EventImportRequest.DryRun.Apply))
   def mediaProviders(): Future[List[MediaProvider.Info]] = call(Api.mediaProviders)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def importMedia(provider: MediaItem.Provider): Future[JobInfo] =
-    call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = MediaImportRequest.DryRun(false)))
+    call(Api.mediaImportJob)(MediaImportRequest(provider, dryRun = MediaImportRequest.DryRun.Apply))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setAgentMode(mode: AgentMode): Future[AutopilotStatus] =
     call(AutopilotApi.setMode)(AgentMode.ModeSet(mode.wire, Some(AgentMode.ModeSet.By("web"))))
@@ -421,7 +421,7 @@ object ApiClient:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def patchSource(ck: Citekey, p: Source.Patch): Future[Source.WithFindings] =
-    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Apply(false)))
+    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Strictness.Lenient))
 
   // ── embedded agents ──────────────────────────────────────────────────────────────────────────────
 

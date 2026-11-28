@@ -77,7 +77,7 @@ class VacuumHttpSuite extends munit.FunSuite:
         started.detail.flatMap(VacuumPlan.Detail.of),
         Some(
           VacuumPlan(
-            VacuumPlan.Analyze(true),
+            VacuumPlan.Analyze.Analyze,
             List(Vacuum.Request.Tables("place_overrides"), Vacuum.Request.Tables("place_removals"))
           )
         )

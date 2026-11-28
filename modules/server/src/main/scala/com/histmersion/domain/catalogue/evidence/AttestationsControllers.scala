@@ -123,7 +123,7 @@ final class AttestationsControllers(
 
   def delete(caller: Caller, id: Attestation.Id): Either[Api.Error, Attestation.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_attestation")):
-      if attestations.delete(id) then Right(Attestation.Deleted(id, Attestation.Deleted.Value(true)))
+      if attestations.delete(id) then Right(Attestation.Deleted(id, Attestation.Deleted.Value.Deleted))
       else Left(notFound(id))
 
 object AttestationsControllers:

@@ -239,7 +239,7 @@ object CollectionsService:
         CollectionCapability.values.toList
           .filter(c.can)
           .map(k => CollectionInfo.Capabilities(k.toString.toLowerCase(java.util.Locale.ROOT))),
-        CollectionInfo.Reachable(reach.isRight),
+        (if reach.isRight then CollectionInfo.Reachable.Reachable else CollectionInfo.Reachable.Unreachable),
         reach.left.toOption.toList.flatMap(_.toVector)
       )
 
@@ -343,8 +343,8 @@ object CollectionsService:
           .map(usageOf)
         record <- upsert(ck, item, target)
       yield
-        val cover = Option.when(req.cover.value)(coverOf(c, ck, item))
-        val conversion = if req.convert.value then Some(convert(c, item, file, ck, req.acquireItem)) else None
+        val cover = Option.when(req.cover.cover)(coverOf(c, ck, item))
+        val conversion = if req.convert.convert then Some(convert(c, item, file, ck, req.acquireItem)) else None
         CollectionImported(
           apiKey(ck),
           CollectionImported.Id(req.id.value),
@@ -431,7 +431,7 @@ object CollectionsService:
         case Left(why) =>
           CollectionCover(
             CollectionCover.Line(s"$ck: ${why.sentences.mkString("; ")}"),
-            warning = CollectionCover.Warning(true)
+            warning = CollectionCover.Warning.Warning
           )
         case Right(Some(fc)) =>
           library.putCover(
@@ -447,7 +447,7 @@ object CollectionsService:
             case Left(e)  =>
               CollectionCover(
                 CollectionCover.Line(s"$ck: ${e.problems.sentences.mkString("; ")}"),
-                warning = CollectionCover.Warning(true)
+                warning = CollectionCover.Warning.Warning
               )
         case Right(None) =>
           CoverChoice.choose(
@@ -459,9 +459,9 @@ object CollectionsService:
             case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
               library.openLibraryCover(
                 MediaCoversRequest(
-                  dryRun = RepairAcquire.RepairRequest.DryRun(false),
+                  dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
                   citekey = Some(apiKey(ck)),
-                  illustrations = MediaCoversRequest.Illustrations(false),
+                  illustrations = MediaCoversRequest.Illustrations.Skipped,
                   isbn = Some(MediaCoversRequest.Isbn(isbn.value))
                 )
               ) match
@@ -571,7 +571,7 @@ object CollectionsService:
     def push(caller: Caller, name: CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
       linking(name).flatMap { c =>
         checked(req.citekey).flatMap { ck =>
-          if !req.replace.value then
+          if !req.replace.replace then
             pushOne(c, ck).map((id, title) => CollectionPushed(apiKey(ck), CollectionPushed.Id(id.value), title))
           else
             for
@@ -628,7 +628,10 @@ object CollectionsService:
         c <- linking(name)
         ls <- links(linked(), Nil)
         entries <- c.updateAll(ls, SourceCollection.UpdateAllApply(apply.value)).left.map(failed)
-      yield CollectionUpdateAll(entries.map(updateRow), CollectionUpdateAll.Applied(apply.value))
+      yield CollectionUpdateAll(
+        entries.map(updateRow),
+        (if apply.value then CollectionUpdateAll.Applied.Applied else CollectionUpdateAll.Applied.Previewed)
+      )
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def updateRow(e: CollectionUpdateEntry): CollectionUpdateRow =
@@ -716,7 +719,7 @@ object CollectionsService:
     def gaps(name: CollectionName, limit: Option[Limit]): Either[Api.Error, CollectionGaps] =
       linking(name).map { _ =>
         val rows = library.gaps(limit.map(l => CollectionLibrary.Limit(l.value))).gaps.map(GapOriginal.row)
-        val n = rows.count(_.counted.value)
+        val n = rows.count(_.counted.counted)
         CollectionGaps(
           CollectionGaps.Count(n),
           CollectionGaps.Uncounted(rows.size - n),
@@ -732,9 +735,9 @@ object CollectionsService:
         c <- linking(name)
       yield
         val pushes =
-          if !req.apply.value then Nil
+          if !req.apply.applies then Nil
           else
-            g.gaps.filter(_.counted.value).map { r =>
+            g.gaps.filter(_.counted.counted).map { r =>
               checked(r.citekey)
                 .flatMap(pushOne(c, _))
                 .fold(
@@ -742,7 +745,11 @@ object CollectionsService:
                   (id, _) => CollectionSync.Push(r.citekey, Some(CollectionSync.Push.Id(id.value)), None)
                 )
             }
-        CollectionSync(g, CollectionSync.Applied(req.apply.value), pushes)
+        CollectionSync(
+          g,
+          (if req.apply.applies then CollectionSync.Applied.Applied else CollectionSync.Applied.Previewed),
+          pushes
+        )
 
     // ── archive.org ───────────────────────────────────────────────────────────────────────────
 
@@ -763,7 +770,7 @@ object CollectionsService:
         apiYear(i.year),
         i.publisher.map(p => ArchiveItem.Publisher(p.value)),
         i.description.map(d => ArchiveItem.Description(d.value)),
-        ArchiveItem.LendingOnly(i.restricted.value),
+        (if i.restricted.value then ArchiveItem.LendingOnly.LendingOnly else ArchiveItem.LendingOnly.Public),
         i.files.map(archiveFile)
       )
 

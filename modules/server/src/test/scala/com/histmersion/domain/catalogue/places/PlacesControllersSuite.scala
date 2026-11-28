@@ -203,7 +203,7 @@ class PlacesControllersSuite extends munit.FunSuite:
             Caller.Local,
             Place.Id("zzcl_hill"),
             api.catalogue.Place
-              .OverrideSet(reset = api.catalogue.Place.OverrideSet.Reset(true))
+              .OverrideSet(reset = api.catalogue.Place.OverrideSet.Reset.Reset)
           ).isLeft,
           c.merge(
             Caller.Local,

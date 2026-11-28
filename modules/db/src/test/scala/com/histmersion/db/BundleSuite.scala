@@ -656,7 +656,7 @@ class BundleSuite extends DbSuite with Bounded:
     val two = exportOf(ds, sp)
     assert(java.util.Arrays.equals(one, two), "the two exports differ")
     val v = BundleReader.verify(java.io.ByteArrayInputStream(one), connect(ds)(BundleRepo.schemaVersion))
-    assert(v.ok.value, v.problems.mkString("\n"))
+    assert(v.ok.ok, v.problems.mkString("\n"))
     val es = entries(one)
     assertEquals(es.head._1, Bundle.ManifestPath)
     val m = manifestOf(one)
@@ -717,7 +717,7 @@ class BundleSuite extends DbSuite with Bounded:
     populate(a, sa)
     val first = exportOf(a, sa)
     val result = importInto(b, first, sb)
-    assert(result.applied.value, result.problems.mkString("\n"))
+    assert(result.applied.applied, result.problems.mkString("\n"))
     assertEquals(result.problems, Nil)
     assertEquals(result.conflicts, Nil)
     val second = exportOf(b, sb)
@@ -756,7 +756,7 @@ class BundleSuite extends DbSuite with Bounded:
     put(a, source(G1, Some(Source.OcrMarkdown("# Gamma\n\nshort")), 0))
     exec(a, s"UPDATE sources SET source = 'Unheard-Of' WHERE citekey = '$G1'")
     val result = importInto(b, exportOf(a, sa), sb)
-    assert(result.applied.value, result.problems.mkString("\n"))
+    assert(result.applied.applied, result.problems.mkString("\n"))
     assertEquals(count(b, s"SELECT count(*)::int FROM sources WHERE citekey = '$G1' AND source = 'Unheard-Of'"), 1)
 
   test("a bundle carries each record's creator, outside its rev, and the import writes it"):
@@ -824,7 +824,7 @@ class BundleSuite extends DbSuite with Bounded:
       text(es, Bundle.Kind.Event.file)
     )
     val r1 = importInto(b, first, sb)
-    assert(r1.applied.value, r1.problems.mkString("\n"))
+    assert(r1.applied.applied, r1.problems.mkString("\n"))
     def one(ds: DataSource, q: String): String = connect(ds)(sql"${SqlLiteral(q)}".query[String].run().head)
     assertEquals(
       one(b, "SELECT names::text || plus_minus || dating_method FROM events WHERE id = 'zzb_e1'"),
@@ -857,7 +857,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val second = exportOf(a, sa)
     val r2 = importInto(b, second, sb)
-    assert(r2.applied.value, r2.problems.mkString("\n"))
+    assert(r2.applied.applied, r2.problems.mkString("\n"))
     assertEquals(
       one(b, s"SELECT status || ' ' || score FROM event_link_candidates WHERE citekey = '$G1'"),
       "rejected 0.9"
@@ -867,21 +867,21 @@ class BundleSuite extends DbSuite with Bounded:
     // idempotent: the same bundle again writes nothing
     val before = exportOf(b, sb)
     val r3 = importInto(b, second, sb)
-    assert(r3.applied.value, r3.problems.mkString("\n"))
+    assert(r3.applied.applied, r3.problems.mkString("\n"))
     assert(java.util.Arrays.equals(exportOf(b, sb), before), "a repeated import changed the event-catalogue sets")
 
     // a bundle written before these files existed imports cleanly — the events, without the sets — and
     // leaves the sets of a collection that has them alone
     val old = withoutEventSets(first)
     val v = BundleReader.verify(java.io.ByteArrayInputStream(old), connect(c)(BundleRepo.schemaVersion))
-    assert(v.ok.value, v.problems.mkString("\n"))
+    assert(v.ok.ok, v.problems.mkString("\n"))
     val r4 = importInto(c, old, sc)
-    assert(r4.applied.value, r4.problems.mkString("\n"))
+    assert(r4.applied.applied, r4.problems.mkString("\n"))
     assertEquals(count(c, "SELECT count(*)::int FROM events WHERE id IN ('zzb_e1', 'zzb_e2')"), 2)
     assertEquals(count(c, "SELECT count(*)::int FROM event_catalogue"), 0)
     assertEquals(count(c, "SELECT count(*)::int FROM event_link_candidates"), 0)
     val r5 = importInto(b, old, sb)
-    assert(r5.applied.value, r5.problems.mkString("\n"))
+    assert(r5.applied.applied, r5.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM event_link_candidates"), 2)
     assertEquals(count(b, "SELECT count(*)::int FROM corrections"), 2)
 
@@ -891,7 +891,7 @@ class BundleSuite extends DbSuite with Bounded:
     populate(a, sa)
     val before = exportOf(a, sa)
     val r = importInto(a, before, sa)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(r.changed, 0, r.toString)
     assertEquals(r.counts.map(_.keptLocal.value).sum + r.counts.map(_.conflicts.value).sum, 0)
     assertEquals(count(a, "SELECT count(*)::int FROM merges"), 0)
@@ -937,7 +937,7 @@ class BundleSuite extends DbSuite with Bounded:
       SourceFixtures.patch(a, A1, Source.Patch(summary = Some(Source.Summary("work again"))), cfg.limits.chunkChars)
     val third = exportOf(a, sa)
     val r3 = importInto(b, third, sb)
-    assert(!r3.applied.value)
+    assert(!r3.applied.applied)
     assertEquals(
       r3.counts.find(_.kind == Bundle.Kind.Source).map(_.conflicts),
       Some(1),
@@ -952,12 +952,12 @@ class BundleSuite extends DbSuite with Bounded:
       List(MergeResolution(MergeResolution.Issue(conflict.id.value), MergeResolution.Decision("keep-left")))
     )
     val r3b = importInto(b, third, sb, resolutions = keep)
-    assert(r3b.applied.value, r3b.problems.mkString("\n"))
+    assert(r3b.applied.applied, r3b.problems.mkString("\n"))
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.notes), Some("home edit"))
     // the same foreign version does not ask again, with or without the resolution
     val r3c = importInto(b, third, sb)
-    assert(r3c.applied.value, r3c.problems.mkString("\n"))
+    assert(r3c.applied.applied, r3c.problems.mkString("\n"))
     assertEquals(r3c.issues, Nil)
     // a deletion over there of a row unchanged here since the last import deletes it here
     val _ = Transactor(a).write(GoalRepo.deleteIn(domain.automation.Goal.Slug("zzb_goal_sub")))
@@ -971,7 +971,7 @@ class BundleSuite extends DbSuite with Bounded:
     // a rename over there is followed here: the citekey, its findings and an alias
     val _ = SourceFixtures.rename(a, G1, Citekeys.RenameToNewRaw("zzb2004_gamma"))
     val r5 = importInto(b, exportOf(a, sa), sb)
-    assert(r5.applied.value, r5.problems.mkString("\n"))
+    assert(r5.applied.applied, r5.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzb2004_gamma'"), 1)
     assertEquals(count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$G1'"), 1)
 
@@ -986,7 +986,7 @@ class BundleSuite extends DbSuite with Bounded:
     assert(SourceFixtures.rename(b, B1, Citekeys.RenameToNewRaw(B0.value)).isRight)
     assertEquals(count(b, s"SELECT count(*)::int FROM alias_tombstones WHERE alias = '$B0'"), 1)
     val r = importInto(b, bundle, sb)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(
       count(b, s"SELECT count(*)::int FROM source_aliases WHERE alias = '$B0'"),
       0,
@@ -1002,7 +1002,7 @@ class BundleSuite extends DbSuite with Bounded:
     val _ = importInto(b, bundle, sb)
     exec(b, "DELETE FROM assets WHERE name = 'fig1.png'")
     val r = importInto(b, bundle, sb)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(
       r.counts.find(_.kind == Bundle.Kind.Asset).map(_.skippedDeleted),
       Some(1),
@@ -1026,7 +1026,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val before = exportOf(c, sc)
     val r = importInto(c, exportOf(a, sa), sc)
-    assert(!r.applied.value)
+    assert(!r.applied.applied)
     // the same work (same DOI) under another uid: merging is merge apply's (M5); its findings go with it
     assert(
       r.problems.exists(p => p.sentence.contains(s"source $A1") && p.sentence.contains("merge apply")),
@@ -1066,8 +1066,8 @@ class BundleSuite extends DbSuite with Bounded:
     populate(a, sa)
     val empty = exportOf(b, sb)
     val r = importInto(b, exportOf(a, sa), sb, dryRun = true)
-    assert(!r.applied.value)
-    assert(r.dryRun.value)
+    assert(!r.applied.applied)
+    assert(r.dryRun.dryRun)
     assertEquals(r.problems, Nil)
     assertEquals(
       r.counts.find(_.kind == Bundle.Kind.Source).map(_.inserted),
@@ -1093,7 +1093,7 @@ class BundleSuite extends DbSuite with Bounded:
       else p -> b
     }
     val v1 = verify(edited)
-    assert(!v1.ok.value)
+    assert(!v1.ok.ok)
     assert(
       v1.problems.exists(_.sentence.contains(s"${Bundle.Kind.Goal.file} has sha256")),
       v1.problems.mkString("\n")
@@ -1109,8 +1109,8 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val whole = rebuild(identity)
     val v3 = verify(whole.take(whole.length / 2))
-    assert(!v3.ok.value)
-    assert(verify(whole).ok.value, verify(whole).problems.mkString("\n"))
+    assert(!v3.ok.ok)
+    assert(verify(whole).ok.ok, verify(whole).problems.mkString("\n"))
     // and a server older than the bundle refuses it
     assert(
       BundleReader
@@ -1164,7 +1164,7 @@ class BundleSuite extends DbSuite with Bounded:
         val _ = QueueRows.add(a, Kind.Tasks, QueueAdd(Queue.QueueItem.Text(rnd.alphanumeric.take(20).mkString)))
       val first = exportOf(a, sa)
       val r = importInto(b, first, sb)
-      assert(r.applied.value, s"iteration $i: ${r.problems.mkString("\n")}")
+      assert(r.applied.applied, s"iteration $i: ${r.problems.mkString("\n")}")
       val second = exportOf(b, sb)
       entries(first).zip(entries(second)).tail.foreach { case ((p, x), (_, y)) =>
         assert(java.util.Arrays.equals(x, y), s"iteration $i: $p differs")

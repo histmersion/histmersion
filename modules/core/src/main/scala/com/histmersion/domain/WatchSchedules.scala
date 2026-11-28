@@ -60,8 +60,8 @@ object WatchSchedules:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def migrate(existing: Option[Existing], schedules: List[GoalSchedule], now: Instant): Plan =
     val ordered = schedules.sortBy(_.kind.ordinal)
-    val on = ordered.filter(_.enabled.value)
-    val off = ordered.filterNot(_.enabled.value)
+    val on = ordered.filter(_.enabled.enabled)
+    val off = ordered.filterNot(_.enabled.enabled)
     val base = existing.map(_.config).getOrElse(ManagerConfig(sweeps = Some(Nil)))
     val had = existing.fold(List.empty[Sweep])(e => Sweep.of(e.config))
     val sweeps = Sweep.values.toList.filter(s => had.contains(s) || on.exists(x => sweepOf(x.kind) == s))
@@ -78,7 +78,7 @@ object WatchSchedules:
       if keepOwn then existing.flatMap(_.nextTick)
       else
         pick.flatMap(s =>
-          Option.when(s.enabled.value)(s.nextRunAt).flatten.map(n => ManagerPolicy.InstantText(n.value))
+          Option.when(s.enabled.enabled)(s.nextRunAt).flatten.map(n => ManagerPolicy.InstantText(n.value))
         )
     val budget = base.budgetUsd
       .orElse(
@@ -124,7 +124,7 @@ object WatchSchedules:
           g,
           kindOf(s),
           GoalSchedule.Cron(m.cron.fold("")(_.value)),
-          enabled = GoalSchedule.Enabled(m.cron.isDefined),
+          enabled = (if m.cron.isDefined then GoalSchedule.Enabled.Enabled else GoalSchedule.Enabled.Disabled),
           m.config.budgetUsd.map(b => GoalSchedule.BudgetUsd(b.value)),
           m.nextTickAt.map(t => GoalSchedule.NextRunAt(t.value)),
           it.filter(_.runId.isDefined).map(i => GoalSchedule.LastRunAt(i.updatedAt.value)),

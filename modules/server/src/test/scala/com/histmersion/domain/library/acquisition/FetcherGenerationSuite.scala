@@ -22,7 +22,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
     PluginStatus.Id("oa-core"),
     PluginStatus.Version("1.0"),
     PluginStatus.SpiVersion(2),
-    enabled = PluginStatus.Enabled(true),
+    enabled = PluginStatus.Enabled.Enabled,
     PluginState.Wire("registered"),
     provides = List(PluginDescription.Provides("source-fetcher:core")),
     settings = List(PluginSetting(PluginSetting.Key("api-key"), key))
@@ -31,7 +31,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
     PluginStatus.Id("oa-unpaywall"),
     PluginStatus.Version("1.0"),
     PluginStatus.SpiVersion(2),
-    enabled = PluginStatus.Enabled(true),
+    enabled = PluginStatus.Enabled.Enabled,
     PluginState.Wire("registered"),
     provides = List(PluginDescription.Provides("source-fetcher:unpaywall")),
     settings = List(PluginSetting(PluginSetting.Key("contact-email"), PluginSetting.Value("null")))
@@ -41,7 +41,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
       PluginStatus.Id("keepassxc"),
       PluginStatus.Version("0.1"),
       PluginStatus.SpiVersion(2),
-      enabled = PluginStatus.Enabled(true),
+      enabled = PluginStatus.Enabled.Enabled,
       PluginState.Wire("registered"),
       provides = List(PluginDescription.Provides("secret-vault:keepassxc"))
     )
@@ -75,7 +75,7 @@ class FetcherGenerationSuite extends munit.FunSuite:
       PluginStatus.Id("stub"),
       PluginStatus.Version("9"),
       PluginStatus.SpiVersion(2),
-      enabled = PluginStatus.Enabled(true),
+      enabled = PluginStatus.Enabled.Enabled,
       PluginState.Wire("registered"),
       provides = List(PluginDescription.Provides("source-fetcher:stub")),
       settings = List(PluginSetting(PluginSetting.Key("token"), PluginSetting.Value("env:X")))

@@ -95,7 +95,7 @@ class BasemapSuite extends munit.FunSuite:
   test("the status reads as Markdown: what is there, the command when nothing is, credits without links"):
     val v = Basemap.LayerInfo(
       Basemap.LayerInfo.Layer("vector"),
-      present = Basemap.LayerInfo.Present(true),
+      present = Basemap.LayerInfo.Present.Present,
       file = Basemap.LayerInfo.File("/c/vector.pmtiles"),
       bytes = ByteCount(138000000),
       minZoom = Some(Basemap.LayerInfo.MinZoom(0)),
@@ -107,12 +107,12 @@ class BasemapSuite extends munit.FunSuite:
     )
     val t = Basemap.LayerInfo(
       Basemap.LayerInfo.Layer("terrain"),
-      present = Basemap.LayerInfo.Present(false),
+      present = Basemap.LayerInfo.Present.Absent,
       file = Basemap.LayerInfo.File("/c/terrain.pmtiles")
     )
     val md = BasemapMarkdown.status(
       Basemap.Status(
-        available = Basemap.Status.Available(true),
+        available = Basemap.Status.Available.Available,
         Basemap.Status.Dir("/c"),
         Basemap.Status.Bbox("-12,20,90,62"),
         List(v, t),
@@ -126,7 +126,7 @@ class BasemapSuite extends munit.FunSuite:
     assert(md.contains("Credits: © OpenStreetMap"), md)
     val hinted = BasemapMarkdown.status(
       Basemap.Status(
-        available = Basemap.Status.Available(true),
+        available = Basemap.Status.Available.Available,
         Basemap.Status.Dir("/c"),
         Basemap.Status.Bbox("x"),
         List(v, t),
@@ -137,7 +137,7 @@ class BasemapSuite extends munit.FunSuite:
     assert(hinted.contains("Run `histmersion basemap fetch --layer labels`."), hinted)
     val none = BasemapMarkdown.status(
       Basemap.Status(
-        available = Basemap.Status.Available(false),
+        available = Basemap.Status.Available.Unavailable,
         Basemap.Status.Dir("/c"),
         Basemap.Status.Bbox("x"),
         List(t),
@@ -174,13 +174,13 @@ class BasemapSuite extends munit.FunSuite:
   test("focus regions, the on-demand relief and the sea floor in the status, in Markdown"):
     val t = Basemap.LayerInfo(
       Basemap.LayerInfo.Layer("terrain"),
-      present = Basemap.LayerInfo.Present(true),
+      present = Basemap.LayerInfo.Present.Present,
       Basemap.LayerInfo.File("/c/terrain.pmtiles"),
       bytes = ByteCount(1),
       maxZoom = Some(Basemap.Focus.MaxZoom(8)),
       onDemand = Some(
         Basemap.OnDemand(
-          Basemap.OnDemand.Enabled(true),
+          Basemap.OnDemand.Enabled.Enabled,
           Basemap.OnDemand.MaxZoom(12),
           Basemap.OnDemand.Dir("/c/terrain-cache"),
           Basemap.OnDemand.Tiles(3),
@@ -204,7 +204,7 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(t.modify(_.onDemand).setTo(None).modify(_.focus).setTo(Nil).deepest, Some(8))
     val md = BasemapMarkdown.status(
       Basemap.Status(
-        available = Basemap.Status.Available(true),
+        available = Basemap.Status.Available.Available,
         Basemap.Status.Dir("/c"),
         Basemap.Status.Bbox("x"),
         List(t),
@@ -217,7 +217,7 @@ class BasemapSuite extends munit.FunSuite:
       BasemapMarkdown
         .onDemand(
           Basemap.OnDemand(
-            Basemap.OnDemand.Enabled(false),
+            Basemap.OnDemand.Enabled.Disabled,
             Basemap.OnDemand.MaxZoom(12),
             Basemap.OnDemand.Dir("/c"),
             Basemap.OnDemand.Tiles(0),
@@ -235,23 +235,23 @@ class BasemapSuite extends munit.FunSuite:
     )
   test("what an extract left out, and what a style that draws some layers lacks in it"):
     assertEquals(
-      Basemap.droppedLayers(keepAll = Basemap.FetchQuery.KeepAll(true), Some(Basemap.DropRule.Spec("roads"))),
+      Basemap.droppedLayers(keepAll = Basemap.FetchQuery.KeepAll.KeepAll, Some(Basemap.DropRule.Spec("roads"))),
       Nil
     )
     assertEquals(
       Basemap.droppedLayers(
-        keepAll = Basemap.FetchQuery.KeepAll(false),
+        keepAll = Basemap.FetchQuery.KeepAll.Trim,
         Some(Basemap.DropRule.Spec("roads; places; pois +peak; water fountain"))
       ),
       List("places", "roads"),
       "only layers dropped whole: a style reading pois still finds the peaks"
     )
     assertEquals(
-      Basemap.droppedLayers(keepAll = Basemap.FetchQuery.KeepAll(false), Some(Basemap.DropRule.Spec(""))),
+      Basemap.droppedLayers(keepAll = Basemap.FetchQuery.KeepAll.Trim, Some(Basemap.DropRule.Spec(""))),
       Nil
     )
     assertEquals(
-      Basemap.droppedLayers(keepAll = Basemap.FetchQuery.KeepAll(false), None),
+      Basemap.droppedLayers(keepAll = Basemap.FetchQuery.KeepAll.Trim, None),
       Basemap.LegacyLacks,
       "made before the drop list: earth, water, land cover only"
     )
@@ -308,16 +308,22 @@ class BasemapSuite extends munit.FunSuite:
         Basemap.StyleState(Basemap.StyleState.Id("physical"), Basemap.StyleState.Name("Physical"), physical)
       )
     )
-    assertEquals(BaseMapSource.resolve(BaseMapSource.Wire("local"), st(Basemap.Status.Available(false), Nil)), "local")
     assertEquals(
-      BaseMapSource.resolve(BaseMapSource.Wire(" Online "), st(Basemap.Status.Available(true), Nil)),
+      BaseMapSource.resolve(BaseMapSource.Wire("local"), st(Basemap.Status.Available.Unavailable, Nil)),
+      "local"
+    )
+    assertEquals(
+      BaseMapSource.resolve(BaseMapSource.Wire(" Online "), st(Basemap.Status.Available.Available, Nil)),
       "online"
     )
-    assertEquals(BaseMapSource.resolve(BaseMapSource.Wire("auto"), st(Basemap.Status.Available(true), Nil)), "local")
+    assertEquals(
+      BaseMapSource.resolve(BaseMapSource.Wire("auto"), st(Basemap.Status.Available.Available, Nil)),
+      "local"
+    )
     assertEquals(
       BaseMapSource.resolve(
         BaseMapSource.Wire("auto"),
-        st(Basemap.Status.Available(true), List(Basemap.LayerInfo.Dropped("roads")))
+        st(Basemap.Status.Available.Available, List(Basemap.LayerInfo.Dropped("roads")))
       ),
       "local",
       "Physical is whole without the roads"
@@ -326,7 +332,7 @@ class BasemapSuite extends munit.FunSuite:
       BaseMapSource.resolve(
         BaseMapSource.Wire("auto"),
         st(
-          Basemap.Status.Available(true),
+          Basemap.Status.Available.Available,
           List(Basemap.LayerInfo.Dropped("roads")),
           List(Basemap.LayerInfo.Dropped("landuse"))
         )
@@ -335,12 +341,12 @@ class BasemapSuite extends munit.FunSuite:
       "neither is whole"
     )
     assertEquals(
-      BaseMapSource.resolve(BaseMapSource.Wire("auto"), st(Basemap.Status.Available(false), Nil)),
+      BaseMapSource.resolve(BaseMapSource.Wire("auto"), st(Basemap.Status.Available.Unavailable, Nil)),
       "online",
       "nothing downloaded"
     )
     assertEquals(
-      BaseMapSource.resolve(BaseMapSource.Wire("whatever"), st(Basemap.Status.Available(true), Nil)),
+      BaseMapSource.resolve(BaseMapSource.Wire("whatever"), st(Basemap.Status.Available.Available, Nil)),
       "local",
       "anything else is auto"
     )
@@ -348,13 +354,13 @@ class BasemapSuite extends munit.FunSuite:
   test("the status says which styles lack layers"):
     val v = Basemap.LayerInfo(
       Basemap.LayerInfo.Layer("vector"),
-      present = Basemap.LayerInfo.Present(true),
+      present = Basemap.LayerInfo.Present.Present,
       file = Basemap.LayerInfo.File("/c/vector.pmtiles"),
       dropped = List(Basemap.LayerInfo.Dropped("places"), Basemap.LayerInfo.Dropped("roads"))
     )
     val md = BasemapMarkdown.status(
       Basemap.Status(
-        available = Basemap.Status.Available(true),
+        available = Basemap.Status.Available.Available,
         Basemap.Status.Dir("/c"),
         Basemap.Status.Bbox("x"),
         List(v),
@@ -384,7 +390,7 @@ class BasemapSuite extends munit.FunSuite:
       "The map",
       Basemap.Layer.Wire("vector"),
       Basemap.OnDemand(
-        Basemap.OnDemand.Enabled(true),
+        Basemap.OnDemand.Enabled.Enabled,
         Basemap.OnDemand.MaxZoom(12),
         Basemap.OnDemand.Dir("/c/vector-cache"),
         Basemap.OnDemand.Tiles(3),
@@ -405,7 +411,7 @@ class BasemapSuite extends munit.FunSuite:
         "The sea floor",
         Basemap.Layer.Wire("bathymetry"),
         Basemap.OnDemand(
-          Basemap.OnDemand.Enabled(false),
+          Basemap.OnDemand.Enabled.Disabled,
           Basemap.OnDemand.MaxZoom(7),
           Basemap.OnDemand.Dir("/c"),
           Basemap.OnDemand.Tiles(0),

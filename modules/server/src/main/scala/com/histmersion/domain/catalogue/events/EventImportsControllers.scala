@@ -77,7 +77,7 @@ final class EventImportsControllers(
         EventImportsControllers.ImportJobKind,
         JobKinds.Subject(
           s"${imports.infoOf(provider).fold(provider.value)(_.title.value)} events${
-              if req.dryRun.value then " (dry run)" else ""
+              if req.dryRun.dryRun then " (dry run)" else ""
             }"
         )
       ) { (job, progress) =>
@@ -110,10 +110,10 @@ final class EventImportsControllers(
         JobKinds.Subject(
           s"re-derive the dating of ${provider
               .fold("every catalogue's")(p => imports.infoOf(p).fold(p.value)(_.title.value) + "'s")} " +
-            s"events${if req.dryRun.value then " (dry run)" else ""}"
+            s"events${if req.dryRun.dryRun then " (dry run)" else ""}"
         )
       ) { (job, progress) =>
-        val r = imports.runRederive(provider, req.dryRun.value, progress)
+        val r = imports.runRederive(provider, req.dryRun.dryRun, progress)
         jobs.amend(Job.Id.assume(job.id.value))(_.set(EventRederiveReport.Detail, Some(r)))
         Right(BackgroundJob.Outcome.Summary(EventRederiveReport.summary(r)))
       }

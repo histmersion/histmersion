@@ -34,7 +34,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.Id("keepassxc"),
     PluginStatus.Version("0.1.0"),
     PluginStatus.SpiVersion(1),
-    enabled = PluginStatus.Enabled(true),
+    enabled = PluginStatus.Enabled.Enabled,
     PluginState.Registered.wire,
     provides = List(PluginDescription.Provides("secret-vault:keepassxc")),
     settings = List(
@@ -46,14 +46,14 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.Id("bitwarden"),
     PluginStatus.Version("0.1.0"),
     PluginStatus.SpiVersion(1),
-    enabled = PluginStatus.Enabled(false),
+    enabled = PluginStatus.Enabled.Disabled,
     PluginState.Disabled.wire
   )
   private val broken = PluginStatus(
     PluginStatus.Id("portal"),
     PluginStatus.Version("2.0.0"),
     PluginStatus.SpiVersion(1),
-    enabled = PluginStatus.Enabled(true),
+    enabled = PluginStatus.Enabled.Enabled,
     PluginState.Failed.wire,
     warnings =
       List(PluginStatus.Warnings("histmersion.plugins.portal.token: a secret written into the config (value:***)")),
@@ -69,7 +69,7 @@ class PluginsReportSuite extends munit.FunSuite:
     PluginStatus.Id("old"),
     PluginStatus.Version("0.0.1"),
     PluginStatus.SpiVersion(0),
-    enabled = PluginStatus.Enabled(false),
+    enabled = PluginStatus.Enabled.Disabled,
     PluginState.Refused.wire,
     errors = List(
       Problem.Plugin
@@ -173,7 +173,7 @@ class PluginsReportSuite extends munit.FunSuite:
 
   test("the self-check report shows settings as references and ends with the verdict"):
     val ok = PluginsMarkdown.selfCheck(
-      ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded(true)),
+      ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded.Loaded),
       PluginsReport(PluginsReport.SpiVersion(1), List(vault, off))
     )
     assert(ok.contains("- config file: /c/histmersion.conf (read)"), ok)

@@ -143,14 +143,14 @@ object GoalsView:
       plan: GoalsView.NewAreaPlan,
       seed: GoalsView.NewAreaSeed,
       watch: Watch = Watch.Unwatched,
-      autoIngest: Managers.ManagerConfig.AutoIngest = Managers.ManagerConfig.AutoIngest(false),
+      autoIngest: Managers.ManagerConfig.AutoIngest = Managers.ManagerConfig.AutoIngest.Manual,
       perDay: PerDay = PerDay("")
   ): Either[Problem, NewArea] =
     val t = title.value.trim
     val s = Option(slug.value.trim).filter(_.nonEmpty).map(Goal.Slug(_)).getOrElse(slugify(Goal.Title(t)))
     val cap = perDay.value.trim
     if t.isEmpty then Left(Problem.Unclassified(Legacy.Text("a research area needs a title")))
-    else if watch.watched && autoIngest.value && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
+    else if watch.watched && autoIngest.autoIngest && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
       Left(Problem.Unclassified(Legacy.Text("ingests a day: a whole number")))
     else
       val ok = s
@@ -158,7 +158,7 @@ object GoalsView:
         Managers.ManagerConfig(
           autoIngest = Some(autoIngest),
           autoIngestPerDay =
-            if autoIngest.value then cap.toIntOption.map(Managers.ManagerConfig.AutoIngestPerDay(_)) else None
+            if autoIngest.autoIngest then cap.toIntOption.map(Managers.ManagerConfig.AutoIngestPerDay(_)) else None
         )
       )
       Right(
@@ -196,7 +196,7 @@ object GoalsView:
         seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
         watched.fold("")(id =>
           s"; watcher ${made(id, "for its weekly sweeps")}" +
-            (if a.watch.exists(_.autoIngest.exists(_.value)) then " (it ingests legal open-access finds)" else "")
+            (if a.watch.exists(_.autoIngest.exists(_.autoIngest)) then " (it ingests legal open-access finds)" else "")
         )
     )
 
@@ -307,10 +307,10 @@ object GoalsView:
         Goal.Slug(slug.now()),
         Goal.Notes(notes.now()),
         TagsText(tags.now()),
-        NewAreaPlan(plan.now()),
-        NewAreaSeed(seed.now()),
+        (if plan.now() then NewAreaPlan.Plan else NewAreaPlan.NoPlan),
+        (if seed.now() then NewAreaSeed.Seed else NewAreaSeed.NoSeed),
         (if watch.now() then Watch.Watched else Watch.Unwatched),
-        Managers.ManagerConfig.AutoIngest(ingest.now()),
+        (if ingest.now() then Managers.ManagerConfig.AutoIngest.Auto else Managers.ManagerConfig.AutoIngest.Manual),
         PerDay(perDay.now())
       ) match
         case Left(m)  => msg.set(Some(Left(m.sentence)))
@@ -665,7 +665,7 @@ object GoalsView:
     def editor(k: ScheduleKind): HtmlElement =
       val current = ss.find(_.kind == k)
       val cron = Var[String](current.map(_.cron.value).getOrElse(defaultCron(k).value))
-      val on = Var(current.forall(_.enabled.value))
+      val on = Var(current.forall(_.enabled.enabled))
       val budget = Var(current.flatMap(_.budgetUsd).fold("")(b => AgentsMarkdown.usd(b.value)))
       li(
         cls := "goal-schedule",
@@ -693,7 +693,7 @@ object GoalsView:
         child <-- Auth.writable.map { w =>
           if !w then
             current.fold(span(cls := "muted", "no schedule"))(c =>
-              span(code(c.cron), if c.enabled.value then " on" else " off")
+              span(code(c.cron), if c.enabled.enabled then " on" else " off")
             )
           else
             div(
@@ -729,7 +729,7 @@ object GoalsView:
                       k,
                       ScheduleSet(
                         ScheduleSet.Cron(cron.now()),
-                        ScheduleSet.Enabled(on.now()),
+                        (if on.now() then ScheduleSet.Enabled.Enabled else ScheduleSet.Enabled.Disabled),
                         RunsView.budget(UiLabels.Text(budget.now())).map(b => ScheduleSet.BudgetUsd(b.value))
                       )
                     )

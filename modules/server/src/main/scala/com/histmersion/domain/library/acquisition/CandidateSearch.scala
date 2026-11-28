@@ -245,7 +245,7 @@ final class CandidateSearch(
           skipped
             .map((reason, n) => CandidateSweep.SkippedKey(reason.said) -> CandidateSweep.SkippedValue(n.value)),
           unseen,
-          CandidateSweep.DryRun(dryRun.value),
+          (if dryRun.value then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply),
           notes
         )
       }

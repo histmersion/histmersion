@@ -982,7 +982,7 @@ final class ReviewArticlePipeline(
             }
           )
       }
-    val named = hits.filterNot(_.mechanical.value).map(x => s"- ${x.line}")
+    val named = hits.filterNot(_.mechanical.mechanical).map(x => s"- ${x.line}")
     if critiques.isEmpty && named.isEmpty then ""
     else
       "\n\nThe critique work, worked out by code from the checklist (a pair is answered when both sources are cited in one " +

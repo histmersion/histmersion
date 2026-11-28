@@ -13,6 +13,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** A plan is spent by every client of the account, and the provider says how much is left only as a percentage of each
   * window plus its reset, so a plan is governed by floors rather than budgets.
@@ -65,27 +66,33 @@ object PlanQuota:
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
-      claudeCodeApiKey: Logins.ClaudeCodeApiKey = Logins.ClaudeCodeApiKey(false),
-      codexApiKey: Logins.CodexApiKey = Logins.CodexApiKey(false),
-      opencodeChatgpt: Logins.OpencodeChatgpt = Logins.OpencodeChatgpt(false)
+      claudeCodeApiKey: Logins.ClaudeCodeApiKey = Logins.ClaudeCodeApiKey.Login,
+      codexApiKey: Logins.CodexApiKey = Logins.CodexApiKey.Login,
+      opencodeChatgpt: Logins.OpencodeChatgpt = Logins.OpencodeChatgpt.Other
   )
 
   object Logins:
-    type ClaudeCodeApiKey = ClaudeCodeApiKey.T
-    object ClaudeCodeApiKey extends Newtype[Boolean, Pure]
-    type CodexApiKey = CodexApiKey.T
-    object CodexApiKey extends Newtype[Boolean, Pure]
-    type OpencodeChatgpt = OpencodeChatgpt.T
-    object OpencodeChatgpt extends Newtype[Boolean, Pure]
+    enum ClaudeCodeApiKey derives CanEqual:
+      case ApiKey, Login
+    object ClaudeCodeApiKey extends TwoStates[ClaudeCodeApiKey]:
+      extension (claudeCodeApiKey: ClaudeCodeApiKey) def claudeCodeApiKey: Boolean = claudeCodeApiKey == ApiKey
+    enum CodexApiKey derives CanEqual:
+      case ApiKey, Login
+    object CodexApiKey extends TwoStates[CodexApiKey]:
+      extension (codexApiKey: CodexApiKey) def codexApiKey: Boolean = codexApiKey == ApiKey
+    enum OpencodeChatgpt derives CanEqual:
+      case Chatgpt, Other
+    object OpencodeChatgpt extends TwoStates[OpencodeChatgpt]:
+      extension (opencodeChatgpt: OpencodeChatgpt) def opencodeChatgpt: Boolean = opencodeChatgpt == Chatgpt
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
-    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey(true)) =>
+    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == Logins.ClaudeCodeApiKey.ApiKey) =>
       Some(PoolId.ClaudePlan)
-    case ProviderKind.Codex if !((logins.codexApiKey) == Logins.CodexApiKey(true)) => Some(PoolId.ChatgptPlan)
+    case ProviderKind.Codex if !((logins.codexApiKey) == Logins.CodexApiKey.ApiKey) => Some(PoolId.ChatgptPlan)
     case ProviderKind.Opencode
-        if ((logins.opencodeChatgpt) == Logins.OpencodeChatgpt(true)) && m.model.value.startsWith("openai/") =>
+        if ((logins.opencodeChatgpt) == Logins.OpencodeChatgpt.Chatgpt) && m.model.value.startsWith("openai/") =>
       Some(PoolId.ChatgptPlan)
     case _ => None
 
@@ -134,8 +141,10 @@ object PlanQuota:
     object UsedPct extends Newtype[Double, Pure]
     type ResetsAt = ResetsAt.T
     object ResetsAt extends Newtype[Long, Pure]
-    type Rejected = Rejected.T
-    object Rejected extends Newtype[Boolean, Pure]
+    enum Rejected derives CanEqual:
+      case Rejected, Accepted
+    object Rejected extends TwoStates[Rejected]:
+      extension (rejected: Rejected) def rejected: Boolean = rejected == Rejected
     type ObservedAt = ObservedAt.T
     object ObservedAt extends Newtype[Long, Pure]
     export ModelChains.ChainEntry.Model
@@ -218,10 +227,14 @@ object PlanQuota:
   object WindowState:
     export Floors.Floor
     export WindowStatus.LeftPct
-    type Stale = Stale.T
-    object Stale extends Newtype[Boolean, Pure]
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
+    enum Stale derives CanEqual:
+      case Stale, Fresh
+    object Stale extends TwoStates[Stale]:
+      extension (stale: Stale) def stale: Boolean = stale == Stale
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
 
   enum Verdict:
     case Usable(note: Option[Usable.Note])
@@ -258,7 +271,7 @@ object PlanQuota:
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
-      if (r.rejected) == Reading.Rejected(true) then Some(s"${r.kind}: the provider refuses it")
+      if (r.rejected) == Reading.Rejected.Rejected then Some(s"${r.kind}: the provider refuses it")
       else if !stale && left <= floor.value then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
       else if stale && left < floor.value + rules.marginPct.value then
         Some(
@@ -269,8 +282,8 @@ object PlanQuota:
       r,
       floor,
       WindowStatus.LeftPct(left),
-      WindowState.Stale(stale),
-      WindowState.Usable(why.isEmpty),
+      (if stale then WindowState.Stale.Stale else WindowState.Stale.Fresh),
+      (if why.isEmpty then WindowState.Usable.Usable else WindowState.Usable.Unusable),
       why.map(w => Rationale(s"$w"))
     )
 
@@ -285,10 +298,10 @@ object PlanQuota:
       model: Option[PlanQuota.VerdictModel] = None
   ): (Verdict, List[WindowState]) =
     val states = current(readings, now, model).map(windowState(_, rules, now))
-    val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
+    val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable.Usable)))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if (held).value then Verdict.Blocked(Rationale("held: a person paused all agent use of this plan"), None)
+      if (held).held then Verdict.Blocked(Rationale("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))        => Verdict.Blocked(why, until)
@@ -299,7 +312,7 @@ object PlanQuota:
             )
           case None if states.isEmpty =>
             Verdict.Usable(Some(Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
-          case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale(true)))) =>
+          case None if states.exists((refactorCallback => ((refactorCallback.stale) == WindowState.Stale.Stale))) =>
             Verdict.Usable(Some(Verdict.Usable.Note("the last reading is stale")))
           case None => Verdict.Usable(None)
     (v, states)
@@ -358,17 +371,15 @@ object PlanQuota:
       now: RefreshNeedNow,
       model: Option[PlanQuota.RefreshNeedModel] = None
   ): Option[RefreshNeed] =
-    if ((held) == PoolStatus.Held(true)) || refusal.exists(_._2.forall(_.value > now.value)) then None
+    if ((held) == PoolStatus.Held.Held) || refusal.exists(_._2.forall(_.value > now.value)) then None
     else
       val states = current(readings, now, model).map(windowState(_, rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
-        val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable(true))))
+        val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable.Usable)))
         Option.when(
           blocking.nonEmpty && blocking.forall(s =>
-            ((s.stale) == WindowState.Stale(true)) && !((s.reading.rejected) == Reading.Rejected(
-              true
-            )) && s.leftPct.value > s.floor.value
+            ((s.stale) == WindowState.Stale.Stale) && !((s.reading.rejected) == Reading.Rejected.Rejected) && s.leftPct.value > s.floor.value
           )
         )(
           RefreshNeed.StaleOnly
@@ -424,10 +435,14 @@ object PlanQuota:
     type LeftPct = LeftPct.T
     object LeftPct extends Newtype[Double, Pure]
     export Floors.Floor
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
-    type Stale = Stale.T
-    object Stale extends Newtype[Boolean, Pure]
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
+    enum Stale derives CanEqual:
+      case Stale, Fresh
+    object Stale extends TwoStates[Stale]:
+      extension (stale: Stale) def stale: Boolean = stale == Stale
     type ResetsAt = ResetsAt.T
     object ResetsAt extends Newtype[String, Pure]
     type ObservedAt = ObservedAt.T
@@ -452,7 +467,7 @@ object PlanQuota:
       windows: List[WindowStatus],
       planType: Option[PoolStatus.PlanType] = None,
       note: Option[PoolStatus.Note] = None,
-      available: PoolStatus.Available = PoolStatus.Available(true),
+      available: PoolStatus.Available = PoolStatus.Available.Available,
       login: Option[PoolStatus.Login] = None,
       refresh: Option[PoolStatus.Refresh] = None,
       refreshesToday: PoolStatus.RefreshesToday = PoolStatus.RefreshesToday(0),
@@ -473,10 +488,14 @@ object PlanQuota:
     type FloorsSource = FloorsSource.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object FloorsSource extends Newtype[String, Pure]
-    type Held = Held.T
-    object Held extends Newtype[Boolean, Pure]
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
+    enum Held derives CanEqual:
+      case Held, Released
+    object Held extends TwoStates[Held]:
+      extension (held: Held) def held: Boolean = held == Held
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
     type Until = Until.T
     object Until extends Newtype[String, Pure]
     type MaxCallsInFlight = MaxCallsInFlight.T
@@ -486,8 +505,10 @@ object PlanQuota:
     type Note = Note.T
     object Note extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Available = Available.T
-    object Available extends Newtype[Boolean, Pure]
+    enum Available derives CanEqual:
+      case Available, Unavailable
+    object Available extends TwoStates[Available]:
+      extension (available: Available) def available: Boolean = available == Available
     type Login = Login.T
     object Login extends Newtype[String, Pure]
     type Refresh = Refresh.T
@@ -512,8 +533,10 @@ object PlanQuota:
     object At extends Newtype[String, Pure]
     export RefreshMode.Wire as Mode
     export RefreshTrigger.Wire as Trigger
-    type Ok = Ok.T
-    object Ok extends Newtype[Boolean, Pure]
+    enum Ok derives CanEqual:
+      case Ok, Failed
+    object Ok extends TwoStates[Ok]:
+      extension (ok: Ok) def ok: Boolean = ok == Ok
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
 
@@ -536,8 +559,10 @@ object PlanQuota:
 
   object PoolRefreshed:
     export PoolId.Wire as Pool
-    type Refreshed = Refreshed.T
-    object Refreshed extends Newtype[Boolean, Pure]
+    enum Refreshed derives CanEqual:
+      case Refreshed, Unchanged
+    object Refreshed extends TwoStates[Refreshed]:
+      extension (refreshed: Refreshed) def refreshed: Boolean = refreshed == Refreshed
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
 
@@ -582,8 +607,10 @@ object PlanQuota:
         api.json.Schema
 
   object PoolSet:
-    type Hold = Hold.T
-    object Hold extends Newtype[Boolean, Pure]
+    enum Hold derives CanEqual:
+      case Hold, Release
+    object Hold extends TwoStates[Hold]:
+      extension (hold: Hold) def hold: Boolean = hold == Hold
     type Floors = Floors.T
     object Floors extends Newtype[String, Pure]
 
@@ -593,8 +620,10 @@ object PlanQuota:
         api.json.Schema
 
   object FallthroughSet:
-    type Fallthrough = Fallthrough.T
-    object Fallthrough extends Newtype[Boolean, Pure]
+    enum Fallthrough derives CanEqual:
+      case Fallthrough, Stop
+    object Fallthrough extends TwoStates[Fallthrough]:
+      extension (fallthrough: Fallthrough) def fallthrough: Boolean = fallthrough == Fallthrough
 
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
   final case class ModWindow(
@@ -629,7 +658,9 @@ object PlanQuota:
         api.json.Schema
 
   object GuardAnswer:
-    type Allow = Allow.T
-    object Allow extends Newtype[Boolean, Pure]
+    enum Allow derives CanEqual:
+      case Allow, Deny
+    object Allow extends TwoStates[Allow]:
+      extension (allow: Allow) def allow: Boolean = allow == Allow
     type ResetsAt = ResetsAt.T
     object ResetsAt extends Newtype[String, Pure]

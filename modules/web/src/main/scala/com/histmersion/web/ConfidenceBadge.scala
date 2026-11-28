@@ -29,7 +29,7 @@ object ConfidenceBadge:
         ConfidenceStyle
           .iconParts(c)
           .map(p =>
-            if p.filled.value then svg.path(svg.d := p.d.value, svg.fill := "currentColor")
+            if p.filled.filled then svg.path(svg.d := p.d.value, svg.fill := "currentColor")
             else svg.path(svg.d := p.d.value, svg.fill := "none", svg.stroke := "currentColor")
           )
       ),

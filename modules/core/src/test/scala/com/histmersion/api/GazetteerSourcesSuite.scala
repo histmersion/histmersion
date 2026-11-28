@@ -304,7 +304,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val copied = api.catalogue.Place.Match(
       api.catalogue.Place.Id("wikidata_q1059359"),
       Some(api.catalogue.Place.Match.ImportSource("wikidata")),
-      native = api.catalogue.Place.Match.Native(false)
+      native = api.catalogue.Place.Match.Native.Foreign
     )
     assertEquals(Gazetteer.canonical(byOwn = List(q5420), byLinks = List(copied, q5420)), Some("wikidata_q5420"))
     assertEquals(Gazetteer.canonical(Nil, List(copied, q5420)), Some("wikidata_q5420"))
@@ -316,7 +316,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val city = api.catalogue.Place.Match(
       api.catalogue.Place.Id("ne_city_1159139597"),
       None,
-      native = api.catalogue.Place.Match.Native(false)
+      native = api.catalogue.Place.Match.Native.Foreign
     )
     assertEquals(Gazetteer.canonical(byOwn = List(city), byLinks = List(pleiades)), Some("pleiades_383804"))
     // between two native places, the record's own id decides before a link
@@ -373,7 +373,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         Span(None, Some(Year(1769L))),
         Gazetteer.ValidityWindowYears(300)
       ),
-      Validity(Some(Year(1469L)), Some(Year(1769L)), startUnknown = Validity.StartUnknown(true))
+      Validity(Some(Year(1469L)), Some(Year(1769L)), startUnknown = Validity.StartUnknown.StartUnknown)
     )
     assertEquals(
       Gazetteer.validity(
@@ -381,7 +381,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         Span(None, Some(Year(-1200L))),
         Gazetteer.ValidityWindowYears(100)
       ),
-      Validity(Some(Year(-1300L)), Some(Year(-1200L)), startUnknown = Validity.StartUnknown(true))
+      Validity(Some(Year(-1300L)), Some(Year(-1200L)), startUnknown = Validity.StartUnknown.StartUnknown)
     )
     assertEquals(
       Gazetteer.validity(
@@ -389,7 +389,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         Span(Some(Year(1299L)), Some(Year(1922L))),
         Gazetteer.ValidityWindowYears(300)
       ),
-      Validity(Some(Year(1299L)), Some(Year(1922L)), Validity.StartUnknown(false))
+      Validity(Some(Year(1299L)), Some(Year(1922L)), Validity.StartUnknown.StartKnown)
     )
     assertEquals(
       Gazetteer.validity(
@@ -397,12 +397,12 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         Span(Some(Year(1200L)), None),
         Gazetteer.ValidityWindowYears(300)
       ),
-      Validity(Some(Year(1200L)), None, Validity.StartUnknown(false)),
+      Validity(Some(Year(1200L)), None, Validity.StartUnknown.StartKnown),
       "a known start with no end: still there (a town founded in 1200)"
     )
     assertEquals(
       Gazetteer.validity(Gazetteer.ValiditySourceKey("geonames"), Span.always, Gazetteer.ValidityWindowYears(300)),
-      Validity(None, None, Validity.StartUnknown(false)),
+      Validity(None, None, Validity.StartUnknown.StartKnown),
       "undated: told apart by its source"
     )
 
@@ -413,12 +413,12 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         Span(None, Some(Year(1769L))),
         Gazetteer.ValidityWindowYears(300)
       ),
-      Validity(None, Some(Year(1769L)), Validity.StartUnknown(false))
+      Validity(None, Some(Year(1769L)), Validity.StartUnknown.StartKnown)
     )
     assertEquals(
       Gazetteer
         .validity(Gazetteer.ValiditySourceKey(""), Span(None, Some(Year(1769L))), Gazetteer.ValidityWindowYears(300)),
-      Validity(None, Some(Year(1769L)), Validity.StartUnknown(false))
+      Validity(None, Some(Year(1769L)), Validity.StartUnknown.StartKnown)
     )
 
   test("the window's default is the configured one (and V074's, checked in the db module)"):

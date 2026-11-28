@@ -275,7 +275,7 @@ class ProviderPluginsSuite extends munit.FunSuite:
       infos
         .find(_.name.value == "europeana")
         .exists(i =>
-          i.builtin.value && i.plugin.value == "media-europeana" &&
+          i.builtin.builtin && i.plugin.value == "media-europeana" &&
             i.description.value.endsWith("NO KEY SET: not asked")
         ),
       infos.toString
@@ -350,12 +350,12 @@ class ProviderPluginsSuite extends munit.FunSuite:
           MediaProvider.Info.Over("places"),
           MediaProvider.Info.Description(""),
           PluginDescription.Id("zq-plugin"),
-          builtin = MediaProvider.Info.Builtin(false),
+          builtin = MediaProvider.Info.Builtin.Plugin,
           MediaProvider.Info.Licences("cc0,cc-by")
         )
     )
     assert(
-      infos.find(_.name.value == "met").exists(i => i.builtin.value && i.plugin.value == "media-met"),
+      infos.find(_.name.value == "met").exists(i => i.builtin.builtin && i.plugin.value == "media-met"),
       infos.toString
     )
     val cats = BuiltinCatalogues.infos(providers(g.registries.eventCatalogues))

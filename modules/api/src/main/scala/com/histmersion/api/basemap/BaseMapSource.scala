@@ -33,4 +33,4 @@ object BaseMapSource:
       case Online => Wire(Online)
       case _      =>
         val whole = status.styles.exists(s => BaseStyles.all.exists(_.id == s.id) && s.missing.isEmpty)
-        if ((status.available) == Basemap.Status.Available(true)) && whole then Wire(Local) else Wire(Online)
+        if ((status.available) == Basemap.Status.Available.Available) && whole then Wire(Local) else Wire(Online)

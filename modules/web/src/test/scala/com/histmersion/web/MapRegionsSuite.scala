@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.MapArea
 class MapRegionsSuite extends munit.FunSuite:
 
   private val status = Basemap.Status(
-    available = Basemap.Status.Available(true),
+    available = Basemap.Status.Available.Available,
     dir = Basemap.Status.Dir("/d"),
     bbox = Basemap.Status.Bbox("-12,20,90,62"),
     layers = Nil,
@@ -53,12 +53,12 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Map,
         None,
         MapRegions.ZoomText(""),
-        dryRun = Basemap.FetchQuery.DryRun(true)
+        dryRun = Basemap.FetchQuery.DryRun.DryRun
       ),
       Right(
         Basemap.FetchQuery(
           bbox = Some(Basemap.FetchQuery.Bbox("20,30,40,50")),
-          dryRun = Basemap.FetchQuery.DryRun(true)
+          dryRun = Basemap.FetchQuery.DryRun.DryRun
         )
       )
     )
@@ -68,7 +68,7 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Map,
         None,
         MapRegions.ZoomText("6"),
-        dryRun = Basemap.FetchQuery.DryRun(false)
+        dryRun = Basemap.FetchQuery.DryRun.Apply
       ),
       Right(Basemap.FetchQuery(bbox = Some(Basemap.FetchQuery.Bbox("world")), maxZoom = Some(Basemap.Focus.MaxZoom(6))))
     )
@@ -78,13 +78,13 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Relief,
         Some(Basemap.Focus.Name("argolid")),
         MapRegions.ZoomText(""),
-        dryRun = Basemap.FetchQuery.DryRun(true)
+        dryRun = Basemap.FetchQuery.DryRun.DryRun
       ),
       Right(
         Basemap.FetchQuery(
           layer = Basemap.FetchQuery.Layer("terrain"),
           bbox = Some(Basemap.FetchQuery.Bbox("22.5,37.4,23.2,37.9")),
-          dryRun = Basemap.FetchQuery.DryRun(true),
+          dryRun = Basemap.FetchQuery.DryRun.DryRun,
           focus = Some(Basemap.FetchQuery.Focus("argolid"))
         )
       )
@@ -95,7 +95,7 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Relief,
         None,
         MapRegions.ZoomText("11"),
-        dryRun = Basemap.FetchQuery.DryRun(false)
+        dryRun = Basemap.FetchQuery.DryRun.Apply
       ).map(q => (q.focus, q.terrainMaxZoom)),
       Right((Some("bbox-1-2-3-4"), Some(11)))
     )
@@ -107,7 +107,7 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Map,
         None,
         MapRegions.ZoomText(""),
-        dryRun = Basemap.FetchQuery.DryRun(true)
+        dryRun = Basemap.FetchQuery.DryRun.DryRun
       ).left.exists {
         case Problem.Invalid.Inconsistent(_, Problem.Invalid.Exclusion.Ordered, _) => true
         case _                                                                     => false
@@ -119,7 +119,7 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Map,
         None,
         MapRegions.ZoomText(""),
-        dryRun = Basemap.FetchQuery.DryRun(true)
+        dryRun = Basemap.FetchQuery.DryRun.DryRun
       ).isLeft
     )
     assert(
@@ -128,7 +128,7 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Map,
         None,
         MapRegions.ZoomText("deep"),
-        dryRun = Basemap.FetchQuery.DryRun(true)
+        dryRun = Basemap.FetchQuery.DryRun.DryRun
       ).left.exists(_.sentence.contains("0 to"))
     )
     assert(
@@ -137,7 +137,7 @@ class MapRegionsSuite extends munit.FunSuite:
         Content.Map,
         None,
         MapRegions.ZoomText("99"),
-        dryRun = Basemap.FetchQuery.DryRun(true)
+        dryRun = Basemap.FetchQuery.DryRun.DryRun
       ).isLeft
     )
 

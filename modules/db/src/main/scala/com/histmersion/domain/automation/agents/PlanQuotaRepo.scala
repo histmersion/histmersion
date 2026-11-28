@@ -46,7 +46,9 @@ object PlanQuotaRepo:
           val model = r.model.map(_.value).getOrElse("")
           Unused(
             sql"""INSERT INTO plan_quota_readings (pool, limit_id, kind, model, used_pct, resets_at, rejected, observed_at, source)
-                VALUES (${pool.wire}, ${r.limit}, ${r.kind}, $model, ${r.usedPct}, to_timestamp($reset::float8), ${r.rejected},
+                VALUES (${pool.wire}, ${r.limit}, ${r.kind}, $model, ${r.usedPct}, to_timestamp($reset::float8), ${{
+                r.rejected
+              }.rejected},
                         to_timestamp($seen::float8), ${r.source.wire})
                 ON CONFLICT (pool, limit_id, kind, model) DO UPDATE SET used_pct = EXCLUDED.used_pct,
                   resets_at = EXCLUDED.resets_at, rejected = EXCLUDED.rejected, observed_at = EXCLUDED.observed_at,
@@ -70,7 +72,7 @@ object PlanQuotaRepo:
           Reading.Kind(k),
           Reading.UsedPct(u),
           r.map(Reading.ResetsAt(_)),
-          Reading.Rejected(rej),
+          (if rej then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
           Reading.ObservedAt(o),
           Source.parse(Source.Wire(s)).getOrElse(Source.Run),
           Option(m).filter(_.nonEmpty).map(Reading.Model(_))
@@ -189,7 +191,7 @@ object PlanQuotaRepo:
           RefreshInfo.At(a),
           RefreshInfo.Mode(m),
           RefreshInfo.Trigger(t),
-          RefreshInfo.Ok(ok),
+          (if ok then RefreshInfo.Ok.Ok else RefreshInfo.Ok.Failed),
           RefreshInfo.Detail(d)
         )
       )

@@ -4,6 +4,7 @@ package domain.library.acquisition
 import com.histmersion.api
 import com.histmersion.upstreams
 import io.scalaland.chimney.dsl.*
+import com.histmersion.domain.TwoStateTransformers.given
 import io.scalaland.chimney.Transformer
 import com.histmersion.plugin.Year
 import com.histmersion.plugin.WorkKey
@@ -60,7 +61,7 @@ extension (w: WorkRef)
             )
           )
       )
-      .withFieldConst(_.inDb, api.library.WorkRef.InDb(false))
+      .withFieldConst(_.inDb, api.library.WorkRef.InDb.Missing)
       .transform
 
 extension (w: api.library.WorkRef)

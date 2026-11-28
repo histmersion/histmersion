@@ -164,7 +164,7 @@ class ResearchOverviewSuite extends munit.FunSuite:
       openApprovals = Autopilot.GoalProgress.OpenApprovals(2)
     )
     val focus = Autopilot.FocusInfo(
-      on = Autopilot.FocusInfo.On(true),
+      on = Autopilot.FocusInfo.On.On,
       waiting = List(
         Autopilot.FocusWaiting(
           Autopilot.FocusWaiting.Slug("a"),
@@ -204,8 +204,8 @@ class ResearchOverviewSuite extends munit.FunSuite:
       PlanQuota.WindowStatus.UsedPct(39),
       PlanQuota.WindowStatus.LeftPct(61),
       PlanQuota.WindowStatus.Floor(10),
-      usable = PlanQuota.WindowStatus.Usable(true),
-      stale = PlanQuota.WindowStatus.Stale(false),
+      usable = PlanQuota.WindowStatus.Usable.Usable,
+      stale = PlanQuota.WindowStatus.Stale.Fresh,
       None,
       PlanQuota.WindowStatus.ObservedAt(""),
       PlanQuota.WindowStatus.AgeSeconds(0),
@@ -218,8 +218,8 @@ class ResearchOverviewSuite extends munit.FunSuite:
       Nil,
       PlanQuota.PoolStatus.Floors(""),
       PlanQuota.PoolStatus.FloorsSource(""),
-      held = PlanQuota.PoolStatus.Held(false),
-      usable = PlanQuota.PoolStatus.Usable(true),
+      held = PlanQuota.PoolStatus.Held.Released,
+      usable = PlanQuota.PoolStatus.Usable.Usable,
       None,
       None,
       PlanQuota.PoolStatus.MaxCallsInFlight(1),

@@ -121,7 +121,7 @@ object Composition:
             cfg,
             UserConfigFile(
               configFile.path.map(p => java.nio.file.Path.of(p.value)),
-              UserConfigFile.Loaded(configFile.loaded.value),
+              UserConfigFile.Loaded(configFile.loaded.loaded),
               configFile.unknownKeys.map(k => UserConfigFile.UnknownKeys(k.value))
             )
           )

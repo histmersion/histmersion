@@ -115,7 +115,7 @@ private[goals] object GoalBundleRepo:
               Bundle.GoalSchedule(
                 Bundle.GoalSchedule.Kind(x.kind.value),
                 Bundle.GoalSchedule.Cron(x.cron.value),
-                Bundle.GoalSchedule.Enabled(x.enabled.value),
+                (if x.enabled.value then Bundle.GoalSchedule.Enabled.Enabled else Bundle.GoalSchedule.Enabled.Disabled),
                 x.budgetUsd.map(b => Bundle.GoalSchedule.BudgetUsd(b.toDouble))
               )
             )
@@ -189,7 +189,9 @@ private[goals] object GoalBundleRepo:
       val usd = x.budgetUsd.map(b => BigDecimal(b.value))
       Unused(
         sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, last_note, creator)
-            VALUES ($slug, ${x.kind}, ${x.cron}, ${x.enabled}, $usd,
+            VALUES ($slug, ${x.kind}, ${x.cron}, ${{
+            x.enabled
+          }.enabled}, $usd,
               'brought in by a merge: save it once here to schedule it', ${StoredCreator.write(
             Creator.unrecorded
           )}::jsonb)

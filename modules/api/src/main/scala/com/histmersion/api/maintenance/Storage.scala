@@ -15,6 +15,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 object Storage:
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]
@@ -129,7 +130,7 @@ object Storage:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def shown(entries: List[Entry]): List[(Entry, Depth)] =
-    val present = entries.filter((refactorCallback => ((refactorCallback.exists) == Entry.Exists(true))))
+    val present = entries.filter((refactorCallback => ((refactorCallback.exists) == Entry.Exists.Exists)))
     val keys = present.map(_.key).toSet
     def walk(e: Entry, depth: Depth, seen: Set[Entry.Key]): List[(Entry, Depth)] =
       (e, depth) :: present
@@ -141,9 +142,9 @@ object Storage:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size(e: Entry): String =
     e.bytes.map(_.value.toLong) match
-      case None => if (e.exists) == Entry.Exists(true) then ("—") else ("not there")
-      case Some(b) if ((e.partial) == Entry.Partial(true)) => (s"at least ${Backup.humanBytes(ByteCount(b))}")
-      case Some(b)                                         => Backup.humanBytes(ByteCount(b))
+      case None => if (e.exists) == Entry.Exists.Exists then ("—") else ("not there")
+      case Some(b) if ((e.partial) == Entry.Partial.Partial) => (s"at least ${Backup.humanBytes(ByteCount(b))}")
+      case Some(b)                                           => Backup.humanBytes(ByteCount(b))
 
   object Advice:
     type Keep = Keep.T
@@ -182,8 +183,8 @@ object Storage:
       path: Option[Entry.Path] = None,
       bytes: Option[ByteCount] = None,
       files: Option[FileCount] = None,
-      exists: Entry.Exists = Entry.Exists(true),
-      partial: Entry.Partial = Entry.Partial(false),
+      exists: Entry.Exists = Entry.Exists.Exists,
+      partial: Entry.Partial = Entry.Partial.Whole,
       within: Option[Entry.Key] = None,
       detail: Option[Entry.Detail] = None,
       shrink: Option[Entry.Shrink] = None,
@@ -203,10 +204,14 @@ object Storage:
     object Group extends Newtype[String, Pure]
     type Path = Path.T
     object Path extends Newtype[String, Pure]
-    type Exists = Exists.T
-    object Exists extends Newtype[Boolean, Pure]
-    type Partial = Partial.T
-    object Partial extends Newtype[Boolean, Pure]
+    enum Exists derives CanEqual:
+      case Exists, Missing
+    object Exists extends TwoStates[Exists]:
+      extension (exists: Exists) def exists: Boolean = exists == Exists
+    enum Partial derives CanEqual:
+      case Partial, Whole
+    object Partial extends TwoStates[Partial]:
+      extension (partial: Partial) def partial: Boolean = partial == Partial
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
     type Shrink = Shrink.T
@@ -217,7 +222,7 @@ object Storage:
     object Host extends Newtype[String, Pure]
 
   final case class Report(
-      measuring: Report.Measuring = Report.Measuring(false),
+      measuring: Report.Measuring = Report.Measuring.Measured,
       measuredAt: Option[Report.MeasuredAt] = None,
       tookMillis: Option[Report.DurationMillis] = None,
       ageSeconds: Option[Report.AgeSeconds] = None,
@@ -245,8 +250,10 @@ object Storage:
   object FileCount extends Newtype[Long, io.github.iltotore.iron.constraint.any.Pure]
 
   object Report:
-    type Measuring = Measuring.T
-    object Measuring extends Newtype[Boolean, Pure]
+    enum Measuring derives CanEqual:
+      case Measuring, Measured
+    object Measuring extends TwoStates[Measuring]:
+      extension (measuring: Measuring) def measuring: Boolean = measuring == Measuring
     type MeasuredAt = MeasuredAt.T
     object MeasuredAt extends Newtype[String, Pure]
     type Problems = Problems.T

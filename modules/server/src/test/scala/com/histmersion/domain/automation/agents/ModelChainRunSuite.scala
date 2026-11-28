@@ -253,9 +253,9 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val m = a.models
     val ex = m.chains.find(_.role.value == "extractor").get
     assertEquals(ex.active.map(_.value: String), Some(B.wire))
-    assert(!ex.models.head.usable.value && ex.models.head.freesAt.isDefined, ex)
+    assert(!ex.models.head.usable.usable && ex.models.head.freesAt.isDefined, ex)
     val al = m.allowances.find(_.target.value == A.wire.value).get
-    assert(!al.usable.value && al.limits.head.used.value >= 1500, al)
+    assert(!al.usable.usable && al.limits.head.used.value >= 1500, al)
     assertEquals(m.roles.find(_.role.value == "extractor").flatMap(_.model).map(_.value: String), Some(B.wire))
 
   test(
@@ -546,7 +546,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         ) // the server's own factory: real clients, nothing called
       val d = a.doctor(offline = AgentsControllers.Offline(false))
       val local = d.providers.find(_.provider.value == "local").get
-      assert(local.used.value && local.upstreamModels.map(_.value).contains("zzA"), local)
+      assert(local.used.used && local.upstreamModels.map(_.value).contains("zzA"), local)
       assert(
         local.checks.exists(c => c.name.value == "upstream local:zzMissing" && c.level == CheckLevel.Warn),
         local.checks
@@ -574,7 +574,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       assert(code.checks.exists(c => c.name.value == "bind" && c.level == CheckLevel.Ok), code.checks)
       val md = AgentsMarkdown.doctor(d)
       assert(!md.contains("someone@example.org") && !md.contains("o-1"), "the account never leaves the doctor")
-      assert(d.providers.find(_.provider.value == "anthropic").exists(p => !p.used.value && p.level != CheckLevel.Fail))
+      assert(d.providers.find(_.provider.value == "anthropic").exists(p => !p.used.used && p.level != CheckLevel.Fail))
       import scala.jdk.CollectionConverters.*
       assertEquals(requests.asScala.toList, List("GET /v1/models"), "one free listing; never a generation")
       // offline: no request at all

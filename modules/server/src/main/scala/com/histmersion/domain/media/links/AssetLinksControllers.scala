@@ -90,7 +90,7 @@ final class AssetLinksControllers(
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def delete(id: AssetLinkService.LinkId): Either[Api.Error, AssetLink.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_asset_link")):
-      if links.delete(id) then Right(AssetLink.Deleted(AssetLink.Id(id.value), AssetLink.Deleted.Value(true)))
+      if links.delete(id) then Right(AssetLink.Deleted(AssetLink.Id(id.value), AssetLink.Deleted.Value.Deleted))
       else
         Left(
           Api.Error(Problem.Unclassified(Legacy.Text(s"No asset link #$id")), Some(Api.Error.Code(Write.CodeNotFound)))

@@ -97,9 +97,9 @@ class EventCatalogSuite extends munit.FunSuite:
 
   test("a kind filter: a group selects its kinds (human = every non-natural one), a kind its aliases"):
     val nat = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("natural"))).get
-    assert(!nat.negate.value && nat.kinds.contains("eruption") && nat.kinds.contains("plague"))
+    assert(!nat.negate.negate && nat.kinds.contains("eruption") && nat.kinds.contains("plague"))
     val hum = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("human"))).get
-    assert(hum.negate.value && hum.kinds == nat.kinds)
+    assert(hum.negate.negate && hum.kinds == nat.kinds)
     assertEquals(
       EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet,
       Set("revolt", "rebellion", "uprising")
@@ -386,7 +386,7 @@ class EventCatalogSuite extends munit.FunSuite:
   test("an import report adds up and reads as one line"):
     val a = EventImportReport(
       EventImportReport.Provider("gvp"),
-      dryRun = EventImportReport.DryRun(true),
+      dryRun = EventImportReport.DryRun.DryRun,
       records = EventImportReport.Records(10),
       kept = EventImportReport.Kept(4),
       created = EventImportReport.Created(3),

@@ -43,7 +43,7 @@ class SourceDeleteSuite extends munit.FunSuite:
   private val done = Source.Deletion(
     Ck,
     Source.Deletion.Title("The Ahhiyawa Texts"),
-    applied = Source.Deletion.Applied(true),
+    applied = Source.Deletion.Applied.Applied,
     counts =
       List(DeleteCount(DeletePart.Findings, DeleteCount.Rows(3)), DeleteCount(DeletePart.EdgesIn, DeleteCount.Rows(2))),
     files = List(Source.Deletion.Files("/spool/abc.pdf")),
@@ -57,25 +57,25 @@ class SourceDeleteSuite extends munit.FunSuite:
       s"deleted $Ck (The Ahhiyawa Texts): 3 findings, 2 edges in (parked), 1 stored original, Calibre entry 1693 kept"
     )
     assertEquals(
-      Source.Delete.logText(Source.Deletion(Ck, Source.Deletion.Title("T"), applied = Source.Deletion.Applied(true))),
+      Source.Delete.logText(Source.Deletion(Ck, Source.Deletion.Title("T"), applied = Source.Deletion.Applied.Applied)),
       s"deleted $Ck (T)"
     )
 
   test("markdown: dry run, refused, applied"):
     val dry = Source.Delete
-      .markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None))
+      .markdown(done.modify(_.applied).setTo(Source.Deletion.Applied.Previewed).modify(_.logEntry).setTo(None))
       .value
     assert(dry.contains("Would delete") && dry.contains("--apply") && dry.contains("findings: 3"), dry)
     assert(dry.contains("links entry 1693 (not checked against the library)"), dry)
     val present = Source.Delete
       .markdown(
-        done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None),
+        done.modify(_.applied).setTo(Source.Deletion.Applied.Previewed).modify(_.logEntry).setTo(None),
         Some(CalibreEntryCheck.Present)
       )
       .value
     assert(present.contains("entry 1693 is linked and is NOT touched"), present)
     val refused = Source.Delete
-      .markdown(done.modify(_.applied).setTo(Source.Deletion.Applied(false)).modify(_.blockers).setTo(blocked))
+      .markdown(done.modify(_.applied).setTo(Source.Deletion.Applied.Previewed).modify(_.blockers).setTo(blocked))
       .value
     assert(
       refused.contains("Cannot delete") && refused.contains("no override") && !refused.contains("--apply"),
@@ -117,10 +117,10 @@ class SourceDeleteSuite extends munit.FunSuite:
   test("the request is strict: an unknown key is refused"):
     assertEquals(
       RawJson.decode[Source.DeleteRequest]("""{"apply":true}"""),
-      Right(Source.DeleteRequest(Source.DeleteRequest.Apply(true)))
+      Right(Source.DeleteRequest(Source.DeleteRequest.Apply.Apply))
     )
     assertEquals(
       RawJson.decode[Source.DeleteRequest]("{}"),
-      Right(Source.DeleteRequest(Source.DeleteRequest.Apply(false)))
+      Right(Source.DeleteRequest(Source.DeleteRequest.Apply.DryRun))
     )
     assert(RawJson.decode[Source.DeleteRequest]("""{"apply":true,"force":true}""").isLeft)

@@ -10,6 +10,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** Read-only is enforced in three layers, because no single one of them holds:
   *
@@ -59,8 +60,10 @@ object Query:
     object Rows extends Newtype[String, Pure]
     type RowCount = RowCount.T
     object RowCount extends Newtype[Int, Pure]
-    type Truncated = Truncated.T
-    object Truncated extends Newtype[Boolean, Pure]
+    enum Truncated derives CanEqual:
+      case Truncated, Complete
+    object Truncated extends TwoStates[Truncated]:
+      extension (truncated: Truncated) def truncated: Boolean = truncated == Truncated
     type ElapsedMs = ElapsedMs.T
     object ElapsedMs extends Newtype[Long, Pure]
 
@@ -78,8 +81,10 @@ object Query:
     object Name extends Newtype[String, Pure]
     type DataType = DataType.T
     object DataType extends Newtype[String, Pure]
-    type Nullable = Nullable.T
-    object Nullable extends Newtype[Boolean, Pure]
+    enum Nullable derives CanEqual:
+      case Nullable, Required
+    object Nullable extends TwoStates[Nullable]:
+      extension (nullable: Nullable) def nullable: Boolean = nullable == Nullable
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
@@ -231,7 +236,7 @@ object Query:
   def markdown(r: QueryResult): Markdown =
     val head =
       s"### ${r.rowCount} row(s)${
-          if (r.truncated) == QueryResult.Truncated(true) then " (truncated by the row cap)" else ""
+          if (r.truncated) == QueryResult.Truncated.Truncated then " (truncated by the row cap)" else ""
         } · ${r.elapsedMs} ms"
     if r.rows.isEmpty then Markdown(s"$head\n\n_no rows_")
     else Markdown(s"$head\n\n${markdownTable(r.columns, r.rows)}")

@@ -108,15 +108,15 @@ object QueueView:
   ):
     /** Whether items carry a checkbox; the worklog's do not. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def checkable: Boolean = kind.checkboxes.value
+    def checkable: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item can be edited and deleted here; the worklog is only added to. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def editable: Boolean = kind.checkboxes.value
+    def editable: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item carries a reason (why it is wanted); a worklog entry is its own record. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def reasons: Boolean = kind.checkboxes.value
+    def reasons: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */
     def fulfils: Boolean = kind == Queue.Kind.Acquire
@@ -241,7 +241,7 @@ object QueueView:
       items: List[Queue.QueueItem]
   ): List[(Option[Queue.QueueItem.Topic], List[Queue.QueueItem])] =
     val gs = items.groupBy(_.topic).toList.map((t, is) => t -> is.sortBy(_.id))
-    if kind.checkboxes.value then gs.sortBy((_, is) => is.head.id)
+    if kind.checkboxes.checkboxes then gs.sortBy((_, is) => is.head.id)
     else
       gs.sortBy((t, is) => (logDate(t, is).value, is.head.id.value))(using
         Ordering.Tuple2(using Ordering.String.reverse, Ordering.Int)
@@ -447,7 +447,7 @@ object QueueView:
         ApiClient
           .acquireRecheck(
             Acquire.Checks.RecheckRequest(
-              all = Acquire.Checks.RecheckRequest.All(true),
+              all = Acquire.Checks.RecheckRequest.All.All,
               by = Some(Acquire.Checks.RecheckRequest.By("web"))
             )
           )

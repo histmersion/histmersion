@@ -218,7 +218,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
     assertEquals((d.place.periodStart, d.place.periodEnd, d.place.dating), (None, Some(1769L), Place.Dating.EndOnly))
     assertEquals(d.place.when, "end 1769 CE, start unknown")
     assertEquals(d.place.importSource, Some("wikidata"))
-    assert(!d.hasBoundary.value, "a point")
+    assert(!d.hasBoundary.hasBoundary, "a point")
 
   test("time filters see the end-only place only in its window: search, the map feed, finding_places"):
     load(Wikidata, V1, List(Patones))
@@ -361,7 +361,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
     )
     val d = PlaceFixtures.get(ds, domain.catalogue.Place.Id("lpf_zzpt_1")).get.place
     assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), Place.Dating.Stated))
-    assert(PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary.value)
+    assert(PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary.hasBoundary)
     assertEquals(
       PlaceFixtures.get(ds, domain.catalogue.Place.Id("zzpt_region")).get.place.dating,
       Place.Dating.Stated

@@ -62,7 +62,7 @@ private[sources] object SourceDeleteRepo:
         val p = p0.modify(_.deletion).setTo(d0.modify(_.files).setTo(files(p0)))
         val source = keysOf(requested, p.keys.flatMap(k => Citekey.option(k.value)))
         deleteNow(p, source, referrers)
-        val d = p.deletion.modify(_.applied).setTo(Source.Deletion.Applied(true))
+        val d = p.deletion.modify(_.applied).setTo(Source.Deletion.Applied.Applied)
         val log = referrers.recorded(source, SourceReferrers.Line(Source.Delete.logText(d).value), logTopic)
         Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log.map(e => Source.Deletion.LogEntry(e.value)))))
     }
@@ -132,7 +132,7 @@ private[sources] object SourceDeleteRepo:
         val d = Source.Deletion(
           citekey = com.histmersion.api.library.Citekey(ck.value),
           title = com.histmersion.api.library.Title(r.title.value),
-          applied = Source.Deletion.Applied(false),
+          applied = Source.Deletion.Applied.Previewed,
           blockers = report.blockers,
           counts = report.counts,
           aliases = aliases.map(a => Source.Deletion.Aliases(a.value)),

@@ -93,7 +93,9 @@ private[acquisition] object CandidateRepo:
     Unused(
       sql"""INSERT INTO source_candidates (goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, creator)
                     VALUES (${c.goal}, ${c.doi}, ${c.title}, ${c.year}, ${c.authors}::text[], ${c.venue}, ${c.abstractText},
-                            ${c.isOa}, ${c.arxivId}, ${c.foundBy}::text[], ${StoredCreator.column(creator)}::jsonb)
+                            ${{
+          c.isOa
+        }.isOa}, ${c.arxivId}, ${c.foundBy}::text[], ${StoredCreator.column(creator)}::jsonb)
                     ON CONFLICT (goal, doi) DO UPDATE SET last_seen = now(),
                       found_by = (SELECT array_agg(DISTINCT f) FROM unnest(source_candidates.found_by || EXCLUDED.found_by) f),
                       abstract = coalesce(source_candidates.abstract, EXCLUDED.abstract),

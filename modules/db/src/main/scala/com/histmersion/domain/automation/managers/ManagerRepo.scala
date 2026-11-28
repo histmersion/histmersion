@@ -196,7 +196,7 @@ object ManagerRepo:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setState(id: ManagerRow.Id, state: State, pauseRuns: ManagerRow.PauseRuns)(using DbCon): Boolean =
-    sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = $pauseRuns, updated_at = now()
+    sql"""UPDATE agent_managers SET state = ${state.wire}, pause_runs = ${pauseRuns.pauseRuns}, updated_at = now()
           WHERE id = $id""".update.run() > 0
 
   /** Its settings and cron; `next` = when the cron fires next (None with no cron). */
@@ -1133,7 +1133,7 @@ object ManagerRepo:
   )(using DbCon)(using creator: Creator.New): ManagerHint =
     val id =
       sql"""INSERT INTO manager_hints (manager_id, item_id, text, effect, author, standing, creator)
-            VALUES ($managerId, $itemId, $text, $effect::jsonb, $author, $standing, ${StoredCreator.column(
+            VALUES ($managerId, $itemId, $text, $effect::jsonb, $author, ${standing.standing}, ${StoredCreator.column(
           creator
         )}::jsonb) RETURNING id"""
         .query[HintRow.Id]
@@ -1172,7 +1172,7 @@ object ManagerRepo:
           .run(),
         Unused.Why.Idempotent
       )
-      if !h.standing.value then
+      if !h.standing.standing then
         Unused(
           sql"UPDATE manager_hints SET retired_at = now() WHERE id = ${h.id} AND retired_at IS NULL".update.run(),
           Unused.Why.Idempotent

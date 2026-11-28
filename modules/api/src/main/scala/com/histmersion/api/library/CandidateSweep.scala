@@ -8,6 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class CandidateSweep(
@@ -18,7 +19,7 @@ final case class CandidateSweep(
     again: CandidateSweep.Again,
     skipped: Map[CandidateSweep.SkippedKey, CandidateSweep.SkippedValue],
     unseen: CandidateSweep.Unseen,
-    dryRun: CandidateSweep.DryRun = CandidateSweep.DryRun(false),
+    dryRun: CandidateSweep.DryRun = CandidateSweep.DryRun.Apply,
     notes: List[CandidateSweep.Notes] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
@@ -38,19 +39,23 @@ object CandidateSweep:
   object SkippedValue extends Newtype[Int, Pure]
   type Unseen = Unseen.T
   object Unseen extends Newtype[Int, Pure]
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Apply
+  object DryRun extends TwoStates[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
 
   final case class Request(
       goal: Request.Goal,
-      dryRun: Request.DryRun = Request.DryRun(false),
+      dryRun: Request.DryRun = Request.DryRun.Apply,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, Schema
 
   object Request:
     export api.research.ReviewGoal.Slug as Goal
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun

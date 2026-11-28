@@ -274,7 +274,7 @@ object RunService:
         r.row.parent.map(p => RunInfo.Id(p.value)),
         Some(RunInfo.Origin(r.row.origin.value)),
         r.resumeAt.map(t => RunInfo.ResumeAt(text(t))),
-        RunInfo.DryRun(r.row.dryRun.value),
+        (if r.row.dryRun.value then RunInfo.DryRun.DryRun else RunInfo.DryRun.Apply),
         r.row.managerId.map(m => Managers.ManagerInfo.Id(m.value)),
         r.row.managerItem.map(i => Managers.ManagerItem.Id(i.value)),
         r.heartbeatAt.map(t => RunInfo.HeartbeatAt(text(t))),

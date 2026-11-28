@@ -224,5 +224,6 @@ object ArticleReviewStatus:
       closedRound = e.closed.map(c => ReviewFinding.ClosedRound(c.round.value)),
       closedRunNumber = e.closed.flatMap(c => number.get(c.run).map(ReviewFinding.ClosedRunNumber(_))),
       reopened = ReviewFinding.Reopened(e.reopened.value),
-      deferred = ReviewFinding.Deferred(e.deferred.isDefined && e.open)
+      deferred =
+        (if e.deferred.isDefined && e.open then ReviewFinding.Deferred.Deferred else ReviewFinding.Deferred.Open)
     )

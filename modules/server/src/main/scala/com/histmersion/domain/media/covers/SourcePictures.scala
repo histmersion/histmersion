@@ -321,8 +321,8 @@ final class SourcePictures(
   def run(req: MediaCoversRequest, progress: JobInfo.Progress => Unit = _ => ())(using
       WritePermit
   )(using Creator.New): MediaCoversReport =
-    val dryRun = SourcePictures.DryRun(req.dryRun.value)
-    val refresh = CoverService.CandidatesRefresh(req.refresh.value)
+    val dryRun = SourcePictures.DryRun(req.dryRun.dryRun)
+    val refresh = CoverService.CandidatesRefresh(req.refresh.refresh)
     val named = req.citekey.map(_.value.trim).filter(_.nonEmpty)
     val only = named.flatMap(c =>
       Citekey.option(c).map(k => sources.current(k).map(cur => Citekey.assume(cur.value)).getOrElse(k))
@@ -336,7 +336,7 @@ final class SourcePictures(
     // `var`: the sources looked at so far
     var seen = Set.empty[String]
 
-    if req.covers.value then
+    if req.covers.included then
       val hinted = for ck <- only; i <- req.isbn.map(_.value.trim).filter(_.nonEmpty)
       yield CoverKeys(ck, Some(CoverKeys.Isbn(i)), None)
       val cands =
@@ -358,7 +358,7 @@ final class SourcePictures(
           case Left(CoverRefusal.Skipped(why)) => skipped += s"cover: $why"
       }
 
-    if req.illustrations.value then
+    if req.illustrations.included then
       val cands = if nobody then Nil else covers.illustrationCandidates(only, refresh, limit)
       cands.zipWithIndex.foreach { (ck, i) =>
         seen += ck.value

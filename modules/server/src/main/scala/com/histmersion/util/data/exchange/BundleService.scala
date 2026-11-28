@@ -340,7 +340,7 @@ object BundleService:
               w.clock
             )
             .map { r =>
-              if r.applied.value && r.mergeId.isDefined then
+              if r.applied.applied && r.mergeId.isDefined then
                 Transactor(w.ds).write(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
               r
             }

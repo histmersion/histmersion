@@ -13,11 +13,11 @@ object StorageMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(r: Storage.Report): List[String] =
-    if r.entries.isEmpty && !((r.measuring) == Storage.Report.Measuring(true)) && r.problems.isEmpty then Nil
+    if r.entries.isEmpty && !((r.measuring) == Storage.Report.Measuring.Measuring) && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
         r.tookMillis.map(_.value.toLong).map(ms => s"took $ms ms") ++ Option.when(
-          ((r.measuring) == Storage.Report.Measuring(true))
+          ((r.measuring) == Storage.Report.Measuring.Measuring)
         )("measuring…")).mkString(", ")
       val head = s"## Storage" + (if r.entries.nonEmpty then
                                     s" — ${Backup.humanBytes(ByteCount(Storage.total(r.entries).value.toLong))} in all"
@@ -30,7 +30,7 @@ object StorageMarkdown:
       )
       val hints = r.hints.map(h => s"- $h")
       val problems = r.problems.map(p => s"- problem: $p")
-      List("", head, "") ++ (if r.entries.isEmpty && ((r.measuring) == Storage.Report.Measuring(true)) then
+      List("", head, "") ++ (if r.entries.isEmpty && ((r.measuring) == Storage.Report.Measuring.Measuring) then
                                List("- measuring…")
                              else entries) ++
         vols ++ (if hints.isEmpty then Nil else "" :: hints) ++ problems

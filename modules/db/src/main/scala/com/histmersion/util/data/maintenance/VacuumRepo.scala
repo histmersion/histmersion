@@ -50,5 +50,11 @@ object VacuumRepo:
   def vacuum(table: String, analyze: Analyze)(using con: DbCon): Unit =
     val c = con.connection
     val st = c.createStatement()
-    try { val _ = st.execute(Vacuum.statement(Vacuum.Table(table), Vacuum.Request.Analyze(analyze.value))) }
-    finally st.close()
+    try {
+      val _ = st.execute(
+        Vacuum.statement(
+          Vacuum.Table(table),
+          (if analyze.value then Vacuum.Request.Analyze.Analyze else Vacuum.Request.Analyze.VacuumOnly)
+        )
+      )
+    } finally st.close()

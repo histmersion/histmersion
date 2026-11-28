@@ -28,6 +28,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Place(
     id: Place.Id,
@@ -48,8 +49,10 @@ object Place:
   object Rationale extends Newtype[String, Pure]
   type Depth = Depth.T
   object Depth extends Newtype[Int, Pure]
-  type Detail = Detail.T
-  object Detail extends Newtype[Boolean, Pure]
+  enum Detail derives CanEqual:
+    case Detail, Brief
+  object Detail extends TwoStates[Detail]:
+    extension (detail: Detail) def detail: Boolean = detail == Detail
   type Region = Region.T
   object Region extends Newtype[String, Pure]
 
@@ -233,7 +236,7 @@ object Place:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-    def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary.value)
+    def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary.hasBoundary)
 
     def shapeNote: Option[Card.Note] =
       Option
@@ -488,12 +491,12 @@ object Place:
       children: List[Summary],
       findings: Counts.Findings,
       asOf: Option[Year],
-      contested: Entry.Contested = Entry.Contested(false),
+      contested: Entry.Contested = Entry.Contested.Settled,
       footprints: List[Footprint] = Nil,
       links: List[Link] = Nil,
       types: List[Type] = Nil,
       counts: Option[Counts] = None,
-      hasBoundary: Entry.HasBoundary = Entry.HasBoundary(false),
+      hasBoundary: Entry.HasBoundary = Entry.HasBoundary.Unbounded,
       descriptions: List[Description] = Nil,
       timeBasis: TimeBasis = TimeBasis.Dated,
       /** `grid-cell` for a Pleiades point that is only the centre of an atlas grid square. */
@@ -506,10 +509,14 @@ object Place:
 
   object Entry:
     export Place.Geometry
-    type Contested = Contested.T
-    object Contested extends Newtype[Boolean, Pure]
-    type HasBoundary = HasBoundary.T
-    object HasBoundary extends Newtype[Boolean, Pure]
+    enum Contested derives CanEqual:
+      case Contested, Settled
+    object Contested extends TwoStates[Contested]:
+      extension (contested: Contested) def contested: Boolean = contested == Contested
+    enum HasBoundary derives CanEqual:
+      case Bounded, Unbounded
+    object HasBoundary extends TwoStates[HasBoundary]:
+      extension (hasBoundary: HasBoundary) def hasBoundary: Boolean = hasBoundary == Bounded
     type SiteType = SiteType.T
     object SiteType extends Newtype[String, Pure]
 
@@ -585,7 +592,7 @@ object Place:
       names: Hit.Names,
       matchedName: Option[Hit.MatchedName],
       findings: Hit.Findings,
-      contested: Hit.Contested = Hit.Contested(false),
+      contested: Hit.Contested = Hit.Contested.Settled,
       dating: Dating = Dating.Stated,
       importSource: Option[Hit.ImportSource] = None
   ) derives JsonCodec,
@@ -700,14 +707,16 @@ object Place:
   final case class Match(
       placeId: Id,
       importSource: Option[Match.ImportSource],
-      native: Match.Native = Match.Native(true)
+      native: Match.Native = Match.Native.Native
   )
 
   object Match:
     type ImportSource = ImportSource.T
     object ImportSource extends Newtype[String, Pure]
-    type Native = Native.T
-    object Native extends Newtype[Boolean, Pure]
+    enum Native derives CanEqual:
+      case Native, Foreign
+    object Native extends TwoStates[Native]:
+      extension (native: Native) def native: Boolean = native == Native
 
   final case class MergeIn(into: Id, reason: Option[Rationale] = None) derives StrictJson
   object MergeIn:
@@ -752,7 +761,7 @@ object Place:
       lang: NameChanged.Lang,
       added: NameChanged.Added,
       changed: NameChanged.Changed,
-      wasImported: NameChanged.WasImported = NameChanged.WasImported(false)
+      wasImported: NameChanged.WasImported = NameChanged.WasImported.Local
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -762,12 +771,18 @@ object Place:
     type Name = Name.T
     object Name extends Newtype[String, Pure]
     export Place.Name.Lang
-    type Added = Added.T
-    object Added extends Newtype[Boolean, Pure]
-    type Changed = Changed.T
-    object Changed extends Newtype[Boolean, Pure]
-    type WasImported = WasImported.T
-    object WasImported extends Newtype[Boolean, Pure]
+    enum Added derives CanEqual:
+      case Added, Kept
+    object Added extends TwoStates[Added]:
+      extension (added: Added) def added: Boolean = added == Added
+    enum Changed derives CanEqual:
+      case Changed, Unchanged
+    object Changed extends TwoStates[Changed]:
+      extension (changed: Changed) def changed: Boolean = changed == Changed
+    enum WasImported derives CanEqual:
+      case Imported, Local
+    object WasImported extends TwoStates[WasImported]:
+      extension (wasImported: WasImported) def wasImported: Boolean = wasImported == Imported
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class NameRemove(name: NameRemove.Name, lang: Option[NameRemove.Lang] = None)
@@ -804,9 +819,10 @@ object Place:
     export Place.Label
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type PeriodSet = PeriodSet.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object PeriodSet extends Newtype[Boolean, Pure]
+    enum PeriodSet derives CanEqual:
+      case PeriodSet, NoPeriod
+    object PeriodSet extends TwoStates[PeriodSet]:
+      extension (periodSet: PeriodSet) def periodSet: Boolean = periodSet == PeriodSet
     type SourceKind = SourceKind.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SourceKind extends Newtype[String, Pure]
@@ -835,8 +851,10 @@ object Place:
 
   object OverrideChanged:
     export Place.Label
-    type Reset = Reset.T
-    object Reset extends Newtype[Boolean, Pure]
+    enum Reset derives CanEqual:
+      case Reset, Set
+    object Reset extends TwoStates[Reset]:
+      extension (reset: Reset) def reset: Boolean = reset == Reset
     type FindingsBefore = FindingsBefore.T
     object FindingsBefore extends Newtype[Int, Pure]
     type FindingsAfter = FindingsAfter.T
@@ -866,7 +884,7 @@ object Place:
       periodStart: Option[Year] = None,
       periodEnd: Option[Year] = None,
       reason: Option[Rationale] = None,
-      reset: OverrideSet.Reset = OverrideSet.Reset(false),
+      reset: OverrideSet.Reset = OverrideSet.Reset.Set,
       pointLat: Option[Latitude] = None,
       pointLon: Option[Longitude] = None,
       createdBy: Option[Creation.By] = None,
@@ -875,8 +893,10 @@ object Place:
   object OverrideSet:
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Reset = Reset.T
-    object Reset extends Newtype[Boolean, Pure]
+    enum Reset derives CanEqual:
+      case Reset, Set
+    object Reset extends TwoStates[Reset]:
+      extension (reset: Reset) def reset: Boolean = reset == Reset
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
@@ -907,7 +927,7 @@ object Place:
       val reason = in.reason.map(r => s"$r".trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
-      if (in.reset) == OverrideSet.Reset(true) then
+      if (in.reset) == OverrideSet.Reset.Reset then
         if kind.isDefined || period.isDefined || asked then
           Left(
             Write.invalid(
@@ -1205,7 +1225,7 @@ object Place:
       periodEnd: Option[Year],
       source: Option[Summary.Source],
       names: Summary.Names,
-      contested: Summary.Contested = Summary.Contested(false),
+      contested: Summary.Contested = Summary.Contested.Settled,
       dating: Dating = Dating.Stated,
       importSource: Option[Summary.ImportSource] = None
   ) derives JsonCodec,
@@ -1220,8 +1240,10 @@ object Place:
     export Place.Source
     type Names = Names.T
     object Names extends Newtype[String, Pure]
-    type Contested = Contested.T
-    object Contested extends Newtype[Boolean, Pure]
+    enum Contested derives CanEqual:
+      case Contested, Settled
+    object Contested extends TwoStates[Contested]:
+      extension (contested: Contested) def contested: Boolean = contested == Contested
     export Match.ImportSource
 
   enum TimeBasis derives CanEqual:
@@ -1298,7 +1320,7 @@ object Place:
       kind: TreeRow.Kind,
       depth: TreeRow.Depth,
       findings: TreeRow.Findings,
-      contested: TreeRow.Contested = TreeRow.Contested(false)
+      contested: TreeRow.Contested = TreeRow.Contested.Settled
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -1311,8 +1333,10 @@ object Place:
     object Depth extends Newtype[Int, Pure]
     type Findings = Findings.T
     object Findings extends Newtype[Int, Pure]
-    type Contested = Contested.T
-    object Contested extends Newtype[Boolean, Pure]
+    enum Contested derives CanEqual:
+      case Contested, Settled
+    object Contested extends TwoStates[Contested]:
+      extension (contested: Contested) def contested: Boolean = contested == Contested
 
   final case class Type(
       placeId: Id,

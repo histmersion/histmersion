@@ -41,7 +41,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     title = (Some("Archaeology and the Bible")).map(api.library.Title.apply),
     year = (Some(2019)).map(Year.apply),
     authors = (List("Greener", "Smith")).map(api.library.AuthorName.apply),
-    isOa = WorkRef.IsOa(true),
+    isOa = WorkRef.IsOa.OpenAccess,
     oaStatus = Some(WorkRef.OaStatus("gold")),
     oaUrl = Some(WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
     oaLocations = List(

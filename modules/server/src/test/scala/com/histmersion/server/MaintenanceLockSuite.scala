@@ -116,7 +116,7 @@ class MaintenanceLockSuite extends DbSuite:
     refused("reindex")(h.upkeep.reindex(None, None))
     refused("edges/resolve")(h.library.citations.resolveEdges)
     refused("delete_source")(
-      h.library.sources.delete(Citekey("zzlock_src"), Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      h.library.sources.delete(Citekey("zzlock_src"), Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply))
     )
 
   test("every ARTICLE write is refused too — these had no guard at all"):
@@ -182,7 +182,7 @@ class MaintenanceLockSuite extends DbSuite:
             Upload.handed(HandedFile.snapshot(f))
           )
       )
-      refused("reocr")(h.ingest.controllers.reocr(Citekey("zzlock_src"), Ingest.Params.Quality(false)))
+      refused("reocr")(h.ingest.controllers.reocr(Citekey("zzlock_src"), Ingest.Params.Quality.Fast))
       refused("put_assets")(h.media.assets.putFigures(Citekey("zzlock_src"), List(png)))
     finally { val _ = f.delete() }
 

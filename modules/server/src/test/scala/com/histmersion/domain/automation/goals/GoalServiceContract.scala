@@ -285,7 +285,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       domain.automation.Goal.Slug("zz-s2"),
       domain.automation.ScheduleKind.Currency,
       Goal.Plans.GoalSchedule.Cron("@weekly"),
-      enabled = Goal.Plans.GoalSchedule.Enabled(true),
+      enabled = Goal.Plans.GoalSchedule.Enabled.Enabled,
       None,
       None
     )
@@ -293,7 +293,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       domain.automation.Goal.Slug("zz-s1"),
       domain.automation.ScheduleKind.Currency,
       Goal.Plans.GoalSchedule.Cron("@daily"),
-      enabled = Goal.Plans.GoalSchedule.Enabled(true),
+      enabled = Goal.Plans.GoalSchedule.Enabled.Enabled,
       Some(BigDecimal(1)),
       Some(t)
     )
@@ -301,7 +301,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       domain.automation.Goal.Slug("zz-s1"),
       domain.automation.ScheduleKind.Acquisition,
       Goal.Plans.GoalSchedule.Cron("@daily"),
-      enabled = Goal.Plans.GoalSchedule.Enabled(false),
+      enabled = Goal.Plans.GoalSchedule.Enabled.Disabled,
       None,
       Some(t)
     )
@@ -309,7 +309,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       domain.automation.Goal.Slug("zz-s1"),
       domain.automation.ScheduleKind.Currency,
       Goal.Plans.GoalSchedule.Cron("@monthly"),
-      enabled = Goal.Plans.GoalSchedule.Enabled(true),
+      enabled = Goal.Plans.GoalSchedule.Enabled.Enabled,
       Some(BigDecimal(1)),
       Some(t)
     )

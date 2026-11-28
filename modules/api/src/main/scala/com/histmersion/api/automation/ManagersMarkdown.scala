@@ -66,7 +66,7 @@ object ManagersMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line(m: ManagerInfo): String =
     val goal = m.goal.fold("")(g => s" · goal $g")
-    val runs = if (m.pauseRuns) == ManagerInfo.PauseRuns(true) then " (its runs paused too)" else ""
+    val runs = if (m.pauseRuns) == ManagerInfo.PauseRuns.Pause then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       (if (m.backlog).value > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
       m.statusNote.map(_.render).filter(_.nonEmpty).fold("")(n => s" · $n") +
@@ -143,14 +143,14 @@ object ManagersMarkdown:
       c.includeGoal.map(g => s"includeGoal=$g"),
       c.models.map(ms => s"models=${ms.map(_.text).mkString(";")}"),
       c.staleAfterDays.map(n => s"staleAfterDays=$n"),
-      c.inferFilter.map(b => s"inferFilter=$b"),
+      c.inferFilter.map(b => s"inferFilter=${b.inferFilter}"),
       c.minSources.map(n => s"minSources=$n"),
       c.maxArticles.map(n => s"maxArticles=$n"),
       c.sweeps.map(ws => s"sweeps=${ws.mkString(",")}"),
-      c.autoIngest.map(b => s"autoIngest=$b"),
+      c.autoIngest.map(b => s"autoIngest=${b.autoIngest}"),
       c.autoIngestPerDay.map(n => s"autoIngestPerDay=$n"),
       c.dailyUsd.map(n => s"dailyUsd=$n"),
-      c.autoApprove.map(b => s"autoApprove=$b"),
+      c.autoApprove.map(b => s"autoApprove=${b.autoApprove}"),
       c.extendMinNew.map(n => s"extendMinNew=$n")
     ).flatten.mkString(", ") match
       case "" => ("the defaults")
@@ -164,7 +164,7 @@ object ManagersMarkdown:
     val proposed = h.proposal.fold("")(a =>
       s" · proposed: ${h.proposed.fold("an action")(effect)} (approval #$a waits for a person)"
     )
-    (s"#${h.id} (${if (h.standing) == ManagerHint.Standing(true) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
+    (s"#${h.id} (${if (h.standing) == ManagerHint.Standing.Standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if (h.uses).value > 0 then s" · reached ${h.uses} run(s)" else ""))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -191,12 +191,12 @@ object ManagersMarkdown:
       cfg.models.filter(_.nonEmpty).map(ms => s"models ${ms.map(_.text).mkString("; ")}"),
       cfg.budgetUsd.map(u => s"budget $u USD/run"),
       cfg.staleAfterDays.filter((_).value > 0).map(n => s"stale after $n days"),
-      cfg.inferFilter.map(b => s"infer-filter ${if (b) == ManagerConfig.InferFilter(true) then "on" else "off"}"),
+      cfg.inferFilter.map(b => s"infer-filter ${if (b) == ManagerConfig.InferFilter.Infer then "on" else "off"}"),
       cfg.minSources.map(n => s"min-sources $n"),
       cfg.maxArticles.map(n => s"max-articles $n"),
       cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
       cfg.autoIngest.map(b =>
-        if (b) == ManagerConfig.AutoIngest(true) then
+        if (b) == ManagerConfig.AutoIngest.Auto then
           s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
         else "auto-ingest off"
       ),
@@ -204,7 +204,7 @@ object ManagersMarkdown:
         .filter((_).value > 0)
         .map(u => s"daily cap ${usd(u.value)} USD (metered spend; plan-billed runs count 0 USD)"),
       cfg.autoApprove.map(b =>
-        if (b) == ManagerConfig.AutoApprove(true) then "its approvals decided by code checks"
+        if (b) == ManagerConfig.AutoApprove.Auto then "its approvals decided by code checks"
         else "its approvals always a person's"
       ),
       cfg.extendMinNew.filter((_).value > 0).map(n => s"extend at $n new sources")

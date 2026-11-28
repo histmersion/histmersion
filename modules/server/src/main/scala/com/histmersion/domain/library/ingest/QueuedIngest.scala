@@ -80,7 +80,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
         Ingest.Params(
           citekey = com.histmersion.api.library.Citekey(citekey.value),
           filename = Some(Ingest.Params.Filename(file.key.name.value)),
-          force = Ingest.Params.Force(true), // the channel chose the citekey; the duplicate guard is for human uploads
+          force = Ingest.Params.Force.Force, // the channel chose the citekey; the duplicate guard is for human uploads
           title = Some(meta.title).filter(_.value.nonEmpty).map(t => Title(t.value)),
           authors = meta.authors.map(a => AuthorName(a.value)),
           year = meta.year.map(y => Year(y.value.toLong)),

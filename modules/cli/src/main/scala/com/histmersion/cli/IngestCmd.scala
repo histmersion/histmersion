@@ -131,10 +131,11 @@ object IngestCmd:
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Reocr(ck, quality, following) =>
-          c.reocr(Citekey(ck), Api.Overwrite(quality)).flatMap { a =>
-            Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
-            following.follow(pollJob(c, a.jobId, 0))
-          }
+          c.reocr(Citekey(ck), (if quality then Ingest.Params.Quality.Quality else Ingest.Params.Quality.Fast))
+            .flatMap { a =>
+              Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
+              following.follow(pollJob(c, a.jobId, 0))
+            }
         case Command.Assets(ck) =>
           c.assets(Citekey(ck)).map(rows => Cli.out.println(IngestMarkdown.assets(Citekey(ck), rows.toVector)))
         case Command.Control(action, id, json) =>

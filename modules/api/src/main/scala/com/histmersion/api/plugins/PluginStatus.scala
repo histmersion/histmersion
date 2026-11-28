@@ -11,6 +11,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class PluginStatus(
@@ -34,8 +35,10 @@ object PluginStatus:
       if status.errors.isEmpty then "no reason given" else status.errors.map(_.sentence).mkString("; ")
 
   export PluginDescription.{Id, SpiVersion, Version}
-  type Enabled = Enabled.T
-  object Enabled extends Newtype[Boolean, Pure]
+  enum Enabled derives CanEqual:
+    case Enabled, Disabled
+  object Enabled extends TwoStates[Enabled]:
+    extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
   export PluginDescription.Provides
   type Warnings = Warnings.T
   object Warnings extends Newtype[String, Pure]

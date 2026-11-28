@@ -46,7 +46,7 @@ object MediaMarkdown:
     if cs.isEmpty then ("none")
     else
       (cs
-        .map(c => s"${c.key} ${c.n}${if (c.allowed) == MediaCount.Allowed(true) then "" else " (not allowed)"}")
+        .map(c => s"${c.key} ${c.n}${if (c.allowed) == MediaCount.Allowed.Allowed then "" else " (not allowed)"}")
         .mkString(" · ")
     )
 
@@ -55,7 +55,7 @@ object MediaMarkdown:
     if ps.isEmpty then ("No media provider is registered (every media plugin is switched off).")
     else
       ps.map { p =>
-        val origin = if (p.builtin) == MediaProvider.Info.Builtin(true) then s"built in, plugin `${p.plugin}`"
+        val origin = if (p.builtin) == MediaProvider.Info.Builtin.Builtin then s"built in, plugin `${p.plugin}`"
         else s"plugin `${p.plugin}`"
         val terms = if p.licences.value.trim.isEmpty then "" else s" · licences: ${p.licences}"
         s"- **`${p.name}`** — ${p.title} (${p.over}; $origin$terms)" +
@@ -66,15 +66,15 @@ object MediaMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def mediaImportReport(r: MediaImportReport): String =
-    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "dry run — nothing stored" else "stored"
+    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
     else
       r.byLicence
-        .map(c => s"| `${c.key}` | ${c.n} | ${if (c.allowed) == MediaCount.Allowed(true) then "yes" else "**no**"} |")
+        .map(c => s"| `${c.key}` | ${c.n} | ${if (c.allowed) == MediaCount.Allowed.Allowed then "yes" else "**no**"} |")
         .mkString("| licence | files | allowed |\n|---|---|---|\n", "\n", "")
     val rejected = if r.rejected.isEmpty then ""
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
-    val done = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then ""
+    val done = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then ""
     else
       s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(Plural.Count(r.categories.value.toLong), Plural.Noun.Singular("category"), Plural.Noun.Plural("categories"))}"
     val revoked = if r.revoked.isEmpty then ""
@@ -110,7 +110,7 @@ object MediaMarkdown:
   private[api] def mediaSamples(xs: List[MediaSample], dryRun: MediaMarkdown.MediaSamplesDryRun): String =
     if xs.isEmpty then ("")
     else
-      (s"\n\n**${if (dryRun).value then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
+      (s"\n\n**${if (dryRun).dryRun then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
         xs.map(x =>
           s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}"
         ).mkString("\n")
@@ -119,8 +119,8 @@ object MediaMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaCoversReport(r: MediaCoversReport): String =
-    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "dry run — nothing stored" else "stored"
-    val verb = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun(true) then "would link" else "linked"
+    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then "dry run — nothing stored" else "stored"
+    val verb = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then "would link" else "linked"
     val lines = if r.lines.isEmpty then ""
     else
       "\n\n" + r.lines
@@ -206,7 +206,7 @@ object MediaMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def figureLicenceFill(f: FigureLicenceFill): String =
-    val what = if (f.applied) == FigureLicenceFill.Applied(true) then
+    val what = if (f.applied) == FigureLicenceFill.Applied.Applied then
       s"${Plural.count(Plural.Count(f.updated.value.toLong), Plural.CountSingular("figure"))} given their source's licence"
     else
       s"${Plural.count(Plural.Count(f.candidates.value.toLong), Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"

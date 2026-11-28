@@ -119,8 +119,8 @@ class ResearchAreaDbSuite extends DbSuite:
     val in = Goal.AreaCreate(
       AreaSlug,
       form,
-      Goal.AreaCreate.Plan(true),
-      Goal.AreaCreate.Seed(true),
+      Goal.AreaCreate.Plan.Plan,
+      Goal.AreaCreate.Seed.Seed,
       Some(ManagerConfig())
     )
     val refused = create(a, h, in).fold(identity, made => fail(s"created over an existing goal: $made"))
@@ -144,8 +144,8 @@ class ResearchAreaDbSuite extends DbSuite:
     val in = Goal.AreaCreate(
       AreaSlug,
       form,
-      Goal.AreaCreate.Plan(true),
-      Goal.AreaCreate.Seed(true),
+      Goal.AreaCreate.Plan.Plan,
+      Goal.AreaCreate.Seed.Seed,
       Some(ManagerConfig())
     )
     val refused = create(a, h, in).fold(identity, made => fail(s"created: $made"))
@@ -156,7 +156,7 @@ class ResearchAreaDbSuite extends DbSuite:
 
   test("a plan run that cannot start is checked before anything is written"):
     val (a, h) = handlers(enabled = false)
-    val refused = create(a, h, Goal.AreaCreate(AreaSlug, form, Goal.AreaCreate.Plan(true)))
+    val refused = create(a, h, Goal.AreaCreate(AreaSlug, form, Goal.AreaCreate.Plan.Plan))
       .fold(identity, made => fail(s"created: $made"))
     assert(refused.problems.sentences.nonEmpty)
     assertEquals((goalTitle(), managers(), runs()), (None, Nil, Nil))
@@ -166,8 +166,8 @@ class ResearchAreaDbSuite extends DbSuite:
     val in = Goal.AreaCreate(
       AreaSlug,
       form,
-      Goal.AreaCreate.Plan(true),
-      Goal.AreaCreate.Seed(true),
+      Goal.AreaCreate.Plan.Plan,
+      Goal.AreaCreate.Seed.Seed,
       Some(ManagerConfig())
     )
     val made = create(a, h, in).fold(e => fail(e.problems.sentences.mkString("; ")), identity)

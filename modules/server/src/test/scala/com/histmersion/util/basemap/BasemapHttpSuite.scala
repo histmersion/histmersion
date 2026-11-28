@@ -93,7 +93,7 @@ class BasemapHttpSuite extends DbSuite:
     withServer(dir) { url =>
       // nothing downloaded yet: the status says so, and how to fetch it
       val s0 = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assert(!s0.available.value)
+      assert(!s0.available.available)
       assertEquals(s0.fetchCommand, "histmersion basemap fetch")
       assertEquals(s0.dir, dir.toString)
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 404)
@@ -101,7 +101,7 @@ class BasemapHttpSuite extends DbSuite:
       BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = PmTiles.Zoom(3))
       BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = PmTiles.Zoom(2))
       val s1 = RawJson.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assert(s1.available.value, s1.toString)
+      assert(s1.available.available, s1.toString)
       val v = s1.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
       assertEquals((v.present, v.maxZoom, v.tileType), (true, Some(3), Some("application/vnd.mapbox-vector-tile")))
       assert(v.version.nonEmpty && v.attribution.value.nonEmpty, v.toString)

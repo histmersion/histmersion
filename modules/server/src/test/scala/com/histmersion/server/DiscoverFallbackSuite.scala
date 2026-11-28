@@ -145,7 +145,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     val http = OpenAlexBusy(withContact)
     val w = discovery(withContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.sentence), identity)
     assertEquals(w.venue, Some("Scientific Reports"))
-    assert(w.isOa.value, w.toString)
+    assert(w.isOa.isOa, w.toString)
     assertEquals(w.oaStatus, Some("gold"))
     assertEquals(w.oaUrl, Some("https://www.nature.com/articles/s41598-022-07284-3.pdf"))
     assert(http.urls.exists(_.value.startsWith(withContact.unpaywall.url.value)), http.urls.toString)
@@ -154,7 +154,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     val noContact = cfg.modify(_.contactEmail).setTo(AcquireConfig.ContactEmail(""))
     val http = OpenAlexBusy(noContact)
     val w = discovery(noContact, http).meta(Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.sentence), identity)
-    assert(!w.isOa.value)
+    assert(!w.isOa.isOa)
     assertEquals(w.oaStatus, None) // rendered as "OA status unknown", never "no OA copy known"
     assert(
       !http.urls.exists(_.value.startsWith(noContact.unpaywall.url.value)),

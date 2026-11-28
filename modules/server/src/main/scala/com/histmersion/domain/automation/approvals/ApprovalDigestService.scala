@@ -131,10 +131,10 @@ final class ApprovalDigestService(
     yield
       val open = agents.approvalStore.openLight()
       val ms = ApprovalDigest.matching(open, b)
-      if b.dryRun.value then
+      if b.dryRun.dryRun then
         BulkResult(
           BulkResult.Decision(d.wire.value),
-          dryRun = BulkResult.DryRun(true),
+          dryRun = BulkResult.DryRun.DryRun,
           BulkResult.Matched(ms.size),
           ms.map(o => BulkResult.Decided(o.id.value)),
           Nil,
@@ -178,7 +178,7 @@ final class ApprovalDigestService(
         agents.managers.nudge()
         BulkResult(
           BulkResult.Decision(d.wire.value),
-          dryRun = BulkResult.DryRun(false),
+          dryRun = BulkResult.DryRun.Apply,
           BulkResult.Matched(ms.size),
           ok.map(id => BulkResult.Decided(id.value)),
           bad,

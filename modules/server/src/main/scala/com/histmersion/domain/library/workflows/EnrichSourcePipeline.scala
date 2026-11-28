@@ -353,12 +353,12 @@ final class EnrichSourcePipeline(
             ctx.warn(s"assess: ${m.sentences.mkString("; ")}")
             Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentences.mkString("; ")))
           case Right(a) =>
-            if a.isRetracted.value then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
+            if a.isRetracted.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
             Upstreamed(
               ran = Upstreamed.Ran(true),
               Upstreamed.Summary(s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}"),
-              Upstreamed.Retracted(a.isRetracted.value)
+              Upstreamed.Retracted(a.isRetracted.isRetracted)
             )
 
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by

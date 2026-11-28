@@ -411,7 +411,7 @@ final class SchedulerService(
       else AgentScheduler.SchedulerStatus.StrategyFrom("config"),
       Strategies.all.map(x => StrategyLine(StrategyLine.Name(x.name.value), StrategyLine.Describe(x.describe))),
       Some(SchedulerStatus.At(snap.at.toString)),
-      SchedulerStatus.Dry(snap.dry),
+      (if snap.dry then SchedulerStatus.Dry.Dry else SchedulerStatus.Dry.Live),
       SchedulerStatus.MaxRuns(res.maxRuns.value),
       SchedulerStatus.Occupied(res.occupied.value),
       res.poolCap.toList
@@ -648,11 +648,12 @@ final class SchedulerService(
         aps,
         Stalls.Facts.PersonHeld(held.get(slug).fold(0)(_.value)),
         paused.getOrElse(ManagerLight.Goal(g.slug.value), Nil).map(id => Stalls.Facts.Paused(id.value)),
-        Stalls.Facts.Draining(draining),
+        (if draining then Stalls.Facts.Draining.Draining else Stalls.Facts.Draining.Running),
         waits.getOrElse(Some(Candidate.Goal(g.slug.value)), Nil),
         stops.get(slug).map(w => Stalls.Facts.LastStop(s"$w")),
         Stalls.Facts.Sources(sources.get(slug).fold(0)(_.value)),
-        Stalls.Facts.NoCandidates(sweeps.get(slug).exists(_.value.contains("no new candidates"))),
+        (if sweeps.get(slug).exists(_.value.contains("no new candidates")) then Stalls.Facts.NoCandidates.NoCandidates
+         else Stalls.Facts.NoCandidates.HasCandidates),
         Stalls.Facts.Open(
           List(seedId(Goal.Ref(g.slug.value)), watchId(Goal.Ref(g.slug.value))).flatMap(pace.get).map(_._1.value).sum
         ),

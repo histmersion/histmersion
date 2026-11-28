@@ -95,7 +95,7 @@ object EventSql:
       ps += sql"(e.label ILIKE $c ESCAPE '\\' OR e.description ILIKE $c ESCAPE '\\')"
     }
     EventTaxonomy.condition(clean(kind.map(_.value)).map(k => EventTaxonomy.KindCondition.Filter(k))).foreach { c =>
-      ps += (if c.negate.value then sql"NOT (e.kind = ANY(${c.kinds}::text[]))"
+      ps += (if c.negate.negate then sql"NOT (e.kind = ANY(${c.kinds}::text[]))"
              else sql"e.kind = ANY(${c.kinds}::text[])")
     }
     clean(historicity.map(_.value))

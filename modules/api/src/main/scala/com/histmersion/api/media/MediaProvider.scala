@@ -10,6 +10,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 object MediaProvider:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
@@ -95,7 +96,9 @@ object MediaProvider:
     object Over extends Newtype[String, Pure]
     type Description = Description.T
     object Description extends Newtype[String, Pure]
-    type Builtin = Builtin.T
-    object Builtin extends Newtype[Boolean, Pure]
+    enum Builtin derives CanEqual:
+      case Builtin, Plugin
+    object Builtin extends TwoStates[Builtin]:
+      extension (builtin: Builtin) def builtin: Boolean = builtin == Builtin
     type Licences = Licences.T
     object Licences extends Newtype[String, Pure]

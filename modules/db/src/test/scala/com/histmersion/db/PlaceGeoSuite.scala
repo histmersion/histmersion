@@ -121,7 +121,7 @@ class PlaceGeoSuite extends DbSuite:
   test("over a whole range: the window is the range, shadowing only among shapes that coexist, one version per state"):
     val q = PlaceFixtures.geoJsonTimeQuery(
       Some(domain.catalogue.Place.Kind.Wire("polity")),
-      GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
+      GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Earliest),
       PlaceFixtures.Limit(50)
     )
     assert(
@@ -182,7 +182,7 @@ class PlaceGeoSuite extends DbSuite:
     val plain =
       PlaceFixtures.geoJsonTimeQuery(
         Some(domain.catalogue.Place.Kind.Wire("polity")),
-        GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
+        GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Earliest),
         PlaceFixtures.Limit(50),
         pairsByIndex = PlaceFixtures.PairsByIndex(false)
       )
@@ -210,7 +210,7 @@ class PlaceGeoSuite extends DbSuite:
         PlaceFixtures
           .geoJsonTimeQuery(
             k,
-            GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(false)),
+            GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Earliest),
             PlaceFixtures.Limit(50)
           )
           .sqlString
@@ -221,7 +221,7 @@ class PlaceGeoSuite extends DbSuite:
     val late = PlaceFixtures
       .geoJsonTimeQuery(
         Some(domain.catalogue.Place.Kind.Wire("polity")),
-        GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest(true)),
+        GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Latest),
         PlaceFixtures.Limit(50)
       )
       .sqlString
@@ -442,7 +442,8 @@ class PlaceGeoSuite extends DbSuite:
     val json = PlaceFixtures.geoJsonAt(
       ds,
       Some(domain.catalogue.Place.Kind.Wire("polity")),
-      GeoTime.Within(Year(lo), Year(hi), GeoTime.Within.Latest(latest)),
+      GeoTime
+        .Within(Year(lo), Year(hi), (if latest then GeoTime.Within.Latest.Latest else GeoTime.Within.Latest.Earliest)),
       PlaceFixtures.Limit(500)
     )
     "\"id\":\"(zzr_[a-z_]+)\"".r.findAllMatchIn(json.value).map(_.group(1)).toSet
@@ -522,7 +523,11 @@ class PlaceGeoSuite extends DbSuite:
       latest <- List(false, true)
       limit <- List(2, 500)
     do
-      val t = GeoTime.Within(Year(lo), Year(hi), GeoTime.Within.Latest(latest))
+      val t = GeoTime.Within(
+        Year(lo),
+        Year(hi),
+        (if latest then GeoTime.Within.Latest.Latest else GeoTime.Within.Latest.Earliest)
+      )
       val indexed = rows(
         PlaceFixtures.geoJsonTimeQuery(
           Some(domain.catalogue.Place.Kind.Wire("polity")),
@@ -546,7 +551,7 @@ class PlaceGeoSuite extends DbSuite:
     val over = rows(
       PlaceFixtures.geoJsonTimeQuery(
         Some(domain.catalogue.Place.Kind.Wire("polity")),
-        GeoTime.Within(Year(-2700), Year(-1600), GeoTime.Within.Latest(false)),
+        GeoTime.Within(Year(-2700), Year(-1600), GeoTime.Within.Latest.Earliest),
         PlaceFixtures.Limit(500)
       )
     ).mkString
@@ -650,7 +655,7 @@ class PlaceGeoSuite extends DbSuite:
       .geoJsonAt(
         ds,
         Some(domain.catalogue.Place.Kind.Wire("polity")),
-        GeoTime.Within(Year(3000), Year(3100), latest = GeoTime.Within.Latest(false)),
+        GeoTime.Within(Year(3000), Year(3100), latest = GeoTime.Within.Latest.Earliest),
         PlaceFixtures.Limit(500)
       )
       .value

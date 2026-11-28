@@ -71,9 +71,9 @@ object MediaImportReport:
           MediaCount(
             k,
             MediaCount.N(cs.map(_.n.value).sum),
-            MediaCount.Allowed(
-              cs.forall((refactorCallback => ((refactorCallback.allowed) == MediaCount.Allowed(true))))
-            )
+            (if cs.forall((refactorCallback => ((refactorCallback.allowed) == MediaCount.Allowed.Allowed))) then
+               MediaCount.Allowed.Allowed
+             else MediaCount.Allowed.Blocked)
           )
         )
         .sortBy[(Int, String)](c => (-c.n.value, c.key.value))

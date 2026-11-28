@@ -31,7 +31,7 @@ class UpstreamRecordsSuite extends munit.FunSuite:
     assertEquals(AcquireParse.openalexWork(fixture("openalex_work.json")).wire.citekey, Some("haak2015_massive"))
     assertEquals(AcquireParse.crossrefWork(fixture("crossref_work.json")).wire.citekey, Some("haak2015_massive"))
     val ws = AcquireParse.openalexWorks(fixture("openalex_search.json")).map(_.wire)
-    assert(ws.nonEmpty && ws.forall(_.citekey.isDefined) && ws.forall(!_.inDb.value))
+    assert(ws.nonEmpty && ws.forall(_.citekey.isDefined) && ws.forall(!_.inDb.inDb))
 
   test("a work goes to the upstreams and back unchanged but for the corpus's own fields"):
     val w = AcquireParse.openalexWork(fixture("openalex_work.json"))
@@ -64,7 +64,7 @@ class UpstreamRecordsSuite extends munit.FunSuite:
       Acquire.classify(
         r.intents.map(i => Acquire.Intent.Wire(i.value)),
         r.contexts.map(c => Acquire.CitationContext(c.value)),
-        r.isInfluential.value,
+        r.isInfluential.isInfluential,
         r.year,
         Some(Year(2015))
       )

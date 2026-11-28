@@ -234,8 +234,8 @@ object ApprovalsView:
               w.title.map(_.value).getOrElse(w.doi.value),
               s" (${w.year.fold("n.d.")(_.toString)}) ",
               a(href := shown"https://doi.org/${w.doi}", target := "_blank", rel := "noopener", w.doi),
-              if w.inCorpus.value then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
-              else span(cls := "muted", if w.isOa.value then " — to acquire (open access)" else " — to acquire"),
+              if w.inCorpus.inCorpus then span(" — in the corpus as ", w.citekey.fold(span("?"))(ck => SourceLink(ck)))
+              else span(cls := "muted", if w.isOa.isOa then " — to acquire (open access)" else " — to acquire"),
               Option(shown"${w.why}").filter(_.nonEmpty).map(y => div(cls := "muted", y))
             )
           })

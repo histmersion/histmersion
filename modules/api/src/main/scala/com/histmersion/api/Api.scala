@@ -130,6 +130,7 @@ import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Histogram
+import com.histmersion.api.TwoStates
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -193,16 +194,28 @@ object Api:
   object AgentState:
     type Key = Key.T
     object Key extends Newtype[String, Pure]
-  type Apply = Apply.T
-  object Apply extends Newtype[Boolean, Pure]
+  enum Apply derives CanEqual:
+    case Apply, DryRun
+  object Apply extends TwoStates[Apply]:
+    extension (apply: Apply) def applies: Boolean = apply == Apply
   type ContentType = ContentType.T
   object ContentType extends Newtype[String, Pure]
   type FileBytes = FileBytes.T
   object FileBytes extends Newtype[Array[Byte], Pure]
   type FileName = FileName.T
   object FileName extends Newtype[String, Pure]
-  type Overwrite = Overwrite.T
-  object Overwrite extends Newtype[Boolean, Pure]
+  enum Overwrite derives CanEqual:
+    case Overwrite, Keep
+  object Overwrite extends TwoStates[Overwrite]:
+    extension (overwrite: Overwrite) def overwrites: Boolean = overwrite == Overwrite
+  enum Strictness derives CanEqual:
+    case Strict, Lenient
+  object Strictness extends TwoStates[Strictness]:
+    extension (strictness: Strictness) def strict: Boolean = strictness == Strict
+  enum Fetching derives CanEqual:
+    case Fetch, BundledOnly
+  object Fetching extends TwoStates[Fetching]:
+    extension (fetching: Fetching) def fetches: Boolean = fetching == Fetch
 
   /** `region` is still sent by older links and clients; it is one more place name. */
 
@@ -381,10 +394,10 @@ object Api:
       .mapIn[(Citekey, SourceViewQuery.FullText)]((refactorDecoded109: (String, Boolean)) =>
         (
           Citekey((refactorDecoded109)._1),
-          SourceViewQuery.FullText((refactorDecoded109)._2)
+          (if (refactorDecoded109)._2 then SourceViewQuery.FullText.FullText else SourceViewQuery.FullText.SummaryOnly)
         )
       )((refactorEncoded109: (Citekey, SourceViewQuery.FullText)) =>
-        (((refactorEncoded109)._1).value, ((refactorEncoded109)._2).value)
+        (((refactorEncoded109)._1).value, ((refactorEncoded109)._2).fullText)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -399,7 +412,7 @@ object Api:
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class SourceViewQuery(
       citekey: Citekey,
-      fullText: SourceViewQuery.FullText = SourceViewQuery.FullText(false),
+      fullText: SourceViewQuery.FullText = SourceViewQuery.FullText.SummaryOnly,
       section: Option[SourceViewQuery.Section] = None,
       heading: Option[SourceViewQuery.Heading] = None,
       offset: Option[SourceViewQuery.Offset] = None,
@@ -407,8 +420,10 @@ object Api:
   )
 
   object SourceViewQuery:
-    type FullText = FullText.T
-    object FullText extends Newtype[Boolean, Pure]
+    enum FullText derives CanEqual:
+      case FullText, SummaryOnly
+    object FullText extends TwoStates[FullText]:
+      extension (fullText: FullText) def fullText: Boolean = fullText == FullText
     export Source.Section.Wire as Section
     type Heading = Heading.T
     object Heading extends Newtype[String, Pure]:
@@ -431,7 +446,7 @@ object Api:
       .mapIn { case (citekey, fullText, section, heading, offset, chars) =>
         SourceViewQuery(
           Citekey(citekey),
-          SourceViewQuery.FullText(fullText),
+          (if fullText then SourceViewQuery.FullText.FullText else SourceViewQuery.FullText.SummaryOnly),
           section.map(SourceViewQuery.Section(_)),
           heading.map(SourceViewQuery.Heading(_)),
           offset.map(SourceViewQuery.Offset(_)),
@@ -440,7 +455,7 @@ object Api:
       }(v =>
         (
           v.citekey.value,
-          v.fullText.value,
+          v.fullText.fullText,
           v.section.map(_.value),
           v.heading.map(_.value),
           v.offset.map(_.value),
@@ -456,7 +471,7 @@ object Api:
   final case class PassagesQuery(
       citekey: Citekey,
       q: PassagesQuery.Q,
-      regex: PassagesQuery.Regex = PassagesQuery.Regex(false),
+      regex: PassagesQuery.Regex = PassagesQuery.Regex.Literal,
       limit: Option[PassagesQuery.Limit] = None,
       context: Option[PassagesQuery.Context] = None
   )
@@ -464,8 +479,10 @@ object Api:
   object PassagesQuery:
     type Q = Q.T
     object Q extends Newtype[String, Pure]
-    type Regex = Regex.T
-    object Regex extends Newtype[Boolean, Pure]
+    enum Regex derives CanEqual:
+      case Regex, Literal
+    object Regex extends TwoStates[Regex]:
+      extension (regex: Regex) def regex: Boolean = regex == Regex
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
     type Context = Context.T
@@ -487,11 +504,11 @@ object Api:
         PassagesQuery(
           Citekey(citekey),
           PassagesQuery.Q(q),
-          PassagesQuery.Regex(regex),
+          (if regex then PassagesQuery.Regex.Regex else PassagesQuery.Regex.Literal),
           limit.map(PassagesQuery.Limit(_)),
           context.map(PassagesQuery.Context(_))
         )
-      }(v => (v.citekey.value, v.q.value, v.regex.value, v.limit.map(_.value), v.context.map(_.value)))
+      }(v => (v.citekey.value, v.q.value, v.regex.regex, v.limit.map(_.value), v.context.map(_.value)))
       .errorOut(problemOut)
       .out(jsonBody[PassageResult])
 
@@ -708,41 +725,35 @@ object Api:
   private def strictQuery = query[Boolean]("strict")
     .default(false)
     .description("refuse the write when its Markdown has a formatting error (default: report only)")
+    .map(strict => if strict then Strictness.Strict else Strictness.Lenient)(_.strict)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  lazy val putSource: PublicEndpoint[(Citekey, Source.Put, Overwrite), Error, Source.WithFindings, Any] =
+  lazy val putSource: PublicEndpoint[(Citekey, Source.Put, Strictness), Error, Source.WithFindings, Any] =
     (endpoint.put
       .in("api" / "sources" / path[String]("citekey"))
       .in(jsonBody[Source.Put])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
-      .mapIn[(Citekey, Source.Put, Overwrite)]((refactorDecoded10: (String, Source.Put, Boolean)) =>
-        (
-          Citekey((refactorDecoded10)._1),
-          (refactorDecoded10)._2,
-          Overwrite((refactorDecoded10)._3)
-        )
-      )((refactorEncoded10: (Citekey, Source.Put, Overwrite)) =>
-        (((refactorEncoded10)._1).value, (refactorEncoded10)._2, ((refactorEncoded10)._3).value)
+      .mapIn[(Citekey, Source.Put, Strictness)]((refactorDecoded10: (String, Source.Put, Strictness)) =>
+        (Citekey((refactorDecoded10)._1), (refactorDecoded10)._2, (refactorDecoded10)._3)
+      )((refactorEncoded10: (Citekey, Source.Put, Strictness)) =>
+        (((refactorEncoded10)._1).value, (refactorEncoded10)._2, (refactorEncoded10)._3)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  lazy val patchSource: PublicEndpoint[(Citekey, Source.Patch.Request, Apply), Error, Source.WithFindings, Any] =
+  lazy val patchSource: PublicEndpoint[(Citekey, Source.Patch.Request, Strictness), Error, Source.WithFindings, Any] =
     (endpoint.patch
       .in("api" / "sources" / path[String]("citekey"))
       .in(jsonBody[Source.Patch.Request])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Source.WithFindings]))
-      .mapIn[(Citekey, Source.Patch.Request, Apply)]((refactorDecoded117: (String, Source.Patch.Request, Boolean)) =>
-        (
-          Citekey((refactorDecoded117)._1),
-          (refactorDecoded117)._2,
-          Apply((refactorDecoded117)._3)
-        )
-      )((refactorEncoded117: (Citekey, Source.Patch.Request, Apply)) =>
-        (((refactorEncoded117)._1).value, (refactorEncoded117)._2, ((refactorEncoded117)._3).value)
+      .mapIn[(Citekey, Source.Patch.Request, Strictness)](
+        (refactorDecoded117: (String, Source.Patch.Request, Strictness)) =>
+          (Citekey((refactorDecoded117)._1), (refactorDecoded117)._2, (refactorDecoded117)._3)
+      )((refactorEncoded117: (Citekey, Source.Patch.Request, Strictness)) =>
+        (((refactorEncoded117)._1).value, (refactorEncoded117)._2, (refactorEncoded117)._3)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -884,8 +895,8 @@ object Api:
       .in(fileBody)
       .out(jsonBody[Bundle.ImportResult]))
       .mapIn[(Apply, TapirFile)]((refactorDecoded: (Boolean, TapirFile)) =>
-        (Apply(refactorDecoded._1), refactorDecoded._2)
-      )((refactorEncoded: (Apply, TapirFile)) => ((refactorEncoded._1).value, refactorEncoded._2))
+        ((if refactorDecoded._1 then Apply.DryRun else Apply.Apply), refactorDecoded._2)
+      )((refactorEncoded: (Apply, TapirFile)) => (!(refactorEncoded._1).applies, refactorEncoded._2))
 
   /** Kept on the server under its sha256 so `merge plan` and `merge import` can name it: their body is the resolution
     * set, and a request carries one body.
@@ -1035,37 +1046,40 @@ object Api:
       .errorOut(problemOut)
       .out(jsonBody[Article.View]))
       .mapIn[(ReviewGoal.Slug, Article.FullText)]((refactorDecoded137: (String, Boolean)) =>
-        (ReviewGoal.Slug((refactorDecoded137)._1), Article.FullText((refactorDecoded137)._2))
+        (
+          ReviewGoal.Slug((refactorDecoded137)._1),
+          (if (refactorDecoded137)._2 then Article.FullText.FullText else Article.FullText.SummaryOnly)
+        )
       )((refactorEncoded137: (ReviewGoal.Slug, Article.FullText)) =>
-        (((refactorEncoded137)._1).value, ((refactorEncoded137)._2).value)
+        (((refactorEncoded137)._1).value, ((refactorEncoded137)._2).fullText)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  lazy val putArticle: PublicEndpoint[(ReviewGoal.Slug, Article.Put, Overwrite), Error, Article.View, Any] =
+  lazy val putArticle: PublicEndpoint[(ReviewGoal.Slug, Article.Put, Strictness), Error, Article.View, Any] =
     (endpoint.put
       .in("api" / "articles" / path[String]("slug"))
       .in(jsonBody[Article.Put])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Article.View]))
-      .mapIn[(ReviewGoal.Slug, Article.Put, Overwrite)]((refactorDecoded138: (String, Article.Put, Boolean)) =>
-        (ReviewGoal.Slug((refactorDecoded138)._1), (refactorDecoded138)._2, Overwrite((refactorDecoded138)._3))
-      )((refactorEncoded138: (ReviewGoal.Slug, Article.Put, Overwrite)) =>
-        (((refactorEncoded138)._1).value, (refactorEncoded138)._2, ((refactorEncoded138)._3).value)
+      .mapIn[(ReviewGoal.Slug, Article.Put, Strictness)]((refactorDecoded138: (String, Article.Put, Strictness)) =>
+        (ReviewGoal.Slug((refactorDecoded138)._1), (refactorDecoded138)._2, (refactorDecoded138)._3)
+      )((refactorEncoded138: (ReviewGoal.Slug, Article.Put, Strictness)) =>
+        (((refactorEncoded138)._1).value, (refactorEncoded138)._2, (refactorEncoded138)._3)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  lazy val patchArticle: PublicEndpoint[(ReviewGoal.Slug, Article.Patch, Apply), Error, Article.View, Any] =
+  lazy val patchArticle: PublicEndpoint[(ReviewGoal.Slug, Article.Patch, Strictness), Error, Article.View, Any] =
     (endpoint.patch
       .in("api" / "articles" / path[String]("slug"))
       .in(jsonBody[Article.Patch])
       .in(strictQuery)
       .errorOut(problemOut)
       .out(jsonBody[Article.View]))
-      .mapIn[(ReviewGoal.Slug, Article.Patch, Apply)]((refactorDecoded33: (String, Article.Patch, Boolean)) =>
-        (ReviewGoal.Slug((refactorDecoded33)._1), (refactorDecoded33)._2, Apply((refactorDecoded33)._3))
-      )((refactorEncoded33: (ReviewGoal.Slug, Article.Patch, Apply)) =>
-        (((refactorEncoded33)._1).value, (refactorEncoded33)._2, ((refactorEncoded33)._3).value)
+      .mapIn[(ReviewGoal.Slug, Article.Patch, Strictness)]((refactorDecoded33: (String, Article.Patch, Strictness)) =>
+        (ReviewGoal.Slug((refactorDecoded33)._1), (refactorDecoded33)._2, (refactorDecoded33)._3)
+      )((refactorEncoded33: (ReviewGoal.Slug, Article.Patch, Strictness)) =>
+        (((refactorEncoded33)._1).value, (refactorEncoded33)._2, (refactorEncoded33)._3)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -1487,13 +1501,14 @@ object Api:
           (
             Place.Id((refactorDecoded47)._1),
             ((refactorDecoded47)._2).map(refactorElement41 => AggregateQuery.AsOf(refactorElement41)),
-            ((refactorDecoded47)._3).map(refactorElement42 => Place.Detail(refactorElement42))
+            ((refactorDecoded47)._3)
+              .map(refactorElement42 => (if refactorElement42 then Place.Detail.Detail else Place.Detail.Brief))
           )
       )((refactorEncoded47: (Place.Id, Option[AggregateQuery.AsOf], Option[Place.Detail])) =>
         (
           ((refactorEncoded47)._1).value,
           ((refactorEncoded47)._2).map(refactorElement43 => (refactorElement43).value),
-          ((refactorEncoded47)._3).map(refactorElement44 => (refactorElement44).value)
+          ((refactorEncoded47)._3).map(refactorElement44 => (refactorElement44).detail)
         )
       )
 
@@ -1589,9 +1604,9 @@ object Api:
       .in("periods" / "seed")
       .in(query[Boolean]("replace").default(false))
       .out(jsonBody[Period.ImportResult]))
-      .mapIn[Overwrite]((refactorDecoded158: Boolean) => Overwrite(refactorDecoded158))(
-        (refactorEncoded158: Overwrite) => (refactorEncoded158).value
-      )
+      .mapIn[Overwrite]((refactorDecoded158: Boolean) =>
+        (if refactorDecoded158 then Overwrite.Overwrite else Overwrite.Keep)
+      )((refactorEncoded158: Overwrite) => (refactorEncoded158).overwrites)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val importPeriods: PublicEndpoint[
@@ -1652,14 +1667,14 @@ object Api:
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  lazy val init: PublicEndpoint[Overwrite, Error, JobInfo, Any] =
+  lazy val init: PublicEndpoint[Fetching, Error, JobInfo, Any] =
     (base.post
       .in("init")
       .in(query[Boolean]("fetch").default(false))
       .out(jsonBody[JobInfo]))
-      .mapIn[Overwrite]((refactorDecoded161: Boolean) => Overwrite(refactorDecoded161))(
-        (refactorEncoded161: Overwrite) => (refactorEncoded161).value
-      )
+      .mapIn[Fetching]((refactorDecoded161: Boolean) =>
+        (if refactorDecoded161 then Fetching.Fetch else Fetching.BundledOnly)
+      )((refactorEncoded161: Fetching) => (refactorEncoded161).fetches)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val importPlaces: PublicEndpoint[
@@ -1700,9 +1715,9 @@ object Api:
       .in(query[Boolean]("dryRun"))
       .out(jsonBody[Place.ImportResult]))
       .mapIn[(ExternalPlaces.Source, Apply)]((refactorDecoded57: (String, Boolean)) =>
-        (ExternalPlaces.Source((refactorDecoded57)._1), Apply((refactorDecoded57)._2))
+        (ExternalPlaces.Source((refactorDecoded57)._1), (if (refactorDecoded57)._2 then Apply.DryRun else Apply.Apply))
       )((refactorEncoded57: (ExternalPlaces.Source, Apply)) =>
-        (((refactorEncoded57)._1).value, ((refactorEncoded57)._2).value)
+        (((refactorEncoded57)._1).value, !((refactorEncoded57)._2).applies)
       )
 
   /** Declared before `places/{id}` so `sources` is never read as an id. */
@@ -1717,9 +1732,9 @@ object Api:
       .in(query[Boolean]("apply").default(false))
       .out(jsonBody[JobInfo]))
       .mapIn[(ExternalPlaces.Source, Apply)]((refactorDecoded58: (String, Boolean)) =>
-        (ExternalPlaces.Source((refactorDecoded58)._1), Apply((refactorDecoded58)._2))
+        (ExternalPlaces.Source((refactorDecoded58)._1), (if (refactorDecoded58)._2 then Apply.Apply else Apply.DryRun))
       )((refactorEncoded58: (ExternalPlaces.Source, Apply)) =>
-        (((refactorEncoded58)._1).value, ((refactorEncoded58)._2).value)
+        (((refactorEncoded58)._1).value, ((refactorEncoded58)._2).applies)
       )
 
   /** Declared before `places/{id}` so `names` is never read as an id. */
@@ -1842,7 +1857,7 @@ object Api:
           historicity.map(Historicity(_)),
           placeId.map(PlaceId(_)),
           tier.map(Tier(_)),
-          context.map(Context(_)),
+          context.map((if _ then Context.Context else Context.Alone)),
           area.map(Area(_))
         )
 
@@ -1863,7 +1878,7 @@ object Api:
       v.historicity.map(_.value),
       v.placeId.map(_.value),
       v.tier.map(_.value),
-      v.context.map(_.value),
+      v.context.map(_.context),
       v.area.map(_.value)
     )
 
@@ -1875,8 +1890,10 @@ object Api:
     export Place.Id as PlaceId
     type Tier = Tier.T
     object Tier extends Newtype[String, Pure]
-    type Context = Context.T
-    object Context extends Newtype[Boolean, Pure]
+    enum Context derives CanEqual:
+      case Context, Alone
+    object Context extends TwoStates[Context]:
+      extension (context: Context) def context: Boolean = context == Context
     type Area = Area.T
     object Area extends Newtype[String, Pure]
 
@@ -2203,8 +2220,8 @@ object Api:
         Ingest.Params(
           Citekey(citekey),
           filename.map(Ingest.Params.Filename(_)),
-          Ingest.Params.Quality(quality),
-          Ingest.Params.Force(force),
+          (if quality then Ingest.Params.Quality.Quality else Ingest.Params.Quality.Fast),
+          (if force then Ingest.Params.Force.Force else Ingest.Params.Force.Safe),
           title.map(Title(_)),
           authors.map(AuthorName(_)),
           year.map(catalogue.Year(_)),
@@ -2218,8 +2235,8 @@ object Api:
         (
           v.citekey.value,
           v.filename.map(_.value),
-          v.quality.value,
-          v.force.value,
+          v.quality.quality,
+          v.force.force,
           v.title.map(_.value),
           v.authors.map(_.value),
           v.year.map(_.value),
@@ -2264,17 +2281,20 @@ object Api:
       .out(jsonBody[Ingest.Accepted])
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  lazy val reocr: PublicEndpoint[(Citekey, Overwrite), Error, Ingest.Accepted, Any] =
+  lazy val reocr: PublicEndpoint[(Citekey, Ingest.Params.Quality), Error, Ingest.Accepted, Any] =
     (endpoint.post
       .in("api" / "sources" / path[String]("citekey") / "reocr")
       .in(query[Boolean]("quality").default(false))
       .errorOut(problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[Ingest.Accepted]))
-      .mapIn[(Citekey, Overwrite)]((refactorDecoded189: (String, Boolean)) =>
-        (Citekey((refactorDecoded189)._1), Overwrite((refactorDecoded189)._2))
-      )((refactorEncoded189: (Citekey, Overwrite)) =>
-        (((refactorEncoded189)._1).value, ((refactorEncoded189)._2).value)
+      .mapIn[(Citekey, Ingest.Params.Quality)]((refactorDecoded189: (String, Boolean)) =>
+        (
+          Citekey((refactorDecoded189)._1),
+          (if (refactorDecoded189)._2 then Ingest.Params.Quality.Quality else Ingest.Params.Quality.Fast)
+        )
+      )((refactorEncoded189: (Citekey, Ingest.Params.Quality)) =>
+        (((refactorEncoded189)._1).value, ((refactorEncoded189)._2).quality)
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -2654,8 +2674,8 @@ object Api:
       .in("media" / "fill-licences")
       .in(query[Boolean]("apply").default(false))
       .out(jsonBody[FigureLicenceFill]))
-      .mapIn[Apply]((refactorDecoded97: Boolean) => Apply(refactorDecoded97))((refactorEncoded97: Apply) =>
-        (refactorEncoded97).value
+      .mapIn[Apply]((refactorDecoded97: Boolean) => (if refactorDecoded97 then Apply.Apply else Apply.DryRun))(
+        (refactorEncoded97: Apply) => (refactorEncoded97).applies
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

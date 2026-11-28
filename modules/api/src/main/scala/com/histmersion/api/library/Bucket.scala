@@ -18,7 +18,7 @@ final case class Bucket(
     placeId: Option[Bucket.PlaceId] = None,
     count: Bucket.Count = Bucket.Count(0),
     overlap: Bucket.Overlap = Bucket.Overlap(0),
-    contested: Bucket.Contested = Bucket.Contested(false),
+    contested: Bucket.Contested = Bucket.Contested.Settled,
     alsoUnder: List[Bucket.AlsoUnder] = Nil,
     children: List[Bucket] = Nil,
     samples: List[Bucket.Sample] = Nil

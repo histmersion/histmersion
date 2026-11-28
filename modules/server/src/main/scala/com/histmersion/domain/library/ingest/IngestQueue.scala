@@ -230,7 +230,7 @@ final class IngestQueue(
                       .convert(
                         blob,
                         ConverterClient.Filename(job.params.filename.fold(name.value)(_.value)),
-                        ConverterClient.HighQuality(job.params.quality.value)
+                        ConverterClient.HighQuality(job.params.quality.quality)
                       )
                       .left
                       .map(Right(_))

@@ -88,7 +88,7 @@ final class VacuumJobs(
           val before = transactor.read(VacuumRepo.state(name))
           val started = System.nanoTime()
           scala.util
-            .Try(transactor.writeAutocommit(VacuumRepo.vacuum(name, VacuumRepo.Analyze(plan.analyze.value))))
+            .Try(transactor.writeAutocommit(VacuumRepo.vacuum(name, VacuumRepo.Analyze(plan.analyze.analyze))))
             .toEither match
             case Left(e)  => outcome(Some(s"$table: ${e.getMessage}"))
             case Right(_) =>

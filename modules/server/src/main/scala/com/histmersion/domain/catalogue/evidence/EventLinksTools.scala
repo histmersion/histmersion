@@ -30,7 +30,7 @@ object EventLinksTools:
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class EventLinksInput(
       id: Option[com.histmersion.api.catalogue.Event.Id] = None,
-      recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false),
+      recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute.Reuse,
       confirm: List[EventLinksRequest.Confirm] = Nil,
       reject: List[EventLinksRequest.Reject] = Nil,
       from: Option[Year] = None,
@@ -88,7 +88,7 @@ object EventLinksTools:
                       )
                     )
                     .flatMap { id =>
-                      if in.recompute.value || in.confirm.nonEmpty || in.reject.nonEmpty then
+                      if in.recompute.recompute || in.confirm.nonEmpty || in.reject.nonEmpty then
                         links
                           .applyLinks(Caller.Local, id, EventLinksRequest(in.recompute, in.confirm, in.reject))
                           .map(EventLinksMarkdown.result)

@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 enum AgentMode(val wire: AgentMode.Wire) derives CanEqual:
   case Working extends AgentMode(AgentMode.Wire("working"))
@@ -37,7 +38,7 @@ object AgentMode:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On): AgentMode =
-    if !(autopilotOn).value then Paused else if (draining).value then Finishing else Working
+    if !(autopilotOn).on then Paused else if (draining).on then Finishing else Working
 
   enum Step:
     case Autopilot(on: Autopilot.On)
@@ -45,26 +46,30 @@ object AgentMode:
 
   object Step:
     object Autopilot:
-      type On = On.T
-      object On extends Newtype[Boolean, Pure]
+      enum On derives CanEqual:
+        case On, Off
+      object On extends TwoStates[On]:
+        extension (on: On) def on: Boolean = on == On
     object Drain:
-      type On = On.T
-      object On extends Newtype[Boolean, Pure]
+      enum On derives CanEqual:
+        case On, Off
+      object On extends TwoStates[On]:
+        extension (on: On) def on: Boolean = on == On
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def steps(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On, to: AgentMode): List[Step] = to match
     case Working =>
-      Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(
-        !((autopilotOn) == Step.Autopilot.On(true))
-      )(Step.Autopilot(Step.Autopilot.On(true)))
+      Option.when(((draining) == Step.Drain.On.On))(Step.Drain(Step.Drain.On.Off)).toList ++ Option.when(
+        !((autopilotOn) == Step.Autopilot.On.On)
+      )(Step.Autopilot(Step.Autopilot.On.On))
     case Finishing =>
-      Option.when(!(draining).value)(Step.Drain(Step.Drain.On(true))).toList ++ Option.when(
-        !((autopilotOn) == Step.Autopilot.On(true))
-      )(Step.Autopilot(Step.Autopilot.On(true)))
+      Option.when(!(draining).on)(Step.Drain(Step.Drain.On.On)).toList ++ Option.when(
+        !((autopilotOn) == Step.Autopilot.On.On)
+      )(Step.Autopilot(Step.Autopilot.On.On))
     case Paused =>
-      Option.when(((draining) == Step.Drain.On(true)))(Step.Drain(Step.Drain.On(false))).toList ++ Option.when(
-        ((autopilotOn) == Step.Autopilot.On(true))
-      )(Step.Autopilot(Step.Autopilot.On(false)))
+      Option.when(((draining) == Step.Drain.On.On))(Step.Drain(Step.Drain.On.Off)).toList ++ Option.when(
+        ((autopilotOn) == Step.Autopilot.On.On)
+      )(Step.Autopilot(Step.Autopilot.On.Off))
 
   final case class ModeSet(
       mode: ModeSet.Mode,

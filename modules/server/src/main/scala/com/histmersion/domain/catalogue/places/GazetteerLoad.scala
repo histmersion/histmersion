@@ -632,7 +632,7 @@ object GazetteerLoad:
           k,
           x.title,
           Option.when(built)(Gazetteer.SourceInfo.File(at.fold(expected)((store, key) => store.where(key)).value)),
-          Gazetteer.SourceInfo.Present(at.isDefined),
+          (if at.isDefined then Gazetteer.SourceInfo.Present.Present else Gazetteer.SourceInfo.Present.Absent),
           Option.when(built)(Gazetteer.SourceInfo.PinnedVersion(x.version.value)),
           licence = Some(x.licence),
           citation = x.attribution.map(a => Gazetteer.SourceInfo.Citation(a.value))
@@ -649,7 +649,7 @@ object GazetteerLoad:
         Gazetteer.Kind.Lpf,
         Gazetteer.SourceInfo.Title(f.key.name.value),
         Some(Gazetteer.SourceInfo.File(f.where.value)),
-        present = Gazetteer.SourceInfo.Present(true),
+        present = Gazetteer.SourceInfo.Present.Present,
         None
       )
     }
@@ -663,7 +663,7 @@ object GazetteerLoad:
             k,
             Gazetteer.SourceInfo.Title(r.title.value),
             Some(Gazetteer.SourceInfo.File(r.file.value)),
-            present = Gazetteer.SourceInfo.Present(false),
+            present = Gazetteer.SourceInfo.Present.Absent,
             None
           )
         )

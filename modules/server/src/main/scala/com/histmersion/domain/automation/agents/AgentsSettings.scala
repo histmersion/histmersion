@@ -68,9 +68,12 @@ extension (c: AgentsConfig)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def logins: PlanQuota.Logins =
     PlanQuota.Logins(
-      PlanQuota.Logins.ClaudeCodeApiKey(c.providers.claudeCode.useApiKey.value),
-      PlanQuota.Logins.CodexApiKey(c.providers.codex.useApiKey.value),
-      PlanQuota.Logins.OpencodeChatgpt(c.providers.opencode.chatgptLogin.value)
+      (if c.providers.claudeCode.useApiKey.value then PlanQuota.Logins.ClaudeCodeApiKey.ApiKey
+       else PlanQuota.Logins.ClaudeCodeApiKey.Login),
+      (if c.providers.codex.useApiKey.value then PlanQuota.Logins.CodexApiKey.ApiKey
+       else PlanQuota.Logins.CodexApiKey.Login),
+      (if c.providers.opencode.chatgptLogin.value then PlanQuota.Logins.OpencodeChatgpt.Chatgpt
+       else PlanQuota.Logins.OpencodeChatgpt.Other)
     )
 
 extension (c: AgentPlanConfig)

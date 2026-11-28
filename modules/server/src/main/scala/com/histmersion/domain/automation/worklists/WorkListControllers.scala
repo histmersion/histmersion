@@ -111,7 +111,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     maintenance.guard(WriteGate.OperationName("queue/import")):
       kindOf(WorkListControllers.KindOfList(list.value)).map { k =>
         val rows = Queue.parse(k, Queue.FileText(req.text.value))
-        val counts = queues.replace(k, rows, ImportMode.of(req.replace.value), Imported)
+        val counts = queues.replace(k, rows, ImportMode.of(req.replace.replace), Imported)
         val notes = rows.count(_.status.exists(_.value == Queue.Note))
         QueueImported(
           k.label,

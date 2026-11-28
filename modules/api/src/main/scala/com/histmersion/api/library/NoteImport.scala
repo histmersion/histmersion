@@ -10,6 +10,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class NoteImport(
@@ -17,7 +18,7 @@ final case class NoteImport(
     citekey: Option[Citekey] = None,
     body: Option[NoteImport.Body] = None,
     mtime: Option[NoteImport.Mtime] = None,
-    force: NoteImport.Force = NoteImport.Force(false),
+    force: NoteImport.Force = NoteImport.Force.Safe,
     assets: List[AssetInput] = Nil,
     createdBy: Option[Creation.By] = None,
     via: Option[Creation.Via] = None
@@ -27,5 +28,7 @@ object NoteImport:
   export Source.{Notes as Body, Notes as Text}
   type Mtime = Mtime.T
   object Mtime extends Newtype[Long, Pure]
-  type Force = Force.T
-  object Force extends Newtype[Boolean, Pure]
+  enum Force derives CanEqual:
+    case Force, Safe
+  object Force extends TwoStates[Force]:
+    extension (force: Force) def force: Boolean = force == Force

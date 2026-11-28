@@ -36,10 +36,9 @@ object MediaCoversReport:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
-      RepairAcquire.RepairRequest.DryRun(
-        ((a.dryRun) == RepairAcquire.RepairRequest.DryRun(true)) && ((b.dryRun) == RepairAcquire.RepairRequest
-          .DryRun(true))
-      ),
+      (if ((a.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun) && ((b.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun)
+       then RepairAcquire.RepairRequest.DryRun.DryRun
+       else RepairAcquire.RepairRequest.DryRun.Apply),
       Sources((a.sources).value + (b.sources).value),
       Covers((a.covers).value + (b.covers).value),
       Illustrations((a.illustrations).value + (b.illustrations).value),

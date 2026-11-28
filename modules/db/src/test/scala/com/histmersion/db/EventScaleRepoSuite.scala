@@ -235,7 +235,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
         "zqes_unplaced" -> "local"
       )
     )
-    assert(!summary(BEventRow.Id("zqes_migration")).scaleStated.value)
+    assert(!summary(BEventRow.Id("zqes_migration")).scaleStated.scaleStated)
     // the list carries the same
     val listed = EventFixtures
       .list(
@@ -257,7 +257,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
 
   test("a stated scale wins; a patch states one, and `auto` forgets it"):
     assertEquals(
-      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated),
+      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated.scaleStated),
       ("regional", true)
     )
     assertEquals(
@@ -265,7 +265,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
       Right(())
     )
     assertEquals(
-      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated),
+      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated.scaleStated),
       ("local", false)
     )
     assertEquals(
@@ -273,7 +273,7 @@ class EventScaleRepoSuite extends DbSuite with Bounded:
       Right(())
     )
     assertEquals(
-      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated),
+      (summary(BEventRow.Id("zqes_stated")).scale, summary(BEventRow.Id("zqes_stated")).scaleStated.scaleStated),
       ("regional", true)
     )
     // a patch of something else keeps it

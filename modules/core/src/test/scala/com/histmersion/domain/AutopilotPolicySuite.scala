@@ -743,8 +743,8 @@ class AutopilotPolicySuite extends munit.FunSuite:
       .parse(List(Managers.ManagerConfig.Spec("autoApprove=on"), Managers.ManagerConfig.Spec("extend-min-new=4")))
       .toOption
       .get
-    assertEquals((c.autoApprove, c.extendMinNew), (Some(true), Some(4)))
-    assertEquals(ManagerConfig().merge(c).autoApprove, Some(true))
+    assertEquals((c.autoApprove.map(_.autoApprove), c.extendMinNew), (Some(true), Some(4)))
+    assertEquals(ManagerConfig().merge(c).autoApprove.map(_.autoApprove), Some(true))
     assert(ManagersMarkdown.configLine(c).contains("autoApprove=true, extendMinNew=4"))
 
 /** The daily caps scaled to the backlog (#3762 proposal 3). */

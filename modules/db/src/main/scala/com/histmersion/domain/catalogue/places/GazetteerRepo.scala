@@ -243,7 +243,9 @@ private[places] object GazetteerRepo:
         // id meet exactly as they would across batches (the second joins the first's place)
         val linked = scala.collection.mutable.Map.empty[(String, String), List[Place.Match]]
         linkedRows.foreach { (s, e, id, src, native) =>
-          linked((s, e)) = Place.Match(id, src, Place.Match.Native(native)) :: linked.getOrElse((s, e), Nil)
+          linked((s, e)) =
+            Place.Match(id, src, (if native then Place.Match.Native.Native else Place.Match.Native.Foreign)) :: linked
+              .getOrElse((s, e), Nil)
         }
         val byId = scala.collection.mutable.Map.from(stored.map(s => s.id -> s))
         val own = stored
@@ -283,9 +285,12 @@ private[places] object GazetteerRepo:
             // what the store will say after this record: its links on its place, native where it made it
             val native = !pl.isInstanceOf[Placement.Join]
             r.placeLinks.foreach(l =>
-              linked((l.id.scheme.wire.value, l.id.id.value)) =
-                Place.Match(pl.placeId, Some(Place.Match.ImportSource(source.value)), Place.Match.Native(native)) ::
-                  linked.getOrElse((l.id.scheme.wire.value, l.id.id.value), Nil)
+              linked((l.id.scheme.wire.value, l.id.id.value)) = Place.Match(
+                pl.placeId,
+                Some(Place.Match.ImportSource(source.value)),
+                (if native then Place.Match.Native.Native else Place.Match.Native.Foreign)
+              ) ::
+                linked.getOrElse((l.id.scheme.wire.value, l.id.id.value), Nil)
             )
             if pl.isInstanceOf[Placement.Create] then
               byId(pl.placeId) = Stored(pl.placeId, Some(Place.Match.ImportSource(source.value)), Some(r.ref))
@@ -356,7 +361,7 @@ private[places] object GazetteerRepo:
             "gwkt" -> txt(r.geometry.collect { case GazGeometry.Wkt(t) => t.value }),
             "lo" -> num(v.from.map(_.value)),
             "hi" -> num(v.to.map(_.value)),
-            "su" -> Json.fromBoolean(v.startUnknown.value),
+            "su" -> Json.fromBoolean(v.startUnknown.startUnknown),
             "source" -> txt(r.source.map(_.value)),
             "props" -> txt(r.properties.map(_.value)),
             "ref" -> Json.fromString(r.ref.value)

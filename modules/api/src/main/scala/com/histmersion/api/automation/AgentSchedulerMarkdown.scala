@@ -37,7 +37,7 @@ object AgentSchedulerMarkdown:
       Some(
         s.at.fold("- no pass yet")(t =>
           s"- ${
-              if (s.dry) == SchedulerStatus.Dry(true) then "what a pass would do now (nothing started)"
+              if (s.dry) == SchedulerStatus.Dry.Dry then "what a pass would do now (nothing started)"
               else s"last pass $t"
             }"
         )

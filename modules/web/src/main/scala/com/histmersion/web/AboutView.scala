@@ -56,7 +56,7 @@ object AboutView:
         Row("version", shown"${a.name} ${b.version}"),
         Row(
           "commit",
-          b.gitCommit.fold("unknown")(c => if b.dirty.value then shown"$c (with uncommitted changes)" else shown"$c")
+          b.gitCommit.fold("unknown")(c => if b.dirty.dirty then shown"$c (with uncommitted changes)" else shown"$c")
         ),
         Row("commit date", b.commitDate.fold("unknown")(_.value)),
         Row("licence", b.licence.fold("unknown")(_.value)),
@@ -69,7 +69,7 @@ object AboutView:
         Row("schema version", a.health.schemaVersion.fold("unknown")(_.value)),
         Row(
           "config file",
-          a.configFile.path.fold("none")(_ => if a.configFile.loaded.value then "read" else "not found"),
+          a.configFile.path.fold("none")(_ => if a.configFile.loaded.loaded then "read" else "not found"),
           detail = a.configFile.path.map(p =>
             if a.configFile.unknownKeys.isEmpty then shown"$p"
             else shown"$p · ignored unknown: ${a.configFile.unknownKeys.mkString(", ")}"
@@ -129,10 +129,10 @@ object AboutView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def storage(r: Storage.Report): List[Section] =
-    if r.entries.isEmpty && !r.measuring.value && r.problems.isEmpty then Nil
+    if r.entries.isEmpty && !r.measuring.measuring && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
-        Option.when(r.measuring.value)("measuring…")).mkString(" · ")
+        Option.when(r.measuring.measuring)("measuring…")).mkString(" · ")
       val total = Option.when(r.entries.nonEmpty)(
         Row(
           "in all",
@@ -144,12 +144,12 @@ object AboutView:
         Row(
           if e.host.value == "server" then e.label.value else shown"${e.label} (this machine)",
           Storage.size(e),
-          state = Option.when(e.partial.value)(ServiceState.Busy),
+          state = Option.when(e.partial.partial)(ServiceState.Busy),
           detail = Option(Storage.details(r, e) ++ e.path.toList).filter(_.nonEmpty).map(_.mkString(" · ")),
           depth = depth.value
         )
       }
-      val waiting = Option.when(r.entries.isEmpty && r.measuring.value)(Row("", "measuring…"))
+      val waiting = Option.when(r.entries.isEmpty && r.measuring.measuring)(Row("", "measuring…"))
       val disks = r.volumes.map { v =>
         val low = v.freeBytes.value.toLong < r.lowFreeBytes.value.toLong
         Row(
@@ -223,7 +223,7 @@ object AboutView:
           e => failure.set(Some(e.getMessage)),
           a => {
             failure.set(None); about.set(Some(a))
-            if a.storage.measuring.value && polls < MaxPolls then
+            if a.storage.measuring.measuring && polls < MaxPolls then
               polls += 1
               val _ = scala.scalajs.js.timers.setTimeout(PollMs)(if mounted then load())
           }

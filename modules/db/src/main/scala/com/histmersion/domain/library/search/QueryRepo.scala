@@ -72,7 +72,13 @@ private[search] object QueryRepo:
           // unreachable in a READ ONLY transaction (nothing that updates rows can run), but an
           // honest answer beats a NullPointerException if Postgres ever allows one.
           Right(
-            QueryResult(Nil, Nil, QueryResult.RowCount(0), QueryResult.Truncated(false), QueryResult.ElapsedMs(elapsed))
+            QueryResult(
+              Nil,
+              Nil,
+              QueryResult.RowCount(0),
+              QueryResult.Truncated.Complete,
+              QueryResult.ElapsedMs(elapsed)
+            )
           )
         else Right(read(st.getResultSet, maxRows, maxCellChars, QueryResult.ElapsedMs(elapsed)))
       finally st.close()
@@ -111,7 +117,7 @@ private[search] object QueryRepo:
       columns.map(QueryResult.Columns(_)),
       rows.result(),
       QueryResult.RowCount(n),
-      QueryResult.Truncated(more),
+      (if more then QueryResult.Truncated.Truncated else QueryResult.Truncated.Complete),
       elapsedMs
     )
 
@@ -162,7 +168,7 @@ private[search] object QueryRepo:
                 SchemaColumn(
                   SchemaColumn.Name(col),
                   SchemaColumn.DataType(tpe),
-                  SchemaColumn.Nullable(nullable == "YES")
+                  (if nullable == "YES" then SchemaColumn.Nullable.Nullable else SchemaColumn.Nullable.Required)
                 )
               )
             )

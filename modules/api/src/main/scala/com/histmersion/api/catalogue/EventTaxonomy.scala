@@ -4,6 +4,7 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object EventTaxonomy:
@@ -161,20 +162,22 @@ object EventTaxonomy:
   object KindCondition:
     type Filter = Filter.T
     object Filter extends Newtype[String, Pure]
-    type Negate = Negate.T
-    object Negate extends Newtype[Boolean, Pure]
+    enum Negate derives CanEqual:
+      case Negate, Affirm
+    object Negate extends TwoStates[Negate]:
+      extension (negate: Negate) def negate: Boolean = negate == Negate
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def condition(filter: Option[KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
       val natural = (kinds.filter(_.group == Kind.Group(Natural)).map(_.kind) ++
         aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Kind.Group(Natural)) => a }).distinct.sorted
-      if f == Natural then KindCondition(natural, negate = KindCondition.Negate(false))
-      else if f == Human then KindCondition(natural, negate = KindCondition.Negate(true))
+      if f == Natural then KindCondition(natural, negate = KindCondition.Negate.Affirm)
+      else if f == Human then KindCondition(natural, negate = KindCondition.Negate.Negate)
       else
         val c = canonical(EventSummary.Kind(f))
         KindCondition(
           (c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sorted,
-          negate = KindCondition.Negate(false)
+          negate = KindCondition.Negate.Affirm
         )
     }

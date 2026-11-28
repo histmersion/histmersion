@@ -195,8 +195,8 @@ object Wording:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def agentsState(autopilotOn: AgentMode.Step.Autopilot.On, draining: AgentMode.Step.Drain.On): String =
-    if (draining).value then ("Agents: finishing current work, then pausing")
-    else if (autopilotOn).value then ("Agents: working")
+    if (draining).on then ("Agents: finishing current work, then pausing")
+    else if (autopilotOn).on then ("Agents: working")
     else ("Agents: paused")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

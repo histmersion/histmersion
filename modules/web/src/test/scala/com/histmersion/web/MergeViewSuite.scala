@@ -224,14 +224,14 @@ class MergeViewSuite extends munit.FunSuite:
       IssueText.Left("a\nB\nc"),
       IssueText.Right("a\nβ\nc"),
       List(
-        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("a"))),
+        IssueHunk(IssueHunk.Conflict.Clean, left = List(IssueHunk.Left("a"))),
         IssueHunk(
-          IssueHunk.Conflict(true),
+          IssueHunk.Conflict.Conflict,
           List(IssueHunk.Base("b")),
           List(IssueHunk.Left("B")),
           List(IssueHunk.Right("β"))
         ),
-        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("c")))
+        IssueHunk(IssueHunk.Conflict.Clean, left = List(IssueHunk.Left("c")))
       )
     )
     val m = MergeView.markedText(t)

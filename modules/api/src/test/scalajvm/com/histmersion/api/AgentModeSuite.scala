@@ -12,22 +12,25 @@ class AgentModeSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val switches = for on <- List(false, true); draining <- List(false, true)
-  yield (Step.Autopilot.On(on), Step.Drain.On(draining))
+  yield (
+    (if on then Step.Autopilot.On.On else Step.Autopilot.On.Off),
+    (if draining then Step.Drain.On.On else Step.Drain.On.Off)
+  )
 
   test("the mode the switches stand for: off is paused, draining or not"):
     assertEquals(
-      AgentMode.of(autopilotOn = Step.Autopilot.On(true), draining = Step.Drain.On(false)),
+      AgentMode.of(autopilotOn = Step.Autopilot.On.On, draining = Step.Drain.On.Off),
       AgentMode.Working
     )
     assertEquals(
-      AgentMode.of(autopilotOn = Step.Autopilot.On(true), draining = Step.Drain.On(true)),
+      AgentMode.of(autopilotOn = Step.Autopilot.On.On, draining = Step.Drain.On.On),
       AgentMode.Finishing
     )
     assertEquals(
-      AgentMode.of(autopilotOn = Step.Autopilot.On(false), draining = Step.Drain.On(false)),
+      AgentMode.of(autopilotOn = Step.Autopilot.On.Off, draining = Step.Drain.On.Off),
       AgentMode.Paused
     )
-    assertEquals(AgentMode.of(autopilotOn = Step.Autopilot.On(false), draining = Step.Drain.On(true)), AgentMode.Paused)
+    assertEquals(AgentMode.of(autopilotOn = Step.Autopilot.On.Off, draining = Step.Drain.On.On), AgentMode.Paused)
 
   test("from every state of the switches, the steps reach the chosen mode, with no step to spare"):
     for (on, draining) <- switches; to <- AgentMode.values do
@@ -36,23 +39,23 @@ class AgentModeSuite extends munit.FunSuite:
         case ((_, d), Step.Autopilot(v)) => (v, d)
         case ((a, _), Step.Drain(v))     => (a, v)
       }
-      assertEquals(AgentMode.of(on2, drain2), to, s"$on/$draining → $to: $steps")
+      assertEquals(AgentMode.of(on2, drain2), to, s"${on.on}/${draining.on} → $to: $steps")
       assertEquals(steps.distinct, steps)
-      if AgentMode.of(on, draining) == to && !(to == AgentMode.Paused && draining.value) then
-        assertEquals(steps, Nil, s"$on/$draining → $to")
+      if AgentMode.of(on, draining) == to && !(to == AgentMode.Paused && draining.on) then
+        assertEquals(steps, Nil, s"${on.on}/${draining.on} → $to")
 
   test("pausing lifts a drain before turning the autopilot off; working lifts it before turning it on"):
     assertEquals(
-      AgentMode.steps(autopilotOn = Step.Autopilot.On(true), draining = Step.Drain.On(true), AgentMode.Paused),
-      List(Step.Drain(Step.Drain.On(false)), Step.Autopilot(Step.Autopilot.On(false)))
+      AgentMode.steps(autopilotOn = Step.Autopilot.On.On, draining = Step.Drain.On.On, AgentMode.Paused),
+      List(Step.Drain(Step.Drain.On.Off), Step.Autopilot(Step.Autopilot.On.Off))
     )
     assertEquals(
-      AgentMode.steps(autopilotOn = Step.Autopilot.On(false), draining = Step.Drain.On(true), AgentMode.Working),
-      List(Step.Drain(Step.Drain.On(false)), Step.Autopilot(Step.Autopilot.On(true)))
+      AgentMode.steps(autopilotOn = Step.Autopilot.On.Off, draining = Step.Drain.On.On, AgentMode.Working),
+      List(Step.Drain(Step.Drain.On.Off), Step.Autopilot(Step.Autopilot.On.On))
     )
     assertEquals(
-      AgentMode.steps(autopilotOn = Step.Autopilot.On(true), draining = Step.Drain.On(false), AgentMode.Finishing),
-      List(Step.Drain(Step.Drain.On(true)))
+      AgentMode.steps(autopilotOn = Step.Autopilot.On.On, draining = Step.Drain.On.Off, AgentMode.Finishing),
+      List(Step.Drain(Step.Drain.On.On))
     )
 
   test("the words: the control's three choices and the card's heading"):

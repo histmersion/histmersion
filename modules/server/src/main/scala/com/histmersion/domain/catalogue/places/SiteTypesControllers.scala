@@ -45,7 +45,7 @@ final class SiteTypesControllers(
   def refineSiteTypes(caller: Caller, req: SiteTypes.Request)(using Creator.New): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
-      JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.value then " (dry run)" else ""}")
+      JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.dryRun then " (dry run)" else ""}")
     ) { (_, progress) =>
       Right(BackgroundJob.Outcome.Summary(SiteTypes.Report.summary(runSiteTypes(req, progress)).value))
     }
@@ -59,10 +59,10 @@ final class SiteTypesControllers(
   )
   def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit)(using WritePermit): SiteTypes.Report =
     val started = DeepTime.SignedYear(clock.millis())
-    val refresh = SiteTypeService.Refresh(req.refresh.value)
-    if req.dryRun.value then
+    val refresh = SiteTypeService.Refresh(req.refresh.refresh)
+    if req.dryRun.dryRun then
       SiteTypes.Report(
-        dryRun = SiteTypes.Report.DryRun(true),
+        dryRun = SiteTypes.Report.DryRun.DryRun,
         pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, None).value)
       )
     else
@@ -108,7 +108,7 @@ final class SiteTypesControllers(
       def next(limit: Int) =
         PageSize.option(limit).fold(Nil)(size => sites.sitesToType(size, refresh, Some(started)))
       // `var`s: the walk
-      var report = SiteTypes.Report(dryRun = SiteTypes.Report.DryRun(false))
+      var report = SiteTypes.Report(dryRun = SiteTypes.Report.DryRun.Apply)
       var batch = next(math.min(ec.siteTypes.batch.value, cap))
       while batch.nonEmpty && report.asked.value < cap && !jobs.held do
         val p31 = claims(batch.map(_._2), EventProviders.WikidataProperty("P31"))

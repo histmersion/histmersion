@@ -25,6 +25,7 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.Paging
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Managers:
@@ -280,19 +281,25 @@ object Managers:
     object IncludeGoal extends Newtype[String, Pure]
     type StaleAfterDays = StaleAfterDays.T
     object StaleAfterDays extends Newtype[Int, Pure]
-    type InferFilter = InferFilter.T
-    object InferFilter extends Newtype[Boolean, Pure]
+    enum InferFilter derives CanEqual:
+      case Infer, Explicit
+    object InferFilter extends TwoStates[InferFilter]:
+      extension (inferFilter: InferFilter) def inferFilter: Boolean = inferFilter == Infer
     export Agents.RunParams.MinSources
     export Agents.RunParams.MaxArticles
-    type AutoIngest = AutoIngest.T
-    object AutoIngest extends Newtype[Boolean, Pure]
+    enum AutoIngest derives CanEqual:
+      case Auto, Manual
+    object AutoIngest extends TwoStates[AutoIngest]:
+      extension (autoIngest: AutoIngest) def autoIngest: Boolean = autoIngest == Auto
     type AutoIngestPerDay = AutoIngestPerDay.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object AutoIngestPerDay extends Newtype[Int, Pure]
     type DailyUsd = DailyUsd.T
     object DailyUsd extends Newtype[Double, Pure]
-    type AutoApprove = AutoApprove.T
-    object AutoApprove extends Newtype[Boolean, Pure]
+    enum AutoApprove derives CanEqual:
+      case Auto, Manual
+    object AutoApprove extends TwoStates[AutoApprove]:
+      extension (autoApprove: AutoApprove) def autoApprove: Boolean = autoApprove == Auto
     type ExtendMinNew = ExtendMinNew.T
     object ExtendMinNew extends Newtype[Int, Pure]
 
@@ -357,11 +364,17 @@ object Managers:
                 case "autoIngestPerDay" | "auto-ingest-per-day" =>
                   int.map(n => c.copy(autoIngestPerDay = Some(AutoIngestPerDay(n))))
                 case "inferFilter" | "infer-filter" => (
-                  bool(k, (v)).map(b => c.copy(inferFilter = Some(InferFilter((b)))))
+                  bool(k, (v)).map(b =>
+                    c.copy(inferFilter = Some((if b then InferFilter.Infer else InferFilter.Explicit)))
+                  )
                 )
-                case "autoIngest" | "auto-ingest" => (bool(k, (v)).map(b => c.copy(autoIngest = Some(AutoIngest((b))))))
+                case "autoIngest" | "auto-ingest" => (
+                  bool(k, (v)).map(b => c.copy(autoIngest = Some((if b then AutoIngest.Auto else AutoIngest.Manual))))
+                )
                 case "autoApprove" | "auto-approve" => (
-                  bool(k, (v)).map(b => c.copy(autoApprove = Some(AutoApprove((b)))))
+                  bool(k, (v)).map(b =>
+                    c.copy(autoApprove = Some((if b then AutoApprove.Auto else AutoApprove.Manual)))
+                  )
                 )
                 case "extendMinNew" | "extend-min-new" => int.map(n => c.copy(extendMinNew = Some(ExtendMinNew(n))))
                 case "sweeps"                          =>
@@ -547,7 +560,7 @@ object Managers:
       kind: ManagerInfo.Kind,
       goal: Option[Goal.Slug] = None,
       state: ManagerInfo.State = Manager.State.Active.wire,
-      pauseRuns: ManagerInfo.PauseRuns = ManagerInfo.PauseRuns(false),
+      pauseRuns: ManagerInfo.PauseRuns = ManagerInfo.PauseRuns.Run,
       config: ManagerConfig = ManagerConfig(),
       effective: ManagerConfig = ManagerConfig(),
       statusNote: Option[Manager.Status] = None,
@@ -572,8 +585,10 @@ object Managers:
       given Display[T] = Display(_.value)
     export Manager.Kind.Wire as Kind
     export Manager.State.Wire as State
-    type PauseRuns = PauseRuns.T
-    object PauseRuns extends Newtype[Boolean, Pure]
+    enum PauseRuns derives CanEqual:
+      case Pause, Run
+    object PauseRuns extends TwoStates[PauseRuns]:
+      extension (pauseRuns: PauseRuns) def pauseRuns: Boolean = pauseRuns == Pause
     type Cron = Cron.T
     object Cron extends Newtype[String, Pure]
     type NextTickAt = NextTickAt.T
@@ -626,7 +641,7 @@ object Managers:
       after: RunMark.After = RunMark.After(0),
       maxReopened: RunMark.MaxReopened = RunMark.MaxReopened(0),
       escalated: RunMark.Escalated = RunMark.Escalated(0),
-      churn: RunMark.Churn = RunMark.Churn(false),
+      churn: RunMark.Churn = RunMark.Churn.Progress,
       pairsBefore: Option[RunMark.PairsBefore] = None,
       pairsAfter: Option[RunMark.PairsAfter] = None
   ) derives JsonCodec,
@@ -642,8 +657,10 @@ object Managers:
     object MaxReopened extends Newtype[Int, Pure]
     type Escalated = Escalated.T
     object Escalated extends Newtype[Int, Pure]
-    type Churn = Churn.T
-    object Churn extends Newtype[Boolean, Pure]
+    enum Churn derives CanEqual:
+      case Churn, Progress
+    object Churn extends TwoStates[Churn]:
+      extension (churn: Churn) def churn: Boolean = churn == Churn
     type PairsBefore = PairsBefore.T
     object PairsBefore extends Newtype[Int, Pure]
     type PairsAfter = PairsAfter.T
@@ -838,7 +855,7 @@ object Managers:
       text: ManagerHint.Text = ManagerHint.Text(""),
       effect: Option[HintEffect] = None,
       author: ManagerHint.Author = ManagerHint.Author(""),
-      standing: ManagerHint.Standing = ManagerHint.Standing(true),
+      standing: ManagerHint.Standing = ManagerHint.Standing.Standing,
       createdAt: ManagerHint.CreatedAt = ManagerHint.CreatedAt(""),
       retiredAt: Option[ManagerHint.RetiredAt] = None,
       uses: ManagerHint.Uses = ManagerHint.Uses(0),
@@ -857,8 +874,10 @@ object Managers:
     object Text extends Newtype[String, Pure]
     type Author = Author.T
     object Author extends Newtype[String, Pure]
-    type Standing = Standing.T
-    object Standing extends Newtype[Boolean, Pure]
+    enum Standing derives CanEqual:
+      case Standing, OneOff
+    object Standing extends TwoStates[Standing]:
+      extension (standing: Standing) def standing: Boolean = standing == Standing
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     type RetiredAt = RetiredAt.T
@@ -919,8 +938,10 @@ object Managers:
 
   object ManagerCreate:
     export Manager.Kind.Wire as Kind
-    type Paused = Paused.T
-    object Paused extends Newtype[Boolean, Pure]
+    enum Paused derives CanEqual:
+      case Paused, Active
+    object Paused extends TwoStates[Paused]:
+      extension (paused: Paused) def paused: Boolean = paused == Paused
     type Cron = Cron.T
     object Cron extends Newtype[String, Pure]
 
@@ -1000,13 +1021,19 @@ object Managers:
     object Text extends Newtype[String, Pure]
     type Item = Item.T
     object Item extends Newtype[String, Pure]
-    type Once = Once.T
-    object Once extends Newtype[Boolean, Pure]
+    enum Once derives CanEqual:
+      case Once, Standing
+    object Once extends TwoStates[Once]:
+      extension (once: Once) def once: Boolean = once == Once
     type Author = Author.T
     object Author extends Newtype[String, Pure]
-    type Propose = Propose.T
-    object Propose extends Newtype[Boolean, Pure]
-    type Suggest = Suggest.T
-    object Suggest extends Newtype[Boolean, Pure]
+    enum Propose derives CanEqual:
+      case Propose, Direct
+    object Propose extends TwoStates[Propose]:
+      extension (propose: Propose) def propose: Boolean = propose == Propose
+    enum Suggest derives CanEqual:
+      case Suggest, Direct
+    object Suggest extends TwoStates[Suggest]:
+      extension (suggest: Suggest) def suggest: Boolean = suggest == Suggest
 
   val Actions: List[Actions] = List(ActionsValue("pause"), ActionsValue("resume"), ActionsValue("stop"))

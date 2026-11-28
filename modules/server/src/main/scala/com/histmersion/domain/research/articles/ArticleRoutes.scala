@@ -78,16 +78,16 @@ object ArticleRoutes:
       Api.articleCoverage.serverLogic[Identity](slug => read(slug).flatMap(articles.coverage)),
       Api.articleReview.serverLogic[Identity](slug => read(slug).flatMap(articles.review)),
       Api.getArticle.serverLogic[Identity]((slug, brief) =>
-        read(slug).flatMap(articles.get(_, ArticlesControllers.GetBrief(brief.value)))
+        read(slug).flatMap(articles.get(_, ArticlesControllers.GetBrief(brief.fullText)))
       ),
       Api.putArticle.serverLogic[Identity]((slug, in, strict) =>
         CreatorControllers.rest(in) {
-          write(slug).flatMap(articles.put(_, in, domain.research.Article.StrictMode(strict.value)))
+          write(slug).flatMap(articles.put(_, in, domain.research.Article.StrictMode(strict.strict)))
         }
       ),
       Api.patchArticle.serverLogic[Identity]((slug, p, strict) =>
         CreatorControllers.rest(p) {
-          write(slug).flatMap(articles.patch(_, p, domain.research.Article.StrictMode(strict.value)))
+          write(slug).flatMap(articles.patch(_, p, domain.research.Article.StrictMode(strict.strict)))
         }
       ),
       Api.deleteArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.delete))

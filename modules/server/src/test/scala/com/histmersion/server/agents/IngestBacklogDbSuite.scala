@@ -186,7 +186,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     assert(a.addGoalLink(goal, LinkAdd(LinkKind.Query, query)).isRight)
 
   private def doi(n: String) = s"10.5555/zzagent.$n"
-  private def work(n: String, oa: WorkRef.IsOa = WorkRef.IsOa(true)) =
+  private def work(n: String, oa: WorkRef.IsOa = WorkRef.IsOa.OpenAccess) =
     WorkRef(
       doi = (Some(doi(n))).map(Doi.apply),
       title = (Some(s"Work $n")).map(api.library.Title.apply),
@@ -220,7 +220,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
           api.library.Citekey(ck.value),
           Some(Doi(d)),
           Some(api.library.Title(s"Ingested $d")),
-          created = Ingest.Report.Created(true),
+          created = Ingest.Report.Created.Created,
           Some(
             PdfInfo(
               PdfInfo.Source("unpaywall"),
@@ -242,7 +242,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       a: AgentsControllers,
       goal: DomainGoal.Slug,
       perDay: ManagerConfig.AutoIngestPerDay,
-      auto: ManagerConfig.AutoIngest = ManagerConfig.AutoIngest(true)
+      auto: ManagerConfig.AutoIngest = ManagerConfig.AutoIngest.Auto
   ): ManagerInfo =
     val m = a.managing
       .create(
@@ -254,7 +254,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
             autoIngest = Some(auto),
             autoIngestPerDay = Some(perDay)
           ),
-          paused = Some(ManagerCreate.Paused(false))
+          paused = Some(ManagerCreate.Paused.Active)
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -420,7 +420,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     c.scripts += Seq(picks(Seq("x", "y", "z")))
     c.scripts += Seq(picks(Seq("x")))
     val (a, h, up) = handlers(c); seed(a, h); seed(a, h, Goal2, Query2Ref)
-    up.found = Map(Query -> List(work("x"), work("y"), work("z", oa = WorkRef.IsOa(false))), Query2 -> List(work("x")))
+    up.found = Map(Query -> List(work("x"), work("y"), work("z", oa = WorkRef.IsOa.Closed)), Query2 -> List(work("x")))
     up.onIngest = legalIngest(h, Set(doi("y")))
     val w1 = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(2))
     val w2 = watcher(a, Goal2, perDay = ManagerConfig.AutoIngestPerDay(2))
@@ -533,10 +533,10 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     c.scripts += Seq(picks(Seq("a", "b", "c")))
     val (a, h, up) = handlers(c); seed(a, h)
-    up.found = Map(Query -> List(work("a"), work("b", oa = WorkRef.IsOa(false)), work("c")))
+    up.found = Map(Query -> List(work("a"), work("b", oa = WorkRef.IsOa.Closed), work("c")))
     up.onIngest = legalIngest(h)
     // the old behaviour: a watcher without auto-ingest queues every pick (the overflow looked the same)
-    val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5), auto = ManagerConfig.AutoIngest(false))
+    val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5), auto = ManagerConfig.AutoIngest.Manual)
     // a person's own item, in the same words, linked to the goal by its DOI
     val mine = h.workLists
       .addOverRest(
@@ -572,11 +572,11 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     a.managing
       .update(
         ApiIds.manager(m.id),
-        ManagerUpdate(Some(m.config.copy(autoIngest = Some(ManagerConfig.AutoIngest(true)))))
+        ManagerUpdate(Some(m.config.copy(autoIngest = Some(ManagerConfig.AutoIngest.Auto))))
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
-    val dry = a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun(true), Some(Activity.Actor("test"))))
+    val dry = a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun.DryRun, Some(Activity.Actor("test"))))
     assertEquals(
       dry.rows.map(r => (r.doi, r.action)).sortBy(_._1.value),
       List(doi("a") -> RepairAcquire.Move, doi("b") -> RepairAcquire.Keep, doi("c") -> RepairAcquire.Remove)
@@ -631,9 +631,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5))
     a.oaBacklog.add(m.id, Goal, OaWork(Doi(doi("q")), api.library.Title("Q")))
-    assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun(true))).backlog, 1)
+    assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = RepairRequest.DryRun.DryRun)).backlog, 1)
     val on = a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On, Some(AutopilotSet.By("test"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)

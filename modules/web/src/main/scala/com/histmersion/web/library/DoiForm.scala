@@ -94,7 +94,7 @@ object DoiForm:
       cls := "doi-result",
       role := "status",
       p(
-        strong(if r.created.value then "Added: " else "Already in the library: "),
+        strong(if r.created.created then "Added: " else "Already in the library: "),
         a(href := SourceLink.href(r.citekey), r.title.map(_.value).getOrElse(r.citekey.value))
       ),
       p(

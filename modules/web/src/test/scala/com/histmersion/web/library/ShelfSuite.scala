@@ -62,5 +62,5 @@ class ShelfSuite extends munit.FunSuite:
       ReadMark.Title("B"),
       openedAt = Some(ReadMark.OpenedAt("2026-10-30T11:00:00Z"))
     )
-    val c = ReadMark(ItemKind.Source, ItemKey("c"), ReadMark.Title("C"), read = ReadMark.Read(true))
+    val c = ReadMark(ItemKind.Source, ItemKey("c"), ReadMark.Title("C"), read = ReadMark.Read.Read)
     assertEquals(ShelfRow.recent(List(a, b, c)).map(_.title), List("B", "A"))

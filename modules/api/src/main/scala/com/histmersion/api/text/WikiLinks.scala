@@ -3,6 +3,7 @@ package api.text
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object WikiLinks:
   type Alias = Alias.T
@@ -42,10 +43,14 @@ object WikiLinks:
     object End extends Newtype[Int, Pure]
     type Raw = Raw.T
     object Raw extends Newtype[String, Pure]
-    type Embed = Embed.T
-    object Embed extends Newtype[Boolean, Pure]
-    type Escaped = Escaped.T
-    object Escaped extends Newtype[Boolean, Pure]
+    enum Embed derives CanEqual:
+      case Embed, Link
+    object Embed extends TwoStates[Embed]:
+      extension (embed: Embed) def embed: Boolean = embed == Embed
+    enum Escaped derives CanEqual:
+      case Escaped, Live
+    object Escaped extends TwoStates[Escaped]:
+      extension (escaped: Escaped) def escaped: Boolean = escaped == Escaped
     type Target = Target.T
     object Target extends Newtype[String, Pure]
 
@@ -60,8 +65,8 @@ object WikiLinks:
           Occurrence.Start(m.start),
           Occurrence.End(m.end),
           Occurrence.Raw(raw),
-          Occurrence.Embed(m.group(1).nonEmpty),
-          Occurrence.Escaped(m.matched.contains('\\')),
+          (if m.group(1).nonEmpty then Occurrence.Embed.Embed else Occurrence.Embed.Link),
+          (if m.matched.contains('\\') then Occurrence.Escaped.Escaped else Occurrence.Escaped.Live),
           normalize(NormalizeRaw(raw.takeWhile(_ != '|')))
         )
       }

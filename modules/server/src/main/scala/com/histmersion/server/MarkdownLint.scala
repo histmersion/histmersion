@@ -417,7 +417,7 @@ object MarkdownLint:
     private val links = Article.Links
       .occurrences(WikiLinks.Body(text))
       .map(o =>
-        Wikilink(o.start.value, o.end.value, o.raw.value, o.embed.value, o.escaped.value, o.target.map(_.value))
+        Wikilink(o.start.value, o.end.value, o.raw.value, o.embed.embed, o.escaped.escaped, o.target.map(_.value))
       )
     private val masked =
       val b = new java.lang.StringBuilder(text)

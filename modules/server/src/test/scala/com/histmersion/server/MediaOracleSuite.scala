@@ -1128,19 +1128,19 @@ class MediaOracleSuite extends DbSuite:
       )
     )
     builtins.foreach((p, place, event) =>
-      run(s"$p dry run", MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(true), place = place, event = event))
+      run(s"$p dry run", MediaImportRequest(p, dryRun = MediaImportRequest.DryRun.DryRun, place = place, event = event))
     )
     builtins.foreach((p, place, event) =>
       run(
         s"$p ${place.map(_.value).orElse(event.map(_.value)).getOrElse("")}",
-        MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(false), place = place, event = event)
+        MediaImportRequest(p, dryRun = MediaImportRequest.DryRun.Apply, place = place, event = event)
       )
     )
     run(
       "zq-own dry run",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-own"),
-        dryRun = MediaImportRequest.DryRun(true),
+        dryRun = MediaImportRequest.DryRun.DryRun,
         limit = Some(MediaImportRequest.Limit(20))
       )
     )
@@ -1148,7 +1148,7 @@ class MediaOracleSuite extends DbSuite:
       "zq-own a place",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-own"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_697725"))
       )
     )
@@ -1156,7 +1156,7 @@ class MediaOracleSuite extends DbSuite:
       "zq-own an event",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-own"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         event = Some(Event.Id("fall_of_x"))
       )
     )
@@ -1164,16 +1164,16 @@ class MediaOracleSuite extends DbSuite:
       "zq-own again, refresh",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-own"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_697725")),
-        refresh = MediaImportRequest.Refresh(true)
+        refresh = MediaImportRequest.Refresh.Refresh
       )
     )
     run(
       "zq-search dry run",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-search"),
-        dryRun = MediaImportRequest.DryRun(true),
+        dryRun = MediaImportRequest.DryRun.DryRun,
         limit = Some(MediaImportRequest.Limit(3))
       )
     )
@@ -1181,7 +1181,7 @@ class MediaOracleSuite extends DbSuite:
       "zq-search a place",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-search"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491"))
       )
     )
@@ -1190,7 +1190,7 @@ class MediaOracleSuite extends DbSuite:
       "many, not as a job",
       MediaImportRequest(
         api.media.MediaItem.Provider("zq-own"),
-        dryRun = MediaImportRequest.DryRun(false)
+        dryRun = MediaImportRequest.DryRun.Apply
       )
     )
     exec(
@@ -1213,32 +1213,32 @@ class MediaOracleSuite extends DbSuite:
     covers(
       "dry run",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun(true),
-        illustrations = MediaCoversRequest.Illustrations(false)
+        dryRun = RepairAcquire.RepairRequest.DryRun.DryRun,
+        illustrations = MediaCoversRequest.Illustrations.Skipped
       )
     )
     covers(
       "one with a cover",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun(false),
+        dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
         citekey = Some(Citekey("zqol2000_a")),
-        illustrations = MediaCoversRequest.Illustrations(false)
+        illustrations = MediaCoversRequest.Illustrations.Skipped
       )
     )
     covers(
       "one without",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun(false),
+        dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
         citekey = Some(Citekey("zqol2000_b")),
-        illustrations = MediaCoversRequest.Illustrations(false)
+        illustrations = MediaCoversRequest.Illustrations.Skipped
       )
     )
     covers(
       "an ISBN the request names",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun(false),
+        dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
         citekey = Some(Citekey("zqmt2020_x")),
-        illustrations = MediaCoversRequest.Illustrations(false),
+        illustrations = MediaCoversRequest.Illustrations.Skipped,
         isbn = Some(MediaCoversRequest.Isbn("9780000000003"))
       )
     )
@@ -1287,24 +1287,24 @@ class MediaOracleSuite extends DbSuite:
           (r, asks) =>
             s"## $name\nreport: ${r.asJson.sortedKeys.spaces2}\nasks: ${Json.fromValues(asks.map((c, i) => Json.arr(Json.fromString(c.value), Json.fromString(i.value)))).noSpaces}\n"
         )
-    step("dry run", None, refresh = MediaImportRequest.Refresh(false), dry = MediaImportRequest.DryRun(true)) +
+    step("dry run", None, refresh = MediaImportRequest.Refresh.Reuse, dry = MediaImportRequest.DryRun.DryRun) +
       step(
         "every linked source",
         None,
-        refresh = MediaImportRequest.Refresh(false),
-        dry = MediaImportRequest.DryRun(false)
+        refresh = MediaImportRequest.Refresh.Reuse,
+        dry = MediaImportRequest.DryRun.Apply
       ) +
       step(
         "again: nothing left",
         None,
-        refresh = MediaImportRequest.Refresh(false),
-        dry = MediaImportRequest.DryRun(false)
+        refresh = MediaImportRequest.Refresh.Reuse,
+        dry = MediaImportRequest.DryRun.Apply
       ) +
       step(
         "one, refreshed",
         Some(Citekey("zqcal2019_tin")),
-        refresh = MediaImportRequest.Refresh(true),
-        dry = MediaImportRequest.DryRun(false)
+        refresh = MediaImportRequest.Refresh.Refresh,
+        dry = MediaImportRequest.DryRun.Apply
       ) +
       s"## the covers stored\n${get(s"$url/api/media?provider=calibre")}\n"
 

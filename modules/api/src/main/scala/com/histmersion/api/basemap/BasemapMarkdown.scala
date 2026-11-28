@@ -14,11 +14,11 @@ object BasemapMarkdown:
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def status(s: Basemap.Status): String =
     val head =
-      if (s.available) == Basemap.Status.Available(true) then "The local base map is downloaded."
+      if (s.available) == Basemap.Status.Available.Available then "The local base map is downloaded."
       else s"The local base map is not downloaded — run `${s.fetchCommand}`."
     val rows = s.layers.map { l =>
       val what = Basemap.Layer.parse(l.layer).map(_.title).getOrElse(l.layer)
-      if !((l.present) == Basemap.LayerInfo.Present(true)) then s"| ${l.layer} | $what | not downloaded | | | |"
+      if !((l.present) == Basemap.LayerInfo.Present.Present) then s"| ${l.layer} | $what | not downloaded | | | |"
       else
         val zoom = (l.minZoom, l.maxZoom) match
           case (Some(a), Some(b)) => s"$a–$b"
@@ -31,7 +31,7 @@ object BasemapMarkdown:
     val table = ("| layer | what | size | zoom | region | source, fetched |" :: "|---|---|---|---|---|---|" :: rows)
       .mkString("\n")
     val kept = s.layers
-      .find(l => l.layer == Basemap.Layer.Vector.wire && ((l.present) == Basemap.LayerInfo.Present(true)))
+      .find(l => l.layer == Basemap.Layer.Vector.wire && ((l.present) == Basemap.LayerInfo.Present.Present))
       .flatMap(_.kept)
     val terrain = s.layers.find(_.layer == Basemap.Layer.Terrain.wire)
     val focus =
@@ -48,7 +48,7 @@ object BasemapMarkdown:
         .flatMap(_.onDemand)
         .map(outside(("The sea floor"), Basemap.Layer.Wire("bathymetry"), _)),
       Option.when(focus.nonEmpty)(("Relief kept deeper for:" :: focus).mkString("\n")),
-      Option.when(((s.available) == Basemap.Status.Available(true)) && s.styles.nonEmpty)(
+      Option.when(((s.available) == Basemap.Status.Available.Available) && s.styles.nonEmpty)(
         "Styles: " + s.styles
           .map { st =>
             if st.missing.isEmpty then st.name else s"${st.name} (lacks ${st.missing.mkString(", ")})"
@@ -61,10 +61,10 @@ object BasemapMarkdown:
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
       Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
       Option.when(
-        s.layers.exists((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present(true))))
+        s.layers.exists((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present.Present)))
       )(
         "Credits: " + s.layers
-          .filter((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present(true))))
+          .filter((refactorCallback => ((refactorCallback.present) == Basemap.LayerInfo.Present.Present)))
           .map(l => plain(l.attribution.value))
           .distinct
           .mkString(" · ")
@@ -75,7 +75,7 @@ object BasemapMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onDemand(o: Basemap.OnDemand): String =
-    if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then
+    if !((o.enabled) == Basemap.OnDemand.Enabled.Enabled) then
       ("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
@@ -84,7 +84,7 @@ object BasemapMarkdown:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def outside(what: String, key: Basemap.Layer.Wire, o: Basemap.OnDemand): String =
-    if !((o.enabled) == Basemap.OnDemand.Enabled(true)) then
+    if !((o.enabled) == Basemap.OnDemand.Enabled.Enabled) then
       (s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +

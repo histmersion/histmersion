@@ -92,7 +92,7 @@ class GoalPageSuite extends munit.FunSuite:
           Goal.Slug("g"),
           ScheduleKind.Currency,
           GoalSchedule.Cron("@weekly"),
-          enabled = GoalSchedule.Enabled(true),
+          enabled = GoalSchedule.Enabled.Enabled,
           lastRunAt = Some(GoalSchedule.LastRunAt("2026-10-27T09:00:00")),
           nextRunAt = Some(GoalSchedule.NextRunAt("2026-11-03T09:00:00"))
         )

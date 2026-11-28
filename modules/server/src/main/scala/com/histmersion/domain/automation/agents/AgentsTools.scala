@@ -97,7 +97,7 @@ object AgentsTools:
                     in.model.map(RunRequest.Model(_)),
                     in.budgetUsd.map(RunRequest.BudgetUsd(_)),
                     None,
-                    Option.when(in.fix)(RunRequest.Fix(true)),
+                    Option.when(in.fix)(RunRequest.Fix.Fix),
                     in.rounds.map(RunRequest.Rounds(_)),
                     in.acquireItem.map(Queue.QueueItem.Id(_)),
                     in.title.map(RunRequest.Title(_)),
@@ -106,7 +106,7 @@ object AgentsTools:
                     in.topics.map(RunRequest.Topics(_)),
                     in.tags.map(RunRequest.Tags(_)),
                     in.goal.map(Goal.Slug(_)),
-                    Option.when(in.dryRun)(RunRequest.DryRun(true)),
+                    Option.when(in.dryRun)(RunRequest.DryRun.DryRun),
                     over
                   )
                 ) match
@@ -223,7 +223,8 @@ object AgentsTools:
                           in.subject.map(ApprovalDigest.BulkDecide.Subject(_)),
                           in.ids.map(ApprovalDigest.Open.Id(_)),
                           in.note.map(ApprovalDigest.BulkDecide.Note(_)),
-                          ApprovalDigest.BulkDecide.DryRun(in.dryRun),
+                          (if in.dryRun then ApprovalDigest.BulkDecide.DryRun.DryRun
+                           else ApprovalDigest.BulkDecide.DryRun.Apply),
                           in.limit.map(ApprovalDigest.BulkDecide.Limit(_)),
                           Some(ApprovalDigest.BulkDecide.By("mcp"))
                         )
@@ -303,7 +304,8 @@ object AgentsTools:
                           ScheduleKind.Wire(k),
                           Goal.Plans.ScheduleSet(
                             Goal.Plans.ScheduleSet.Cron(c),
-                            Goal.Plans.ScheduleSet.Enabled(in.enabled),
+                            (if in.enabled then Goal.Plans.ScheduleSet.Enabled.Enabled
+                             else Goal.Plans.ScheduleSet.Enabled.Disabled),
                             in.budgetUsd.map(Goal.Plans.ScheduleSet.BudgetUsd(_))
                           )
                         )
@@ -379,14 +381,18 @@ object AgentsTools:
               else
                 a.setPool(
                   PlanQuota.PoolIdText(in.pool.get.trim),
-                  PlanQuota.PoolSet(in.hold.map(PlanQuota.PoolSet.Hold(_)), in.floors.map(PlanQuota.PoolSet.Floors(_)))
+                  PlanQuota.PoolSet(
+                    in.hold.map((if _ then PlanQuota.PoolSet.Hold.Hold else PlanQuota.PoolSet.Hold.Release)),
+                    in.floors.map(PlanQuota.PoolSet.Floors(_))
+                  )
                 ).left
                   .map(Api.Error(_))
                   .map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(
                 AgentRole.Wire(r),
-                PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(in.fallthrough.get))
+                PlanQuota.FallthroughSet((if in.fallthrough.get then PlanQuota.FallthroughSet.Fallthrough.Fallthrough
+                                          else PlanQuota.FallthroughSet.Fallthrough.Stop))
               ).left
                 .map(Api.Error(_))
                 .map(AgentsMarkdown.quota)
@@ -404,7 +410,7 @@ object AgentsTools:
                 .left
                 .map(Api.Error(_))
                 .map(x =>
-                  if x.removed.value then s"The saved allowance of $t is removed." else s"No saved allowance for $t."
+                  if x.removed.removed then s"The saved allowance of $t is removed." else s"No saved allowance for $t."
                 )
             case (None, Some(t)) =>
               in.limits.map(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l))).partitionMap(identity) match
@@ -479,8 +485,11 @@ object AgentsTools:
               case "list"  => Right(ManagersMarkdown.list(m.list))
               case "show"  => m.get(id).map(ManagersMarkdown.detail)
               case "pause" =>
-                m.action(id, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(in.runs)))
-                  .map(ManagersMarkdown.line)
+                m.action(
+                  id,
+                  ManagersControllers.Action("pause"),
+                  Some((if in.runs then Managers.ManagerInfo.PauseRuns.Pause else Managers.ManagerInfo.PauseRuns.Run))
+                ).map(ManagersMarkdown.line)
               case "resume" => m.action(id, ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
               case "create" =>
                 m.create(
@@ -538,11 +547,13 @@ object AgentsTools:
                       Managers.HintAdd(
                         Managers.HintAdd.Text(t),
                         in.item.map(Managers.HintAdd.Item(_)),
-                        Some(Managers.HintAdd.Once(in.once)),
+                        Some((if in.once then Managers.HintAdd.Once.Once else Managers.HintAdd.Once.Standing)),
                         in.effect,
                         Some(Managers.HintAdd.Author("mcp")),
-                        propose = Some(Managers.HintAdd.Propose(in.effect.isDefined)),
-                        suggest = Some(Managers.HintAdd.Suggest(in.suggest))
+                        propose = Some((if in.effect.isDefined then Managers.HintAdd.Propose.Propose
+                                        else Managers.HintAdd.Propose.Direct)),
+                        suggest = Some((if in.suggest then Managers.HintAdd.Suggest.Suggest
+                                        else Managers.HintAdd.Suggest.Direct))
                       )
                     )
                   )
@@ -552,7 +563,10 @@ object AgentsTools:
                   case None    => Right(autopilotPage(m.autopilot))
                   case Some(b) =>
                     m.setAutopilot(
-                      Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(b), Some(Autopilot.AutopilotSet.By("mcp")))
+                      Autopilot.AutopilotSet(
+                        (if b then Autopilot.AutopilotSet.On.On else Autopilot.AutopilotSet.On.Off),
+                        Some(Autopilot.AutopilotSet.By("mcp"))
+                      )
                     ).left
                       .map(Api.Error(_))
                       .map(autopilotPage)
@@ -560,7 +574,10 @@ object AgentsTools:
                 repairAcquire(RepairAcquire(in.dryRun))
               case "drain" =>
                 m.drain(
-                  Autopilot.DrainSet(Autopilot.DrainSet.On(in.on.getOrElse(true)), Some(Autopilot.DrainSet.By("mcp")))
+                  Autopilot.DrainSet(
+                    (if in.on.getOrElse(true) then Autopilot.DrainSet.On.On else Autopilot.DrainSet.On.Off),
+                    Some(Autopilot.DrainSet.By("mcp"))
+                  )
                 ).left
                   .map(Api.Error(_))
                   .map(autopilotPage)

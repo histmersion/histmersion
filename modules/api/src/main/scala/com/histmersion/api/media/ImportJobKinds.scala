@@ -19,6 +19,6 @@ object ImportJobKinds:
     JobKindMeaning(
       "Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."
     ),
-    stoppable = JobKindEntry.OfStoppable(true),
+    stoppable = JobKindEntry.OfStoppable.Stoppable,
     subject = Media.of
   )

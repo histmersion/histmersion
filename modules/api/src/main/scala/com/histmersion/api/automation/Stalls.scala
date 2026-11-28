@@ -9,6 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Stalls:
@@ -135,11 +136,11 @@ object Stalls:
       approvals: List[(Facts.ApprovalId, Facts.ApprovalKind)] = Nil,
       personHeld: Facts.PersonHeld = Facts.PersonHeld(0),
       paused: List[Facts.Paused] = Nil,
-      draining: Facts.Draining = Facts.Draining(false),
+      draining: Facts.Draining = Facts.Draining.Running,
       waits: List[SchedWait] = Nil,
       lastStop: Option[Facts.LastStop] = None,
       sources: Facts.Sources = Facts.Sources(0),
-      noCandidates: Facts.NoCandidates = Facts.NoCandidates(false),
+      noCandidates: Facts.NoCandidates = Facts.NoCandidates.HasCandidates,
       open: Facts.Open = Facts.Open(0),
       running: Facts.Running = Facts.Running(0)
   )
@@ -164,14 +165,18 @@ object Stalls:
     object PersonHeld extends Newtype[Int, Pure]
     type Paused = Paused.T
     object Paused extends Newtype[String, Pure]
-    type Draining = Draining.T
-    object Draining extends Newtype[Boolean, Pure]
+    enum Draining derives CanEqual:
+      case Draining, Running
+    object Draining extends TwoStates[Draining]:
+      extension (draining: Draining) def draining: Boolean = draining == Draining
     type LastStop = LastStop.T
     object LastStop extends Newtype[String, Pure]
     type Sources = Sources.T
     object Sources extends Newtype[Int, Pure]
-    type NoCandidates = NoCandidates.T
-    object NoCandidates extends Newtype[Boolean, Pure]
+    enum NoCandidates derives CanEqual:
+      case NoCandidates, HasCandidates
+    object NoCandidates extends TwoStates[NoCandidates]:
+      extension (noCandidates: NoCandidates) def noCandidates: Boolean = noCandidates == NoCandidates
     type Open = Open.T
     object Open extends Newtype[Int, Pure]
     type Running = Running.T
@@ -186,7 +191,7 @@ object Stalls:
   def classify(f: Facts): (Stall.Code, Stall.Why, Stall.Action) =
     val g = f.slug
     def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
-    if (f.draining) == Facts.Draining(true) then
+    if (f.draining) == Facts.Draining.Draining then
       (
         Stall.Code(Code.Drain),
         Stall.Why("the agents are draining: nothing new starts"),
@@ -272,7 +277,8 @@ object Stalls:
                             Stall.Why(s"its last item stopped: ${o.value.take(300)}"),
                             Stall.Action(s"histmersion agent manager seed:$g items --status stopped; reopen it")
                           )
-                        case None if ((f.noCandidates) == Facts.NoCandidates(true)) && f.sources == Facts.Sources(0) =>
+                        case None
+                            if ((f.noCandidates) == Facts.NoCandidates.NoCandidates) && f.sources == Facts.Sources(0) =>
                           (
                             Stall.Code(Code.NoCandidates),
                             Stall.Why("its candidate sweep found nothing new and it has no source"),

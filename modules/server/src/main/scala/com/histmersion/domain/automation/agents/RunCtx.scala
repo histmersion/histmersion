@@ -106,7 +106,7 @@ final class RunCtx private[automation] (
 
   /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def dryRun: Boolean = run.dryRun.value
+  def dryRun: Boolean = run.dryRun.dryRun
 
   /** The writes this run's current step skipped (a dry run), recorded with the step when it ends. A concurrent queue: a
     * step's body runs on the run's thread, but nothing stops a parallel step from asking.

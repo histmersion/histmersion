@@ -170,7 +170,8 @@ object CandidateService:
                     .modify(_.abstractText)
                     .setTo(c.abstractText.orElse(candidate.abstractText))
                     .modify(_.isOa)
-                    .setTo(Source.Candidate.IsOa(c.isOa.value || candidate.isOa.value))
+                    .setTo((if c.isOa.isOa || candidate.isOa.isOa then Source.Candidate.IsOa.OpenAccess
+                            else Source.Candidate.IsOa.Closed))
                 )
               )
       }

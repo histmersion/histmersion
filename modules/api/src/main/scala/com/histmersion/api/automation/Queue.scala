@@ -17,6 +17,7 @@ import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Queue:
@@ -130,14 +131,16 @@ object Queue:
     export QueueItem.ClosedBy
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class QueueImport(text: QueueItem.Text, replace: QueueImport.Replace = QueueImport.Replace(true))
+  final case class QueueImport(text: QueueItem.Text, replace: QueueImport.Replace = QueueImport.Replace.Replace)
       derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
 
   object QueueImport:
-    type Replace = Replace.T
-    object Replace extends Newtype[Boolean, Pure]
+    enum Replace derives CanEqual:
+      case Replace, Merge
+    object Replace extends TwoStates[Replace]:
+      extension (replace: Replace) def replace: Boolean = replace == Replace
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class QueueImported(
@@ -159,9 +162,9 @@ object Queue:
     object Replaced extends Newtype[Int, Pure]
 
   enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes) derives CanEqual:
-    case Acquire extends Kind(Kind.Label("acquire"), Kind.File("ACQUIRE.md"), Kind.Checkboxes(true))
-    case Tasks extends Kind(Kind.Label("tasks"), Kind.File("TASKS.md"), Kind.Checkboxes(true))
-    case Log extends Kind(Kind.Label("log"), Kind.File("LOG.md"), Kind.Checkboxes(false))
+    case Acquire extends Kind(Kind.Label("acquire"), Kind.File("ACQUIRE.md"), Kind.Checkboxes.Checkboxes)
+    case Tasks extends Kind(Kind.Label("tasks"), Kind.File("TASKS.md"), Kind.Checkboxes.Checkboxes)
+    case Log extends Kind(Kind.Label("log"), Kind.File("LOG.md"), Kind.Checkboxes.Plain)
 
   object Kind:
     type Label = Label.T
@@ -169,8 +172,10 @@ object Queue:
     type File = File.T
     object File extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Checkboxes = Checkboxes.T
-    object Checkboxes extends Newtype[Boolean, Pure]
+    enum Checkboxes derives CanEqual:
+      case Checkboxes, Plain
+    object Checkboxes extends TwoStates[Checkboxes]:
+      extension (checkboxes: Checkboxes) def checkboxes: Boolean = checkboxes == Checkboxes
 
     @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
     type All = Label
@@ -349,7 +354,7 @@ object Queue:
           flush()
           val depth = if stack.lastOption.exists((isBold)) then stack.length - 1 else stack.length
           push((bold), (depth))
-        case CheckRe(box, body) if (kind.checkboxes).value =>
+        case CheckRe(box, body) if (kind.checkboxes).checkboxes =>
           flush()
           last = Some(
             QueueAdd(
@@ -358,7 +363,7 @@ object Queue:
               status = Some(if box.trim.isEmpty then QueueItem.Status(Open) else QueueItem.Status(Done))
             )
           )
-        case BulletRe(body) if !(kind.checkboxes).value =>
+        case BulletRe(body) if !(kind.checkboxes).checkboxes =>
           flush()
           last = Some(
             QueueAdd(
@@ -422,7 +427,7 @@ object Queue:
       .toList
       .sortBy { (_, is) =>
         val minId = is.map(_.id).minOption.fold(0)(i => (i).value)
-        if (kind.checkboxes).value then (0L, minId.toLong)
+        if (kind.checkboxes).checkboxes then (0L, minId.toLong)
         else (-is.flatMap(_.createdAt).maxOption.map(instantKey).fold(0L)(k => (k).value), minId.toLong)
       }
       .map((topic, is) => (path(topic), is.sortBy(_.id)))
@@ -458,7 +463,7 @@ object Queue:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def bullet(kind: Kind, i: QueueItem): String =
     val marker =
-      if !(kind.checkboxes).value then "- " else if i.status == QueueItem.Status(Done) then "- [x] " else "- [ ] "
+      if !(kind.checkboxes).checkboxes then "- " else if i.status == QueueItem.Status(Done) then "- [x] " else "- [ ] "
     val lines = (i.text).value.linesIterator.toList
     (marker + lines.headOption.getOrElse("")) + lines.drop(1).map("\n" + _).mkString
 
@@ -504,7 +509,7 @@ object Queue:
             .mkString(Sep)
         val lines = is.sortBy(_.id).map { i =>
           val box =
-            if !(kind.checkboxes).value then "" else if i.status == QueueItem.Status(Done) then "[x] " else "[ ] "
+            if !(kind.checkboxes).checkboxes then "" else if i.status == QueueItem.Status(Done) then "[x] " else "[ ] "
           val why = i.reason.map(r => s" — _${r}_").getOrElse("")
           s"- $box${(i.text).value.linesIterator.mkString(" ")}$why  `#${i.id}`" +
             notes.get(i.id).fold("")(n => s"\n  - _${n}_")

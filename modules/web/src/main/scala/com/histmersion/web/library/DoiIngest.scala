@@ -27,12 +27,12 @@ object DoiIngest:
         )
       )
     else if t.matches(Doi) then
-      Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = Ingest.Request.LegalOnly(true)))
+      Right(Ingest.Request(id = Ingest.Request.Id(t), legalOnly = Ingest.Request.LegalOnly.LegalOnly))
     else if t.matches(Arxiv) then
       Right(
         Ingest.Request(
           id = Ingest.Request.Id(if t.toLowerCase.startsWith("arxiv:") then t else s"arxiv:$t"),
-          legalOnly = Ingest.Request.LegalOnly(true)
+          legalOnly = Ingest.Request.LegalOnly.LegalOnly
         )
       )
     else Left(Problem.Unclassified(Legacy.Text(s"“$typed” is neither a DOI (10.…/…) nor an arXiv id.")))

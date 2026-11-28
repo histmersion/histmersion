@@ -127,7 +127,7 @@ final class SeedService(
         None
       case Right(sw) =>
         val fresh = acquisition().candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(200)).getOrElse(Nil)
-        val oa = fresh.filter(_.isOa.value).take(math.max(0, cfg.scheduler.seedIngestPerGoal.value))
+        val oa = fresh.filter(_.isOa.isOa).take(math.max(0, cfg.scheduler.seedIngestPerGoal.value))
         val placed = oa.map { c =>
           c -> backlog.add(
             watcherOf(goal),

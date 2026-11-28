@@ -26,7 +26,7 @@ object DeleteArgs extends CommandLine.Entry:
       Right(
         DeleteCmd.Args(
           DeleteCmd.Args.Citekey(citekey().trim),
-          DeleteCmd.Args.Apply(apply.getOrElse(false)),
+          (if apply.getOrElse(false) then DeleteCmd.Args.Apply.Apply else DeleteCmd.Args.Apply.DryRun),
           asJson()
         )
       )

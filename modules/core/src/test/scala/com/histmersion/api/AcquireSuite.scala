@@ -269,7 +269,7 @@ class AcquireSuite extends munit.FunSuite:
       FollowupRow(
         title = Some(Title("influential")),
         year = Some(Year(2017)),
-        isInfluential = FollowupRow.IsInfluential(true)
+        isInfluential = FollowupRow.IsInfluential.Influential
       ),
       FollowupRow(title = Some(Title("recent plain")), year = Some(Year(2024))),
       FollowupRow(
@@ -318,7 +318,7 @@ class AcquireSuite extends munit.FunSuite:
       title = (Some("Archaeology and Religion in Late Bronze Age Canaan")).map(Title.apply),
       year = (Some(2019)).map(Year.apply),
       authors = (List("Aaron Greener")).map(AuthorName.apply),
-      isOa = WorkRef.IsOa(true),
+      isOa = WorkRef.IsOa.OpenAccess,
       oaStatus = Some(WorkRef.OaStatus("gold")),
       oaUrl = Some(WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf"))
     )
@@ -352,7 +352,7 @@ class AcquireSuite extends munit.FunSuite:
     )
     assertEquals(
       Acquire.browserDownloadText(
-        w.modify(_.isOa).setTo(WorkRef.IsOa(false)),
+        w.modify(_.isOa).setTo(WorkRef.IsOa.Closed),
         library.Doi("10.3390/rel10040258"),
         Citekey("k")
       ),
@@ -364,7 +364,7 @@ class AcquireSuite extends munit.FunSuite:
       title = (Some("Gods of the Bronze Age")).map(Title.apply),
       year = (Some(2020)).map(Year.apply),
       authors = (List("A")).map(AuthorName.apply),
-      isOa = WorkRef.IsOa(true),
+      isOa = WorkRef.IsOa.OpenAccess,
       oaStatus = Some(WorkRef.OaStatus("gold"))
     )
     val refusal = Problem.NotFound.Answer(

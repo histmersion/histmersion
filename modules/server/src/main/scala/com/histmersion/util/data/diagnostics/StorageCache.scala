@@ -40,17 +40,17 @@ final class StorageCache(
       case Some((at, r)) if clock().value - at < ttlMillis().value => r
       case Some((_, r))                                            =>
         val _ = kick()
-        r.modify(_.measuring).setTo(Storage.Report.Measuring(true))
+        r.modify(_.measuring).setTo(Storage.Report.Measuring.Measuring)
       case None =>
         val f = kick()
         try f.get(math.max(0L, waitMillis.value: Long), TimeUnit.MILLISECONDS)
         catch
-          case _: TimeoutException   => Storage.Report(measuring = Storage.Report.Measuring(true))
+          case _: TimeoutException   => Storage.Report(measuring = Storage.Report.Measuring.Measuring)
           case e: ExecutionException =>
             Storage.Report(problems =
               List(Storage.Report.Problems(s"storage: ${Option(e.getCause).getOrElse(e).getMessage}"))
             )
-          case _: InterruptedException => Storage.Report(measuring = Storage.Report.Measuring(true))
+          case _: InterruptedException => Storage.Report(measuring = Storage.Report.Measuring.Measuring)
 
   /** The measurement under way, or a new one. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

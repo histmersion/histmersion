@@ -147,9 +147,9 @@ class WikidataCommonsSuite extends munit.FunSuite:
       r.byLicence,
       List(
         MediaCount(MediaCount.Key("CC-BY-4.0"), MediaCount.N(1)),
-        MediaCount(MediaCount.Key("CC-BY-NC-SA-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed(false)),
+        MediaCount(MediaCount.Key("CC-BY-NC-SA-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed.Blocked),
         MediaCount(MediaCount.Key("CC-BY-SA-2.5"), MediaCount.N(1)),
-        MediaCount(MediaCount.Key("all-rights-reserved"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+        MediaCount(MediaCount.Key("all-rights-reserved"), MediaCount.N(1), allowed = MediaCount.Allowed.Blocked)
       )
     )
     assertEquals(

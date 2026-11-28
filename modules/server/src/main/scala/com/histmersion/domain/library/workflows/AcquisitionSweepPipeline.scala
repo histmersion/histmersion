@@ -104,7 +104,7 @@ final class AcquisitionSweepPipeline(
             _ <-
               if found.stored.isEmpty then Right(0)
               else ctx.code[Int](StepRecord.Name("seen"))(Right(markSeen(ctx, found, picks)))
-            backed = ctx.run.params.oaBacklog.exists(_.value) && ctx.run.managerId.isDefined
+            backed = ctx.run.params.oaBacklog.exists(_.oaBacklog) && ctx.run.managerId.isDefined
             line <- ctx.byAnswer(StepRecord.Name("rank")) {
               if backed then withBacklog(ctx, goal, found, picks, allowed)
               else withoutBacklog(ctx, goal, found, picks, allowed)
@@ -162,11 +162,11 @@ final class AcquisitionSweepPipeline(
         else Right(Tried())
       noCopy = tried.failed.filter(_.noCopy).map(_.doi).toSet
       waiting = picks.filter(p =>
-        p.candidate.isOa.value && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
+        p.candidate.isOa.isOa && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
       )
       parked <- ctx.code[Parked](StepRecord.Name("backlog"))(Right(park(ctx, goal, waiting)))
       added <- ctx.code[Int](StepRecord.Name("queue"))(
-        Right(queue(ctx, goal, picks.filter(p => !p.candidate.isOa.value || noCopy(p.candidate.doi))))
+        Right(queue(ctx, goal, picks.filter(p => !p.candidate.isOa.isOa || noCopy(p.candidate.doi))))
       )
       line <- ctx.code[String](StepRecord.Name("close"))(
         log(
@@ -228,7 +228,7 @@ final class AcquisitionSweepPipeline(
               c.year,
               c.authors.take(4),
               c.venue,
-              WorkRef.IsOa(c.isOa.value),
+              (if c.isOa.isOa then WorkRef.IsOa.OpenAccess else WorkRef.IsOa.Closed),
               Candidate.Query(c.foundBy.headOption.fold("the candidate search")(_.value)),
               c.abstractText.map(a => WorkRef.AbstractText(a.value.take(600)))
             )
@@ -316,7 +316,7 @@ final class AcquisitionSweepPipeline(
       allowed: AcquisitionSweepRules.Allowance
   )(using WritePermit)(using Creator.New): List[Ingested] =
     AcquisitionSweepRules
-      .ingestPicks(picks, (p: Picked) => p.candidate.isOa.value, allowed) { p =>
+      .ingestPicks(picks, (p: Picked) => p.candidate.isOa.isOa, allowed) { p =>
         ingestOne(ctx, goal, p) match
           case Left(m) =>
             ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — ${m.sentences.mkString("; ")}")
@@ -371,7 +371,7 @@ final class AcquisitionSweepPipeline(
       allowed: AcquisitionSweepRules.Allowance
   )(using WritePermit)(using Creator.New): Tried =
     val (ok, ko) =
-      AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.value, allowed)(ingestOne(ctx, goal, _))
+      AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.isOa, allowed)(ingestOne(ctx, goal, _))
     ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — ${why.sentences.mkString("; ")}"))
     Tried(
       ok.map(_._2),

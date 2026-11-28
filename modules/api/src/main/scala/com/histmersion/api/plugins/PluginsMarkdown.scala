@@ -21,7 +21,7 @@ object PluginsMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(r: PluginsReport): List[String] =
-    val enabled = r.plugins.count((refactorCallback2 => ((refactorCallback2.enabled) == PluginStatus.Enabled(true))))
+    val enabled = r.plugins.count((refactorCallback2 => ((refactorCallback2.enabled) == PluginStatus.Enabled.Enabled)))
     val head =
       s"- plugins: ${Plural.count(Plural.CountN((r.plugins.size).toLong), Plural.CountSingular("plugin"))} in this binary · $enabled enabled" +
         (if (r.ok) == (true) then "" else " · PROBLEMS")
@@ -44,7 +44,7 @@ object PluginsMarkdown:
       s"- config file: ${ConfigFileInfo.describe(file)}",
       s"- plugin SPI: ${r.spiVersion}",
       s"- plugins: ${Plural.count(Plural.Count((r.plugins.size).toLong), Plural.Noun.Singular("plugin"))} · ${r.plugins
-          .count((refactorCallback3 => ((refactorCallback3.enabled) == PluginStatus.Enabled(true))))} enabled",
+          .count((refactorCallback3 => ((refactorCallback3.enabled) == PluginStatus.Enabled.Enabled)))} enabled",
       s"- plugin set: ${PluginSet.describe(r.set)}",
       s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}"
     ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List(

@@ -9,8 +9,8 @@ import org.ekrich.config.ConfigFactory
 /** An agent's ingest asks the legal chain; asking for more needs a person's setting. */
 class AgentChainSuite extends munit.FunSuite:
 
-  private val legal = Ingest.Request.LegalOnly(true)
-  private val more = Ingest.Request.LegalOnly(false)
+  private val legal = Ingest.Request.LegalOnly.LegalOnly
+  private val more = Ingest.Request.LegalOnly.AnySource
   private val off = AcquireConfig.AgentsMayUseUnauthorised(false)
   private val on = AcquireConfig.AgentsMayUseUnauthorised(true)
 

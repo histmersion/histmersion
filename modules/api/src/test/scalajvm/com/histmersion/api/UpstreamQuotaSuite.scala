@@ -53,7 +53,7 @@ class UpstreamQuotaSuite extends munit.FunSuite:
         .render(about.modify(_.upstreams).setTo(List(q)))
         .contains("- CORE today (UTC 2026-10-26): 14 of 900 tokens")
     )
-    val st = AutopilotStatus(on = AutopilotStatus.On(true))
+    val st = AutopilotStatus(on = AutopilotStatus.On.On)
     assert(!st.markdown.contains("CORE today"))
     val md = st.modify(_.upstreams).setTo(List(q)).markdown
     assert(md.contains("- legal open-access ingests today: 0\n- CORE today (UTC 2026-10-26)"), md)

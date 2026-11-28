@@ -98,7 +98,7 @@ class IngestQueueFailureSuite extends DbSuite:
           Ingest.Params(
             api.library.Citekey("zz_ingest_queue_failure"),
             Some(Bundle.Asset.FileName("fixture.pdf")),
-            force = Ingest.Params.Force(true),
+            force = Ingest.Params.Force.Force,
             acquireItem = Some(Ingest.Params.AcquireItem(item.id.value))
           ),
           Upload.handed(HandedFile.snapshot(pdf.toFile))

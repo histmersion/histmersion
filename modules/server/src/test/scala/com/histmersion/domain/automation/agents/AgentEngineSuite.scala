@@ -548,9 +548,9 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           retracted,
           Nil,
           Nil,
-          Assessment.Flagged(retracted.value),
-          if retracted.value then Assessment.Verdict("retracted") else Assessment.Verdict("ok"),
-          if retracted.value then Assessment.Recommendation("do not cite") else Assessment.Recommendation("fine"),
+          (if retracted.isRetracted then Assessment.Flagged.Flagged else Assessment.Flagged.Clear),
+          if retracted.isRetracted then Assessment.Verdict("retracted") else Assessment.Verdict("ok"),
+          if retracted.isRetracted then Assessment.Recommendation("do not cite") else Assessment.Recommendation("fine"),
           None,
           None,
           None
@@ -587,7 +587,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           title = (Some("Bronze Age tin")).map(api.library.Title.apply),
           year = (Some(2020)).map(Year.apply)
         ),
-        retracted = Assessment.IsRetracted(false)
+        retracted = Assessment.IsRetracted.Standing
       )
     a.attach(up)
     val item = h.workLists
@@ -635,7 +635,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     a.attach(
       FakeUpstream(
         WorkRef(doi = (Some("10.1/zz")).map(api.library.Doi.apply)),
-        retracted = Assessment.IsRetracted(true)
+        retracted = Assessment.IsRetracted.Retracted
       )
     )
     val run = startAndRun(a)
@@ -647,7 +647,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     assert(
-      a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, fix = Some(RunRequest.Fix(true))))
+      a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, fix = Some(RunRequest.Fix.Fix)))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("review-article"))
     )
@@ -935,7 +935,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           title = (Some("Bronze Age tin")).map(api.library.Title.apply),
           year = (Some(2019)).map(Year.apply)
         ),
-        retracted = Assessment.IsRetracted(false)
+        retracted = Assessment.IsRetracted.Standing
       )
     a.attach(up)
     val item = h.workLists
@@ -952,11 +952,11 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         Agents.RunRequest.Pipeline("enrich-source"),
         ApiTarget,
         acquireItem = Some(item.id),
-        dryRun = Some(Agents.RunRequest.DryRun(true))
+        dryRun = Some(Agents.RunRequest.DryRun.DryRun)
       )
     )
     assertEquals(run.status, "done", run.error)
-    assert(run.dryRun.value)
+    assert(run.dryRun.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before, "a dry run writes nothing: source, findings, edges, queues, approvals")
     assertEquals(c.steps.size, 3, "every model step ran")
     assertEquals(up.applies.asScala.toList, List(false, false), "refs and assess only read")
@@ -996,18 +996,18 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val before = CorpusSnapshot.of(ds)
     val paused = startAndRun(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(Agents.RunRequest.DryRun(true)))
+      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(Agents.RunRequest.DryRun.DryRun))
     )
     assertEquals(paused.status, "paused")
-    assert(paused.dryRun.value)
+    assert(paused.dryRun.dryRun)
     val second = ScriptedClient(Model)
     second.scripts += Seq(text(notesJson))
     val (a2, _) = handlersFor(byModel(second))
-    assert(a2.control(runId(paused.id), Agents.Action("resume"), None, None).exists(_.dryRun.value))
+    assert(a2.control(runId(paused.id), Agents.Action("resume"), None, None).exists(_.dryRun.dryRun))
     a2.engine.execute(runId(paused.id))
     val done = connect(ds)(AgentRepo.get(paused.id)).get
     assertEquals(done.status, "done", done.error)
-    assert(done.dryRun.value)
+    assert(done.dryRun.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before)
     assert(
       connect(ds)(AgentRepo.steps(jobId(done.id), AgentRepo.OutputChars(100000))).exists(s =>
@@ -1197,14 +1197,14 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // two dry runs: neither changes what the other reads
     val r1 = startAndRun(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(Agents.RunRequest.DryRun(true)))
+      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(Agents.RunRequest.DryRun.DryRun))
     )
     val r2 = startAndRun(
       a,
       RunRequest(
         Agents.RunRequest.Pipeline("enrich-source"),
         ApiTarget,
-        dryRun = Some(Agents.RunRequest.DryRun(true)),
+        dryRun = Some(Agents.RunRequest.DryRun.DryRun),
         modelFor = List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku)))
       )
     )

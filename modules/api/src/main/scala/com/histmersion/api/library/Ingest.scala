@@ -11,6 +11,7 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 object Ingest:
   type Disposition = Disposition.T
   object Disposition extends Newtype[String, Pure]
@@ -71,8 +72,8 @@ object Ingest:
   final case class Params(
       citekey: Citekey,
       filename: Option[Params.Filename] = None,
-      quality: Params.Quality = Params.Quality(false),
-      force: Params.Force = Params.Force(false),
+      quality: Params.Quality = Params.Quality.Fast,
+      force: Params.Force = Params.Force.Safe,
       title: Option[Title] = None,
       authors: List[AuthorName] = Nil,
       year: Option[Year] = None,
@@ -85,10 +86,14 @@ object Ingest:
 
   object Params:
     export api.exchange.Bundle.Asset.FileName as Filename
-    type Quality = Quality.T
-    object Quality extends Newtype[Boolean, Pure]
-    type Force = Force.T
-    object Force extends Newtype[Boolean, Pure]
+    enum Quality derives CanEqual:
+      case Quality, Fast
+    object Quality extends TwoStates[Quality]:
+      extension (quality: Quality) def quality: Boolean = quality == Quality
+    enum Force derives CanEqual:
+      case Force, Safe
+    object Force extends TwoStates[Force]:
+      extension (force: Force) def force: Boolean = force == Force
     export Source.Provenance
     export Acquire.ItemNumber as AcquireItem
 
@@ -107,8 +112,10 @@ object Ingest:
         api.json.Schema
 
   object Report:
-    type Created = Created.T
-    object Created extends Newtype[Boolean, Pure]
+    enum Created derives CanEqual:
+      case Created, Existing
+    object Created extends TwoStates[Created]:
+      extension (created: Created) def created: Boolean = created == Created
     type EdgesAdded = EdgesAdded.T
     object EdgesAdded extends Newtype[Int, Pure]
     export Ingest.DropInPath as DropIn
@@ -120,8 +127,8 @@ object Ingest:
       id: Request.Id,
       citekey: Option[Citekey] = None,
       arxiv: Option[Request.Arxiv] = None,
-      refetch: Request.Refetch = Request.Refetch(false),
-      legalOnly: Request.LegalOnly = Request.LegalOnly(true),
+      refetch: Request.Refetch = Request.Refetch.Reuse,
+      legalOnly: Request.LegalOnly = Request.LegalOnly.LegalOnly,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
@@ -130,10 +137,14 @@ object Ingest:
     type Id = Id.T
     object Id extends Newtype[String, Pure]
     export Source.Candidate.ArxivId as Arxiv
-    type Refetch = Refetch.T
-    object Refetch extends Newtype[Boolean, Pure]
-    type LegalOnly = LegalOnly.T
-    object LegalOnly extends Newtype[Boolean, Pure]
+    enum Refetch derives CanEqual:
+      case Refetch, Reuse
+    object Refetch extends TwoStates[Refetch]:
+      extension (refetch: Refetch) def refetch: Boolean = refetch == Refetch
+    enum LegalOnly derives CanEqual:
+      case LegalOnly, AnySource
+    object LegalOnly extends TwoStates[LegalOnly]:
+      extension (legalOnly: LegalOnly) def legalOnly: Boolean = legalOnly == LegalOnly
 
   final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail)
       derives JsonCodec,
@@ -142,7 +153,9 @@ object Ingest:
 
   object Step:
     export Ingest.StepName as Value
-    type Ok = Ok.T
-    object Ok extends Newtype[Boolean, Pure]
+    enum Ok derives CanEqual:
+      case Ok, Failed
+    object Ok extends TwoStates[Ok]:
+      extension (ok: Ok) def ok: Boolean = ok == Ok
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]

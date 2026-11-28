@@ -8,6 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.Schema
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a
   * variant of `temple`), the GeoNames feature code (`P.PPL` a populated place, `S.RUIN` ruins, `S.TMB` a tomb),
@@ -792,9 +793,10 @@ object SiteTypes:
   object Report:
 
     export SiteTypes.ReportSummary as SummaryResult
-
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     type Pending = Pending.T
     object Pending extends Newtype[Int, Pure]
     type Asked = Asked.T
@@ -808,7 +810,7 @@ object SiteTypes:
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def summary(r: Report): ReportSummary =
-      if (r.dryRun).value then ReportSummary(s"${r.pending} Wikidata site(s) on the map would be asked about")
+      if (r.dryRun).dryRun then ReportSummary(s"${r.pending} Wikidata site(s) on the map would be asked about")
       else
         ReportSummary(
           (List(
@@ -823,17 +825,21 @@ object SiteTypes:
         )
 
   final case class Request(
-      dryRun: Request.DryRun = Request.DryRun(false),
+      dryRun: Request.DryRun = Request.DryRun.Apply,
       limit: Option[Request.Limit] = None,
-      refresh: Request.Refresh = Request.Refresh(false),
+      refresh: Request.Refresh = Request.Refresh.Reuse,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, Schema
 
   object Request:
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
-    type Refresh = Refresh.T
-    object Refresh extends Newtype[Boolean, Pure]
+    enum Refresh derives CanEqual:
+      case Refresh, Reuse
+    object Refresh extends TwoStates[Refresh]:
+      extension (refresh: Refresh) def refresh: Boolean = refresh == Refresh

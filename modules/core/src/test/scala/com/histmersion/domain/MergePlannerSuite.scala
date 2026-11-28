@@ -690,7 +690,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val done = MergeApplyResult(
       foreign.sources.head.uid,
       Bundle.Instance(work, Some(Bundle.Instance.Label("work"))),
-      applied = MergeApplyResult.Applied(true),
+      applied = MergeApplyResult.Applied.Applied,
       r.plan.planHash,
       mergeId = Some(uid("merge")),
       backup = Some(MergeApplyResult.Backup("histmersion-20261004-1000.dump")),
@@ -710,7 +710,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       MergeMarkdown.applied(
         done
           .modify(_.applied)
-          .setTo(MergeApplyResult.Applied(false))
+          .setTo(MergeApplyResult.Applied.Skipped)
           .modify(_.mergeId)
           .setTo(None)
           .modify(_.problems)

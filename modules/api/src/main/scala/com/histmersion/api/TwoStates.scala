@@ -1,5 +1,5 @@
 package com.histmersion
-package util.json
+package api
 
 import com.github.plokhotnyuk.jsoniter_scala.core.{JsonReader, JsonValueCodec, JsonWriter}
 import com.histmersion.lint.{atBoundary, BoundaryKind}
@@ -7,6 +7,8 @@ import com.histmersion.lint.{atBoundary, BoundaryKind}
 @atBoundary(BoundaryKind.Json, "writes a two-state enum as its case's name and reads the Boolean it replaced")
 trait TwoStates[E <: reflect.Enum]:
   def values: Array[E]
+
+  given twoStatesOf: TwoStates[E] = this
 
   given twoStates: JsonValueCodec[E] = new JsonValueCodec[E]:
     def nullValue: E = null.asInstanceOf[E]

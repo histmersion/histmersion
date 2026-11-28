@@ -10,6 +10,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** A source collection the server can run: its name, title and description, what it lets the server do (`read`, `add`,
   * `update`), and whether the server can reach it now (`problem` says what is missing when it cannot).
@@ -34,5 +35,7 @@ object CollectionInfo:
   object Description extends Newtype[String, Pure]
   type Capabilities = Capabilities.T
   object Capabilities extends Newtype[String, Pure]
-  type Reachable = Reachable.T
-  object Reachable extends Newtype[Boolean, Pure]
+  enum Reachable derives CanEqual:
+    case Reachable, Unreachable
+  object Reachable extends TwoStates[Reachable]:
+    extension (reachable: Reachable) def reachable: Boolean = reachable == Reachable

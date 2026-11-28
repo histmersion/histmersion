@@ -157,10 +157,16 @@ object AgentUpstream:
     def meta(doi: Doi) = a.meta(AcquireApi.Identifier(doi.value)).left.map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(citekey: Citekey, apply: RefsApply)(using Creator.New) =
-      a.refs(RefsRequest(RefsRequest.Id(citekey.value), apply = RefsRequest.Apply(apply.value))).left.map(problem)
+      a.refs(
+        RefsRequest(
+          RefsRequest.Id(citekey.value),
+          apply = (if apply.value then RefsRequest.Apply.Apply else RefsRequest.Apply.DryRun)
+        )
+      ).left
+        .map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def assess(citekey: Citekey, apply: AssessApply)(using Creator.New) =
-      (if apply.value then a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply(true)))
+      (if apply.value then a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply.Apply))
        else a.assessReadOnly(AssessRequest.Id(citekey.value))).left.map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using Creator.New) =
@@ -169,7 +175,7 @@ object AgentUpstream:
           FollowupsRequest.Id(id.value),
           since.map(y => FollowupsRequest.Since(y.value)),
           limit.map(l => FollowupsRequest.Limit(l.value)),
-          apply = FollowupsRequest.Apply(false)
+          apply = FollowupsRequest.Apply.DryRun
         )
       ).left
         .map(problem)
@@ -194,7 +200,10 @@ object AgentUpstream:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def sweepCandidates(goal: Goal.Slug, dryRun: SweepCandidatesDryRun)(using Creator.New) =
       a.sweepCandidates(
-        CandidateSweep.Request(CandidateSweep.Request.Goal(goal.value), CandidateSweep.Request.DryRun(dryRun.value))
+        CandidateSweep.Request(
+          CandidateSweep.Request.Goal(goal.value),
+          (if dryRun.value then CandidateSweep.Request.DryRun.DryRun else CandidateSweep.Request.DryRun.Apply)
+        )
       ).left
         .map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -225,7 +225,7 @@ object BasemapExtractTool:
     val rules = if keepAll then Map.empty[Mvt.LayerName, Mvt.Rule] else BasemapService.mvtRules(drop)
     val meta = BasemapFetch.localMetadata(
       plan,
-      if keepAll then Set.empty else drop.filter(_.whole.value).map(_.layer).toSet,
+      if keepAll then Set.empty else drop.filter(_.whole.whole).map(_.layer).toSet,
       BasemapFetch.Attribution(cfg.vector.attribution.value),
       BasemapFetch.FetchedAt(java.time.Instant.now().toString),
       Basemap.Layer.Vector,

@@ -69,7 +69,11 @@ object ManagersRoutes:
         m.events(light(id), before.map(b => ManagerRepo.EventCursor(b.value)), pageSize(limit.map(_.value)))
       ),
       ManagersApi.action.serverLogic[Identity]((id, action, runs) =>
-        m.action(light(id), ManagersControllers.Action(action.value), runs.map(ManagerInfo.PauseRuns(_)))
+        m.action(
+          light(id),
+          ManagersControllers.Action(action.value),
+          runs.map((if _ then ManagerInfo.PauseRuns.Pause else ManagerInfo.PauseRuns.Run))
+        )
       ),
       ManagersApi.enqueue.serverLogic[Identity](in => CreatorControllers.rest(in)(m.enqueue(in)))
     ) ++ switches ++ acquisition ++ List(

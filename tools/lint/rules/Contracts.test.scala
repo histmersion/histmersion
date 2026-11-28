@@ -352,6 +352,22 @@ class ContractsSuite extends munit.FunSuite:
         |""".stripMargin
     assertEquals(Rules.genericCodecGivens(code).map(code.substring(0, _).count(_ == '\n') + 1), List(7, 8))
 
+  test("a two-state enum's column lifted from its Boolean's is no codec written by hand; its own codec home is listed"):
+    val lifted =
+      """object NewtypeColumns:
+        |  given twoStates: [E <: reflect.Enum] => (states: TwoStates[E]) => DbCodec[E] = make
+        |  given box: [A] => (c: DbCodec[A]) => DbCodec[Box[A]] = make
+        |""".stripMargin
+    assertEquals(Rules.genericCodecGivens(lifted).map(lifted.substring(0, _).count(_ == '\n') + 1), List(3))
+    val home =
+      """trait TwoStates[E <: reflect.Enum]:
+        |  given twoStates: JsonValueCodec[E] = make
+        |""".stripMargin
+    def lines(key: String) =
+      Rules.all(List(file(key, home))).filter(_.rule == "derives").map(v => (v.count, v.at))
+    assertEquals(lines("api:api/TwoStates.scala"), Nil)
+    assertEquals(lines("api:api/Other.scala"), List((1, "api:api/Other.scala:2")))
+
   test("a CanEqual given is no codec given: CanEqual.derived and a hand-written CanEqual do not count for derives"):
     val code =
       """object Equalities:

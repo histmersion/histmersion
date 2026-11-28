@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class ReloadReport(
     published: ReloadReport.Published,
@@ -24,9 +25,10 @@ final case class ReloadReport(
   def ok: Boolean = (errors.isEmpty)
 
 object ReloadReport:
-
-  type Published = Published.T
-  object Published extends Newtype[Boolean, Pure]
+  enum Published derives CanEqual:
+    case Published, Unpublished
+  object Published extends TwoStates[Published]:
+    extension (published: Published) def published: Boolean = published == Published
   type Generation = Generation.T
   object Generation extends Newtype[Long, Pure]
   type Applied = Applied.T

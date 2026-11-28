@@ -501,7 +501,7 @@ object RunsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def dryBadge(r: RunInfo): Option[HtmlElement] =
-    Option.when(r.dryRun.value)(
+    Option.when(r.dryRun.dryRun)(
       span(cls := "job-state state-dry-run", title := "Dry run: nothing was written to the corpus", "Dry run")
     )
 

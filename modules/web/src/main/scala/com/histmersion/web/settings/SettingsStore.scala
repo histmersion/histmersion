@@ -12,14 +12,16 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.web.{:=, given}
+import com.histmersion.api.TwoStates
 
 /** The settings as the server reads its settings file, for every Settings page: read once when a page opens and again
   * after each change; and the change itself — written into the file by the server, then applied.
   */
 object SettingsStore:
-
-  type SaveLiteralConsent = SaveLiteralConsent.T
-  object SaveLiteralConsent extends Newtype[Boolean, Pure]
+  enum SaveLiteralConsent derives CanEqual:
+    case Consented, Withheld
+  object SaveLiteralConsent extends TwoStates[SaveLiteralConsent]:
+    extension (saveLiteralConsent: SaveLiteralConsent) def consented: Boolean = saveLiteralConsent == Consented
 
   private val page = Var(Option.empty[Either[Problem, ConfigEdit.Page]])
   private val result = Var(Option.empty[Either[Problem, ConfigEdit.Written]])
@@ -39,12 +41,13 @@ object SettingsStore:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def save(
       changes: List[ConfigEdit.Change],
-      literalConsent: SaveLiteralConsent = SaveLiteralConsent(false)
+      literalConsent: SaveLiteralConsent = SaveLiteralConsent.Withheld
   ): Future[ConfigEdit.Written] =
     val w = ConfigEdit.Write(
       changes,
       version = now.map(p => ConfigEdit.Write.Version(p.version.value)),
-      literalConsent = ConfigEdit.Write.LiteralConsent(literalConsent.value)
+      literalConsent = (if literalConsent.consented then ConfigEdit.Write.LiteralConsent.Consented
+                        else ConfigEdit.Write.LiteralConsent.Withheld)
     )
     val f = ApiClient.writeSettings(w)
     f.onComplete { r =>
@@ -117,7 +120,7 @@ object SettingsStore:
           } effect when the server restarts: " +
           w.restart.map(_.key.value.stripPrefix("histmersion.")).mkString(", ") + "."
       ),
-      if w.restartable.value then
+      if w.restartable.restartable then
         div(
           cls := "toolbar",
           button(

@@ -25,7 +25,7 @@ object AboutMarkdown:
   def render(a: About): String =
     val b = a.build
     val commit = b.gitCommit.fold("unknown")(c =>
-      if (b.dirty) == BuildStamp.Dirty(true) then s"$c (with uncommitted changes)" else c
+      if (b.dirty) == BuildStamp.Dirty.Dirty then s"$c (with uncommitted changes)" else c
     )
     val conv = a.health.converter
     val backup = a.lastBackup.fold("none")(bk =>

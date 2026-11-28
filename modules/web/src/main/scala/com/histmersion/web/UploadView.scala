@@ -114,8 +114,8 @@ object UploadView:
         Ingest.Params(
           citekey = api.library.Citekey(d.citekey.value.trim),
           filename = d.fileName.map(f => Ingest.Params.Filename(f.value)),
-          quality = Ingest.Params.Quality(d.quality.highQuality),
-          force = Ingest.Params.Force(d.force.forced),
+          quality = (if d.quality.highQuality then Ingest.Params.Quality.Quality else Ingest.Params.Quality.Fast),
+          force = (if d.force.forced then Ingest.Params.Force.Force else Ingest.Params.Force.Safe),
           title = Some(d.title.value.trim).filter(_.nonEmpty).map(api.library.Title(_)),
           authors = d.authors.map(a => AuthorName(a.value)),
           year = year.toOption.flatten.map(y => api.catalogue.Year(y.toLong)),

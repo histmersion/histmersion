@@ -87,7 +87,7 @@ final class OnDemandTiles(
   def status: Basemap.OnDemand =
     val c = cfg()
     Basemap.OnDemand(
-      Basemap.OnDemand.Enabled(c.enabled.value),
+      (if c.enabled.value then Basemap.OnDemand.Enabled.Enabled else Basemap.OnDemand.Enabled.Disabled),
       Basemap.OnDemand.MaxZoom(c.maxZoom.value),
       Basemap.OnDemand.Dir(store.where().value),
       Basemap.OnDemand.Tiles(cache.entries.value),

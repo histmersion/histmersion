@@ -31,7 +31,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
   private val result = MergeApplyResult(
     UUID.fromString("00000000-0000-0000-0000-000000000001"),
     Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some(Bundle.Instance.Label("work"))),
-    applied = MergeApplyResult.Applied(true),
+    applied = MergeApplyResult.Applied.Applied,
     MergeApplyResult.PlanHash("abc123")
   )
 

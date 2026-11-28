@@ -64,8 +64,8 @@ object EventMarkers:
         .setTo(Filter().sort),
       kind = kind.map(k => TilesApi.TileQuery.Kind(k.value)),
       tier = tier.map(t => TilesApi.TileQuery.Tier(t.value)),
-      context = Some(TilesApi.TileQuery.Context(true)),
-      undated = Option.when(undated.undated)(TilesApi.TileQuery.Undated(true))
+      context = Some(TilesApi.TileQuery.Context.Context),
+      undated = Option.when(undated.undated)(TilesApi.TileQuery.Undated.Undated)
     )
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */

@@ -9,6 +9,7 @@ import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @atBoundary(
   BoundaryKind.Http,
@@ -34,7 +35,7 @@ object TilesApi:
       undated: Option[TileQuery.Undated] = None,
       ifNoneMatch: Option[TileQuery.IfNoneMatch] = None
   ):
-    def withUndated: Boolean = (undated.contains(TileQuery.Undated(true)))
+    def withUndated: Boolean = (undated.contains(TileQuery.Undated.Undated))
 
   object TileQuery:
 
@@ -47,8 +48,10 @@ object TilesApi:
     export Api.EventQuery.Kind
     export Api.EventQuery.Tier
     export com.histmersion.api.catalogue.Historicity.Wire as Historicity
-    type Context = Context.T
-    object Context extends Newtype[Boolean, Pure]
+    enum Context derives CanEqual:
+      case Context, Alone
+    object Context extends TwoStates[Context]:
+      extension (context: Context) def context: Boolean = context == Context
     export Api.Search.Text
     type SiteType = SiteType.T
     object SiteType extends Newtype[String, Pure]
@@ -56,8 +59,10 @@ object TilesApi:
     object Provider extends Newtype[String, Pure]
     type License = License.T
     object License extends Newtype[String, Pure]
-    type Undated = Undated.T
-    object Undated extends Newtype[Boolean, Pure]
+    enum Undated derives CanEqual:
+      case Undated, Dated
+    object Undated extends TwoStates[Undated]:
+      extension (undated: Undated) def undated: Boolean = undated == Undated
     type IfNoneMatch = IfNoneMatch.T
     object IfNoneMatch extends Newtype[String, Pure]
 
@@ -126,13 +131,13 @@ object TilesApi:
             kind.map(TileQuery.Kind(_)),
             tier.map(TileQuery.Tier(_)),
             historicity.map(TileQuery.Historicity(_)),
-            context.map(TileQuery.Context(_)),
+            context.map((if _ then TileQuery.Context.Context else TileQuery.Context.Alone)),
             text.map(TileQuery.Text(_)),
             placeId.map(Place.Id(_)),
             siteType.map(TileQuery.SiteType(_)),
             provider.map(TileQuery.Provider(_)),
             license.map(TileQuery.License(_)),
-            undated.map(TileQuery.Undated(_)),
+            undated.map((if _ then TileQuery.Undated.Undated else TileQuery.Undated.Dated)),
             ifNoneMatch.map(TileQuery.IfNoneMatch(_))
           )
       }(v =>
@@ -145,13 +150,13 @@ object TilesApi:
           v.kind.map(_.value),
           v.tier.map(_.value),
           v.historicity.map(_.value),
-          v.context.map(_.value),
+          v.context.map(_.context),
           v.text.map(_.value),
           v.placeId.map(_.value),
           v.siteType.map(_.value),
           v.provider.map(_.value),
           v.license.map(_.value),
-          v.undated.map(_.value),
+          v.undated.map(_.undated),
           v.ifNoneMatch.map(_.value)
         )
       )

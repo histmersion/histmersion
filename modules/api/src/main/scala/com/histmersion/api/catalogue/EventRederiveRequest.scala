@@ -8,17 +8,20 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventRederiveRequest(
     provider: Option[EventRederiveRequest.Provider] = None,
-    dryRun: EventRederiveRequest.DryRun = EventRederiveRequest.DryRun(false),
+    dryRun: EventRederiveRequest.DryRun = EventRederiveRequest.DryRun.Apply,
     createdBy: Option[Creation.By] = None,
     via: Option[Creation.Via] = None
 ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object EventRederiveRequest:
   export EventImportReport.Provider
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Apply
+  object DryRun extends TwoStates[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun

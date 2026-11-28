@@ -39,5 +39,6 @@ final class AgentStateControllers(store: AgentStateService, maintenance: WriteGa
   )
   def delete(key: AgentStateRecord.Key): Either[Api.Error, AgentStateDeleted] =
     maintenance.guard(WriteGate.OperationName("agent_state_delete")):
-      if store.delete(key) then Right(AgentStateDeleted(Api.AgentState.Key(key.value), AgentStateDeleted.Deleted(true)))
+      if store.delete(key) then
+        Right(AgentStateDeleted(Api.AgentState.Key(key.value), AgentStateDeleted.Deleted.Deleted))
       else Left(notFound(key))

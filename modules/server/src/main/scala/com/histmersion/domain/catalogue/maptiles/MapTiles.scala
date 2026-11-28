@@ -58,7 +58,7 @@ object MapTiles:
           q.kind.fold("")(_.value),
           q.tier.fold("")(_.value),
           q.historicity.fold("")(_.value),
-          q.context.fold("")(_.value.toString),
+          q.context.fold("")(_.context.toString),
           q.text.fold("")(_.value),
           q.placeId.fold("")(_.value),
           undated

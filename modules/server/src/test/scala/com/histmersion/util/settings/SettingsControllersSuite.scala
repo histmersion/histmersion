@@ -37,7 +37,7 @@ class SettingsControllersSuite extends munit.FunSuite:
       restarts,
       () => {
         reloads.incrementAndGet();
-        ReloadReport(published = ReloadReport.Published(true), generation = ReloadReport.Generation(2))
+        ReloadReport(published = ReloadReport.Published.Published, generation = ReloadReport.Generation(2))
       }
     )
 
@@ -132,7 +132,7 @@ class SettingsControllersSuite extends munit.FunSuite:
     assertEquals(w.changed, List("histmersion.backups.keep"))
     assertEquals(f.file.get, Some(Commented.value.replace("keep = 3", "keep = 8")))
     assertEquals(f.reloads.get, 1)
-    assert(w.reload.exists(_.published.value))
+    assert(w.reload.exists(_.published.published))
     val again =
       write(f, K("backups.keep") -> Some(V("8"))).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(again.changed, Nil)
@@ -174,21 +174,21 @@ class SettingsControllersSuite extends munit.FunSuite:
             ConfigEdit
               .Change(ConfigEdit.Change.Key("plugins.oa-core.api-key"), Some(ConfigEdit.Change.Value("value:x")))
           ),
-          literalConsent = ConfigEdit.Write.LiteralConsent(true)
+          literalConsent = ConfigEdit.Write.LiteralConsent.Consented
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(w.warnings.exists(_.value.contains("anyone who can read")), s"${w.warnings}")
-    assert(w.created.value)
+    assert(w.created.created)
 
   test("restart-only settings are said, and the restart is offered only where the server can be restarted"):
     val f = Fixture(Some(Commented))
     val w = write(f, K("server.port") -> Some(V("8123"))).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(w.restart.map(_.key), List("histmersion.server.port"))
-    assert(!w.restartable.value)
+    assert(!w.restartable.restartable)
     assertEquals(f.c.restart().left.toOption.flatMap(_.code), Some(ConfigEdit.CodeUnavailable))
     val g = Fixture(Some(Commented), restartable = true)
-    assert(g.c.restart().exists(_.accepted.value))
+    assert(g.c.restart().exists(_.accepted.accepted))
     assertEquals(g.restarts.restarts, 1)
 
   test("the first-run setup is due for a file that sets nothing, until setup.completed is written"):

@@ -63,7 +63,7 @@ object ReadingPane:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readSource(ck: Citekey): Future[SourceReading] =
     cached(sourceReads, ck.value) {
-      val record = ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false))
+      val record = ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText.SummaryOnly)
       val edges = ApiClient.neighbors(ck)
       val articles = ApiClient.sourceArticles(ck)
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
@@ -73,7 +73,7 @@ object ReadingPane:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readArticle(slug: Article.Slug): Future[Article.View] =
-    cached(articleReads, slug.value)(ApiClient.getArticle(slug, brief = Article.FullText(true)))
+    cached(articleReads, slug.value)(ApiClient.getArticle(slug, brief = Article.FullText.FullText))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

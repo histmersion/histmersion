@@ -185,7 +185,7 @@ object SourceEditor:
     val saving = Var(false)
 
     def load(then0: Option[String] = None): Unit =
-      ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText(false)).onComplete { r =>
+      ApiClient.getSource(ck, body = Api.SourceViewQuery.FullText.SummaryOnly).onComplete { r =>
         r.fold(
           e => errors.set(List(Field.Form -> shown"Could not load $ck: ${e.getMessage}")),
           sw =>

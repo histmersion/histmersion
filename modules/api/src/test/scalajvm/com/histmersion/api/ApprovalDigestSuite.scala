@@ -95,7 +95,7 @@ class ApprovalDigestSuite extends munit.FunSuite:
         .bulk(
           BulkResult(
             BulkResult.Decision("reject"),
-            BulkResult.DryRun(false),
+            BulkResult.DryRun.Apply,
             BulkResult.Matched(3),
             List(BulkResult.Decided(1), BulkResult.Decided(2)),
             List(
@@ -121,7 +121,7 @@ class ApprovalDigestSuite extends munit.FunSuite:
         .bulk(
           BulkResult(
             BulkResult.Decision("approve"),
-            BulkResult.DryRun(true),
+            BulkResult.DryRun.DryRun,
             BulkResult.Matched(1),
             List(BulkResult.Decided(1)),
             Nil,

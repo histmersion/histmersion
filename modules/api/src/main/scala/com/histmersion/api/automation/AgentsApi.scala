@@ -79,9 +79,10 @@ object AgentsApi:
       .in(query[Option[Boolean]]("offline"))
       .out(jsonBody[DoctorReport]))
       .mapIn[Option[DoctorReport.Online]]((refactorDecoded4: Option[Boolean]) =>
-        (refactorDecoded4).map(refactorElement => DoctorReport.Online(refactorElement))
+        (refactorDecoded4)
+          .map(refactorElement => (if refactorElement then DoctorReport.Online.Online else DoctorReport.Online.Offline))
       )((refactorEncoded4: Option[DoctorReport.Online]) =>
-        (refactorEncoded4).map(refactorElement2 => (refactorElement2).value)
+        (refactorEncoded4).map(refactorElement2 => (refactorElement2).online)
       )
 
   lazy val probe: PublicEndpoint[ProbeRequest, Api.Error, ProbeResult, Any] =

@@ -190,7 +190,7 @@ class BasemapServiceSuite extends DbSuite:
     val (svc, v, _) = service(dir)
     val j = await(
       svc
-        .fetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true)))
+        .fetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun.DryRun))
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(j.succeeded, j.toString)
@@ -213,7 +213,7 @@ class BasemapServiceSuite extends DbSuite:
     assert(j.succeeded, j.toString)
     val st = svc.status
     locally {
-      assert(st.available.value, st.toString)
+      assert(st.available.available, st.toString)
       assertEquals(
         st.layers.map(l => l.layer -> l.fetchedAt),
         List("vector", "terrain", "labels", "bathymetry").map(_ -> Some("2000-01-02T03:04:05Z"))
@@ -324,7 +324,7 @@ class BasemapServiceSuite extends DbSuite:
       gone.removed.map(r => Path.of(r.value).getFileName.toString).sorted,
       List("bathymetry.pmtiles", "labels.pmtiles", "terrain.pmtiles", "vector-cache", "vector.pmtiles")
     )
-    assert(!svc.status.available.value)
+    assert(!svc.status.available.available)
 
   test("an extract without the names: the status says a fetch of the labels adds them, and that fetch adds only them"):
     val dir = Files.createTempDirectory("basemap")
@@ -345,7 +345,9 @@ class BasemapServiceSuite extends DbSuite:
     val downloads = v.downloads.get
     val dry = await(
       svc
-        .fetch(Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("labels"), dryRun = Basemap.FetchQuery.DryRun(true)))
+        .fetch(
+          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("labels"), dryRun = Basemap.FetchQuery.DryRun.DryRun)
+        )
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
     assert(dry.progress.exists(_.value.contains("would download 2 files")), dry.progress.toString)
@@ -373,7 +375,7 @@ class BasemapServiceSuite extends DbSuite:
     val j = await(
       svc
         .fetch(
-          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll(true))
+          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll.KeepAll)
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
@@ -419,7 +421,7 @@ class BasemapServiceSuite extends DbSuite:
       await(
         svc
           .fetch(
-            Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll(true))
+            Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("vector"), keepAll = Basemap.FetchQuery.KeepAll.KeepAll)
           )
           .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       ).succeeded
@@ -462,7 +464,7 @@ class BasemapServiceSuite extends DbSuite:
       await(
         svc
           .fetch(
-            Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")), dryRun = Basemap.FetchQuery.DryRun(true))
+            Basemap.FetchQuery(focus = Some(Basemap.Focus.Name("crete")), dryRun = Basemap.FetchQuery.DryRun.DryRun)
           )
           .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
       )
@@ -546,11 +548,11 @@ class BasemapServiceSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(f.removed.map(r => java.nio.file.Path.of(r.value).getFileName.toString), List("crete.pmtiles"))
     val c = svc
-      .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache(true)))
+      .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache.Cache))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.removed.size, 1)
     assertEquals(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.onDemand.map(_.tiles), Some(0L))
-    assert(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.present.value, "the extract stays")
+    assert(svc.status.layers.find(_.layer == Basemap.Layer.Wire("terrain")).get.present.present, "the extract stays")
     assert(
       svc
         .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), focus = Some(Basemap.Focus.Name("nowhere"))))
@@ -565,7 +567,7 @@ class BasemapServiceSuite extends DbSuite:
     val dry = await(
       svc
         .fetch(
-          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun(true))
+          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun.DryRun)
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
@@ -684,7 +686,7 @@ class BasemapServiceSuite extends DbSuite:
     val dry = await(
       svc
         .fetch(
-          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun(true))
+          Basemap.FetchQuery(layer = Basemap.FetchQuery.Layer("bathymetry"), dryRun = Basemap.FetchQuery.DryRun.DryRun)
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     )
@@ -826,7 +828,7 @@ class BasemapServiceSuite extends DbSuite:
     assertEquals(BasemapServiceSuite.seaGets.get - gets, 1)
     // the caches are removed with the others
     val c = svc
-      .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache(true)))
+      .remove(Basemap.RemoveQuery(Basemap.RemoveQuery.Layer("none"), cache = Basemap.RemoveQuery.Cache.Cache))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(c.removed.map(r => Path.of(r.value).getFileName.toString).sorted, List("sea-cache", "vector-cache"))
     // switched off: nothing outside the region
@@ -858,7 +860,7 @@ class BasemapServiceSuite extends DbSuite:
             layer = Basemap.FetchQuery.Layer("vector"),
             bbox = Some(BBox.Text("world")),
             maxZoom = Some(Basemap.Focus.MaxZoom(2)),
-            dryRun = Basemap.FetchQuery.DryRun(true)
+            dryRun = Basemap.FetchQuery.DryRun.DryRun
           )
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)

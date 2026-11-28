@@ -206,7 +206,8 @@ object KeysSection:
           SettingsStore
             .save(
               List(ConfigEdit.Change(ConfigEdit.Change.Key(f.key.value), Some(ConfigEdit.Change.Value(r.value)))),
-              literalConsent = SettingsStore.SaveLiteralConsent(consent.now())
+              literalConsent = (if consent.now() then SettingsStore.SaveLiteralConsent.Consented
+                                else SettingsStore.SaveLiteralConsent.Withheld)
             )
             .foreach(_ => entry.set(""))
     val id = "key-" + f.key.value.replaceAll("[^A-Za-z0-9_-]", "-")

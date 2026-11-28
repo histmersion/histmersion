@@ -142,8 +142,8 @@ final class McpTools(
                 in.path.map(ToolFiles.Path(_)),
                 in.base64.map(IngestControllers.Base64(_)),
                 in.filename.map(Ingest.Params.Filename(_)),
-                Ingest.Params.Quality(in.quality),
-                Ingest.Params.Force(in.force),
+                (if in.quality then Ingest.Params.Quality.Quality else Ingest.Params.Quality.Fast),
+                (if in.force then Ingest.Params.Force.Force else Ingest.Params.Force.Safe),
                 in.title.map(Title(_)),
                 in.authors.map(IngestMeta.Authors(_)),
                 in.year.map(Year(_)),
@@ -314,7 +314,9 @@ final class McpTools(
                           value.map(ConfigEdit.Change.Value(_))
                         )
                       ),
-                      literalConsent = ConfigEdit.Write.LiteralConsent(in.literalConsent.getOrElse(false))
+                      literalConsent =
+                        (if in.literalConsent.getOrElse(false) then ConfigEdit.Write.LiteralConsent.Consented
+                         else ConfigEdit.Write.LiteralConsent.Withheld)
                     )
                   )
                   .fold(McpOut.error, w => ToolResult.text(ConfigEditMarkdown.written(w)))
@@ -683,7 +685,11 @@ final class McpTools(
                     .oaBacklog
                     .repair(
                       RepairAcquire
-                        .RepairRequest(RepairAcquire.RepairRequest.DryRun(dry.value), Some(Activity.Actor("mcp")))
+                        .RepairRequest(
+                          (if dry.value then RepairAcquire.RepairRequest.DryRun.DryRun
+                           else RepairAcquire.RepairRequest.DryRun.Apply),
+                          Some(Activity.Actor("mcp"))
+                        )
                     )
                 )
               )

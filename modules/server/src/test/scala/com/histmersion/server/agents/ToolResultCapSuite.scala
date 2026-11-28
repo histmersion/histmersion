@@ -95,7 +95,7 @@ class ToolResultCapSuite extends munit.FunSuite:
       List(QueryResult.Columns("citekey"), QueryResult.Columns("status")),
       (1 to 120).toList.map(i => List(Some(QueryResult.Rows(s"ck$i")), Some(QueryResult.Rows("current")))),
       QueryResult.RowCount(120),
-      QueryResult.Truncated(false),
+      QueryResult.Truncated.Complete,
       QueryResult.ElapsedMs(3)
     )
     val md = LibraryAgentTools.queryResult(r, AgentToolsConfig.QueryMaxRows(50), ToolResultCap.CapMax(100000))
@@ -106,7 +106,7 @@ class ToolResultCapSuite extends munit.FunSuite:
       List(QueryResult.Columns("c")),
       (1 to 500).toList.map(i => List(Some(QueryResult.Rows(s"r$i")))),
       QueryResult.RowCount(500),
-      QueryResult.Truncated(true),
+      QueryResult.Truncated.Truncated,
       QueryResult.ElapsedMs(3)
     )
     assert(

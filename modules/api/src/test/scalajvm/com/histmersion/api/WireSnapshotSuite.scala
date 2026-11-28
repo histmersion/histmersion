@@ -166,7 +166,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       Gazetteer.Kind.Lpf,
       Gazetteer.SourceInfo.Title("Zq gazetteer"),
       Some(Gazetteer.SourceInfo.File("zq.lpf.json")),
-      present = Gazetteer.SourceInfo.Present(true),
+      present = Gazetteer.SourceInfo.Present.Present,
       Some(Gazetteer.SourceInfo.PinnedVersion("1.0")),
       importedVersion = Some(Gazetteer.SourceInfo.ImportedVersion("0.9")),
       importedAt = Some(Gazetteer.SourceInfo.ImportedAt("2026-01-02T03:04:05Z")),
@@ -183,7 +183,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       Gazetteer.Kind.Geonames,
       Gazetteer.SourceInfo.Title("Zq missing"),
       None,
-      present = Gazetteer.SourceInfo.Present(false),
+      present = Gazetteer.SourceInfo.Present.Absent,
       None
     )
   )
@@ -402,7 +402,7 @@ class WireSnapshotSuite extends munit.FunSuite:
           List(MediaCount(MediaCount.Key("zq-provider"), MediaCount.N(3))),
           List(
             MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)),
-            MediaCount(MediaCount.Key("zq"), MediaCount.N(1), MediaCount.Allowed(false))
+            MediaCount(MediaCount.Key("zq"), MediaCount.N(1), MediaCount.Allowed.Blocked)
           )
         )
       ),
@@ -410,7 +410,7 @@ class WireSnapshotSuite extends munit.FunSuite:
         FigureLicenceFill(
           FigureLicenceFill.Candidates(5),
           FigureLicenceFill.Updated(3),
-          applied = FigureLicenceFill.Applied(false),
+          applied = FigureLicenceFill.Applied.Previewed,
           List(MediaCount(MediaCount.Key("zq_alpha_2001"), MediaCount.N(3)))
         )
       ),
@@ -485,12 +485,12 @@ class WireSnapshotSuite extends munit.FunSuite:
       ).asJson.spaces2,
       "resolved none json" -> ResolvedId(ResolvedId.Id("zq-nothing")).asJson.spaces2,
       "job detail json" -> InitPlan
-        .Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer(true), fetch = List(InitPlan.Fetch("zq-gaz")))))
+        .Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer.Included, fetch = List(InitPlan.Fetch("zq-gaz")))))
         .set(SkippedPeriod.SkippedCount, Period.ImportResult.SkippedCount(2))
         .set(ExchangeJobKinds.PlanHash, Some(MergePlan.PlanHash("zq-hash")))
         .set(
           VacuumPlan.Detail,
-          Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(VacuumPlan.Tables("sources"))))
+          Some(VacuumPlan(analyze = VacuumPlan.Analyze.Analyze, tables = List(VacuumPlan.Tables("sources"))))
         )
         .set(ImportJobKinds.Media, Some(JobKinds.Subject("a media run")))
         .set(EventsJobKinds.Catalogue, Some(JobKinds.Subject("zq-catalogue")))

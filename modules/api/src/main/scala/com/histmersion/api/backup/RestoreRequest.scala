@@ -6,14 +6,17 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 /** `force` is required while the database holds sources: `pg_restore --clean` drops what is there. */
-final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = RestoreRequest.Force(false))
+final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = RestoreRequest.Force.Safe)
     derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
 
 object RestoreRequest:
   export Backup.Result.File
-  type Force = Force.T
-  object Force extends Newtype[Boolean, Pure]
+  enum Force derives CanEqual:
+    case Force, Safe
+  object Force extends TwoStates[Force]:
+    extension (force: Force) def force: Boolean = force == Force

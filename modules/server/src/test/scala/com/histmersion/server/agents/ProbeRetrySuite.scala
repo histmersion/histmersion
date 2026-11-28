@@ -149,7 +149,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
       .probe(ProbeRequest(ApiCk, Some(ProbeModel)))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries.value))
-    assert(!r.matchesRecord.value)
+    assert(!r.matchesRecord.matchesRecord)
     assertEquals(r.problems.size, 2, r.problems)
     assert(
       AgentsMarkdown
@@ -237,7 +237,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.attempts, 1 + math.max(0, cfg.agents.step.maxRetries.value))
     assertEquals(FakeCli.invocations(fake), r.attempts)
-    assert(r.answer.isEmpty && !r.matchesRecord.value)
+    assert(r.answer.isEmpty && !r.matchesRecord.matchesRecord)
     val md = AgentsMarkdown.probe(r)
     assert(
       md.contains(

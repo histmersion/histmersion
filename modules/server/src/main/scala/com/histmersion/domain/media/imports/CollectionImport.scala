@@ -159,7 +159,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     }
     val base = MediaImportReport(
       provider = MediaItem.Provider(col.provider.value),
-      dryRun = RepairAcquire.RepairRequest.DryRun(dryRun.value),
+      dryRun =
+        (if dryRun.value then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
       targets = MediaImportReport.Targets(places.size),
       items = MediaImportReport.Items(records.size),
       statements = MediaImportReport.Statements(kept.size),
@@ -171,7 +172,8 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
           MediaCount(
             MediaCount.Key(k.value),
             MediaCount.N(rs.size),
-            MediaCount.Allowed(rs.head.rights.exists(r => allow.allows(r.licence)))
+            (if rs.head.rights.exists(r => allow.allows(r.licence)) then MediaCount.Allowed.Allowed
+             else MediaCount.Allowed.Blocked)
           )
         )
         .sortBy(c => (-c.n.value, c.key.value)),

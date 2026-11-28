@@ -399,7 +399,7 @@ object ManagerService:
           ManagerInfo.Kind(m.kind.wire.value),
           m.goal.map(g => com.histmersion.api.automation.Goal.Slug(g.value)),
           ManagerInfo.State(m.state.wire.value),
-          ManagerInfo.PauseRuns(m.pauseRuns.value),
+          (if m.pauseRuns.value then ManagerInfo.PauseRuns.Pause else ManagerInfo.PauseRuns.Run),
           m.config,
           ManagerConfig(),
           m.statusNote,
@@ -521,7 +521,7 @@ object ManagerService:
         _.modify(_.state)
           .setTo(state.transformInto[DomainManager.State])
           .modify(_.pauseRuns)
-          .setTo(ManagerRecord.PauseRuns(pauseRuns.value))
+          .setTo(ManagerRecord.PauseRuns(pauseRuns.pauseRuns))
           .modify(_.updatedAt)
           .setTo(at)
       )

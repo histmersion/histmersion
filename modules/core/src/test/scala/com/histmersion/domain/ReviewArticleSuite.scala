@@ -816,7 +816,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text("Tin [[ghost2020_x]].\n\n## Sources cited\n")),
         corpus
       )
-    assert(c.fatal.value)
+    assert(c.fatal.fatal)
     assert(
       c.problems.exists(_.sentence.contains("ghost2020_x")) && c.problems.exists(_.sentence.contains("Sources cited")),
       c.problems
@@ -828,7 +828,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text(Good)),
       corpus
     )
-    assertEquals((ok.problems, ok.fatal, ok.edits), (Nil, false, Nil))
+    assertEquals((ok.problems, ok.fatal.fatal, ok.edits), (Nil, false, Nil))
     // an index fragment needs no section set
     assertEquals(
       checkBody(

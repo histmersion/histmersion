@@ -169,7 +169,7 @@ object EventsCmd:
               hist.map(Api.EventQuery.Historicity(_)),
               place.map(Api.EventQuery.PlaceId(_)),
               tier.map(Api.EventQuery.Tier(_)),
-              Option.when(ctx)(Api.EventQuery.Context(true))
+              Option.when(ctx)(Api.EventQuery.Context.Context)
             )
           ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
         case Command.Show(id, json) =>
@@ -178,19 +178,22 @@ object EventsCmd:
           c.call(EventsApi.importEvents)(
             EventImportRequest(
               EventImportRequest.Provider(p),
-              EventImportRequest.DryRun(writes.dry),
+              (if writes.dry then EventImportRequest.DryRun.DryRun else EventImportRequest.DryRun.Apply),
               limit.map(EventImportRequest.Limit(_)),
               bbox.map(EventImportRequest.Bbox(_)),
               from.map(EventImportRequest.From(_)),
               to.map(EventImportRequest.To(_)),
               vei.map(EventImportRequest.MinVei(_)),
               mag.map(EventImportRequest.MinMagnitude(_)),
-              EventImportRequest.Refresh(refresh)
+              (if refresh then EventImportRequest.Refresh.Refresh else EventImportRequest.Refresh.Reuse)
             )
           ).flatMap(follow(c, _, following))
         case Command.Rederive(p, writes, following) =>
           c.call(EventsApi.rederive)(
-            EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(writes.dry))
+            EventRederiveRequest(
+              p.map(EventRederiveRequest.Provider(_)),
+              (if writes.dry then EventRederiveRequest.DryRun.DryRun else EventRederiveRequest.DryRun.Apply)
+            )
           ).flatMap { j =>
             Cli.out.println(
               s"job `${j.id}` started: ${j.detail.flatMap(EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
@@ -222,7 +225,7 @@ object EventsCmd:
               (
                 Event.Id(id),
                 EventLinksRequest(
-                  EventLinksRequest.Recompute(re),
+                  (if re then EventLinksRequest.Recompute.Recompute else EventLinksRequest.Recompute.Reuse),
                   confirm.map(EventLinksRequest.Confirm(_)),
                   reject.map(EventLinksRequest.Reject(_))
                 )
@@ -232,7 +235,7 @@ object EventsCmd:
         case Command.Candidates(all, ev, limit, following) =>
           c.call(EventsApi.candidatesJob)(
             EventCandidatesRequest(
-              EventCandidatesRequest.All(all),
+              (if all then EventCandidatesRequest.All.All else EventCandidatesRequest.All.Due),
               ev.map(Event.Id(_)),
               limit.map(EventCandidatesRequest.Limit(_))
             )

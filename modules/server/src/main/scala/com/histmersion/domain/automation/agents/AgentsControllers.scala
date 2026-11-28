@@ -389,7 +389,7 @@ final class AgentsControllers(
             .parse(PlanQuota.Floors.Wire(t))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
-      _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
+      _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.hold)))
       _ = f.foreach(x => pools.setFloors(p, x.map(w => PlanQuotaRepo.Pool.Floors(w.value))))
       st <- pools
         .statuses(covers)
@@ -408,7 +408,7 @@ final class AgentsControllers(
     maintenance.writing:
       roleOf(role).map { r =>
         Transactor(ds).write(
-          PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.value)
+          PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.fallthrough)
         )
         quota
       }
@@ -450,14 +450,15 @@ final class AgentsControllers(
                   case Right(x) =>
                     PlanQuota.PoolRefreshed(
                       p.wire,
-                      PlanQuota.PoolRefreshed.Refreshed(x.ok.value),
+                      (if x.ok.value then PlanQuota.PoolRefreshed.Refreshed.Refreshed
+                       else PlanQuota.PoolRefreshed.Refreshed.Unchanged),
                       PlanQuota.PoolRefreshed.Detail(x.text.value),
                       st
                     )
                   case Left(why) =>
                     PlanQuota.PoolRefreshed(
                       p.wire,
-                      PlanQuota.PoolRefreshed.Refreshed(false),
+                      PlanQuota.PoolRefreshed.Refreshed.Unchanged,
                       PlanQuota.PoolRefreshed.Detail(s"not read: $why"),
                       st
                     )
@@ -587,7 +588,7 @@ final class AgentsControllers(
       RoleModel(
         Role.Wire(c.role.value),
         shown.map(RoleModel.Model(_)),
-        ready = RoleModel.Ready(c.active.isDefined),
+        ready = (if c.active.isDefined then RoleModel.Ready.Ready else RoleModel.Ready.Unready),
         if c.active.isDefined then Nil
         else if c.problems.nonEmpty then c.problems
         else
@@ -622,7 +623,7 @@ final class AgentsControllers(
         )
       )
     ModelsInfo(
-      ModelsInfo.Enabled(cfg.enabled.value),
+      (if cfg.enabled.value then ModelsInfo.Enabled.Enabled else ModelsInfo.Enabled.Disabled),
       roles,
       Pipeline.values.toList.map(p => ModelsInfo.Pipelines(p.wire.value)),
       ModelsInfo.MaxConcurrentRuns(cfg.maxConcurrentRuns.value),
@@ -746,9 +747,9 @@ final class AgentsControllers(
       .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
       .map(t =>
         Goal.Plans.Removed(
-          Goal.Plans.Removed.Value(
-            Transactor(ds).write(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value)))
-          )
+          (if Transactor(ds).write(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value))) then
+             Goal.Plans.Removed.Value.Removed
+           else Goal.Plans.Removed.Value.Kept)
         )
       )
 
@@ -768,7 +769,7 @@ final class AgentsControllers(
         aiHttp = aiHttp,
         paths = site.userPaths
       )
-        .report(online = DoctorReport.Online(!offline.value))
+        .report(online = (if !offline.value then DoctorReport.Online.Online else DoctorReport.Online.Offline))
     val held = lease.status match
       case Some((o, u, false, true)) =>
         DoctorCheck(
@@ -940,7 +941,7 @@ final class AgentsControllers(
     yield
       val clean = (xs: List[String]) => Option(xs.map(_.trim).filter(_.nonEmpty).distinct).filter(_.nonEmpty)
       val params = RunParams(
-        fix = req.fix.filter(_.value),
+        fix = req.fix.filter(_.fix),
         rounds = req.rounds,
         title = req.title.map(_.value.trim).filter(_.nonEmpty).map(RunRequest.Title(_)),
         kind = req.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(RunRequest.Kind(_)),
@@ -952,7 +953,7 @@ final class AgentsControllers(
         )
       )
       // a run started by a dry run is one too (nothing it starts may write)
-      val dry = req.dryRun.exists(_.value) || parent.exists(_.dryRun.value)
+      val dry = req.dryRun.exists(_.dryRun) || parent.exists(_.dryRun.dryRun)
       Prepared(
         p,
         target,
@@ -1372,7 +1373,7 @@ final class AgentsControllers(
   )(using WritePermit)(using Creator.New): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note.map(n => DomainApproval.Note(n.value))).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
-      if a.approvalKind.exists(_.blocking.value) then
+      if a.approvalKind.exists(_.blocking.blocking) then
         a.runId.foreach(r => Unused(engine.wake(DomainRun.Id.assume(r.value)), Unused.Why.Idempotent))
       // an approved plan of articles: its seeding manager gets one compile item per article (the item
       // held for it is settled by the next tick, which the nudge brings forward)
@@ -1476,7 +1477,9 @@ final class AgentsControllers(
           )
         )
     yield Removed(
-      Removed.Value(goals.unlink(slug, k.transformInto[DomainGoal.LinkKind], GoalLink.Ref(ref.value.trim)))
+      (if goals.unlink(slug, k.transformInto[DomainGoal.LinkKind], GoalLink.Ref(ref.value.trim)) then
+         Removed.Value.Removed
+       else Removed.Value.Kept)
     )
 
   private def scheduleKind(kind: ScheduleKind.Wire): Either[Problems, ScheduleKind] =
@@ -1618,11 +1621,11 @@ final class AgentsControllers(
                 model = ProbeResult.Model(client.model.wire.value),
                 answer = answer,
                 rawAnswer = ProbeResult.RawAnswer(LlmClient.rawAnswer(res.finalAnswer).take(2000)),
-                matchesRecord = ProbeResult.MatchesRecord(
-                  problems.isEmpty && answer.exists(a =>
-                    host.sameTitle(Title(a.title.value), Title(src.title.value)) && a.year == src.year
-                  )
-                ),
+                matchesRecord =
+                  (if problems.isEmpty && answer
+                       .exists(a => host.sameTitle(Title(a.title.value), Title(src.title.value)) && a.year == src.year)
+                   then ProbeResult.MatchesRecord.Matches
+                   else ProbeResult.MatchesRecord.Differs),
                 toolCalls = toolCalls.map(ProbeResult.ToolCalls(_)),
                 iterations = ProbeResult.Iterations(res.iterations),
                 finish = ProbeResult.Finish(LlmClient.finish(res.finishReason)),

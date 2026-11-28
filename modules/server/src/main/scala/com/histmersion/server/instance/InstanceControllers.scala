@@ -146,7 +146,7 @@ final class InstanceControllers(
         BuildStamp.Version(Version.version.value),
         BuildMeta.gitCommit.map(BuildStamp.GitCommit(_)),
         BuildMeta.commitDate.map(BuildStamp.CommitDate(_)),
-        BuildStamp.Dirty(BuildMeta.dirty),
+        (if BuildMeta.dirty then BuildStamp.Dirty.Dirty else BuildStamp.Dirty.Clean),
         licence = Some(Version.licence),
         sourceUrl = Some(
           BuildStamp.SourceUrl(
@@ -263,11 +263,12 @@ final class InstanceControllers(
   def uiConfig(keyRequired: UiConfig.KeyRequired): UiConfig = UiConfigViews.page(
     cfg.ui,
     keyRequired = keyRequired,
-    agentsEnabled = UiConfig.AgentsEnabled(cfg.agents.enabled.value),
+    agentsEnabled =
+      (if cfg.agents.enabled.value then UiConfig.AgentsEnabled.Enabled else UiConfig.AgentsEnabled.Disabled),
     plugins = deps.plugins.report,
     baseMapSource = baseMapSource,
     mapLanguage = UiConfig.MapLanguage(cfg.basemap.labels.language.value),
-    setupDue = UiConfig.SetupDue(Try(setupDue()).getOrElse(false)),
+    setupDue = (if Try(setupDue()).getOrElse(false) then UiConfig.SetupDue.SetupDue else UiConfig.SetupDue.SetUp),
     buildId = deps.webBundle.id
   )
 

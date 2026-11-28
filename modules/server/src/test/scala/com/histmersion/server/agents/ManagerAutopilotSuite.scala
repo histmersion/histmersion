@@ -376,11 +376,11 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val on = a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On, Some(AutopilotSet.By("test"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(on.on.value)
+    assert(on.on.on)
     assert(
       on.changes.contains(s"${seedId(ref(Goal))} created") && on.changes.contains(s"${watchId(ref(Goal))} created") &&
         on.changes.contains(s"$ReviewId resumed") && on.changes.contains(s"$EnrichId resumed"),
@@ -403,7 +403,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assert(on.goals.exists(g => g.slug.value == Goal.value && g.managers.size == 2), on.goals)
     // again: nothing more to do
     assertEquals(
-      a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On(true))).left.map(Api.Error(_)).toOption.get.changes,
+      a.managing.setAutopilot(AutopilotSet(on = AutopilotSet.On.On)).left.map(Api.Error(_)).toOption.get.changes,
       List("already on")
     )
 
@@ -525,7 +525,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assert(a.autopilotPage(st).contains(s"**$Goal** _(reviewed)_"))
     assert(!a.autopilotPage(st).contains("crons are off"))
     assert(
-      a.autopilotPage(st.modify(_.cronsEnabled).setTo(AutopilotStatus.CronsEnabled(false))).contains("crons are off")
+      a.autopilotPage(st.modify(_.cronsEnabled).setTo(AutopilotStatus.CronsEnabled.Disabled)).contains("crons are off")
     )
 
   test("autopilot, approvals a person's (the defaults): managers and plans start, nothing is approved by itself"):
@@ -533,7 +533,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c, manualCfg); seed(h)
     a.managers.ensureDefaults()
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true)))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -578,7 +578,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     transact(ds)(
       ManagerRepo.setConfig(
         sm.id,
-        sm.config.modify(_.autoApprove).setTo(Some(ManagerConfig.AutoApprove(true))),
+        sm.config.modify(_.autoApprove).setTo(Some(ManagerConfig.AutoApprove.Auto)),
         sm.cron,
         sm.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
       )
@@ -625,7 +625,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     a.managers.ensureDefaults()
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true)))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -651,11 +651,11 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val off =
       a.managing
-        .setAutopilot(AutopilotSet(on = AutopilotSet.On(false)))
+        .setAutopilot(AutopilotSet(on = AutopilotSet.On.Off))
         .left
         .map(Api.Error(_))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(!off.on.value)
+    assert(!off.on.on)
     assert(off.changes.exists(_.value.contains("paused 5 managers")), off.changes)
     assert(
       connect(ds)(ManagerRepo.list())
@@ -665,7 +665,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("active"), "the library-wide ones stay")
     assertEquals(Clock().tick(a).filter(_.value.startsWith("goal")), Nil, "off: nothing ensured")
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true)))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -721,7 +721,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
           ManagerCreate(
             Managers.ManagerCreate.Kind("seed"),
             Some(api.automation.Goal.Slug("zzagent-apform")),
-            paused = Some(Managers.ManagerCreate.Paused(true))
+            paused = Some(Managers.ManagerCreate.Paused.Paused)
           )
         )
         .map(_.state),
@@ -744,7 +744,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .isRight
     )
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true)))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -851,7 +851,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val m = ManagerInfo(
       ManagerInfo.Id("seed:x"),
       ManagerInfo.Kind("seed"),
-      config = ManagerConfig(autoApprove = Some(ManagerConfig.AutoApprove(false)))
+      config = ManagerConfig(autoApprove = Some(ManagerConfig.AutoApprove.Manual))
     )
     assert(!a.autoApprovals.checked(TestRuns.approvals(ds).approval(ApiIds.approval(p2.id)).get, Some(m)))
 
@@ -909,7 +909,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   test("shared ingest cap: every watcher's ingests today count; at the cap a sweep ingests nothing"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true)))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -1003,7 +1003,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     val (a, _) = handlers(ScriptedClient(Model), hk)
     assertEquals(a.autopilot.tick(t0), Nil, "off")
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true)))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)

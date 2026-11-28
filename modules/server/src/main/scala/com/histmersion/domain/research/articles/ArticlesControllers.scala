@@ -730,7 +730,7 @@ final class ArticlesControllers(
     maintenance.guard(WriteGate.OperationName("delete_article")):
       val now = currentSlug(slug)
       if store.delete(now, Caller.Local) then
-        Right(Article.Deleted(Article.Slug(now.value), Article.Deleted.Value(true)))
+        Right(Article.Deleted(Article.Slug(now.value), Article.Deleted.Value.Deleted))
       else Left(notFound(slug))
 
   /** `POST /api/articles/{slug}/rename` — a new slug; the old one keeps resolving and every `[[old]]` in other articles
@@ -851,7 +851,7 @@ final class ArticlesControllers(
               )
           }
           .flatMap { s =>
-            if !req.force.value && req.mtime.exists(m => store.updatedAtMillis.get(s).exists(_.value > m.value)) then
+            if !req.force.force && req.mtime.exists(m => store.updatedAtMillis.get(s).exists(_.value > m.value)) then
               Right(
                 SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), List(SeedResult.Skipped(s.value)))
               )
@@ -862,7 +862,7 @@ final class ArticlesControllers(
                 .map(m => error(m, Write.CodeInvalid))
                 .flatMap(k =>
                   strictGate(
-                    domain.research.Article.StrictMode(req.strict.value),
+                    domain.research.Article.StrictMode(req.strict.strict),
                     formatting(parsed.body, parsed.summary)
                   ).map(_ => k)
                 )

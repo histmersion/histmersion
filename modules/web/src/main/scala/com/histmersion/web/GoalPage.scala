@@ -161,7 +161,7 @@ object GoalPage:
       view.ask(ApiClient.goalView(slug))
       tasks.ask(ApiClient.queueForGoal(Queue.Kind.Tasks.label, slug))
       toAcquire.ask(ApiClient.queueForGoal(Queue.Kind.Acquire.label, slug))
-      if ui.agentsEnabled.value then
+      if ui.agentsEnabled.agentsEnabled then
         agents.ask(ApiClient.managers.flatMap { all =>
           val mine = all.filter(_.goal.contains(slug))
           scala.concurrent.Future
@@ -318,7 +318,7 @@ object GoalPage:
       ),
       div(
         cls := "btn-group goal-actions",
-        Option.when(ui.agentsEnabled.value)(
+        Option.when(ui.agentsEnabled.agentsEnabled)(
           button(
             typ := "button",
             cls := "btn goal-check",
@@ -326,7 +326,7 @@ object GoalPage:
             onClick --> (_ => checkNow())
           )
         ),
-        Option.when(ui.agentsEnabled.value)(
+        Option.when(ui.agentsEnabled.agentsEnabled)(
           button(
             typ := "button",
             cls := "btn goal-pause",
@@ -351,7 +351,7 @@ object GoalPage:
         if is.isEmpty then
           div(
             cls := "row muted",
-            if !ui.agentsEnabled.value then "Research agents are off on this server: no step runs."
+            if !ui.agentsEnabled.agentsEnabled then "Research agents are off on this server: no step runs."
             else
               v.plan.fold("No steps yet: the goal's agents have not planned its work.")(pl =>
                 shown"Approved plan: ${Plural.count(Plural.CountN(pl.subGoals.size), Plural.CountSingular("sub-goal"))}, ${Plural.count(Plural.CountN(pl.queries.size), Plural.CountSingular("query"), Plural.CountPlural("queries"))}, " +

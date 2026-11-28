@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -26,12 +27,16 @@ final case class PassageResult(
 object PassageResult:
   type Query = Query.T
   object Query extends Newtype[String, Pure]
-  type Regex = Regex.T
-  object Regex extends Newtype[Boolean, Pure]
+  enum Regex derives CanEqual:
+    case Regex, Literal
+  object Regex extends TwoStates[Regex]:
+    extension (regex: Regex) def regex: Boolean = regex == Regex
   type Matches = Matches.T
   object Matches extends Newtype[Int, Pure]
-  type Capped = Capped.T
-  object Capped extends Newtype[Boolean, Pure]
+  enum Capped derives CanEqual:
+    case Capped, Complete
+  object Capped extends TwoStates[Capped]:
+    extension (capped: Capped) def capped: Boolean = capped == Capped
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
   type BodyChars = BodyChars.T

@@ -301,7 +301,7 @@ final class ModelPicker(
     val refreshed = plan.flatMap(_._3)
     val blocked = plan.collect { case (p, PlanQuota.Verdict.Blocked(w, u), _) => (p, w, u) }
     val spent = ss
-      .filterNot(_.usable.value)
+      .filterNot(_.usable.usable)
       .map(s =>
         Problem.Run.Spent(
           Problem.Raw(s.limit.text),
@@ -503,27 +503,27 @@ final class ModelPicker(
               case Left(why) =>
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
-                  ready = ModelChains.ChainEntry.Ready(false),
-                  usable = ModelChains.ChainEntry.Usable(false),
+                  ready = ModelChains.ChainEntry.Ready.Unready,
+                  usable = ModelChains.ChainEntry.Usable.Unusable,
                   why.toVector.toList
                 )
               case Right((_, billing)) =>
                 val st = state(m, effective, now, stored)
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
-                  ready = ModelChains.ChainEntry.Ready(true),
-                  ChainEntry.Usable(st.usable.value),
+                  ready = ModelChains.ChainEntry.Ready.Ready,
+                  (if st.usable.value then ChainEntry.Usable.Usable else ChainEntry.Usable.Unusable),
                   st.why.toList,
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
                   Some(ChainEntry.Billing(billing.describe)),
-                  cooling = ChainEntry.Cooling(st.cooling.value)
+                  cooling = (if st.cooling.value then ChainEntry.Cooling.Cooling else ChainEntry.Cooling.Warm)
                 )
           }
           RoleChain(
             RoleChain.Role(r.wire.value),
             src.wire,
             entries,
-            entries.find(_.usable.value).map(e => RoleChain.Active(e.model.value)),
+            entries.find(_.usable.usable).map(e => RoleChain.Active(e.model.value)),
             Option
               .when(ms.isEmpty)(
                 Problem.Run.NoModel(
@@ -545,7 +545,7 @@ final class ModelPicker(
           src.wire,
           ModelChains.AllowanceStatus.ReservePct(0),
           Nil,
-          usable = ModelChains.AllowanceStatus.Usable(false),
+          usable = ModelChains.AllowanceStatus.Usable.Unusable,
           None,
           Some(AllowanceStatus.Note(s"cannot be read, so it blocks what it covers: ${why.sentences.mkString("; ")}"))
         )
@@ -569,11 +569,11 @@ final class ModelPicker(
               LimitStatus.Used(s.used.toDouble),
               LimitStatus.Remaining(s.remaining.toDouble),
               LimitStatus.Reserve(s.reserve.toDouble),
-              LimitStatus.Usable(s.usable.value),
+              (if s.usable.usable then LimitStatus.Usable.Usable else LimitStatus.Usable.Unusable),
               s.freesAt.map(f => LimitStatus.FreesAt(iso(f.value)))
             )
           ),
-          AllowanceStatus.Usable(ok),
+          (if ok then AllowanceStatus.Usable.Usable else AllowanceStatus.Usable.Unusable),
           frees.map(f => LimitStatus.FreesAt(iso(f.value))),
           note.map(n => AllowanceStatus.Note(n))
         )

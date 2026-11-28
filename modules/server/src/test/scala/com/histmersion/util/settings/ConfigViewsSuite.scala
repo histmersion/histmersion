@@ -18,11 +18,11 @@ class ConfigViewsSuite extends munit.FunSuite:
       f.info,
       ConfigFileInfo(
         Some(ConfigFileInfo.Path("/c/histmersion.conf")),
-        loaded = ConfigFileInfo.Loaded(true),
+        loaded = ConfigFileInfo.Loaded.Loaded,
         List(ConfigFileInfo.UnknownKeys("histmersion.x"))
       )
     )
     assertEquals(
       UserConfigFile(None, loaded = UserConfigFile.Loaded(false)).info,
-      ConfigFileInfo(None, loaded = ConfigFileInfo.Loaded(false), Nil)
+      ConfigFileInfo(None, loaded = ConfigFileInfo.Loaded.Absent, Nil)
     )

@@ -36,8 +36,8 @@ class DirSizeSuite extends munit.FunSuite:
       (
         DirSize.Result.Bytes(600L),
         DirSize.Result.Files(3L),
-        DirSize.Result.Exists(true),
-        DirSize.Result.Partial(false),
+        DirSize.Result.Exists.Exists,
+        DirSize.Result.Partial.Whole,
         DirSize.Result.Unreadable(0)
       )
     )
@@ -46,14 +46,14 @@ class DirSizeSuite extends munit.FunSuite:
     val r = DirSize.measure(d.resolve("nope"), DirSize.Budget.unlimited)
     assertEquals(
       r,
-      DirSize.Result(DirSize.Result.Bytes(0L), DirSize.Result.Files(0L), exists = DirSize.Result.Exists(false))
+      DirSize.Result(DirSize.Result.Bytes(0L), DirSize.Result.Files(0L), exists = DirSize.Result.Exists.Missing)
     )
 
   tmp.test("a regular file as the root is its own size"): d =>
     val f = file(d.resolve("one.pmtiles"), 1234)
     assertEquals(
       DirSize.measure(f, DirSize.Budget.unlimited),
-      DirSize.Result(DirSize.Result.Bytes(1234L), DirSize.Result.Files(1L), exists = DirSize.Result.Exists(true))
+      DirSize.Result(DirSize.Result.Bytes(1234L), DirSize.Result.Files(1L), exists = DirSize.Result.Exists.Exists)
     )
 
   tmp.test("links inside the tree are neither followed nor counted; a loop cannot hang the walk"): d =>
@@ -66,7 +66,7 @@ class DirSizeSuite extends munit.FunSuite:
     val r = DirSize.measure(root, DirSize.Budget.unlimited)
     assertEquals(
       (r.bytes, r.files, r.partial),
-      (DirSize.Result.Bytes(10L), DirSize.Result.Files(1L), DirSize.Result.Partial(false))
+      (DirSize.Result.Bytes(10L), DirSize.Result.Files(1L), DirSize.Result.Partial.Whole)
     )
 
   tmp.test("the root itself may be a link (a configured directory moved to another disk) and is followed"): d =>
@@ -78,12 +78,12 @@ class DirSizeSuite extends munit.FunSuite:
     (1 to 50).foreach(i => file(d.resolve(f"f$i%02d.bin"), 10))
     val b = new DirSize.Budget(DirSize.Budget.MaxEntries(10), DirSize.Budget.DeadlineNanos(Long.MaxValue))
     val r = DirSize.measure(d, b)
-    assert(r.partial.value, r)
+    assert(r.partial.partial, r)
     assert(r.bytes.value < 500L && r.files.value < 50L, r)
     assert(b.exhausted)
     // the budget is shared: the next walk of the same measurement stops at once
     val next = DirSize.measure(d, b)
-    assert(next.partial.value && next.bytes.value == 0L, next)
+    assert(next.partial.partial && next.bytes.value == 0L, next)
 
   tmp.test("the time cap stops the walk too"): d =>
     (1 to 20).foreach(i => file(d.resolve(s"f$i.bin"), 10))
@@ -95,7 +95,7 @@ class DirSizeSuite extends munit.FunSuite:
       () => { t += 1; t }
     )
     val r = DirSize.measure(d, b)
-    assert(r.partial.value, r)
+    assert(r.partial.partial, r)
     assert(r.files.value < 20L, r)
 
   tmp.test("an unreadable directory is skipped and counted, the rest is measured"): d =>

@@ -11,21 +11,24 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Managers
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 object RepairAcquire:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
   final case class RepairRequest(
-      dryRun: RepairRequest.DryRun = RepairRequest.DryRun(false),
+      dryRun: RepairRequest.DryRun = RepairRequest.DryRun.Apply,
       by: Option[RepairRequest.By] = None,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object RepairRequest:
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     export api.automation.Activity.Actor as By
 
   final case class RepairRow(
@@ -84,9 +87,9 @@ object RepairAcquire:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(r: RepairResult): Markdown =
-    val verb = if (r.dryRun) == RepairRequest.DryRun(true) then "would " else ""
+    val verb = if (r.dryRun) == RepairRequest.DryRun.DryRun then "would " else ""
     val head = s"# Repair of the acquisition list${
-        if (r.dryRun) == RepairRequest.DryRun(true) then " (dry run: nothing changed)" else ""
+        if (r.dryRun) == RepairRequest.DryRun.DryRun then " (dry run: nothing changed)" else ""
       }\n\n" +
       s"- ${verb}move ${Plural.count(Plural.CountN(r.moved.value.toLong), Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
       s"- ${verb}remove ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("item"))} already in the corpus\n" +

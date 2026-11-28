@@ -35,13 +35,13 @@ object AgentsMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def models(m: ModelsInfo): String =
-    val head = s"# Embedded agents — ${if (m.enabled) == ModelsInfo.Enabled(true) then "enabled" else "OFF"}\n\n" +
+    val head = s"# Embedded agents — ${if (m.enabled) == ModelsInfo.Enabled.Enabled then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
     val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- ${p.sentence}").mkString("\n")
     if m.chains.isEmpty then
       val rows = m.roles.map { r =>
         s"| ${r.role} | ${r.model.getOrElse("—")} | ${
-            if (r.ready) == RoleModel.Ready(true) then "ready" else said(r.problems).getOrElse("not ready")
+            if (r.ready) == RoleModel.Ready.Ready then "ready" else said(r.problems).getOrElse("not ready")
           } |"
       }
       (head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
@@ -64,9 +64,9 @@ object AgentsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def chainEntry(e: ModelChains.ChainEntry): String =
     val mark =
-      if (e.usable) == ModelChains.ChainEntry.Usable(true) then ""
-      else if !((e.ready) == ModelChains.ChainEntry.Ready(true)) then " (not ready)"
-      else if (e.cooling) == ModelChains.ChainEntry.Cooling(true) then
+      if (e.usable) == ModelChains.ChainEntry.Usable.Usable then ""
+      else if !((e.ready) == ModelChains.ChainEntry.Ready.Ready) then " (not ready)"
+      else if (e.cooling) == ModelChains.ChainEntry.Cooling.Cooling then
         " (cooling down" + e.freesAt.fold("")(t => s" until $t") + ": its plan reported its usage limit)"
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     (s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}")
@@ -75,9 +75,9 @@ object AgentsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def roleChain(c: ModelChains.RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
-      val state = if (e.usable) == ModelChains.ChainEntry.Usable(true) then "usable"
-      else if !((e.ready) == ModelChains.ChainEntry.Ready(true)) then "not ready"
-      else if (e.cooling) == ModelChains.ChainEntry.Cooling(true) then "cooling down"
+      val state = if (e.usable) == ModelChains.ChainEntry.Usable.Usable then "usable"
+      else if !((e.ready) == ModelChains.ChainEntry.Ready.Ready) then "not ready"
+      else if (e.cooling) == ModelChains.ChainEntry.Cooling.Cooling then "cooling down"
       else "below its allowance"
       s"${i + 1}. `${e.model}` — $state${said(e.problems).fold("")(p => s": $p")}${e.freesAt.fold("")(t =>
           s" (frees $t)"
@@ -99,7 +99,7 @@ object AgentsMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
-    val state = if (a.usable) == ModelChains.AllowanceStatus.Usable(true) then "has headroom"
+    val state = if (a.usable) == ModelChains.AllowanceStatus.Usable.Usable then "has headroom"
     else s"**below its reserve**${a.freesAt.fold(" (does not free by itself)")(t => s" until $t")}"
     val limits = a.limits.map { l =>
       s"  - ${l.limit}: ${amount(l.used.value, l.measure)} used, ${amount(l.remaining.value, l.measure)} left" +
@@ -127,10 +127,10 @@ object AgentsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
-      if !((p.available) == PlanQuota.PoolStatus.Available(true)) then
+      if !((p.available) == PlanQuota.PoolStatus.Available.Available) then
         s"**${p.reason.map(r => s"$r").getOrElse("unavailable: no login")}**"
-      else if (p.held) == PlanQuota.PoolStatus.Held(true) then "**held** — no agent use until released"
-      else if (p.usable) == PlanQuota.PoolStatus.Usable(true) then "usable" + p.reason.fold("")(r => s" ($r)")
+      else if (p.held) == PlanQuota.PoolStatus.Held.Held then "**held** — no agent use until released"
+      else if (p.usable) == PlanQuota.PoolStatus.Usable.Usable then "usable" + p.reason.fold("")(r => s" ($r)")
       else
         s"**paused** — ${p.reason.map(r => s"$r").getOrElse("below its floor")}" + p.until.fold("")(u =>
           s"; frees at $u"
@@ -145,10 +145,10 @@ object AgentsMarkdown:
                 if w.limit == PlanQuota.Reading.Limit("claude") || w.limit == PlanQuota.Reading.Limit("codex") then
                   w.kind
                 else s"${w.limit}/${w.kind}"
-              val left = if (w.usable) == PlanQuota.WindowStatus.Usable(true) then s"${pct(w.leftPct.value)}%"
+              val left = if (w.usable) == PlanQuota.WindowStatus.Usable.Usable then s"${pct(w.leftPct.value)}%"
               else s"**${pct(w.leftPct.value)}%**"
               s"| $name | ${pct(w.usedPct.value)}% | $left | ${w.floor}% | ${w.resetsAt.getOrElse("—")} | " +
-                s"${age(w.ageSeconds.value)} ago${if w.stale.value then " (stale)" else ""} | ${w.source} |"
+                s"${age(w.ageSeconds.value)} ago${if w.stale.stale then " (stale)" else ""} | ${w.source} |"
             }
             .mkString("\n")
     s"### ${p.title} (`${p.pool}`) — $state\n\nCovers ${p.covers.map(c => s"`$c`").mkString(", ")} · floors " +
@@ -164,7 +164,7 @@ object AgentsMarkdown:
       if p.refreshesToday == PlanQuota.PoolStatus.RefreshesToday(1) then "once" else s"${p.refreshesToday} times"
     val last = p.lastRefresh.fold("")(r =>
       s"; last ${r.at} (${r.trigger}, ${r.mode}): ${
-          if (r.ok) == PlanQuota.RefreshInfo.Ok(true) then "" else "failed — "
+          if (r.ok) == PlanQuota.RefreshInfo.Ok.Ok then "" else "failed — "
         }${r.detail}"
     )
     (s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
@@ -175,7 +175,7 @@ object AgentsMarkdown:
     (q.pools
       .map(r =>
         s"**${r.pool}**: ${
-            if (r.refreshed) == PlanQuota.PoolRefreshed.Refreshed(true) then "read" else "no reading"
+            if (r.refreshed) == PlanQuota.PoolRefreshed.Refreshed.Refreshed then "read" else "no reading"
           } — ${r.detail}\n\n${pool(r.status)}"
       )
       .mkString("\n\n") +
@@ -221,14 +221,14 @@ object AgentsMarkdown:
     def checks(cs: List[DoctorCheck]) = cs.map(c => s"- ${mark(c.level)} · ${c.name}: ${c.detail}").mkString("\n")
     val provs = d.providers.map { p =>
       val use =
-        if (p.used) == ProviderDoctor.Used(true) then s"used by: ${p.models.mkString(", ")}" else "no role uses it"
+        if (p.used) == ProviderDoctor.Used.Used then s"used by: ${p.models.mkString(", ")}" else "no role uses it"
       s"## ${p.provider} — ${mark(p.level)} ($use)\n\n${checks(p.checks)}" +
         (if p.upstreamModels.isEmpty then ""
          else
            s"\n\nUpstream lists: ${p.upstreamModels.take(30).mkString(", ")}" +
              (if p.upstreamModels.size > 30 then s" … (${p.upstreamModels.size})" else ""))
     }
-    (s"# Agent doctor${if (d.online) == DoctorReport.Online(true) then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs
+    (s"# Agent doctor${if (d.online) == DoctorReport.Online.Online then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs
       .mkString("\n\n"))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -239,7 +239,7 @@ object AgentsMarkdown:
       if p.answer.isEmpty then
         "**no typed answer**" + (if p.problems.isEmpty then "" else s": ${p.problems.mkString("; ")}")
       else if p.problems.nonEmpty then s"answer is **incomplete**: ${p.problems.mkString("; ")}"
-      else if p.matchesRecord.value then "answer **matches** the record"
+      else if p.matchesRecord.matchesRecord then "answer **matches** the record"
       else "answer does **not** match the record"
     val tries = if p.attempts.value > 1 then s" · ${p.attempts} attempts" else ""
     s"# Probe — ${p.model}\n\n$verdict$tries · ${p.iterations} iteration(s) · ${p.finish} · ${p.millis} ms · " +
@@ -252,7 +252,7 @@ object AgentsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def options(r: RunInfo): String =
     List(
-      Option.when(((r.dryRun) == RunInfo.DryRun(true)))("dry run, writes nothing"),
+      Option.when(((r.dryRun) == RunInfo.DryRun.DryRun))("dry run, writes nothing"),
       Option.when(r.params.overrides.nonEmpty)(r.params.overrides.map(_.text).mkString(", ")),
       Option.when(((r.params.fixes) == (true)))("fix"),
       r.params.rounds.map(n => Plural.count(Plural.CountN(n.value.toLong), Plural.Noun.Singular("round"))),
@@ -345,7 +345,7 @@ object AgentsMarkdown:
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
-    val head = s"# Agent run ${r.id}${if (r.dryRun) == RunInfo.DryRun(true) then " (dry run)" else ""}\n\n" +
+    val head = s"# Agent run ${r.id}${if (r.dryRun) == RunInfo.DryRun.DryRun then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
       Option(options(r)).filter((_).nonEmpty).fold("")(o => s" · $o") + "\n" +
       s"- status: **${r.status}**${r.error.filter(_.sentence.nonEmpty).fold("")(e => s" — ${e.sentence}")}\n" +
@@ -473,9 +473,9 @@ object AgentsMarkdown:
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
     val works = p.works.map { w =>
-      val where = if (w.inCorpus) == Goal.Plans.PlannedWork.InCorpus(true) then
+      val where = if (w.inCorpus) == Goal.Plans.PlannedWork.InCorpus.InCorpus then
         s"in the corpus as [[${w.citekey.getOrElse("?")}]]"
-      else if (w.isOa) == Goal.Plans.PlannedWork.IsOa(true) then "to acquire (open access)"
+      else if (w.isOa) == Goal.Plans.PlannedWork.IsOa.OpenAccess then "to acquire (open access)"
       else "to acquire"
       s"- ${w.title.getOrElse(w.doi)} (${w.year.fold("n.d.")(_.toString)}) doi:${w.doi} — $where${
           if s"${w.why}".isEmpty then "" else s": ${w.why}"
@@ -502,7 +502,7 @@ object AgentsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def scheduleLine(s: Goal.Plans.GoalSchedule): String =
-    val state = if (s.enabled) == Goal.Plans.GoalSchedule.Enabled(true) then "on" else "off"
+    val state = if (s.enabled) == Goal.Plans.GoalSchedule.Enabled.Enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${usd(b.value)} USD")
     s"${s.goal} · ${s.kind.wire} · `${s.cron}` · $state$budget" +
       s.nextRunAt.fold("")(n => s" · next $n") + s.lastRun.fold("")(r => s" · last run ${r.value.take(8)}") +
@@ -574,7 +574,7 @@ object AgentsMarkdown:
     val runs = table(
       List(
         "status" -> c.runs
-          .map(r => r.status.value + (if (r.dryRun) == RunSide.DryRun(true) then " (dry run)" else "")), {
+          .map(r => r.status.value + (if (r.dryRun) == RunSide.DryRun.DryRun then " (dry run)" else "")), {
           val refactorTuple22 = "model" -> c.runs.map(r =>
             (r.model.toList ++ r.modelFor.map(_.text)).mkString(", ") match
               case "" => "the configured roles"

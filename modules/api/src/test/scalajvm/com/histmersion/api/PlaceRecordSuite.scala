@@ -36,7 +36,7 @@ class PlaceRecordSuite extends munit.FunSuite:
       None,
       None,
       Place.Summary.Names(""),
-      Place.Summary.Contested(false)
+      Place.Summary.Contested.Settled
     )
     val rec = Place.Record(
       Some(Place.Record.DateSource("wikidata-p580")),

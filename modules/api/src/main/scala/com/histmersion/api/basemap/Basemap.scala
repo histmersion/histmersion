@@ -15,6 +15,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.ByteCount
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Basemap:
   object Tile:
@@ -131,8 +132,10 @@ object Basemap:
     type Spec = Spec.T
     object Spec extends Newtype[String, Pure]
     export LayerInfo.Dropped as Layer
-    type Whole = Whole.T
-    object Whole extends Newtype[Boolean, Pure]
+    enum Whole derives CanEqual:
+      case Whole, Partial
+    object Whole extends TwoStates[Whole]:
+      extension (whole: Whole) def whole: Boolean = whole == Whole
     type Drop = Drop.T
     object Drop extends Newtype[String, Pure]
     type Spare = Spare.T
@@ -148,7 +151,7 @@ object Basemap:
       val drop = kinds.filterNot(_.startsWith("+")).toSet
       DropRule(
         DropRule.Layer(words.head),
-        DropRule.Whole(kinds.isEmpty),
+        (if kinds.isEmpty then DropRule.Whole.Whole else DropRule.Whole.Partial),
         (drop).map(refactorValue7 => DropRule.Drop(refactorValue7)),
         (spare).map(refactorValue8 => DropRule.Spare(refactorValue8))
       )
@@ -289,10 +292,10 @@ object Basemap:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def droppedLayers(keepAll: FetchQuery.KeepAll, drop: Option[DropRule.Spec]): List[LayerInfo.Dropped] =
-    if (keepAll).value then Nil
+    if (keepAll).keepAll then Nil
     else
       drop match
-        case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(r => (r.whole).value).map(_.layer).distinct.sorted
+        case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(r => (r.whole).whole).map(_.layer).distinct.sorted
         case None    => LegacyLacks
 
   def missingFor(needs: List[LayerInfo.Dropped], dropped: List[LayerInfo.Dropped]): List[StyleState.Missing] =
@@ -303,7 +306,7 @@ object Basemap:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def keptLine(keepAll: FetchQuery.KeepAll, drop: Option[DropRule.Spec]): LayerInfo.Kept =
-    if (keepAll).value then LayerInfo.Kept("everything (unfiltered)")
+    if (keepAll).keepAll then LayerInfo.Kept("everything (unfiltered)")
     else
       drop match
         case Some(d) if (d).value.trim.isEmpty => LayerInfo.Kept("everything (nothing dropped)")
@@ -318,8 +321,8 @@ object Basemap:
       maxZoom: Option[FetchQuery.MaxZoom] = None,
       terrainMaxZoom: Option[FetchQuery.TerrainMaxZoom] = None,
       bbox: Option[FetchQuery.Bbox] = None,
-      dryRun: FetchQuery.DryRun = FetchQuery.DryRun(false),
-      keepAll: FetchQuery.KeepAll = FetchQuery.KeepAll(false),
+      dryRun: FetchQuery.DryRun = FetchQuery.DryRun.Apply,
+      keepAll: FetchQuery.KeepAll = FetchQuery.KeepAll.Trim,
       focus: Option[FetchQuery.Focus] = None
   )
 
@@ -329,10 +332,14 @@ object Basemap:
     type TerrainMaxZoom = TerrainMaxZoom.T
     object TerrainMaxZoom extends Newtype[Int, Pure]
     export BBox.Text as Bbox
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
-    type KeepAll = KeepAll.T
-    object KeepAll extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
+    enum KeepAll derives CanEqual:
+      case KeepAll, Trim
+    object KeepAll extends TwoStates[KeepAll]:
+      extension (keepAll: KeepAll) def keepAll: Boolean = keepAll == KeepAll
     export Basemap.Focus.Name as Focus
 
   final case class Focus(
@@ -428,13 +435,15 @@ object Basemap:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def deepest: Option[Focus.MaxZoom] =
       (maxZoom.toList ++ focus
-        .map(_.maxZoom) ++ onDemand.filter(d => (d.enabled).value).map(_.maxZoom).toList).maxOption
+        .map(_.maxZoom) ++ onDemand.filter(d => (d.enabled).enabled).map(_.maxZoom).toList).maxOption
 
   object LayerInfo:
 
     export Basemap.Layer.Wire as Layer
-    type Present = Present.T
-    object Present extends Newtype[Boolean, Pure]
+    enum Present derives CanEqual:
+      case Present, Absent
+    object Present extends TwoStates[Present]:
+      extension (present: Present) def present: Boolean = present == Present
     type File = File.T
     object File extends Newtype[String, Pure]
     type MinZoom = MinZoom.T
@@ -471,8 +480,10 @@ object Basemap:
         api.json.Schema
 
   object OnDemand:
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
+    enum Enabled derives CanEqual:
+      case Enabled, Disabled
+    object Enabled extends TwoStates[Enabled]:
+      extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
     export Focus.MaxZoom
     type Dir = Dir.T
     object Dir extends Newtype[String, Pure]
@@ -494,14 +505,16 @@ object Basemap:
   final case class RemoveQuery(
       layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire("all"),
       focus: Option[RemoveQuery.Focus] = None,
-      cache: RemoveQuery.Cache = RemoveQuery.Cache(false)
+      cache: RemoveQuery.Cache = RemoveQuery.Cache.NoCache
   )
 
   object RemoveQuery:
     export Basemap.Layer.Wire as Layer
     export Basemap.Focus.Name as Focus
-    type Cache = Cache.T
-    object Cache extends Newtype[Boolean, Pure]
+    enum Cache derives CanEqual:
+      case Cache, NoCache
+    object Cache extends TwoStates[Cache]:
+      extension (cache: Cache) def cache: Boolean = cache == Cache
 
   final case class Removed(removed: List[Removed.Value], bytes: ByteCount)
       derives JsonCodec,
@@ -532,9 +545,10 @@ object Basemap:
     def missing(id: StyleState.Id): List[StyleState.Missing] = styles.find(_.id == id).fold(Nil)(_.missing)
 
   object Status:
-
-    type Available = Available.T
-    object Available extends Newtype[Boolean, Pure]
+    enum Available derives CanEqual:
+      case Available, Unavailable
+    object Available extends TwoStates[Available]:
+      extension (available: Available) def available: Boolean = available == Available
     export OnDemand.Dir
     export BBox.Text as Bbox
     type FetchCommand = FetchCommand.T

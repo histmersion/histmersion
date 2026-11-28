@@ -205,7 +205,7 @@ final class ManagersControllers(
   )(using Creator.New): Either[Api.Error, ManagerInfo] =
     // created paused unless asked otherwise — or, when nothing is asked, while the autopilot runs the goals
     val state =
-      if in.paused.exists(!_.value) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
+      if in.paused.exists(!_.paused) || (in.paused.isEmpty && agents.autopilot.on) then State.Active else State.Paused
     val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)
     def make(
         k: Kind,
@@ -337,11 +337,11 @@ final class ManagersControllers(
         .flatMap(_.cron)
         .filter(_.value.trim.nonEmpty)
         .fold[Either[Api.Error, Option[Cron]]](Right(None))(t => checkCron(k, t, now).map(Some(_)))
-    val seeding = in.seed.value
+    val seeding = in.seed.seed
     for
       slug <- DomainGoal.Slug.parse(in.slug.value.trim).left.map(Api.Error(_))
       plan <-
-        if !in.plan.value then Right(None)
+        if !in.plan.plan then Right(None)
         else
           agents
             .prepare(
@@ -556,7 +556,7 @@ final class ManagersControllers(
   private def deleteHeld(id: ManagerLight.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
       inFlight(lightId(m)).foreach(r => Unused(agents.engine.cancel(runIdOf(r.id)), Unused.Why.Idempotent))
-      Removed(Removed.Value(Transactor(ds).write(ManagerRepo.delete(m.id))))
+      Removed((if Transactor(ds).write(ManagerRepo.delete(m.id)) then Removed.Value.Removed else Removed.Value.Kept))
     }
 
   private def inFlight(id: ManagerLight.Id): List[RunInfo] =
@@ -584,10 +584,17 @@ final class ManagersControllers(
       runs: Option[ManagerInfo.PauseRuns]
   )(using WritePermit)(using Creator.New): Either[Api.Error, ManagerInfo] =
     manager(id).flatMap { m =>
-      val withRuns = runs.exists(_.value)
+      val withRuns = runs.exists(_.pauseRuns)
       action.value.trim.toLowerCase match
         case "pause" =>
-          Unused(agents.managerStore.setState(m.id, State.Paused, ManagerInfo.PauseRuns(withRuns)), Unused.Why.ReadBack)
+          Unused(
+            agents.managerStore.setState(
+              m.id,
+              State.Paused,
+              (if withRuns then ManagerInfo.PauseRuns.Pause else ManagerInfo.PauseRuns.Run)
+            ),
+            Unused.Why.ReadBack
+          )
           val paused = if withRuns then
             inFlight(lightId(m))
               .filter(r => r.status == RunState.Running.wire || r.status == RunState.Queued.wire)
@@ -604,8 +611,8 @@ final class ManagersControllers(
           )
           manager(lightId(m))
         case "resume" =>
-          Unused(agents.managerStore.setState(m.id, State.Active, ManagerInfo.PauseRuns(false)), Unused.Why.ReadBack)
-          val resumed = if m.pauseRuns.value && cfg.enabled.value then
+          Unused(agents.managerStore.setState(m.id, State.Active, ManagerInfo.PauseRuns.Run), Unused.Why.ReadBack)
+          val resumed = if m.pauseRuns.pauseRuns && cfg.enabled.value then
             inFlight(lightId(m))
               .filter(r =>
                 r.status == RunState.Paused.wire && r.error
@@ -625,7 +632,7 @@ final class ManagersControllers(
           supervisor.nudge()
           manager(lightId(m))
         case "stop" =>
-          Unused(agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns(false)), Unused.Why.ReadBack)
+          Unused(agents.managerStore.setState(m.id, State.Stopped, ManagerInfo.PauseRuns.Run), Unused.Why.ReadBack)
           val cancelled = inFlight(lightId(m)).count(r => agents.engine.cancel(runIdOf(r.id)).isRight)
           val items =
             Transactor(ds).write(
@@ -1032,8 +1039,8 @@ final class ManagersControllers(
   private def addHintHeld(id: ManagerLight.Id, in: HintAdd)(using
       WritePermit
   )(using Creator.New): Either[Api.Error, ManagerHint] =
-    val propose = in.propose.exists(_.value)
-    val suggest = in.suggest.exists(_.value)
+    val propose = in.propose.exists(_.propose)
+    val suggest = in.suggest.exists(_.suggest)
     for
       m <- manager(id)
       text <- Option(in.text.value.trim)
@@ -1076,7 +1083,7 @@ final class ManagersControllers(
           text,
           if propose then None else eff,
           author,
-          standing = ManagerHint.Standing(!in.once.exists(_.value))
+          standing = (if !in.once.exists(_.once) then ManagerHint.Standing.Standing else ManagerHint.Standing.OneOff)
         )
       )
       applied = eff.fold("")(e =>
@@ -1100,7 +1107,8 @@ final class ManagersControllers(
         item.map(_.id),
         None,
         Feed.Hint,
-        s"hint #${hint.id} (${if hint.standing.value then "standing" else "once"}${item.fold("")(i => s", ${i.target}")}): ${text.value.take(300)}$applied$asked"
+        s"hint #${hint.id} (${if hint.standing.standing then "standing" else "once"}${item
+            .fold("")(i => s", ${i.target}")}): ${text.value.take(300)}$applied$asked"
       )
       out <- Transactor(ds)
         .read(ManagerRepo.hint(hint.id))
@@ -1359,7 +1367,7 @@ final class ManagersControllers(
     manager(id).map { m =>
       val gone = Transactor(ds).write(ManagerRepo.retireHint(m.id, hint))
       if gone then record(m.id, None, None, Feed.Hint, s"hint #$hint retired by a person")
-      Removed(Removed.Value(gone))
+      Removed((if gone then Removed.Value.Removed else Removed.Value.Kept))
     }
 
   // ── goal schedules: a watcher's sweeps (phase 3) ───────────────────────────────────────────────
@@ -1415,7 +1423,7 @@ final class ManagersControllers(
         .map(p => error(p))
       _ = agents.managerStore.get(id) match
         case None =>
-          val c = ManagerConfig(sweeps = Some(if in.enabled.value then List(sw.wire) else Nil), budgetUsd = budget)
+          val c = ManagerConfig(sweeps = Some(if in.enabled.enabled then List(sw.wire) else Nil), budgetUsd = budget)
           Unused(
             agents.managerStore.create(
               id,
@@ -1438,7 +1446,7 @@ final class ManagersControllers(
           )
         case Some(m) =>
           val cur = Sweep.of(m.config)
-          val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled.value else cur.contains(x))
+          val sweeps = Sweep.values.toList.filter(x => if x == sw then in.enabled.enabled else cur.contains(x))
           val c = m.config
             .modify(_.sweeps)
             .setTo(Some(sweeps.map(_.wire)))
@@ -1452,14 +1460,14 @@ final class ManagersControllers(
             agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next),
             Unused.Why.ReadBack
           )
-          if !in.enabled.value then cancelSweep(m, sw, ManagerItem.Outcome("its schedule was turned off"))
+          if !in.enabled.enabled then cancelSweep(m, sw, ManagerItem.Outcome("its schedule was turned off"))
           record(
             id,
             None,
             None,
             Feed.Hint,
             s"the goal's ${kind.wire} schedule set: cron `${cron.text}`, " +
-              s"${if in.enabled.value then "on" else "off"}; sweeps ${
+              s"${if in.enabled.enabled then "on" else "off"}; sweeps ${
                   if sweeps.isEmpty then "none" else sweeps.map(_.wire).mkString(", ")
                 }"
           )
@@ -1478,7 +1486,7 @@ final class ManagersControllers(
             goal.transformInto[Goal.Slug],
             kind,
             Goal.Plans.GoalSchedule.Cron(cron.text.value),
-            Goal.Plans.GoalSchedule.Enabled(false),
+            Goal.Plans.GoalSchedule.Enabled.Disabled,
             in.budgetUsd.map(_.transformInto[Goal.Plans.GoalSchedule.BudgetUsd])
           )
         )
@@ -1521,7 +1529,8 @@ final class ManagersControllers(
           )
         removed
       }
-    Goal.Plans.Removed(Goal.Plans.Removed.Value(legacy || fromWatcher))
+    Goal.Plans.Removed((if legacy || fromWatcher then Goal.Plans.Removed.Value.Removed
+                        else Goal.Plans.Removed.Value.Kept))
 
   /** A sweep the watcher no longer runs: its pending or held item is cancelled (a running one finishes). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -1609,15 +1618,23 @@ final class ManagersControllers(
         val now = agents.autopilot.status()
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).orElse(Some("person"))
         AgentMode
-          .steps(now.on, AgentMode.Step.Drain.On(now.drain.isDefined), to)
+          .steps(now.on, (if now.drain.isDefined then AgentMode.Step.Drain.On.On else AgentMode.Step.Drain.On.Off), to)
           .foldLeft(now) { (_, step) =>
             step match
               case AgentMode.Step.Autopilot(on) =>
                 agents.autopilot.set(
-                  Autopilot.AutopilotSet(Autopilot.AutopilotSet.On(on.value), by.map(Autopilot.AutopilotSet.By(_)))
+                  Autopilot.AutopilotSet(
+                    (if on.on then Autopilot.AutopilotSet.On.On else Autopilot.AutopilotSet.On.Off),
+                    by.map(Autopilot.AutopilotSet.By(_))
+                  )
                 )
               case AgentMode.Step.Drain(on) =>
-                agents.drain.set(Autopilot.DrainSet(Autopilot.DrainSet.On(on.value), by.map(Autopilot.DrainSet.By(_))))
+                agents.drain.set(
+                  Autopilot.DrainSet(
+                    (if on.on then Autopilot.DrainSet.On.On else Autopilot.DrainSet.On.Off),
+                    by.map(Autopilot.DrainSet.By(_))
+                  )
+                )
           }
       }
 

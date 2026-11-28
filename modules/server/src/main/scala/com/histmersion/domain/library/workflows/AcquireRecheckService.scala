@@ -260,13 +260,13 @@ final class AcquireRecheckService(
         )
       case None if in.limit.exists(_.value < 0) =>
         Left(Write.invalid(Problem.Unclassified(Legacy.Text("--limit is 0 or more"))))
-      case None if in.all.value && in.id.isDefined =>
+      case None if in.all.all && in.id.isDefined =>
         Left(
           Write.invalid(
             Problem.Unclassified(Legacy.Text("--all re-checks every open item; --id one of them — not both"))
           )
         )
-      case None if in.all.value && in.limit.isDefined =>
+      case None if in.all.all && in.limit.isDefined =>
         Left(
           Write.invalid(
             Problem.Unclassified(
@@ -274,12 +274,12 @@ final class AcquireRecheckService(
             )
           )
         )
-      case None if !in.dryRun.value && jobSlot.isRunning => Left(busy)
-      case None                                          =>
-        if !in.dryRun.value && agents.drain.draining then
+      case None if !in.dryRun.dryRun && jobSlot.isRunning => Left(busy)
+      case None                                           =>
+        if !in.dryRun.dryRun && agents.drain.draining then
           Right(
             RecheckResult(
-              dryRun = RecheckResult.DryRun(false),
+              dryRun = RecheckResult.DryRun.Apply,
               note = Some(
                 RecheckResult.Note(
                   "the autopilot is draining: nothing runs until it is lifted " +
@@ -288,7 +288,7 @@ final class AcquireRecheckService(
               )
             )
           )
-        else if in.dryRun.value || in.id.isDefined then pass(in, now).toRight(passBusy)
+        else if in.dryRun.dryRun || in.id.isDefined then pass(in, now).toRight(passBusy)
         else site.maintenance.guard(WriteGate.OperationName("queue/acquire/recheck"))(byHand(in, now))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -312,15 +312,15 @@ final class AcquireRecheckService(
     val by = By(in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person"))
     val fs = facts(None)
     val base = RecheckResult(
-      dryRun = RecheckResult.DryRun(false),
+      dryRun = RecheckResult.DryRun.Apply,
       RecheckResult.Open(fs.size),
       RecheckResult.WithDoi(fs.count(_.action != Action.NoDoi))
     )
-    if in.all.value then
+    if in.all.all then
       val stopped = latestJob()
         .filter(resumable)
         .flatMap(j =>
-          j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).filter(_.all.value).flatMap(planOf).map(j -> _)
+          j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).filter(_.all.all).flatMap(planOf).map(j -> _)
         )
       val todo = fetchable(fs)
       stopped match
@@ -386,7 +386,7 @@ final class AcquireRecheckService(
     scala.util
       .Try(Instant.parse(d.since.value))
       .toOption
-      .map(JobPlan(JobPlan.All(d.all.value), JobPlan.UpTo(d.upTo.value.toInt), _))
+      .map(JobPlan(JobPlan.All(d.all.all), JobPlan.UpTo(d.upTo.value.toInt), _))
 
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
@@ -411,7 +411,7 @@ final class AcquireRecheckService(
       WritePermit
   )(using Creator.New): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(
-      RecheckJob.All(plan.all.value),
+      (if plan.all.value then RecheckJob.All.All else RecheckJob.All.Due),
       RecheckJob.UpTo(plan.upTo.value.toLong),
       RecheckJob.Since(plan.since.toString),
       RecheckJob.By(by.value),
@@ -492,7 +492,7 @@ final class AcquireRecheckService(
         val (end, rows, stop) = loop(picks, start, Nil)
         val line = AcquireRecheck.progressLine(end)
         val r = RecheckResult(
-          dryRun = RecheckResult.DryRun(false),
+          dryRun = RecheckResult.DryRun.Apply,
           due = RecheckResult.Due(end.total.value - start.tried.value),
           closed = RecheckResult.Closed(closed.size),
           fetched = RecheckResult.Fetched(rows.count(_.action.value == Fetched)),
@@ -530,12 +530,12 @@ final class AcquireRecheckService(
     val gen = up.fetcherGeneration
     val fs = facts(in.id)
     val closes = fs.collect { case f @ Facts(_, Action.Close(ck), _) => f -> ck }
-    val dueNow = if in.id.isDefined || in.all.value then fetchable(fs) else due(fs, gen, now)
+    val dueNow = if in.id.isDefined || in.all.all then fetchable(fs) else due(fs, gen, now)
     val (tried, fetchedToday) = triedToday(now)
     val perPass = in.limit.fold(s.perPass.value)(_.value)
     val room =
       if in.id.isDefined then 1
-      else if in.all.value then dueNow.size
+      else if in.all.all then dueNow.size
       else
         AcquireRecheck
           .allowance(
@@ -557,13 +557,13 @@ final class AcquireRecheckService(
         )
       )
     val base = RecheckResult(
-      RecheckResult.DryRun(in.dryRun.value),
+      (if in.dryRun.dryRun then RecheckResult.DryRun.DryRun else RecheckResult.DryRun.Apply),
       RecheckResult.Open(fs.size),
       RecheckResult.WithDoi(withDoi),
       RecheckResult.Due(dueNow.size),
       RecheckResult.Allowance(room)
     )
-    val capNote = Option.when(picks.size < dueNow.size && in.id.isEmpty && !in.all.value)(
+    val capNote = Option.when(picks.size < dueNow.size && in.id.isEmpty && !in.all.all)(
       RecheckResult.Note(
         s"${dueNow.size - picks.size} due item(s) wait for the next pass: at most $perPass a pass, " +
           s"${s.perDay} a day ($tried tried today)" +
@@ -572,7 +572,7 @@ final class AcquireRecheckService(
            else "")
       )
     )
-    if in.dryRun.value then
+    if in.dryRun.dryRun then
       val rows = closes.map((f, ck) =>
         RecheckRow(
           RecheckRow.Item(f.item.id.value),
@@ -745,7 +745,7 @@ final class AcquireRecheckService(
   def status(now: Instant = Instant.now(agents.clock)): RecheckStatus =
     val s = settings
     if !s.enabled.value then
-      RecheckStatus(enabled = RecheckStatus.Enabled(false), job = jobLine().map(RecheckStatus.Job(_)))
+      RecheckStatus(enabled = RecheckStatus.Enabled.Disabled, job = jobLine().map(RecheckStatus.Job(_)))
     else
       val gen = upstream().fetcherGeneration
       val fs = facts(None)
@@ -777,7 +777,7 @@ final class AcquireRecheckService(
         else if !agents.managers.running then Some("it runs on the managers' tick, which is not running on this server")
         else None
       RecheckStatus(
-        enabled = RecheckStatus.Enabled(true),
+        enabled = RecheckStatus.Enabled.Enabled,
         RecheckStatus.WithDoi(fs.count(_.action != Action.NoDoi)),
         RecheckStatus.Due(dueNow.size),
         RecheckStatus.TriedToday(tried),
@@ -804,7 +804,7 @@ final class AcquireRecheckService(
           s"job ${j.id} stopped (${stopReason(j)}" + j.progress.fold("")(p => s" at ${p.value}") + "): " +
             (if agents.drain.draining then "it resumes once the drain is lifted"
              else if agents.managers.running then "it resumes at the next managers' tick"
-             else if j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).exists(_.all.value) then
+             else if j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).exists(_.all.all) then
                "`histmersion queue acquire recheck --all` resumes it"
              else "the managers' tick resumes it, which is not running on this server")
         )

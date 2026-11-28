@@ -422,7 +422,7 @@ class IngestBacklogSuite extends munit.FunSuite:
     )
     assert(!ManagersMarkdown.line(info.modify(_.backlog).setTo(Managers.ManagerInfo.Backlog(0))).contains("backlog"))
     val r = RepairAcquire.RepairResult(
-      dryRun = RepairAcquire.RepairResult.DryRun(true),
+      dryRun = RepairAcquire.RepairResult.DryRun.DryRun,
       moved = RepairAcquire.RepairResult.Moved(1),
       kept = RepairAcquire.RepairResult.Kept(1),
       untouched = RepairAcquire.RepairResult.Untouched(5),

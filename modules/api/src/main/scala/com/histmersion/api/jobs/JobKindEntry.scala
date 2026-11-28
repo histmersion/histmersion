@@ -3,6 +3,7 @@ package api.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** A kind of job as its owner registers it: its name and meaning for a person, whether a person may pause and cancel
   * its jobs, whether those go to the kind's own runner instead (an agent run's), and what one of its jobs is about,
@@ -12,9 +13,9 @@ final case class JobKindEntry(
     kind: JobInfo.Kind,
     name: JobKindName,
     meaning: JobKindMeaning,
-    stoppable: JobKindEntry.Stoppable = JobKindEntry.Stoppable(false),
+    stoppable: JobKindEntry.Stoppable = JobKindEntry.Stoppable.Unstoppable,
     subject: JobDetail => Option[JobKinds.Subject] = _ => None,
-    ownControl: JobKindEntry.OwnControl = JobKindEntry.OwnControl(false)
+    ownControl: JobKindEntry.OwnControl = JobKindEntry.OwnControl.Shared
 )
 
 object JobKindEntry:
@@ -25,20 +26,23 @@ object JobKindEntry:
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type OfOwnControl = OwnControl
   val OfOwnControl: OwnControl.type = OwnControl
-
-  type Stoppable = Stoppable.T
-  object Stoppable extends Newtype[Boolean, Pure]
-  type OwnControl = OwnControl.T
-  object OwnControl extends Newtype[Boolean, Pure]
+  enum Stoppable derives CanEqual:
+    case Stoppable, Unstoppable
+  object Stoppable extends TwoStates[Stoppable]:
+    extension (stoppable: Stoppable) def stoppable: Boolean = stoppable == Stoppable
+  enum OwnControl derives CanEqual:
+    case OwnControl, Shared
+  object OwnControl extends TwoStates[OwnControl]:
+    extension (ownControl: OwnControl) def ownControl: Boolean = ownControl == OwnControl
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       kind: JobInfo.Kind,
       name: JobKinds.Wire,
       meaning: JobKindMeaning,
-      stoppable: OfStoppable = OfStoppable(false),
+      stoppable: OfStoppable = OfStoppable.Unstoppable,
       subject: JobDetail => Option[JobKinds.Subject] = _ => None,
-      ownControl: OfOwnControl = OfOwnControl(false)
+      ownControl: OfOwnControl = OfOwnControl.Shared
   ): JobKindEntry = JobKindEntry(
     kind,
     JobKindName((name).value),

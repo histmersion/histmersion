@@ -88,7 +88,7 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
         .sha256(req.bundle.value)
         .left
         .map(Api.Error(_))
-        .flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.value)))
+        .flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.dryRun)))
 
   /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the one that takes
     * a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). It runs as a background job

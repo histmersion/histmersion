@@ -10,6 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.TwoStates
 
 object AgentScheduler:
   /** Why the scheduler started, keeps waiting or holds an item: the narration of its decision, not a failure. */
@@ -136,7 +137,7 @@ object AgentScheduler:
       strategyFrom: SchedulerStatus.StrategyFrom = SchedulerStatus.StrategyFrom("config"),
       strategies: List[StrategyLine] = Nil,
       at: Option[SchedulerStatus.At] = None,
-      dry: SchedulerStatus.Dry = SchedulerStatus.Dry(false),
+      dry: SchedulerStatus.Dry = SchedulerStatus.Dry.Live,
       maxRuns: SchedulerStatus.MaxRuns = SchedulerStatus.MaxRuns(0),
       occupied: SchedulerStatus.Occupied = SchedulerStatus.Occupied(0),
       pools: List[PoolUse] = Nil,
@@ -157,8 +158,10 @@ object AgentScheduler:
     object StrategyFrom extends Newtype[String, Pure]
     type At = At.T
     object At extends Newtype[String, Pure]
-    type Dry = Dry.T
-    object Dry extends Newtype[Boolean, Pure]
+    enum Dry derives CanEqual:
+      case Dry, Live
+    object Dry extends TwoStates[Dry]:
+      extension (dry: Dry) def dry: Boolean = dry == Dry
     type MaxRuns = MaxRuns.T
     object MaxRuns extends Newtype[Int, Pure]
     type Occupied = Occupied.T

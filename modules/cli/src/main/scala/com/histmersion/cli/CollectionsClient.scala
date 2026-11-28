@@ -51,7 +51,11 @@ final class CollectionsClient(c: Client, name: Collection.Name):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(apply: Api.Apply): Either[Cli.Error, CollectionUpdateAll] =
     c.call(CollectionsApi.updateAll)(
-      (name, CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(apply.value)))
+      (
+        name,
+        CollectionUpdateAll.Request((if apply.applies then CollectionUpdateAll.Request.Apply.Apply
+                                     else CollectionUpdateAll.Request.Apply.DryRun))
+      )
     )
   def set(req: CollectionSetRequest): Either[Cli.Error, CollectionSetDone] = c.call(CollectionsApi.set)((name, req))
   def audit: Either[Cli.Error, CollectionAudit] = c.call(CollectionsApi.audit)(name)
@@ -65,7 +69,7 @@ final class CollectionsClient(c: Client, name: Collection.Name):
     * this machine's own Calibre code.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def onServer: Boolean = info.exists(_.reachable.value)
+  def onServer: Boolean = info.exists(_.reachable.reachable)
 
 object CollectionsClient:
   export Collection.Name

@@ -174,7 +174,7 @@ object MapLibreStyles:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def info(s: Basemap.Status, layer: String): Option[Basemap.LayerInfo] =
-    s.layers.find(i => i.layer.value == layer && i.present.value && i.error.isEmpty)
+    s.layers.find(i => i.layer.value == layer && i.present.present && i.error.isEmpty)
 
   /** The relief, when it reaches deeper than the extract — a focus region, or the on-demand relief: what the contours
     * are traced from (the extract's relief alone is too coarse for them).
@@ -182,7 +182,7 @@ object MapLibreStyles:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def deeperRelief(s: Basemap.Status): Option[Basemap.LayerInfo] =
-    info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled.value))
+    info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled.enabled))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -230,7 +230,7 @@ object MapLibreStyles:
               // demand there (#3760), or (the relief) a focus region lies outside it
               i.bbox
                 .flatMap(BBox.parse)
-                .filter(_ => i.focus.isEmpty && !i.onDemand.exists(_.enabled.value))
+                .filter(_ => i.focus.isEmpty && !i.onDemand.exists(_.enabled.enabled))
                 .foreach(b => src.bounds = js.Array(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value))
         case None => drop(s, MapSurface.LayerId(id))
     }

@@ -21,7 +21,7 @@ object CollectionsMarkdown:
     (s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
       s"- can: ${c.capabilities.mkString(", ")}\n" +
       s"- reachable: ${
-          if (c.reachable) == CollectionInfo.Reachable(true) then "yes"
+          if (c.reachable) == CollectionInfo.Reachable.Reachable then "yes"
           else s"no — ${if c.problems.isEmpty then "unknown" else c.problems.map(_.sentence).mkString("; ")}"
         }")
 
@@ -74,7 +74,7 @@ object CollectionsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def gaps(rows: List[CollectionGapRow]): String =
     def esc(s: String) = (s).replace("|", "\\|").replace("\n", " ").trim
-    val counted = rows.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted(true))))
+    val counted = rows.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted.Counted)))
     val missing = rows.count(_.original == CollectionGapRow.Original("none"))
     val head =
       if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
@@ -101,11 +101,12 @@ object CollectionsMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sync(s: CollectionSync): String =
-    val ready = s.gaps.gaps.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted(true))))
+    val ready =
+      s.gaps.gaps.filter((refactorCallback => ((refactorCallback.counted) == CollectionGapRow.Counted.Counted)))
     val missing = s.gaps.gaps.count(_.original == CollectionGapRow.Original("none"))
     val note = if missing == 0 then "" else " · " + uncountedLine(Missing(missing))
     val table = if ready.nonEmpty then (gaps(ready)) + "\n\n" else ""
-    if !((s.applied) == CollectionSync.Applied(true)) then
+    if !((s.applied) == CollectionSync.Applied.Applied) then
       (table + s"Dry run: ${ready.size} source(s) would be pushed$note" +
         (if ready.nonEmpty then " Re-run with --apply." else ""))
     else
@@ -185,7 +186,7 @@ object CollectionsMarkdown:
       i.relinkedFrom.map(prev => s"Re-linked `${i.citekey}` from Calibre id $prev to ${i.id}") ++
       List(s"File (left in place, never modified): ${i.file}") ++
       i.cover.map(c =>
-        if (c.warning) == CollectionCover.Warning(true) then s"warning: cover not stored — ${c.line}" else c.line
+        if (c.warning) == CollectionCover.Warning.Warning then s"warning: cover not stored — ${c.line}" else c.line
       ) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
       i.jobProblems.map(e => s"not converted: ${e.sentences.mkString("; ")}")).mkString("\n"))

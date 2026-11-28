@@ -81,7 +81,7 @@ final case class HeldEvent(
         None,
         geometryType.map(g => EventScale.GeometryType(g.value))
       ),
-      EventSummary.ScaleStated(scale.isDefined),
+      (if scale.isDefined then EventSummary.ScaleStated.Stated else EventSummary.ScaleStated.Inferred),
       EventSummary.Tier(if citekey.isDefined || attested then EventTier.Attested else EventTier.Catalogue),
       EventPrecision.of(uncertainty),
       central.map(c => EventSummary.Central(c.value)),

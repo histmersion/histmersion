@@ -178,7 +178,7 @@ class AcquireHandlerSuite extends DbSuite:
             Some(CollectionFile.Megabytes(f.megabytes.value))
           )
         ),
-        restricted = CollectionItem.Restricted(archived.lendingOnly.value)
+        restricted = CollectionItem.Restricted(archived.lendingOnly.lendingOnly)
       )
       def search(query: CollectionQuery) = Right(List(one))
       def item(id: CollectionId) = Right(Some(one))
@@ -317,7 +317,7 @@ class AcquireHandlerSuite extends DbSuite:
 
     val h = handlers(FakeDiscovery(refs = rows))
     val r = h
-      .refs(RefsRequest(RefsRequest.Id("zzacq_target"), apply = RefsRequest.Apply(true)))
+      .refs(RefsRequest(RefsRequest.Id("zzacq_target"), apply = RefsRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.count, 3)
     assertEquals(r.resolved, 2)
@@ -365,10 +365,10 @@ class AcquireHandlerSuite extends DbSuite:
 
     val h = handlers()
     val a = h
-      .assess(AssessRequest(AssessRequest.Id("zzacq_retr"), apply = AssessRequest.Apply(true)))
+      .assess(AssessRequest(AssessRequest.Id("zzacq_retr"), apply = AssessRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Retracted)
-    assert(a.flagged.value)
+    assert(a.flagged.flagged)
     assertEquals(a.retractionWatch.head.date, Some("2021-12-15"))
     assertEquals(a.applied, Some("retracted"))
     assertEquals(
@@ -412,7 +412,7 @@ class AcquireHandlerSuite extends DbSuite:
     )
     val h = handlers()
     val a = h
-      .assess(AssessRequest(AssessRequest.Id("zzacq_kept"), apply = AssessRequest.Apply(true)))
+      .assess(AssessRequest(AssessRequest.Id("zzacq_kept"), apply = AssessRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Current)
     assertEquals((a.applied, a.kept), (None, Some(Source.Status.Contested)))
@@ -426,8 +426,8 @@ class AcquireHandlerSuite extends DbSuite:
       .assess(
         AssessRequest(
           AssessRequest.Id("zzacq_kept"),
-          apply = AssessRequest.Apply(true),
-          forceStatus = AssessRequest.ForceStatus(true)
+          apply = AssessRequest.Apply.Apply,
+          forceStatus = AssessRequest.ForceStatus.ForceStatus
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -458,7 +458,7 @@ class AcquireHandlerSuite extends DbSuite:
         )
       )
     val r = h
-      .assess(AssessRequest(AssessRequest.Id("zzacq_retr2"), apply = AssessRequest.Apply(true)))
+      .assess(AssessRequest(AssessRequest.Id("zzacq_retr2"), apply = AssessRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.applied, Some("retracted"))
     assertEquals(
@@ -478,7 +478,7 @@ class AcquireHandlerSuite extends DbSuite:
         year = Some(Year(2021)),
         doi = Some(Doi("10.1038/zzcritic")),
         contexts = List(FollowupRow.Contexts("These data contradict the steppe model")),
-        isInfluential = FollowupRow.IsInfluential(true)
+        isInfluential = FollowupRow.IsInfluential.Influential
       ),
       FollowupRow(
         title = Some(api.library.Title("Unknown citer")),
@@ -490,7 +490,7 @@ class AcquireHandlerSuite extends DbSuite:
 
     val h = handlers(citations = FakeCitations(rows))
     val r = h
-      .followups(FollowupsRequest(FollowupsRequest.Id("zzacq_target"), apply = FollowupsRequest.Apply(true)))
+      .followups(FollowupsRequest(FollowupsRequest.Id("zzacq_target"), apply = FollowupsRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.count, 2)
     assertEquals(r.followups.head.proposedKind, Acquire.EdgeKinds.Refutes) // influential first
@@ -544,7 +544,7 @@ class AcquireHandlerSuite extends DbSuite:
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
     assertEquals(r.citekey, "zzacq_ingested")
-    assert(r.created.value)
+    assert(r.created.created)
     assertEquals(r.pdf.map(_.source), Some("unpaywall"))
     assert(
       r.pdf.flatMap(_.spoolPath).exists(p => java.nio.file.Files.isRegularFile(java.nio.file.Path.of(p.value))),
@@ -553,7 +553,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(r.edgesAdded, 1)
     assertEquals(r.dropIn, None)
     assertEquals(r.steps.map(_.step), List("metadata", "fetch", "references", "store", "assess"))
-    assert(r.steps.forall(_.ok.value), r.steps.toString)
+    assert(r.steps.forall(_.ok.ok), r.steps.toString)
 
     val stored = SourceFixtures
       .load(ds, domain.library.Citekey("zzacq_ingested"))
@@ -580,12 +580,12 @@ class AcquireHandlerSuite extends DbSuite:
       r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && s.detail.value.contains("licence CC-BY-4.0")),
       r.steps.toString
     )
-    assert(r.steps.exists(s => s.step == Ingest.Step.Value("licence") && s.ok.value), r.steps.toString)
+    assert(r.steps.exists(s => s.step == Ingest.Step.Value("licence") && s.ok.ok), r.steps.toString)
     assertEquals(license, Some("CC-BY-4.0"))
     // a re-fetch with another licence keeps the one recorded; a copy without one changes nothing
     val again =
       handlers(oa = SomePdf(FetchedFile.Source("oabooks"), Some(plugin.Licence("CC-BY-NC-4.0"))))
-        .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch(true)))
+        .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch.Refetch))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!again.steps.exists(_.step == Ingest.Step.Value("licence")), again.steps.toString)
     assertEquals(license, Some("CC-BY-4.0"))
@@ -609,7 +609,7 @@ class AcquireHandlerSuite extends DbSuite:
       FakeDiscovery(
         target
           .modify(_.isOa)
-          .setTo(Source.Candidate.IsOa(true))
+          .setTo(Source.Candidate.IsOa.OpenAccess)
           .modify(_.oaStatus)
           .setTo(Some(WorkRef.OaStatus("gold")))
           .modify(_.oaUrl)
@@ -676,7 +676,7 @@ class AcquireHandlerSuite extends DbSuite:
       FakeDiscovery(
         target
           .modify(_.isOa)
-          .setTo(Source.Candidate.IsOa(true))
+          .setTo(Source.Candidate.IsOa.OpenAccess)
           .modify(_.oaStatus)
           .setTo(Some(WorkRef.OaStatus("gold")))
           .modify(_.oaUrl)
@@ -703,7 +703,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_ingested"); dropItems()
     val gold = target
       .modify(_.isOa)
-      .setTo(Source.Candidate.IsOa(true))
+      .setTo(Source.Candidate.IsOa.OpenAccess)
       .modify(_.oaStatus)
       .setTo(Some(WorkRef.OaStatus("gold")))
       .modify(_.oaLicence)
@@ -824,7 +824,7 @@ class AcquireHandlerSuite extends DbSuite:
     val allowing =
       cfg.modify(_.acquire).setTo(cfg.acquire.modify(_.allowUnauthorised).setTo(AcquireConfig.AllowUnauthorised(true)))
     val r = handlers(oa = chain, app = allowing)
-      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly(true)))
+      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly.LegalOnly))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(asked.get, 0, "no fetcher the config marks unauthorised is asked")
     assert(r.steps.exists(_.step == Ingest.Step.Value("legal-only")), r.steps.toString)
@@ -840,7 +840,7 @@ class AcquireHandlerSuite extends DbSuite:
     // only a person's explicit choice asks it (the switch is on), and the watcher's path never does
     wipe("zzacq_ingested")
     val _ = handlers(oa = chain, app = allowing)
-      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly(false)))
+      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), legalOnly = Ingest.Request.LegalOnly.AnySource))
     assertEquals(asked.get, 1)
     wipe("zzacq_ingested")
     val legal = handlers(oa = chain, app = allowing)
@@ -882,7 +882,7 @@ class AcquireHandlerSuite extends DbSuite:
     wipe("zzacq_ingested")
     val refused =
       handlers(oa = chain, app = allowing).ingestByAgent(
-        Ingest.Request(doi, legalOnly = Ingest.Request.LegalOnly(false))
+        Ingest.Request(doi, legalOnly = Ingest.Request.LegalOnly.AnySource)
       )
     assertEquals(
       refused.left.map(e => util.nonempty.NonEmptyVector.toVector(e.problems)),
@@ -897,7 +897,7 @@ class AcquireHandlerSuite extends DbSuite:
         allowing.acquire.modify(_.agentsMayUseUnauthorised).setTo(AcquireConfig.AgentsMayUseUnauthorised(true))
       )
     val _ = handlers(oa = chain, app = personAllowed)
-      .ingestByAgent(Ingest.Request(doi, legalOnly = Ingest.Request.LegalOnly(false)))
+      .ingestByAgent(Ingest.Request(doi, legalOnly = Ingest.Request.LegalOnly.AnySource))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(asked.get, 1)
     wipe("zzacq_ingested")
@@ -909,7 +909,7 @@ class AcquireHandlerSuite extends DbSuite:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(r.pdf, None)
     assert(r.dropIn.exists(_.value.contains("--citekey zzacq_ingested")), r.dropIn.toString)
-    assert(r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && !s.ok.value))
+    assert(r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && !s.ok.ok))
     assert(
       SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).isDefined,
       "metadata-only source must still exist"
@@ -938,7 +938,7 @@ class AcquireHandlerSuite extends DbSuite:
     val again =
       h.ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001")))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(!again.created.value, "an existing citekey must be updated, not recreated")
+    assert(!again.created.created, "an existing citekey must be updated, not recreated")
     val after =
       SourceFixtures.load(ds, domain.library.Citekey("zzacq_ingested")).getOrElse(fail("gone"))
     assertEquals(after.notes, Some("The compiled article."))
@@ -972,7 +972,7 @@ class AcquireHandlerSuite extends DbSuite:
       "the fetched file goes to the OCR job"
     )
     assert(
-      r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && s.ok.value && !s.detail.value.contains("skipped")),
+      r.steps.exists(s => s.step == Ingest.Step.Value("fetch") && s.ok.ok && !s.detail.value.contains("skipped")),
       r.steps.toString
     )
     assertEquals(r.dropIn, None)
@@ -1004,7 +1004,7 @@ class AcquireHandlerSuite extends DbSuite:
     assertEquals(jobs.files.toArray.toList, List(None), "no file, so no OCR job")
     val fetch = r.steps.find(_.step == Ingest.Step.Value("fetch")).get
     assert(
-      fetch.ok.value && fetch.detail.value.contains("already has a converted body") && fetch.detail.value
+      fetch.ok.ok && fetch.detail.value.contains("already has a converted body") && fetch.detail.value
         .contains("--refetch"),
       fetch.toString
     )
@@ -1016,7 +1016,7 @@ class AcquireHandlerSuite extends DbSuite:
     )
     // asked for: fetched and handed to the job, which replaces the body
     val again = handlers(oa = pdf, jobs = jobs)
-      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch(true)))
+      .ingest(Ingest.Request(Ingest.Request.Id("10.1038/zztest001"), refetch = Ingest.Request.Refetch.Refetch))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(pdf.calls.get, 1)
     assert(jobs.files.toArray.toList.last.asInstanceOf[Option[FetchedCopy]].isDefined)
@@ -1048,7 +1048,7 @@ class AcquireHandlerSuite extends DbSuite:
       title = Some(ArchiveItem.Title("Black Athena")),
       creator = List(ArchiveItem.Creator("Martin Bernal")),
       year = Some(Year(1987)),
-      lendingOnly = ArchiveItem.LendingOnly(true),
+      lendingOnly = ArchiveItem.LendingOnly.LendingOnly,
       files = List(
         ArchiveFile(
           ArchiveFile.Name("blackathena.pdf"),

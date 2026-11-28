@@ -62,7 +62,11 @@ class ArticleReviewViewSuite extends munit.FunSuite:
     assertEquals(Article.ReviewView.outcomeLine(open), "open")
     assertEquals(
       Article.ReviewView.outcomeLine(
-        open.modify(_.deferred).setTo(ReviewFinding.Deferred(true)).modify(_.reopened).setTo(ReviewFinding.Reopened(2))
+        open
+          .modify(_.deferred)
+          .setTo(ReviewFinding.Deferred.Deferred)
+          .modify(_.reopened)
+          .setTo(ReviewFinding.Reopened(2))
       ),
       "open (left for the next run) (reopened 2 times)"
     )

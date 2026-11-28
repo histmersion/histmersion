@@ -388,7 +388,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
           Bundle.GoalSchedule(
             Bundle.GoalSchedule.Kind("currency"),
             Bundle.GoalSchedule.Cron("@weekly"),
-            Bundle.GoalSchedule.Enabled(true),
+            Bundle.GoalSchedule.Enabled.Enabled,
             None
           )
         )
@@ -423,13 +423,13 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
             Bundle.GoalSchedule(
               Bundle.GoalSchedule.Kind("currency"),
               Bundle.GoalSchedule.Cron("@daily"),
-              Bundle.GoalSchedule.Enabled(false),
+              Bundle.GoalSchedule.Enabled.Disabled,
               Some(Bundle.GoalSchedule.BudgetUsd(1.5))
             ),
             Bundle.GoalSchedule(
               Bundle.GoalSchedule.Kind("acquisition"),
               Bundle.GoalSchedule.Cron("@monthly"),
-              Bundle.GoalSchedule.Enabled(true),
+              Bundle.GoalSchedule.Enabled.Enabled,
               None
             )
           )
@@ -457,7 +457,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
               Bundle.GoalSchedule(
                 Bundle.GoalSchedule.Kind("currency"),
                 Bundle.GoalSchedule.Cron("@weekly"),
-                Bundle.GoalSchedule.Enabled(true),
+                Bundle.GoalSchedule.Enabled.Enabled,
                 None
               )
             )
@@ -470,7 +470,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
           Bundle.GoalSchedule(
             Bundle.GoalSchedule.Kind("currency"),
             Bundle.GoalSchedule.Cron("@daily"),
-            Bundle.GoalSchedule.Enabled(true),
+            Bundle.GoalSchedule.Enabled.Enabled,
             None
           )
         )
@@ -674,7 +674,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     val art = p.issues.find(i => i.kind == Issue.Kind.ArticleDiverged && i.severity == Issue.Severity.Blocking).get
     val text = art.detail.flatMap(_.text).getOrElse(fail(art.toString))
     assertEquals(text.left, "Home's account of the collapse.")
-    assert(text.hunks.exists(_.conflict.value), text.hunks.toString)
+    assert(text.hunks.exists(_.conflict.conflict), text.hunks.toString)
     val ev = p.issues.find(i => i.kind == Issue.Kind.LabelTaken && i.entity == Bundle.Kind.Event).get
     assertEquals(ev.detail.flatMap(_.place).flatMap(_.rightSpan), Some(IssueSpan(Some(Year(-1200)), Some(Year(-1190)))))
     // the detail is not part of the plan hash: dropping it changes nothing the apply checks
@@ -689,19 +689,19 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     assertEquals(
       t.hunks,
       List(
-        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("a"))),
+        IssueHunk(IssueHunk.Conflict.Clean, left = List(IssueHunk.Left("a"))),
         IssueHunk(
-          IssueHunk.Conflict(true),
+          IssueHunk.Conflict.Conflict,
           List(IssueHunk.Base("b")),
           List(IssueHunk.Left("B")),
           List(IssueHunk.Right("β"))
         ),
-        IssueHunk(IssueHunk.Conflict(false), left = List(IssueHunk.Left("c")))
+        IssueHunk(IssueHunk.Conflict.Clean, left = List(IssueHunk.Left("c")))
       )
     )
     assertEquals(
       MergePlanner.articleText(None, Bundle.Article.Body("x"), Bundle.Article.Body("y")).hunks,
-      List(IssueHunk(IssueHunk.Conflict(true), Nil, List(IssueHunk.Left("x")), List(IssueHunk.Right("y"))))
+      List(IssueHunk(IssueHunk.Conflict.Conflict, Nil, List(IssueHunk.Left("x")), List(IssueHunk.Right("y"))))
     )
 
   test("the resolution file carries a merged text (texts:) and reads it back exactly — the web screen's download"):

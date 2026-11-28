@@ -115,7 +115,7 @@ object Pages:
   private def notice(b: Board): Modifier[HtmlElement] =
     val c = Notices.counter(b)
     List(
-      cls("has-news") <-- c.map(_.exists(_.fresh.value)),
+      cls("has-news") <-- c.map(_.exists(_.fresh.fresh)),
       child.maybe <-- c
         .map(_.flatMap(x => UiNotices.badge(x.count)))
         .distinct
@@ -162,7 +162,7 @@ object Pages:
     def item(s: ResearchSection, mods: Modifier[HtmlElement]*) =
       val target = if s == ResearchSection.Activity then Route.Activity(ActivityTab.Everything) else Route.Research(s)
       sideLink(target, s.label, on.contains(s), mods)
-    ResearchSection.values.toList.filter(s => ui.agentsEnabled.value || !s.agents.enabled).map { s =>
+    ResearchSection.values.toList.filter(s => ui.agentsEnabled.agentsEnabled || !s.agents.enabled).map { s =>
       s match
         case ResearchSection.Decisions => item(s, notice(Board.Approvals))
         case ResearchSection.Goals     => item(s, notice(Board.Goals))
@@ -183,13 +183,13 @@ object Pages:
         case ResearchSection.Overview  => ResearchOverview.pane(ui)
         case ResearchSection.State     => ResearchState.pane
         case ResearchSection.Decisions =>
-          if ui.agentsEnabled.value then ApprovalsView.pane
+          if ui.agentsEnabled.agentsEnabled then ApprovalsView.pane
           else agentsOff(UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))
         case ResearchSection.Goals   => GoalsView.pane
         case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal)
         case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal)
         case ResearchSection.Models  =>
-          if ui.agentsEnabled.value then ModelsView.pane
+          if ui.agentsEnabled.agentsEnabled then ModelsView.pane
           else agentsOff(UiLabels.Text("No AI models are used: the research agents are off on this server."))
         case ResearchSection.Activity => RunsView.pane
       section(Router.title(r), body)
@@ -226,7 +226,7 @@ object Pages:
         ),
         t match
           case ActivityTab.Runs =>
-            if ui.agentsEnabled.value then RunsView.pane
+            if ui.agentsEnabled.agentsEnabled then RunsView.pane
             else agentsOff(UiLabels.Text("No agent runs: the research agents are off on this server."))
           case ActivityTab.Worklog => QueueView.pane(Queue.Kind.Log)
           case _                   => JobsView.pane

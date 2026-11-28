@@ -94,7 +94,7 @@ class MediaProvidersSuite extends munit.FunSuite:
       List(
         MediaCount(MediaCount.Key("b"), MediaCount.N(2)),
         MediaCount(MediaCount.Key("a"), MediaCount.N(1)),
-        MediaCount(MediaCount.Key("c"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+        MediaCount(MediaCount.Key("c"), MediaCount.N(1), allowed = MediaCount.Allowed.Blocked)
       )
     )
 
@@ -120,14 +120,14 @@ class MediaProvidersSuite extends munit.FunSuite:
   test("the import report prints the counts per provider and licence as a table, refusals and failures after"):
     val r = MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),
-      dryRun = RepairAcquire.RepairRequest.DryRun(true),
+      dryRun = RepairAcquire.RepairRequest.DryRun.DryRun,
       targets = MediaImportReport.Targets(20),
       items = MediaImportReport.Items(9),
       statements = MediaImportReport.Statements(19),
       files = MediaImportReport.Files(10),
       byLicence = List(
         MediaCount(MediaCount.Key("CC-BY-SA-3.0"), MediaCount.N(5)),
-        MediaCount(MediaCount.Key("CC-BY-NC-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+        MediaCount(MediaCount.Key("CC-BY-NC-4.0"), MediaCount.N(1), allowed = MediaCount.Allowed.Blocked)
       ),
       byRole = List(
         MediaCount(MediaCount.Key("locator-map"), MediaCount.N(16)),
@@ -153,7 +153,7 @@ class MediaProvidersSuite extends munit.FunSuite:
       MediaMarkdown
         .mediaImportReport(
           r.modify(_.dryRun)
-            .setTo(RepairAcquire.RepairRequest.DryRun(false))
+            .setTo(RepairAcquire.RepairRequest.DryRun.Apply)
             .modify(_.stored)
             .setTo(MediaImportReport.Stored(2))
         )

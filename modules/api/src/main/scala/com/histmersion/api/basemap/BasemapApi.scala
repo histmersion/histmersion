@@ -60,8 +60,8 @@ object BasemapApi:
               maxZoom.map(Basemap.FetchQuery.MaxZoom(_)),
               terrainMaxZoom.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
               bbox.map(Basemap.FetchQuery.Bbox(_)),
-              Basemap.FetchQuery.DryRun(dryRun),
-              Basemap.FetchQuery.KeepAll(keepAll),
+              (if dryRun then Basemap.FetchQuery.DryRun.DryRun else Basemap.FetchQuery.DryRun.Apply),
+              (if keepAll then Basemap.FetchQuery.KeepAll.KeepAll else Basemap.FetchQuery.KeepAll.Trim),
               focus.map(Basemap.FetchQuery.Focus(_))
             )
           }(v =>
@@ -70,8 +70,8 @@ object BasemapApi:
               v.maxZoom.map(_.value),
               v.terrainMaxZoom.map(_.value),
               v.bbox.map(_.value),
-              v.dryRun.value,
-              v.keepAll.value,
+              v.dryRun.dryRun,
+              v.keepAll.keepAll,
               v.focus.map(_.value)
             )
           )
@@ -92,9 +92,9 @@ object BasemapApi:
             Basemap.RemoveQuery(
               Basemap.RemoveQuery.Layer(layer),
               focus.map(Basemap.RemoveQuery.Focus(_)),
-              Basemap.RemoveQuery.Cache(cache)
+              (if cache then Basemap.RemoveQuery.Cache.Cache else Basemap.RemoveQuery.Cache.NoCache)
             )
-          }(v => (v.layer.value, v.focus.map(_.value), v.cache.value))
+          }(v => (v.layer.value, v.focus.map(_.value), v.cache.cache))
       )
       .errorOut(Api.problemOut)
       .out(jsonBody[Basemap.Removed])

@@ -26,10 +26,11 @@ object FigureService:
   final private class Implementation(db: Transactor) extends FigureService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fillLicences(apply: Apply)(using WritePermit): FigureLicenceFill =
-      if apply.value then db.write(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied(true)))
+      if apply.value then db.write(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied.Applied))
       else countLicences()
 
-    def countLicences(): FigureLicenceFill = db.read(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied(false)))
+    def countLicences(): FigureLicenceFill =
+      db.read(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied.Previewed))
 
   /** Media's rows alone, in memory: no source is held, so no figure has a source licence to take. */
   final class InMemory extends FigureService:
@@ -39,6 +40,6 @@ object FigureService:
     private def filled(apply: Apply): FigureLicenceFill = FigureLicenceFill(
       FigureLicenceFill.Candidates(0),
       FigureLicenceFill.Updated(0),
-      FigureLicenceFill.Applied(apply.value),
+      (if apply.value then FigureLicenceFill.Applied.Applied else FigureLicenceFill.Applied.Previewed),
       Nil
     )

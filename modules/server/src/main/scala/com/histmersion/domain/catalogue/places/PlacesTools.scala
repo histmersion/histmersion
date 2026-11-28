@@ -336,7 +336,8 @@ object PlacesTools:
                               in.periodStart.map(year),
                               in.periodEnd.map(year),
                               in.reason,
-                              ApiPlace.OverrideSet.Reset(in.reset.exists(_.value)),
+                              (if in.reset.exists(_.value) then ApiPlace.OverrideSet.Reset.Reset
+                               else ApiPlace.OverrideSet.Reset.Set),
                               in.pointLat.map(l => Latitude(l.value)),
                               in.pointLon.map(l => Longitude(l.value))
                             )

@@ -14,6 +14,6 @@ object BasemapJobKinds:
     JobInfo.Kind("basemap-fetch"),
     JobKinds.Wire("Download the background map"),
     JobKindMeaning("Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area."),
-    stoppable = JobKindEntry.OfStoppable(true),
+    stoppable = JobKindEntry.OfStoppable.Stoppable,
     subject = JobDetail.Purpose.of
   )

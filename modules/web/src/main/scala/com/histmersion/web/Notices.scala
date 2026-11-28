@@ -42,7 +42,7 @@ object Notices:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toMark(open: List[WindowKey], cs: Map[Board.Wire, Counter]): List[(Board, Counter.Latest)] =
     open.flatMap(boardOf).distinct.flatMap { b =>
-      cs.get(b.wire).filter(_.fresh.value).flatMap(_.latest).map(b -> _)
+      cs.get(b.wire).filter(_.fresh.fresh).flatMap(_.latest).map(b -> _)
     }
 
   /** A counter once its window showed the items up to `at`. */
@@ -50,18 +50,21 @@ object Notices:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seenAt(c: Counter, at: Counter.Seen): Counter =
     val s = UiNotices.advance(c.seen, at)
-    c.modify(_.seen).setTo(Some(s)).modify(_.fresh).setTo(Counter.Fresh(UiNotices.fresh(c.latest, Some(s))))
+    c.modify(_.seen)
+      .setTo(Some(s))
+      .modify(_.fresh)
+      .setTo((if UiNotices.fresh(c.latest, Some(s)) then Counter.Fresh.Fresh else Counter.Fresh.Seen))
 
   /** Is any board among `shown` new? (What the phone's tools button marks.) */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def anyFresh(cs: Map[Board.Wire, Counter], shown: Board => Boolean): Boolean =
-    cs.values.exists(c => c.fresh.value && Board.parse(c.key).exists(shown))
+    cs.values.exists(c => c.fresh.fresh && Board.parse(c.key).exists(shown))
 
   /** What a board's button says to a screen reader beside its label. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def spoken(c: Option[Counter]): Spoken =
     val count = c.flatMap(x => UiNotices.badge(x.count)).map(n => s"$n open")
-    val news = Option.when(c.exists(_.fresh.value))("something new")
+    val news = Option.when(c.exists(_.fresh.fresh))("something new")
     Spoken((count.toList ++ news).mkString(", "))
 
   // ── state ───────────────────────────────────────────────────────────────────────────────────────
@@ -113,12 +116,12 @@ object Notices:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ownWrite(b: Board): Unit =
-    val had = boards.now().get(b.wire).exists(_.fresh.value)
+    val had = boards.now().get(b.wire).exists(_.fresh.fresh)
     dom.window.clearTimeout(soon)
     soon = dom.window.setTimeout(
       () =>
         refresh { cs =>
-          if !had then cs.get(b.wire).filter(_.fresh.value).flatMap(_.latest).foreach(at => mark(b, at))
+          if !had then cs.get(b.wire).filter(_.fresh.fresh).flatMap(_.latest).foreach(at => mark(b, at))
         },
       Layout.countersRefreshMs.value
     )

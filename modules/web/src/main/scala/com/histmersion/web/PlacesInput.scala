@@ -200,13 +200,13 @@ object PlacesInput:
               .getOrElse(Nil)
               .filterNot(p => ids().contains(PlaceId(p.id.value)))
               .map { p =>
-                learn(PlaceId(p.id.value), knownOf(p.label.value, p.kind.value, p.contested.value))
+                learn(PlaceId(p.id.value), knownOf(p.label.value, p.kind.value, p.contested.contested))
                 SuggestItem(
                   p.id.value,
                   p.label.value,
                   p.kind.value,
                   Some(p.findings.value),
-                  p.contested.value,
+                  p.contested.contested,
                   textFallback = false,
                   p.periodStart,
                   p.periodEnd
@@ -304,7 +304,7 @@ object PlacesInput:
         ShapeFeature(
           ShapeFeature.Id(id.value),
           geo,
-          dashed = (if d.contested.value then ShapeFeature.Dashed.Dashed else ShapeFeature.Dashed.Solid)
+          dashed = (if d.contested.contested then ShapeFeature.Dashed.Dashed else ShapeFeature.Dashed.Solid)
         )
       )
 
@@ -331,7 +331,7 @@ object PlacesInput:
             clearNames(pickNames)
             val bounds = scala.collection.mutable.ListBuffer.empty[GeoBounds]
             val shapes = results.flatten.flatMap { (id, d) =>
-              learn(id, knownOf(d.place.label.value, d.place.kind.value, d.contested.value))
+              learn(id, knownOf(d.place.label.value, d.place.kind.value, d.contested.contested))
               d.geometry.flatMap { geoStr =>
                 val geo = js.JSON.parse(geoStr.value)
                 GeoBounds.ofGeometry(geo).foreach(bounds += _)
@@ -544,7 +544,7 @@ object PlacesInput:
         val effectiveAsOf = asOfYear.orElse(asOf())
         fetchPlace(id, effectiveAsOf).foreach { d =>
           if previewId.contains(id) then
-            learn(id, knownOf(d.place.label.value, d.place.kind.value, d.contested.value))
+            learn(id, knownOf(d.place.label.value, d.place.kind.value, d.contested.contested))
             d.geometry.foreach { geoStr =>
               val geo = js.JSON.parse(geoStr.value)
               previewSet.set(
@@ -654,7 +654,7 @@ object PlacesInput:
       fetching += id
       fetchPlace(id, None).onComplete { r =>
         fetching -= id
-        r.foreach(d => learn(id, knownOf(d.place.label.value, d.place.kind.value, d.contested.value)))
+        r.foreach(d => learn(id, knownOf(d.place.label.value, d.place.kind.value, d.contested.contested)))
       }
 
   private val fetching = scala.collection.mutable.Set.empty[PlaceId]

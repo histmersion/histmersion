@@ -867,7 +867,7 @@ object MapView:
           .modify(_.to)
           .setTo(Some(Api.PlacesGeoQuery.To(hi.value)))
           .modify(_.pick)
-          .setTo(Some((if latest.value then GeoPick.Latest else GeoPick.Earliest).wire))
+          .setTo(Some((if latest.latest then GeoPick.Latest else GeoPick.Earliest).wire))
       case GeoTime.Always => q
 
   /** Pure: the time the boundaries layer is drawn for over `span`, as `pick` reads it; playback always draws the
@@ -1148,7 +1148,7 @@ object MapView:
           TilesApi.TileQuery.Y(0),
           tileFilter(tileSpan(span)),
           siteType = UiState.siteType.now().map(TilesApi.TileQuery.SiteType(_)),
-          undated = Option.when(UiState.sitesUndated.now())(TilesApi.TileQuery.Undated(true))
+          undated = Option.when(UiState.sitesUndated.now())(TilesApi.TileQuery.Undated.Undated)
         )
       ),
       span

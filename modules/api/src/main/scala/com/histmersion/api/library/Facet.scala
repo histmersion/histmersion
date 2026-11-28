@@ -7,12 +7,13 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 final case class Facet(
     value: Facet.Value,
     count: Facet.Count,
     id: Option[Facet.Id] = None,
-    contested: Facet.Contested = Facet.Contested(false)
+    contested: Facet.Contested = Facet.Contested.Settled
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
@@ -29,8 +30,10 @@ object Facet:
   object Count extends Newtype[Int, Pure]
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type Contested = Contested.T
-  object Contested extends Newtype[Boolean, Pure]
+  enum Contested derives CanEqual:
+    case Contested, Settled
+  object Contested extends TwoStates[Contested]:
+    extension (contested: Contested) def contested: Boolean = contested == Contested
 
   enum Field derives CanEqual:
     case Tags, Authors, Places, Topics, Status, Provenance

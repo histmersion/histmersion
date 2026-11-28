@@ -127,7 +127,7 @@ final class BasemapService(
     val p = key(l)
     val base = Basemap.LayerInfo(
       l.wire,
-      present = Basemap.LayerInfo.Present(false),
+      present = Basemap.LayerInfo.Present.Absent,
       file = Basemap.LayerInfo.File(files.where(p).value),
       attribution = Basemap.LayerInfo.Attribution(attribution(l).value)
     )
@@ -136,7 +136,7 @@ final class BasemapService(
         val now = files.stat(p)
         base
           .modify(_.present)
-          .setTo(Basemap.LayerInfo.Present(now.exists(_.isFile)))
+          .setTo((if now.exists(_.isFile) then Basemap.LayerInfo.Present.Present else Basemap.LayerInfo.Present.Absent))
           .modify(_.bytes)
           .setTo(com.histmersion.api.ByteCount(now.fold(0L)(_.size.value)))
           .modify(_.error)
@@ -145,7 +145,8 @@ final class BasemapService(
       case Right(Some(f)) =>
         val h = f.header
         val mine = f.metadata.cursor.downField("histmersion")
-        val keepAll = Basemap.FetchQuery.KeepAll(mine.get[Boolean]("keepAll").getOrElse(false))
+        val keepAll = (if mine.get[Boolean]("keepAll").getOrElse(false) then Basemap.FetchQuery.KeepAll.KeepAll
+                       else Basemap.FetchQuery.KeepAll.Trim)
         val drop = mine.get[String]("drop").toOption.map(Basemap.DropRule.Spec(_))
         val credit = if l != Basemap.Layer.Bathymetry then attribution(l)
         else
@@ -155,7 +156,7 @@ final class BasemapService(
             cfg.bathymetry.onDemand.enabled.value
           )
         base.copy(
-          present = Basemap.LayerInfo.Present(true),
+          present = Basemap.LayerInfo.Present.Present,
           attribution = Basemap.LayerInfo.Attribution(credit.value),
           bytes = com.histmersion.api.ByteCount(f.size.value),
           minZoom = Some(Basemap.LayerInfo.MinZoom(h.minZoom.value)),
@@ -184,11 +185,12 @@ final class BasemapService(
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def status: Basemap.Status =
     val layers = Basemap.Layer.values.toList.map(info)
-    def ok(l: Basemap.Layer) = layers.exists(i => i.layer == l.wire && i.present.value && i.error.isEmpty)
-    val vector = layers.find(i => i.layer == Basemap.Layer.Vector.wire && i.present.value && i.error.isEmpty)
+    def ok(l: Basemap.Layer) = layers.exists(i => i.layer == l.wire && i.present.present && i.error.isEmpty)
+    val vector = layers.find(i => i.layer == Basemap.Layer.Vector.wire && i.present.present && i.error.isEmpty)
     val states = BaseStyles.states(vector.map(_.dropped))
     Basemap.Status(
-      available = Basemap.Status.Available(ok(Basemap.Layer.Vector)),
+      available =
+        (if ok(Basemap.Layer.Vector) then Basemap.Status.Available.Available else Basemap.Status.Available.Unavailable),
       dir = Basemap.Status.Dir(files.where().value),
       bbox = Basemap.Status.Bbox(cfg.bbox.value),
       layers = layers,
@@ -641,7 +643,7 @@ final class BasemapService(
           file.toList ++ parts.toList
         val removed = ls.flatMap(l => gone(key(l), work(l))) ++ fs.flatMap(n => gone(focusKey(n), focusWork(n)))
         val cached = Option
-          .when(q.cache.value || all) {
+          .when(q.cache.cache || all) {
             Basemap.Layer.values.toList.flatMap(onDemandOf).flatMap { od =>
               val c = od.store
               Option.when(c.exists(Store.Key.Root))(
@@ -725,8 +727,8 @@ final class BasemapService(
       focus.fold(b)(_._2),
       vz,
       tz,
-      q.dryRun.value,
-      q.keepAll.value,
+      q.dryRun.dryRun,
+      q.keepAll.keepAll,
       focus
     )
 
@@ -988,7 +990,7 @@ final class BasemapService(
       transform = transformOf()
       meta = BasemapFetch.localMetadata(
         plan,
-        rules.filter(_.whole.value).map(_.layer).toSet,
+        rules.filter(_.whole.whole).map(_.layer).toSet,
         attribution(l),
         BasemapFetch.FetchedAt(Instant.now(clock).toString),
         l,
@@ -1490,7 +1492,7 @@ object BasemapService:
   def mvtRules(rules: List[Basemap.DropRule]): Map[Mvt.LayerName, Mvt.Rule] =
     rules
       .map(r =>
-        Mvt.LayerName(r.layer.value) -> (if r.whole.value then Mvt.Rule(none = Mvt.Rule.Empty(true))
+        Mvt.LayerName(r.layer.value) -> (if r.whole.whole then Mvt.Rule(none = Mvt.Rule.Empty(true))
                                          else
                                            Mvt.Rule(
                                              keep = r.spare.map(k => Mvt.Rule.Keep(k.value)),

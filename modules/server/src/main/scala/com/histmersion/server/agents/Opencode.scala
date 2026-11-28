@@ -119,7 +119,11 @@ object Opencode:
     else if !ref.model.value.contains('/') then
       Left(Problem.Invalid.Broken.here(Problem.Invalid.Rule.OpencodeModelShape(Problem.Raw.of(ref.wire))))
     else if PlanQuota
-        .poolOf(ref, PlanQuota.Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(cfg.chatgptLogin.value)))
+        .poolOf(
+          ref,
+          PlanQuota.Logins(opencodeChatgpt = (if cfg.chatgptLogin.value then PlanQuota.Logins.OpencodeChatgpt.Chatgpt
+                                              else PlanQuota.Logins.OpencodeChatgpt.Other))
+        )
         .isDefined && !rt.loopback
     then Left(Problem.Refused.Policy(Problem.Refused.Rule.OpencodeChatgptOutsideLocal))
     else if cfg.command.value.trim.isEmpty then

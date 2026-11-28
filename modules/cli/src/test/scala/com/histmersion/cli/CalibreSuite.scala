@@ -369,7 +369,7 @@ class CalibreSuite extends munit.FunSuite:
   ):
     val shell = libraryOf(shelfAll*)
     val out = Calibre(cfg(), shell)
-      .updateAll(linked, apply = CollectionSync.Request.Apply(false))
+      .updateAll(linked, apply = CollectionSync.Request.Apply.DryRun)
       .fold(p => fail(p.sentence), identity)
     assertEquals(
       out.map(e => e.calibreId -> e.outcome),
@@ -384,14 +384,14 @@ class CalibreSuite extends munit.FunSuite:
     )
     assertEquals(shell.commands.count(_.contains("list")), 1, "one listing of the library, not one per entry")
     assert(!shell.commands.exists(_.contains("set_metadata")), shell.commands)
-    val md = Calibre.markdownUpdateAll(out, applied = CollectionUpdateAll.Applied(false))
+    val md = Calibre.markdownUpdateAll(out, applied = CollectionUpdateAll.Applied.Previewed)
     assert(md.contains("| 11 | page1959_history | pubdate | 1963 | 1959-01-01 |"), md)
     assert(md.contains("guterbock1948_kumarbi, guterbock1997_perspectives") && md.contains("--apply"), md)
 
   test("update --all --apply writes only the entries that change, and refuses while the GUI runs"):
     val shell = libraryOf(shelfAll*)
     val out = Calibre(cfg(), shell)
-      .updateAll(linked, apply = CollectionSync.Request.Apply(true))
+      .updateAll(linked, apply = CollectionSync.Request.Apply.Apply)
       .fold(p => fail(p.sentence), identity)
     assertEquals(
       out.find(_.calibreId == Calibre.Book.Id(11)).map(_.outcome),
@@ -408,7 +408,7 @@ class CalibreSuite extends munit.FunSuite:
     val gui = RecordingShell(running = true)
     assert(
       Calibre(cfg(), gui)
-        .updateAll(linked, apply = CollectionSync.Request.Apply(true))
+        .updateAll(linked, apply = CollectionSync.Request.Apply.Apply)
         .left
         .exists(_.sentence.contains("GUI is running"))
     )
@@ -807,10 +807,10 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre.sqliteQuery("1=1", Paging.Limit(1)).contains("has_cover"))
 
   test("#1446: the Calibre-linked sources `media covers` reads — a citekey quoted, covered ones skipped"):
-    val q = MediaCovers.linkedQuery(Some(Citekey("o'brien2001")), refresh = MediaImportRequest.Refresh(false))
+    val q = MediaCovers.linkedQuery(Some(Citekey("o'brien2001")), refresh = MediaImportRequest.Refresh.Reuse)
     assert(q.value.contains("s.citekey = 'o''brien2001'"), q)
     assert(q.value.contains("m.role = 'cover'") && q.value.contains("'^[0-9]+$'"), q)
-    assert(!MediaCovers.linkedQuery(None, refresh = MediaImportRequest.Refresh(true)).value.contains("NOT EXISTS"))
+    assert(!MediaCovers.linkedQuery(None, refresh = MediaImportRequest.Refresh.Refresh).value.contains("NOT EXISTS"))
 
   test("an import into an existing record keeps a compiled summary (#896)"):
     assertEquals(

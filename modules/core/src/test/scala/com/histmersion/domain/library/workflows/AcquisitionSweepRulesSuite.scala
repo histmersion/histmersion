@@ -27,15 +27,15 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     val w = (doi: String, inDb: WorkRef.InDb) =>
       WorkRef(doi = (Some(doi)).map(Doi.apply), title = (Some(doi)).map(Title.apply), inDb = inDb)
     val found = List(
-      Candidate.Query("q1") -> w("10.1000/a", WorkRef.InDb(false)),
-      Candidate.Query("q1") -> w("10.1000/b", WorkRef.InDb(true)),
-      Candidate.Query("q2") -> w("10.1000/a", WorkRef.InDb(false)),
-      Candidate.Query("q2") -> w("10.1000/c", WorkRef.InDb(false)),
+      Candidate.Query("q1") -> w("10.1000/a", WorkRef.InDb.Missing),
+      Candidate.Query("q1") -> w("10.1000/b", WorkRef.InDb.InDb),
+      Candidate.Query("q2") -> w("10.1000/a", WorkRef.InDb.Missing),
+      Candidate.Query("q2") -> w("10.1000/c", WorkRef.InDb.Missing),
       Candidate.Query("q2") -> WorkRef(title = (Some("no doi")).map(Title.apply)),
-      Candidate.Query("q2") -> w("10.1000/d", WorkRef.InDb(false)),
+      Candidate.Query("q2") -> w("10.1000/d", WorkRef.InDb.Missing),
       Candidate.Query("q2") -> WorkRef(
         doi = (Some("10.1000/e")).map(Doi.apply),
-        isRetracted = WorkRef.IsRetracted(true)
+        isRetracted = WorkRef.IsRetracted.Retracted
       )
     )
     val (cs, skipped) = candidates(found, queued = Set(domain.library.Doi("10.1000/c")), max = Limit(1))
@@ -55,7 +55,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
       Some(Year(2020)),
       Nil,
       None,
-      isOa = WorkRef.IsOa(true),
+      isOa = WorkRef.IsOa.OpenAccess,
       Candidate.Query("q"),
       None
     )

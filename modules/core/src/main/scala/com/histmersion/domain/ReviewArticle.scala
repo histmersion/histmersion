@@ -1961,7 +1961,7 @@ object ReviewArticle:
         f.pair.flatMap(Critiques.find(rule.pairs, _)) match
           case Some(p) if p.open =>
             val g = f.modify(_.pair).setTo(Some(p.ref))
-            if !p.criticised.cited.value then
+            if !p.criticised.cited.cited then
               minor(g, s"the article does not cite [[${p.criticised.citekey}]], so it states none of its claims")
             else if rule.body.value.isEmpty then Right((g, None))
             else
@@ -2455,7 +2455,7 @@ object ReviewArticle:
       kind,
       applied.results,
       applied.results.flatMap(r => r.problem.map(_.inside(Problem.Where(r.label)))) ++ bodyProblems,
-      Article.Edits.ArticleCheck.Fatal(fatal),
+      (if fatal then Article.Edits.ArticleCheck.Fatal.Fatal else Article.Edits.ArticleCheck.Fatal.Recoverable),
       Article.Edits.ArticleCheck.WordsBefore(words(before.value)),
       Article.Edits.ArticleCheck.WordsAfter(words(body.value)),
       body
@@ -2589,7 +2589,7 @@ object ReviewArticle:
     def evaluate(es: List[Article.Edits.EditAnswer]): Revision =
       val check = checkBody(slug, before, kind, Article.Edits.Draft.Edits(es), corpus)
       guards match
-        case Some(g) if !check.fatal.value =>
+        case Some(g) if !check.fatal.fatal =>
           val (body, hits) = g.repair(check.body)
           Revision(check, body, hits, g.pairsOf(body), g.regressions(before, body))
         case _ => Revision(check, check.body, Nil, critiques, Nil)
@@ -2612,7 +2612,7 @@ object ReviewArticle:
             val keep = cur.check.edits.filter(e => e.applied && e.index != i).map(_.index).toSet
             val trial =
               evaluate(edits.zipWithIndex.collect { case (e, j) if keep(Article.Edits.EditResult.Index(j + 1)) => e })
-            if trial.regressions.size < cur.regressions.size && !trial.check.fatal.value then trial else cur
+            if trial.regressions.size < cur.regressions.size && !trial.check.fatal.fatal then trial else cur
         }
     val dropped = first.check.edits.filter(_.applied).map(_.index).diff(rev.check.edits.filter(_.applied).map(_.index))
     val droppedNote = Option.when(dropped.nonEmpty)(
@@ -2672,7 +2672,7 @@ object ReviewArticle:
       check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
         wont.collect { case Left(p) => p } ++ asideProblems ++ pairProblems ++ broughtProblem.toList ++
         regressionProblems
-    if problems.isEmpty || (last.value && !check.fatal.value) then
+    if problems.isEmpty || (last.value && !check.fatal.fatal) then
       val wontOk = wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id)
       val setAside = asides.filterNot(s => applied.contains(s.id) || rejectedOk.exists(_.id == s.id))
       // every open finding left unanswered, with why — the ledger records it as not fixed

@@ -40,7 +40,7 @@ object AutopilotMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focus(f: FocusInfo): String =
     val head =
-      s"## Focus: ${if (f.on) == FocusInfo.On(true) then s"at most ${f.max} active goals" else "not in force"}" +
+      s"## Focus: ${if (f.on) == FocusInfo.On.On then s"at most ${f.max} active goals" else "not in force"}" +
         (if f.maxFrom == FocusInfo.MaxFrom("person") then " (set by a person)"
          else " (agents.autopilot.max-active-goals)")
     val lines = List(
@@ -56,7 +56,7 @@ object AutopilotMarkdown:
         f.active.zipWithIndex
           .map { (g, i) =>
             s"${i + 1}. **${g.slug}** _(${g.status}, ${g.stage})_${
-                if (g.pinned) == FocusGoal.Pinned(true) then " (pinned)" else ""
+                if (g.pinned) == FocusGoal.Pinned.Pinned then " (pinned)" else ""
               } — ${g.why}" +
               g.doing.fold("")(d => s"\n   - now: $d") + s"\n   - ${pace(g)}"
           }
@@ -69,7 +69,7 @@ object AutopilotMarkdown:
     val waits = f.waiting.groupBy(_.code).toList.sortBy(-_._2.size).map { (c, ws) =>
       s"- ${Plural.count(Plural.CountN((ws.size).toLong), Plural.CountSingular("goal"))} $c: " + ws
         .take(5)
-        .map(w => s"${w.slug}${if (w.pinned) == FocusWaiting.Pinned(true) then " (pinned)" else ""}")
+        .map(w => s"${w.slug}${if (w.pinned) == FocusWaiting.Pinned.Pinned then " (pinned)" else ""}")
         .mkString(", ") +
         (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${s"${w.why}".take(200)}")
     }
@@ -88,11 +88,11 @@ object AutopilotMarkdown:
       beforeBacklog: List[String] = Nil,
       afterBacklog: List[String] = Nil
   ): String =
-    val head = s"# Autopilot: ${if (s.on) == EngineStatus.On(true) then "ON" else "off"}" +
+    val head = s"# Autopilot: ${if (s.on) == EngineStatus.On.On then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
       s.drain.map(d =>
-        if (d.drained) == DrainInfo.Drained(true) then
+        if (d.drained) == DrainInfo.Drained.Drained then
           s"DRAINED since ${d.drainedAt.getOrElse(d.since)} (draining since ${d.since}" +
             s"${
                 if (d.by).value.nonEmpty then s" by ${d.by}" else ""
@@ -102,16 +102,15 @@ object AutopilotMarkdown:
           s"DRAINING since ${d.since}${if (d.by).value.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
             s"${counted((d.inFlight).value.toLong, "run")} in flight still finishing"
       ),
-      Option.when(!((s.agentsEnabled) == EngineStatus.AgentsEnabled(true)))(
+      Option.when(!((s.agentsEnabled) == EngineStatus.AgentsEnabled.Enabled))(
         "agents are disabled on this server (agents.enabled = false): nothing runs"
       ),
       Option.when(
-        ((s.agentsEnabled) == EngineStatus.AgentsEnabled(true)) && !((s.managersEnabled) == EngineStatus
-          .ManagersEnabled(true))
+        ((s.agentsEnabled) == EngineStatus.AgentsEnabled.Enabled) && !((s.managersEnabled) == EngineStatus.ManagersEnabled.Enabled)
       )(
         "the managers are disabled (agents.managers.enabled = false): nothing runs"
       ),
-      Option.when(!((s.cronsEnabled) == EngineStatus.CronsEnabled(true)))(Autopilot.EngineStatus.CronsOff),
+      Option.when(!((s.cronsEnabled) == EngineStatus.CronsEnabled.Enabled))(Autopilot.EngineStatus.CronsOff),
       s.goalPlansWait.map(w => s"$w; a person may still approve a plan")
     ).flatten.map(w => s"- **$w**")
     val rules =

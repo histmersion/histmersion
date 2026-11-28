@@ -3,6 +3,7 @@ package api.catalogue
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** A place as the hierarchy shows it: its id, label, kind, period, and whether it is contested or withdrawn. */
 final case class RegionNode(
@@ -10,9 +11,9 @@ final case class RegionNode(
     label: RegionNode.Label,
     kind: RegionNode.Kind,
     period: Option[Period] = None,
-    contested: RegionNode.Contested = RegionNode.Contested(false),
+    contested: RegionNode.Contested = RegionNode.Contested.Settled,
     /** Pleiades marks superseded records `withdrawn`; they must never head a level. */
-    withdrawn: RegionNode.Withdrawn = RegionNode.Withdrawn(false)
+    withdrawn: RegionNode.Withdrawn = RegionNode.Withdrawn.Current
 )
 
 object RegionNode:
@@ -29,10 +30,14 @@ object RegionNode:
   export Place.Label
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
-  type Contested = Contested.T
-  object Contested extends Newtype[Boolean, Pure]
-  type Withdrawn = Withdrawn.T
-  object Withdrawn extends Newtype[Boolean, Pure]
+  enum Contested derives CanEqual:
+    case Contested, Settled
+  object Contested extends TwoStates[Contested]:
+    extension (contested: Contested) def contested: Boolean = contested == Contested
+  enum Withdrawn derives CanEqual:
+    case Withdrawn, Current
+  object Withdrawn extends TwoStates[Withdrawn]:
+    extension (withdrawn: Withdrawn) def withdrawn: Boolean = withdrawn == Withdrawn
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val RootKinds: Set[RootKinds] = Set(
@@ -51,6 +56,6 @@ object RegionNode:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def rootEligible(n: RegionNode): Boolean =
-    RootKinds.contains(RootKindsText((n.kind).value)) && !((n.withdrawn) == Withdrawn(true)) && !((uncertainLabel(
+    RootKinds.contains(RootKindsText((n.kind).value)) && !((n.withdrawn) == Withdrawn.Withdrawn) && !((uncertainLabel(
       Label((n.label).value)
     )) == (true))

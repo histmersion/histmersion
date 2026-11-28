@@ -224,7 +224,7 @@ class CritiqueReasonsSuite extends DbSuite:
     // the source's delete drops it
     assert(
       h.library.sources
-        .delete(Citekey("zzcrit1999_ritesb"), Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+        .delete(Citekey("zzcrit1999_ritesb"), Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply))
         .isRight
     )
     assertEquals(ArticleFixtures.critiques(ds, domain.research.Slug("zzcrit_bough2")), Nil)

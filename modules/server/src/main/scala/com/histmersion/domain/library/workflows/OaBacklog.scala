@@ -183,7 +183,7 @@ final class OaBacklog(
       .light()
       .filter(m =>
         m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value && m.config.autoIngest
-          .contains(ManagerConfig.AutoIngest(true))
+          .contains(ManagerConfig.AutoIngest.Auto)
       )
       .map(m =>
         m.id -> IngestBacklog.Lane.LeftToday(
@@ -202,7 +202,7 @@ final class OaBacklog(
       .light()
       .filter(m =>
         m.kind.value == Kind.Watch.wire.value && m.state.value == State.Active.wire.value &&
-          m.config.autoIngest.contains(ManagerConfig.AutoIngest(true))
+          m.config.autoIngest.contains(ManagerConfig.AutoIngest.Auto)
       )
       .map(_.id)
       .toSet
@@ -465,7 +465,7 @@ final class OaBacklog(
                     w.year,
                     w.authors,
                     w.venue,
-                    isOa = WorkRef.IsOa(true),
+                    isOa = WorkRef.IsOa.OpenAccess,
                     AcquisitionSweepRules.Candidate.Query(""),
                     None
                   ),
@@ -520,7 +520,7 @@ final class OaBacklog(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def repair(in: RepairRequest)(using WritePermit)(using Creator.New): RepairResult =
-    val dryRun = in.dryRun.value
+    val dryRun = in.dryRun.dryRun
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
     val rows = agents.managerStore.sweepAcquireItems()
     val light = agents.managerStore.light().map(m => m.id.value -> m).toMap
@@ -539,7 +539,7 @@ final class OaBacklog(
         RepairFacts.WatcherExists(w.isDefined),
         RepairFacts.WatcherAutoIngest(
           w.exists(m =>
-            m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true))
+            m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest.Auto)
           )
         ),
         site.sourceStore.citekeyOfDoi(first.doi)

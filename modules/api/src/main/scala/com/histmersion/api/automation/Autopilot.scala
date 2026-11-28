@@ -10,6 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Autopilot:
@@ -111,7 +112,7 @@ object Autopilot:
       status: FocusGoal.Status = FocusGoal.Status(""),
       stage: FocusGoal.Stage = FocusGoal.Stage(""),
       why: Rationale = Rationale(""),
-      pinned: FocusGoal.Pinned = FocusGoal.Pinned(false),
+      pinned: FocusGoal.Pinned = FocusGoal.Pinned.Unpinned,
       priority: FocusGoal.Priority = FocusGoal.Priority(0),
       since: Option[FocusGoal.Since] = None,
       doing: Option[FocusGoal.Doing] = None,
@@ -129,8 +130,10 @@ object Autopilot:
     object Status extends Newtype[String, Pure]
     type Stage = Stage.T
     object Stage extends Newtype[String, Pure]
-    type Pinned = Pinned.T
-    object Pinned extends Newtype[Boolean, Pure]
+    enum Pinned derives CanEqual:
+      case Pinned, Unpinned
+    object Pinned extends TwoStates[Pinned]:
+      extension (pinned: Pinned) def pinned: Boolean = pinned == Pinned
     type Priority = Priority.T
     object Priority extends Newtype[Int, Pure]
     type Since = Since.T
@@ -148,7 +151,7 @@ object Autopilot:
       slug: FocusWaiting.Slug,
       code: FocusWaiting.Code,
       why: Rationale = Rationale(""),
-      pinned: FocusWaiting.Pinned = FocusWaiting.Pinned(false)
+      pinned: FocusWaiting.Pinned = FocusWaiting.Pinned.Unpinned
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -157,8 +160,10 @@ object Autopilot:
     export api.research.ReviewGoal.Slug
     type Code = Code.T
     object Code extends Newtype[String, Pure]
-    type Pinned = Pinned.T
-    object Pinned extends Newtype[Boolean, Pure]
+    enum Pinned derives CanEqual:
+      case Pinned, Unpinned
+    object Pinned extends TwoStates[Pinned]:
+      extension (pinned: Pinned) def pinned: Boolean = pinned == Pinned
 
   final case class FocusInfo(
       on: FocusInfo.On,
@@ -176,8 +181,10 @@ object Autopilot:
         api.json.Schema
 
   object FocusInfo:
-    type On = On.T
-    object On extends Newtype[Boolean, Pure]
+    enum On derives CanEqual:
+      case On, Off
+    object On extends TwoStates[On]:
+      extension (on: On) def on: Boolean = on == On
     type Max = Max.T
     object Max extends Newtype[Int, Pure]
     type MaxFrom = MaxFrom.T
@@ -215,7 +222,7 @@ object Autopilot:
   final case class DrainInfo(
       since: DrainInfo.Since,
       by: DrainInfo.By = DrainInfo.By(""),
-      drained: DrainInfo.Drained = DrainInfo.Drained(false),
+      drained: DrainInfo.Drained = DrainInfo.Drained.Running,
       drainedAt: Option[DrainInfo.DrainedAt] = None,
       inFlight: DrainInfo.InFlight = DrainInfo.InFlight(0)
   ) derives JsonCodec,
@@ -227,8 +234,10 @@ object Autopilot:
     object Since extends Newtype[String, Pure]
     type By = By.T
     object By extends Newtype[String, Pure]
-    type Drained = Drained.T
-    object Drained extends Newtype[Boolean, Pure]
+    enum Drained derives CanEqual:
+      case Drained, Running
+    object Drained extends TwoStates[Drained]:
+      extension (drained: Drained) def drained: Boolean = drained == Drained
     type DrainedAt = DrainedAt.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object DrainedAt extends Newtype[String, Pure]
@@ -241,8 +250,10 @@ object Autopilot:
         api.json.Schema
 
   object DrainSet:
-    type On = On.T
-    object On extends Newtype[Boolean, Pure]
+    enum On derives CanEqual:
+      case On, Off
+    object On extends TwoStates[On]:
+      extension (on: On) def on: Boolean = on == On
     type By = By.T
     object By extends Newtype[String, Pure]
 
@@ -254,9 +265,9 @@ object Autopilot:
       on: EngineStatus.On,
       since: Option[EngineStatus.Since] = None,
       by: Option[EngineStatus.By] = None,
-      agentsEnabled: EngineStatus.AgentsEnabled = EngineStatus.AgentsEnabled(false),
-      managersEnabled: EngineStatus.ManagersEnabled = EngineStatus.ManagersEnabled(false),
-      cronsEnabled: EngineStatus.CronsEnabled = EngineStatus.CronsEnabled(true),
+      agentsEnabled: EngineStatus.AgentsEnabled = EngineStatus.AgentsEnabled.Disabled,
+      managersEnabled: EngineStatus.ManagersEnabled = EngineStatus.ManagersEnabled.Disabled,
+      cronsEnabled: EngineStatus.CronsEnabled = EngineStatus.CronsEnabled.Enabled,
       approvals: List[ApprovalRule] = Nil,
       ingestedToday: EngineStatus.IngestedToday = EngineStatus.IngestedToday(0),
       ingestCap: EngineStatus.IngestCap = EngineStatus.IngestCap(0),
@@ -278,14 +289,18 @@ object Autopilot:
     object Since extends Newtype[String, Pure]
     type By = By.T
     object By extends Newtype[String, Pure]
-    type AgentsEnabled = AgentsEnabled.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object AgentsEnabled extends Newtype[Boolean, Pure]
-    type ManagersEnabled = ManagersEnabled.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object ManagersEnabled extends Newtype[Boolean, Pure]
-    type CronsEnabled = CronsEnabled.T
-    object CronsEnabled extends Newtype[Boolean, Pure]
+    enum AgentsEnabled derives CanEqual:
+      case Enabled, Disabled
+    object AgentsEnabled extends TwoStates[AgentsEnabled]:
+      extension (agentsEnabled: AgentsEnabled) def agentsEnabled: Boolean = agentsEnabled == Enabled
+    enum ManagersEnabled derives CanEqual:
+      case Enabled, Disabled
+    object ManagersEnabled extends TwoStates[ManagersEnabled]:
+      extension (managersEnabled: ManagersEnabled) def managersEnabled: Boolean = managersEnabled == Enabled
+    enum CronsEnabled derives CanEqual:
+      case Enabled, Disabled
+    object CronsEnabled extends TwoStates[CronsEnabled]:
+      extension (cronsEnabled: CronsEnabled) def cronsEnabled: Boolean = cronsEnabled == Enabled
     type IngestedToday = IngestedToday.T
     object IngestedToday extends Newtype[Int, Pure]
     type IngestCap = IngestCap.T

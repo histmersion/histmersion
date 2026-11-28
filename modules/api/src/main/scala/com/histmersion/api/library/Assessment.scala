@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class Assessment(
     target: Assessment.Target,
@@ -34,10 +35,14 @@ object Assessment:
   export Acquire.CitedByCount
   type InfluentialCitations = InfluentialCitations.T
   object InfluentialCitations extends Newtype[Int, Pure]
-  type IsRetracted = IsRetracted.T
-  object IsRetracted extends Newtype[Boolean, Pure]
-  type Flagged = Flagged.T
-  object Flagged extends Newtype[Boolean, Pure]
+  enum IsRetracted derives CanEqual:
+    case Retracted, Standing
+  object IsRetracted extends TwoStates[IsRetracted]:
+    extension (isRetracted: IsRetracted) def isRetracted: Boolean = isRetracted == Retracted
+  enum Flagged derives CanEqual:
+    case Flagged, Clear
+  object Flagged extends TwoStates[Flagged]:
+    extension (flagged: Flagged) def flagged: Boolean = flagged == Flagged
   type Verdict = Verdict.T
   object Verdict extends Newtype[String, Pure]
   export Acquire.Recommendation

@@ -26,6 +26,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.time.IsoLocal
 import com.histmersion.api.library.Filter
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -352,8 +353,10 @@ object Agents:
     object Model extends Newtype[String, Pure]
     type RawAnswer = RawAnswer.T
     object RawAnswer extends Newtype[String, Pure]
-    type MatchesRecord = MatchesRecord.T
-    object MatchesRecord extends Newtype[Boolean, Pure]
+    enum MatchesRecord derives CanEqual:
+      case Matches, Differs
+    object MatchesRecord extends TwoStates[MatchesRecord]:
+      extension (matchesRecord: MatchesRecord) def matchesRecord: Boolean = matchesRecord == Matches
     type ToolCalls = ToolCalls.T
     object ToolCalls extends Newtype[String, Pure]
     type Iterations = Iterations.T
@@ -403,8 +406,10 @@ object Agents:
     object BudgetUsd extends Newtype[Double, Pure]
     type BudgetTokens = BudgetTokens.T
     object BudgetTokens extends Newtype[Long, Pure]
-    type Fix = Fix.T
-    object Fix extends Newtype[Boolean, Pure]
+    enum Fix derives CanEqual:
+      case Fix, Report
+    object Fix extends TwoStates[Fix]:
+      extension (fix: Fix) def fix: Boolean = fix == Fix
     type Rounds = Rounds.T
     object Rounds extends Newtype[Int, Pure]
     export Article.Title
@@ -414,8 +419,10 @@ object Agents:
     object Query extends Newtype[String, Pure]
     export Filter.Topics
     export Filter.Tags
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
 
   final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model)
       derives JsonCodec,
@@ -467,7 +474,7 @@ object Agents:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
-    def fixes: Boolean = (fix.contains(RunRequest.Fix(true)))
+    def fixes: Boolean = (fix.contains(RunRequest.Fix.Fix))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def noteList: List[RunParams.Notes] = (notes
       .getOrElse(Nil)
@@ -480,8 +487,10 @@ object Agents:
 
     type Notes = Notes.T
     object Notes extends Newtype[String, Pure]
-    type ChainReview = ChainReview.T
-    object ChainReview extends Newtype[Boolean, Pure]
+    enum ChainReview derives CanEqual:
+      case ChainReview, Alone
+    object ChainReview extends TwoStates[ChainReview]:
+      extension (chainReview: ChainReview) def chainReview: Boolean = chainReview == ChainReview
     type MinSources = MinSources.T
     object MinSources extends Newtype[Int, Pure]
     type MaxArticles = MaxArticles.T
@@ -492,8 +501,10 @@ object Agents:
     object Hint extends Newtype[Long, Pure]
     type SubGoals = SubGoals.T
     object SubGoals extends Newtype[Int, Pure]
-    type OaBacklog = OaBacklog.T
-    object OaBacklog extends Newtype[Boolean, Pure]
+    enum OaBacklog derives CanEqual:
+      case Backlog, Regular
+    object OaBacklog extends TwoStates[OaBacklog]:
+      extension (oaBacklog: OaBacklog) def oaBacklog: Boolean = oaBacklog == Backlog
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -519,7 +530,7 @@ object Agents:
       parent: Option[RunInfo.Id] = None,
       origin: Option[RunInfo.Origin] = None,
       resumeAt: Option[RunInfo.ResumeAt] = None,
-      dryRun: RunInfo.DryRun = RunInfo.DryRun(false),
+      dryRun: RunInfo.DryRun = RunInfo.DryRun.Apply,
       managerId: Option[Managers.ManagerInfo.Id] = None,
       managerItem: Option[Managers.ManagerItem.Id] = None,
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None,
@@ -573,8 +584,10 @@ object Agents:
     export Agents.Origin.Wire as Origin
     type ResumeAt = ResumeAt.T
     object ResumeAt extends Newtype[String, Pure]
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     type HeartbeatAt = HeartbeatAt.T
     object HeartbeatAt extends Newtype[String, Pure]
 
@@ -700,8 +713,10 @@ object Agents:
     export AgentRole.Wire as Role
     type Model = Model.T
     object Model extends Newtype[String, Pure]
-    type Ready = Ready.T
-    object Ready extends Newtype[Boolean, Pure]
+    enum Ready derives CanEqual:
+      case Ready, Unready
+    object Ready extends TwoStates[Ready]:
+      extension (ready: Ready) def ready: Boolean = ready == Ready
 
   final case class ModelsInfo(
       enabled: ModelsInfo.Enabled,
@@ -717,8 +732,10 @@ object Agents:
         api.json.Schema
 
   object ModelsInfo:
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
+    enum Enabled derives CanEqual:
+      case Enabled, Disabled
+    object Enabled extends TwoStates[Enabled]:
+      extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
     type Pipelines = Pipelines.T
     object Pipelines extends Newtype[String, Pure]
     type MaxConcurrentRuns = MaxConcurrentRuns.T
@@ -776,8 +793,10 @@ object Agents:
   object ProviderDoctor:
     type Provider = Provider.T
     object Provider extends Newtype[String, Pure]
-    type Used = Used.T
-    object Used extends Newtype[Boolean, Pure]
+    enum Used derives CanEqual:
+      case Used, Unused
+    object Used extends TwoStates[Used]:
+      extension (used: Used) def used: Boolean = used == Used
     type Models = Models.T
     object Models extends Newtype[String, Pure]
     type UpstreamModels = UpstreamModels.T
@@ -793,10 +812,14 @@ object Agents:
         api.json.Schema
 
   object DoctorReport:
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
-    type Online = Online.T
-    object Online extends Newtype[Boolean, Pure]
+    enum Enabled derives CanEqual:
+      case Enabled, Disabled
+    object Enabled extends TwoStates[Enabled]:
+      extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
+    enum Online derives CanEqual:
+      case Online, Offline
+    object Online extends TwoStates[Online]:
+      extension (online: Online) def online: Boolean = online == Online
 
   final case class GenerateRequest(
       runtimes: List[GenerateRequest.Runtimes] = Nil,

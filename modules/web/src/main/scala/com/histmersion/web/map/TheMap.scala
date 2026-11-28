@@ -65,7 +65,7 @@ object TheMap:
 
   private var canvas: Option[MarkerCanvas] = None
 
-  private val pointPane: MapStack.Pane => Boolean = _.point == MapStack.Pane.Point(true)
+  private val pointPane: MapStack.Pane => Boolean = _.point == MapStack.Pane.Point.Point
 
   def reposition(): Unit =
     // the view read once for every marker: a layout read between two markers' writes forced a layout each

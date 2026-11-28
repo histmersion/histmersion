@@ -30,11 +30,11 @@ class GeoPickSuite extends munit.FunSuite:
   test("the range picks keep the whole range; reversed bounds are put in order; one year is a snapshot"):
     assertEquals(
       GeoPick.resolve(None, Some(Year(1000)), Some(Year(1500)), GeoPick.Earliest),
-      Within(Year(1000), Year(1500), latest = Within.Latest(false))
+      Within(Year(1000), Year(1500), latest = Within.Latest.Earliest)
     )
     assertEquals(
       GeoPick.resolve(None, Some(Year(1500)), Some(Year(1000)), GeoPick.Latest),
-      Within(Year(1000), Year(1500), latest = Within.Latest(true))
+      Within(Year(1000), Year(1500), latest = Within.Latest.Latest)
     )
     assertEquals(GeoPick.resolve(None, Some(Year(1200)), Some(Year(1200)), GeoPick.Latest), At(Year(1200)))
     assertEquals(
@@ -56,4 +56,4 @@ class GeoPickSuite extends munit.FunSuite:
   test("the window a time rule reads"):
     assertEquals(Always.window, None)
     assertEquals(At(Year(5)).window, Some((5L, 5L)))
-    assertEquals(Within(Year(-10), Year(10), latest = Within.Latest(true)).window, Some((-10L, 10L)))
+    assertEquals(Within(Year(-10), Year(10), latest = Within.Latest.Latest).window, Some((-10L, 10L)))

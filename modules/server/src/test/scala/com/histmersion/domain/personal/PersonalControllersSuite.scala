@@ -151,9 +151,9 @@ class PersonalControllersSuite extends munit.FunSuite:
 
   test("only sources and articles are marked read; show is read, opened or all"):
     val c = fixture()
-    assert(c.setRead(me, ReadMark.Set(ItemKind.Place, ItemKey("p"), read = ReadMark.Read(true))).isLeft)
+    assert(c.setRead(me, ReadMark.Set(ItemKind.Place, ItemKey("p"), read = ReadMark.Read.Read)).isLeft)
     assertEquals(
-      c.setRead(me, ReadMark.Set(ItemKind.Source, ItemKey("zz"), read = ReadMark.Read(true), Some(Title("Zz"))))
+      c.setRead(me, ReadMark.Set(ItemKind.Source, ItemKey("zz"), read = ReadMark.Read.Read, Some(Title("Zz"))))
         .map(m => (m.read, m.title)),
       Right((true, "Zz"))
     )

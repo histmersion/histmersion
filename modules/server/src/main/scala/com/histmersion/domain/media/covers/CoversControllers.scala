@@ -39,7 +39,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def covers(req: MediaCoversRequest)(using Creator.New): Either[Api.Error, MediaCoversReport] =
     // a dry run writes nothing, but runs the one path that may: under the gate too
-    if req.dryRun.value then jobs.guarded(WriteGate.OperationName("media_covers"))(Right(pictures.run(req)))
+    if req.dryRun.dryRun then jobs.guarded(WriteGate.OperationName("media_covers"))(Right(pictures.run(req)))
     else if req.citekey.forall(_.value.trim.isEmpty) then
       Left(
         Api.Error(
@@ -60,13 +60,13 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   def coversJob(req: MediaCoversRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     val what =
       List(
-        Option.when(req.covers.value)("Open Library covers"),
-        Option.when(req.illustrations.value)("illustrations")
+        Option.when(req.covers.included)("Open Library covers"),
+        Option.when(req.illustrations.included)("illustrations")
       ).flatten
         .mkString(" and ") + req.citekey.fold(" of every source")(c => s" of $c") +
-        (if req.refresh.value then " (refresh)" else "")
+        (if req.refresh.refresh then " (refresh)" else "")
     jobs.start(CoversControllers.CoversJobKind, JobKinds.Subject(what)) { progress =>
-      val r = pictures.run(req.modify(_.dryRun).setTo(RepairAcquire.RepairRequest.DryRun(false)), progress)
+      val r = pictures.run(req.modify(_.dryRun).setTo(RepairAcquire.RepairRequest.DryRun.Apply), progress)
       Right(
         BackgroundJob.Outcome.Summary(
           s"${r.sources} source(s) · ${r.covers} cover(s) · ${r.illustrations} illustration(s)" +

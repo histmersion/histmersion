@@ -81,8 +81,8 @@ object BundleImporter:
     Bundle.ImportResult(
       m.bundleId,
       m.instance,
-      Bundle.ImportResult.DryRun(opts.dryRun.value),
-      applied = Bundle.ImportResult.Applied(false),
+      (if opts.dryRun.value then Bundle.ImportResult.DryRun.DryRun else Bundle.ImportResult.DryRun.Apply),
+      applied = Bundle.ImportResult.Applied.Skipped,
       Nil,
       Bundle.ImportResult.Blobs(0),
       problems,
@@ -166,10 +166,10 @@ object BundleImporter:
       Bundle.ImportResult(
         m.bundleId,
         m.instance,
-        Bundle.ImportResult.DryRun(opts.dryRun.value),
+        (if opts.dryRun.value then Bundle.ImportResult.DryRun.DryRun else Bundle.ImportResult.DryRun.Apply),
         applied,
         counts,
-        if applied.value then Bundle.ImportResult.Blobs(needed.size) else Bundle.ImportResult.Blobs(0),
+        if applied.applied then Bundle.ImportResult.Blobs(needed.size) else Bundle.ImportResult.Blobs(0),
         problems,
         conflicts,
         planned.notes.map(n => Bundle.ImportResult.Notes(n.value)),
@@ -178,7 +178,7 @@ object BundleImporter:
         Some(Bundle.ImportResult.PlanHash(plan.planHash.value))
       )
 
-    if problems.nonEmpty || opts.dryRun.value then result(applied = Bundle.ImportResult.Applied(false), None)
+    if problems.nonEmpty || opts.dryRun.value then result(applied = Bundle.ImportResult.Applied.Skipped, None)
     else
       writeAll(bundle, input, planned, opts, files, kinds)
       val mergeId = MergeRepo.record(
@@ -186,10 +186,10 @@ object BundleImporter:
         bundleSha,
         BundlePlan.EntityOwnBundle(ownBundle),
         decided,
-        result(applied = Bundle.ImportResult.Applied(true), None).asJson,
-        RowCount(result(applied = Bundle.ImportResult.Applied(true), None).changed.value)
+        result(applied = Bundle.ImportResult.Applied.Applied, None).asJson,
+        RowCount(result(applied = Bundle.ImportResult.Applied.Applied, None).changed.value)
       )
-      result(applied = Bundle.ImportResult.Applied(true), mergeId)
+      result(applied = Bundle.ImportResult.Applied.Applied, mergeId)
 
   /** Every kind's steps over the decided lines: the rows, the blobs, what hangs off them and the derived state. Inside
     * the caller's transaction; the importing flag is left on.
@@ -351,7 +351,7 @@ object BundleImporter:
               MergeApplyResult(
                 m.bundleId,
                 m.instance,
-                applied = MergeApplyResult.Applied(false),
+                applied = MergeApplyResult.Applied.Skipped,
                 MergeApplyResult.PlanHash(planHash.value),
                 problems = a.problems
               )
@@ -400,7 +400,7 @@ object BundleImporter:
     val base = MergeApplyResult(
       m.bundleId,
       m.instance,
-      applied = MergeApplyResult.Applied(false),
+      applied = MergeApplyResult.Applied.Skipped,
       MergeApplyResult.PlanHash(plan.planHash.value),
       counts = counts,
       tally = planned.apply.tally,
@@ -412,7 +412,7 @@ object BundleImporter:
     else if plan.changes.value == 0 then
       base
         .modify(_.applied)
-        .setTo(MergeApplyResult.Applied(true))
+        .setTo(MergeApplyResult.Applied.Applied)
         .modify(_.replanChanges)
         .setTo(Some(MergeApplyResult.ReplanChanges(0)))
         .modify(_.tally)
@@ -432,7 +432,7 @@ object BundleImporter:
           folded.groupBy(_.kind).foreach((k, rs) => MergeRepo.touch(kinds.tableOf(k), rs.map(_.uid).distinct))
           val report = base
             .modify(_.applied)
-            .setTo(MergeApplyResult.Applied(true))
+            .setTo(MergeApplyResult.Applied.Applied)
             .modify(_.backup)
             .setTo(Some(MergeApplyResult.Backup(dump)))
             .modify(_.problems)

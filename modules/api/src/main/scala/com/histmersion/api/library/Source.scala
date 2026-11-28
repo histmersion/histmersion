@@ -28,6 +28,7 @@ import com.histmersion.api.exchange.PlanMatchKind
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -135,7 +136,7 @@ object Source:
       authors: List[AuthorName] = (Nil).map(AuthorName.apply),
       venue: Option[Venue] = None,
       abstractText: Option[Candidate.AbstractText] = None,
-      isOa: Candidate.IsOa = Candidate.IsOa(false),
+      isOa: Candidate.IsOa = Candidate.IsOa.Closed,
       arxivId: Option[Candidate.ArxivId] = None,
       foundBy: List[Candidate.FoundBy] = Nil,
       state: Candidate.State = Candidate.State(Candidates.State.New.wire.value),
@@ -151,8 +152,10 @@ object Source:
     export api.research.ReviewGoal.Slug as Goal
     type AbstractText = AbstractText.T
     object AbstractText extends Newtype[String, Pure]
-    type IsOa = IsOa.T
-    object IsOa extends Newtype[Boolean, Pure]
+    enum IsOa derives CanEqual:
+      case OpenAccess, Closed
+    object IsOa extends TwoStates[IsOa]:
+      extension (isOa: IsOa) def isOa: Boolean = isOa == OpenAccess
     type ArxivId = ArxivId.T
     object ArxivId extends Newtype[String, Pure]
     type FoundBy = FoundBy.T
@@ -253,7 +256,7 @@ object Source:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(d: Deletion, calibre: Option[CalibreEntryCheck] = None): Markdown =
       val head =
-        if (d.applied) == Deletion.Applied(true) then s"# Deleted `${d.citekey}`"
+        if (d.applied) == Deletion.Applied.Applied then s"# Deleted `${d.citekey}`"
         else if (d.refused) == (true) then s"# Cannot delete `${d.citekey}`"
         else s"# Would delete `${d.citekey}` (dry run)"
       val blockers =
@@ -261,11 +264,11 @@ object Source:
         else
           List("", "**Refused — fix these first (there is no override):**", "") ++
             d.blockers.map(b => s"- ${b.kind.label}: `${b.id}`${b.title.fold("")(t => s" — $t")}")
-      val verb = if (d.applied) == Deletion.Applied(true) then "removed" else "would go"
+      val verb = if (d.applied) == Deletion.Applied.Applied then "removed" else "would go"
       val counts =
         if d.counts.isEmpty then List("", s"Nothing besides the record itself $verb.")
         else
-          List("", s"**${if (d.applied) == Deletion.Applied(true) then "Removed" else "Would remove"}** (with the record itself):", "") ++
+          List("", s"**${if (d.applied) == Deletion.Applied.Applied then "Removed" else "Would remove"}** (with the record itself):", "") ++
             d.counts.map(c => s"- ${c.part.label}: ${c.rows}")
       val aliases = if d.aliases.isEmpty then Nil
       else List("", s"Old citekeys that stop resolving: ${d.aliases.map(a => s"`$a`").mkString(", ")}")
@@ -274,7 +277,7 @@ object Source:
         List(
           "",
           s"Edges of other sources to it (${
-              if (d.applied) == Deletion.Applied(true) then "parked" else "parked, not lost"
+              if (d.applied) == Deletion.Applied.Applied then "parked" else "parked, not lost"
             }: " +
             "they come back if it is ingested again):",
           ""
@@ -288,7 +291,7 @@ object Source:
           List(
             "",
             s"Stored original (${
-                if (d.applied) == Deletion.Applied(true) then "removed" else "removed after the commit"
+                if (d.applied) == Deletion.Applied.Applied then "removed" else "removed after the commit"
               }):",
             ""
           ) ++
@@ -299,7 +302,7 @@ object Source:
       else List("", s"Queue items that mention it (left as they are): ${d.mentions.map(i => s"#$i").mkString(", ")}")
       val calibreLines = List("", calibreLine(d.calibreId, calibre))
       val tail =
-        if (d.applied) == Deletion.Applied(true) then
+        if (d.applied) == Deletion.Applied.Applied then
           List(
             "",
             s"Logged as item #${d.logEntry.fold("?")(_.toString)} of the log queue. A tombstone keeps a " +
@@ -314,7 +317,7 @@ object Source:
       )
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class DeleteRequest(apply: DeleteRequest.Apply = Api.Apply(false))
+  final case class DeleteRequest(apply: DeleteRequest.Apply = Api.Apply.DryRun)
       derives StrictJson,
         KindlingsSchema,
         api.json.Schema
@@ -347,8 +350,10 @@ object Source:
   object Deletion:
 
     export com.histmersion.api.library.Title
-    type Applied = Applied.T
-    object Applied extends Newtype[Boolean, Pure]
+    enum Applied derives CanEqual:
+      case Applied, Previewed
+    object Applied extends TwoStates[Applied]:
+      extension (applied: Applied) def applied: Boolean = applied == Applied
     type Aliases = Aliases.T
     object Aliases extends Newtype[String, Pure]
     type Coverage = Coverage.T

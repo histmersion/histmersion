@@ -10,6 +10,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.problem.Problem
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 final case class MergeApplyResult(
     bundleId: UUID,
@@ -33,9 +34,10 @@ final case class MergeApplyResult(
   def changed: Bundle.ChangedCount = Bundle.ChangedCount(counts.map(c => c.changed.value: Int).sum)
 
 object MergeApplyResult:
-
-  type Applied = Applied.T
-  object Applied extends Newtype[Boolean, Pure]
+  enum Applied derives CanEqual:
+    case Applied, Skipped
+  object Applied extends TwoStates[Applied]:
+    extension (applied: Applied) def applied: Boolean = applied == Applied
   export MergePlan.PlanHash
   type Backup = Backup.T
   object Backup extends Newtype[String, Pure]

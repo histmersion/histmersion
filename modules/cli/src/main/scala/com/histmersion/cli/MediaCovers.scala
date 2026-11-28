@@ -44,7 +44,7 @@ object MediaCovers:
         WHERE s.calibre_id ~ '^[0-9]+$$'
           ${only.fold("")(c => s"AND s.citekey = ${lit(c.value)}")}
           ${
-        if refresh.value then ""
+        if refresh.refresh then ""
         else
           "AND NOT EXISTS (SELECT 1 FROM media_links m WHERE m.target_type = 'source' AND m.target_id = s.citekey AND m.role = 'cover')"
       }
@@ -92,7 +92,7 @@ object MediaCovers:
           MediaItem.Provider(MediaProvider.Calibre),
           MediaSourceLine.Detail(shown"Calibre id ${book.id}")
         )
-        if dryRun.value then Outcome.Uploaded(line)
+        if dryRun.dryRun then Outcome.Uploaded(line)
         else
           scala.util.Try(Files.readAllBytes(Path.of(path.value))).toEither match
             case Left(e) =>

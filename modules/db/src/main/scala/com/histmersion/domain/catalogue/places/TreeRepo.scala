@@ -52,8 +52,8 @@ private[places] object TreeRepo:
         RegionNode.Label(label.value),
         RegionNode.Kind(kind.value),
         periodOf(periodStart, periodEnd),
-        RegionNode.Contested(contested.value),
-        RegionNode.Withdrawn(withdrawn.value)
+        (if contested.value then RegionNode.Contested.Contested else RegionNode.Contested.Settled),
+        (if withdrawn.value then RegionNode.Withdrawn.Withdrawn else RegionNode.Withdrawn.Current)
       )
 
   object RegionNodeRow:

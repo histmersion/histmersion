@@ -754,7 +754,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     assert(!dated.exists(_.assetName.value == "Zqmd_image.jpg"), "a place with no dates gives its picture none")
 
   test("fill-licences: a figure takes its source's licence — counted first, written only with apply"):
-    val dry = FigureFixtures.fillLicences(ds, apply = FigureLicenceFill.Applied(false))
+    val dry = FigureFixtures.fillLicences(ds, apply = FigureLicenceFill.Applied.Previewed)
     assertEquals(dry.bySource.find(_.key.value == "zqmd2020_figs").map(_.n), Some(2))
     assert(!dry.bySource.exists(_.key.value == "zqmd2021_nolic"), "a source with no licence gives none")
     assertEquals(
@@ -767,8 +767,8 @@ class MediaRepoSuite extends DbSuite with Bounded:
       0,
       "a dry run writes nothing"
     )
-    val done = FigureFixtures.fillLicences(ds, apply = FigureLicenceFill.Applied(true))
-    assert(done.applied.value && done.updated.value >= 2)
+    val done = FigureFixtures.fillLicences(ds, apply = FigureLicenceFill.Applied.Applied)
+    assert(done.applied.applied && done.updated.value >= 2)
     assertEquals(
       connect(ds)(
         sql"SELECT DISTINCT license FROM assets WHERE citekey = 'zqmd2020_figs'"

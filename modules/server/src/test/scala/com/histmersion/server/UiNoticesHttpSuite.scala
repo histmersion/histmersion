@@ -92,7 +92,7 @@ class UiNoticesHttpSuite extends DbSuite:
         assertEquals(post(s"$url/ui/seen/tasks", "{}", None)._1, 401)
         val (m0, mb0) = post(s"$url/ui/seen/tasks", "{}")
         assertEquals(m0, 200, mb0)
-        assert(!decode(mb0).boards.find(_.key.value == "tasks").get.fresh.value, mb0)
+        assert(!decode(mb0).boards.find(_.key.value == "tasks").get.fresh.fresh, mb0)
 
         // something lands in the backlog
         assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""", None)._1, 401)
@@ -101,17 +101,17 @@ class UiNoticesHttpSuite extends DbSuite:
         added = RawJson.decode[Queue.QueueItem](ab).toOption.map(_.id)
         val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key.value == "tasks").get
         assertEquals(after.count, tasks0.count.map(c => UiNotices.Counter.Count(c.value + 1)))
-        assert(after.fresh.value, after.toString)
+        assert(after.fresh.fresh, after.toString)
         val latest = after.latest.getOrElse(fail("no latest"))
 
         // an older mark changes nothing; the window's own latest clears it
         val (o, ob) = post(s"$url/ui/seen/tasks", """{"at":"2000-01-01T00:00:00.000000Z"}""")
         assertEquals(o, 200, ob)
-        assert(decode(ob).boards.find(_.key.value == "tasks").get.fresh.value, ob)
+        assert(decode(ob).boards.find(_.key.value == "tasks").get.fresh.fresh, ob)
         val (m1, mb1) = post(s"$url/ui/seen/tasks", s"""{"at":"$latest"}""")
         assertEquals(m1, 200, mb1)
         val read = decode(mb1).boards.find(_.key.value == "tasks").get
-        assert(!read.fresh.value, read.toString)
+        assert(!read.fresh.fresh, read.toString)
         assertEquals(read.seen.map(_.value), Some(latest.value))
 
         // refused: an unknown board, a malformed instant, a longer path

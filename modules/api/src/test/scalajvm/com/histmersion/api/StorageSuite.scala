@@ -105,7 +105,7 @@ class StorageSuite extends munit.FunSuite:
         e(Storage.Entry.Key("cluster"), Some(Storage.Entry.Path("/d/pg")), ByteCount(6)),
         e(Storage.Entry.Key("gone"), Some(Storage.Entry.Path("/nope")), ByteCount(0))
           .modify(_.exists)
-          .setTo(Storage.Entry.Exists(false))
+          .setTo(Storage.Entry.Exists.Missing)
           .modify(_.bytes)
           .setTo((None: Option[ByteCount])),
         e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), ByteCount(1))
@@ -195,7 +195,7 @@ class StorageSuite extends munit.FunSuite:
       Storage.size(
         e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), ByteCount(2 * GB))
           .modify(_.partial)
-          .setTo(Storage.Entry.Partial(true))
+          .setTo(Storage.Entry.Partial.Partial)
       ),
       "at least 2.0 GB"
     )
@@ -213,7 +213,7 @@ class StorageSuite extends munit.FunSuite:
           .modify(_.bytes)
           .setTo((None: Option[ByteCount]))
           .modify(_.exists)
-          .setTo(Storage.Entry.Exists(false))
+          .setTo(Storage.Entry.Exists.Missing)
       ),
       "not there"
     )
@@ -281,7 +281,7 @@ class StorageSuite extends munit.FunSuite:
           Some(Storage.Entry.Path("/d/toolchain")),
           None,
           None,
-          exists = Storage.Entry.Exists(false)
+          exists = Storage.Entry.Exists.Missing
         ),
         Storage.Entry(
           Storage.Entry.Key("basemap"),
@@ -290,7 +290,7 @@ class StorageSuite extends munit.FunSuite:
           Some(Storage.Entry.Path("/c/basemap")),
           (Some(600_000_000L)).map(ByteCount.apply),
           (Some(3L)).map(Storage.FileCount.apply),
-          partial = Storage.Entry.Partial(true),
+          partial = Storage.Entry.Partial.Partial,
           detail = Some(Storage.Entry.Detail("vector 410.0 MB · terrain 190.0 MB")),
           volume = Some(entryVolume)
         )
@@ -346,7 +346,7 @@ class StorageSuite extends munit.FunSuite:
   test("histmersion about: measuring, and nothing at all from an older server"):
     assertEquals(StorageMarkdown.render(Storage.Report()), Nil)
     assertEquals(
-      StorageMarkdown.render(Storage.Report(measuring = Storage.Report.Measuring(true))),
+      StorageMarkdown.render(Storage.Report(measuring = Storage.Report.Measuring.Measuring)),
       List("", "## Storage (measuring…)", "", "- measuring…")
     )
     val about = About(

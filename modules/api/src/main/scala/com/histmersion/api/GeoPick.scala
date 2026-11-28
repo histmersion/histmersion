@@ -65,4 +65,9 @@ object GeoPick:
     span match
       case None                                                      => asOf.fold(GeoTime.Always)(GeoTime.At(_))
       case Some((lo, hi)) if ((pick.snapshot) == (true)) || lo == hi => GeoTime.At(yearOf(pick, lo, hi))
-      case Some((lo, hi)) => GeoTime.Within(lo, hi, latest = GeoTime.Within.Latest(pick == Latest))
+      case Some((lo, hi))                                            =>
+        GeoTime.Within(
+          lo,
+          hi,
+          latest = (if pick == Latest then GeoTime.Within.Latest.Latest else GeoTime.Within.Latest.Earliest)
+        )

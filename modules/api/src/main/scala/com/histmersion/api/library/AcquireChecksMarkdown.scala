@@ -14,7 +14,7 @@ object AcquireChecksMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line(s: RecheckStatus): String =
     val job = s.job.fold("")(j => s" — $j")
-    if !((s.enabled) == RecheckStatus.Enabled(true)) then
+    if !((s.enabled) == RecheckStatus.Enabled.Enabled) then
       (s"acquire re-check: off (acquire.recheck.enabled = false)$job")
     else
       s"acquire re-check: ${s.due} of ${Plural.count(Plural.CountN(s.withDoi.value.toLong), Plural.CountSingular("item"))} with a DOI due, " +
@@ -35,13 +35,13 @@ object AcquireChecksMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pass(r: RecheckResult): String =
-    val verb = if (r.dryRun) == RecheckResult.DryRun(true) then "would " else ""
+    val verb = if (r.dryRun) == RecheckResult.DryRun.DryRun then "would " else ""
     val head =
       s"# Acquisition list re-check${
-          if (r.dryRun) == RecheckResult.DryRun(true) then " (dry run: no fetcher asked, nothing stored)" else ""
+          if (r.dryRun) == RecheckResult.DryRun.DryRun then " (dry run: no fetcher asked, nothing stored)" else ""
         }\n\n" +
         s"- ${Plural.count(Plural.CountN(r.open.value.toLong), Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.due} due for a try, ${r.allowance} this pass may try\n" +
-        (if r.dryRun.value then
+        (if r.dryRun.dryRun then
            s"- ${verb}close ${Plural.count(Plural.CountN(r.rows.count(_.action.value == WouldClose).toLong), Plural.CountSingular("item"))} the corpus holds with its text\n" +
              s"- ${verb}try ${Plural.count(Plural.CountN(r.rows.count(_.action.value == WouldTry).toLong), Plural.CountSingular("item"))} through the legal chain"
          else
