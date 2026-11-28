@@ -7,6 +7,8 @@
 //> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/CommentScope.scala
 //> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/CommentRemoval.scala
 //> using file ../../modules/server/src/test/scala/com/histmersion/server/comments/ApiDoc.scala
+//> using file ../../modules/lint/src/main/scala/com/histmersion/lint/tolerated.scala
+//> using file ../../modules/lint/src/main/scala/com/histmersion/lint/LintRule.scala
 
 import com.histmersion.server.comments.*
 import java.nio.charset.StandardCharsets.UTF_8
