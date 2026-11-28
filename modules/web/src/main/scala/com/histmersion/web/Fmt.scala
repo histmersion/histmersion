@@ -75,8 +75,7 @@ object Fmt:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def display(s: UiLabels.Text): UiLabels.Text = UiLabels.Text(Label.display(Label.Text(s.value)).value)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def displayTag(s: Fmt.DisplayTagS): UiLabels.Text = display(s)
+  def displayTag(s: DisplayTagS): UiLabels.Text = display(s)
 
   def esc(s: String): String =
     val sb = new StringBuilder(s.length)

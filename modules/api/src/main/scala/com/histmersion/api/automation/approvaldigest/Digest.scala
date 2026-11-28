@@ -39,7 +39,7 @@ object Digest:
   extension (d: Digest)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: Line =
-      if d.total == Digest.Total(0) && d.heldForPerson == Digest.HeldForPerson(0) then
+      if d.total == Total(0) && d.heldForPerson == HeldForPerson(0) then
         Line("approval digest: nothing waits for a person")
       else
         Line(

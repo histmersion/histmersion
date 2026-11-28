@@ -139,13 +139,11 @@ object AssetLinks:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def toWeb(md: ToWebMd, citekey: AssetLinks.ToWebCitekey): Body = retarget(md, Url(Prefix), webBase(citekey))
+  def toWeb(md: ToWebMd, citekey: ToWebCitekey): Body = retarget(md, Url(Prefix), webBase(citekey))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def toAbsolute(md: ToAbsoluteMd, citekey: AssetLinks.ToAbsoluteCitekey, publicUrl: Url): Body =
+  def toAbsolute(md: ToAbsoluteMd, citekey: ToAbsoluteCitekey, publicUrl: Url): Body =
     retarget(md, Url(Prefix), Url((publicUrl).value.trim.stripSuffix("/") + webBase(citekey)))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -154,8 +152,7 @@ object AssetLinks:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def url(citekey: AssetLinks.UrlCitekey, name: AssetLinks.UrlName): Url = Url(
+  def url(citekey: UrlCitekey, name: UrlName): Url = Url(
     (webBase(citekey)).value + enc(name.value)
   )
 

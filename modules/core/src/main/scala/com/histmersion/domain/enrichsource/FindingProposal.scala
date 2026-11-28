@@ -53,7 +53,7 @@ object FindingProposal:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pointerPhrase(
-      claim: FindingProposal.Claim,
+      claim: Claim,
       phrases: List[FindingGuards.PointerPhrases]
   ): Option[FindingGuards.PointerPhrases] =
     val lower = claim.value.toLowerCase(java.util.Locale.ROOT)

@@ -53,5 +53,5 @@ object GoalPlanFacts:
         )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def depthText(d: GoalPlanFacts.Depth): String =
+  private def depthText(d: Depth): String =
     if d.value == 0 then "at the root" else s"$d level(s) below a root"

@@ -30,15 +30,11 @@ object Block:
   type Because = Because.T
   object Because extends Newtype[String, Pure]
 
-  /** Which spend cap was reached. */
   enum SpendCap:
-    /** `agents.budgets.daily-usd`: all agents' spend today. */
     case Daily(limit: Usd)
 
-    /** `agents.budgets.monthly-usd`: all agents' spend this month. */
     case Monthly(limit: Usd)
 
-    /** A manager's own daily cap, against its metered spend today. */
     case Manager(spent: Usd, cap: Usd)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -49,11 +45,9 @@ object Block:
         s"its spend today (${s.money} USD, metered calls only) reached its daily-usd (${c.money}); " +
           "it starts again tomorrow (UTC)"
 
-  /** What another item must finish first. */
   enum Precondition:
     case Plan, Filter
 
-  /** Why `start` did not start an item. */
   enum Refusal:
     case TargetWritten, NotStartable, Settled, Gone
 
@@ -63,42 +57,27 @@ object Block:
       case Settled       => "settled without a run"
       case Gone          => "the item is gone"
 
-  /** The one account of why an item waits or nothing starts, closed: each case holds what its sentence is made of. The
-    * sentence ([[render]]) and the [[code]] it is filed under come from the case alone.
-    */
   enum Why derives CanEqual:
-    /** A spend cap is reached. */
     case Budget(cap: SpendCap)
 
-    /** The plan pools the item's role chains draw on are below their floors (`chain` says which and when it frees).
-      */
     case Starved(chain: Chain)
 
-    /** The agents are draining: nothing new starts until a person lifts it. */
     case Draining(since: Since, by: Option[By])
 
-    /** An item of the same goal must finish first. */
     case WaitsFor(first: Precondition)
 
-    /** The goal's articles are in progress; `detail` counts them. */
     case ArticlesInProgress(detail: Detail)
 
-    /** Too many planned goals are unfinished; `detail` counts them. */
     case UnfinishedGoals(detail: Detail)
 
-    /** `runs` runs draw on the plan pool already. */
     case PoolFull(pool: Candidate.Pools, runs: Resources.PoolCapValue)
 
-    /** The item's manager has its own `maxRuns` in flight. */
     case ManagerFull(manager: Candidate.ManagerId, maxRuns: Resources.ManagerCapValue)
 
-    /** All places are taken; `because` says which items are ahead. */
     case NoPlaceFree(maxRuns: Resources.MaxRuns, occupied: Resources.Occupied, because: Option[Because])
 
-    /** The dispatch refused to start it. */
     case Busy(refusal: Refusal)
 
-    /** The code this reason is filed under. */
     def code: Code = this match
       case Budget(_)             => Code("budget")
       case Starved(_)            => Code("quota")
@@ -111,7 +90,6 @@ object Block:
       case NoPlaceFree(_, _, _)  => Code("capacity")
       case Busy(_)               => Code("busy")
 
-    /** The sentence. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def render: String = this match
       case Budget(c)      => s"budget: ${c.render}"

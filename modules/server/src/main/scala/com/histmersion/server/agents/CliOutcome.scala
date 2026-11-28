@@ -17,9 +17,6 @@ import sttp.ai.core.agent.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 
-/** What a CLI run printed, read into sttp-ai's result types: the conversation (text, tool calls and their results, in
-  * order), the final text, usage, and an error or the plan's limit if it ended on one.
-  */
 @movesTo(FeaturePlace.AutomationAgents)
 final case class CliOutcome(
     entries: Vector[ConversationEntry],
@@ -52,11 +49,7 @@ object CliOutcome:
       val parsed = RawJson.parse(stripFence(raw))
       val finish = o.error.fold(FinishReason.NaturalStop)(e => FinishReason.Error(e.sentence.take(600)))
       val answer: Either[AgentFailure, Out] = parsed match
-        // a null decodes as an absent field: Codex's strict schema makes the model answer `null` for
-        // every optional field it would have left out (StrictJsonSchema), and a field with a default
-        // (`tags: List[String] = Nil`) would otherwise refuse it
         case Right(j) => SttpAiJson.answer(schema, j.withoutNulls).left.map(e => AgentParseError(raw, e))
-        // #941: an answer that ended normally but is not JSON keeps the parser's error as its cause
         case Left(pf) =>
           Left(
             AgentIncomplete(

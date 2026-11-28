@@ -629,12 +629,12 @@ private[places] object PlaceRepo:
     * always a superset of the true circle.
     */
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def geoJsonQuery(
-      kind: Option[PlaceRepo.GeoJsonQueryKind],
+      kind: Option[GeoJsonQueryKind],
       asOf: Option[DeepTime.SignedYear],
       limit: GeoJsonQueryLimit,
-      modernFrom: PlaceRepo.GeoJsonQueryModernFrom = DefaultModernFrom
+      modernFrom: GeoJsonQueryModernFrom = DefaultModernFrom
   ): Frag =
     geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(y)), limit, modernFrom)
 

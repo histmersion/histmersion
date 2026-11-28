@@ -18,8 +18,7 @@ object ActivityMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def minute(at: ActivityMarkdown.MinuteAt): String = ((at).value.take(16).replace('T', ' '))
+  def minute(at: MinuteAt): String = ((at).value.take(16).replace('T', ' '))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

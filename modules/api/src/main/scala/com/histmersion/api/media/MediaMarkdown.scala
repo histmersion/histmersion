@@ -108,8 +108,7 @@ object MediaMarkdown:
     ).mkString("\n")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[api] def mediaSamples(xs: List[MediaSample], dryRun: MediaMarkdown.MediaSamplesDryRun): String =
+  private[api] def mediaSamples(xs: List[MediaSample], dryRun: MediaSamplesDryRun): String =
     if xs.isEmpty then ("")
     else
       (s"\n\n**${if (dryRun).dryRun then "Would link" else "Linked"} (sample of ${xs.size})**\n" +

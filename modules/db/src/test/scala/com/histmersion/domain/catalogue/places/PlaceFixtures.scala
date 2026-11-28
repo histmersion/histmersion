@@ -75,7 +75,6 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): Vector[Place.Summary] = connect(ds)(PlaceRepo.children(id, asOf, limit, modernFrom))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hierarchy(
       ds: DataSource,
       asOf: Option[SignedYear],

@@ -14,7 +14,6 @@ enum Origin(val wire: Origin.Wire) derives CanEqual:
   case Scheduler extends Origin(Origin.Wire("scheduler"))
   case Run extends Origin(Origin.Wire("run"))
 
-  /** A run an ingest started, by a name no other type takes. */
   case FromIngest extends Origin(Origin.Wire("ingest"))
 
   case Manager extends Origin(Origin.Wire("manager"))

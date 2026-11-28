@@ -14,7 +14,6 @@ enum EntryKind(val wire: EntryKind.Wire) derives CanEqual:
   case Log extends EntryKind(EntryKind.Wire("log"))
   case Decision extends EntryKind(EntryKind.Wire("decision"))
 
-  /** The entry's kind as the activity list names it. */
   def wording: String = this match
     case Run      => ("Agent work")
     case Job      => ("Background job")

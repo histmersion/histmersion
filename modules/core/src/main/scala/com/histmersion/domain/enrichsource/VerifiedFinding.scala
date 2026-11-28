@@ -27,7 +27,6 @@ final case class VerifiedFinding(
     confidence: VerifiedFinding.Confidence,
     placeKind: Option[KindHint] = None
 ) derives JsonCodec:
-  /** The finding's own period, for a time-aware choice among dated places. */
   def period: Option[Period] = (start, end) match
     case (Some(s), Some(e)) => Some(Period(s, e))
     case (Some(s), None)    => Some(Period(s, s))

@@ -57,8 +57,7 @@ object PlaceHover:
 
   /** The shapes of set `set` answer as the places `place` names. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def shapes(set: PlaceHover.ShapeSetName, places: Places): Unit = shapeSets(set) = places
+  def shapes(set: ShapeSetName, places: Places): Unit = shapeSets(set) = places
 
   /** Is this pointer type a finger? (`pen` hovers like a mouse.) */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -68,8 +67,7 @@ object PlaceHover:
   /** The place shape topmost under `p`, if any. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def placeAt(p: ScreenPt): Option[(ShapeHit, (PlaceHover.PlaceId, UiLabels.Text, PlaceKind), Places)] =
+  private def placeAt(p: ScreenPt): Option[(ShapeHit, (PlaceId, UiLabels.Text, PlaceKind), Places)] =
     if surface == null then None
     else
       surface
@@ -190,10 +188,9 @@ object PlaceHover:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def bind(
       m: DomMarker,
-      id: PlaceHover.PlaceId,
+      id: PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
       asOf: () => Option[Year.Astronomical]
@@ -227,10 +224,9 @@ object PlaceHover:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def bindName(
       m: DomMarker,
-      id: PlaceHover.PlaceId,
+      id: PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
       asOf: () => Option[Year.Astronomical]
@@ -325,10 +321,10 @@ object PlaceHover:
     * go and closes the card.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def activatePlace(
-      id: PlaceHover.PlaceId,
+      id: PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
       asOf: () => Option[Year.Astronomical],

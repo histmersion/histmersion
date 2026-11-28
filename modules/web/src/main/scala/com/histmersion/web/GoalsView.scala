@@ -141,15 +141,14 @@ object GoalsView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def newArea(
       title: Goal.Title,
       slug: Goal.Slug,
       notes: Goal.Notes,
       tags: TagsText,
-      plan: GoalsView.NewAreaPlan,
-      seed: GoalsView.NewAreaSeed,
+      plan: NewAreaPlan,
+      seed: NewAreaSeed,
       watch: Watch = Watch.Unwatched,
       autoIngest: ManagerConfig.AutoIngest = ManagerConfig.AutoIngest.Manual,
       perDay: PerDay = PerDay("")
@@ -267,8 +266,7 @@ object GoalsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def badge(status: GoalsView.BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
+  def badge(status: BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
     span(
       cls := s"job-state goal-status state-${status.value}",
       meaning(Goal.Stage(status.value)).map(m => title := m),
@@ -523,9 +521,9 @@ object GoalsView:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def planSection(
-      slug: GoalsView.PlanSectionSlug,
+      slug: PlanSectionSlug,
       approvals: Signal[List[ApprovalInfo]],
       busy: Signal[Boolean],
       plan: () => Unit

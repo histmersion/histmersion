@@ -69,16 +69,16 @@ object SourceInfo:
   type Citation = Citation.T
   object Citation extends Newtype[String, Pure]
 
-  def datasetSlug(fileName: SourceInfo.File): DatasetName =
+  def datasetSlug(fileName: File): DatasetName =
     val base = fileName.value
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
       .replaceAll("(?i)\\.lpf$", "")
     DatasetName((slug(base)).take(48))
 
-  def unknownWhenSilent(sourceKey: SourceInfo.Key): Boolean =
+  def unknownWhenSilent(sourceKey: Key): Boolean =
     Kind
       .ofKey(sourceKey)
       .exists(k => k != Kind.Lpf)
 
-  def dropsPointArea(source: SourceInfo.Key, r: GazRecord, kinds: Set[PointAreaKinds]): Boolean =
+  def dropsPointArea(source: Key, r: GazRecord, kinds: Set[PointAreaKinds]): Boolean =
     PointAreaSources.contains(source) && kinds.map(_.value).contains(r.kind.value) && pointOnly(r.geometry)

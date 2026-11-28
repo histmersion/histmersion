@@ -175,7 +175,7 @@ object ArticlesAnswer:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verify(
       goal: Goal.Slug,
-      rationale: ArticlesAnswer.Rationale,
+      rationale: Rationale,
       cs: List[Candidate],
       dropped: List[Problem],
       slugFree: Article.Slug => Boolean,

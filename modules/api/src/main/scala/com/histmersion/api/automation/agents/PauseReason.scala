@@ -31,6 +31,5 @@ object PauseReason:
     def all: Array[PauseReason] = values
     def wire(e: PauseReason): WireEnumValues.Wire = e.wire
     def fromWire(s: WireEnumValues.Wire): Option[PauseReason] = values.find(_.wire == s)
-  // without these, a record deriving its codec spells the enum as an object (ContractSnapshotSuite refuses that)
   given JsonValueCodec[PauseReason] = WireEnum.codec
   given Schema[PauseReason] = WireEnum.schema

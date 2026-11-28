@@ -17,9 +17,6 @@ enum Status(val wire: WireEnumValues.Wire) derives CanEqual:
   case Rejected extends Status(WireEnumValues.Wire("rejected"))
   case WontFix extends Status(WireEnumValues.Wire("wont-fix"))
 
-  /** A missing-critique finding the fixer answered with a stored critique reason (§6.8): the critique exists, and does
-    * not bear on what the article cites the source for.
-    */
   case SetAside extends Status(WireEnumValues.Wire("set-aside"))
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")

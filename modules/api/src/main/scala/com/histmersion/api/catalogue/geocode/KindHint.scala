@@ -21,8 +21,6 @@ object KindHint:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
-  /** Lenient: it parses a model's free answer, and an unrecognised word is no hint. */
-
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): KindHint =
     val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)

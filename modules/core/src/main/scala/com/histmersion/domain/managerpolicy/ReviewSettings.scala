@@ -38,7 +38,6 @@ final case class ReviewSettings(
 )
 
 object ReviewSettings:
-  /** The settings of a manager of kind `k`. */
   type MaxRuns = MaxRuns.T
   object MaxRuns extends Newtype[Int, Pure]
   type MaxOpen = MaxOpen.T
@@ -93,7 +92,6 @@ object ReviewSettings:
     case Manager.Kind.Watch  => m.watch
     case _                   => m.seed
 
-  /** The defaults of a manager of kind `k` (a kind whose defaults say more builds them itself). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultsFor(k: Manager.Kind, m: ManagerDefaults): ManagerConfig =
     val s = simple(k, m)
@@ -106,8 +104,8 @@ object ReviewSettings:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def backoff(
-      baseMinutes: ReviewSettings.BackoffMinutes,
-      maxMinutes: ReviewSettings.MaxBackoffMinutes,
+      baseMinutes: BackoffMinutes,
+      maxMinutes: MaxBackoffMinutes,
       failures: Next.Retry.Failures
   ): Duration =
     val exp = math.min(30, math.max(0, failures.value - 1))

@@ -212,13 +212,12 @@ object ReviewArticle:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def mechanical(
       slug: research.Slug,
       kind: Snapshot.Kind,
-      body: ReviewArticle.MechanicalBody,
+      body: MechanicalBody,
       isTarget: research.Slug => Boolean,
-      generated: ReviewArticle.MechanicalGenerated = ReviewArticle.MechanicalGenerated(false)
+      generated: MechanicalGenerated = MechanicalGenerated(false)
   ): List[domain.reviewarticle.Finding] =
     val hs = headings(body)
     def f(
@@ -701,10 +700,9 @@ object ReviewArticle:
     * ([[claimWindow]]), or a status label on the criticised work ([[labelled]])?
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def qualifiedClaim(
       sentence: QualifiedClaimSentence,
-      quote: ReviewArticle.QualifiedClaimQuote,
+      quote: QualifiedClaimQuote,
       criticised: QualifiedClaimCriticised
   ): Boolean =
     qualified(claimWindow(sentence, quote)) || labelled(sentence, criticised)
@@ -858,9 +856,8 @@ object ReviewArticle:
     */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def merge(
-      round: ReviewArticle.MergeRound,
+      round: MergeRound,
       mechanicalFindings: List[domain.reviewarticle.Finding],
       reports: List[Report],
       rejectedBefore: List[domain.reviewarticle.Finding]

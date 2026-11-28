@@ -150,15 +150,13 @@ object Query:
           Left(Problem.Refused.Policy(Problem.Refused.Rule.OneStatement))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def cell(v: Option[Query.MarkdownTableRows]): String =
+  private def cell(v: Option[MarkdownTableRows]): String =
     v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def markdownTable(
-      columns: List[Query.MarkdownTableColumns],
-      rows: List[List[Option[Query.MarkdownTableRows]]]
+      columns: List[MarkdownTableColumns],
+      rows: List[List[Option[MarkdownTableRows]]]
   ): String =
     if columns.isEmpty then ("_(no columns)_")
     else

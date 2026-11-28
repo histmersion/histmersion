@@ -130,7 +130,6 @@ object ManagerConfig:
   type ExtendMinNew = ExtendMinNew.T
   object ExtendMinNew extends Newtype[Int, Pure]
 
-  /** The settings `parse` reads, by their kebab-case names (each also has a camelCase spelling). */
   val Keys: Vector[String] = Vector(
     "max-runs",
     "max-open",

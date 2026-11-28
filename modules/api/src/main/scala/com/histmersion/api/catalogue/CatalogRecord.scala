@@ -100,8 +100,7 @@ object CatalogRecord:
   def eventId(r: CatalogRecord): EventId = eventId(r.provider, r.providerId)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def eventId(provider: EventIdProvider, providerId: CatalogRecord.EventIdProviderId): EventId =
+  def eventId(provider: EventIdProvider, providerId: EventIdProviderId): EventId =
     EventId(
       ((provider).value + "_" + providerId)
         .toLowerCase(java.util.Locale.ROOT)

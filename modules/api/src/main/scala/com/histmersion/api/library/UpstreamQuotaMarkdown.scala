@@ -9,9 +9,8 @@ object UpstreamQuotaMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def name(upstream: UpstreamQuotaMarkdown.NameUpstream): String =
-    if upstream == UpstreamQuotaMarkdown.NameUpstream("core") then ("CORE") else upstream.value
+  private def name(upstream: NameUpstream): String =
+    if upstream == NameUpstream("core") then ("CORE") else upstream.value
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

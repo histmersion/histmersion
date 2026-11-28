@@ -8,7 +8,6 @@ import com.histmersion.util.ocr.Chunker
 
 import io.github.iltotore.iron.constraint.any.Pure
 
-/** Where a passage is in a text: `[start, end)` character offsets. */
 final case class Anchor(start: Anchor.Start, end: Anchor.End)
 
 object Anchor:
@@ -91,7 +90,7 @@ object Anchor:
   private def collapse(s: String): (String, Array[Int]) =
     val sb = StringBuilder()
     val back = Array.newBuilder[Int]
-    var inWs = false // one pass over the characters: whether the previous one was whitespace
+    var inWs = false
     s.indices.foreach { i =>
       val c = s.charAt(i)
       if c.isWhitespace then

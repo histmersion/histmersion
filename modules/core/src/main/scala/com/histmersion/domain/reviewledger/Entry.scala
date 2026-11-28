@@ -36,7 +36,6 @@ final case class Entry(
   def major: Boolean = finding.major
   def reviewer: Reviewer = finding.reviewer
 
-  /** Deferred by `run`'s final pass: not part of that run's verdict. */
   def deferredIn(run: Run.Id): Boolean = open && deferred.contains(run)
 
 object Entry:

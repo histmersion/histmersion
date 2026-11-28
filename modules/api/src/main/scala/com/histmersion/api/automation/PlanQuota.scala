@@ -89,14 +89,13 @@ object PlanQuota:
       .sortBy(r => (r.limit, r.kind))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def verdict(
       readings: List[Reading],
       held: PoolStatus.Held,
       refusal: Option[(Rationale, Option[Verdict.Blocked.Until])],
       rules: Rules,
       now: VerdictNow,
-      model: Option[PlanQuota.VerdictModel] = None
+      model: Option[VerdictModel] = None
   ): (Verdict, List[WindowState]) =
     val states = current(readings, now, model).map(_.windowState(rules, now))
     val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable.Usable)))
@@ -119,14 +118,13 @@ object PlanQuota:
     (v, states)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def refreshNeed(
       readings: List[Reading],
       held: PoolStatus.Held,
       refusal: Option[(Rationale, Option[Verdict.Blocked.Until])],
       rules: Rules,
       now: RefreshNeedNow,
-      model: Option[PlanQuota.RefreshNeedModel] = None
+      model: Option[RefreshNeedModel] = None
   ): Option[RefreshNeed] =
     if ((held) == PoolStatus.Held.Held) || refusal.exists(_._2.forall(_.value > now.value)) then None
     else
@@ -148,13 +146,12 @@ object PlanQuota:
 
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def refreshDecision(
       need: Option[RefreshNeed],
       login: api.automation.planquota.Login,
       enabled: Boolean,
-      lastAttempt: Option[PlanQuota.RefreshDecisionLastAttempt],
-      minGapMs: PlanQuota.RefreshDecisionMinGapMs,
+      lastAttempt: Option[RefreshDecisionLastAttempt],
+      minGapMs: RefreshDecisionMinGapMs,
       now: RefreshDecisionNow,
       force: Boolean = (false)
   ): Either[Rationale, Option[RefreshNeed]] =

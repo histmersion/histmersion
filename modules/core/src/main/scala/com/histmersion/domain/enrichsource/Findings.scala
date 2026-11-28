@@ -73,7 +73,6 @@ object Findings:
           ),
           conf.left.toOption.map(_.inside(at))
         ).flatten ++ per.left.toOption.toList.flatMap(_.toVector).map(_.inside(at))
-        // the guards' problems: sent back like the others, but never a reason to drop the finding
         val said = List(Some(p.claim.value), Some(p.quote.value), p.periodName.map(_.value)).flatten.mkString("\n")
         val century =
           per.toOption.flatten
@@ -104,8 +103,6 @@ object Findings:
       }
       val results = checked.map(_._1)
       val rejected = results.collect { case Left(ps) => ps }.flatten
-      // the placement guard asks the gazetteer only while the answer can still be sent back, or once on
-      // the last attempt for the warning; a finding with no place is a non-spatial claim and does not count
       val named = f.findings.zip(checked).zipWithIndex.flatMap { case ((p, (_, _, per)), i) =>
         p.place.map(pl => FindingProposal.Place(pl.value.trim)).filter(_.value.nonEmpty).map { name =>
           val kind = p.placeKind.map(KindHint.parse).getOrElse(KindHint.Unknown)
@@ -120,7 +117,6 @@ object Findings:
           .collect { case Right(v) => v }
           .filterNot(v => norm.contains(normalised(v.claim.value)))
           .distinctBy(v => normalised(v.quote.value))
-        // outside the source's own span is suspicious, not wrong (a source cites older and later events)
         val outside = for
           v <- kept; s <- v.start; e <- v.end; p <- within
           problem <- periodProblems(PeriodStart(s.value), PeriodEnd(e.value), maxAbsYear, Some(p)).lastOption

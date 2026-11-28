@@ -53,9 +53,6 @@ final case class ApprovalInfo(
       CanEqual:
   def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
 
-  /** The approval with its payload read as the article proposal its kind carries (an article's coverage filter, a plan
-    * of articles), its rationale as the evidence; None for a kind that carries none.
-    */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def withArticleProposal(payload: Option[Json]): Option[ApprovalInfo] =
     if approvalKind.exists((refactorCallback => ((refactorCallback.proposesFilter) == (true)))) then

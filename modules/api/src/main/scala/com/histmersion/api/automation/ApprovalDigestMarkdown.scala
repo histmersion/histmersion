@@ -16,8 +16,7 @@ object ApprovalDigestMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def decider(decidedBy: ApprovalDigestMarkdown.DeciderDecidedBy): String = (decidedBy.value: String) match
+  private def decider(decidedBy: DeciderDecidedBy): String = (decidedBy.value: String) match
     case "checked" => ("the autopilot's checks (within the day's cap); a person may decide them first")
     case Waits     => ("nobody now: they wait (see above); a person may still decide one")
     case _         => ("a person")

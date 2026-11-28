@@ -57,7 +57,6 @@ final case class Ledger(
   def openMajors: List[Entry] = open.filter(_.major)
   def entry(id: Finding.Id): Option[Entry] = entries.find(_.id == id)
 
-  /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed.value && e.reviewer == r)
   def verdict: Verdict = Verdict.of(open.map(_.finding))
@@ -229,11 +228,9 @@ object Ledger:
     @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def applyFix(f: Fix, run: ReviewLedger.ApplyFixRun, round: ReviewLedger.ApplyFixRound): Ledger =
-      // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
       val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) =>
         led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = Entry.Claimed(true))))
       )
-      // what the fixer neither applied nor rejected, or claimed without the change: not fixed, with why
       val unanswered = f.notFixed.foldLeft(claimed)((led, w) =>
         led
           .entry(w.id)
@@ -277,7 +274,6 @@ object Ledger:
             )
           )
       )
-      // a critique set aside: closed with the reason stored with the article and the pair it is about
       val setAside = f.setAside.foldLeft(declined)((led, a) =>
         led
           .entry(a.id)
@@ -340,7 +336,6 @@ object Ledger:
       val fs = l.open
         .map(_.finding)
         .sortBy(f => (f.reviewer.ordinal, f.id.value.drop(f.reviewer.prefix.value.length).toIntOption.getOrElse(0)))
-      // a MAJOR the run's final pass deferred is the next run's: it counts as minor in this verdict
       val deferred = run.toList.flatMap(r => l.open.filter(e => e.major && e.deferredIn(r)).map(_.id))
       val counted = fs.map(f => if deferred.contains(f.id) then f.modify(_.severity).setTo(Severity.Minor) else f)
       Merged(round, Verdict.of(counted), fs, explainBack, emptySlots, proposals, deferred)
@@ -414,7 +409,7 @@ object Ledger:
           .findQuote(
             Proposal.Quote(q),
             AgentVerify.SourceBody(body.value),
-            minRatio
+            AgentVerify.MinRatio(minRatio.value)
           )
           .accepted
       l.entries.filter(_.status == Status.Fixed).flatMap { e =>

@@ -66,8 +66,7 @@ object RangeSql:
     bounds(p.map(x => DeepTime.SignedYear(x.start.value)), p.map(x => DeepTime.SignedYear(x.end.value)))
 
   /** [[bounds]], or `None` (SQL NULL: no period) when neither bound is given. */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def literal(start: Option[RangeSql.LiteralStart], end: Option[RangeSql.LiteralEnd]): Option[String] =
+  def literal(start: Option[LiteralStart], end: Option[LiteralEnd]): Option[String] =
     Option.when(start.isDefined || end.isDefined)(bounds(start, end))
 
   /** [[literal]] of an optional closed period. */

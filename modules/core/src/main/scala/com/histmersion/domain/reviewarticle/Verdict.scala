@@ -32,7 +32,6 @@ object Verdict:
   def parse(s: Wire): Option[Verdict] = values.find(_.wire.value == s.value.trim.toUpperCase)
   def worst(vs: Iterable[Verdict]): Verdict = vs.foldLeft(Pass)((a, b) => if b.rank > a.rank then b else a)
 
-  /** What a list of findings amounts to on its own. */
   def of(fs: Iterable[Finding]): Verdict =
     if fs.exists(_.severity == Severity.Major) then Major else if fs.nonEmpty then Minor else Pass
   given WireEnumValues[Verdict]:

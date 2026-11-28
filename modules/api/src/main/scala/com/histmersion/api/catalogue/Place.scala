@@ -1210,8 +1210,7 @@ object Place:
     val NoBoundaryNote: Card.Note = Card.Note("point only — boundary not yet available")
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def isPeople(kind: Shape.IsPeopleKind): Boolean = (kind == Shape.IsPeopleKind(Kind.People))
+    def isPeople(kind: IsPeopleKind): Boolean = (kind == IsPeopleKind(Kind.People))
 
     val PeopleNote: Card.Note = Card.Note("a people or tribe — placed at a representative point, not an area")
 

@@ -94,7 +94,6 @@ object WorkRef:
       .map(AcquireParse.openalexWork)
       .left
       .flatMap { why =>
-        // a miss (404) and a refusal (429/503) both land here; the reason says which
         log.info(
           Plugin.Log.Line(s"acquire: OpenAlex did not answer for $doi (${why.sentence}) — falling back to Crossref")
         )

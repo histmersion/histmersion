@@ -195,14 +195,12 @@ object FixerAnswer:
           case _ => Revision(check, check.body, Nil, critiques, Nil)
 
       val first = evaluate(edits)
-      // the pairs a set-aside may name: the checklist the round reviewed, and the revision's
       val (asides, pairsAside, asideProblems) =
         checkSetAside(Option(a.setAside).getOrElse(Nil), byId, critiques ++ first.pairs)
       val aside = asides.map(_.pair) ++ pairsAside.map(_.ref)
       def answered(r: CritiqueRef, rev: Revision) =
         aside.exists(_.same(r)) || CritiquePair.find(rev.pairs, r).forall(!_.bearing)
 
-      // on the last attempt, the edits that reopen a closed finding are dropped, one at a time from the last
       val rev =
         if !last.value || first.regressions.isEmpty || guards.isEmpty then first
         else
@@ -220,7 +218,6 @@ object FixerAnswer:
         s"edit(s) ${dropped.mkString(", ")} dropped: they reopened ${first.regressions.map(_.id).diff(rev.regressions.map(_.id)).mkString(", ")}"
       )
 
-      // a missing critique listed as applied must leave its pair answered
       val pairUnanswered = applied0
         .flatMap(byId.get)
         .filter(f => guards.isDefined && f.isMissingCritique)
@@ -230,7 +227,6 @@ object FixerAnswer:
         Content.Answer(Content.Requirement.Panel(PanelRule.PairAnswered(Raw.of(id), Raw.of(r.src), Raw.of(r.dst))))
       )
       val applied = if last.value then applied0.filterNot(id => pairUnanswered.exists(_._1 == id)) else applied0
-      // pairs the revision brought in: a work it now cites whose recorded critique it discusses nowhere
       val brought = rev.pairs
         .filter(p => p.bearing && !critiques.exists(_.ref.same(p.ref)) && !aside.exists(_.same(p.ref)))
         .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists(_.ref.same(p.ref)) then acc else acc :+ p)
@@ -248,7 +244,6 @@ object FixerAnswer:
       val regressionProblems: List[Problem] =
         rev.regressions.map(r => Content.Answer(Content.Requirement.Panel(PanelRule.ClosedKept(Raw(r.line)))))
 
-      // repaired: findings whose pair the pairing repair answered (not those the fixer claims)
       val repaired = m.findings
         .filter(f => f.isMissingCritique && !applied.contains(f.id))
         .filter(f => f.pair.exists(r => rev.hits.exists(_.ref.same(r)) && answered(r, rev)))
@@ -276,7 +271,6 @@ object FixerAnswer:
       if problems.isEmpty || (last.value && !check.fatal.fatal) then
         val wontOk = wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id)
         val setAside = asides.filterNot(s => applied.contains(s.id) || rejectedOk.exists(_.id == s.id))
-        // every open finding left unanswered, with why — the ledger records it as not fixed
         val answeredIds = applied.toSet ++ rejectedOk.map(_.id) ++ wontOk.map(_.id) ++ setAside.map(_.id) ++ repaired
         val notFixed = m.findings.filterNot(f => answeredIds(f.id) || m.deferred.contains(f.id)).map { f =>
           val why = pairUnanswered

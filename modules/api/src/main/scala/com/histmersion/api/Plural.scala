@@ -37,6 +37,5 @@ object Plural:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def count(n: CountN, singular: Plural.CountSingular, plural: Plural.CountPlural = Plural.CountPlural("")): Phrase =
+  def count(n: CountN, singular: CountSingular, plural: CountPlural = CountPlural("")): Phrase =
     Phrase(s"$n ${noun(n, singular, plural)}")

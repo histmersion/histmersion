@@ -110,8 +110,7 @@ object PlaceSql:
     * time, nothing is filtered), `modern_on` whether it reaches `modern-from`. [[inTimeSql]] reads it; every
     * time-filtered place query starts with it.
     */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def timeWindowCte(asOf: Option[DeepTime.SignedYear], modernFrom: PlaceSql.TimeWindowCteModernFrom): Frag =
+  def timeWindowCte(asOf: Option[DeepTime.SignedYear], modernFrom: TimeWindowCteModernFrom): Frag =
     windowCte(asOf.map(y => (y, y)), modernFrom)
 
   /** [[timeWindowCte]] for the inclusive window `lo..hi` (the map's area layer over a whole range, [[GeoTime.Within]]):
@@ -137,11 +136,10 @@ object PlaceSql:
     * keeps nearly everything and finds the candidates by what does narrow them: the trigram index of a search, the
     * (kind, period) GiSTs of a map layer (V076).
     */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def inTimeSql(
       alias: Frag,
       asOf: Option[DeepTime.SignedYear],
-      kind: Option[PlaceSql.InTimeSqlKind] = None
+      kind: Option[InTimeSqlKind] = None
   ): Frag =
     inWindowSql(alias, asOf.map(y => (y, y)), kind)
 

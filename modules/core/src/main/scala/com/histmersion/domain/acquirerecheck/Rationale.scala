@@ -22,9 +22,6 @@ enum Rationale:
   case Failed(day: LocalDate, why: Problems)
   case Legacy(day: LocalDate, note: library.acquisition.AcquireAttempt.Outcome.LegacyNote)
 
-  /** The short reason an item carries, at most 500 characters: `checked 2026-10-27: no legal copy (unpaywall: no copy —
-    * none; …)`.
-    */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def said: String =
     val text = this match

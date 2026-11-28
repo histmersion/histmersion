@@ -72,7 +72,6 @@ object ColdReaderAnswer:
     .modify(_.emptySlots)(
       _.description("The slot names you could not fill from the text; [] when all four are filled")
     )
-    // the items: one of the slot names (Claude Code and Codex enforce the answer schema)
     .modify(_.emptySlots)(
       _.modifyUnsafe[String](Schema.ModifyCollectionElements)(
         _.validate(sttp.tapir.Validator.enumeration(ExplainSlots.map(_.value)))
@@ -93,7 +92,7 @@ object ColdReaderAnswer:
         odd.map(s =>
           Content.Answer(Content.Requirement.Panel(PanelRule.SlotKnown(Raw(s), ExplainSlots.toVector.map(Raw.of(_)))))
         )
-      val explain = Option(a.explainBack).map(e => ColdReaderAnswer.ExplainBack(e.value.trim)).filter(_.value.nonEmpty)
+      val explain = Option(a.explainBack).map(e => ExplainBack(e.value.trim)).filter(_.value.nonEmpty)
       val extra =
         slots
           .filter(ExplainSlots.contains)

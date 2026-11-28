@@ -34,7 +34,7 @@ object NextFacts:
   object CompileOpen extends Newtype[Int, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def articlesInProgress(unreviewed: NextFacts.Unreviewed, compileOpen: NextFacts.CompileOpen): Option[Description] =
+  def articlesInProgress(unreviewed: Unreviewed, compileOpen: CompileOpen): Option[Description] =
     Option.when(unreviewed.value > 0 || compileOpen.value > 0)(
       Description(
         "its articles in progress come first (" + List(

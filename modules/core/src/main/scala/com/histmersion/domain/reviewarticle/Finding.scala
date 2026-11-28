@@ -42,18 +42,14 @@ final case class Finding(
     quote: Finding.Quote,
     problem: Finding.Problem,
     fix: Finding.Fix,
-    /** The records it rests on, each quote found in its record by code. */
     evidence: List[Evidence] = Nil,
-    /** A reviewer raised it again after the fixer rejected it in an earlier round. */
     escalated: Finding.Escalated = Finding.Escalated(false),
-    /** A missing-critique finding's pair of the critique checklist (§6.8). */
     pair: Option[CritiqueRef] = None
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema:
   def major: Boolean = severity == Severity.Major
 
-  /** One line for a person or a queue item. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line: String =
     val at = Option(where).map(_.value.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
@@ -70,11 +66,6 @@ object Finding:
   export Evidence.Quote
   type Problem = Problem.T
 
-  /** What is wrong, as the sentence the ledgers store it. The sentences code writes for the mechanical findings the
-    * pipeline acts on are [[Problem.Cause]]s; [[Problem.cause]] reads any stored sentence back (what no writer of code
-    * produces is [[Problem.Cause.Other]]) and [[Problem.of]] writes a cause as the same sentence, so a ledger written
-    * by an earlier version reads as it was and one written now reads in an earlier version.
-    */
   @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
   object Problem extends Newtype[String, Pure]:
     type Section = Section.T
@@ -85,34 +76,23 @@ object Finding:
     type Rest = Rest.T
     object Rest extends Newtype[String, Pure]
 
-    /** A mechanical finding's problem by what it says. */
     enum Cause derives CanEqual:
-      /** A paragraph with no citation. */
       case UncitedParagraph
 
-      /** A Sources cited section written by hand (the page generates it). */
       case HandWrittenSourcesCited
 
-      /** A compulsory section is missing; any of `alternatives` would do. */
       case MissingSection(alternatives: List[Section])
 
-      /** `count` sources of the article's filter are neither cited nor given a reason; `listed` are the first of them.
-        */
       case UnplacedSources(count: Count, listed: List[ApiCitekey])
 
-      /** The cold reader's count of undefined terms; `rest` is what follows "N terms " in the sentence. */
       case TermCount(count: Count, rest: Rest)
 
-      /** A Not used section written by hand (the page generates it from the filter and the reasons). */
       case HandWrittenNotUsed
 
-      /** A `_Method_` note written by hand (the page generates it). */
       case HandWrittenMethod
 
-      /** Banned filler: `matches`, as the lint lists them. */
       case Filler(matches: Rest)
 
-      /** Any other sentence, as written. */
       case Other(text: Problem)
 
     private val MissingRe = """^no ('[^']*'(?: or '[^']*')*) section \(writing guide rule 4\)$""".r
@@ -122,13 +102,11 @@ object Finding:
     private val FillerRe = """^banned filler — (.*)$""".r
     private val TermsRe = """^(\d+) terms ((?:are )?undefined\b.*)$""".r
 
-    /** The listed citekeys of a sentence, when it is only a comma-separated list of them. */
     private def keys(listed: String): List[String] =
       val parts = listed.split(", ").toList
       if parts.nonEmpty && parts.forall(KeyRe.matches) then parts.map(p => KeyRe.findFirstMatchIn(p).get.group(1))
       else Nil
 
-    /** The sentence a cause is stored as. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(c: Cause): Problem = c match
       case Cause.UncitedParagraph        => Problem("a paragraph with no [[citekey]]")
@@ -153,9 +131,6 @@ object Finding:
       case Cause.Other(text)        => text
 
     extension (c: Cause)
-      /** The problem a draft or a revision shows for a mechanical finding of this cause, when it shows one: a
-        * hand-written Sources cited or Not used section or Method note, banned filler, a missing section.
-        */
       def shown: Option[util.problem.Problem] =
         import util.problem.Problem.{Content, Raw}
         c match
@@ -168,9 +143,6 @@ object Finding:
           case _ => None
 
     extension (p: Problem)
-      /** What the sentence says. A sentence is only read as a cause when writing that cause gives the sentence back
-        * exactly, so [[of]] of [[cause]] is always the stored sentence.
-        */
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def cause: Cause =
         val text: String = p.value
@@ -196,9 +168,6 @@ object Finding:
           case _                 => Cause.Other(p)
         if of(read).value == text then read else Cause.Other(p)
 
-      /** The sentence up to its first colon: what stays the same when only the detail after it changes (a coverage
-        * count), so a finding raised again is recognised.
-        */
       def head: String = p.value.takeWhile(_ != ':')
 
       def isUncitedParagraph: Boolean = p.cause == Cause.UncitedParagraph
@@ -210,7 +179,6 @@ object Finding:
         case Cause.UnplacedSources(_, _) => true
         case _                           => false
 
-      /** The cold reader's count sentence, as an earlier version wrote it too, whatever blank surrounds it. */
       def isTermCount: Boolean = TermsRe.matches(p.value.trim)
 
   type Fix = Fix.T
@@ -236,7 +204,7 @@ object Finding:
       )
       val kind = f.kind.value.trim.toLowerCase(java.util.Locale.ROOT)
       val wrote = (FactualKinds(
-        Finding.Kind(kind)
+        Kind(kind)
       ) || kind == "synth") && f.quote.value.trim.nonEmpty && edited.value.trim.nonEmpty &&
         findQuote(f.quote.value, edited.value, minRatio).accepted
       pairBack || wrote
@@ -246,7 +214,7 @@ object Finding:
     def scope(edited: domain.reviewarticle.Fix.Body, minRatio: CritiqueRule.MinRatio): (Finding, Option[String]) =
       val inside = f.quote.value.trim.nonEmpty && findQuote(f.quote.value, edited.value, minRatio).accepted
       if !f.major || inside || (FactualKinds(
-          Finding.Kind(f.kind.value.trim.toLowerCase(java.util.Locale.ROOT))
+          Kind(f.kind.value.trim.toLowerCase(java.util.Locale.ROOT))
         ) && f.evidence.nonEmpty)
       then (f, None)
       else

@@ -143,12 +143,11 @@ object Article:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
     def compute(
-        slug: Coverage.ComputeSlug,
+        slug: ComputeSlug,
         filter: Filter,
-        total: Coverage.ComputeTotal,
+        total: ComputeTotal,
         hits: scala.List[api.research.Coverage.Source],
         citedInFilter: Set[Citekey],
         cited: scala.List[Citekey],
@@ -534,8 +533,7 @@ object Article:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    private def occurrences(text: Edits.OccurrencesText, needle: String): scala.List[Offset] =
+    private def occurrences(text: OccurrencesText, needle: String): scala.List[Offset] =
       (Iterator
         .iterate((text).value.indexOf(needle))(i => (text).value.indexOf(needle, i + 1))
         .takeWhile(_ >= 0)
@@ -544,8 +542,7 @@ object Article:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def locate(text: Edits.LocateText, anchor: Anchor): Either[Problem, (Offset, Offset)] =
+    def locate(text: LocateText, anchor: Anchor): Either[Problem, (Offset, Offset)] =
       val a = (anchor).value.trim
       occurrences(text, (a)) match
         case scala.List(i) => Right((i, Offset((i).value + a.length)))
@@ -592,8 +589,7 @@ object Article:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def applyOne(text: Edits.ApplyOneText, e: Edit): Either[Problem, Body] =
+    def applyOne(text: ApplyOneText, e: Edit): Either[Problem, Body] =
       locate(text, e.anchor).map { (s, end) =>
         e match
           case Edit.Replace(_, t) => Body(text.value.substring(0, s.value) + t.value + text.value.substring(end.value))
@@ -957,8 +953,7 @@ object Article:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def resolveMarkdown(md: Links.ResolveMarkdownMd, isSource: Link.Target => Boolean): Markdown =
+    def resolveMarkdown(md: ResolveMarkdownMd, isSource: Link.Target => Boolean): Markdown =
       Markdown(
         linkMarkdown(
           md,

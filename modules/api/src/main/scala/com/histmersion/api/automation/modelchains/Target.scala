@@ -51,14 +51,14 @@ object Target:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAllowance(
-      target: Target.Spec,
+      target: Spec,
       items: List[Limit.Spec],
       known: Set[ProviderKind.Plugin.Name] = Set.empty
   ): Either[Problems, Allowance] =
     val ts = items.map((_).value.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
-      t <- Target.parse(target, known)
+      t <- parse(target, known)
       rs <- reserves match
         case Nil      => Right(Allowance.ReservePct(0))
         case r :: Nil => Allowance.parseReserve(Allowance.ReserveSpec(r.drop("reserve".length)))

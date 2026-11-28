@@ -57,9 +57,9 @@ object State:
         s.modify(_.day)
           .setTo(today)
           .modify(_.lookupTokens)
-          .setTo(State.LookupTokens(0))
+          .setTo(LookupTokens(0))
           .modify(_.searchTokens)
-          .setTo(State.SearchTokens(0))
+          .setTo(SearchTokens(0))
 
   extension (s0: State)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -74,7 +74,6 @@ object State:
           else if purpose == Purpose.Search && s.searchTokens.value + cost.value > limits.searchDailyTokens.value then
             Left(Refusal.OverBudget(purpose, s.spentOn(Purpose.Search), limits.searchCap))
           else
-            // CORE's own reported window wins when it is smaller than ours (a new key may get less than its tier)
             val perMinute = s.window
               .flatMap(_.limit)
               .map(l => (l.value: Int))
@@ -91,8 +90,8 @@ object State:
               Left(Refusal.Paced(Grant.WaitMs(waitMs)))
             else
               val spent = purpose match
-                case Purpose.Lookup => s.modify(_.lookupTokens).using(t => State.LookupTokens(t.value + cost.value))
-                case Purpose.Search => s.modify(_.searchTokens).using(t => State.SearchTokens(t.value + cost.value))
+                case Purpose.Lookup => s.modify(_.lookupTokens).using(t => LookupTokens(t.value + cost.value))
+                case Purpose.Search => s.modify(_.searchTokens).using(t => SearchTokens(t.value + cost.value))
               Right(
                 Grant(
                   spent

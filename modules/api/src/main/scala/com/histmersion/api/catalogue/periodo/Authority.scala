@@ -15,6 +15,5 @@ final case class Authority(
     year: Option[Year],
     periods: List[Definition]
 ):
-  /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
   def cite(periodId: HistoricalPeriod.Id): HistoricalPeriod.Authority =
     HistoricalPeriod.Authority(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")

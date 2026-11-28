@@ -48,7 +48,7 @@ object Allowance:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseAllowances(
-      s: Allowance.Spec,
+      s: Spec,
       known: Set[ProviderKind.Plugin.Name] = Set.empty
   ): Either[Problems, List[Allowance]] =
     val entries = (s).value.split(';').toList.map(_.trim).filter(_.nonEmpty)
@@ -56,7 +56,7 @@ object Allowance:
       e.indexOf('=') match
         case -1 =>
           Left(
-            Invalid.Unreadable.here(TypeName.of(Allowance.Spec), Raw(s"$e"), Vector(Raw("claude-code:* = 5 usd/day")))
+            Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$e"), Vector(Raw("claude-code:* = 5 usd/day")))
           )
         case i =>
           Target.parseAllowance(
@@ -73,7 +73,7 @@ object Allowance:
       case errs => Left(errs.reduce(_ ++ _))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def parseReserve(s: Allowance.ReserveSpec): Either[Problem, Allowance.ReservePct] =
+  def parseReserve(s: ReserveSpec): Either[Problem, ReservePct] =
     (((s).value.trim
       .stripPrefix("=")
       .trim
@@ -82,9 +82,9 @@ object Allowance:
       .toIntOption
       .toRight(
         Invalid.Unreadable
-          .here(TypeName.of(Allowance.ReservePct), Raw(s"${(s).value.trim}"), Vector(Raw("reserve 20%")))
+          .here(TypeName.of(ReservePct), Raw(s"${(s).value.trim}"), Vector(Raw("reserve 20%")))
       )))
-      .map(refactorValue15 => Allowance.ReservePct(refactorValue15))
+      .map(refactorValue15 => ReservePct(refactorValue15))
 
   extension (a: Allowance)
     def states(spends: Seq[Spend], now: LimitState.Now): List[LimitState] =

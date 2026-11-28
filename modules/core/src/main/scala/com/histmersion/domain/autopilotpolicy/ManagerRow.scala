@@ -32,4 +32,4 @@ object ManagerRow:
   object PlanItem extends Newtype[Boolean, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def spread(key: ManagerRow.Id): Int = key.value.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
+  def spread(key: Id): Int = key.value.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue

@@ -88,8 +88,7 @@ object Agents:
     /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
       * never trip a cost budget.
       */
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def cost(prices: Map[ModelRef.Model, Price], model: Prices.CostModel, u: Usage): Either[Problem, BigDecimal] =
+    def cost(prices: Map[ModelRef.Model, Price], model: CostModel, u: Usage): Either[Problem, BigDecimal] =
       (prices
         .get(model)
         .toRight(unpriced(model, None))

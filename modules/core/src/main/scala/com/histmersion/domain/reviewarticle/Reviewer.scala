@@ -233,7 +233,6 @@ object Reviewer:
     ): Either[List[Problem], (Recheck, List[String])] =
       val (cs, cps, cws) = r.checkChecks(prior, a.checks, last)
       val (raw, ps, ds0) = r.checkFindings(Option(a.findings).getOrElse(Nil), ev)
-      // a re-check is shown no checklist: a missing-critique MAJOR on no open pair is recorded minor
       val (fs, _, kws) =
         r.checkCritiques(
           raw,

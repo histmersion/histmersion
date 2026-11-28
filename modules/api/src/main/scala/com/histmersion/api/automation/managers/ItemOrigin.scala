@@ -13,7 +13,6 @@ enum ItemOrigin(val wire: ItemOrigin.Wire):
   case Chain extends ItemOrigin(ItemOrigin.Wire("chain"))
   case Hint extends ItemOrigin(ItemOrigin.Wire("hint"))
 
-  /** An item an ingest added, by a name no other type takes. */
   case FromIngest extends ItemOrigin(ItemOrigin.Wire("ingest"))
 
   case Cron extends ItemOrigin(ItemOrigin.Wire("cron"))

@@ -40,7 +40,7 @@ object Evidence:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def evidenceText(extracted: List[Extracted]): Description =
       val bySource = extracted.map(e => e.citekey -> e).toMap
-      val sources = ev.sources.filter(s => ev.claims.getOrElse(s.citekey, Evidence.ClaimCount(0)).hasClaims).map { s =>
+      val sources = ev.sources.filter(s => ev.claims.getOrElse(s.citekey, ClaimCount(0)).hasClaims).map { s =>
         val claims = bySource.get(s.citekey).toList.flatMap(_.claims).map { c =>
           val when = c.date.fold("")(d => s" · date: $d")
           val where = c.place.fold("")(p => s" · place: $p")

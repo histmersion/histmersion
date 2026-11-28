@@ -27,10 +27,8 @@ final case class Snapshot(
     truncated: Snapshot.Truncated,
     coverage: Option[Coverage] = None,
     cited: List[CitedSource] = Nil,
-    /** The critique checklist of this body (§6.8), whether or not the article records a filter. */
     critiques: List[CritiquePair] = Nil
 ) derives JsonCodec:
-  /** The sections code generates from the filter (#958), as the page shows them after the body. */
   def generated: Option[Article.Coverage.Sections] = coverage.map(Article.Coverage.sections)
 
 object Snapshot:
@@ -50,7 +48,7 @@ object Snapshot:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def requiredSections(
-      kind: Snapshot.Kind,
+      kind: Kind,
       generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
   ): List[List[String]] =
     if kind.value.trim.equalsIgnoreCase("index") then Nil

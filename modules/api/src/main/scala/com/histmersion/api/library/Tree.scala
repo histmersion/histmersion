@@ -117,11 +117,10 @@ object Tree:
       (_, _, _) => (Nil, Bucket.Overlap(0))
     )
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def timeTree(
       rows: List[TreeRow],
-      from: Tree.TimeTreeFrom,
-      to: Tree.TimeTreeTo,
+      from: TimeTreeFrom,
+      to: TimeTreeTo,
       depth: TimeTreeDepth,
       samples: TimeTreeSamples = TimeTreeSamples(0)
   ): List[Bucket] =
@@ -176,15 +175,14 @@ object Tree:
   def splitWorthShowing(parent: Bucket.Count, kids: List[Bucket]): List[Bucket] =
     if kids.sizeIs > 1 && kids.exists(_.count.value < parent.value * SplitRatio.value) then kids else Nil
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def regionTree(
       rows: List[TreeRow],
       nodes: List[RegionNode],
       relations: List[Place.Relation],
-      asOf: Option[Tree.RegionTreeAsOf],
+      asOf: Option[RegionTreeAsOf],
       depth: RegionTreeDepth,
       samples: RegionTreeSamples = RegionTreeSamples(0),
-      root: Option[Tree.RegionTreeRoot] = None
+      root: Option[RegionTreeRoot] = None
   ): List[Bucket] =
     regions(rows, nodes, relations, asOf, clamp(depth), samples, (_, _) => Nil, root)._1
 
@@ -210,17 +208,17 @@ object Tree:
         regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
     )
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def regionTimeTree(
       rows: List[TreeRow],
       from: Year,
       to: Year,
       nodes: List[RegionNode],
       relations: List[Place.Relation],
-      asOf: Option[Tree.RegionTimeTreeAsOf],
+      asOf: Option[RegionTimeTreeAsOf],
       depth: RegionTimeTreeDepth,
       samples: RegionTimeTreeSamples = RegionTimeTreeSamples(0),
-      root: Option[Tree.RegionTimeTreeRoot] = None
+      root: Option[RegionTimeTreeRoot] = None
   ): List[Bucket] =
     val (lo, hi) = order(from, to)
     regions(
@@ -235,12 +233,11 @@ object Tree:
     )._1
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def regions(
       rows: List[TreeRow],
       nodes: List[RegionNode],
       relations: List[Place.Relation],
-      asOf: Option[Tree.RegionsAsOf],
+      asOf: Option[RegionsAsOf],
       depth: Depth,
       samples: MaxSamplesCount,
       leaf: (List[TreeRow], RegionNode.Id) => List[Bucket],

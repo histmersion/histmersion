@@ -66,30 +66,30 @@ object QueueItem:
 
   extension (item: QueueItem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def fulfil(citekey: Citekey, by: Option[QueueItem.ClosedBy] = None): QueuePatch =
+    def fulfil(citekey: Citekey, by: Option[ClosedBy] = None): QueuePatch =
       QueuePatch(
-        status = Some(QueueItem.Status(Done)),
+        status = Some(Status(Done)),
         reason = Some(fulfilledReason(item.reason, citekey)),
         closedBy = by
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def fulfillable(id: QueueItem.Id, found: Option[QueueItem]): Either[Problem, QueueItem] =
+  def fulfillable(id: Id, found: Option[QueueItem]): Either[Problem, QueueItem] =
     found match
-      case None => Left(Problem.NotFound.Entity(TypeName.of(QueueItem.Id), Raw(s"$id")))
+      case None                                    => Left(Problem.NotFound.Entity(TypeName.of(Id), Raw(s"$id")))
       case Some(i) if i.list != Kind.Acquire.label =>
         Left(
           Problem.Conflict.WrongState(
-            TypeName.of(QueueItem.Id),
+            TypeName.of(Id),
             Raw(s"$id"),
             Problem.Conflict.State(s"${i.list}"),
             Vector(Problem.Conflict.State(s"${Kind.Acquire.label}"))
           )
         )
-      case Some(i) if i.status != QueueItem.Status(Open) =>
+      case Some(i) if i.status != Status(Open) =>
         Left(
           Problem.Conflict.WrongState(
-            TypeName.of(QueueItem.Id),
+            TypeName.of(Id),
             Raw(s"$id"),
             Problem.Conflict.State(s"${i.status}"),
             Vector(Problem.Conflict.State(s"$Open"))
@@ -103,22 +103,22 @@ object QueueItem:
       def clearable[A](v: Option[A], old: Option[A])(text: A => String, make: String => A): Option[A] =
         v.fold(old)(x => Some(text(x).trim).filter(_.nonEmpty).map(make))
       val status =
-        p.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(x => QueueItem.Status(x)).getOrElse(cur.status)
+        p.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).map(x => Status(x)).getOrElse(cur.status)
       val closedBy =
-        if status != QueueItem.Status(Done) then None
+        if status != Status(Done) then None
         else
           p.closedBy
             .map(_.value.trim)
             .filter(_.nonEmpty)
-            .map(x => QueueItem.ClosedBy(x))
-            .orElse(Option.when(cur.status == QueueItem.Status(Done))(cur.closedBy).flatten)
+            .map(x => ClosedBy(x))
+            .orElse(Option.when(cur.status == Status(Done))(cur.closedBy).flatten)
       cur
         .modify(_.status)
         .setTo(status)
         .modify(_.text)
         .setTo(p.text.getOrElse(cur.text))
         .modify(_.topic)
-        .setTo(clearable(p.topic, cur.topic)(t => (t).value, x => QueueItem.Topic(x)))
+        .setTo(clearable(p.topic, cur.topic)(t => (t).value, x => Topic(x)))
         .modify(_.reason)
         .setTo(clearable(p.reason, cur.reason)(t => s"$t", x => Rationale(s"$x")))
         .modify(_.goal)

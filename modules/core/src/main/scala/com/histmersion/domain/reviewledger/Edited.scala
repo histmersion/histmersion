@@ -17,11 +17,9 @@ import com.histmersion.Newtype
 final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives JsonCodec:
   def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
-  /** The text a finding's quote is looked up in (to scope it). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text: Fix.Body = Fix.Body(passages.map(_.text.value).mkString("\n\n"))
 
-  /** As a prompt shows it. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render: String =
     val ps = passages.map(p => p.heading.fold("")(h => s"[under: $h]\n") + p.text).mkString("\n\n---\n\n")

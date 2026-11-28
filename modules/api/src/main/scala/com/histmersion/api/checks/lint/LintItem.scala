@@ -18,12 +18,9 @@ object LintItem:
   object Detail extends Newtype[String, Pure]:
     private val FillerMark = "filler: "
 
-    /** The detail of an article with banned filler: the first matches, and how many more. */
     def filler(matches: List[String]): Detail =
       Detail(s"$FillerMark${matches.take(3).mkString(", ")}${
           if matches.sizeIs > 3 then s" (+${matches.size - 3} more)" else ""
         }")
 
-    extension (d: Detail)
-      /** The matches of a filler detail, as [[filler]] wrote them. */
-      def fillerMatches: String = d.value.stripPrefix(FillerMark)
+    extension (d: Detail) def fillerMatches: String = d.value.stripPrefix(FillerMark)

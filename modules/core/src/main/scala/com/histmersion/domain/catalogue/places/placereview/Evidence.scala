@@ -52,13 +52,13 @@ object Evidence:
   private val WithdrawnDuplicate = "(?i)^withdrawn\\s*\\(?duplicate\\)?\\s*:\\s*(.+)$".r
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def duplicateOf(label: Evidence.Label): Option[Evidence.Label] = label.value.trim match
-    case WithdrawnDuplicate(x) => Some(x.trim).filter(_.nonEmpty).map(Evidence.Label(_))
+  def duplicateOf(label: Label): Option[Label] = label.value.trim match
+    case WithdrawnDuplicate(x) => Some(x.trim).filter(_.nonEmpty).map(Label(_))
     case _                     => None
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  def duplicateKeys(name: Evidence.Label): List[Geocode.Key] =
+  def duplicateKeys(name: Label): List[Geocode.Key] =
     (Geocode.key(name.value) :: name.value.split("/").toList.map(Geocode.key)).filter(_.value.nonEmpty).distinct
 
   extension (e: Evidence)
@@ -82,7 +82,7 @@ object Evidence:
   extension (e: Evidence)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def propose(candidates: List[Candidate] = Nil): Option[Proposal] =
-      val types = e.featureTypes.map(t => Evidence.FeatureTypes(t.value.trim.toLowerCase(java.util.Locale.ROOT))).toSet
+      val types = e.featureTypes.map(t => FeatureTypes(t.value.trim.toLowerCase(java.util.Locale.ROOT))).toSet
       val ev = e.evidenceOf
       def to(kind: Place.Kind.Wire, reason: Rationale, period: Option[Period] = None) =
         Option.when(kind != e.kind || period.isDefined)(
@@ -134,8 +134,6 @@ object Evidence:
         case None if e.kind.value == Place.Kind.Feature => None
         case None                                       =>
           val settled = types.intersect(SiteTypes)
-          // a SITE that is also a settlement stays one (a provincial capital); otherwise an
-          // administrative or a people type wins over the kind the seed gave it
           val keepSite = e.kind.value == Place.Kind.Site && settled.nonEmpty
           val admin = types.intersect(PolityTypes).filter(_ => !keepSite)
           if admin.nonEmpty then
@@ -146,7 +144,6 @@ object Evidence:
                 "an administrative unit (a polity); the period from the linked Wikidata item"
               case Some(_) => "an administrative unit (a polity)"
               case None    => "an administrative unit (a polity); no source states its period — add one by hand"
-            // a polity whose own period is already the stated one needs no period write
             val write = period.filterNot(p => stated._1.contains(p.start) && stated._2.contains(p.end))
             if e.kind.value == Place.Kind.Polity && write.isEmpty then None
             else
@@ -173,7 +170,6 @@ object Evidence:
               Rationale(s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
             )
           else if e.kind.value != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
-            // Wikidata files Brittany and Messenia as historical countries too: evidence, not a verdict
             Some(
               Proposal.Review(
                 e.id,

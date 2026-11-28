@@ -24,10 +24,6 @@ import com.histmersion.api.automation.AgentRole
 import com.histmersion.util.storage.SafePath
 import com.histmersion.lint.{tolerated, LintRule}
 
-/** The pure half of the definitions: parsing a definition and a skill, the placeholders, and the system prompt a
-  * headless run of a definition gets (the same function for every runtime, so the generated Claude Code agent and the
-  * prompt the engine sends the API cannot drift).
-  */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 object AgentDefinitions:
   type FragmentBody = FragmentBody.T
@@ -39,26 +35,17 @@ object AgentDefinitions:
   type ResourcePath = ResourcePath.T
   object ResourcePath extends Newtype[String, Pure]
 
-  /** The MCP server's name in every runtime's configuration. */
-
   val McpServer = "histmersion"
 
-  /** The include fragment that is the writing guide, and the heading it is sent under. */
   val WritingGuide = "writing-guide"
   private val GuideHeading = "# The writing guide (docs/writing-guide.md)"
 
-  /** The include that is the writing guide WITHOUT its writer-only parts (the phases' procedure, the self-check): every
-    * rule an article is held to, for the roles that check or fix one.
-    */
   val WritingRules = "writing-rules"
   private val RulesHeading = "# The writing guide (docs/writing-guide.md): the rules an article is held to"
 
   private val Marked = """(?s)<!-- only:([a-z]+) -->\n?(.*?)<!-- /only:\1 -->\n?""".r
   private val Marker = """<!-- (/?)only:([a-z]+) -->""".r
 
-  /** `text` as `keep` reads it: a part marked for an audience not in `keep` is removed, a kept one loses its markers.
-    * Removing a part never leaves more than one blank line behind.
-    */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def forAudience(text: AgentDef.Body, keep: Set[Audience]): AgentDef.Body =
     if !text.value.contains("<!-- only:") then text
@@ -70,8 +57,6 @@ object AgentDefinitions:
       )
       AgentDef.Body(out.replaceAll("\n{3,}", "\n\n"))
 
-  /** Audience markers that do not pair up or name no audience — a part that would leak into the wrong prompt.
-    */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markerProblems(text: AgentDef.Body): List[Problem.Config.Flaw] =
     val ms = Marker.findAllMatchIn(text.value).map(m => (m.group(1) == "/", m.group(2))).toList
@@ -96,7 +81,6 @@ object AgentDefinitions:
 
   private val Placeholder = """\{\{tool:([a-z_]+|\*)\}\}""".r
 
-  /** `{{tool:x}}` → the runtime's name for tool `x`; `{{tool:*}}` → every Histmersion tool. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(text: String, style: ToolStyle): String =
     Placeholder.replaceAllIn(
@@ -110,11 +94,9 @@ object AgentDefinitions:
           case t => style.tool(ToolUse.Tool(t)))
     )
 
-  /** Every tool a text names by placeholder (`*` left out). */
   def placeholders(text: String): List[String] =
     Placeholder.findAllMatchIn(text).map(_.group(1)).filter(_ != "*").toList.distinct
 
-  /** `---\n<yaml>\n---\n<body>` → (yaml, body); the body keeps its leading newline, as written. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def split(md: Markdown): Either[Problem.Config.Flaw, (String, String)] =
     val t = md.value.replace("\r\n", "\n")
@@ -133,7 +115,6 @@ object AgentDefinitions:
       case e: Exception =>
         Left(Problem.Config.Flaw.HeaderUnparsable(External.Reported.of(Option(e.getMessage).getOrElse(""))))
 
-  /** A header field that holds a list: none, or its items; `field` names it when it holds something else. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def strings(field: String, v: Any): Either[Problem.Config.Flaw, List[String]] =
     Option(v).map(_.asMatchable) match
@@ -142,13 +123,11 @@ object AgentDefinitions:
       case Some(s: String) if s.trim.isEmpty => Right(Nil)
       case Some(other) => Left(Problem.Config.Flaw.NotList(Problem.Field(field), Problem.Raw(s"$other")))
 
-  /** The file a definition, a skill or a fragment is, as the prompts name it. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[agents] def agentFile(name: AgentDef.Name): Problem.Raw = Problem.Raw(s"agents/$name.md")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def skillFile(name: SkillDef.Name): Problem.Raw = Problem.Raw(s"skills/$name/SKILL.md")
 
-  /** Parse one definition. `name` is its file name; the header's `name` must agree. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(name: AgentDef.Name, md: Markdown, known: List[ToolName]): Either[Problem, AgentDef] =
     val file = agentFile(name)
@@ -236,7 +215,6 @@ object AgentDefinitions:
       )
     }
 
-  /** Parse one skill (`skills/<name>/SKILL.md`). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parseSkill(name: SkillDef.Name, md: Markdown): Either[Problem, SkillDef] =
     val file = skillFile(name)
@@ -253,11 +231,6 @@ object AgentDefinitions:
       .left
       .map(Problem.Config.Definition(file, _))
 
-  /** The system prompt of a headless run of `d`: its body, its include fragments in order (the writing guide under its
-    * heading), then the skills it lists, inlined — a main-thread Claude Code agent never gets its `skills:` preloaded,
-    * and Codex cannot open a skill without a shell, so inlining is what every runtime has in common (§2.3, §3a).
-    * Placeholders rendered for `style`.
-    */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def system(
       d: AgentDef,
@@ -291,7 +264,6 @@ object AgentDefinitions:
         )
       case Some(problems) => Left(problems)
 
-  /** Who a headless run of `d` is: a step — and the writer when it includes the whole writing guide. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def headlessAudience(d: AgentDef): Set[Audience] =
     if d.include.exists(_.value == WritingGuide) then Set(Audience.Headless, Audience.Writer)
@@ -380,7 +352,6 @@ object AgentDefinitions:
   def claudeAgent(d: Defs, a: AgentDef): String =
     val tools =
       a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
-    // no stripMargin around the prompt: a Markdown table row starts with `|`
     s"---\nname: ${a.name}\ndescription: ${yamlString(a.description.value)}\ntools: ${tools.mkString(", ")}\n" +
       s"maxTurns: ${claudeTurns(a.maxTurns)}\n---\n${d.system(a, ToolStyle.Claude)}\n"
 
@@ -522,7 +493,6 @@ object AgentDefinitions:
   def codexBase(s: GenSettings): String =
     val outputLimit =
       if s.codexToolOutputTokens.value > 0 then s"tool_output_token_limit = ${s.codexToolOutputTokens}\n" else ""
-    // relative to CODEX_HOME (checked: a missing file there fails `codex debug prompt-input` naming <home>/<file>)
     val instructions = if s.codexLeanBase.value then s"model_instructions_file = ${tomlString(CodexBaseFile)}\n" else ""
     s"""# Generated by Histmersion — the CODEX_HOME of its agent runs. Do not edit: regenerated on start.
        |web_search = "disabled"
@@ -570,8 +540,6 @@ object AgentDefinitions:
     val mcp =
       if a.tools.isEmpty then s"[mcp_servers.$McpServer]\nenabled = false\nrequired = false\n"
       else
-        // approval_policy = "never" refuses any tool that would ask, so each allowed tool is approved
-        // in advance; only the role's own list, everything else stays off (#1493)
         s"[mcp_servers.$McpServer]\nenabled_tools = ${tomlList(a.tools.map(_.value))}\n" +
           a.tools
             .map(t => s"\n[mcp_servers.$McpServer.tools.${t.value}]\napproval_mode = \"approve\"\n")
@@ -598,7 +566,6 @@ object AgentDefinitions:
     val base = render(text.value.trim, ToolStyle.Bare)
     if s.codexToolOutputTokens.value <= 0 then base + "\n"
     else
-      // a bullet of "# Working", just before "# Answer" (or at the end if the fragment has no such heading)
       val budget = s"- Start every script with `// @exec: {\"max_output_tokens\": ${s.codexToolOutputTokens}}`."
       val at = base.indexOf("\n\n# Answer")
       (if at < 0 then s"$base\n\n$budget" else base.substring(0, at) + "\n" + budget + base.substring(at)) + "\n"
@@ -735,18 +702,10 @@ object AgentDefinitions:
          |""".stripMargin else "}\n")
     )
 
-/** The definitions as the server reads them: bundled resources (`agents/index.txt` lists them), each file overridable
-  * from `agents.prompts-dir` through [[Prompts]]. Read on every use — a definition can be iterated on without a
-  * rebuild, and the hash recorded per attempt says which text ran.
-  */
-/** `roster`: the agent tools the engine's toolbox holds and the roles the contributed workflows take — a definition may
-  * list only these tools and take only these roles.
-  */
 final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
   import AgentDefinitions.agentFile
   val tools: List[ToolName] = roster.tools
 
-  /** Every bundled file, relative to `agents/`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def index: List[AgentDefinitions.ResourcePath] =
     prompts
@@ -810,7 +769,6 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
   def skills: Either[Problems, Map[SkillDef.Name, SkillDef]] = all(skillNames)(n => skill(n).map(n -> _)).map(_.toMap)
   def agents: Either[Problems, List[AgentDef]] = all(agentNames)(agent)
 
-  /** The system prompt `d` runs with in a runtime that names tools `style`'s way. */
   def system(d: AgentDef, style: ToolStyle): Either[Problems, String] =
     for
       fs <- fragments

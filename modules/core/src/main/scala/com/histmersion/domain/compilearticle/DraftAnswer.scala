@@ -81,8 +81,6 @@ object DraftAnswer:
       val title = currentTitle
         .orElse(Option(a.title).map(t => Title(t.value.trim)).filter(_.value.nonEmpty))
         .getOrElse(Title(slug.value))
-      // a NEW article takes its title and summary from the draft: an empty one (a strict-schema
-      // provider's "" or null) is sent back, not quietly replaced by the slug
       val newArticle = if currentTitle.isDefined || mode != DraftMode.Create then Nil
       else
         List(
@@ -143,7 +141,6 @@ object DraftAnswer:
           r.citekey -> Coverage.Rationale(s"${s"${r.reason}".replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars)}")
         )
         .toMap
-      // the extraction's reason (the record does not bear on the question), unless the writer gave one
       val reasons =
         (evidence.notUsed
           .filterNot(n => citesAll(n.citekey))

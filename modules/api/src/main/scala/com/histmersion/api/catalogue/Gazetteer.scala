@@ -104,8 +104,7 @@ object Gazetteer:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def validity(sourceKey: Gazetteer.ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity =
+  def validity(sourceKey: ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity =
     span match
       case Span(None, Some(end)) if ((SourceInfo.unknownWhenSilent(sourceKey)) == (true)) =>
         Validity(

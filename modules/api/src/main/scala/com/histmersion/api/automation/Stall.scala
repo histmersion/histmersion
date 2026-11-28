@@ -181,117 +181,117 @@ object Stall:
   def stalled(f: Facts, days: StallReport.Days): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def classify(f: Facts): (Stall.Code, Stall.Why, Stall.Action) =
+  def classify(f: Facts): (Code, Why, Action) =
     val g = f.slug
     def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
     if (f.draining) == Facts.Draining.Draining then
       (
-        Stall.Code(Code.Drain),
-        Stall.Why("the agents are draining: nothing new starts"),
-        Stall.Action("histmersion agent autopilot undrain")
+        Code(Code.Drain),
+        Why("the agents are draining: nothing new starts"),
+        Action("histmersion agent autopilot undrain")
       )
     else if f.approvals.nonEmpty then
       val kinds =
         f.approvals.groupMapReduce(_._2)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$k $n").mkString(", ")
       (
-        Stall.Code(Code.Person),
-        Stall.Why(
+        Code(Code.Person),
+        Why(
           s"waits for a person: ${Plural.count(Plural.CountN((f.approvals.size).toLong), Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})"
         ),
-        Stall.Action(
+        Action(
           s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)"
         )
       )
     else if (f.personHeld).value > 0 then
       (
-        Stall.Code(Code.Held),
-        Stall.Why(
+        Code(Code.Held),
+        Why(
           s"${Plural.count(Plural.CountN(f.personHeld.value.toLong), Plural.CountSingular("item"))} held by a person"
         ),
-        Stall.Action(s"histmersion agent manager seed:$g items --status held, then release")
+        Action(s"histmersion agent manager seed:$g items --status held, then release")
       )
     else if f.paused.nonEmpty then
       (
-        Stall.Code(Code.Paused),
-        Stall.Why(s"its managers are paused: ${f.paused.mkString(", ")}"),
-        Stall.Action(s"histmersion agent manager ${f.paused.head} resume")
+        Code(Code.Paused),
+        Why(s"its managers are paused: ${f.paused.mkString(", ")}"),
+        Action(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == Stall.Code("blocked") && w.isBudget)
-        .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("budget"))))) match
+      waitOf(w => w.code == Code("blocked") && w.isBudget)
+        .orElse(waitOf((refactorCallback => (refactorCallback.code == Code("budget"))))) match
         case Some(w) =>
           (
-            Stall.Code(Code.Budget),
+            Code(Code.Budget),
             w.why.render,
-            Stall.Action("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
+            Action("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == Stall.Code("blocked") && w.isStarved)
-            .orElse(waitOf((refactorCallback => (refactorCallback.code == Stall.Code("pool"))))) match
+          waitOf(w => w.code == Code("blocked") && w.isStarved)
+            .orElse(waitOf((refactorCallback => (refactorCallback.code == Code("pool"))))) match
             case Some(w) =>
               (
-                Stall.Code(Code.Quota),
+                Code(Code.Quota),
                 w.why.render,
-                Stall.Action(
+                Action(
                   "histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models"
                 )
               )
             case None =>
-              waitOf(w => (w.code == Stall.Code("capacity"))) match
+              waitOf(w => (w.code == Code("capacity"))) match
                 case Some(w) =>
                   (
-                    Stall.Code(Code.Queue),
-                    Stall.Why(s"waits in the scheduler's queue (#${w.position}): ${w.why.render}"),
-                    Stall.Action(
+                    Code(Code.Queue),
+                    Why(s"waits in the scheduler's queue (#${w.position}): ${w.why.render}"),
+                    Action(
                       s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs"
                     )
                   )
                 case None =>
-                  waitOf((refactorCallback => (refactorCallback.code == Stall.Code("blocked")))) match
+                  waitOf((refactorCallback => (refactorCallback.code == Code("blocked")))) match
                     case Some(w) =>
                       (
-                        Stall.Code(Code.Blocked),
+                        Code(Code.Blocked),
                         w.why.render,
-                        Stall.Action(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
+                        Action(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
                       )
                     case None if (f.running).value > 0 =>
                       (
-                        Stall.Code(Code.Running),
-                        Stall.Why(
+                        Code(Code.Running),
+                        Why(
                           s"${Plural.count(Plural.CountN(f.running.value.toLong), Plural.CountSingular("run"))} in flight"
                         ),
-                        Stall.Action("nothing: wait for it")
+                        Action("nothing: wait for it")
                       )
                     case None =>
                       f.lastStop match
                         case Some(o) =>
                           (
-                            Stall.Code(Code.Failed),
-                            Stall.Why(s"its last item stopped: ${o.value.take(300)}"),
-                            Stall.Action(s"histmersion agent manager seed:$g items --status stopped; reopen it")
+                            Code(Code.Failed),
+                            Why(s"its last item stopped: ${o.value.take(300)}"),
+                            Action(s"histmersion agent manager seed:$g items --status stopped; reopen it")
                           )
                         case None
                             if ((f.noCandidates) == Facts.NoCandidates.NoCandidates) && f.sources == Facts.Sources(0) =>
                           (
-                            Stall.Code(Code.NoCandidates),
-                            Stall.Why("its candidate sweep found nothing new and it has no source"),
-                            Stall.Action(
+                            Code(Code.NoCandidates),
+                            Why("its candidate sweep found nothing new and it has no source"),
+                            Action(
                               s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)"
                             )
                           )
                         case None if f.open == Facts.Open(0) =>
                           (
-                            Stall.Code(Code.Idle),
-                            Stall.Why("nothing open: it waits for its cron or new sources"),
-                            Stall.Action(s"histmersion agent enqueue seed $g (propose its next articles)")
+                            Code(Code.Idle),
+                            Why("nothing open: it waits for its cron or new sources"),
+                            Action(s"histmersion agent enqueue seed $g (propose its next articles)")
                           )
                         case None =>
                           (
-                            Stall.Code(Code.Idle),
-                            Stall.Why(
+                            Code(Code.Idle),
+                            Why(
                               s"${Plural.count(Plural.CountN(f.open.value.toLong), Plural.CountSingular("item"))} open, none due yet (a cooldown or a backoff)"
                             ),
-                            Stall.Action(s"histmersion agent scheduler why <item>")
+                            Action(s"histmersion agent scheduler why <item>")
                           )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

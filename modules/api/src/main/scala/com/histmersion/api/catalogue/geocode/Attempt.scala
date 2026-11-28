@@ -59,7 +59,7 @@ object Attempt:
   private val Joiners: Set[String] = Set("and", "or")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def stripQualifier(name: Attempt.Name): Option[(Approximation.Qualifier.Dropped, Attempt.Name)] =
+  def stripQualifier(name: Name): Option[(Approximation.Qualifier.Dropped, Name)] =
     val words = name.value.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
     def isQ(w: String) = QualifierWords.contains(key(w).value)
     @annotation.tailrec
@@ -69,14 +69,14 @@ object Attempt:
       case _                                                                              => (dropped, rest)
     val (dropped, rest) = go(words, Nil)
     Option.when(dropped.nonEmpty && rest.nonEmpty && key(rest.mkString(" ")).value.nonEmpty)(
-      (Approximation.Qualifier.Dropped(dropped.mkString(" ")), Attempt.Name(rest.mkString(" ")))
+      (Approximation.Qualifier.Dropped(dropped.mkString(" ")), Name(rest.mkString(" ")))
     )
 
   private val Asides = "\\(([^)]*)\\)".r
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  def attempts(name: Attempt.Name): List[Attempt] =
+  def attempts(name: Name): List[Attempt] =
     val n = (name).value.trim
     if (key((n))).value.isEmpty then Nil
     else
@@ -84,7 +84,7 @@ object Attempt:
         .findAllMatchIn(n)
         .map(_.group(1).trim)
         .filter(a => (key((a))).value.nonEmpty)
-        .map(a => Attempt(Attempt.Name(a)))
+        .map(a => Attempt(Name(a)))
         .toList
       val comma = n.lastIndexOf(',') match
         case i if i > 0 && (key((n.take(i)))).value.nonEmpty && (key((n.drop(i + 1)))).value.nonEmpty =>
@@ -92,15 +92,13 @@ object Attempt:
         case _ => None
       val head = comma.fold(n)(_._1)
       val qualified =
-        stripQualifier(Attempt.Name(head)).map((q, base) =>
-          Attempt(base, comma.map(c => Attempt.Within(c._2)), Some(Approximation.Qualifier(q)))
+        stripQualifier(Name(head)).map((q, base) =>
+          Attempt(base, comma.map(c => Within(c._2)), Some(Approximation.Qualifier(q)))
         )
-      val all = List(Attempt(Attempt.Name(n))) ++ asides ++
-        comma.map((a, in) => Attempt(Attempt.Name(a), Some(Attempt.Within(in)))).toList ++
+      val all = List(Attempt(Name(n))) ++ asides ++
+        comma.map((a, in) => Attempt(Name(a), Some(Within(in)))).toList ++
         qualified.toList ++
         comma
-          .map((a, in) =>
-            Attempt(Attempt.Name(in), None, Some(Approximation.OnlyWithin(Approximation.OnlyWithin.Missing(a))))
-          )
+          .map((a, in) => Attempt(Name(in), None, Some(Approximation.OnlyWithin(Approximation.OnlyWithin.Missing(a)))))
           .toList
       all.distinctBy(a => (a.key, a.within.map(w => key(w.value))))

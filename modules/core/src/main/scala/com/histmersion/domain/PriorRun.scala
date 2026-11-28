@@ -45,7 +45,7 @@ object PriorRun:
     case HasNotes
 
     /** Its earlier `enrich-source` run `run` is `state` (neither failed nor cancelled). */
-    case RunLive(run: PriorRun.Id, state: Run.State)
+    case RunLive(run: Id, state: Run.State)
 
     /** No source has the citekey. */
     case NoSource

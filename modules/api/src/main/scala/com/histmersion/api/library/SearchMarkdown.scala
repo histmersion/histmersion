@@ -204,8 +204,7 @@ object SearchMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def tree(h: TimeHistogram, unit: SearchMarkdown.TreeUnit): String =
+  def tree(h: TimeHistogram, unit: TreeUnit): String =
     val span = s"${yearLabel(h.from.value)} → ${yearLabel(h.to.value)}"
     if h.tree.isEmpty then (s"_No $unit to group for $span._")
     else

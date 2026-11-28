@@ -49,7 +49,7 @@ object Reading:
       val pct = (d: Double) =>
         java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
       val why =
-        if (r.rejected) == Reading.Rejected.Rejected then Some(s"${r.kind}: the provider refuses it")
+        if (r.rejected) == Rejected.Rejected then Some(s"${r.kind}: the provider refuses it")
         else if !stale && left <= floor.value then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
         else if stale && left < floor.value + rules.marginPct.value then
           Some(

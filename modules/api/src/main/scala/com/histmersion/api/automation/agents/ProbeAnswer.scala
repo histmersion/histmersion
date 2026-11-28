@@ -21,7 +21,6 @@ import com.histmersion.Newtype
 final case class ProbeAnswer(citekey: Citekey, title: api.library.Title, year: Option[Year])
     derives JsonCodec,
       KindlingsSchema:
-  /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def problems(recordYear: Option[ProbeAnswer.RecordYear]): List[Problem] = List(
     Option.when(Option(citekey).forall(_.value.trim.isEmpty))(
@@ -37,7 +36,6 @@ final case class ProbeAnswer(citekey: Citekey, title: api.library.Title, year: O
 
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 object ProbeAnswer:
-  /** The year asked of a model stays the 32-bit integer its schema has always said. */
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given Schema[ProbeAnswer] = api.json.Schema.derived[ProbeAnswer].modify(_.year)(_.format("int32"))
   type RecordYear = RecordYear.T

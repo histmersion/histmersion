@@ -160,8 +160,8 @@ object Proposal:
     val at = Where(s"proposal for $shown")
     val field = Field(s"proposal for $shown")
     def broken(rule: Content.Requirement): Problem = Content.Proposal(rule, at)
-    def quoted(keys: List[library.Citekey]): Either[Problem, Proposal.Quote] =
-      val q = Proposal.Quote(a.quote.value.trim)
+    def quoted(keys: List[library.Citekey]): Either[Problem, Quote] =
+      val q = Quote(a.quote.value.trim)
       if q.value.isEmpty then Left(broken(Content.Requirement.QuoteGiven))
       else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
       else Left(broken(Content.Requirement.QuoteInRecords(keys.toVector.map(Raw.of(_)))))
@@ -184,7 +184,7 @@ object Proposal:
             Approval.Kind.StatusChange,
             ck,
             status = Some(st),
-            evidence = Proposal.Evidence(a.evidence.value.trim),
+            evidence = Evidence(a.evidence.value.trim),
             quote = Some(q)
           )
         case "edge" =>
@@ -213,7 +213,7 @@ object Proposal:
             ck,
             edgeKind = Some(k),
             target = Some(t),
-            evidence = Proposal.Evidence(a.evidence.value.trim),
+            evidence = Evidence(a.evidence.value.trim),
             quote = Some(q)
           )
         case _ =>

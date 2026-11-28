@@ -34,7 +34,6 @@ final case class RunRequest(
     query: Option[RunRequest.Query] = None,
     topics: List[RunRequest.Topics] = Nil,
     tags: List[RunRequest.Tags] = Nil,
-    /** Every field is optional: a run stored before an option existed must still decode. */
     goal: Option[Goal.Slug] = None,
     dryRun: Option[RunRequest.DryRun] = None,
     modelFor: List[ModelOverride] = Nil,

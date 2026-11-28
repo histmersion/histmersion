@@ -30,7 +30,6 @@ object JobType:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[JobType] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 
-  /** The job type of a manager item kind. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(itemKind: Candidate.Kind): JobType = itemKind.value match
     case PlanGoalItem     => GoalPlan

@@ -68,12 +68,11 @@ object AcquireRecheck:
         else l.at.plusSeconds(math.max(1, everyDays.value).toLong * 86400L)
       )
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def isDue(
       last: Option[LastCheck],
-      generation: AcquireRecheck.IsDueGeneration,
-      everyDays: AcquireRecheck.IsDueEveryDays,
-      retryHours: AcquireRecheck.IsDueRetryHours,
+      generation: IsDueGeneration,
+      everyDays: IsDueEveryDays,
+      retryHours: IsDueRetryHours,
       now: Instant
   ): Boolean =
     dueAt(last, generation, everyDays, retryHours).forall(!_.isAfter(now))
@@ -115,12 +114,11 @@ object AcquireRecheck:
     )
 
   /** The earliest time one of the checked items falls due again (None: none waits). */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def nextDue(
       checks: List[LastCheck],
-      generation: AcquireRecheck.NextDueGeneration,
-      everyDays: AcquireRecheck.NextDueEveryDays,
-      retryHours: AcquireRecheck.NextDueRetryHours
+      generation: NextDueGeneration,
+      everyDays: NextDueEveryDays,
+      retryHours: NextDueRetryHours
   ): Option[Instant] =
     checks.flatMap(c => dueAt(Some(c), generation, everyDays, retryHours)).minOption
 

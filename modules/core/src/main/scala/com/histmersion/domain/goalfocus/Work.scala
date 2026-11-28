@@ -24,7 +24,6 @@ final case class Work(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def waitsForPerson: Boolean = approval.isDefined && approvalByPerson.value
 
-  /** It can still use a model without a person: not waiting for a person's approval, not held by one. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def runnable: Boolean = !waitsForPerson && !personHeld.value
 

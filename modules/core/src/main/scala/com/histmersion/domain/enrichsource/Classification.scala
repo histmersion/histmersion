@@ -69,7 +69,6 @@ object Classification:
       val status = AgentVerify.status(c.status)
       val period = c.period.map(p => p.convert(maxAbsYear, None))
       val summary = Option(c.summary.value).map(_.trim).filter(_.nonEmpty)
-      // a status other than unassessed is a proposal a person may weigh: it needs its evidence
       val evidence = Option(c.statusEvidence.value).map(_.trim).getOrElse("")
       val noEvidence = Option.when(status.exists(_ != Source.Status.Unassessed) && evidence.isEmpty)(
         Content.Answer(Content.Requirement.StatusEvidence)

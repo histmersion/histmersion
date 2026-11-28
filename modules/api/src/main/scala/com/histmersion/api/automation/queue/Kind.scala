@@ -241,9 +241,7 @@ object Kind:
               .mkString(Sep)
           val lines = is.sortBy(_.id).map { i =>
             val box =
-              if !(kind.checkboxes).checkboxes then ""
-              else if i.status == QueueItem.Status(Done) then "[x] "
-              else "[ ] "
+              if !(kind.checkboxes).checkboxes then "" else if i.status == QueueItem.Status(Done) then "[x] " else "[ ] "
             val why = i.reason.map(r => s" — _${r}_").getOrElse("")
             s"- $box${(i.text).value.linesIterator.mkString(" ")}$why  `#${i.id}`" +
               notes.get(i.id).fold("")(n => s"\n  - _${n}_")

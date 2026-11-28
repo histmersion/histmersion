@@ -34,7 +34,6 @@ object StatedPeriod:
   extension (p: StatedPeriod)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def convert(maxAbsYear: MaxAbsYear, within: Option[Period]): Either[Problems, Period] =
-      // a unit the model wrote that is none of the four, named back to it as it wrote it
       def unit(stated: YearUnit.Wire): Either[Problem, YearUnit] =
         YearUnit
           .parse(stated)

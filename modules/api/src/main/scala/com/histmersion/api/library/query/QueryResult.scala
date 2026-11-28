@@ -42,7 +42,7 @@ object QueryResult:
     def markdown: Markdown =
       val head =
         s"### ${r.rowCount} row(s)${
-            if (r.truncated) == QueryResult.Truncated.Truncated then " (truncated by the row cap)" else ""
+            if (r.truncated) == Truncated.Truncated then " (truncated by the row cap)" else ""
           } · ${r.elapsedMs} ms"
       if r.rows.isEmpty then Markdown(s"$head\n\n_no rows_")
       else Markdown(s"$head\n\n${markdownTable(r.columns, r.rows)}")

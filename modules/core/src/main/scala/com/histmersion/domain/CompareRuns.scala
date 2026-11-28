@@ -444,8 +444,7 @@ object CompareRuns:
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def output[O: JsonValueCodec](d: Run, name: CompareRuns.OutputName): Option[O] =
+  def output[O: JsonValueCodec](d: Run, name: OutputName): Option[O] =
     d.steps
       .filter(s => s.name == name && s.status == automation.Step.Status.Done.wire)
       .lastOption

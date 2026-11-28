@@ -49,4 +49,4 @@ object Move:
 
   extension (m: Move)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def worthMoving(minKm: Move.MinKm): Boolean = (m.km).value > minKm.value
+    def worthMoving(minKm: MinKm): Boolean = (m.km).value > minKm.value

@@ -18,7 +18,7 @@ object Rule:
   object Description extends Newtype[String, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def rule(name: Rule.Name): Option[Rule] = all.find(_.name == Rule.Name((name).value.trim.toLowerCase))
+  def rule(name: Name): Option[Rule] = all.find(_.name == Name((name).value.trim.toLowerCase))
 
   extension (r: Rule)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

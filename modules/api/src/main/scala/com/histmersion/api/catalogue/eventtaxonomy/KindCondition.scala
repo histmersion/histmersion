@@ -22,6 +22,6 @@ object KindCondition:
     extension (negate: Negate) def negate: Boolean = negate == Negate
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def matches(filter: KindCondition.Filter, kind: EventSummary.Kind): Boolean =
+  def matches(filter: Filter, kind: EventSummary.Kind): Boolean =
     val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
     f.isEmpty || f == group(kind).value || canonical(EventSummary.Kind(f)) == canonical(kind)

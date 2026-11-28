@@ -93,8 +93,6 @@ object Facts:
       else
         val open = unfinishedKids(f, kids)
         val allowed = if open.isEmpty then f.work else f.work.filter(_.kind.value == PlanGoalItem)
-        // an item that waits for another (a proposal for its plan, a review for its filter) can run only when
-        // that one can: a proposal behind a plan waiting for a person waits for that person too
         val runnable = allowed.filter(w => w.runnable && w.blockers(f.work).forall(_.runnable))
         if runnable.isEmpty && open.nonEmpty then
           Fit.Waits(

@@ -23,11 +23,8 @@ final case class Report(
     explainBack: Option[Report.ExplainBack] = None,
     emptySlots: List[Report.EmptySlots] = Nil,
     proposals: List[Proposal] = Nil,
-    /** Its verdicts on its own earlier findings (the ledger's open ones), each quote found in the body. */
     checks: List[Check] = Nil,
-    /** The rules reviewer's verified spot-checks of cited claims (#1840). */
     spotChecks: List[SpotCheck] = Nil,
-    /** The skeptic's verified rulings that an open checklist pair is not material (§6.8). */
     notMaterial: List[CritiqueReason] = Nil
 ) derives JsonCodec
 

@@ -179,8 +179,7 @@ object ArticleReviewStatus:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def runOrder(l: Ledger, runStarts: Map[Run.Id, ArticleReviewStatus.RunStart]): List[Run.Id] =
+  def runOrder(l: Ledger, runStarts: Map[Run.Id, RunStart]): List[Run.Id] =
     val named = l.entries.flatMap(e => e.run :: e.closed.map(_.run).toList).filter(_.value.nonEmpty).distinct
     named.zipWithIndex.sortBy((run, i) => (runStarts.get(run).map(_.value), i)).map(_._1)
 
@@ -189,8 +188,7 @@ object ArticleReviewStatus:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def history(l: Ledger, runStarts: Map[Run.Id, ArticleReviewStatus.RunStart]): List[ReviewRound] =
+  def history(l: Ledger, runStarts: Map[Run.Id, RunStart]): List[ReviewRound] =
     val order = runOrder(l, runStarts)
     val number = order.zipWithIndex.map((r, i) => r -> (i + 1)).toMap
     l.entries

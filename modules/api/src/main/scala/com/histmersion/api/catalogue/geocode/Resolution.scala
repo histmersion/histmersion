@@ -31,7 +31,7 @@ object Resolution:
   object Asked extends Newtype[String, Pure]
 
   def choose(
-      asked: Resolution.Asked,
+      asked: Asked,
       attempt: Attempt,
       ranked: List[Candidate],
       placeholderMin: Placeholder.Min

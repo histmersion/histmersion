@@ -109,8 +109,7 @@ object SchedulerPolicy:
     */
   object GoalFirst extends Strategy:
 
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    val name = SchedulerPolicy.StrategyName("goal-first")
+    val name = StrategyName("goal-first")
     val describe =
       "depth first: the highest-priority goals, oldest first, take the allowance; newer goals of the same " +
         "priority wait until the older ones have nothing to run (aging and max-wait bound the wait)"
@@ -127,8 +126,7 @@ object SchedulerPolicy:
     */
   object TypeBalanced extends Strategy:
 
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    val name = SchedulerPolicy.StrategyName("type-balanced")
+    val name = StrategyName("type-balanced")
     val describe = "breadth: the allowance is spread over the job types by weight (agents.scheduler.type-weights); " +
       "inside each type the highest-priority goals first, oldest as tiebreak, so every goal advances"
 
@@ -168,11 +166,9 @@ object SchedulerPolicy:
     val all: List[Strategy] = List(TypeBalanced, GoalFirst)
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def parse(s: SchedulerPolicy.StrategyName): Option[Strategy] =
+    def parse(s: StrategyName): Option[Strategy] =
       all.find(_.name.value == Option(s).fold("")(_.value).trim.toLowerCase(java.util.Locale.ROOT))
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def names: List[SchedulerPolicy.StrategyName] = all.map(_.name)
+    def names: List[StrategyName] = all.map(_.name)
 
   object Code:
     val Blocked: Block.Code = Block.Code("blocked")

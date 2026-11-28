@@ -94,8 +94,7 @@ object MapView:
   private var heldPoints: Option[List[GeoHit]] = None
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private var playYearsPerSecond: MapView.YearsPerSecond = MapView.YearsPerSecond(0.0)
+  private var playYearsPerSecond: YearsPerSecond = YearsPerSecond(0.0)
 
   /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one bubble,
     * whatever it is. Regions never join.
@@ -215,12 +214,11 @@ object MapView:
     * The findings are diffed (only the colour of a kept one changes); the states are recoloured and faded in place.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def playFrame(
       points: List[GeoHit],
       span: (Year.Astronomical, Year.Astronomical),
       ph: Year,
-      yearsPerSecond: MapView.YearsPerSecond
+      yearsPerSecond: YearsPerSecond
   ): Unit =
     playLead = Year((yearsPerSecond.value * Layout.playbackLeadSeconds.value).toLong)
     playYearsPerSecond = yearsPerSecond
@@ -298,15 +296,13 @@ object MapView:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[web] def midOf(pt: GeoHit): Option[MapView.Mid] =
+  private[web] def midOf(pt: GeoHit): Option[Mid] =
     for a <- pt.periodStart; b <- pt.periodEnd yield Mid((a.value + b.value).toDouble / 2)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[web] def avgMid(items: Iterable[GeoHit]): Option[MapView.Mid] =
+  private[web] def avgMid(items: Iterable[GeoHit]): Option[Mid] =
     val points = items.iterator
-    @tailrec def loop(sum: Double, n: Int): Option[MapView.Mid] =
+    @tailrec def loop(sum: Double, n: Int): Option[Mid] =
       if points.hasNext then
         midOf(points.next()) match
           case Some(m) => loop(sum + m.value, n + 1)
@@ -316,9 +312,8 @@ object MapView:
     loop(0.0, 0)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def colorFor(
-      mid: Option[MapView.Mid],
+      mid: Option[Mid],
       span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): Color =
@@ -334,13 +329,11 @@ object MapView:
   private def tinted(base: Wcag.Hex, certainty: Certainty): Color =
     Color(Certainty.desaturate(ConfidenceStyle.Rgb(base.value), certainty).value)
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[web] def midRange(items: Iterable[GeoHit]): Option[(MapView.Mid, MapView.Mid)] = rangeOf(items.flatMap(midOf))
+  private[web] def midRange(items: Iterable[GeoHit]): Option[(Mid, Mid)] = rangeOf(items.flatMap(midOf))
 
   /** Pure: the least and the greatest of `mids`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[web] def rangeOf(mids: Iterable[MapView.Mid]): Option[(MapView.Mid, MapView.Mid)] =
+  private[web] def rangeOf(mids: Iterable[Mid]): Option[(Mid, Mid)] =
     // `var`s: one pass over what may be thousands of mids, during a drag
     var lo = Double.MaxValue
     var hi = Double.MinValue
@@ -363,9 +356,8 @@ object MapView:
     * (the undated have no say).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def gradientOf(
-      mids: Iterable[MapView.Mid],
+      mids: Iterable[Mid],
       span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): Color =
@@ -377,9 +369,8 @@ object MapView:
     * colour twice when none is dated.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def rampEnds(
-      mids: Iterable[MapView.Mid],
+      mids: Iterable[Mid],
       span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): (Color, Color) =
@@ -390,7 +381,7 @@ object MapView:
       case Some((lo, hi)) =>
         val sLo = span._1.value.min(span._2.value).toDouble
         val sHi = span._1.value.max(span._2.value).toDouble
-        def norm(v: MapView.Mid): Fmt.ColorT = Fmt.ColorT(if sHi == sLo then 0.5 else (v.value - sLo) / (sHi - sLo))
+        def norm(v: Mid): Fmt.ColorT = Fmt.ColorT(if sHi == sLo then 0.5 else (v.value - sLo) / (sHi - sLo))
         (tinted(Fmt.color(norm(lo)), certainty), tinted(Fmt.color(norm(hi)), certainty))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -731,11 +722,10 @@ object MapView:
     * whole time buckets ([[PlaybackBuckets]]), so their tiles change once a bucket.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def tileSpanOf(
       span: (Year.Astronomical, Year.Astronomical),
       playback: Playback,
-      yearsPerSecond: MapView.YearsPerSecond,
+      yearsPerSecond: YearsPerSecond,
       bucketSeconds: MapTilesUiConfig.PlaybackBucketSeconds
   ): (Year.Astronomical, Year.Astronomical) =
     val ordered =
@@ -929,8 +919,7 @@ object MapView:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[web] def viridisAt(mid: MapView.Mid, span: (Year.Astronomical, Year.Astronomical)): Color =
+  private[web] def viridisAt(mid: Mid, span: (Year.Astronomical, Year.Astronomical)): Color =
     val sLo = span._1.value.min(span._2.value).toDouble
     val sHi = span._1.value.max(span._2.value).toDouble
     Color(Fmt.color(Fmt.ColorT(if sHi == sLo then 0.5 else ((mid.value - sLo) / (sHi - sLo)).max(0).min(1))).value)

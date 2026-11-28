@@ -87,7 +87,7 @@ object FilterAnswer:
   def judge(
       slug: Slug,
       f: Article.Filter,
-      rationale: FilterAnswer.Rationale,
+      rationale: Rationale,
       total: FilterProposal.Total,
       cited: List[Citekey],
       citedIn: Set[Citekey],

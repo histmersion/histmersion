@@ -19,7 +19,6 @@ final case class Regression(id: Regression.Id, why: Rationale) derives JsonCodec
 
 object Regression:
 
-  /** Why the revision reopens the finding: the guard's account of what it found, not a failure. */
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 

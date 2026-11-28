@@ -39,7 +39,7 @@ object Approximation:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def compassBox(
-      dropped: Approximation.Qualifier.Dropped
+      dropped: Qualifier.Dropped
   ): Option[(Compass.Fraction, Compass.Fraction, Compass.Fraction, Compass.Fraction)] =
     val words = dropped.value.split("[\\s\\-]+").map(w => key(w).value).filter(_.nonEmpty).toList
     val dirs = words.flatMap(w => Boxes.get(w.stripSuffix("ern")).orElse(Boxes.get(w)))

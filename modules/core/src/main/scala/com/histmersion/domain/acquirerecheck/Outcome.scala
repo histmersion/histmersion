@@ -9,16 +9,12 @@ import com.histmersion.domain.library
 import com.histmersion.Newtype
 
 enum Outcome(val wire: Outcome.Wire) derives CanEqual:
-  /** In the corpus with its original: closed. */
   case Closed extends Outcome(Outcome.Wire("closed"))
 
-  /** A legal copy found and handed to the conversion; the conversion closes the item. */
   case Fetched extends Outcome(Outcome.Wire("fetched"))
 
-  /** The legal chain has no copy (yet). */
   case NoCopy extends Outcome(Outcome.Wire("no-copy"))
 
-  /** The check did not get to an answer (an upstream down, the converter refused): tried again when due. */
   case Failed extends Outcome(Outcome.Wire("failed"))
 
 object Outcome:

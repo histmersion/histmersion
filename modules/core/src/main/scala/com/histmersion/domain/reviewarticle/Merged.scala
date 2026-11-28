@@ -46,7 +46,7 @@ object Merged:
 
   extension (m: Merged)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def done(round: Merged.Round, rounds: RoundCount, fix: FixRun): Boolean =
+    def done(round: Round, rounds: RoundCount, fix: FixRun): Boolean =
       m.majors.isEmpty || !fix.value || round.value >= rounds.value
 
   extension (m: Merged)

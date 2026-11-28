@@ -41,7 +41,7 @@ object Scored:
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def hours(minutes: Scored.WaitedMinutes): String =
+  def hours(minutes: WaitedMinutes): String =
     val m = minutes.value
     if m < 60 then s"$m min"
     else s"${m / 60} h" + (if m % 60 != 0 then s" ${m % 60} min" else "")

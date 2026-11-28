@@ -84,7 +84,6 @@ object SkepticAnswer:
       val (nm, nps, nws) =
         critique.fold((Nil, Nil, Nil))(checkNotMaterial(Option(a.notMaterial).getOrElse(Nil), fs, _, last))
       val (cs, cps, cws) = checksOf(Reviewer.Skeptic, prior, a.checks, last)
-      // the stated verdict is held to the findings as stated: one code records minor does not make it a finding left out
       val verdict = verdictOf(a.verdict, stated, last).map(_ => domain.reviewarticle.Verdict.of(fs))
       settle(Reviewer.Skeptic, verdict, fs, ps ++ cps ++ kps ++ nps, ds ++ cws ++ kws ++ nws, last)(v =>
         Report(Reviewer.Skeptic, v, fs, proposals = verified, checks = cs, notMaterial = nm)
