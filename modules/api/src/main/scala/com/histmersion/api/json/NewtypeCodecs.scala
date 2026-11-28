@@ -37,9 +37,6 @@ object NewtypeCodecs:
 
   def twoStatesSchema[E]: Schema[E] = Schema.schemaForBoolean.as[E]
 
-  /** A two-case enum of the layers below the api (whose companions extend the codec-free TwoCases) gets its JSON here,
-    * at the boundary, the same as a wire enum's: `true` its first case, `false` its second.
-    */
   given twoCases: [E <: reflect.Enum] => (cases: TwoCases[E]) => JsonValueCodec[E] = twoStates(cases.values)
 
   given twoCasesSchema: [E <: reflect.Enum] => TwoCases[E] => Schema[E] = twoStatesSchema

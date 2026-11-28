@@ -65,6 +65,13 @@ are written to the report but not emitted as lints, and the report is the fixtur
   the conversion between such an enum and a domain Boolean newtype (domain layer, no codec). The lint rule `derives`
   reads an instance lifted from `TwoStates` as it reads one lifted from a newtype's base, and lists
   `api/json/TwoStates.scala` as the codecs' home.
+- The layers below the api (core, db, server) have no codecs, so their two-case enums' companions extend the codec-free
+  `TwoCases` (`modules/newtype`, which `TwoStates` extends too). Where such an enum sits in JSON, the api's boundary
+  lifts its codec and schema from `TwoCases` (`NewtypeCodecs.twoCases`, `NewtypeCodecs.twoCasesSchema`: the same JSON
+  Boolean and `boolean` schema). `NewtypeColumns.twoStates`, `TwoStateTransformers` (with `between`: one two-case enum
+  into another, case by case in order, so a wire enum and the domain's of the same Boolean convert as the Boolean did)
+  and the tests' `ComparedByValue` take `TwoCases`; the rule `derives` reads an instance lifted from `TwoCases` as one
+  lifted from `TwoStates`.
 - A Boolean newtype that served several parameters of different meaning becomes one enum per meaning: `Api.Apply`
   (apply or dry run; the `dryRun` parameters of `importBundle` and `fetchExternalPlaces` map `true` to `DryRun`),
   `Api.Strictness` (`strict`), `Api.Fetching` (`init`'s `fetch`), and `reocr`'s `quality` takes

@@ -156,7 +156,6 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
       val initEnd = o.templ.inits.last.pos.end
       val header = tokens.filter(_.end <= initEnd)
       val lower = s"${name.head.toLower}${name.tail}"
-      // a parameter named after a keyword (`Import` -> `import`) is quoted
       val param = if (lower.parse[Term].toOption.exists(_.is[Term.Name])) lower else s"`$lower`"
       val ext = s"extension ($param: $name) def ${e.test}: Boolean = $param == ${e.yes}"
       val enumText = s"enum $name derives CanEqual:\n$ind  case ${e.yes}, ${e.no}\n$ind"
@@ -209,7 +208,7 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
           log.add(s"$path:${a.pos.startLine + 1}\ttext\t${e.newtype}")
           val braced = i.tokens.takeWhile(_.end <= a.pos.start).lastOption.exists(_.is[Token.LeftBrace])
           a match {
-            case Term.Block(List(inner: Term)) => Patch.addRight(inner, s".${e.test}") // `${x}` parsed as a block
+            case Term.Block(List(inner: Term)) => Patch.addRight(inner, s".${e.test}")
             case _ if braced => Patch.addRight(a, s".${e.test}")
             case _ => Patch.replaceTree(a, s"{${a.syntax}.${e.test}}")
           }

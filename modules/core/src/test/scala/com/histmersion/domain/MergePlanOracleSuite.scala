@@ -121,6 +121,16 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sorted
     s"sketches wanted: ${s.mkString(", ")}\nbodies wanted: ${b.mkString(", ")}\n"
 
+  private def recorded(p: Product): String =
+    p.productIterator
+      .map(_.asInstanceOf[Matchable])
+      .map {
+        case t: MergePlanner.Row.Tombstone       => t.tombstone.toString
+        case d: MergePlanner.AttestationFix.Drop => d.drop.toString
+        case other                               => other.toString
+      }
+      .mkString(s"${p.productPrefix}(", ",", ")")
+
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def render(r: MergePlanner.Result): String =
     val a = r.apply
@@ -129,7 +139,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       out ++= s"-- $name\n"
       lines.foreach(l => out ++= s"$l\n")
     section("plan", List(r.plan.asJson.spaces2))
-    section("rows", r.rows.map(_.toString))
+    section("rows", r.rows.map(recorded))
     section("needs apply", r.needsApply.map(_.sentence))
     section("old citekeys left out", r.skipAliases.toList.map(_.value).sorted)
     section("notes", r.notes.map(_.value))
@@ -138,7 +148,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     section("apply: snapshots", a.snapshots.toList.map(_.toString).sorted)
     section("apply: versions", a.versions.map(_.toString))
     section("apply: copies", a.copies.map(_.asJson.noSpaces))
-    section("apply: attestations", a.attestations.map(_.toString))
+    section("apply: attestations", a.attestations.map(recorded))
     section("apply: tombstones", a.tombstones.map(_.toString))
     section("apply: body renames", a.bodyRenames.toList.map(_.toString).sorted)
     section("apply: reviews", a.reviews.map(_.value))
