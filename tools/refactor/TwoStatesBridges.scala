@@ -4,7 +4,8 @@ import scala.meta._
 class TwoStatesBridges extends SyntacticRule("TwoStatesBridges") {
   override def fix(implicit doc: SyntacticDocument): Patch =
     doc.tree.collect {
-      case o: Defn.Object if o.templ.inits.exists(_.tpe.syntax == s"TwoStates[${o.name.value}]") =>
+      case o: Defn.Object
+          if o.templ.inits.exists(i => Set(s"TwoStates[${o.name.value}]", s"TwoCases[${o.name.value}]")(i.tpe.syntax)) =>
         val name = o.name.value
         val cases = o.parent.toList.flatMap(_.children).collectFirst {
           case e: Defn.Enum if e.name.value == name =>

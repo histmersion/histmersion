@@ -368,6 +368,16 @@ class ContractsSuite extends munit.FunSuite:
     assertEquals(lines("api:api/json/TwoStates.scala"), Nil)
     assertEquals(lines("api:api/Other.scala"), List((1, "api:api/Other.scala:2")))
 
+  test("a domain two-case enum's codec and schema lifted from its TwoCases at the boundary are no codecs written by hand"):
+    val code =
+      """object NewtypeCodecs:
+        |  given twoCases: [E <: reflect.Enum] => (cases: TwoCases[E]) => JsonValueCodec[E] = make
+        |  given twoCasesSchema: [E <: reflect.Enum] => TwoCases[E] => Schema[E] = make
+        |  given column: [E <: reflect.Enum] => (cases: TwoCases[E]) => DbCodec[E] = make
+        |  given box: [A] => (c: JsonValueCodec[A]) => JsonValueCodec[Box[A]] = make
+        |""".stripMargin
+    assertEquals(Rules.genericCodecGivens(code).map(code.substring(0, _).count(_ == '\n') + 1), List(5))
+
   test("a CanEqual given is no codec given: CanEqual.derived and a hand-written CanEqual do not count for derives"):
     val code =
       """object Equalities:

@@ -342,7 +342,7 @@ object Contracts:
         }
         .toList
 
-    private val NewtypeLift = "\\bRefinedType\\.Mirror\\[|\\bTwoStates\\[".r
+    private val NewtypeLift = "\\bRefinedType\\.Mirror\\[|\\bTwoStates\\[|\\bTwoCases\\[".r
 
     private def resultType(h: String): String =
       var depth = 0
