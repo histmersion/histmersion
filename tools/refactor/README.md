@@ -716,6 +716,22 @@ the spelled root package counts as the client naming a package outside the api. 
   tools/refactor/drop-root-imports-fixture/input tools/refactor/drop-root-imports-fixture/expected
 ```
 
+`SplitWireTwin` (G7, separate types per layer) copies a configured record (a case class or an enum with its companion's
+newtypes, aliases and exports) into another layer as its twin. Domain to api (`strip = true`): the twin derives the
+codecs and the original loses them (its codec derives, its codec givens with their annotations, and the listed imports
+nothing else in the file uses); a `given Schema[R] = KindlingsSchema.derived[R].schema.modify(_.f)(_.description("…"))`
+becomes `@description("…")` on the twin's field. Every name the twin uses is resolved through SemanticDB: the twin's own
+companion (renamed with the twin), another configured record (its twin), `types` (a symbol or prefix mapped elsewhere;
+an own newtype mapped there is not declared again), `redeclare` (a newtype declared again in the twin's companion),
+`visible` (as is). Anything else is reported `unmapped`/`nested` and that twin is not written. Run it with
+`bash tools/refactor/move-onto-type.sh tools/refactor/split-wire-twin-<slice>.conf` on a clean, freshly compiled tree;
+the fixture (the twins land on the placeholders under `input/twins/`, so they are compared too):
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/SplitWireTwin.scala \
+  tools/refactor/split-wire-twin-fixture/input tools/refactor/split-wire-twin-fixture/expected
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.
