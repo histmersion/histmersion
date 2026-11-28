@@ -115,7 +115,7 @@ object Router:
     case Route.Activity(t) => UiLabels.Text(t.label)
     case Route.Settings(s) => s.label
     case Route.Setup       => UiLabels.Text("Set up Histmersion")
-    case Route.Goal(slug)  => UiLabels.Text(s"Goal · ${Wording.humanize(Wording.Id(slug.value))}")
+    case Route.Goal(slug)  => UiLabels.Text(s"Goal · ${Wording.humanize(slug.wordingId)}")
     case Route.Run(_)      => UiLabels.Text("Agent run")
     case Route.Manager(id) => UiLabels.Text(Wording.manager(Wording.ManagerId(id.value)))
     case Route.Job(_)      => UiLabels.Text("Background job")

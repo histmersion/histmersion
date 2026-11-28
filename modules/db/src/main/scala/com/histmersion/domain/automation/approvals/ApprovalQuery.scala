@@ -26,7 +26,8 @@ object ApprovalQuery:
   type Cursor = Cursor.T
   object Cursor extends Newtype[String, Pure]
   type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  object Limit extends Newtype[Int, Pure]:
+    extension (limit: Limit) def pageSize: PageSize = PageSize.assume(limit.value)
   type State = State.T
   object State extends Newtype[String, Pure]
   type UpTo = UpTo.T

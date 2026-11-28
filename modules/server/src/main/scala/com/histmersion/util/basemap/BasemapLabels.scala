@@ -430,7 +430,7 @@ object BasemapLabels:
         Option.when(points.nonEmpty)(Mvt.typedLayer(Mvt.LayerName("physical"), points.toList)),
         Option.when(lines.nonEmpty)(Mvt.typedLayer(Mvt.LayerName("rivers"), lines.toList))
       ).flatten
-      PmTiles.Entry.TileId(id) -> PmTiles.TileBytes(PmTiles.gzip(Mvt.tile(layers)).value)
+      PmTiles.Entry.TileId(id) -> PmTiles.gzip(Mvt.tile(layers)).asStored
     }
 
   /** Write `labels` as the archive `key` of `store` (zooms 0…`maxZoom`, bounds `b`); answers its tiles and bytes. */

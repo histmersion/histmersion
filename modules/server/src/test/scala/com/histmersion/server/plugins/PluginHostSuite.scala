@@ -724,7 +724,7 @@ class PluginHostSuite extends munit.FunSuite:
     assertEquals(errs, Nil)
     assertEquals(vaults(found).map(_.info.id.value).sorted, List("1password", "bitwarden", "keepassxc"))
     assert(
-      found.map(_.info.id).forall(id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))),
+      found.map(_.info.id).forall(id => ReservedNames.firstPartyPlugins.contains(id)),
       found.map(_.info.id).toString
     )
     val (g, _) = build(vaults(found), "")

@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Paging
+import com.histmersion.api.jobs.JobKinds
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Activity:
@@ -106,7 +107,8 @@ object Activity:
     object At extends Newtype[String, Pure]
     export Run.State.Wire as State
     type What = What.T
-    object What extends Newtype[String, Pure]
+    object What extends Newtype[String, Pure]:
+      extension (what: What) def asJobKind: JobKinds.Wire = JobKinds.Wire(what.value)
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     type EndedAt = EndedAt.T

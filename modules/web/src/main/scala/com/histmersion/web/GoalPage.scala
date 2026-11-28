@@ -173,8 +173,8 @@ object GoalPage:
       ApiClient
         .startRun(
           Agents.RunRequest(
-            Agents.RunRequest.Pipeline(Agents.Pipeline.CurrencyCheck.wire.value),
-            Agents.RunRequest.Target(slug.value)
+            Agents.Pipeline.CurrencyCheck.wire,
+            slug.asRunTarget
           )
         )
         .onComplete {
@@ -290,7 +290,7 @@ object GoalPage:
           cls := "muted goal-crumbs",
           RouteLink(Route.Research(ResearchSection.Goals), "Goals"),
           shown" › ${g.title}",
-          g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(Wording.Id(p.value)))))
+          g.parentSlug.map(p => span(" · part of ", RouteLink(Route.Goal(p), Wording.humanize(p.wordingId))))
         ),
         g.notes.filter(_.value.trim.nonEmpty).map(n => p(cls := "goal-question", n)),
         Creation.line(g.creator, g.createdAt).map(c => p(cls := "item-provenance muted", c)),
@@ -298,7 +298,7 @@ object GoalPage:
           cls := "muted goal-state",
           GoalsView.badge(g.status),
           child.text <-- managers.combineWith(items).map { (ms, is) =>
-            val ref = Goal.Ref(g.slug.value)
+            val ref = g.slug
             val pr = ResearchOverview.progressOf(g.slug, ms)
             val watcher = ms.find(_.id == Managers.watchId(ref))
             val lastCheck =

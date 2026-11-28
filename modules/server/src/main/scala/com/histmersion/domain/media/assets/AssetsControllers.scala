@@ -50,12 +50,8 @@ final class AssetsControllers(
   private def notFound(uid: AssetService.AssetUid) =
     Api.Error(Problem.Unclassified(Legacy.Text(s"No picture '$uid'")), Some(Api.Error.Code(Write.CodeNotFound)))
 
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def canonical(citekey: Citekey): Citekey =
-    sources.current(citekey).map(c => Citekey.assume(c.value)).getOrElse(citekey)
+    sources.current(citekey).map(c => c.citekey).getOrElse(citekey)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def uuid(uid: AssetService.AssetUid): Option[AssetService.AssetUid] =

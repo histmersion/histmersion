@@ -454,7 +454,7 @@ final class ManagerSupervisor(
         val filed = task.flatMap(t =>
           workLists
             .record(
-              WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
+              Queue.Kind.Tasks.label,
               QueueAdd(
                 Queue.QueueItem.Text(t.value),
                 topic = Some(Queue.QueueItem.Topic("agent manager")),
@@ -563,7 +563,7 @@ final class ManagerSupervisor(
   )(using Creator.New): RowCount =
     (a.subject, a.articles) match
       case (Some(goal), Some(plan)) if a.state == ApprovalState.Approved.wire =>
-        val id = seedId(Goal.Ref(goal.value))
+        val id = seedId(Goal.Slug(goal.value))
         Unused(
           ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(DomainGoal.Slug.assume(goal.value))),
           Unused.Why.Idempotent
@@ -681,7 +681,7 @@ final class ManagerSupervisor(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def migrateSchedules(now: Instant)(using WritePermit)(using Creator.New): List[TickLine] =
     agents.goals.scheduleGoals().flatMap { g =>
-      val id = watchId(Goal.Ref(g.value))
+      val id = watchId(Goal.Slug(g.value))
       val apiGoal = g.transformInto[Goal.Slug]
       try
         val moved = Transactor(ds).write {
@@ -693,7 +693,7 @@ final class ManagerSupervisor(
                 WatchSchedules.Existing(
                   m.config,
                   m.cron.map(c => Cron.Text(c.value)),
-                  m.nextTickAt.map(t => ManagerPolicy.InstantText(t.value))
+                  m.nextTickAt.map(t => t)
                 )
               ),
               rows,
@@ -747,7 +747,7 @@ final class ManagerSupervisor(
       val cron = m.cron.flatMap(c => Cron.parse(Cron.Text(c.value)).toOption)
       ManagerPolicy.cronStep(
         cron,
-        m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
+        m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t)),
         now
       ) match
         case ManagerPolicy.CronStep.Idle           => false
@@ -1151,7 +1151,6 @@ final class ManagerSupervisor(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def state(id: ManagerLight.Id): Option[ManagerLight.State] =
     agents.managerStore.get(id.transformInto[ManagerInfo.Id]).map(m => ManagerLight.State(m.state.value))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def openMajorArticles(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1162,12 +1161,11 @@ final class ManagerSupervisor(
       ManagerRepo.openMajorArticles(
         id.transformInto[ManagerInfo.Id],
         ManagerItem.Kind(ArticleReview),
-        tags.map(t => EnrichSource.Tag(t.value)),
+        tags.map(t => t.asTag),
         goal,
-        PageSize.assume(limit.value)
+        limit.pageSize
       )
     )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unreviewedArticles(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1178,9 +1176,9 @@ final class ManagerSupervisor(
       ManagerRepo.unreviewedArticles(
         id.transformInto[ManagerInfo.Id],
         ManagerItem.Kind(ArticleReview),
-        tags.map(t => EnrichSource.Tag(t.value)),
+        tags.map(t => t.asTag),
         goal,
-        PageSize.assume(limit.value)
+        limit.pageSize
       )
     )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -1195,13 +1193,12 @@ final class ManagerSupervisor(
         ManagerRepo.staleCandidates(
           id.transformInto[ManagerInfo.Id],
           ManagerItem.Kind(ArticleReview),
-          tags.map(t => EnrichSource.Tag(t.value)),
+          tags.map(t => t.asTag),
           goal,
-          PageSize.assume(limit.value)
+          limit.pageSize
         )
       )
       .map((slug, progress, hits, itemId) => (slug, progress, hits, itemId.map(i => ManagerContext.ItemId(i.value))))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extendCandidates(
       id: ManagerLight.Id,
       tags: List[GoalRow.Tags],
@@ -1211,9 +1208,9 @@ final class ManagerSupervisor(
     Transactor(ds).read(
       ManagerRepo.extendCandidates(
         id.transformInto[ManagerInfo.Id],
-        tags.map(t => EnrichSource.Tag(t.value)),
+        tags.map(t => t.asTag),
         goal,
-        PageSize.assume(limit.value)
+        limit.pageSize
       )
     )
   def articleFacets(slug: Slug): (List[EnrichSource.Tag], List[DomainGoal.Slug]) =

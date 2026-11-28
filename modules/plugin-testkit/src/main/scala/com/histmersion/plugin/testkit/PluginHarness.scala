@@ -638,7 +638,7 @@ object PluginHarness:
       env,
       services,
       fallback = FirstPartySettings.fallback(_, supplied),
-      firstParty = id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
+      firstParty = id => ReservedNames.firstPartyPlugins.contains(id)
     )
     val statuses = generation.report.plugins
     val failedVaults =

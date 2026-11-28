@@ -478,7 +478,7 @@ final class CompileArticlePipeline(
         ctx.run.params.overrides.filter(o => Role.parse(o.role).exists(Pipeline.ReviewArticle.roles.contains))
       startChild(
         RunRequest(
-          RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
+          Pipeline.ReviewArticle.wire,
           RunRequest.Target(s.slug.value),
           model = ctx.run.model.map(m => RunRequest.Model(m.value)),
           fix = Some(RunRequest.Fix.Fix),

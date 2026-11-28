@@ -34,14 +34,18 @@ object PmTiles:
   type ByteLength = ByteLength.T
   object ByteLength extends Newtype[Int, Pure]
   type CompressedBytes = CompressedBytes.T
-  object CompressedBytes extends Newtype[Array[Byte], Pure]
+  object CompressedBytes extends Newtype[Array[Byte], Pure]:
+    extension (bytes: CompressedBytes) def asStored: TileBytes = TileBytes(bytes.value)
   type HeaderBytes = HeaderBytes.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object HeaderBytes extends Newtype[Array[Byte], Pure]
   type PlainBytes = PlainBytes.T
   object PlainBytes extends Newtype[Array[Byte], Pure]
   type TileBytes = TileBytes.T
-  object TileBytes extends Newtype[Array[Byte], Pure]
+  object TileBytes extends Newtype[Array[Byte], Pure]:
+    extension (bytes: TileBytes)
+      def asCompressed: CompressedBytes = CompressedBytes(bytes.value)
+      def asPlain: PlainBytes = PlainBytes(bytes.value)
   type TileColumn = TileColumn.T
   object TileColumn extends Newtype[Long, Pure]
   type TileRow = TileRow.T
@@ -147,7 +151,14 @@ object PmTiles:
     object Clustered extends TwoCases[Clustered]:
       extension (clustered: Clustered) def clustered: Boolean = clustered == Clustered
     export PmTiles.{Zoom as MaxZoom, Zoom as MinZoom}
-    export api.catalogue.{Latitude as MaxLat, Latitude as MinLat, Longitude as MaxLon, Longitude as MinLon}
+    type MinLon = MinLon.T
+    object MinLon extends Newtype[Double, Pure]
+    type MinLat = MinLat.T
+    object MinLat extends Newtype[Double, Pure]
+    type MaxLon = MaxLon.T
+    object MaxLon extends Newtype[Double, Pure]
+    type MaxLat = MaxLat.T
+    object MaxLat extends Newtype[Double, Pure]
     export PmTiles.Zoom as CenterZoom
     type CenterLon = CenterLon.T
     object CenterLon extends Newtype[Double, Pure]

@@ -52,12 +52,11 @@ class LintRepoSuite extends DbSuite:
 
   private val Prefix = "zzlint_"
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val geo =
     GeocodeSettings(
-      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
-      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
-      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+      cfg.places.geocodePlaceholderMin,
+      cfg.places.geocodeRepairKm,
+      cfg.places.pointToleranceKm
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -277,7 +276,7 @@ class LintRepoSuite extends DbSuite:
     val r = SourceCheckFixtures.reindexStale(
       ds,
       Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
-      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+      cfg.limits.reindexChars
     )
     assert(r.chunks.value > 0, s"reindexStale wrote no chunks: $r")
     assertEquals(keys(Lint.Rule.Name(StaleChunks)), Nil)
@@ -286,12 +285,12 @@ class LintRepoSuite extends DbSuite:
     val _ = SourceCheckFixtures.reindexStale(
       ds,
       Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
-      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+      cfg.limits.reindexChars
     )
     val r = SourceCheckFixtures.reindexStale(
       ds,
       Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
-      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+      cfg.limits.reindexChars
     )
     assertEquals(r.remaining, 0)
 

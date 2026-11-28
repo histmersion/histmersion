@@ -55,14 +55,12 @@ final class SeedImport(
                   .modify(_.ocrMarkdown)
                   .using(
                     _.map(md =>
-                      Source.OcrMarkdown(
-                        AssetLinks
-                          .normalizeBody(
-                            AssetLinks.NormalizeBodyMd(md.value),
-                            AssetLinks.NormalizeBodyTitle(n.source.title.value)
-                          )
-                          .value
-                      )
+                      AssetLinks
+                        .normalizeBody(
+                          AssetLinks.NormalizeBodyMd(md.value),
+                          AssetLinks.NormalizeBodyTitle(n.source.title.value)
+                        )
+                        .asOcrMarkdown
                     )
                   )
                 val _ = sources.put(s, Caller.Local)

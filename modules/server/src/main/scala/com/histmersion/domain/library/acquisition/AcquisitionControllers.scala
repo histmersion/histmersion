@@ -203,7 +203,7 @@ final class AcquisitionControllers(
       val from = offset.flatMap(o => Offset.option(o.value)).getOrElse(Offset.Start)
       val page = candidateStore.list(
         g,
-        Source.Candidate.State(s.wire.value),
+        s.wire,
         CandidateService.ListLimit(n.value + 1),
         from
       )
@@ -240,8 +240,8 @@ final class AcquisitionControllers(
         )
         .map(s =>
           CandidateMarked(
-            Source.Candidate.State(s.wire.value),
-            CandidateMarked.Updated(candidateStore.mark(m.ids.distinct, Source.Candidate.State(s.wire.value)).value)
+            s.wire,
+            CandidateMarked.Updated(candidateStore.mark(m.ids.distinct, s.wire).value)
           )
         )
 

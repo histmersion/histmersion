@@ -123,7 +123,7 @@ object AgentGenerator:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeAgent(d: Defs, a: AgentDef): String =
     val tools =
-      a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
+      a.tools.map(t => ToolStyle.Claude.tool(t.asToolUse)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     // no stripMargin around the prompt: a Markdown table row starts with `|`
     s"---\nname: ${a.name}\ndescription: ${yamlString(a.description.value)}\ntools: ${tools.mkString(", ")}\n" +
       s"maxTurns: ${claudeTurns(a.maxTurns)}\n---\n${d.system(a, ToolStyle.Claude)}\n"
@@ -132,10 +132,9 @@ object AgentGenerator:
     * quota-guard mod off (§3a P5); the person's own hooks stay out through `--setting-sources ""` instead.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def claudeSettings(a: AgentDef): String =
     val allow =
-      a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
+      a.tools.map(t => ToolStyle.Claude.tool(t.asToolUse)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     val deny = List("Bash", "Edit", "Write", "NotebookEdit", "Agent") ++
       List("WebFetch", "WebSearch").filterNot(claudeWebTools(a.web).contains)
     pretty(
@@ -426,9 +425,8 @@ object AgentGenerator:
 
   /** The permission map of a role: deny everything, allow its tools (last match wins). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def opencodePermissions(a: AgentDef): List[(String, String)] =
-    ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(ToolUse.Tool(t.value)) -> "allow") ++ (a.web match
+    ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(t.asToolUse) -> "allow") ++ (a.web match
       case WebAccess.WebSearch => List("webfetch" -> "allow", "websearch" -> "allow")
       case WebAccess.Fetch     => List("webfetch" -> "allow")
       case _                   => Nil)

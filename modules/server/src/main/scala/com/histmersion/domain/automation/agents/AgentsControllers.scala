@@ -401,16 +401,12 @@ final class AgentsControllers(
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Problems, PlanQuota.QuotaInfo] =
     maintenance.writing:
       roleOf(role).map { r =>
         Transactor(ds).write(
-          PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.fallthrough)
+          PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough.fallthrough)
         )
         quota
       }
@@ -648,7 +644,6 @@ final class AgentsControllers(
         )
       )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
@@ -682,21 +677,17 @@ final class AgentsControllers(
         (),
         Problem.Invalid.Broken.here(Problem.Invalid.Rule.ChainGiven)
       )
-      _ = Transactor(ds).write(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
+      _ = Transactor(ds).write(ModelSettingsRepo.setChain(r.wire, ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
   def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] = maintenance.writing(resetChainHeld(role))
 
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def resetChainHeld(role: Role.Wire)(using WritePermit): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      _ = Transactor(ds).write(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
+      _ = Transactor(ds).write(ModelSettingsRepo.removeChain(r.wire))
       c <- chainOf(r)
     yield c
 
@@ -1178,7 +1169,7 @@ final class AgentsControllers(
           q,
           RunQuery.Limit(site.config.limits.page(limit, searchPage).value),
           cursor(before).map(c => AgentRepo.PageCursor(c.value)),
-          cursor(upTo).map(c => RunQuery.UpTo(c.value))
+          cursor(upTo).map(c => AgentRepo.PageCursor(c.value))
         )
         .left
         .map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeNotFound))))

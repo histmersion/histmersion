@@ -403,7 +403,6 @@ object ArticleService:
       * mentions it rewritten through the write path, the old slug kept as an alias.
       */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
     private def renamed(
         st: ResearchState,
         oldSlug: Slug,
@@ -460,11 +459,9 @@ object ArticleService:
             val a = loaded(acc.articles(s))
             val (body, nb) = Article.Links.retarget(WikiLinks.Body(a.body.value), to)
             val summary = a.summary.map(sm => Article.Links.retarget(WikiLinks.Body(sm.value), to))
-            val reasons = a.reasons.map((ck, r) =>
-              to(WikiLinks.Occurrence.Target(ck.value)).fold(ck)(t => com.histmersion.api.library.Citekey(t.value)) -> r
-            )
+            val reasons = a.reasons.map((ck, r) => to(ck.asLinkTarget).fold(ck)(t => t.asCitekey) -> r)
             val count = nb.value + summary.fold(0)(_._2.value) +
-              a.reasons.keys.count(ck => to(WikiLinks.Occurrence.Target(ck.value)).isDefined)
+              a.reasons.keys.count(ck => to(ck.asLinkTarget).isDefined)
             if count == 0 then loop(tail, acc, done)
             else
               val edited =

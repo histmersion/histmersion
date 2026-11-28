@@ -83,7 +83,6 @@ object Gazetteer:
     ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def rank(m: Place.Match): Rank = m.importSource.flatMap(s => Kind.ofKey(s)) match
     case None                => if m.importSource.isEmpty then Rank(0) else Rank(5)
     case Some(Kind.Lpf)      => Rank(1)

@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.json.TwoStates
+import com.histmersion.api.RowCount
 
 final case class Facet(
     value: Facet.Value,
@@ -27,7 +28,8 @@ object Facet:
   type Value = Value.T
   object Value extends Newtype[String, Pure]
   type Count = Count.T
-  object Count extends Newtype[Int, Pure]
+  object Count extends Newtype[Int, Pure]:
+    extension (count: Count) def rows: RowCount = RowCount(count.value)
   type Id = Id.T
   object Id extends Newtype[String, Pure]
   enum Contested derives CanEqual:

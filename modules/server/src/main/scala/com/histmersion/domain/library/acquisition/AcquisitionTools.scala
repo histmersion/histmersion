@@ -262,7 +262,7 @@ final class AcquisitionTools(
           else if in.mark.nonEmpty then
             render(
               h.markCandidates(
-                CandidateMark(in.mark, in.as.getOrElse(Source.Candidate.State(Candidates.State.Seen.wire.value)))
+                CandidateMark(in.mark, in.as.getOrElse(Candidates.State.Seen.wire))
               )
             )(
               CandidatesMarkdown.marked

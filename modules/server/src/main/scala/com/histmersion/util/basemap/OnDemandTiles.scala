@@ -272,10 +272,9 @@ final class OnDemandTiles(
                 .replace("{y}", y.value.toString)
             )
           )
-        ).map(_.map(b => PmTiles.TileBytes(b.value)))
+        ).map(_.map(b => b.asTile))
     raw.flatMap(_.fold[Either[Problem, Option[PmTiles.TileBytes]]](Right(None))(transform))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def readPlanet(
       z: PmTiles.Zoom,
       x: PmTiles.TileColumn,
@@ -289,7 +288,7 @@ final class OnDemandTiles(
           PmTiles.range(r.header.dataOffset, e).flatMap { (at, n) =>
             request(http().bytes(r.url, at, n)).flatMap { (b, got) =>
               if got.etag != r.file.etag || got.size != r.file.size then Left(OnDemandTiles.Changed)
-              else Right(Some(PmTiles.TileBytes(b.value)))
+              else Right(Some(b.asTile))
             }
           }
         }

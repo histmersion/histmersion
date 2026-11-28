@@ -321,7 +321,7 @@ object GazetteerLoad:
       Settings.Batch(math.max(1, cfg.places.sources.batch.value)),
       Settings.MaxLpfBytes(cfg.places.sources.maxLpfMb.value.toLong * 1024 * 1024),
       Settings.DownloadTimeoutSeconds(cfg.places.sources.downloadTimeoutSeconds.value),
-      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value),
+      cfg.places.pointToleranceKm,
       clock,
       openStartWindowYears = Gazetteer.ValidityWindowYears(cfg.places.sources.openStartWindowYears.value),
       pointAreaKinds = cfg.places.sources.pointAreaKindSet.map(k => Gazetteer.PointAreaKinds(k.value))

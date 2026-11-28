@@ -141,7 +141,7 @@ final class StorageFigures(registry: DataContributions):
           .map(StorageReports.Entry.Detail.apply),
         shrink = StorageReports.Advice
           .shrink(StorageReports.Entry.Key(spot.key.value), StorageReports.Advice.Keep(settings.backups.keep.value))
-          .map(h => StorageReports.Entry.Shrink(h.value)),
+          .map(h => h),
         volume = spot.stores.headOption.flatMap(_.volume).map(v => StorageReports.Entry.Volume(v.id.value))
       )
     }
@@ -187,7 +187,7 @@ final class StorageFigures(registry: DataContributions):
               detail = size.toOption.map(s => StorageReports.Entry.Detail(s._1.value)),
               shrink = StorageReports.Advice
                 .shrink(StorageReports.Entry.Key("database"), StorageReports.Advice.Keep(settings.backups.keep.value))
-                .map(h => StorageReports.Entry.Shrink(h.value))
+                .map(h => h)
             )
           ),
           top.getOrElse(Nil)

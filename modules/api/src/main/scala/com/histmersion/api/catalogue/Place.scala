@@ -65,6 +65,7 @@ object Place:
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
+    extension (label: Label) def asNameValue: Name.Value = Name.Value(label.value)
   type KindValue = KindValue.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object KindValue extends Newtype[String, Pure]

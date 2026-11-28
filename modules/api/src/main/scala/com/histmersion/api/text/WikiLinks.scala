@@ -52,7 +52,8 @@ object WikiLinks:
     object Escaped extends TwoStates[Escaped]:
       extension (escaped: Escaped) def escaped: Boolean = escaped == Escaped
     type Target = Target.T
-    object Target extends Newtype[String, Pure]
+    object Target extends Newtype[String, Pure]:
+      extension (target: Target) def asCitekey: api.library.Citekey = api.library.Citekey(target.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

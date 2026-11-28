@@ -949,7 +949,7 @@ class BundleSuite extends DbSuite with Bounded:
     assertEquals(SourceFixtures.load(b, A1).flatMap(_.summary), Some("work edit"))
     // …until it is decided: keep-left keeps ours and records that it was decided
     val keep = MergeResolutions(
-      List(MergeResolution(MergeResolution.Issue(conflict.id.value), MergeResolution.Decision("keep-left")))
+      List(MergeResolution(conflict.id, MergeResolution.Decision("keep-left")))
     )
     val r3b = importInto(b, third, sb, resolutions = keep)
     assert(r3b.applied.applied, r3b.problems.mkString("\n"))

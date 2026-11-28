@@ -550,7 +550,7 @@ final class AcquireRecheckService(
       .filter(_.action == Action.NoDoi)
       .map(f =>
         RecheckRow(
-          RecheckRow.Item(f.item.id.value),
+          f.item.id,
           None,
           RecheckRow.Action(NoDoi),
           RecheckRow.Detail("no DOI in its text")
@@ -575,7 +575,7 @@ final class AcquireRecheckService(
     if in.dryRun.dryRun then
       val rows = closes.map((f, ck) =>
         RecheckRow(
-          RecheckRow.Item(f.item.id.value),
+          f.item.id,
           doiOf(f).map(apiDoi),
           RecheckRow.Action(WouldClose),
           RecheckRow.Detail("in the corpus with its original"),
@@ -585,7 +585,7 @@ final class AcquireRecheckService(
         dueNow.zipWithIndex.map { (f, i) =>
           val into = f.action match { case Action.Fetch(_, into) => into; case _ => None }
           RecheckRow(
-            RecheckRow.Item(f.item.id.value),
+            f.item.id,
             doiOf(f).map(apiDoi),
             RecheckRow.Action(if i < picks.size then WouldTry else Due),
             RecheckRow.Detail(f.last.fold("never checked")(l => s"last ${AcquireRecheck.Rationale.of(l).said}")),
@@ -657,7 +657,7 @@ final class AcquireRecheckService(
         )
         Some(
           RecheckRow(
-            RecheckRow.Item(f.item.id.value),
+            f.item.id,
             doiOf(f).map(apiDoi),
             RecheckRow.Action(Closed),
             RecheckRow.Detail("in the corpus with its original"),
@@ -714,7 +714,7 @@ final class AcquireRecheckService(
     val outcome = AcquireRecheck.Outcome.of(found).getOrElse(Outcome.Failed)
     Tried(
       RecheckRow(
-        RecheckRow.Item(f.item.id.value),
+        f.item.id,
         doi.map(apiDoi),
         RecheckRow.Action(outcome.wire.value),
         RecheckRow.Detail(why.said),

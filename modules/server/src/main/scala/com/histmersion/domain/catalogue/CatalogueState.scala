@@ -50,7 +50,8 @@ object CatalogueState:
   type EventAliasesKey = EventAliasesKey.T
   object EventAliasesKey extends Newtype[String, Pure]
   type EventAliasesValue = EventAliasesValue.T
-  object EventAliasesValue extends Newtype[String, Pure]
+  object EventAliasesValue extends Newtype[String, Pure]:
+    extension (value: EventAliasesValue) def eventId: Event.Id = Event.Id.assume(value.value)
   type LastCorrectionId = LastCorrectionId.T
   object LastCorrectionId extends Newtype[Long, Pure]
   type ImportPartsKey = ImportPartsKey.T

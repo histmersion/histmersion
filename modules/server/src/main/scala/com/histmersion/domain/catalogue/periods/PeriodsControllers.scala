@@ -31,7 +31,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
       .map { p =>
         Period.Detail(
           p,
-          p.parentId.flatMap(parent => periods.get(HistoricalPeriod.Id(parent.value))),
+          p.parentId.flatMap(parent => periods.get(parent)),
           periods.children(id)
         )
       }

@@ -46,7 +46,6 @@ object ReviewLedger:
   object StubbornLimit extends Newtype[Int, Pure]
   export Queue.QueueItem.Text as TaskText
   type TaskTextLimit = TaskTextLimit.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TaskTextLimit extends Newtype[Int, Pure]
 
   export automation.Run.Id as ApplyChecksRun
@@ -236,7 +235,7 @@ object ReviewLedger:
           (qa == qb || (math.min(qa.length, qb.length) >= 20 && (qa.contains(qb) || qb.contains(qa))))
         quoted || (normalised(a.where.value) == normalised(b.where.value) &&
           CompareRuns
-            .similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value))
+            .similarity(a.problem.asCompared, b.problem.asCompared)
             .value >= ReviewComparison.ProblemSimilarity)
     }
 

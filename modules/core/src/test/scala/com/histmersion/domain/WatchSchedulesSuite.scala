@@ -110,7 +110,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
 
   test("view: one schedule per sweep, the watcher's cron and next firing; paused says how to make it fire"):
     val m = ManagerInfo(
-      watchId(Goal.Ref("tin")),
+      watchId(Goal.Slug("tin")),
       Managers.ManagerInfo.Kind("watch"),
       Some(Goal.Slug("tin")),
       State.Paused.wire,

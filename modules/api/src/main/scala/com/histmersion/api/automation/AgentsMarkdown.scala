@@ -333,7 +333,7 @@ object AgentsMarkdown:
       .map((name, label) =>
         ListFilters.facetLine(
           ListFilters.FacetName(label),
-          page.facet(Facet.Name(name)).map((t, n) => (ListFilters.Term(t.value), RowCount(n.value)))
+          page.facet(Facet.Name(name)).map((t, n) => (ListFilters.Term(t.value), n.rows))
         )
       )
       .filter(_.value.nonEmpty)

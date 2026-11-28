@@ -167,7 +167,7 @@ object NoaaCatalogue:
         case Volcanoes => s"Eruption of ${i.str(JsonFields.Key("name")).map(_.value).getOrElse(where)}"
         case _         => s"${one.capitalize}, $where"
       val deaths = i.long(JsonFields.Key("deathsTotal")).orElse(i.long(JsonFields.Key("deaths")))
-      val d = Dated.of(CatalogDating.span(Some(CatalogDating.year(CatalogDating.HistoricalYear(year.value))), None))
+      val d = Dated.of(CatalogDating.span(Some(CatalogDating.year(year.asHistoricalYear)), None))
       CatalogueEvent(
         id = CatalogueEvent.Id(s"$one:${id.value}"),
         url = CatalogueEvent.Url(
@@ -215,7 +215,7 @@ object NoaaCatalogue:
         group = if dataset == Volcanoes then
           i.long(JsonFields.Key("volcanoLocationNewNum")).map(v => CatalogueEvent.Group(s"volcano:${v.value}"))
         else None,
-        central = Dated.year(CatalogDating.HistoricalYear(year.value)),
+        central = Dated.year(year.asHistoricalYear),
         raw = i.focus.map(j => CatalogueEvent.Raw(j.noSpaces))
       )
 

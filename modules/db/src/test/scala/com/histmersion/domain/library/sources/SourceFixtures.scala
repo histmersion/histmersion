@@ -63,7 +63,6 @@ object SourceFixtures:
     )
   )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def upsert(
       ds: DataSource,
       s: Source,

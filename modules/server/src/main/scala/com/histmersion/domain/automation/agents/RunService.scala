@@ -174,7 +174,6 @@ object RunService:
     def get(id: Run.Id): Option[RunInfo] = db.read(AgentRepo.get(RunInfo.Id(id.value)))
     def list(status: Option[RunQuery.Status], limit: RunQuery.Limit, goal: Option[Goal.Slug]): Vector[RunInfo] =
       db.read(AgentRepo.list(stateOf(status), size(limit), goal))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def page(
         status: Option[RunQuery.Status],
         limit: RunQuery.Limit,
@@ -182,15 +181,14 @@ object RunService:
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
     ): Either[Problem, (Vector[RunInfo], Boolean)] =
-      db.read(AgentRepo.page(stateOf(status), size(limit), goal, before, upTo.map(u => AgentRepo.PageCursor(u.value))))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+      db.read(AgentRepo.page(stateOf(status), size(limit), goal, before, upTo.map(u => u)))
     def page(
         q: RunQuery,
         limit: RunQuery.Limit,
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
     ): Either[Problem, (Vector[RunInfo], Boolean)] =
-      db.read(AgentRepo.page(q, size(limit), before, upTo.map(u => AgentRepo.PageCursor(u.value))))
+      db.read(AgentRepo.page(q, size(limit), before, upTo.map(u => u)))
     def runFacets(q: RunQuery): (List[(Run.State.Wire, Count)], List[(String, List[(String, Count)])]) =
       val (states, facets) = db.read(AgentRepo.runFacets(q))
       (states.map((s, n) => (s, count(n))), facets.map((name, vs) => (name, vs.map((v, n) => (v, count(n))))))
@@ -356,14 +354,14 @@ object RunService:
         before: Option[AgentRepo.PageCursor],
         upTo: Option[RunQuery.UpTo]
     ): Either[Problem, (Vector[RunInfo], Boolean)] =
-      val cursors = before.toList ++ upTo.toList.map(u => AgentRepo.PageCursor(u.value))
+      val cursors = before.toList ++ upTo.toList.map(u => u)
       cursors.find(c => runOf(c).isEmpty) match
         case Some(c) => Left(Problem.NotFound.Entity(Problem.TypeName.of(Run.Id), Problem.Raw.of(c)))
         case None    =>
           val ordering = summon[Ordering[(Instant, Long)]]
           val all = newest(runs.filter(matches(q, "")))
           val b = before.flatMap(runOf)
-          val u = upTo.flatMap(c => runOf(AgentRepo.PageCursor(c.value)))
+          val u = upTo.flatMap(c => runOf(c))
           val bounded =
             all.filter(r => b.forall(c => ordering.lt(key(r), key(c))) && u.forall(c => ordering.gteq(key(r), key(c))))
           val n = math.max(1, limit.value)

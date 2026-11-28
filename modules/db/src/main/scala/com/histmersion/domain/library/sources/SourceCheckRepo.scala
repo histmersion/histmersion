@@ -154,12 +154,11 @@ private[sources] object SourceCheckRepo:
 
   /** The geocoder's knobs (`places.geocode-*`), as `finding-geocode` and its repair use them. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def geocodeOf(cfg: AppConfig): GeocodeSettings =
     GeocodeSettings(
-      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
-      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
-      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+      cfg.places.geocodePlaceholderMin,
+      cfg.places.geocodeRepairKm,
+      cfg.places.pointToleranceKm
     )
 
   // the graph inputs and the fetches several rules classify, read at most once per run

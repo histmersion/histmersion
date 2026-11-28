@@ -95,10 +95,7 @@ object CandidateService:
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends CandidateService:
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
     private def now: String = Stamp.format(clock.instant())
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(s =>
-      Source.Candidate.State(s.wire.value)
-    )
+    private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(s => s.wire)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def watches(goal: Goal.Slug): List[CandidateWatch] =
@@ -150,7 +147,7 @@ object CandidateService:
                   .modify(_.id)
                   .setTo(Source.Candidate.Id(id))
                   .modify(_.state)
-                  .setTo(Source.Candidate.State(Candidates.State.New.wire.value))
+                  .setTo(Candidates.State.New.wire)
                   .modify(_.firstSeen)
                   .setTo(Source.Candidate.FirstSeen(at))
                   .modify(_.lastSeen)

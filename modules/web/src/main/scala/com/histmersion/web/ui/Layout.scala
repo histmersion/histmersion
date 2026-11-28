@@ -3,6 +3,8 @@ package web.ui
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.web.BoundedCache
+import com.histmersion.api.library.Filter
 
 /** The UI's behavioural numbers: drag limits, fetch limits, timings, layout maths. Colours and looks are the
   * stylesheet's (`web/style.css`), not these.
@@ -67,7 +69,8 @@ object Layout:
   type GeoCacheChars = GeoCacheChars.T
   object GeoCacheChars extends Newtype[Long, Pure]
   type CardCacheSize = CardCacheSize.T
-  object CardCacheSize extends Newtype[Int, Pure]
+  object CardCacheSize extends Newtype[Int, Pure]:
+    extension (size: CardCacheSize) def maxEntries: BoundedCache.MaxEntries = BoundedCache.MaxEntries(size.value)
   type IdentCacheSize = IdentCacheSize.T
   object IdentCacheSize extends Newtype[Int, Pure]
   type PlaceLabelCacheSize = PlaceLabelCacheSize.T
@@ -75,7 +78,8 @@ object Layout:
   type TabReloadMs = TabReloadMs.T
   object TabReloadMs extends Newtype[Int, Pure]
   type TabFetch = TabFetch.T
-  object TabFetch extends Newtype[Int, Pure]
+  object TabFetch extends Newtype[Int, Pure]:
+    extension (fetch: TabFetch) def asLimit: Filter.Limit = Filter.Limit(fetch.value)
   type TabPage = TabPage.T
   object TabPage extends Newtype[Int, Pure]
   type LibraryPage = LibraryPage.T

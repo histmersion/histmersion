@@ -64,7 +64,7 @@ object PlacesData:
         FixRank(50),
         c =>
           val (reclassified, merged) =
-            geometry(c).reclassify(GeocodeSettings.ToleranceKm(c.config.places.pointToleranceKm.value))
+            geometry(c).reclassify(c.config.places.pointToleranceKm)
           LintFixResult(
             List(
               LintFixResult.Applied(
@@ -97,7 +97,7 @@ object PlacesData:
         FixWhen.WhenNamed,
         FixRank(60),
         c =>
-          val relocated = geometry(c).relocate(GeocodeSettings.ToleranceKm(c.config.places.pointToleranceKm.value))
+          val relocated = geometry(c).relocate(c.config.places.pointToleranceKm)
           LintFixResult(
             List(
               LintFixResult.Applied(

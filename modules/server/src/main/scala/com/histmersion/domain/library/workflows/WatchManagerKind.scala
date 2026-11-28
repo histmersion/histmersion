@@ -292,8 +292,8 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                   m,
                   item,
                   RunRequest(
-                    RunRequest.Pipeline(pipelineOf(ManagerContext.ItemKind(item.kind.value)).wire.value),
-                    RunRequest.Target(g.slug.value),
+                    pipelineOf(ManagerContext.ItemKind(item.kind.value)).wire,
+                    g.slug.asRunTarget,
                     budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
                   ),
                   p =>

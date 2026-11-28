@@ -99,10 +99,10 @@ enum WindowKey derives CanEqual:
   /** The citekey or slug a window is about, if any. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def subject: Option[ItemKey] = this match
-    case Source(ck)     => Some(ItemKey(ck.value))
+    case Source(ck)     => Some(ck.asItemKey)
     case Article(slug)  => Some(ItemKey(slug.value))
-    case Graph(ck)      => Some(ItemKey(ck.value))
-    case EditSource(ck) => Some(ItemKey(ck.value))
+    case Graph(ck)      => Some(ck.asItemKey)
+    case EditSource(ck) => Some(ck.asItemKey)
     case _              => None
 
   /** A title to show before the content has told us a better one (the item's own title: the window retitles itself once
@@ -126,7 +126,7 @@ enum WindowKey derives CanEqual:
     case Models        => UiLabels.Text("AI models and limits")
     case Approvals     => UiLabels.Text("Approvals")
     case Goals         => UiLabels.Text("Research goals")
-    case Goal(slug)    => UiLabels.Text(s"Goal · ${Wording.humanize(Wording.Id(slug.value))}")
+    case Goal(slug)    => UiLabels.Text(s"Goal · ${Wording.humanize(slug.wordingId)}")
     case Merge         => UiLabels.Text("Merge another collection")
     case Managers      => UiLabels.Text("Agent managers")
     case Manager(id)   => UiLabels.Text(Wording.manager(Wording.Id(id.value)))

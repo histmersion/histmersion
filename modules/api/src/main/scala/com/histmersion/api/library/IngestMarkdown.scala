@@ -68,7 +68,7 @@ object IngestMarkdown:
       )
       val kinds = ListFilters.facetLine(
         ListFilters.FacetName("By kind"),
-        page.facet(Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), RowCount(n.value)))
+        page.facet(Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), n.rows))
       )
       (List(
         s"### ${Paging.heading(Paging.ShownCount(js.size), page.total, Plural.Noun.Singular("job"), qualifier = status.map(_.value))}",

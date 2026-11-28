@@ -437,7 +437,7 @@ object GoalsView:
     def plan(): Unit =
       busy.set(true)
       ApiClient
-        .startRun(RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(slug.value)))
+        .startRun(RunRequest(Pipeline.PlanGoal.wire, slug.asRunTarget))
         .onComplete { r =>
           busy.set(false)
           r.fold(

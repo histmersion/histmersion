@@ -46,12 +46,11 @@ class GeocoderSuite extends DbSuite with Bounded:
     Migrate.run(d)
     d
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val settings =
     GeocodeSettings(
-      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
-      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
-      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+      cfg.places.geocodePlaceholderMin,
+      cfg.places.geocodeRepairKm,
+      cfg.places.pointToleranceKm
     )
   private def min = settings.placeholderMin
 

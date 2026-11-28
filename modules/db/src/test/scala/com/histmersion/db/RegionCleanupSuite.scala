@@ -77,7 +77,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       )
     val _ = PlaceFixtures.upsertPlaces(
       ds,
-      List(Place.Input(precise, List(Place.Name(Place.Name.Value(precise.label.value)))))
+      List(Place.Input(precise, List(Place.Name(precise.label.asNameValue))))
     )
     val r =
       connect(ds)(
@@ -85,7 +85,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
           Geocode.Attempt.Name("Zzrc Thessalia"),
           Geocode.KindHint.Unknown,
           None,
-          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+          cfg.places.geocodePlaceholderMin
         )
       )
     assertEquals(r.map(_.placeId), Some("pleiades_999100010"))
@@ -95,7 +95,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
           Geocode.Attempt.Name("Zzrc Achaia"),
           Geocode.KindHint.Unknown,
           None,
-          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+          cfg.places.geocodePlaceholderMin
         )
       )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))

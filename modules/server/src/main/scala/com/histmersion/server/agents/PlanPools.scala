@@ -708,7 +708,7 @@ object PlanPools:
     val o = ClaudeCode.parse(run.lines)
     if o.readings.nonEmpty then
       Right(
-        o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(Reading.ObservedAt(now.value)))
+        o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(now))
       )
     else
       o.result.flatMap(ClaudeCode.usageLimit) match
@@ -726,7 +726,7 @@ object PlanPools:
                 Reading.UsedPct(100),
                 Some(Reading.ResetsAt(until)),
                 rejected = Reading.Rejected.Rejected,
-                Reading.ObservedAt(now.value),
+                now,
                 Source.Probe
               )
             )
@@ -790,7 +790,7 @@ object PlanPools:
           w.cursor.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
           rejected = (if status.contains("rejected") && repKind.contains(kind) then Reading.Rejected.Rejected
                       else Reading.Rejected.Accepted),
-          Reading.ObservedAt(now.value),
+          now,
           source
         )
       }
@@ -808,7 +808,7 @@ object PlanPools:
               Reading.UsedPct(used.getOrElse(100.0)),
               repReset,
               rejected = Reading.Rejected.Rejected,
-              Reading.ObservedAt(now.value),
+              now,
               source
             )
           )
@@ -821,7 +821,7 @@ object PlanPools:
                 Reading.UsedPct(u),
                 repReset,
                 rejected = Reading.Rejected.Accepted,
-                Reading.ObservedAt(now.value),
+                now,
                 source
               )
             )
@@ -841,7 +841,7 @@ object PlanPools:
         w.percentUsed,
         reset,
         rejected = Reading.Rejected.Accepted,
-        Reading.ObservedAt(now.value),
+        now,
         source
       )
     }
@@ -880,7 +880,7 @@ object PlanPools:
           Reading.UsedPct(used),
           wc.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
           rejected = (if reached then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
-          Reading.ObservedAt(now.value),
+          now,
           Source.AppServer,
           model.map(Reading.Model(_))
         )

@@ -44,7 +44,7 @@ object ResultDetail:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pin(t: Preview.Target, from: dom.Element): Unit = t match
-    case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(ck.value)))
+    case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(ck))
     case Preview.Target.Article(slug) => WindowManager.open(WindowKey.Article(WindowKey.Article.Slug(slug.value)))
     case _                            =>
       val r = from.getBoundingClientRect()

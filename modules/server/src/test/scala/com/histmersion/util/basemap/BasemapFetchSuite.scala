@@ -168,9 +168,9 @@ class BasemapFetchSuite extends munit.FunSuite:
     "a vector tile is thinned by the drop list: no roads, places or modern POIs; everything else kept for the style"
   ):
     val raw = BasemapFixtures.vectorTile(PmTiles.Zoom(3), PmTiles.TileColumn(4), PmTiles.TileRow(3))
-    val stored = PmTiles.TileBytes(PmTiles.gzip(raw).value)
+    val stored = PmTiles.gzip(raw).asStored
     val thin = BasemapService.thin(stored, PmTiles.Compression.Gzip, keep).fold(e => fail(e.sentence), identity).get
-    val t = PmTiles.gunzip(PmTiles.CompressedBytes(thin.value)).fold(e => fail(e.sentence), identity)
+    val t = PmTiles.gunzip(thin.asCompressed).fold(e => fail(e.sentence), identity)
     assertEquals(Mvt.layerNames(t), Right(List("earth", "water", "landcover", "landuse", "pois", "physical_point")))
     assertEquals(Mvt.kinds(t, Mvt.LayerName("water")), Right(List("ocean", "river", "canal", "sea")))
     assertEquals(Mvt.kinds(t, Mvt.LayerName("landcover")), Right(List("forest", "farmland")))
@@ -179,7 +179,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(
       BasemapService
         .thin(stored, PmTiles.Compression.Gzip, Map.empty)
-        .map(_.map(b => PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).toOption.get.value.toList)),
+        .map(_.map(b => PmTiles.gunzip(b.asCompressed).toOption.get.value.toList)),
       Right(Some(raw.value.toList))
     )
     // nothing left: the tile is dropped
@@ -241,7 +241,7 @@ class BasemapFetchSuite extends munit.FunSuite:
         )
       )
     )
-    val stored = PmTiles.TileBytes(PmTiles.gzip(tile).value)
+    val stored = PmTiles.gzip(tile).asStored
     val rules =
       Basemap.parseSubset(Basemap.Subset.Spec("places:p,roads:l~highway|rail")).fold(e => fail(e.sentence), identity)
     val cut = BasemapService
@@ -262,7 +262,7 @@ class BasemapFetchSuite extends munit.FunSuite:
       )
       .fold(e => fail(e.sentence), identity)
     val got = Mvt
-      .features(PmTiles.gunzip(PmTiles.CompressedBytes(cut.value)).fold(e => fail(e.sentence), identity))
+      .features(PmTiles.gunzip(cut.asCompressed).fold(e => fail(e.sentence), identity))
       .fold(e => fail(e.sentence), identity)
     assertEquals(got.map(_._1), List("places", "places", "roads", "roads"), "no land use; the minor road gone")
     assertEquals(
@@ -283,7 +283,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     // the geometry is untouched: the same bytes as a cut that keeps every property
     val whole = BasemapService.subset(stored, PmTiles.Compression.Gzip, rules).fold(e => fail(e.sentence), identity)
     assert(cut.value.length < whole.value.length, s"${cut.value.length} < ${whole.value.length}")
-    val wholeFeatures = Mvt.features(PmTiles.gunzip(PmTiles.CompressedBytes(whole.value)).toOption.get).toOption.get
+    val wholeFeatures = Mvt.features(PmTiles.gunzip(whole.asCompressed).toOption.get).toOption.get
     assertEquals(wholeFeatures.map(_._2), got.map(_._2))
     assertEquals(wholeFeatures.head._3(NameFr), "Athènes")
 
@@ -358,7 +358,7 @@ class BasemapFetchSuite extends munit.FunSuite:
       val t = f
         .tile(PmTiles.Zoom(5), PmTiles.TileColumn(18), PmTiles.TileRow(12))
         .fold(e => fail(e.sentence), identity)
-        .map(b => PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).fold(e => fail(e.sentence), identity))
+        .map(b => PmTiles.gunzip(b.asCompressed).fold(e => fail(e.sentence), identity))
         .get
       assert(!Mvt.layerNames(t).toOption.get.contains(Mvt.LayerName("roads")))
       assertEquals(

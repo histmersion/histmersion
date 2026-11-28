@@ -83,7 +83,7 @@ object ReviewComparison extends OutputComparison:
         ComparedText.normalise(ComparedText.NormaliseS(Option(b.where).fold("")(_.value)))
     (qa.value.nonEmpty && qa == qb) ||
     (sameWhere && CompareRuns
-      .similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value))
+      .similarity(a.problem.asCompared, b.problem.asCompared)
       .value >= ProblemSimilarity)
 
   /** Each pair of runs: how many of round 1's majors match one-to-one (greedily, in order). */

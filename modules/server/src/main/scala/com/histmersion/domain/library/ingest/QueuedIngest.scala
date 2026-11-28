@@ -82,7 +82,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
           filename = Some(Ingest.Params.Filename(file.key.name.value)),
           force = Ingest.Params.Force.Force, // the channel chose the citekey; the duplicate guard is for human uploads
           title = Some(meta.title).filter(_.value.nonEmpty).map(t => Title(t.value)),
-          authors = meta.authors.map(a => AuthorName(a.value)),
+          authors = meta.authors.map(a => a.asAuthorName),
           year = meta.year.map(y => Year(y.value.toLong)),
           doi = meta.doi.map(d => Doi(d.value))
         ),

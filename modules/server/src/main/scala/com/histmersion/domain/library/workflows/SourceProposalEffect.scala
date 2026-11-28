@@ -18,7 +18,7 @@ final class SourceProposalEffect(sources: => SourcesControllers) extends Proposa
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def proposal(payload: ApprovalEffects.Payload): Option[Creator.New ?=> Either[Problems, String]] =
     Jsonb
-      .read[Proposal](Jsonb.JsonText(payload.value))
+      .read[Proposal](payload.asJsonText)
       .map[Creator.New ?=> Either[Problems, String]](p =>
         sources
           .patch(p.citekey, p.patch)

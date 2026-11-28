@@ -175,7 +175,7 @@ object BasemapFixtures:
       (PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y))
     )
     all.sortBy[Long](_._1.value).foreach { case (id, (z, x, y)) =>
-      w.add(id, PmTiles.TileBytes(PmTiles.compress(tile(z, x, y), c).value))
+      w.add(id, PmTiles.compress(tile(z, x, y), c).asStored)
     }
     val meta = Json.obj(
       "name" -> Json.fromString("fixture"),

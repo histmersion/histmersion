@@ -69,7 +69,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
 
   private val Goal = DomainGoal.Slug("zzagent-sched")
   private val GoalTarget = RunRequest.Target("zzagent-sched")
-  private val GoalRef = api.automation.Goal.Ref("zzagent-sched")
+  private val GoalRef = api.automation.Goal.Slug("zzagent-sched")
   private val Ck = Citekey("zzagent2000_old")
   private val Ck2 = Citekey("zzagent2024_new")
   private val ApiCk2 = api.library.Citekey("zzagent2024_new")
@@ -372,12 +372,11 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def candidates(goal: DomainGoal.Slug, state: Candidates.State.Wire, limit: AgentUpstream.Limit) = Right(
-      stored.filter(_.state == Source.Candidate.State(state.value)).take(limit.value)
+      stored.filter(_.state == state).take(limit.value)
     )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
-      stored =
-        stored.map(c => if ids.contains(c.id) then c.modify(_.state).setTo(Source.Candidate.State(state.value)) else c)
+      stored = stored.map(c => if ids.contains(c.id) then c.modify(_.state).setTo(state) else c)
       Right(RowCount(ids.size))
 
   test(

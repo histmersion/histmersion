@@ -7,6 +7,7 @@ import scala.collection.immutable.ListMap
 import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.util.plugins.Plugin as PluginRecord
 
 /** What the registered plugins contribute, one map per extension point, in registration order. Read by the rest of the
   * app; an immutable snapshot of one [[Generation]].
@@ -55,7 +56,8 @@ object Registries:
   type EventCataloguesKey = EventCataloguesKey.T
   object EventCataloguesKey extends Newtype[String, Pure]
   type AiProvidersKey = AiProvidersKey.T
-  object AiProvidersKey extends Newtype[String, Pure]
+  object AiProvidersKey extends Newtype[String, Pure]:
+    extension (key: AiProvidersKey) def pluginId: PluginRecord.Id = PluginRecord.Id.assume(key.value)
   type GazetteerSourcesKey = GazetteerSourcesKey.T
   object GazetteerSourcesKey extends Newtype[String, Pure]
   type SourceCollectionsKey = SourceCollectionsKey.T

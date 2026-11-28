@@ -120,7 +120,7 @@ object Plugins:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def firstParty(set: Option[PluginSet])(id: Plugin.Info.Id): Boolean =
-    ReservedNames.firstPartyPlugins(ReservedNames.Name(id.value)) && !set.exists(
+    ReservedNames.firstPartyPlugins(id) && !set.exists(
       _.jars.exists(_.plugins.exists(_.id.value == id.value))
     )
 

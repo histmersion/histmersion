@@ -143,7 +143,7 @@ final class ModelPicker(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chain(role: Role): Either[Problems, (List[ModelRef], SettingSource)] =
-    Transactor(ds).read(ModelSettingsRepo.chains).get(ModelSettingsRepo.ChainRole(role.wire.value)) match
+    Transactor(ds).read(ModelSettingsRepo.chains).get(role.wire) match
       case Some(ms) =>
         parseModels(ms.map(m => ModelRef.Model.Spec(m.value)), known())
           .map(_ -> SettingSource.Saved)
@@ -184,7 +184,7 @@ final class ModelPicker(
     Transactor(ds)
       .read(PlanQuotaRepo.fallthrough)
       .getOrElse(
-        ModelSettingsRepo.ChainRole(role.wire.value),
+        role.wire,
         cfg.quota.fallthrough.value.split(',').map(_.trim.toLowerCase(java.util.Locale.ROOT)).contains(role.wire.value)
       )
 
@@ -502,7 +502,7 @@ final class ModelPicker(
       chain(r) match
         case Left(m) =>
           RoleChain(
-            RoleChain.Role(r.wire.value),
+            r.wire,
             SettingSource.Config.wire,
             Nil,
             None,
@@ -531,7 +531,7 @@ final class ModelPicker(
                 )
           }
           RoleChain(
-            RoleChain.Role(r.wire.value),
+            r.wire,
             src.wire,
             entries,
             entries.find(_.usable.usable).map(e => RoleChain.Active(e.model.value)),

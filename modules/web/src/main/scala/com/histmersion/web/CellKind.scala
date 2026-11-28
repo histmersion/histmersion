@@ -24,7 +24,6 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def box: (PointKind.BoxPixels, PointKind.BoxPixels) = (PointKind.BoxPixels(0), PointKind.BoxPixels(0))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def key(c: TileCellPoint): PointKind.PointKey = PointKind.PointKey(c.key.value)
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def at(c: TileCellPoint): (Geo.Latitude, Geo.Longitude) = (c.lat, c.lon)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inner(c: TileCellPoint): Html = Html.text(c.n.value.toString)

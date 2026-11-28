@@ -93,7 +93,7 @@ object MapLists:
         MapListRow.Label(p.name.value),
         MapListRow.Note(siteNote(p).value),
         Glyphs
-          .svg(CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => Place.Entry.SiteType(t.id.value)))),
+          .svg(CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => t.id))),
         MapListRow.Href(Route.Place(Route.Place.Id(id.value)).path),
         () => ResultsPanel.show(Preview.Target.Place(Preview.Target.Place.Id(id.value), MapView.spanMid())),
         (if p.undated.undated then MapListRow.Undated.Undated else MapListRow.Undated.Dated)

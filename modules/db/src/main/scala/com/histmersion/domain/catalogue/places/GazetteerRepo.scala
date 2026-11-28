@@ -249,7 +249,7 @@ private[places] object GazetteerRepo:
         }
         val byId = scala.collection.mutable.Map.from(stored.map(s => s.id -> s))
         val own = stored
-          .filter(_.importSource.contains(Place.Match.ImportSource(source.value)))
+          .filter(_.importSource.contains(source))
           .flatMap(s => s.importRef.map(_ -> s))
           .toMap
         // a record that would make (or keep) a place of its own but is an area known only by a point is
@@ -287,13 +287,12 @@ private[places] object GazetteerRepo:
             r.placeLinks.foreach(l =>
               linked((l.id.scheme.wire.value, l.id.id.value)) = Place.Match(
                 pl.placeId,
-                Some(Place.Match.ImportSource(source.value)),
+                Some(source),
                 (if native then Place.Match.Native.Native else Place.Match.Native.Foreign)
               ) ::
                 linked.getOrElse((l.id.scheme.wire.value, l.id.id.value), Nil)
             )
-            if pl.isInstanceOf[Placement.Create] then
-              byId(pl.placeId) = Stored(pl.placeId, Some(Place.Match.ImportSource(source.value)), Some(r.ref))
+            if pl.isInstanceOf[Placement.Create] then byId(pl.placeId) = Stored(pl.placeId, Some(source), Some(r.ref))
             Right((r, pl, stale))
         }
         val placed = decided.collect { case Right(x) => x }

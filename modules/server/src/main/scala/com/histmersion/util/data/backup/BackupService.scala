@@ -140,7 +140,7 @@ object BackupService:
     PreparedBackup.File(
       Backup
         .uniqueName(
-          Backup.Name(Backup.fileName(now).value),
+          Backup.fileName(now).asName,
           n => store.exists(Store.Key.applyUnsafe(n.value)) || store.exists(Store.Key.applyUnsafe(n.value + Pending))
         )
         .value

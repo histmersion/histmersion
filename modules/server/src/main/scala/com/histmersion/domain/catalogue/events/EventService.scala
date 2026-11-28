@@ -562,7 +562,7 @@ object EventService:
             .modify(_.eventAliases)
             .using(as =>
               (as - CatalogueState.EventAliasesKey(newId.value)).map((a, t) =>
-                a -> CatalogueState.EventAliasesValue(ren(Event.Id.assume(t.value)).value)
+                a -> CatalogueState.EventAliasesValue(ren(t.eventId).value)
               ) + (CatalogueState.EventAliasesKey(oldId.value) -> CatalogueState.EventAliasesValue(newId.value))
             )
         }
@@ -572,7 +572,7 @@ object EventService:
     def renamedTo(id: Event.Id): Option[Event.Id] =
       val s = state.get
       if s.events.exists(_.id == id) then None
-      else s.eventAliases.get(CatalogueState.EventAliasesKey(id.value)).map(v => Event.Id.assume(v.value))
+      else s.eventAliases.get(CatalogueState.EventAliasesKey(id.value)).map(v => v.eventId)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def delete(id: Event.Id)(using WritePermit): Boolean =

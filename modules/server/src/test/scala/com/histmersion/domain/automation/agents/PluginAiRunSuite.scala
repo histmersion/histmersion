@@ -237,7 +237,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assert(!g.report.toString.contains(Secret), "the token's value is never in the report")
     assertEquals(
       BuiltinAi.known(
-        g.registries.aiProviders.map((k, p) => util.plugins.Plugin.Id.assume(k.value) -> p)
+        g.registries.aiProviders.map((k, p) => k.pluginId -> p)
       ),
       Set("hello-ai")
     )

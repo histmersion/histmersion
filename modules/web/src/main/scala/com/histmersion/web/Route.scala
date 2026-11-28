@@ -188,7 +188,7 @@ object Route:
   /** The page of an item that also opens as a window — what a link to it points at, for a new tab. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ofItem(key: WindowKey): Option[Route] = key match
-    case WindowKey.Source(ck)    => Some(Source(Preview.Target.Source.Citekey(ck.value)))
+    case WindowKey.Source(ck)    => Some(Source(ck))
     case WindowKey.Article(slug) => Some(Article(Preview.Item.Slug(slug.value)))
     case WindowKey.Run(id)       => Some(Run(RunId(id.value)))
     case WindowKey.Goal(slug)    => Some(Goal(slug))

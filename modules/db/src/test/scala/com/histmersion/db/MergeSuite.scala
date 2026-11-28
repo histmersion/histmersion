@@ -749,7 +749,7 @@ class MergeSuite extends DbSuite with Bounded:
     val res = MergeResolutions(
       p.open
         .filter(i => i.options.contains(DecisionKind.KeepLeft))
-        .map(i => MergeResolution(MergeResolution.Issue(i.id.value), MergeResolution.Decision("keep-left")))
+        .map(i => MergeResolution(i.id, MergeResolution.Decision("keep-left")))
     )
     val r2 = importInto(home, bundle, sh, res)
     assert(!r2.applied.applied)
@@ -848,7 +848,7 @@ class MergeSuite extends DbSuite with Bounded:
       bundle,
       sb,
       MergeResolutions(
-        List(MergeResolution(MergeResolution.Issue(taken.id.value), MergeResolution.Decision("keep-left")))
+        List(MergeResolution(taken.id, MergeResolution.Decision("keep-left")))
       )
     )
     assert(r.applied.applied, r.problems.mkString("\n"))
@@ -910,7 +910,7 @@ class MergeSuite extends DbSuite with Bounded:
       case AttestationUnanchored                               => "drop"
       case _ => i.suggested.fold(DecisionKind.wireOf(i.options.head).value)(_.wire.value)
     MergeResolution(
-      MergeResolution.Issue(i.id.value),
+      i.id,
       MergeResolution.Decision(d),
       Option.when(d.startsWith("file:"))(MergeResolution.Text(confText))
     )
@@ -1181,7 +1181,7 @@ class MergeSuite extends DbSuite with Bounded:
               val wire = i.kind match
                 case SameWork => s"map:${i.left.get.label}"
                 case _        => i.suggested.fold(DecisionKind.wireOf(i.options.head).value)(_.wire.value)
-              MergeResolution(MergeResolution.Issue(i.id.value), MergeResolution.Decision(wire))
+              MergeResolution(i.id, MergeResolution.Decision(wire))
             }),
             n - 1
           )

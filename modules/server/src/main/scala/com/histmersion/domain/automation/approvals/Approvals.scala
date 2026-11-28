@@ -197,7 +197,7 @@ final class Approvals(
             id,
             ApprovalState.Approved,
             DomainApproval.Outcome(
-              s"approved — the seeding manager ${Managers.seedId(Goal.Ref(a.subject.fold("?")(_.value)))} compiles " +
+              s"approved — the seeding manager ${Managers.seedId(Goal.Slug(a.subject.fold("?")(_.value)))} compiles " +
                 Plural.count(
                   Plural.CountN(a.articles.fold(0)(_.articles.size).toLong),
                   Plural.CountSingular("article")

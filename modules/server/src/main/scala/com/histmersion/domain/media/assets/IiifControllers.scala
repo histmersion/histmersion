@@ -266,7 +266,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
           External.Reported("no image writer took the image")
         )
       )
-    else Right((AssetService.Bytes(out.toByteArray), AssetService.Mime(Iiif.contentType(format).value)))
+    else Right((AssetService.Bytes(out.toByteArray), Iiif.contentType(format)))
 
   private def enc(s: String): String =
     java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")

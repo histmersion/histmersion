@@ -258,10 +258,10 @@ final class ManagersControllers(
             .option(g)
             .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$g"))))
           gl <- host.goal(slug)
-          m <- make(Kind.Seed, seedId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id], Some(slug))
+          m <- make(Kind.Seed, seedId(gl.slug).transformInto[ManagerLight.Id], Some(slug))
           _ <- addItem(
             lightId(m),
-            EnqueueRequest(EnqueueRequest.Kind(ProposeArticles), EnqueueRequest.Target(gl.slug.value))
+            EnqueueRequest(EnqueueRequest.Kind(ProposeArticles), gl.slug.asEnqueueTarget)
           )
           out <- manager(lightId(m))
         yield out
@@ -276,7 +276,7 @@ final class ManagersControllers(
           gl <- host.goal(slug)
           m <- make(
             Kind.Watch,
-            watchId(Goal.Ref(gl.slug.value)).transformInto[ManagerLight.Id],
+            watchId(gl.slug).transformInto[ManagerLight.Id],
             Some(slug),
             in.cron.map(c => ManagerLight.Cron(c.value)).orElse(kinds.find(_.kind == Kind.Watch).flatMap(_.cron))
           )
@@ -287,7 +287,7 @@ final class ManagersControllers(
                 lightId(m),
                 EnqueueRequest(
                   EnqueueRequest.Kind(sw.itemKind.value),
-                  EnqueueRequest.Target(gl.slug.value),
+                  gl.slug.asEnqueueTarget,
                   Some(EnqueueRequest.Priority(0))
                 ),
                 ItemOrigin.Selection
@@ -345,7 +345,7 @@ final class ManagersControllers(
         else
           agents
             .prepare(
-              RunRequest(RunRequest.Pipeline(Pipeline.PlanGoal.wire.value), RunRequest.Target(slug.value)),
+              RunRequest(Pipeline.PlanGoal.wire, RunRequest.Target(slug.value)),
               None,
               creating = Some(slug)
             )
@@ -354,7 +354,7 @@ final class ManagersControllers(
       watchCron <- in.watch.fold[Either[Api.Error, Option[Cron]]](Right(None))(c =>
         validate(Kind.Watch, c).flatMap(_ => cronOf(Kind.Watch))
       )
-      ref = Goal.Ref(slug.value)
+      ref = Goal.Slug(slug.value)
       target = ManagerItem.Target(slug.value)
       written <-
         try
@@ -452,7 +452,7 @@ final class ManagersControllers(
         case None     => Right(m.cron.flatMap(t => Cron.parse(Cron.Text(t.value)).toOption))
       next = cron.flatMap(x =>
         if in.cron.isDefined || m.nextTickAt.isEmpty then x.next(now)
-        else m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+        else m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
       )
       _ = agents.managerStore.setConfig(m.id, c, cron.map(x => ManagerInfo.Cron(x.text.value)), next)
       _ = record(
@@ -825,14 +825,14 @@ final class ManagersControllers(
             .option(text)
             .toRight(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Goal.Slug), Problem.Raw(s"$text"))))
           g <- host.goal(slug)
-          id = seedId(Goal.Ref(g.slug.value))
+          id = seedId(g.slug)
           _ = supervisor.ensure(Kind.Seed, id.transformInto[ManagerLight.Id], Some(slug))
           out <- addItem(
             id.transformInto[ManagerLight.Id],
             in.modify(_.kind)
               .setTo(EnqueueRequest.Kind(ProposeArticles))
               .modify(_.target)
-              .setTo(EnqueueRequest.Target(g.slug.value))
+              .setTo(g.slug.asEnqueueTarget)
           ).map(i => EnqueueResult(id, List(i)))
         yield out
       case Some(EnqueueKind.Enrich) =>
@@ -1066,7 +1066,7 @@ final class ManagersControllers(
         if suggest then
           agents
             .prepare(
-              RunRequest(RunRequest.Pipeline(Pipeline.HintEffect.wire.value), RunRequest.Target(m.id.value)),
+              RunRequest(Pipeline.HintEffect.wire, RunRequest.Target(m.id.value)),
               None
             )
             .map(_ => ())
@@ -1075,7 +1075,7 @@ final class ManagersControllers(
       hint = Transactor(ds).write(
         ManagerRepo.addHint(
           m.id,
-          item.map(i => ManagerHint.ItemId(i.id.value)),
+          item.map(i => i.id),
           text,
           if propose then None else eff,
           author,
@@ -1089,7 +1089,7 @@ final class ManagersControllers(
         if suggest then
           agents
             .startRunWith(
-              RunRequest(RunRequest.Pipeline(Pipeline.HintEffect.wire.value), RunRequest.Target(m.id.value)),
+              RunRequest(Pipeline.HintEffect.wire, RunRequest.Target(m.id.value)),
               Origin.Person,
               None,
               _.modify(_.hint).setTo(Some(RunParams.Hint(hint.id.value)))
@@ -1244,7 +1244,7 @@ final class ManagersControllers(
       e <- checkEffect(
         m,
         p.effect,
-        ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
+        ht.itemId.flatMap(i => agents.managerStore.item(i)),
         proposal = true
       ).left.map(_.problems)
       w <- HintEffect.Action.verb(e.action) match
@@ -1257,7 +1257,7 @@ final class ManagersControllers(
                 m.id,
                 c,
                 m.cron,
-                m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+                m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
               )
             )(s" — settings now: ${ManagersControllers.describe(c)}")
             .toRight(Problem.NotFound.Entity(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(m.id)))
@@ -1265,7 +1265,7 @@ final class ManagersControllers(
       _ = Transactor(ds).write(ManagerRepo.setHintEffect(ht.id, Some(e)))
       _ = record(
         m.id,
-        ht.itemId.map(i => ManagerItem.Id(i.value)),
+        ht.itemId.map(i => i),
         None,
         Feed.Hint,
         s"hint #${ht.id}: the proposed ${ManagersMarkdown.effect(e)} approved by a person$w".take(2000)
@@ -1401,7 +1401,7 @@ final class ManagersControllers(
       in: Goal.Plans.ScheduleSet,
       now: java.time.Instant
   )(using WritePermit)(using Creator.New): Either[Api.Error, Goal.Plans.GoalSchedule] =
-    val id = watchId(Goal.Ref(goal.value))
+    val id = watchId(Goal.Slug(goal.value))
     val sw = WatchSchedules.sweepOf(kind)
     val budget = in.budgetUsd.map(b => b)
     for
@@ -1445,7 +1445,7 @@ final class ManagersControllers(
             .modify(_.budgetUsd)
             .setTo(budget.orElse(m.config.budgetUsd))
           val next = if m.cron.exists(_.value == cron.text.value) && m.nextTickAt.isDefined then
-            m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+            m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
           else cron.next(now)
           // the manager is read back below (`manager(id)`): one removed meanwhile is not found there
           Unused(
@@ -1500,14 +1500,14 @@ final class ManagersControllers(
     val legacy = agents.goals.removeSchedule(goal, kind.transformInto[ScheduleKind])
     val sw = WatchSchedules.sweepOf(kind)
     val fromWatcher =
-      agents.managerStore.get(watchId(Goal.Ref(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
+      agents.managerStore.get(watchId(Goal.Slug(goal.value))).filter(m => Sweep.of(m.config).contains(sw)).exists { m =>
         val rest = Sweep.of(m.config).filterNot(_ == sw)
         // a watcher removed since it was read had no schedule left to remove
         val removed = agents.managerStore.setConfig(
           m.id,
           m.config.modify(_.sweeps).setTo(Some(rest.map(_.wire))),
           m.cron,
-          m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+          m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
         )
         if removed then
           cancelSweep(m, sw, ManagerItem.Outcome("its schedule was removed"))

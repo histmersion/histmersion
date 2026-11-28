@@ -473,7 +473,7 @@ object PluginHost:
         vaults.get(name) match
           case None    => Left(Problem.Plugin.Vault(Problem.Plugin.Id(s"$name"), Problem.Plugin.Retrieval.NoVault))
           case Some(v) =>
-            try v.resolve(Secret.Vault.ResolveRef(r.value)).map(x => SecretValue(x.value))
+            try v.resolve(Secret.Vault.ResolveRef(r.value)).map(x => x)
             catch case NonFatal(e) => Left(vaultThrew(e, s"$name"))
 
   /** The vault of this name threw instead of answering: logged under its problem's id. */
@@ -495,14 +495,14 @@ object PluginHost:
   ): Map[Secret.Ref.Vault.Ref, Either[Problems, SecretValue]] =
     val asked = refs.distinct
     def one(r: Secret.Ref.Vault.Ref) =
-      try vault.resolve(Secret.Vault.ResolveRef(r.value)).map(x => SecretValue(x.value))
+      try vault.resolve(Secret.Vault.ResolveRef(r.value)).map(x => x)
       catch case NonFatal(e) => Left(vaultThrew(e, s"$name"))
     try
       val answers = Option(vault.resolveAll(asked.map(r => Secret.Vault.ResolveRef(r.value)))).getOrElse(Map.empty)
       asked.map { r =>
         val answer: Either[Problems, SecretValue] =
           answers.get(Secret.Vault.ResolveRef(r.value)).flatMap(Option(_)) match
-            case Some(Right(v)) => Right(SecretValue(v.value))
+            case Some(Right(v)) => Right(v)
             case Some(Left(e))  => Left(e)
             case None           =>
               Left(
@@ -617,7 +617,6 @@ object PluginHost:
       Option(services.env.root.get(name.value))
         .flatMap(v => Option(v.unwrapped))
         .map(v => EnvVar.Value(v.toString))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def secret(s: Secret) =
       resolved(s)
         .map(v => v)

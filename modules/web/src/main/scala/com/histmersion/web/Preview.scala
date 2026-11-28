@@ -567,14 +567,10 @@ object Preview:
   // ── typed, cached fetches ────────────────────────────────────────────────────────────────────
 
   // one per kind, each bounded (#1949): a long session hovers thousands of links
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val sourceCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val articleCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val placeCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val eventCache = BoundedCache[CacheKey, Future[Card]](BoundedCache.MaxEntries(Layout.cardCacheSize.value))
+  private val sourceCache = BoundedCache[CacheKey, Future[Card]](Layout.cardCacheSize.maxEntries)
+  private val articleCache = BoundedCache[CacheKey, Future[Card]](Layout.cardCacheSize.maxEntries)
+  private val placeCache = BoundedCache[CacheKey, Future[Card]](Layout.cardCacheSize.maxEntries)
+  private val eventCache = BoundedCache[CacheKey, Future[Card]](Layout.cardCacheSize.maxEntries)
 
   /** The card caches' figures, for [[Diagnostics]]. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

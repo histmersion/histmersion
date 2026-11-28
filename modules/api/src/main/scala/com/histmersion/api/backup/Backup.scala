@@ -26,7 +26,8 @@ object Backup:
   type JdbcUrl = JdbcUrl.T
   object JdbcUrl extends Newtype[String, Pure]
   type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  object Name extends Newtype[String, Pure]:
+    extension (name: Name) def asFile: Result.File = Result.File(name.value)
   type Outcome = Outcome.T
   object Outcome extends Newtype[String, Pure]
   type Retention = Retention.T
@@ -49,14 +50,14 @@ object Backup:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uniqueName(name: Name, taken: Result.File => Boolean): Result.File =
-    if !((taken(Result.File((name).value))) == (true)) then Result.File((name).value)
+    if !((taken(name.asFile)) == (true)) then name.asFile
     else
       val stem = (name).value.dropRight(Extension.length)
       LazyList
         .from(2)
         .map(n => Result.File(s"$stem-$n$Extension"))
         .find(c => !((taken(c)) == (true)))
-        .getOrElse(Result.File((name).value))
+        .getOrElse(name.asFile)
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
@@ -248,6 +249,7 @@ object Backup:
     type File = File.T
     object File extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
+      extension (file: File) def asName: Name = Name(file.value)
     type DurationMs = DurationMs.T
     object DurationMs extends Newtype[Long, Pure]
     type Pruned = Pruned.T

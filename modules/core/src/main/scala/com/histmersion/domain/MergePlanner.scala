@@ -1035,14 +1035,14 @@ object MergePlanner:
             title,
             Some(
               IssueSide(
-                IssueSide.Label(a.slug.value),
+                a.slug.asSideLabel,
                 o,
                 mine.map(m => IssueSide.Lines(s"\"${m.title}\" · ${m.body.value.length} characters")).toList
               )
             ),
             Some(
               IssueSide(
-                IssueSide.Label(a.slug.value),
+                a.slug.asSideLabel,
                 f,
                 List(IssueSide.Lines(s"\"${a.title}\" · ${a.body.value.length} characters"))
               )
@@ -1067,8 +1067,8 @@ object MergePlanner:
                 MergeIssue.Severity.Default,
                 Bundle.Kind.Article,
                 MergeIssue.Title("the same text was written on both sides"),
-                Some(IssueSide(IssueSide.Label(a.slug.value), o)),
-                Some(IssueSide(IssueSide.Label(a.slug.value), f)),
+                Some(IssueSide(a.slug.asSideLabel, o)),
+                Some(IssueSide(a.slug.asSideLabel, f)),
                 Nil,
                 List(km.KeepLeft, km.Both),
                 Some(MergeDecision.of(km.KeepLeft))
@@ -1126,14 +1126,14 @@ object MergePlanner:
               MergeIssue.Title(s"goal ${l.slug}: two different approved plans, and neither is known to be the newer"),
               Some(
                 IssueSide(
-                  IssueSide.Label(l.slug.value),
+                  l.slug.asSideLabel,
                   o,
                   l.planApprovedAt.map(a => IssueSide.Lines(s"approved $a")).toList
                 )
               ),
               Some(
                 IssueSide(
-                  IssueSide.Label(r.slug.value),
+                  r.slug.asSideLabel,
                   f,
                   r.planApprovedAt.map(a => IssueSide.Lines(s"approved $a")).toList
                 )

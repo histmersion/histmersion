@@ -123,7 +123,7 @@ final class PageBuilder(
       val links =
         articles.pageLinks(
           Article.Links.targets(WikiLinks.Body(v.article.body.value)) ++
-            v.sourcesCited.map(c => WikiLinks.Occurrence.Target(c.citekey.value)) ++ generated
+            v.sourcesCited.map(c => c.citekey.asLinkTarget) ++ generated
         )
       val html = Pages.article(
         ArticlePage(

@@ -90,9 +90,8 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       Bundle.Finding.UpdatedAt(At)
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def answer(issue: Issue.Id, decision: MergeResolution.Decision): MergeResolution =
-    MergeResolution(MergeResolution.Issue(issue.value), decision)
+    MergeResolution(issue, decision)
 
   private def resolve(pairs: (Issue.Id, MergeResolution.Decision)*): MergeResolutions =
     MergeResolutions(pairs.toList.map((i, d) => answer(i, d)))

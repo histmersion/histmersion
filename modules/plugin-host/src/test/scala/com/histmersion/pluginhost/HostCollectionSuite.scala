@@ -96,7 +96,7 @@ class HostCollectionSuite extends munit.FunSuite:
     )
     val first = build(
       ShelfPlugin(Plugin.Info.Id("calibre"), Registry.AddId("calibre")),
-      id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
+      id => ReservedNames.firstPartyPlugins.contains(id)
     )
     assertEquals(first.registries.sourceCollections.keySet, Set("calibre"))
 

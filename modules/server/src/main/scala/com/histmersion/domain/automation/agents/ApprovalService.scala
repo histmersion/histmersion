@@ -122,7 +122,8 @@ trait ApprovalService:
 
 object ApprovalService:
   type Payload = Payload.T
-  object Payload extends Newtype[String, Pure]
+  object Payload extends Newtype[String, Pure]:
+    extension (payload: Payload) def asJsonText: Jsonb.JsonText = Jsonb.JsonText(payload.value)
   type StepSeq = StepSeq.T
   object StepSeq extends Newtype[Int, Pure]
   type StepOutcome = StepOutcome.T
@@ -149,9 +150,8 @@ object ApprovalService:
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approval(id: Approval.Id): Option[ApprovalInfo] = db.read(AgentRepo.approval(ApprovalInfo.Id(id.value)))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
-      db.read(AgentRepo.approvals(state, PageSize.assume(limit.value)))
+      db.read(AgentRepo.approvals(state, limit.pageSize))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvalPage(
         state: Option[ApprovalState],
@@ -162,7 +162,7 @@ object ApprovalService:
       db.read(
         AgentRepo.approvalPage(
           state,
-          PageSize.assume(limit.value),
+          limit.pageSize,
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
@@ -177,7 +177,7 @@ object ApprovalService:
       db.read(
         AgentRepo.approvalPage(
           q,
-          PageSize.assume(limit.value),
+          limit.pageSize,
           before.map(c => AgentRepo.PageCursor(c.value)),
           upTo.map(c => AgentRepo.PageCursor(c.value))
         )
@@ -203,7 +203,7 @@ object ApprovalService:
           StepInfo.Seq(seq.value),
           kind,
           ApprovalInfo.Subject(subject.value),
-          Jsonb.JsonText(payload.value),
+          payload.asJsonText,
           state,
           result.map(r => ApprovalInfo.Result(r.value)),
           now
@@ -223,7 +223,7 @@ object ApprovalService:
           jobId,
           kind,
           ApprovalInfo.Subject(subject.value),
-          Jsonb.JsonText(payload.value),
+          payload.asJsonText,
           state,
           result.map(r => ApprovalInfo.Result(r.value)),
           now
@@ -233,9 +233,8 @@ object ApprovalService:
       db.read(AgentRepo.approvalsOf(jobId, kind))
     def autoApprovedSince(kind: ApprovalKind, since: Instant): List[ApprovalInfo] =
       db.read(AgentRepo.autoApprovedSince(kind, since))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
-      db.read(AgentRepo.openOfKinds(kinds, PageSize.assume(limit.value)))
+      db.read(AgentRepo.openOfKinds(kinds, limit.pageSize))
     def openLight(): List[ApprovalDigest.Open] = db.read(AgentRepo.openLight())
     def openCount(kind: ApprovalKind): RowCount = db.read(AgentRepo.openCount(kind))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

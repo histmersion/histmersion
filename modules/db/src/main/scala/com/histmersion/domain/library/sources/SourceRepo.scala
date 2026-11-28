@@ -68,10 +68,9 @@ private[sources] object SourceRepo:
   private def apiToDomain(ck: com.histmersion.api.library.Citekey): Citekey = Citekey.applyUnsafe(ck.value)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def apiCitekeyOf(t: WikiLinks.Occurrence.Target): com.histmersion.api.library.Citekey =
-    com.histmersion.api.library.Citekey(t.value)
+    t.asCitekey
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")

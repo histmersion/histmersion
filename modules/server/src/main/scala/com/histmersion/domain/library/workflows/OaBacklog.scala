@@ -479,7 +479,7 @@ final class OaBacklog(
       text.flatMap(t =>
         site.workLists
           .record(
-            WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
+            Queue.Kind.Acquire.label,
             QueueAdd(
               t,
               topic = goal.map(g => Queue.QueueItem.Topic(s"goal $g")),

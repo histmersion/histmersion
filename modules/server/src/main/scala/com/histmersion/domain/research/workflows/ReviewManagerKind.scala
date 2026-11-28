@@ -220,7 +220,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       .orElse(
         site.queues
           .list(Queue.Kind.Tasks, QueueScope.Open)
-          .filter(i => ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
+          .filter(i => ReviewLedger.articleTask(slug, i.text))
           .sortBy(_.id)
           .headOption
       )
@@ -233,7 +233,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case None =>
         site.workLists
           .record(
-            WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
+            Queue.Kind.Tasks.label,
             QueueAdd(Queue.QueueItem.Text(text.value), topic = Some(Queue.QueueItem.Topic("agent review"))),
             creator
           )
@@ -578,7 +578,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                 m,
                 item,
                 RunRequest(
-                  RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
+                  Pipeline.ReviewArticle.wire,
                   RunRequest.Target(item.target.value),
                   budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value)),
                   fix = Some(RunRequest.Fix.Fix),
@@ -607,7 +607,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               m,
               item,
               RunRequest(
-                RunRequest.Pipeline(Pipeline.InferFilter.wire.value),
+                Pipeline.InferFilter.wire,
                 RunRequest.Target(item.target.value),
                 budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
               ),
@@ -625,7 +625,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               m,
               item,
               RunRequest(
-                RunRequest.Pipeline(Pipeline.CompileArticle.wire.value),
+                Pipeline.CompileArticle.wire,
                 RunRequest.Target(item.target.value),
                 budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
               ),

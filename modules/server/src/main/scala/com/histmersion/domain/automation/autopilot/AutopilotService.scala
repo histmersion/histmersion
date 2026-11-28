@@ -254,7 +254,7 @@ final class AutopilotService(
   private def applyStep(s: Step, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
     s match
       case Step.CreateSeed(goal, cron, planFirst) =>
-        val id = seedId(Goal.Ref(goal.value))
+        val id = seedId(Goal.Slug(goal.value))
         Option.when(
           agents.managerStore
             .create(
@@ -293,7 +293,7 @@ final class AutopilotService(
           s"$id created"
         }
       case Step.CreateWatch(goal, cron, perDay) =>
-        val id = watchId(Goal.Ref(goal.value))
+        val id = watchId(Goal.Slug(goal.value))
         val c = ManagerConfig(
           autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto),
           autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(perDay.value))
@@ -351,7 +351,7 @@ final class AutopilotService(
               id,
               c,
               m.cron,
-              m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+              m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
             )
           ) {
             event(
@@ -389,7 +389,7 @@ final class AutopilotService(
               id,
               m.config.modify(_.extendMinNew).setTo(Some(ManagerConfig.ExtendMinNew(n.value))),
               m.cron,
-              m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+              m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
             )
           ) {
             event(
@@ -429,7 +429,7 @@ final class AutopilotService(
             (m.kind.value == Kind.Seed.wire.value || m.kind.value == Kind.Watch.wire.value)
         )
       val arts = articles.getOrElse(slug, Nil)
-      val seed = seedId(Goal.Ref(slug))
+      val seed = seedId(Goal.Slug(slug))
       val compileOpen = agents.managerStore
         .openOf(
           seed,
@@ -490,7 +490,7 @@ final class AutopilotService(
         .flatMap(m => m.goal.map(g => (g.value: String) -> m))
         .toMap
       agents.focus.facts().filter(f => f.articles.value > 0 && seeds.contains(f.slug.value)).flatMap { f =>
-        val sid = seedId(Goal.Ref(f.slug.value))
+        val sid = seedId(Goal.Slug(f.slug.value))
         val item = agents.managerStore.itemFor(sid, ManagerItem.Kind(ProposeArticles), itemOf(f.slug))
         val facts = AutopilotPolicy.NextFacts(
           AutopilotPolicy.NextFacts.Goal(f.slug.value),

@@ -55,10 +55,9 @@ object ActivityView:
     * cancel) or waiting its turn (cancel).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def actions(e: Entry): List[Api.JobControl.Action] =
     val controllable = e.entryKind.contains(EntryKind.Run) ||
-      (e.entryKind.contains(EntryKind.Job) && JobActions.Stoppable.contains(JobKinds.Wire(e.what.value)))
+      (e.entryKind.contains(EntryKind.Job) && JobActions.Stoppable.contains(e.what.asJobKind))
     if !controllable || e.job.isEmpty then Nil
     else
       Run.State.parse(e.state) match
@@ -110,9 +109,8 @@ object ActivityView:
   // ── one row ─────────────────────────────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalLink(g: Goal.Slug): HtmlElement =
-    RouteLink(Route.Goal(g), cls := "goal-ref", Wording.humanize(Wording.Id(g.value)))
+    RouteLink(Route.Goal(g), cls := "goal-ref", Wording.humanize(g.wordingId))
 
   /** What an entry touched, as links. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

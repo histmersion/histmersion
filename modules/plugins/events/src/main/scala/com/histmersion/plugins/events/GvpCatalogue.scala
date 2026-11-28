@@ -169,12 +169,12 @@ object GvpCatalogue:
       val vnum = p.long(JsonFields.Key("Volcano_Number"))
       val pm = p.long(JsonFields.Key("StartDateYearUncertainty")).filter(_.value > 0)
       val start =
-        CatalogDating.year(CatalogDating.HistoricalYear(year.value), pm.map(m => CatalogDating.YearMargin(m.value)))
+        CatalogDating.year(year.asHistoricalYear, pm.map(m => CatalogDating.YearMargin(m.value)))
       val end = p
         .long(JsonFields.Key("EndDateYear"))
         .map(y =>
           CatalogDating.year(
-            CatalogDating.HistoricalYear(y.value),
+            y.asHistoricalYear,
             p.long(JsonFields.Key("EndDateYearUncertainty")).map(m => CatalogDating.YearMargin(m.value))
           )
         )
@@ -207,7 +207,7 @@ object GvpCatalogue:
           )
         ),
         group = vnum.map(v => CatalogueEvent.Group(s"volcano:${v.value}")),
-        central = Dated.year(CatalogDating.HistoricalYear(year.value)),
+        central = Dated.year(year.asHistoricalYear),
         plusMinus = pm.map(m => CatalogueEvent.PlusMinus(m.value)),
         datingMethod = method.map(m => CatalogueEvent.DatingMethod(m.value)),
         raw = Some(CatalogueEvent.Raw(f.noSpaces))

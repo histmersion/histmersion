@@ -95,10 +95,10 @@ final class GoalFocusService(
       .fold(note)(_ => Manager.Status(Manager.Status.Kind.Queued, s" its goal waits for a slot — ${note.render}"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def seed(goal: Goal.Slug): ManagerInfo.Id = seedId(ApiGoal.Ref(goal.value))
+  private def seed(goal: Goal.Slug): ManagerInfo.Id = seedId(ApiGoal.Slug(goal.value))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def watch(goal: Goal.Slug): ManagerInfo.Id = watchId(ApiGoal.Ref(goal.value))
+  private def watch(goal: Goal.Slug): ManagerInfo.Id = watchId(ApiGoal.Slug(goal.value))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def count(n: Int, noun: String): String =

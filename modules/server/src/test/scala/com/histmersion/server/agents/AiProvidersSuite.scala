@@ -75,11 +75,10 @@ class AiProvidersSuite extends munit.FunSuite:
       Left(Problem.Unclassified(Legacy.Text("offline")))
 
   /** The registry's providers as the engine reads them: keyed by plugin id. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def providersOf(
       registered: ListMap[Registries.AiProvidersKey, AiProvider]
   ): ListMap[util.plugins.Plugin.Id, AiProvider] =
-    registered.map((k, p) => util.plugins.Plugin.Id.assume(k.value) -> p)
+    registered.map((k, p) => k.pluginId -> p)
 
   /** A generation of `plugins` as the server builds one: the first-party plugins supplied the host's settings
     * (`reference.conf` under `env`) and allowed their reserved names.

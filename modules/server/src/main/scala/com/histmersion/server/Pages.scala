@@ -375,7 +375,7 @@ object Pages:
             c.status.transformInto[Option[domain.library.Source.Status]]
           )
         )
-        .orElse(links(WikiLinks.Occurrence.Target(ck.value)).collect { case r: Source.Ref =>
+        .orElse(links(ck.asLinkTarget).collect { case r: Source.Ref =>
           CitedEntry(
             Some(CitedEntry.Number(n)),
             CitedEntry.Citekey.assume(ck.value),

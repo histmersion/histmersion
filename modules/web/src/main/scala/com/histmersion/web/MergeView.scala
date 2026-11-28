@@ -137,7 +137,7 @@ object MergeView:
       .setTo(
         (rest ++ decision.map(d =>
           MergeResolution(
-            MergeResolution.Issue(issue.value),
+            issue,
             MergeResolution.Decision(d.wire.value),
             text.filter(_ => d.kind == MergeDecision.Kind.File)
           )

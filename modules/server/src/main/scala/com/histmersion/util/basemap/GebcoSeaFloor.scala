@@ -163,7 +163,7 @@ final class GebcoSeaFloor(
           )
           .toOption
           .flatten
-          .flatMap(b => TerrariumPng.decode(PmTiles.TileBytes(b.value)).toOption)
+          .flatMap(b => TerrariumPng.decode(b.asTile).toOption)
           .map((m, w) => (m, w.value))
           .orElse { etopoFailures += 1; None }
       val metres = new Array[Float](TileSize * TileSize)

@@ -63,7 +63,7 @@ class AboutStorageSuite extends munit.FunSuite:
           volume = Some(Storage.Entry.Volume(vol)),
           shrink = Storage.Advice
             .shrink(Storage.Entry.Key("backups"), Storage.Advice.Keep(5))
-            .map(h => Storage.Entry.Shrink(h.value))
+            .map(h => h)
         ),
         Storage.Entry(
           Storage.Entry.Key("plugins"),

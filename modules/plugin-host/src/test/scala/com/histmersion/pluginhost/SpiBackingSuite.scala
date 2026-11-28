@@ -275,7 +275,7 @@ class SpiBackingSuite extends munit.FunSuite:
     val first = build(
       List(Volcanoes(Plugin.Info.Id("events-gvp"))),
       "histmersion.plugins.events-gvp.enabled = true",
-      firstParty = id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
+      firstParty = id => ReservedNames.firstPartyPlugins.contains(id)
     )
     assert(first.report.ok, first.report.toString)
     assertEquals(first.registries.eventCatalogues.keySet, Set("gvp"))

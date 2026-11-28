@@ -106,9 +106,8 @@ object PeriodService:
       ps.sortBy(p => (p.period.start.value: Long, p.label.value: String, p.id)).toList
 
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = all.find(_.id == id)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = ordered(
-      all.filter(_.parentId.exists(_.value == id.value))
+      all.filter(_.parentId.exists(_ == id))
     )
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -127,9 +126,8 @@ object PeriodService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def presetCount(): RowCount = RowCount(all.count(_.preset.isDefined))
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
-      all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId.map(x => HistoricalPeriod.Id(x.value))).toMap
+      all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId.map(x => x)).toMap
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def write(rows: List[HistoricalPeriod], dataset: Dataset)(using WritePermit)(using Creator.New): RowCount =
@@ -137,7 +135,7 @@ object PeriodService:
         rest match
           case Nil       => held
           case p :: tail =>
-            if p.parentId.exists(parent => !held.exists(_.period.id.value == parent.value)) then
+            if p.parentId.exists(parent => !held.exists(_.period.id == parent)) then
               throw IllegalArgumentException(s"period ${p.id}: no parent ${p.parentId.fold("")(_.value)}")
             val i = held.indexWhere(_.period.id == p.id)
             if i < 0 then upsert(tail, held :+ StoredPeriod(p, dataset))

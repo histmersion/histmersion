@@ -319,7 +319,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     s"""{"title":"Zz new","summary":"Where Aegean tin came from.","body":${str(body)},"section":null,"reasons":[]}"""
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Slug(g.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
 
@@ -580,7 +580,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         sm.id,
         sm.config.modify(_.autoApprove).setTo(Some(ManagerConfig.AutoApprove.Auto)),
         sm.cron,
-        sm.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
+        sm.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(t))
       )
     )
     // the plan is code's to decide now
@@ -692,7 +692,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     Clock(Instant.now(suiteClock).plusSeconds(3600)).tick(a)
     assertEquals(
-      connect(ds)(ManagerRepo.get(seedId(api.automation.Goal.Ref("zzagent-aplate")))).map(_.state),
+      connect(ds)(ManagerRepo.get(seedId(api.automation.Goal.Slug("zzagent-aplate")))).map(_.state),
       Some("active")
     )
     // the New research area form's watcher, asked for while it is on, is created active (paused only when asked)

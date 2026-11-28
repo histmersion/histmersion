@@ -137,9 +137,8 @@ object PointKinds:
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def at(p: SitePoint): (Geo.Latitude, Geo.Longitude) = (p.lat, p.lon)
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def inner(p: SitePoint): Html =
-      Glyphs.badge(CardIcons.siteMarker(p.known.map(t => Place.Entry.SiteType(t.id.value))))
+      Glyphs.badge(CardIcons.siteMarker(p.known.map(t => t.id)))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def classes(p: SitePoint): String =
       MapView
@@ -184,7 +183,7 @@ object PointKinds:
             DotEntry.Id(key(p).value),
             DotEntry.Label(p.name.value),
             DotEntry.Icon(
-              CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => Place.Entry.SiteType(t.id.value))).value
+              CardIcons.place(Place.Kind.Wire(p.kind.value), p.known.map(t => t.id)).value
             ),
             p.mid.map(m => DotEntry.Mid(m.value)),
             DotEntry.Note(note(p))
@@ -396,9 +395,8 @@ object PointKinds:
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     def action(h: MediaGeoHit): UiLabels.Text = UiLabels.Text("open this picture")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def target(h: MediaGeoHit, asOf: Option[Years.Astronomical]): Option[Preview.Target] =
-      h.citekey.map(c => Preview.Target.Source(Preview.Target.Source.Citekey(c.value)))
+      h.citekey.map(c => Preview.Target.Source(c))
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def popup(h: MediaGeoHit): Unit =

@@ -138,7 +138,7 @@ object TimelinePlayback:
       htmlTag("span")(
         cls := "tl-play-year",
         child.text <-- playheadPos.signal.map {
-          case Some(ph) => Fmt.yr(Year(ph.value)).value
+          case Some(ph) => Fmt.yr(ph.numberAsYear).value
           case None     => ""
         }
       )
@@ -163,7 +163,7 @@ object TimelinePlayback:
     if eventsConfig != null then
       EventLayer.start(
         eventsConfig,
-        Api.EventQuery(UiState.toFilter().copy(period = Some(Period(Year(sf.value), Year(st.value)))))
+        Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf.numberAsYear, st.numberAsYear))))
       )
     playing.set(true)
     lastTs = ResearchOverview.EpochMillis(0.0)
@@ -211,7 +211,7 @@ object TimelinePlayback:
           playhead.set(next)
           playheadPos.set(Some(next))
           EventLayer.frame(
-            Year(next.value),
+            next.numberAsYear,
             EventLayer.YearsPerSecond(yearsPerSecond)
           )
           feed.frame(next, PlaybackBuckets.YearsPerSecond(yearsPerSecond))
@@ -266,7 +266,7 @@ object TimelinePlayback:
             Years.Astronomical(hi)
           ),
           (Years.Astronomical(lo), Years.Astronomical(hi)),
-          Year(ph.value),
+          ph.numberAsYear,
           MapView.YearsPerSecond(yearsPerSecond.value)
         )
 

@@ -111,7 +111,7 @@ final class SourceRepairs(db: Transactor):
   def reindexFix(cfg: AppConfig)(using WritePermit): LintFixResult =
     val r = reindexStale(
       Chunker.ChunkMaxChars(cfg.limits.chunkChars.value),
-      SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
+      cfg.limits.reindexChars
     )
     val left = if r.remaining.value > 0 then s", ${r.remaining.value} still stale" else ""
     LintFixResult(

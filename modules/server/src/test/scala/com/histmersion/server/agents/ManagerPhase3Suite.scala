@@ -178,7 +178,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, QueryRef)).isRight)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Slug(g.value)
 
   private def work(doi: String, title: String, oa: WorkRef.IsOa) =
     WorkRef(

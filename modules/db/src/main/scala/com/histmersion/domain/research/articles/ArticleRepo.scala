@@ -243,7 +243,7 @@ private[articles] object ArticleRepo:
       load(slug).flatMap { a =>
         val (body, nb) = Article.Links.retarget(WikiLinks.Body(a.body.value), to)
         val summary = a.summary.map(s => Article.Links.retarget(WikiLinks.Body(s.value), to))
-        val reasons = a.reasons.map((ck, r) => to(Article.Link.Target(ck.value)).fold(ck)(t => Citekey(t.value)) -> r)
+        val reasons = a.reasons.map((ck, r) => to(Article.Link.Target(ck.value)).fold(ck)(t => t.asCitekey) -> r)
         val nr = a.reasons.keys.count(ck => to(Article.Link.Target(ck.value)).isDefined)
         val moved = nb.value + summary.fold(0)(_._2.value) + nr
         Option.when(moved > 0) {

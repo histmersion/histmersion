@@ -132,7 +132,7 @@ object EventsTab:
         .getOrElse(emptyNode),
       evt.citekey
         .map { ck =>
-          span(cls := "event-source", SourceLink(Preview.Target.Source.Citekey(ck.value)))
+          span(cls := "event-source", SourceLink(ck))
         }
         .getOrElse(emptyNode)
     )

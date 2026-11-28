@@ -140,7 +140,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             .map(MergeIssue.Rationale(_)),
           List(km.Map, km.Both),
           Option.when(ev.score.value >= cfg.autoMerge.value)(
-            MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))
+            MergeDecision.withArg(km.Map, p.left.source.citekey.asArgument)
           ),
           detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(p.left.source, p.right.source)))
         ),
@@ -333,7 +333,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           )
         else Nil,
         if asAlias then List(km.RenameRight) else List(km.RenameRight, km.RenameLeft),
-        Some(MergeDecision.withArg(km.RenameRight, MergeDecision.Argument(suggestion.value))),
+        Some(MergeDecision.withArg(km.RenameRight, suggestion.asArgument)),
         cond,
         detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(o, s)))
       )

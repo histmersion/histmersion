@@ -656,7 +656,7 @@ object RunsView:
         p(
           cls := "muted",
           "For the goal ",
-          WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.value)), title := g, Wording.humanize(Wording.Id(g.value)))
+          WinLink(WindowKey.Goal(WindowKey.Goal.Slug(g.value)), title := g, Wording.humanize(g.wordingId))
         )
       ),
       r.error

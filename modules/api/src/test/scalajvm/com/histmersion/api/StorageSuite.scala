@@ -36,9 +36,8 @@ class StorageSuite extends munit.FunSuite:
       shrink = shrink
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def shrinkOf(key: Storage.Entry.Key, keep: Storage.Advice.Keep): Option[Storage.Entry.Shrink] =
-    Storage.Advice.shrink(key, keep).map(h => Storage.Entry.Shrink(h.value))
+    Storage.Advice.shrink(key, keep).map(h => h)
 
   test("paths nest by containment — the innermost parent, either separator, not a mere prefix"):
     assert(Storage.under(Storage.Entry.Path("/d/pg"), Storage.Entry.Path("/d")))

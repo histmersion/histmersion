@@ -184,10 +184,9 @@ trait RegionCleanupFixtures extends DbSuite with Bounded:
     f(6, Some(Finding.Region("Zzrc Hellas")), Some(GeoPoint(Longitude(142.5), Latitude(-47.5))))
   ) // round numbers ON a grid centre
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def seed(): Unit =
     val _ =
-      PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))))
+      PlaceFixtures.upsertPlaces(ds, places.map(p => Place.Input(p, List(Place.Name(p.label.asNameValue)))))
     SourceFixtures.upsert(
       ds,
       Source(

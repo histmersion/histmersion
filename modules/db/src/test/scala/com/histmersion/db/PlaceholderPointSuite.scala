@@ -81,7 +81,7 @@ class PlaceholderPointSuite extends DbSuite with Bounded:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def seed(): Unit =
-    def in(p: Place) = Place.Input(p, List(Place.Name(Place.Name.Value(p.label.value))))
+    def in(p: Place) = Place.Input(p, List(Place.Name(p.label.asNameValue)))
     val _ = PlaceFixtures.upsertPlaces(
       ds,
       List(

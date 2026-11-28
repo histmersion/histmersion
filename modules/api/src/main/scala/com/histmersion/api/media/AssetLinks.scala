@@ -3,6 +3,7 @@ package api.media
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.library.Source
 import com.histmersion.api.text.SafeName
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.lint.{tolerated, LintRule}
@@ -10,7 +11,8 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object AssetLinks:
   type Body = Body.T
-  object Body extends Newtype[String, Pure]
+  object Body extends Newtype[String, Pure]:
+    extension (body: Body) def asOcrMarkdown: Source.OcrMarkdown = Source.OcrMarkdown(body.value)
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
   type Target = Target.T

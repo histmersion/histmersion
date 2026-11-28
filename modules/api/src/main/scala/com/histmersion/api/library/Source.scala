@@ -15,6 +15,7 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.Write.*
 import com.histmersion.api.checks.FormatIssue
 import com.histmersion.api.media.MediaThumb
+import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.{ListPatch, StrictJson}
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -90,7 +91,8 @@ object Source:
   object CalibreId extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   type OcrMarkdown = OcrMarkdown.T
-  object OcrMarkdown extends Newtype[String, Pure]
+  object OcrMarkdown extends Newtype[String, Pure]:
+    extension (markdown: OcrMarkdown) def asLinksBody: AssetLinks.Body = AssetLinks.Body(markdown.value)
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
   type UpdatedAt = UpdatedAt.T
@@ -126,7 +128,6 @@ object Source:
   object Alias:
     export com.histmersion.api.library.Citekey as Value
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   final case class Candidate(
       id: Candidate.Id,
       goal: Candidate.Goal,
@@ -139,7 +140,7 @@ object Source:
       isOa: Candidate.IsOa = Candidate.IsOa.Closed,
       arxivId: Option[Candidate.ArxivId] = None,
       foundBy: List[Candidate.FoundBy] = Nil,
-      state: Candidate.State = Candidate.State(Candidates.State.New.wire.value),
+      state: Candidate.State = Candidates.State.New.wire,
       firstSeen: Candidate.FirstSeen = Candidate.FirstSeen(""),
       lastSeen: Candidate.LastSeen = Candidate.LastSeen("")
   ) derives JsonCodec,

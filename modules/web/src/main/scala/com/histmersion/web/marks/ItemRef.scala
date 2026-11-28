@@ -29,8 +29,7 @@ object ItemRef:
   object Href extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def source(ck: Citekey, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ItemKey(ck.value)), title)
+  def source(ck: Citekey, title: Title): ItemRef = ItemRef(Target.item(ItemKind.Source, ck.asItemKey), title)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def article(slug: Article.Slug, title: Title): ItemRef =
     ItemRef(Target.item(ItemKind.Article, ItemKey(slug.value)), title)

@@ -191,7 +191,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
               case Right(())                               =>
                 Some(
                   a.startRunAs(
-                    RunRequest(RunRequest.Pipeline(Pipeline.EnrichSource.wire.value), RunRequest.Target(ck.value)),
+                    RunRequest(Pipeline.EnrichSource.wire, RunRequest.Target(ck.value)),
                     Origin.FromIngest,
                     None
                   ).fold(
@@ -280,7 +280,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                   m,
                   item,
                   RunRequest(
-                    RunRequest.Pipeline(Pipeline.EnrichSource.wire.value),
+                    Pipeline.EnrichSource.wire,
                     RunRequest.Target(src.source.citekey.value),
                     budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
                   ),
