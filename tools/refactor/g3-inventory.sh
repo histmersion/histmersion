@@ -1,7 +1,4 @@
 #!/usr/bin/env bash
-# The G3Misplaced worklist: every finding the lint sees, tolerated or not, one TSV row each (path, line, Object.def(param: Type)).
-# Runs tools/refactor/G3Inventory.scala with the lint rules, like tools/lint/lint.sh. From the worktree root, after
-# `sbt compile Test/compile`:  bash tools/refactor/g3-inventory.sh [out.tsv]   (default refactor-audit/lane-objects/g3.tsv)
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 props=target/build-versions.properties

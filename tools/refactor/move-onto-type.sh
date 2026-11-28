@@ -1,9 +1,4 @@
 #!/usr/bin/env bash
-# One MoveOntoType batch over every module, with every module's SemanticDB named the way tools/lint/lint.sh names it.
-# Without --semanticdb-targetroots, Scalafix's auto-classpath misses some modules' SemanticDB (upstreams), hands the
-# rule those files without symbols, and their references are silently left as they were.
-#   bash tools/refactor/move-onto-type.sh tools/refactor/move-onto-type-<batch>.conf
-# After `sbt compile Test/compile`, from the worktree root. Then delete the files the report lists as emptied.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 [ $# -eq 1 ] || { echo "usage: move-onto-type.sh <config>" >&2; exit 64; }

@@ -602,9 +602,7 @@ extension `op` (an operation added to the type by hand, then every call site fol
 becomes `x`; `x.value == y.value` (`!=`, `<`, `<=`, `>`, `>=`) of one newtype becomes `x == y` (Newtype's lifted
 CanEqual and Ordering); and a `.value` handed to a `sinks` method (regexes over SemanticDB symbols of methods whose
 parameter takes the newtype through a type class instance, e.g. Laminar's text child and `:=` through
-`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`; for an
-operator sink (`attr := x`), `sinkReceivers` (regexes over the receiver's symbol) keeps it to the display attributes,
-so a protocol position (an option's `value`, a data attribute, `disabled`) never goes through Display. With
+`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`. With
 `sinkRequires` (a type class symbol) a sink is rewritten only for a newtype whose companion gives that instance: the
 type's own display form, never the raw value lifted for every newtype; the others go to the worklist. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
 extensions, limits itself to `paths` (prefixes) less `excludes` (regexes over the path), and writes `report` (each rewrite) and `<report>-missing.tsv` (each
@@ -626,24 +624,12 @@ The fixture:
 `DisplayAsIs` writes the per-type decision that a newtype's friendly form is its text as it is: for each listed
 companion (`types`, SemanticDB symbols) one line `given Display[T] = Display(_.value)` at the top of its body (a body
 is created for a one-line object), importing `com.histmersion.Display` where the file's package does not see it.
-Types whose friendly form differs (enum spellings, times, years, ids shown short) are listed under `forms`
-(`newtype`, the `instance` text, the `imports` it needs), each the decided form of that type. Run as above with `display-as-is-<batch>.conf`; the fixture:
+Types whose friendly form differs (enum spellings, times, years, ids shown short) get a hand-written instance
+instead. Run as above with `display-as-is-<batch>.conf`; the fixture:
 
 ```text
 .claude/skills/scalafix/scripts/run-rule.sh tools/refactor/DisplayAsIs.scala \
   tools/refactor/display-as-is-fixture/input tools/refactor/display-as-is-fixture/expected
-```
-
-`ShownInterpolation` turns an `s"…"` that splices newtypes into `shown"…"` (`com.histmersion` in the newtype
-module), the interpolator whose every splice needs a `Display` instance or is a String, Int, Long, Double, Boolean
-or Char. It rewrites an interpolation only when every splice qualifies and each spliced newtype is in `asIs` (or the
-`types` of the DisplayAsIs configs listed in `asIsFrom`), so the text is the same as before: a newtype whose display
-is a label stays in `s"…"`, where it is usually a protocol value (a CSS class, a URL path), not text for a reader.
-`${x.value}` of an as-is newtype loses its `.value`. Config: `paths`, `excludes`, `report`; the fixture:
-
-```text
-.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/ShownInterpolation.scala \
-  tools/refactor/shown-interpolation-fixture/input tools/refactor/shown-interpolation-fixture/expected
 ```
 
 `RetypeToNewtype` retypes a parameter from a primitive to a newtype (G1; the G44plaindef findings are its worklist).
@@ -688,8 +674,18 @@ not) that a batch config is generated from. Each batch has its own `move-onto-ty
 `sbt compile Test/compile`, from the worktree root:
 
 ```text
-SCALAFIX_JAVA_OPTS=-Xmx6g bash tools/refactor/scalafix.sh --config tools/refactor/move-onto-type-<batch>.conf \
-  --sourceroot . --auto-classpath --auto-classpath-roots target/out --files modules
+bash tools/refactor/move-onto-type.sh tools/refactor/move-onto-type-<batch>.conf
+```
+
+`move-onto-type.sh` names every module's SemanticDB root the way `tools/lint/lint.sh` does: without them Scalafix's
+auto-classpath misses some modules (upstreams) and hands the rule their files without symbols, so their references stay
+as they were. Compile the clean tree right before a run (SemanticDB a compile of a modified tree left is stale for
+HEAD). Then delete the files the report lists as `emptied`; a `LOST:` line is a target no file defines (its members
+would be written nowhere). `bash tools/refactor/g3-inventory.sh [out.tsv]` writes one TSV row per G3Misplaced finding,
+tolerated or not (path, line, `Object.def(param: Type)`), the worklist a batch config is generated from.
+
+```text
+bash tools/refactor/move-onto-type.sh tools/refactor/move-onto-type-kernel.conf
 ```
 
 The fixture (input, expected, and the files the rule creates):

@@ -238,8 +238,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     }
   }
 
-  /** A private member the moved members use goes with them when they all go to one place and nothing that stays uses
-    * it; one they share across places (or with what stays) stays and is widened to its package, so they import it. */
   private def carryPrivateHelpers(sd: SourceDoc, stats: List[(Stat, Option[Planned])]): (List[(Stat, Option[Planned])], List[Stat]) = {
     def place(p: Planned): String = if (p.promote) p.to + p.name + "." else if (p.toplevel) "" else p.to
     val refs: List[(String, Int)] = sd.tree.collect {
@@ -336,7 +334,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       case _ => false
     }
 
-    /** A name in the path of an `export` (`export Obj.X.Y as Z`), not one of its importees. */
     def inExportRef(t: Tree): Boolean = {
       def walk(c: Tree, p: Option[Tree]): Boolean = p match {
         case Some(imp: Importer) => imp.parent.exists(_.is[Export]) && (imp.ref eq c)
@@ -397,8 +394,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           lints += other -> s"${p.name} became an extension of its first parameter: rewrite this reference by hand"
           text.substring(other.pos.start, other.pos.end)
       }
-      // the file already uses the name for something else (a nested type, a wildcard import's member): an import would
-      // shadow it, so the moved type is written from the project root (`domain.x.T`)
       else if (p.toplevel && taken(p.newName)) path(p.to).stripPrefix("com.histmersion.") + "." + p.newName
       else if (p.toplevel) {
         imports += path(p.to) + "." + p.newName
@@ -534,7 +529,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       sym.nonEmpty && !sym.startsWith("local") && !ownedBy(definedHere, sym) && !sym.contains(".(") && !sym.contains("[")
     }
       .groupBy(_._1).map { case (k, v) => k -> v.forall(_._2) }
-    // names SemanticDB records no occurrence for (a `derives` clause's type classes): matched to an import by name
     val unresolved: Set[String] = stat.collect {
       case n: Name if sd.definitions(n).isEmpty && sd.occurrences(n).isEmpty && n.value.headOption.exists(_.isUpper) &&
           !n.parent.exists { case s: Term.Select => s.name eq n; case s: Type.Select => s.name eq n; case _ => false } =>
@@ -552,7 +546,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         case n: Term.Name => sd.symbol(n)
         case _ => ""
       }
-      // the importer's path written from the root (an import inside the object is relative to it), and where it moved
       val absRef =
         if (refSym.isEmpty || refSym.startsWith("local")) imp.ref.syntax
         else relocate(refSym).orElse(plannedFor(refSym).map(newPath)).getOrElse(path(refSym))
@@ -562,7 +555,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
           case _: Importee.Wildcard =>
             refs.keys.filter(r => (strip(owner(r)) == strip(refSym) || strip(owner(norm(r))) == strip(norm(refSym))) &&
               !moving(r)).toList ++
-              // an outside library's syntax (extension methods SemanticDB may not tie to the import) comes along
               List(s"wildcard:$refSym").filter(_ => refSym.nonEmpty && !refSym.startsWith("com/histmersion/") &&
                 !refSym.startsWith("scala/"))
           case i: Importee.Name =>
@@ -604,7 +596,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     out.toList.distinct
   }
 
-  /** `sym` is one of `defined` or a member of one (an enum case's companion, an enum's `values`). */
   private def ownedBy(defined: Set[String], sym: String): Boolean = {
     val s = strip(norm(sym))
     defined.exists { d =>
@@ -613,11 +604,9 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     }
   }
 
-  /** The path a moved definition is written at: its new top-level name, or its target's path and its name. */
   private def newPath(m: Planned): String =
     if (m.toplevel) path(m.to) + "." + m.newName else path(termOf(m.to)) + "." + m.newName
 
-  /** Where a member of a moved definition (`Stalls.SchedWait.Why.Other`) is written now: its moved owner's new path. */
   private def relocate(sym: String): Option[String] = {
     var o = owner(sym)
     var rest = List(lastName(sym))
@@ -650,8 +639,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
         x -> extracted.filter(e => !e.planned.toplevel && e.planned.to == members.head.planned.to + x + ".").sortBy(_.order)
       }.toMap
       val all = (members ++ extras.values.flatten).flatMap(_.imports).distinct
-      // a wildcard import outranks a same-package definition in another file, so with one the package's names stay
-      // imported by name
       val wildcard = all.exists(_.endsWith(".*"))
       val imports = all.filterNot { i =>
         !wildcard && visible.exists(v => i.startsWith(v + ".") && !i.drop(v.length + 1).contains('.'))
@@ -697,7 +684,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
   private val insertedTargets = java.util.concurrent.ConcurrentHashMap.newKeySet[String]()
 
   override def afterComplete(): Unit = if (enabled && config.report.nonEmpty) {
-    // a target no file took: its members were removed from their object and written nowhere
     val missing = extracted.filterNot(e => e.planned.toplevel || promotedTargets(e.planned.to)).map(_.planned.to)
       .distinct.filterNot(insertedTargets.contains).sorted
     val lines = missing.map("LOST: no file defines the target\t" + _) ++
@@ -830,8 +816,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
       val pkg = imp.split('.').dropRight(1).mkString(".")
       existing(imp) || (plain && (visible.contains(pkg) || existing(pkg + ".*") || existing(pkg + "._")))
     }
-    // written as text (Patch.addGlobalImport prints `*` as `_`) after the last top-level import this run leaves as it
-    // is, else after the innermost package clause
     def kept(i: Import): Boolean = i.importers.forall { imp =>
       importerPathMoved(imp).isEmpty && imp.importees.forall {
         case n: Importee.Name => plannedFor(sym(n.name)).isEmpty && !deletedObjects(sym(n.name))
@@ -893,7 +877,6 @@ class MoveOntoType(config: MoveOntoType.Config) extends SemanticRule("MoveOntoTy
     val patches = extracted.filterNot(e => e.planned.toplevel || promotedTargets(e.planned.to)).groupBy(_.planned.to).toList.flatMap { case (to, members) =>
       val ordered = members.sortBy(_.order)
       val obj = doc.tree.collect { case o: Defn.Object if sym(o.name) == termOf(to) => o }.headOption
-      // the target names the companion (`T.`) or the type (`T#`); a type without a companion gets one
       val typeSym = termOf(to).dropRight(1) + "#"
       lazy val tpe = doc.tree.collect {
         case c: Defn.Class if sym(c.name) == typeSym => c: Stat

@@ -5,13 +5,6 @@ import metaconfig.Configured
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardOpenOption}
 
-/** Read-only: one row per G3Misplaced finding (tolerated or not): path, line, object.def, the receiver parameter and
-  * its type, the module. The worklist of G34 batches, so a batch config is generated from what the lint sees. Compiled
-  * with the lint rules (it calls `Guidelines.findings`); from the worktree root, after `sbt compile Test/compile`:
-  * {{{
-  * bash tools/refactor/g3-inventory.sh > refactor-audit/lane-objects/g3.tsv
-  * }}}
-  */
 final class G3Inventory(scalaVersion: String) extends SemanticRule("G3Inventory") {
   def this() = this("")
 
