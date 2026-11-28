@@ -3,8 +3,8 @@ package domain.catalogue.places
 
 import com.histmersion.domain.catalogue.places.placereview.Evidence
 import com.histmersion.domain.catalogue.places.placereview.LinkedItem
-import com.histmersion.domain.catalogue.places.placereview.Proposal
-import com.histmersion.domain.catalogue.places.placereview.Candidate
+import com.histmersion.domain.catalogue.places.placereview.Remedy
+import com.histmersion.domain.catalogue.places.placereview.Reclassifiable
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -40,7 +40,7 @@ class PlaceReviewSuite extends munit.FunSuite:
       items
     )
 
-  private def kindOf(p: Option[Proposal]): Option[Place.Kind.Wire] = p.collect { case r: Proposal.Reclassify => r.to }
+  private def kindOf(p: Option[Remedy]): Option[Place.Kind.Wire] = p.collect { case r: Remedy.Reclassify => r.to }
 
   test("a people or a civic tribe is a people, not a territory"):
     for (id, label, types) <- List(
@@ -79,14 +79,14 @@ class PlaceReviewSuite extends munit.FunSuite:
     assertEquals(
       pal,
       Some(
-        Proposal.Reclassify(
+        Remedy.Reclassify(
           Evidence.Id("pleiades_1001939"),
           Evidence.Label("Palaestina I (late Roman province)"),
           Place.Kind.Wire(Place.Kind.Region),
           Place.Kind.Wire(Place.Kind.Polity),
           None,
           PlaceReview.Rationale("an administrative unit (a polity)"),
-          List(Proposal.EvidenceLine("Pleiades types: province"))
+          List(Remedy.EvidenceLine("Pleiades types: province"))
         )
       )
     )
@@ -104,7 +104,7 @@ class PlaceReviewSuite extends munit.FunSuite:
       )
     ).propose()
     assertEquals(
-      gs.collect { case r: Proposal.Reclassify => r.period }.flatten,
+      gs.collect { case r: Remedy.Reclassify => r.period }.flatten,
       DeepTime.span(DeepTime.SignedYear(83L), DeepTime.SignedYear(297L))
     )
     assert(gs.get.describe.value.contains("period 83 CE–297 CE"), gs.get.describe)
@@ -117,7 +117,7 @@ class PlaceReviewSuite extends munit.FunSuite:
       start = Some(DeepTime.SignedYear(-1600L)),
       end = Some(DeepTime.SignedYear(2100L))
     ).propose()
-    assertEquals(pylos.collect { case r: Proposal.Reclassify => (r.to, r.period) }, Some((Place.Kind.Polity, None)))
+    assertEquals(pylos.collect { case r: Remedy.Reclassify => (r.to, r.period) }, Some((Place.Kind.Polity, None)))
     assert(pylos.get.describe.value.contains("no source states its period"), pylos.get.describe)
     // the seed filed `province-2` alone as a site: still a province
     assertEquals(
@@ -217,7 +217,7 @@ class PlaceReviewSuite extends munit.FunSuite:
       Evidence.duplicateKeys(Evidence.Label("Peiros/Piros (river)")),
       List("peiros piros", "peiros", "piros")
     )
-    val into = Candidate(
+    val into = Reclassifiable(
       Evidence.Id("pleiades_981517"),
       Evidence.Label("Creta et Cyrene (Roman province)"),
       Place.Kind.Wire(Place.Kind.Polity)
@@ -235,7 +235,11 @@ class PlaceReviewSuite extends munit.FunSuite:
       .propose(
         List(
           into,
-          Candidate(Evidence.Id("pleiades_2"), Evidence.Label("Creta et Cyrene"), Place.Kind.Wire(Place.Kind.Region))
+          Reclassifiable(
+            Evidence.Id("pleiades_2"),
+            Evidence.Label("Creta et Cyrene"),
+            Place.Kind.Wire(Place.Kind.Region)
+          )
         )
       )
       .get

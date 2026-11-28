@@ -462,7 +462,7 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val q1 = QueueRows.add(
       ds,
-      api.automation.queue.Kind.Tasks,
+      api.automation.queue.Docket.Tasks,
       QueueAdd(
         QueueItem.Text("read alpha"),
         Some(QueueItem.Topic("Hittites")),
@@ -471,13 +471,13 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val _ = QueueRows.add(
       ds,
-      api.automation.queue.Kind.Log,
+      api.automation.queue.Docket.Log,
       QueueAdd(
         QueueItem.Text("2026-10-03: did things"),
         createdAt = Some(QueueItem.CreatedAt("2026-10-03T09:00:00Z"))
       )
     )
-    val q3 = QueueRows.add(ds, api.automation.queue.Kind.Acquire, QueueAdd(QueueItem.Text("buy a book")))
+    val q3 = QueueRows.add(ds, api.automation.queue.Docket.Acquire, QueueAdd(QueueItem.Text("buy a book")))
     val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some(QueueItem.Status("done"))))
     val _ = QueueRows.delete(ds, q3.id)
 
@@ -1166,7 +1166,7 @@ class BundleSuite extends DbSuite with Bounded:
       if rnd.nextBoolean() then
         val _ = QueueRows.add(
           a,
-          api.automation.queue.Kind.Tasks,
+          api.automation.queue.Docket.Tasks,
           QueueAdd(QueueItem.Text(rnd.alphanumeric.take(20).mkString))
         )
       val first = exportOf(a, sa)

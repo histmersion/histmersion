@@ -14,7 +14,7 @@ import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.managerpolicy.Next
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.{Pipeline, RunState}
@@ -224,10 +224,10 @@ trait ManagerContext:
 object ManagerContext:
   export Next.Retry.Failures as FailureCount
   export Item.{Id as ItemId, Kind as ItemKind}
-  export Candidate.Target as ItemTarget
+  export Assignable.Target as ItemTarget
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
-  export Candidate.Priority
+  export Assignable.Priority
   type EventFeed = EventFeed.T
   object EventFeed extends Newtype[String, Pure]
   type EventText = EventText.T

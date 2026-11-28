@@ -9,9 +9,9 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
 
-final case class Passage(heading: Option[Passage.Heading], text: Passage.Text) derives JsonCodec
+final case class Excerpt(heading: Option[Excerpt.Heading], text: Excerpt.Text) derives JsonCodec
 
-object Passage:
+object Excerpt:
   type Heading = Heading.T
   object Heading extends Newtype[String, Pure]
   type Text = Text.T

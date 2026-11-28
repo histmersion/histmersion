@@ -3,7 +3,7 @@ package api.research
 
 import com.histmersion.api.research.critiquepairing.Work
 import com.histmersion.api.research.critiquepairing.Mention
-import com.histmersion.api.research.critiquepairing.Hit
+import com.histmersion.api.research.critiquepairing.MissedPair
 import scala.annotation.tailrec
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.LatinFold
@@ -72,7 +72,7 @@ object CritiquePairing:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def edgeLine(e: Coverage.Edge): Hit.Edges = Hit.Edges(s"[[${e.from}]] ${e.kind} [[${e.to}]]")
+  private def edgeLine(e: Coverage.Edge): MissedPair.Edges = MissedPair.Edges(s"[[${e.from}]] ${e.kind} [[${e.to}]]")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -81,14 +81,14 @@ object CritiquePairing:
       resolve: Mention.Key => Option[Citekey],
       edges: List[Coverage.Edge],
       work: Citekey => Option[Work]
-  ): List[Hit] =
+  ): List[MissedPair] =
     val es = edges.filter(e => CritiquePair.DisagreementKinds.contains(e.kind) && e.from != e.to)
     val blocks = CritiquePair.units(body)
     val citedAnywhere = blocks.flatMap(u => targetsOf(u).flatMap(resolve)).toSet
     blocks.zipWithIndex.flatMap { (u, i) =>
       val cited = targetsOf(u).flatMap(resolve).distinct
       val text = prose(u.text.value)
-      val where = Hit.Where(words(text).take(8).mkString(" "))
+      val where = MissedPair.Where(words(text).take(8).mkString(" "))
       val partners = cited
         .flatMap { x =>
           es.filter(e => e.from == x || e.to == x).map(e => (x, if e.from == x then e.to else e.from, e))
@@ -110,8 +110,8 @@ object CritiquePairing:
       candidates.groupBy(_._2).toList.sortBy(_._1.value).map { case (y, cs) =>
         val (x, _, xes, n, m) = cs.head
         val shared = byName(n).map(_._2).distinct.size > 1 || citedNames(n)
-        Hit(
-          Hit.Unit(i),
+        MissedPair(
+          MissedPair.Unit(i),
           u.from,
           u.to,
           where,
@@ -119,27 +119,27 @@ object CritiquePairing:
           y,
           cs.flatMap(_._3).distinct.map(edgeLine),
           n,
-          mechanical = (if citedAnywhere(y) && (m == Mention.Strong || !shared) then Hit.Mechanical.Mechanical
-                        else Hit.Mechanical.Judged)
+          mechanical = (if citedAnywhere(y) && (m == Mention.Strong || !shared) then MissedPair.Mechanical.Mechanical
+                        else MissedPair.Mechanical.Judged)
         )
       }
     }
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def repair(body: Article.Body, hs: List[Hit]): (Article.Body, List[Hit]) =
+  def repair(body: Article.Body, hs: List[MissedPair]): (Article.Body, List[MissedPair]) =
     val todo = hs
-      .filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical.Mechanical)))
+      .filter((refactorCallback => ((refactorCallback.mechanical) == MissedPair.Mechanical.Mechanical)))
       .groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else
       val crlf = (body).value.contains("\r\n")
       val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
       @tailrec def insert(
-          rest: List[((Hit.From, Hit.To), List[Hit])],
+          rest: List[((MissedPair.From, MissedPair.To), List[MissedPair])],
           ls: Vector[String],
-          acc: List[Hit]
-      ): (Vector[String], List[Hit]) =
+          acc: List[MissedPair]
+      ): (Vector[String], List[MissedPair]) =
         rest match
           case Nil                      => (ls, acc)
           case ((from, to), xs) :: tail =>

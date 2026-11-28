@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 package commandline
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.nonempty.NonEmptyVector
 
@@ -107,13 +107,13 @@ object UpkeepArgs:
 
   final private class GroupQueue() extends Group("histmersion", "queue", QueueEntry.help):
     holds(
-      (Kind.values.toList.map(k => LeafList(k.label)) ++
+      (Docket.values.toList.map(k => LeafList(k.label)) ++
         List(LeafDone(), LeafEdit(), LeafPatch(), LeafRm(), LeafExport(), LeafImport()))*
     )
 
   /** `queue <list> [--all]` shows it; `queue <list> add …` and `queue acquire recheck …` are its subcommands. */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  final private class LeafList(list: Kind.Label)
+  final private class LeafList(list: Docket.Label)
       extends Leaf(QueueParent, list.value, s"Show the ${list.value} list (add: put an item on it)"):
     private val all_ = flag(
       "all",
@@ -121,14 +121,14 @@ object UpkeepArgs:
     )
     private val json_ = json()
     holds(
-      LeafAdd(list) :: (if list == Kind.Acquire.label then List(LeafRecheck(), LeafWhy()) else Nil)*
+      LeafAdd(list) :: (if list == Docket.Acquire.label then List(LeafRecheck(), LeafWhy()) else Nil)*
     )
 
     @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Show(list, all_.getOrElse(false), json_()))
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  final private class LeafAdd(list: Kind.Label)
+  final private class LeafAdd(list: Docket.Label)
       extends Leaf(s"$QueueParent ${list.value}", "add", s"Add an item to the ${list.value} list"):
     private val text_ = arg[String]("text")
     private val topic_ = value[String]("topic", "Group the added item under this heading")

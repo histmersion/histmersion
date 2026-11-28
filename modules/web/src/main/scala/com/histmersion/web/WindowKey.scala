@@ -3,7 +3,7 @@ package web
 
 import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.managers.ManagerInfo
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.personal.ItemKey
@@ -172,16 +172,16 @@ object WindowKey:
     export ManagerInfo.Id
 
   /** The window of each bookkeeping list, and back. */
-  def ofQueue(kind: Kind): WindowKey = kind match
-    case Kind.Acquire => Acquire
-    case Kind.Tasks   => Tasks
-    case Kind.Log     => Log
+  def ofQueue(kind: Docket): WindowKey = kind match
+    case Docket.Acquire => Acquire
+    case Docket.Tasks   => Tasks
+    case Docket.Log     => Log
 
   /** The bookkeeping list a window shows, if it shows one. */
-  def queueOf(key: WindowKey): Option[Kind] = key match
-    case Acquire => Some(Kind.Acquire)
-    case Tasks   => Some(Kind.Tasks)
-    case Log     => Some(Kind.Log)
+  def queueOf(key: WindowKey): Option[Docket] = key match
+    case Acquire => Some(Docket.Acquire)
+    case Tasks   => Some(Docket.Tasks)
+    case Log     => Some(Docket.Log)
     case _       => None
 
   private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r

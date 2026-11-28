@@ -8,13 +8,13 @@ import com.histmersion.api.given
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
-import com.histmersion.domain.reviewledger.Passage
+import com.histmersion.domain.reviewledger.Excerpt
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.reviewarticle.Fix
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
 
-final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives JsonCodec:
+final case class Edited(passages: List[Excerpt], removed: List[Edited.Removed]) derives JsonCodec:
   def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

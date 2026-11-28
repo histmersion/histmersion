@@ -5,22 +5,22 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.automation
 
-enum Step:
-  case CreateSeed(goal: Step.CreateSeed.Goal, cron: Step.CreateSeed.Cron, planFirst: Step.CreateSeed.PlanFirst)
+enum Stride:
+  case CreateSeed(goal: Stride.CreateSeed.Goal, cron: Stride.CreateSeed.Cron, planFirst: Stride.CreateSeed.PlanFirst)
 
-  case CreateWatch(goal: Step.CreateWatch.Goal, cron: Step.CreateWatch.Cron, perDay: Step.CreateWatch.PerDay)
+  case CreateWatch(goal: Stride.CreateWatch.Goal, cron: Stride.CreateWatch.Cron, perDay: Stride.CreateWatch.PerDay)
 
-  case Resume(id: Step.Resume.Id)
+  case Resume(id: Stride.Resume.Id)
 
-  case SetCron(id: Step.SetCron.Id, cron: Step.SetCron.Cron)
+  case SetCron(id: Stride.SetCron.Id, cron: Stride.SetCron.Cron)
 
-  case AutoIngestOn(id: Step.AutoIngestOn.Id, perDay: Step.AutoIngestOn.PerDay)
+  case AutoIngestOn(id: Stride.AutoIngestOn.Id, perDay: Stride.AutoIngestOn.PerDay)
 
-  case AddPlanItem(id: Step.AddPlanItem.Id, goal: Step.AddPlanItem.Goal)
+  case AddPlanItem(id: Stride.AddPlanItem.Id, goal: Stride.AddPlanItem.Goal)
 
-  case ExtendMinNew(id: Step.ExtendMinNew.Id, n: Step.ExtendMinNew.N)
+  case ExtendMinNew(id: Stride.ExtendMinNew.Id, n: Stride.ExtendMinNew.N)
 
-object Step:
+object Stride:
   object CreateSeed:
     export automation.Goal.Slug as Goal
     export AutopilotPolicy.Cron
@@ -28,7 +28,7 @@ object Step:
   object CreateWatch:
     export automation.Goal.Slug as Goal
     export AutopilotPolicy.Cron
-    export Settings.WatchIngestPerDay as PerDay
+    export Pacing.WatchIngestPerDay as PerDay
   object Resume:
     export ManagerRow.Id
   object SetCron:
@@ -36,10 +36,10 @@ object Step:
     export AutopilotPolicy.Cron
   object AutoIngestOn:
     export ManagerRow.Id
-    export Settings.WatchIngestPerDay as PerDay
+    export Pacing.WatchIngestPerDay as PerDay
   object AddPlanItem:
     export ManagerRow.Id
     export automation.Goal.Slug as Goal
   object ExtendMinNew:
     export ManagerRow.Id
-    export Settings.ExtendMinNew as N
+    export Pacing.ExtendMinNew as N

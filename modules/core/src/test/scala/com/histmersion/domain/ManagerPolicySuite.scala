@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.api.automation.managers.HintEffect
 import com.histmersion.api.automation.managers.ManagerHint
 import com.histmersion.api.automation.managers.ManagerInfo
@@ -61,45 +61,45 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("dispatch order: priority, then the earliest not-before, then the oldest"):
     val cs = List(
-      Candidate(
-        Candidate.Id(3),
-        Candidate.Target("c"),
-        Candidate.Priority(0),
+      Assignable(
+        Assignable.Id(3),
+        Assignable.Target("c"),
+        Assignable.Priority(0),
         None
       ),
-      Candidate(
-        Candidate.Id(1),
-        Candidate.Target("a"),
-        Candidate.Priority(0),
+      Assignable(
+        Assignable.Id(1),
+        Assignable.Target("a"),
+        Assignable.Priority(0),
         Some(now)
       ),
-      Candidate(
-        Candidate.Id(2),
-        Candidate.Target("b"),
-        Candidate.Priority(10),
+      Assignable(
+        Assignable.Id(2),
+        Assignable.Target("b"),
+        Assignable.Priority(10),
         None
       ),
-      Candidate(
-        Candidate.Id(4),
-        Candidate.Target("d"),
-        Candidate.Priority(0),
+      Assignable(
+        Assignable.Id(4),
+        Assignable.Target("d"),
+        Assignable.Priority(0),
         Some(now.minusSeconds(60))
       )
     )
     assertEquals(order(cs).map(_.target), List("b", "c", "d", "a"))
     assert(
-      !Candidate(
-        Candidate.Id(5),
-        Candidate.Target("e"),
-        Candidate.Priority(0),
+      !Assignable(
+        Assignable.Id(5),
+        Assignable.Target("e"),
+        Assignable.Priority(0),
         Some(now.plusSeconds(1))
       ).due(now)
     )
     assert(
-      Candidate(
-        Candidate.Id(5),
-        Candidate.Target("e"),
-        Candidate.Priority(0),
+      Assignable(
+        Assignable.Id(5),
+        Assignable.Target("e"),
+        Assignable.Priority(0),
         Some(now)
       ).due(now)
     )
@@ -216,12 +216,12 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
     val e = HintEffect(HintEffect.Verb.Prioritise.word, tag = Some(HintEffect.Tag("Tin Trade")))
-    assert(matches(e, Candidate.Target("x"), List(ManagerPolicy.Tag("tin trade")), Nil, Nil))
-    assert(!matches(e, Candidate.Target("x"), List(ManagerPolicy.Tag("copper")), Nil, Nil))
+    assert(matches(e, Assignable.Target("x"), List(ManagerPolicy.Tag("tin trade")), Nil, Nil))
+    assert(!matches(e, Assignable.Target("x"), List(ManagerPolicy.Tag("copper")), Nil, Nil))
     assert(
       matches(
         HintEffect(HintEffect.Verb.Skip.word, targets = List(HintEffect.Targets("tin"))),
-        Candidate.Target("TIN"),
+        Assignable.Target("TIN"),
         Nil,
         Nil,
         Nil
@@ -230,7 +230,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(
       matches(
         HintEffect(HintEffect.Verb.Hold.word, goal = Some(Goal.Slug("g"))),
-        Candidate.Target("x"),
+        Assignable.Target("x"),
         Nil,
         Nil,
         List(automation.Goal.Slug("g"))
@@ -357,19 +357,19 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("waitsFor: an article's review waits while its infer-filter item is open; nothing else waits"):
     val open = List(
-      Item.Kind.InferFilter -> Candidate.Target("a"),
-      Item.Kind.ArticleReview -> Candidate.Target("a"),
-      Item.Kind.ArticleReview -> Candidate.Target("b")
+      Item.Kind.InferFilter -> Assignable.Target("a"),
+      Item.Kind.ArticleReview -> Assignable.Target("a"),
+      Item.Kind.ArticleReview -> Assignable.Target("b")
     )
-    assert(waitsFor(Item.Kind.ArticleReview, Candidate.Target("a"), open))
-    assert(!waitsFor(Item.Kind.ArticleReview, Candidate.Target("b"), open))
-    assert(!waitsFor(Item.Kind.InferFilter, Candidate.Target("a"), open))
+    assert(waitsFor(Item.Kind.ArticleReview, Assignable.Target("a"), open))
+    assert(!waitsFor(Item.Kind.ArticleReview, Assignable.Target("b"), open))
+    assert(!waitsFor(Item.Kind.InferFilter, Assignable.Target("a"), open))
 
   test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
     def ev(st: RunState, f: StepFacts, failures: Next.Retry.Failures = Next.Retry.Failures(0)) =
       s.evaluateStep(
         StepLabel(InferFilter),
-        Candidate.Target("tin"),
+        Assignable.Target("tin"),
         failures,
         ItemState(),
         Run.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),

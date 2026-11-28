@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.enrichsource.FindingGuards
-import com.histmersion.domain.enrichsource.Window
+import com.histmersion.domain.enrichsource.Frame
 import com.histmersion.domain.enrichsource.StatedYear
 import com.histmersion.domain.enrichsource.FindingProposal
 import com.histmersion.domain.enrichsource.Classification
@@ -48,10 +48,10 @@ class EnrichSourceSuite extends munit.FunSuite:
     (_, _, _) => true
   )
 
-  private val window = Window(
-    Window.Index(1),
-    Some(Window.Heading("Results")),
-    Window.Text(
+  private val window = Frame(
+    Frame.Index(1),
+    Some(Frame.Heading("Results")),
+    Frame.Text(
       "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
     )
   )

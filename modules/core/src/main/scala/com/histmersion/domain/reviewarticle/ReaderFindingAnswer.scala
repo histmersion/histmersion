@@ -12,7 +12,7 @@ import sttp.tapir.Schema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.reviewarticle.Severity
 
@@ -29,7 +29,7 @@ final case class ReaderFindingAnswer(
 object ReaderFindingAnswer:
   export Severity.Wire as Severity
   export Finding.{Kind, Where}
-  export Evidence.Quote
+  export Quotation.Quote
   export Finding.{Fix, Problem}
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")

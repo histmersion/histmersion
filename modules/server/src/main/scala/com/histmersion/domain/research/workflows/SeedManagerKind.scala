@@ -8,7 +8,7 @@ import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.domain.managerpolicy.StepFacts
 import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.domain.autopilotpolicy.PlannedFacts
 import com.histmersion.domain.autopilotpolicy.DraftFacts
 import com.histmersion.domain.managerpolicy.ReviewSettings
@@ -232,14 +232,14 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       run: Option[RunInfo],
       mgr: Option[ManagerInfo],
       now: Instant
-  ): Option[Verdict] =
+  ): Option[Ruling] =
     val day = ManagerPolicy.dayStart(now)
     val caps = c.config.approvals.auto
     Option.when(a.approvalKind.exists(k => k == ApprovalKind.ArticlePlan || k == ApprovalKind.ArticlePublish)) {
       a.approvalKind match
         case Some(ApprovalKind.ArticlePlan) =>
           a.articles match
-            case None       => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
+            case None       => Ruling.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
             case Some(plan) =>
               val goal = a.subject.map(_.value).getOrElse(plan.goal.value)
               val min =
@@ -295,9 +295,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 ),
                 AutopilotPolicy.Cap(c.publishCap.value)
               )
-            case (None, _) => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable draft"))
-            case (_, None) => Verdict.Leave(AutopilotPolicy.Rationale("the run that drafted it is gone"))
-        case _ => Verdict.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
+            case (None, _) => Ruling.Leave(AutopilotPolicy.Rationale("the approval carries no readable draft"))
+            case (_, None) => Ruling.Leave(AutopilotPolicy.Rationale("the run that drafted it is gone"))
+        case _ => Ruling.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

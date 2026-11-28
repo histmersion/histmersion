@@ -13,7 +13,7 @@ import com.histmersion.domain.automation
 import com.histmersion.domain.reviewarticle.Reviewer
 import com.histmersion.domain.reviewarticle.Merged
 import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 
 final case class Closure(
     by: Closure.By,
@@ -29,4 +29,4 @@ object Closure:
   export Merged.Round
   export automation.Run.Id as Run
   export Check.Note
-  export Evidence.Quote
+  export Quotation.Quote

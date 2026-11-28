@@ -2,7 +2,7 @@ package com.histmersion
 package cli
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -202,7 +202,7 @@ object CalibreCmd:
     for
       // checked BEFORE the record is written: a typo'd item must not leave a half-done import behind
       _ <- item.fold(Right(()))(i =>
-        c.queueList(Queue.Wire(Kind.Acquire.label.value), all = true)
+        c.queueList(Queue.Wire(Docket.Acquire.label.value), all = true)
           .flatMap(l =>
             QueueItem
               .fulfillable(i, l.items.find(_.id == i))

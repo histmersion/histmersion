@@ -15,7 +15,7 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.util.problem.Problem.`++`
 
-final case class Allowance(target: Target, limits: List[Limit], reservePct: Allowance.ReservePct):
+final case class Allowance(target: Aim, limits: List[Limit], reservePct: Allowance.ReservePct):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def text: String =
     ((limits.map(_.text) ++ Option.when((reservePct).value > 0)(s"reserve $reservePct%")).mkString(", "))
@@ -33,7 +33,7 @@ object Allowance:
   object ReservePct extends Newtype[Int, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def of(target: Target, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
+  def of(target: Aim, limits: List[Limit], reservePct: OfReservePct): Either[Problem, Allowance] =
     if (reservePct).value < 0 || (reservePct).value > 99 then
       Left(
         Invalid.OutOfRange
@@ -59,8 +59,8 @@ object Allowance:
             Invalid.Unreadable.here(TypeName.of(Spec), Raw(s"$e"), Vector(Raw("claude-code:* = 5 usd/day")))
           )
         case i =>
-          Target.parseAllowance(
-            Target.Spec(e.substring(0, i)),
+          Aim.parseAllowance(
+            Aim.Spec(e.substring(0, i)),
             (e.substring(i + 1).split(',').toList).map(refactorValue11 => Limit.Spec(refactorValue11)),
             known
           )
@@ -69,7 +69,7 @@ object Allowance:
       case Nil =>
         val as = parsed.collect { case Right(a) => a }
         val dup = as.groupBy(_.target.wire).collect { case (t, xs) if xs.size > 1 => t }
-        Problems.from(dup.toVector.map(d => Invalid.Repeated.here(TypeName.of(Target.Wire), Raw(s"$d")))).toLeft(as)
+        Problems.from(dup.toVector.map(d => Invalid.Repeated.here(TypeName.of(Aim.Wire), Raw(s"$d")))).toLeft(as)
       case errs => Left(errs.reduce(_ ++ _))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -5,9 +5,9 @@ import com.histmersion.api.given
 import com.histmersion.api.catalogue.EventSummary
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class Kind(kind: EventSummary.Kind, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
+final case class Genre(kind: EventSummary.Kind, group: Genre.Group, label: Genre.Label, icon: Genre.Icon)
 
-object Kind:
+object Genre:
   type Group = Group.T
   object Group extends Newtype[String, Pure]
   type Label = Label.T

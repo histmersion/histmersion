@@ -8,7 +8,7 @@ import com.histmersion.domain.schedulerpolicy.Scored
 import com.histmersion.domain.schedulerpolicy.Strategy
 import com.histmersion.domain.schedulerpolicy.PassState
 import com.histmersion.domain.schedulerpolicy.Block
-import com.histmersion.domain.schedulerpolicy.Resources
+import com.histmersion.domain.schedulerpolicy.Capacity
 import com.histmersion.domain.schedulerpolicy.Decision
 import com.histmersion.domain.schedulerpolicy.Wait
 
@@ -185,7 +185,7 @@ object SchedulerPolicy:
     */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def run(cands: List[Candidate], res: Resources, s: Settings, now: Instant)(
+  def run(cands: List[Candidate], res: Capacity, s: Settings, now: Instant)(
       start: Candidate => Either[Block.Refusal, Unit]
   ): Decision =
     val scored = cands.map(_.score(s, now))
@@ -230,7 +230,7 @@ object SchedulerPolicy:
                     pool = rest,
                     waits = a.waits :+ (x -> Wait(
                       Code.Pool,
-                      Wait.Why.PoolFull(p, res.poolCap.getOrElse(p, Resources.PoolCapValue(0))),
+                      Wait.Why.PoolFull(p, res.poolCap.getOrElse(p, Capacity.PoolCapValue(0))),
                       inFlightOn(p, a.started)
                     ))
                   )
@@ -243,7 +243,7 @@ object SchedulerPolicy:
                       Code.Manager,
                       Wait.Why.ManagerFull(
                         x.c.managerId,
-                        res.managerCap.getOrElse(x.c.managerId, Resources.ManagerCapValue(0))
+                        res.managerCap.getOrElse(x.c.managerId, Capacity.ManagerCapValue(0))
                       )
                     ))
                   )
@@ -288,7 +288,7 @@ object SchedulerPolicy:
             Code.Capacity,
             Wait.Why.NoPlaceFree(
               res.maxRuns,
-              Resources.Occupied(math.min(res.maxRuns.value, res.occupied.value + done.started.size)),
+              Capacity.Occupied(math.min(res.maxRuns.value, res.occupied.value + done.started.size)),
               because
             ),
             behind.map(Wait.Behind(_)),
@@ -342,7 +342,7 @@ object SchedulerPolicy:
     * waits for room. The anti-starvation rules apply as in the pass (the gathering places as if free).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def order(cands: List[Scored], res: Resources, s: Settings): List[(Scored, String)] =
+  def order(cands: List[Scored], res: Capacity, s: Settings): List[(Scored, String)] =
     @annotation.tailrec
     def go(
         pool: List[Scored],

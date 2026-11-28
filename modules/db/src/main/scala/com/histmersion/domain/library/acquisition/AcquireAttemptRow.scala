@@ -12,7 +12,7 @@ object AcquireAttemptRow:
   type Id = Id.T
   object Id extends Newtype[Int, Pure]
 
-  val LegacyWire: domain.acquirerecheck.Outcome.Wire = domain.acquirerecheck.Outcome.Wire("legacy")
+  val LegacyWire: domain.acquirerecheck.Upshot.Wire = domain.acquirerecheck.Upshot.Wire("legacy")
   val NoNote: AcquireAttempt.Outcome.LegacyNote = AcquireAttempt.Outcome.LegacyNote("")
 
   def unreadable(at: Instant): AcquireAttempt =

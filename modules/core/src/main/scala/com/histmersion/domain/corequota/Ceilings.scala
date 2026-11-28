@@ -10,14 +10,14 @@ import com.histmersion.domain.CoreQuota.Cost
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
 
-final case class Limits(
-    perMinute: Limits.PerMinute,
-    dailyTokens: Limits.DailyTokens,
-    searchDailyTokens: Limits.SearchDailyTokens,
-    lookupCost: Limits.LookupCost,
-    searchCost: Limits.SearchCost,
-    exhaustedPauseSeconds: Limits.ExhaustedPauseSeconds,
-    maxWaitSeconds: Limits.MaxWaitSeconds
+final case class Ceilings(
+    perMinute: Ceilings.PerMinute,
+    dailyTokens: Ceilings.DailyTokens,
+    searchDailyTokens: Ceilings.SearchDailyTokens,
+    lookupCost: Ceilings.LookupCost,
+    searchCost: Ceilings.SearchCost,
+    exhaustedPauseSeconds: Ceilings.ExhaustedPauseSeconds,
+    maxWaitSeconds: Ceilings.MaxWaitSeconds
 ):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def cost(p: Purpose): Cost = p match
@@ -29,7 +29,7 @@ final case class Limits(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def searchCap: Cap = Cap(searchDailyTokens.value)
 
-object Limits:
+object Ceilings:
 
   type PerMinute = PerMinute.T
   object PerMinute extends Newtype[Int, Pure]

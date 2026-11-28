@@ -11,7 +11,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.domain.reviewarticle.Reviewer
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.Content
@@ -42,7 +42,7 @@ final case class Finding(
     quote: Finding.Quote,
     problem: Finding.Problem,
     fix: Finding.Fix,
-    evidence: List[Evidence] = Nil,
+    evidence: List[Quotation] = Nil,
     escalated: Finding.Escalated = Finding.Escalated(false),
     pair: Option[CritiqueRef] = None
 ) derives JsonCodec,
@@ -63,7 +63,7 @@ object Finding:
   object Kind extends Newtype[String, Pure]
   type Where = Where.T
   object Where extends Newtype[String, Pure]
-  export Evidence.Quote
+  export Quotation.Quote
   type Problem = Problem.T
 
   @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")

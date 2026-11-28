@@ -2,12 +2,12 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.acquirerecheck.LastCheck
-import com.histmersion.domain.acquirerecheck.Settings
+import com.histmersion.domain.acquirerecheck.Cadence
 import com.histmersion.domain.acquirerecheck.Held
 import com.histmersion.domain.acquirerecheck.Action
 import com.histmersion.domain.acquirerecheck.Rationale
 import com.histmersion.domain.acquirerecheck.Shared
-import com.histmersion.domain.acquirerecheck.Candidate
+import com.histmersion.domain.acquirerecheck.Recheckable
 import com.histmersion.domain.acquirerecheck.JobPlan
 import com.histmersion.domain.acquirerecheck.Tally
 
@@ -36,14 +36,14 @@ class AcquireRecheckSuite extends munit.FunSuite:
   private val now = Instant.parse("2026-10-27T12:00:00Z")
   private val Gen = LastCheck.Generation("g1")
   private def daysAgo(d: Int) = now.minusSeconds(d.toLong * 86400L)
-  private val settings = Settings(
-    enabled = Settings.Enabled(true),
-    everyDays = Settings.EveryDays(7),
-    perDay = Settings.PerDay(40),
-    perPass = Settings.PerPass(3),
-    passMinutes = Settings.PassMinutes(10),
-    sharePercent = Settings.SharePercent(25),
-    retryHours = Settings.RetryHours(6)
+  private val settings = Cadence(
+    enabled = Cadence.Enabled(true),
+    everyDays = Cadence.EveryDays(7),
+    perDay = Cadence.PerDay(40),
+    perPass = Cadence.PerPass(3),
+    passMinutes = Cadence.PassMinutes(10),
+    sharePercent = Cadence.SharePercent(25),
+    retryHours = Cadence.RetryHours(6)
   )
 
   test("due: never checked, checked longer ago than every-days, or checked under another fetcher generation"):
@@ -91,8 +91,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
       dueAt(
         Some(LastCheck(daysAgo(2), Gen)),
         Gen,
-        Settings.EveryDays(7),
-        Settings.RetryHours(6)
+        Cadence.EveryDays(7),
+        Cadence.RetryHours(6)
       ),
       Some(daysAgo(2).plusSeconds(7L * 86400L))
     )
@@ -100,8 +100,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
       dueAt(
         Some(LastCheck(daysAgo(2), Gen)),
         Gen,
-        Settings.EveryDays(0),
-        Settings.RetryHours(6)
+        Cadence.EveryDays(0),
+        Cadence.RetryHours(6)
       ),
       Some(daysAgo(1)),
       "a window under a day is a day"
@@ -166,15 +166,15 @@ class AcquireRecheckSuite extends munit.FunSuite:
   test("a failed legal ingest: no legal copy, or no answer"):
     assertEquals(
       failure(Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)),
-      domain.acquirerecheck.Outcome.NoCopy
+      domain.acquirerecheck.Upshot.NoCopy
     )
     assertEquals(
       failure(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))),
-      domain.acquirerecheck.Outcome.Failed
+      domain.acquirerecheck.Upshot.Failed
     )
     assertEquals(
-      domain.acquirerecheck.Outcome.values.toList.flatMap(o => domain.acquirerecheck.Outcome.parse(o.wire)),
-      domain.acquirerecheck.Outcome.values.toList
+      domain.acquirerecheck.Upshot.values.toList.flatMap(o => domain.acquirerecheck.Upshot.parse(o.wire)),
+      domain.acquirerecheck.Upshot.values.toList
     )
 
   test("the reason: the day, what was found and what each fetcher answered"):
@@ -342,7 +342,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     assertEquals(
       settings
         .modify(_.sharePercent)
-        .setTo(Settings.SharePercent(0))
+        .setTo(Cadence.SharePercent(0))
         .allowance(
           AcquireRecheck.CheckedToday(0),
           Some(
@@ -360,9 +360,9 @@ class AcquireRecheckSuite extends munit.FunSuite:
     assertEquals(
       settings
         .modify(_.sharePercent)
-        .setTo(Settings.SharePercent(100))
+        .setTo(Cadence.SharePercent(100))
         .modify(_.perPass)
-        .setTo(Settings.PerPass(100))
+        .setTo(Cadence.PerPass(100))
         .allowance(
           AcquireRecheck.CheckedToday(0),
           Some(
@@ -379,9 +379,9 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
 
   test("a pass is due once its minutes passed since the last"):
-    assert(passDue(None, Settings.PassMinutes(10), now))
-    assert(!passDue(Some(now.minusSeconds(300)), Settings.PassMinutes(10), now))
-    assert(passDue(Some(now.minusSeconds(600)), Settings.PassMinutes(10), now))
+    assert(passDue(None, Cadence.PassMinutes(10), now))
+    assert(!passDue(Some(now.minusSeconds(300)), Cadence.PassMinutes(10), now))
+    assert(passDue(Some(now.minusSeconds(600)), Cadence.PassMinutes(10), now))
 
   test("a check that got no answer (a rate limit) is due again after retry-hours, not every-days"):
     val failed = LastCheck(now.minusSeconds(2L * 3600L), Gen, failed = LastCheck.Failed(true))
@@ -400,11 +400,11 @@ class AcquireRecheckSuite extends munit.FunSuite:
       "six hours ago: due"
     )
     assertEquals(
-      dueAt(Some(failed), Gen, Settings.EveryDays(7), Settings.RetryHours(6)),
+      dueAt(Some(failed), Gen, Cadence.EveryDays(7), Cadence.RetryHours(6)),
       Some(failed.at.plusSeconds(6L * 3600L))
     )
     assertEquals(
-      dueAt(Some(failed), Gen, Settings.EveryDays(7), Settings.RetryHours(0)),
+      dueAt(Some(failed), Gen, Cadence.EveryDays(7), Cadence.RetryHours(0)),
       Some(failed.at.plusSeconds(3600L)),
       "a retry under an hour is an hour"
     )
@@ -420,27 +420,27 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("the order items are tried in: the never-checked first, then the oldest check, then the item id"):
     val cs = List(
-      Candidate(Candidate.Item(5), Some(LastCheck(daysAgo(1), Gen))),
-      Candidate(Candidate.Item(9), None),
-      Candidate(Candidate.Item(2), Some(LastCheck(daysAgo(3), Gen))),
-      Candidate(Candidate.Item(4), None),
-      Candidate(Candidate.Item(1), Some(LastCheck(daysAgo(1), Gen)))
+      Recheckable(Recheckable.Item(5), Some(LastCheck(daysAgo(1), Gen))),
+      Recheckable(Recheckable.Item(9), None),
+      Recheckable(Recheckable.Item(2), Some(LastCheck(daysAgo(3), Gen))),
+      Recheckable(Recheckable.Item(4), None),
+      Recheckable(Recheckable.Item(1), Some(LastCheck(daysAgo(1), Gen)))
     )
     assertEquals(order(cs).map(_.item), List(4, 9, 2, 1, 5))
 
   test("a job over every item: all of them, due or not; resumed, it skips the ones checked since it started"):
     val since = now.minusSeconds(3600L)
     val cs = List(
-      Candidate(Candidate.Item(1), None),
-      Candidate(Candidate.Item(2), Some(LastCheck(daysAgo(1), Gen))),
-      Candidate(Candidate.Item(3), Some(LastCheck(now.minusSeconds(60), Gen))),
-      Candidate(
-        Candidate.Item(4),
+      Recheckable(Recheckable.Item(1), None),
+      Recheckable(Recheckable.Item(2), Some(LastCheck(daysAgo(1), Gen))),
+      Recheckable(Recheckable.Item(3), Some(LastCheck(now.minusSeconds(60), Gen))),
+      Recheckable(
+        Recheckable.Item(4),
         Some(LastCheck(since, Gen, failed = LastCheck.Failed(true)))
       ),
-      Candidate(Candidate.Item(5), Some(LastCheck(daysAgo(30), Gen)))
+      Recheckable(Recheckable.Item(5), Some(LastCheck(daysAgo(30), Gen)))
     )
-    val notDue = (c: Candidate) => false
+    val notDue = (c: Recheckable) => false
     assertEquals(
       JobPlan(all = JobPlan.All(true), JobPlan.UpTo(0), now).jobPicks(cs, Tally.Tried(0), notDue).map(_.item),
       List(1, 5, 2, 4, 3),
@@ -461,8 +461,9 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("a capped job: only the due items, no more than it planned less what it tried already"):
     val since = now.minusSeconds(3600L)
-    val cs = (1 to 6).toList.map(i => Candidate(Candidate.Item(i), if i == 6 then Some(LastCheck(now, Gen)) else None))
-    val due = (c: Candidate) => c.item.value != 2
+    val cs =
+      (1 to 6).toList.map(i => Recheckable(Recheckable.Item(i), if i == 6 then Some(LastCheck(now, Gen)) else None))
+    val due = (c: Recheckable) => c.item.value != 2
     assertEquals(
       JobPlan(all = JobPlan.All(false), JobPlan.UpTo(4), since).jobPicks(cs, Tally.Tried(0), due).map(_.item),
       List(1, 3, 4, 5)
@@ -479,11 +480,11 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("the job's progress line counts what it found, with the last no-answer's reason, shortened"):
     val t = Tally(total = Tally.Total(453))
-      .add(domain.acquirerecheck.Outcome.Closed, AcquireRecheck.Detail("a2020_x"))
-      .add(domain.acquirerecheck.Outcome.Fetched, AcquireRecheck.Detail("unpaywall"))
-      .add(domain.acquirerecheck.Outcome.NoCopy, Detail("none"))
+      .add(domain.acquirerecheck.Upshot.Closed, AcquireRecheck.Detail("a2020_x"))
+      .add(domain.acquirerecheck.Upshot.Fetched, AcquireRecheck.Detail("unpaywall"))
+      .add(domain.acquirerecheck.Upshot.NoCopy, Detail("none"))
       .add(
-        domain.acquirerecheck.Outcome.Failed,
+        domain.acquirerecheck.Upshot.Failed,
         Detail("HTTP 429 Too Many Requests from api.example.invalid — retry after 3600 seconds, said the upstream")
       )
     assertEquals(t.tried, 3)

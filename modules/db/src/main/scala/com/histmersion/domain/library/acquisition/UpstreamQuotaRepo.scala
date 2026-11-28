@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.acquisition
 
 import com.histmersion.domain.corequota.State
-import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Backoff
 import com.histmersion.domain.corequota.Window
 
 import com.histmersion.domain.CoreQuota
@@ -37,9 +37,9 @@ private[acquisition] object UpstreamQuotaRepo:
           State.LookupTokens(lookups),
           State.SearchTokens(searches),
           until.map(u =>
-            Block(
+            Backoff(
               Instant.ofEpochMilli(u),
-              why.fold(Block.Rationale.Unstated)(Block.Rationale.read)
+              why.fold(Backoff.Rationale.Unstated)(Backoff.Rationale.read)
             )
           ),
           at.map(t =>

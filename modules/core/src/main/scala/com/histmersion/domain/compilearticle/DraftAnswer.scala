@@ -23,7 +23,7 @@ import com.histmersion.api.research.DraftMode
 import com.histmersion.domain.research.Slug
 import com.histmersion.domain.CompileArticle.combined
 import com.histmersion.domain.AgentVerify
-import com.histmersion.domain.compilearticle.Evidence
+import com.histmersion.domain.compilearticle.Support
 import com.histmersion.domain.compilearticle.Corpus
 import com.histmersion.domain.CompileArticle.statusesSilent
 import com.histmersion.domain.CompileArticle.cited
@@ -70,7 +70,7 @@ object DraftAnswer:
         kind: Article.Kind.Wire,
         currentTitle: Option[Title],
         current: Article.Body,
-        evidence: Evidence,
+        evidence: Support,
         filter: ArticleDraft.Filter,
         corpus: Corpus,
         last: Last

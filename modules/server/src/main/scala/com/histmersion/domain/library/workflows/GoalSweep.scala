@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.util.json.RawJson.*
@@ -57,7 +57,7 @@ private[workflows] trait GoalSweep:
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   protected def queuedDois(): Map[Doi, api.automation.queue.QueueItem.Id] =
     site.queues
-      .list(Kind.Acquire, QueueScope.All)
+      .list(Docket.Acquire, QueueScope.All)
       .flatMap(i => Scheduling.dois(i.text.value).map(_ -> i.id))
       .toMap
 
@@ -74,7 +74,7 @@ private[workflows] trait GoalSweep:
       text: api.automation.queue.QueueItem.Text,
       queued: Map[Doi, api.automation.queue.QueueItem.Id]
   )(using WritePermit)(using Creator.New): Either[String, Boolean] =
-    queued.get(doi).orElse(site.queues.naming(Kind.Acquire, doi).headOption.map(_.id)) match
+    queued.get(doi).orElse(site.queues.naming(Docket.Acquire, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(
           s"link queue item $id to goal $goal",

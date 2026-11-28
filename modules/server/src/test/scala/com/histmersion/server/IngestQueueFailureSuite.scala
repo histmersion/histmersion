@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 
@@ -80,7 +80,7 @@ class IngestQueueFailureSuite extends DbSuite:
     val jobs = JobListing(ds, () => cfg)
     val key = Citekey("zz_ingest_queue_failure")
     val item =
-      QueueRows.add(ds, Kind.Acquire, QueueAdd(text = QueueItem.Text("zz_ingest_queue_failure")))
+      QueueRows.add(ds, Docket.Acquire, QueueAdd(text = QueueItem.Text("zz_ingest_queue_failure")))
     val pdf = Files.createTempFile("ingest-queue-upload", ".pdf")
     Files.writeString(pdf, "%PDF-1.4 queue failure fixture")
     def sql(statement: String): Unit =

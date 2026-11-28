@@ -746,13 +746,13 @@ final class AcquisitionControllers(
       scripts: AcquireAttempt.Oa.Scripts,
       by: Creator.New
   )(using WritePermit): (QueueItem.Id, Boolean) =
-    val (id, added) = queues.naming(api.automation.queue.Kind.Acquire, doi).headOption match
+    val (id, added) = queues.naming(api.automation.queue.Docket.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
         (
           queues
             .add(
-              api.automation.queue.Kind.Acquire,
+              api.automation.queue.Docket.Acquire,
               QueueAdd(text, topic = Some(QueueItem.Topic(Acquire.BrowserDownloadTopic))),
               by
             )
@@ -942,7 +942,7 @@ final class AcquisitionControllers(
             )
           do
             // an item already naming the DOI was reported just above
-            if queues.naming(api.automation.queue.Kind.Acquire, d).isEmpty then
+            if queues.naming(api.automation.queue.Docket.Acquire, d).isEmpty then
               val (id, _) =
                 acquireOnce(
                   d,
@@ -1016,7 +1016,7 @@ final class AcquisitionControllers(
       authors: List[AcquireMatch.DecideAuthors],
       jobId: Option[Job.Id]
   ): List[Ingest.Step] =
-    val items = queues.list(api.automation.queue.Kind.Acquire, QueueScope.Open).toList
+    val items = queues.list(api.automation.queue.Docket.Acquire, QueueScope.Open).toList
     AcquireMatch
       .decide(items, doi, title, authors, AcquireMatch.ProposeThreshold(acq.defaults.titleMatchAt.value))
       .map {

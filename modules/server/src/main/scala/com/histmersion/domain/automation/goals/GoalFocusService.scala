@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.domain.goalfocus.Thresholds
 import com.histmersion.api.automation.autopilot.FocusInfo
 import com.histmersion.domain.goalfocus.Facts
 import com.histmersion.api.automation.managers.ManagerInfo
@@ -11,7 +11,7 @@ import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.domain.goalfocus.Plan
 import com.histmersion.domain.goalfocus.Item
 import com.histmersion.api.automation.managers.Hold
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.domain.goalfocus.Pick
 import com.histmersion.api.automation.autopilot.FocusGoal
@@ -76,11 +76,11 @@ final class GoalFocusService(
 
   /** The cap and where it comes from: a person's (`focus max`) or the config's. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def cap: (Settings.Max, FocusInfo.MaxFrom) =
+  def cap: (Thresholds.Max, FocusInfo.MaxFrom) =
     Transactor(ds)
       .read(FocusRepo.maxOverride)
-      .fold((Settings.Max(math.max(0, acfg.maxActiveGoals.value)), FocusInfo.MaxFrom("config")))(n =>
-        (Settings.Max(math.max(0, n.value)), FocusInfo.MaxFrom("person"))
+      .fold((Thresholds.Max(math.max(0, acfg.maxActiveGoals.value)), FocusInfo.MaxFrom("config")))(n =>
+        (Thresholds.Max(math.max(0, n.value)), FocusInfo.MaxFrom("person"))
       )
 
   /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the managers' work:
@@ -191,14 +191,14 @@ final class GoalFocusService(
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def settings(r: Read, max: Settings.Max): Settings =
-    Settings(
+  private def settings(r: Read, max: Thresholds.Max): Thresholds =
+    Thresholds(
       max,
-      Settings.MinSources(agents.sourcesToPlan.value),
-      plansByPerson = Settings.PlansByPerson(
+      Thresholds.MinSources(agents.sourcesToPlan.value),
+      plansByPerson = Thresholds.PlansByPerson(
         !cfg.approvals.checked(domain.automation.Approval.Kind.GoalPlan)
       ),
-      Settings.OpenPersonPlans(r.openPlans.value)
+      Thresholds.OpenPersonPlans(r.openPlans.value)
     )
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
@@ -300,9 +300,9 @@ final class GoalFocusService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fair(
       m: ManagerInfo,
-      due: List[Candidate],
+      due: List[Assignable],
       pending: List[ManagerItem]
-  ): List[Candidate] =
+  ): List[Assignable] =
     current match
       case Some(active) if m.id.value == EnrichId || m.id.value == ReviewId =>
         val link =
@@ -384,7 +384,7 @@ final class GoalFocusService(
     val plan =
       GoalFocus.select(
         r.facts,
-        settings(r, if max.value > 0 then max else Settings.Max(acfg.maxActiveGoals.value))
+        settings(r, if max.value > 0 then max else Thresholds.Max(acfg.maxActiveGoals.value))
       )
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
@@ -484,7 +484,7 @@ final class GoalFocusService(
         in.value match
           case Some(n) if n.value < 0 => Left(error("`max` is 0 (no cap) or more"))
           case v                      =>
-            Transactor(ds).write(FocusRepo.setMaxOverride(v.map(n => Settings.Max(n.value))))
+            Transactor(ds).write(FocusRepo.setMaxOverride(v.map(n => Thresholds.Max(n.value))))
             Right(
               v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals.value}) (by $by)")(n =>
                 s"cap ${n.value}${if n.value == 0 then " (no cap)" else ""} (by $by)"

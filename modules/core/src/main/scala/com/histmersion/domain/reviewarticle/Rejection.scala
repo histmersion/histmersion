@@ -10,7 +10,7 @@ import com.histmersion.domain.library
 import com.histmersion.domain.ReviewArticle.Rationale
 import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 
 final case class Rejection(
     id: Rejection.Id,
@@ -22,5 +22,5 @@ final case class Rejection(
 
 object Rejection:
   export Finding.Id
-  export Evidence.Quote
+  export Quotation.Quote
   export AgentVerify.Ratio

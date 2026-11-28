@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
@@ -30,7 +30,7 @@ class AcquireMatchSuite extends munit.FunSuite:
       id: QueueItem.Id,
       text: QueueItem.Text,
       status: QueueItem.Status = QueueItem.Status(Queue.Open),
-      list: QueueItem.List = Kind.Acquire.label
+      list: QueueItem.List = Docket.Acquire.label
   ) =
     QueueItem(id, list, text, Some(QueueItem.Topic("Books")), status)
 
@@ -158,7 +158,7 @@ class AcquireMatchSuite extends munit.FunSuite:
         item(QueueItem.Id(7), QueueItem.Text("Burkert, Greek Religion")),
         item(QueueItem.Id(8), QueueItem.Text("10.1163/9789004441385"), status = QueueItem.Status(Queue.Done)),
         item(QueueItem.Id(9), QueueItem.Text("10.1163/9789004441385"), status = QueueItem.Status(Queue.Note)),
-        item(QueueItem.Id(10), QueueItem.Text("10.1163/9789004441385"), list = Kind.Tasks.label)
+        item(QueueItem.Id(10), QueueItem.Text("10.1163/9789004441385"), list = Docket.Tasks.label)
       ),
       Some(Doi("10.1163/9789004441385")),
       AcquireMatch.DecideTitle("The Rise of Bronze Age Society"),

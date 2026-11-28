@@ -40,7 +40,7 @@ final case class Loaded(
     existingClaims: List[Loaded.ExistingClaims],
     updatedAt: Option[Source.UpdatedAt],
     head: Loaded.Head,
-    windows: List[Window],
+    windows: List[Frame],
     tags: List[Tag] = Nil,
     doi: Option[Doi] = None
 ) derives JsonCodec

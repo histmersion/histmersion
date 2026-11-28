@@ -2,7 +2,7 @@ package com.histmersion
 package server
 
 import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Refusal
+import com.histmersion.domain.corequota.Denial
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
@@ -62,8 +62,8 @@ object DocQuotedSentencesSuite:
   val Rendered: Vector[String] =
     (Problem.examples ++ Quoted).map(_.sentence) ++
       Purpose.values.toVector.map(p =>
-        Refusal
-          .OverBudget(p, Refusal.OverBudget.Spent(6), Refusal.OverBudget.Cap(6))
+        Denial
+          .OverBudget(p, Denial.OverBudget.Spent(6), Denial.OverBudget.Cap(6))
           .describe
           .toString
       )

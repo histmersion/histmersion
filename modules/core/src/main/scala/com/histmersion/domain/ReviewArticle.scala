@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.domain.reviewarticle.Merged
 import com.histmersion.domain.reviewarticle.CritiqueRule
 import com.histmersion.domain.reviewarticle.Snapshot
@@ -142,7 +142,7 @@ object ReviewArticle:
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type QualifiedClaimSentence = Sentence
   val QualifiedClaimSentence: Sentence.type = Sentence
-  export Evidence.Quote as QualifiedClaimQuote
+  export Quotation.Quote as QualifiedClaimQuote
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type QualifiedClaimCriticised = Criticised
   val QualifiedClaimCriticised: Criticised.type = Criticised
@@ -423,7 +423,7 @@ object ReviewArticle:
   // ── validating a reviewer's answer ──────────────────────────────────────────────────────────────
 
   /** How a stated evidence record is checked: a verified [[Evidence]], or why it was dropped. */
-  type EvidenceCheck = EvidenceAnswer => Either[Problem, Evidence]
+  type EvidenceCheck = EvidenceAnswer => Either[Problem, Quotation]
 
   /** No evidence is checked (the cold reader has none). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -452,7 +452,7 @@ object ReviewArticle:
           case Some(ck) =>
             text(ck).map(t => findQuote(q, t.value, minRatio)).filter(_.accepted) match
               case Some(m) =>
-                Right(Evidence(ck, e.offset.flatMap(o => Offset.option(o.value)), Evidence.Quote(q), m.ratio))
+                Right(Quotation(ck, e.offset.flatMap(o => Offset.option(o.value)), Quotation.Quote(q), m.ratio))
               case None =>
                 Left(Content.Answer(Content.Requirement.Panel(PanelRule.QuoteInSourceRecord(Raw.of(ck), Raw(q)))))
 
@@ -561,7 +561,7 @@ object ReviewArticle:
             case None       => refused(PanelRule.RecordRead)
             case Some(call) =>
               ev(
-                EvidenceAnswer(EvidenceAnswer.Citekey(ck), None, Option(a.recordQuote).getOrElse(Evidence.Quote("")))
+                EvidenceAnswer(EvidenceAnswer.Citekey(ck), None, Option(a.recordQuote).getOrElse(Quotation.Quote("")))
               ) match
                 case Left(m)  => Left(m.inside(label))
                 case Right(e) =>
@@ -670,7 +670,7 @@ object ReviewArticle:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def claimWindow(sentence: Sentence, quote: Evidence.Quote): Sentence =
+  def claimWindow(sentence: Sentence, quote: Quotation.Quote): Sentence =
     val ws = quote.value.split("[^\\p{L}\\p{N}]+").filter(_.nonEmpty).takeRight(3)
     if ws.isEmpty then sentence
     else
@@ -888,9 +888,9 @@ object ReviewArticle:
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def mergeEvidence(a: List[Evidence], b: List[Evidence]): List[Evidence] =
+  private def mergeEvidence(a: List[Quotation], b: List[Quotation]): List[Quotation] =
     (a ++ b)
-      .foldLeft(Vector.empty[Evidence]) { (acc, e) =>
+      .foldLeft(Vector.empty[Quotation]) { (acc, e) =>
         if acc.exists(x => x.citekey == e.citekey && normalise(x.quote.value) == normalise(e.quote.value))
         then acc
         else acc :+ e

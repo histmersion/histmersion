@@ -9,13 +9,13 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
 
-final case class Patched(
-    written: Patched.Written,
-    previousVersion: Option[Patched.PreviousVersion],
-    conflict: Patched.Conflict
+final case class Amended(
+    written: Amended.Written,
+    previousVersion: Option[Amended.PreviousVersion],
+    conflict: Amended.Conflict
 ) derives JsonCodec
 
-object Patched:
+object Amended:
   type Written = Written.T
   object Written extends Newtype[Boolean, Pure]
   type PreviousVersion = PreviousVersion.T

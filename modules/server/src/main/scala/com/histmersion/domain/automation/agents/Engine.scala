@@ -613,7 +613,7 @@ final class Engine(
             s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.value.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.value.take(8)}) $w"
         val _ = agents.queues.add(
-          api.automation.queue.Kind.Tasks,
+          api.automation.queue.Docket.Tasks,
           QueueAdd(
             QueueItem.Text(text),
             topic = Some(QueueItem.Topic(if scheduled then "agent schedules" else "auto-enrich")),

@@ -10,7 +10,7 @@ import com.histmersion.domain.library
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.domain.AgentVerify
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.Newtype
 import com.histmersion.domain.ReviewArticle
 
@@ -27,6 +27,6 @@ object SpotCheck:
   type Claim = Claim.T
   object Claim extends Newtype[String, Pure]
   export ReviewArticle.SpotVerdictsValue as Verdict
-  export Evidence.Quote as RecordQuote
+  export Quotation.Quote as RecordQuote
   export AgentVerify.Ratio
   export ToolUse.Tool

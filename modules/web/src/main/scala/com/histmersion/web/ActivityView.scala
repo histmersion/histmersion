@@ -153,7 +153,7 @@ object ActivityView:
       e.article.map(slug => span(" · ", ArticleLink(Article.Slug(slug.value), slug.value))),
       e.queueItem
         .filter(_ => kind.contains(EntryKind.Job))
-        .map(id => span(" · for ", QueueItemLink(api.automation.queue.Kind.Acquire, id, s"“To acquire” item $id"))),
+        .map(id => span(" · for ", QueueItemLink(api.automation.queue.Docket.Acquire, id, s"“To acquire” item $id"))),
       e.approval.map(id => span(" · ", RouteLink(Route.Research(ResearchSection.Decisions), s"decision #$id")))
     ).flatten
 

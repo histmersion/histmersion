@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
 
@@ -31,7 +31,7 @@ class QueueSuite extends munit.FunSuite:
 
   /** Parsed rows as the database would hand them back: ids in insertion order. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def store(kind: Kind, text: FileText): List[QueueItem] =
+  private def store(kind: Docket, text: FileText): List[QueueItem] =
     kind.parse(text).zipWithIndex.map { (r, i) =>
       QueueItem(
         QueueItem.Id(i + 1),
@@ -46,7 +46,7 @@ class QueueSuite extends munit.FunSuite:
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def roundTrip(kind: Kind, text: FileText): String = kind.render(store(kind, text)).value
+  private def roundTrip(kind: Docket, text: FileText): String = kind.render(store(kind, text)).value
 
   /** A readable line diff, so a failure says WHICH line moved rather than dumping 4 kB twice. */
   private def diff(a: String, b: String): String =
@@ -65,17 +65,17 @@ class QueueSuite extends munit.FunSuite:
 
   test("ACQUIRE.md round-trips byte for byte"):
     val original = fixture("ACQUIRE.md")
-    val out = roundTrip(Kind.Acquire, FileText(original))
+    val out = roundTrip(Docket.Acquire, FileText(original))
     assertEquals(out, original, diff(original, out))
 
   test("LOG.md round-trips byte for byte"):
     val original = fixture("LOG.md")
-    val out = roundTrip(Kind.Log, FileText(original))
+    val out = roundTrip(Docket.Log, FileText(original))
     assertEquals(out, original, diff(original, out))
 
   test("TASKS.md round-trips (one blank line the original omits before a bold group)"):
     val original = fixture("TASKS.md")
-    val out = roundTrip(Kind.Tasks, FileText(original))
+    val out = roundTrip(Docket.Tasks, FileText(original))
     // the renderer is canonical, not byte-preserving: it always separates a heading from a preceding
     // block, where the hand-written file does so everywhere EXCEPT under `## 📋 Backlog`.
     assertEquals(
@@ -86,7 +86,7 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(out.count(_ == '\n') - original.count(_ == '\n'), 1)
 
   test("export is a fixpoint: re-importing an export reproduces it exactly"):
-    Kind.values.foreach { kind =>
+    Docket.values.foreach { kind =>
       val once = roundTrip(kind, FileText(fixture(kind.file.value)))
       val twice = roundTrip(kind, FileText(once))
       assertEquals(twice, once, s"${kind.file}: " + diff(once, twice))
@@ -95,7 +95,7 @@ class QueueSuite extends munit.FunSuite:
   // ── what parsing actually captured ───────────────────────────────────────────────────────────
 
   test("ACQUIRE: outstanding items are open, completed ones are done, prose is a note"):
-    val rows = Kind.Acquire.parse(FileText(fixture("ACQUIRE.md")))
+    val rows = Docket.Acquire.parse(FileText(fixture("ACQUIRE.md")))
     val open = rows.filter(_.status.contains(Open))
     val done = rows.filter(_.status.contains(Done))
     assert(open.exists(_.text.value.contains("Cynthia Eller")), "the Eller line is an open item")
@@ -106,7 +106,7 @@ class QueueSuite extends munit.FunSuite:
     assert(rows.exists(r => r.status.contains(Note) && r.topic.isEmpty && r.text.value.startsWith("# 📥 ACQUIRE")))
 
   test("ACQUIRE: a whole-line bold group becomes the third level of the topic path"):
-    val rows = Kind.Acquire.parse(FileText(fixture("ACQUIRE.md")))
+    val rows = Docket.Acquire.parse(FileText(fixture("ACQUIRE.md")))
     val eller = rows.find(_.text.value.contains("Cynthia Eller")).get
     val parts = Queue.path(eller.topic)
     assertEquals(parts.size, 3)
@@ -115,21 +115,21 @@ class QueueSuite extends munit.FunSuite:
     assertEquals(parts(2), "**Highest value — get first**")
 
   test("TASKS: a bold line that is NOT the whole line stays prose"):
-    val rows = Kind.Tasks.parse(FileText(fixture("TASKS.md")))
+    val rows = Docket.Tasks.parse(FileText(fixture("TASKS.md")))
     val drained = rows.find(_.text.value.startsWith("**Original ingestion queues")).get
     assertEquals(drained.status, Some(Note))
     // …while the trailing `:**` group heading IS a heading
     assert(rows.exists(_.topic.exists(_.value.endsWith("**Enrichment / compile follow-ups:**"))))
 
   test("TASKS: the currency-checkpoint table is kept verbatim as one note"):
-    val rows = Kind.Tasks.parse(FileText(fixture("TASKS.md")))
+    val rows = Docket.Tasks.parse(FileText(fixture("TASKS.md")))
     val table = rows.find(_.text.value.contains("| subtopic | checkpoint held | since |")).get
     assertEquals(table.status, Some(Note))
     assert(table.text.value.contains("| IE homeland (ling.+arch.) |"), "the whole table is one block")
     assert(table.text.value.contains("**Genre note:**"), "trailing prose stays in the same block")
 
   test("LOG: entries keep their heading as the topic and their date as createdAt"):
-    val rows = Kind.Log.parse(FileText(fixture("LOG.md")))
+    val rows = Docket.Log.parse(FileText(fixture("LOG.md")))
     val bullets = rows.filterNot(_.status.contains(Note))
     assert(bullets.nonEmpty)
     assert(bullets.forall(_.createdAt.isDefined), "every bullet inherits its entry's date")
@@ -138,14 +138,14 @@ class QueueSuite extends munit.FunSuite:
     assert(rows.exists(_.topic.contains("2026-06-24/25 — Frontier passes + reviews-first strategy")))
 
   test("LOG: a bullet's indented continuation lines belong to it"):
-    val rows = Kind.Log.parse(FileText(fixture("LOG.md")))
+    val rows = Docket.Log.parse(FileText(fixture("LOG.md")))
     val merged = rows.find(_.text.value.startsWith("Merged the scattered working files")).get
     assert(merged.text.value.contains("\n  acquisition queue)"), merged.text)
 
   // ── the renderer on its own ──────────────────────────────────────────────────────────────────
 
   test("an empty list renders a usable file, and that file re-imports to nothing but its preamble"):
-    Kind.values.foreach { kind =>
+    Docket.values.foreach { kind =>
       val out = kind.render(Nil).value
       assert(out.startsWith("# "), out.take(40))
       val rows = kind.parse(FileText(out))
@@ -162,13 +162,13 @@ class QueueSuite extends munit.FunSuite:
       None,
       None
     )
-    assert(Kind.Acquire.render(List(item(QueueItem.Status(Open)))).value.contains("- [ ] a thing"))
-    assert(Kind.Acquire.render(List(item(QueueItem.Status(Done)))).value.contains("- [x] a thing"))
-    assert(Kind.Log.render(List(item(QueueItem.Status(Open)))).value.contains("- a thing"))
-    assert(!Kind.Log.render(List(item(QueueItem.Status(Open)))).value.contains("[ ]"))
+    assert(Docket.Acquire.render(List(item(QueueItem.Status(Open)))).value.contains("- [ ] a thing"))
+    assert(Docket.Acquire.render(List(item(QueueItem.Status(Done)))).value.contains("- [x] a thing"))
+    assert(Docket.Log.render(List(item(QueueItem.Status(Open)))).value.contains("- a thing"))
+    assert(!Docket.Log.render(List(item(QueueItem.Status(Open)))).value.contains("[ ]"))
 
   test("a topic path renders ## / ### / bold, one level per segment; a heading hugs its content"):
-    val out = Kind.Tasks
+    val out = Docket.Tasks
       .render(
         List(
           QueueItem(
@@ -187,7 +187,7 @@ class QueueSuite extends munit.FunSuite:
     assert(out.endsWith("\n## A\n\n### B\n\n**C**\n- [ ] x\n"), out)
 
   test("later items join an existing topic group instead of repeating its heading"):
-    val out = Kind.Tasks
+    val out = Docket.Tasks
       .render(
         List(
           QueueItem(
@@ -224,7 +224,7 @@ class QueueSuite extends munit.FunSuite:
     assert(out.indexOf("- [ ] second") > out.indexOf("- [ ] first"))
 
   test("log entries are ordered newest first, so an added line lands on top"):
-    val out = Kind.Log
+    val out = Docket.Log
       .render(
         List(
           QueueItem(
@@ -275,13 +275,13 @@ class QueueSuite extends munit.FunSuite:
         None
       )
     )
-    val md = Kind.Acquire.markdown(items).value
+    val md = Docket.Acquire.markdown(items).value
     assert(md.contains("`#7`"), md)
     assert(md.contains("1 item(s)"), md)
     assert(!md.contains("preamble"), md)
 
   test("the listing strips a bold group's own ** so the heading is not doubled"):
-    val md = Kind.Acquire
+    val md = Docket.Acquire
       .markdown(
         List(
           QueueItem(
@@ -300,12 +300,12 @@ class QueueSuite extends munit.FunSuite:
     assert(!md.contains("****"), md)
 
   test("an empty list says so rather than rendering an empty table"):
-    assertEquals(Kind.Tasks.markdown(Nil), "_tasks: nothing queued._")
+    assertEquals(Docket.Tasks.markdown(Nil), "_tasks: nothing queued._")
 
   test("Kind.parse accepts exactly the three list names"):
-    assertEquals(Kind.all, List("acquire", "tasks", "log"))
-    assertEquals(Kind.parse(Kind.Label(" Acquire ")).map(_.file), Some("ACQUIRE.md"))
-    assertEquals(Kind.parse(Kind.Label("notes")), None)
+    assertEquals(Docket.all, List("acquire", "tasks", "log"))
+    assertEquals(Docket.parse(Docket.Label(" Acquire ")).map(_.file), Some("ACQUIRE.md"))
+    assertEquals(Docket.parse(Docket.Label("notes")), None)
 
   // ── input validation (these used to reach the INSERT unchecked) ──────────────────────────────
 

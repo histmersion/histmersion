@@ -405,17 +405,17 @@ class DataOracleSuite extends DbSuite with db.Bounded:
       )
     val _ = QueueRows.add(
       ds,
-      api.automation.queue.Kind.Tasks,
+      api.automation.queue.Docket.Tasks,
       QueueAdd(QueueItem.Text("check the storm god"), topic = Some(QueueItem.Topic("oracle")))
     )
     val _ = QueueRows.add(
       ds,
-      api.automation.queue.Kind.Log,
+      api.automation.queue.Docket.Log,
       QueueAdd(QueueItem.Text("crafted the oracle"), topic = Some(QueueItem.Topic("oracle")))
     )
     val _ = QueueRows.add(
       ds,
-      api.automation.queue.Kind.Acquire,
+      api.automation.queue.Docket.Acquire,
       QueueAdd(QueueItem.Text("Doe, The Lost Book (1900)"), topic = Some(QueueItem.Topic("oracle")))
     )
 
@@ -507,7 +507,7 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     )
     val _ = QueueRows.add(
       work,
-      api.automation.queue.Kind.Tasks,
+      api.automation.queue.Docket.Tasks,
       QueueAdd(QueueItem.Text("a task work added"), topic = Some(QueueItem.Topic("oracle")))
     )
 

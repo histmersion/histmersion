@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
@@ -170,7 +170,7 @@ object OpsTools:
           .getOrElse(
             McpOut.error(
               Api.Error(Problem.Invalid.Missing.here(Problem.Field("list"))),
-              s"The lists: ${Kind.all.mkString(", ")}."
+              s"The lists: ${Docket.all.mkString(", ")}."
             )
           )
       case "add" =>

@@ -1117,11 +1117,11 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
     val e2 =
-      domain.reviewarticle.Evidence(
+      domain.reviewarticle.Quotation(
         Citekey("knapp2016_tin"),
         None,
-        domain.reviewarticle.Evidence.Quote("one ton of tin"),
-        domain.reviewarticle.Evidence.Ratio(1.0)
+        domain.reviewarticle.Quotation.Quote("one ton of tin"),
+        domain.reviewarticle.Quotation.Ratio(1.0)
       )
     val dup = rr.findings.head.copy(id = Finding.Id("R9"), evidence = List(e2))
     val m = merge(ReviewArticle.MergeRound(1), Nil, List(rr, rr.modify(_.findings).setTo(List(dup))), Nil)
@@ -1436,11 +1436,11 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("scope: inside the edited passages anything stands; outside, a MAJOR only as a factual error with evidence"):
     val edited = Article.Body("Tin, the scarce half of bronze, reached the Aegean by sea [[knapp2016_tin]].")
     val ev =
-      domain.reviewarticle.Evidence(
+      domain.reviewarticle.Quotation(
         Citekey("knapp2016_tin"),
         None,
-        domain.reviewarticle.Evidence.Quote("ten tons of copper"),
-        domain.reviewarticle.Evidence.Ratio(1.0)
+        domain.reviewarticle.Quotation.Quote("ten tons of copper"),
+        domain.reviewarticle.Quotation.Ratio(1.0)
       )
     val inside = Finding(
       Finding.Id("S1"),

@@ -6,10 +6,10 @@ import com.histmersion.api.automation.autopilot.AutopilotSet
 import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.domain.autopilotpolicy.ManagerRow
-import com.histmersion.domain.autopilotpolicy.Settings
+import com.histmersion.domain.autopilotpolicy.Pacing
 import com.histmersion.domain.autopilotpolicy.GoalRow
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.autopilotpolicy.Step
+import com.histmersion.domain.autopilotpolicy.Stride
 import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.api.automation.managers.Sweep
@@ -210,17 +210,17 @@ final class AutopilotService(
           m.cron.map(c => AutopilotPolicy.Cron(c.value)),
           m.config.autoIngest.map(a => ManagerRow.AutoIngest(a.autoIngest)),
           ManagerRow.PlanItem(m.planItem.value),
-          m.config.extendMinNew.map(n => Settings.ExtendMinNew(n.value))
+          m.config.extendMinNew.map(n => Pacing.ExtendMinNew(n.value))
         )
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def settings = Settings(
+  private def settings = Pacing(
     AutopilotPolicy.Cron(acfg.watchCron.value),
     AutopilotPolicy.Cron(acfg.seedCron.value),
     AutopilotPolicy.Cron(acfg.finishedWatchCron.value),
-    Settings.WatchIngestPerDay(math.max(0, acfg.watchIngestPerDay.value)),
-    Settings.ExtendMinNew(math.max(0, acfg.extendMinNew.value))
+    Pacing.WatchIngestPerDay(math.max(0, acfg.watchIngestPerDay.value)),
+    Pacing.ExtendMinNew(math.max(0, acfg.extendMinNew.value))
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
@@ -268,9 +268,9 @@ final class AutopilotService(
   private def itemOf(goal: DomainGoal.Slug): ManagerItem.Target = ManagerItem.Target(goal.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def applyStep(s: Step, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
+  private def applyStep(s: Stride, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
     s match
-      case Step.CreateSeed(goal, cron, planFirst) =>
+      case Stride.CreateSeed(goal, cron, planFirst) =>
         val id = seedId(Goal.Ref(goal.value))
         Option.when(
           agents.managerStore
@@ -309,7 +309,7 @@ final class AutopilotService(
           )
           s"$id created"
         }
-      case Step.CreateWatch(goal, cron, perDay) =>
+      case Stride.CreateWatch(goal, cron, perDay) =>
         val id = watchId(Goal.Ref(goal.value))
         val c = ManagerConfig(
           autoIngest = Some(ManagerConfig.AutoIngest.Auto),
@@ -337,14 +337,14 @@ final class AutopilotService(
           )
           s"$id created"
         }
-      case Step.Resume(rowId) =>
+      case Stride.Resume(rowId) =>
         val id = ManagerInfo.Id(rowId.value)
         Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = ManagerInfo.PauseRuns.Run)) {
           agents.autopilotRow.unpaused(id)
           event(id, "resumed by the autopilot")
           s"$id resumed"
         }
-      case Step.SetCron(rowId, cron) =>
+      case Stride.SetCron(rowId, cron) =>
         val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           Option.when(
@@ -354,7 +354,7 @@ final class AutopilotService(
             s"$id cron $cron"
           }
         }
-      case Step.AutoIngestOn(rowId, perDay) =>
+      case Stride.AutoIngestOn(rowId, perDay) =>
         val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           val c =
@@ -378,7 +378,7 @@ final class AutopilotService(
             s"$id auto-ingest on"
           }
         }
-      case Step.AddPlanItem(rowId, goal) =>
+      case Stride.AddPlanItem(rowId, goal) =>
         val id = ManagerInfo.Id(rowId.value)
         val (item, isNew) = agents.managerStore.upsert(
           id,
@@ -398,7 +398,7 @@ final class AutopilotService(
           )
           s"$id plan-goal queued"
         }
-      case Step.ExtendMinNew(rowId, n) =>
+      case Stride.ExtendMinNew(rowId, n) =>
         val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           Option.when(

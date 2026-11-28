@@ -83,7 +83,7 @@ final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckServi
 
   private def tasks: Vector[OpenItem] =
     agents.queues
-      .list(api.automation.queue.Kind.Tasks, QueueScope.Open)
+      .list(api.automation.queue.Docket.Tasks, QueueScope.Open)
       .toVector
       .map(i =>
         OpenItem.Task(

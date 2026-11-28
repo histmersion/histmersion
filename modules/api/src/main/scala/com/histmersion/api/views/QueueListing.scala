@@ -1,7 +1,7 @@
 package com.histmersion
 package api.views
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.ItemGoals
 import com.histmersion.util.json.JsonCodec
@@ -18,7 +18,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class QueueListing(
-    list: Kind.Label,
+    list: Docket.Label,
     items: List[QueueItem],
     checks: List[Acquire.Checks.AcquireCheck] = Nil,
     goals: List[ItemGoals] = Nil
@@ -28,4 +28,4 @@ final case class QueueListing(
 
   /** The list in Markdown, each ACQUIRE item with its last check's reason; `None` for a list no kind names. */
   def markdown: Option[Queue.Markdown] =
-    Kind.parse(list).map(k => k.markdown(items, checks.map(c => c.item -> c.reason).toMap))
+    Docket.parse(list).map(k => k.markdown(items, checks.map(c => c.item -> c.reason).toMap))

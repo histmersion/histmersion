@@ -370,7 +370,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       stopped.outcome
     )
     val tasks =
-      QueueRows.list(ds, api.automation.queue.Kind.Tasks, all = false).filter(_.text.value.contains("zzagent_m2"))
+      QueueRows.list(ds, api.automation.queue.Docket.Tasks, all = false).filter(_.text.value.contains("zzagent_m2"))
     assertEquals(tasks.size, 1)
     assert(tasks.head.text.value.contains("review manager stopped: omission churn"), tasks.head.text)
     // the evaluation happened once per run, whatever the ticks
@@ -518,7 +518,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     assertEquals((f3.status, f3.failures), ("failed", 3))
     assert(
       QueueRows
-        .list(ds, api.automation.queue.Kind.Tasks, all = false)
+        .list(ds, api.automation.queue.Docket.Tasks, all = false)
         .exists(_.text.value.contains("after 3 failed runs"))
     )
 

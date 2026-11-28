@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.api.WebPaths
 import com.histmersion.api.automation.Queue
@@ -146,10 +146,10 @@ class RouteSuite extends munit.FunSuite:
     assertEquals(Route.hrefOf(WindowKey.Graph(WindowKey.Graph.Citekey("a2020_b"))), "/explore#open=graph%3Aa2020_b")
 
   test("a list item's page is its list's, scrolled to it"):
-    assertEquals(Route.queueItem(Kind.Tasks, Goal.Plans.GoalLink.QueueNumber(12)), "/research/backlog?item=12")
-    assertEquals(Route.queueItem(Kind.Acquire, Goal.Plans.GoalLink.QueueNumber(3)), "/research/acquire?item=3")
+    assertEquals(Route.queueItem(Docket.Tasks, Goal.Plans.GoalLink.QueueNumber(12)), "/research/backlog?item=12")
+    assertEquals(Route.queueItem(Docket.Acquire, Goal.Plans.GoalLink.QueueNumber(3)), "/research/acquire?item=3")
     assertEquals(
-      Route.queueItem(Kind.Log, Goal.Plans.GoalLink.QueueNumber(9)),
+      Route.queueItem(Docket.Log, Goal.Plans.GoalLink.QueueNumber(9)),
       "/research/activity/worklog?item=9"
     )
 

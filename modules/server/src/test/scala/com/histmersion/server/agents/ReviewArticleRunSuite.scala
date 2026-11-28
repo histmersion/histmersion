@@ -10,7 +10,7 @@ import com.histmersion.domain.reviewarticle.Verdict
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.reviewledger.Status
 import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Patched
+import com.histmersion.domain.reviewarticle.Amended
 import com.histmersion.domain.reviewarticle.Severity
 import com.histmersion.domain.reviewledger.LessonSource
 import com.histmersion.api.automation.queue.QueueAdd
@@ -948,14 +948,14 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val patched = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(4000)))
       .find(_.name.value == "patch-1")
       .flatMap(_.output)
-      .flatMap(o => RawJson.decode[Patched](o.value).toOption)
+      .flatMap(o => RawJson.decode[Amended](o.value).toOption)
     assertEquals(
       patched,
       Some(
-        Patched(
-          written = Patched.Written(false),
+        Amended(
+          written = Amended.Written(false),
           None,
-          conflict = Patched.Conflict(true)
+          conflict = Amended.Conflict(true)
         )
       )
     )
@@ -1632,12 +1632,12 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     val patch = steps.find(_.name.value == "patch-1").get
     assertEquals(
-      patch.output.flatMap(o => RawJson.decode[Patched](o.value).toOption),
+      patch.output.flatMap(o => RawJson.decode[Amended](o.value).toOption),
       Some(
-        Patched(
-          written = Patched.Written(false),
+        Amended(
+          written = Amended.Written(false),
           None,
-          conflict = Patched.Conflict(false)
+          conflict = Amended.Conflict(false)
         )
       )
     )

@@ -6,7 +6,7 @@ import com.histmersion.server.markdownlint.Context
 import com.histmersion.domain.reviewarticle.BodyCorpus
 import com.histmersion.domain.reviewarticle.Fix
 import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.api.research.critiquepairing.Hit
+import com.histmersion.api.research.critiquepairing.MissedPair
 import com.histmersion.api.research.critiquepairing.Mention
 import com.histmersion.api.research.critiquepairing.Work
 
@@ -497,7 +497,7 @@ final class ArticlesControllers(
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def pairing(
       body: Article.Body
-  ): (List[Hit], Mention.Key => Option[com.histmersion.api.library.Citekey]) =
+  ): (List[MissedPair], Mention.Key => Option[com.histmersion.api.library.Citekey]) =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
     val edges = coverageReads.edgesTouching(cited, disagreementKinds)
@@ -510,7 +510,7 @@ final class ArticlesControllers(
     (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
 
   /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the hits applied. */
-  def repairPairing(body: Article.Body): (Article.Body, List[Hit]) =
+  def repairPairing(body: Article.Body): (Article.Body, List[MissedPair]) =
     CritiquePairing.repair(body, pairing(body)._1)
 
   /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns, and up to `cap`

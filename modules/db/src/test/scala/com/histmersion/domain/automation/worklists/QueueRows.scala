@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
@@ -27,17 +27,17 @@ import com.histmersion.lint.{tolerated, LintRule}
   * `QueueServiceContractSuite`).
   */
 object QueueRows:
-  def add(ds: DataSource, kind: Kind, in: QueueAdd): QueueItem =
+  def add(ds: DataSource, kind: Docket, in: QueueAdd): QueueItem =
     transact(ds)(QueueRepo.insert(kind, in, Creator.New.Manual(Creator.Surface.Rest), TestCreators.at))
 
-  def addAs(ds: DataSource, kind: Kind, in: QueueAdd, creator: Creator.New): QueueItem =
+  def addAs(ds: DataSource, kind: Docket, in: QueueAdd, creator: Creator.New): QueueItem =
     transact(ds)(QueueRepo.insert(kind, in, creator, TestCreators.at))
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def list(ds: DataSource, kind: Kind, all: Boolean): Vector[QueueItem] = connect(ds)(QueueRepo.list(kind, all))
+  def list(ds: DataSource, kind: Docket, all: Boolean): Vector[QueueItem] = connect(ds)(QueueRepo.list(kind, all))
   def get(ds: DataSource, id: QueueItem.Id): Option[QueueItem] = connect(ds)(QueueRepo.get(repoId(id)))
   def acquireNaming(ds: DataSource, doi: Doi): Vector[QueueItem] =
-    connect(ds)(QueueRepo.naming(Kind.Acquire, doi))
+    connect(ds)(QueueRepo.naming(Docket.Acquire, doi))
 
   /** The row removed straight, with no read before it: false when it was gone (G94). */
   def removeRow(ds: DataSource, id: QueueItem.Id): Boolean = transact(ds)(QueueRepo.delete(repoId(id)))

@@ -2,7 +2,7 @@ package com.histmersion
 package domain.catalogue.places
 
 import com.histmersion.domain.catalogue.evidence.NearFinding
-import com.histmersion.domain.catalogue.places.placereview.Proposal
+import com.histmersion.domain.catalogue.places.placereview.Remedy
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.catalogue.RegionNode
@@ -230,11 +230,11 @@ object PlaceFixtures:
 
   def gazetteerSources(ds: DataSource): List[GazetteerSourceRow] = connect(ds)(GazetteerRepo.sources())
 
-  def proposals(ds: DataSource): List[Proposal] = connect(ds)(PlaceReviewRepo.proposals())
+  def proposals(ds: DataSource): List[Remedy] = connect(ds)(PlaceReviewRepo.proposals())
 
   def applyProposals(
       ds: DataSource,
-      ps: List[Proposal],
+      ps: List[Remedy],
       toleranceKm: PlacesConfig.PointToleranceKm
   ): (RowCount, RowCount) =
     transact(ds)(PlaceReviewRepo.apply(ps, areaTolerance(toleranceKm)))

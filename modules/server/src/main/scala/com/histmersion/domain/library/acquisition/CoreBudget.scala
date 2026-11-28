@@ -3,9 +3,9 @@ package domain.library.acquisition
 
 import com.histmersion.domain.corequota.Grant
 import com.histmersion.domain.corequota.State
-import com.histmersion.domain.corequota.Limits
+import com.histmersion.domain.corequota.Ceilings
 import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Refusal
+import com.histmersion.domain.corequota.Denial
 
 import com.histmersion.config.CoreServiceConfig
 import com.histmersion.domain.CoreQuota
@@ -34,7 +34,7 @@ final class CoreBudget(clock: () => Instant, sleep: Grant.WaitMs => Unit = ms =>
   def state: State = current.get
 
   /** This budget as the plugin SPI lends it (`ctx.quota("core")`), under `limits`. */
-  def lend(limits: Limits): UpstreamQuota =
+  def lend(limits: Ceilings): UpstreamQuota =
     CoreQuotaLend(this, limits)
 
   /** Keep the budget in `s` from now on, starting from what it holds: the same day's spending and a block that has not
@@ -63,10 +63,10 @@ final class CoreBudget(clock: () => Instant, sleep: Grant.WaitMs => Unit = ms =>
   /** Why a call for `purpose` would not be made now — CORE asked to wait, or the day's budget is spent; `None` when it
     * may go (pacing aside: a slot comes within a minute). Nothing is counted.
     */
-  def unavailable(limits: Limits, purpose: Purpose): Option[Refusal] =
+  def unavailable(limits: Ceilings, purpose: Purpose): Option[Denial] =
     current.get.reserve(limits, purpose, clock()).left.toOption.filter {
-      case Refusal.Paced(_) => false
-      case _                => true
+      case Denial.Paced(_) => false
+      case _               => true
     }
 
   /** Take one call's share for `purpose`: `Left` when the call is not made (nothing is counted then). The call is
@@ -74,7 +74,7 @@ final class CoreBudget(clock: () => Instant, sleep: Grant.WaitMs => Unit = ms =>
     * answered.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def take(limits: Limits, purpose: Purpose): Either[Refusal, Unit] =
+  def take(limits: Ceilings, purpose: Purpose): Either[Denial, Unit] =
     val granted = lock.synchronized {
       current.get.reserve(limits, purpose, clock()).map { g =>
         current.set(g.state)
@@ -86,7 +86,7 @@ final class CoreBudget(clock: () => Instant, sleep: Grant.WaitMs => Unit = ms =>
 
   /** What CORE answered a call taken: a 429 and its rate-limit headers (names in lower case) block or pace it. */
   def observe(
-      limits: Limits,
+      limits: Ceilings,
       code: CoreQuota.StatusCode,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Unit =
@@ -112,18 +112,18 @@ object CoreBudget:
 
   /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def quotas(core: CoreBudget, limits: Limits): HostServices.Quotas =
+  def quotas(core: CoreBudget, limits: Ceilings): HostServices.Quotas =
     name => if name == Upstream.value then core.lend(limits) else UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def limits(c: CoreServiceConfig): Limits =
-    Limits(
-      Limits.PerMinute(c.perMinute.value),
-      Limits.DailyTokens(c.dailyTokens.value),
-      Limits.SearchDailyTokens(c.searchDailyTokens.value),
-      Limits.LookupCost(c.lookupCost.value),
-      Limits.SearchCost(c.searchCost.value),
-      Limits.ExhaustedPauseSeconds(c.exhaustedPauseSeconds.value),
-      Limits.MaxWaitSeconds(c.maxWaitSeconds.value)
+  def limits(c: CoreServiceConfig): Ceilings =
+    Ceilings(
+      Ceilings.PerMinute(c.perMinute.value),
+      Ceilings.DailyTokens(c.dailyTokens.value),
+      Ceilings.SearchDailyTokens(c.searchDailyTokens.value),
+      Ceilings.LookupCost(c.lookupCost.value),
+      Ceilings.SearchCost(c.searchCost.value),
+      Ceilings.ExhaustedPauseSeconds(c.exhaustedPauseSeconds.value),
+      Ceilings.MaxWaitSeconds(c.maxWaitSeconds.value)
     )

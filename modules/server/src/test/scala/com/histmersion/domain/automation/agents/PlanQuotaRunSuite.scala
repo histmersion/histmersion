@@ -215,7 +215,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         Some(Reading.ResetsAt(now() + resetIn)),
         rejected = Reading.Rejected.Accepted,
         Reading.ObservedAt(now()),
-        api.automation.planquota.Source.Run
+        api.automation.planquota.Channel.Run
       ),
       Reading(
         Reading.Limit("claude"),
@@ -224,7 +224,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
         Some(Reading.ResetsAt(now() + 5 * 86400000L)),
         rejected = Reading.Rejected.Accepted,
         Reading.ObservedAt(now()),
-        api.automation.planquota.Source.Run
+        api.automation.planquota.Channel.Run
       )
     )
 
@@ -383,7 +383,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
           Some(Reading.ResetsAt(now() + 3600000L)),
           Reading.Rejected.Accepted,
           Reading.ObservedAt(now() - 3600000L),
-          api.automation.planquota.Source.Run
+          api.automation.planquota.Channel.Run
         )
       )
     )
@@ -538,7 +538,7 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
           None,
           Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
-          api.automation.planquota.Source.Run
+          api.automation.planquota.Channel.Run
         )
       )
     )
@@ -552,13 +552,13 @@ class PlanQuotaRunSuite extends DbSuite with RunTranscripts:
           None,
           Reading.Rejected.Accepted,
           Reading.ObservedAt(now() - 60000),
-          api.automation.planquota.Source.Mod
+          api.automation.planquota.Channel.Mod
         )
       )
     )
     assertEquals(
       Transactor(ds).read(PlanQuotaRepo.readings(PoolId.ClaudePlan)).map(r => (r.usedPct, r.source)),
-      List((50.0, api.automation.planquota.Source.Run))
+      List((50.0, api.automation.planquota.Channel.Run))
     )
 
   test("the quota-guard report: recorded, and answered with stop once the pool is below its floor"):

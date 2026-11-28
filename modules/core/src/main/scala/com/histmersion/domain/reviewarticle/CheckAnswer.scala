@@ -12,7 +12,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.domain.reviewarticle.Finding
 import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CheckAnswer(
@@ -25,7 +25,7 @@ final case class CheckAnswer(
 object CheckAnswer:
   export Finding.Id
   export Check.Fixed
-  export Evidence.Quote
+  export Quotation.Quote
   export Check.Note
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")

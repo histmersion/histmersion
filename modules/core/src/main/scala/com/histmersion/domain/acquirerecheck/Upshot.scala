@@ -8,23 +8,23 @@ import com.histmersion.lint.LintRule
 import com.histmersion.domain.library
 import com.histmersion.Newtype
 
-enum Outcome(val wire: Outcome.Wire) derives CanEqual:
-  case Closed extends Outcome(Outcome.Wire("closed"))
+enum Upshot(val wire: Upshot.Wire) derives CanEqual:
+  case Closed extends Upshot(Upshot.Wire("closed"))
 
-  case Fetched extends Outcome(Outcome.Wire("fetched"))
+  case Fetched extends Upshot(Upshot.Wire("fetched"))
 
-  case NoCopy extends Outcome(Outcome.Wire("no-copy"))
+  case NoCopy extends Upshot(Upshot.Wire("no-copy"))
 
-  case Failed extends Outcome(Outcome.Wire("failed"))
+  case Failed extends Upshot(Upshot.Wire("failed"))
 
-object Outcome:
+object Upshot:
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
+  def parse(s: Wire): Option[Upshot] = values.find(_.wire.value == s.value.trim)
 
-  def of(o: library.acquisition.AcquireAttempt.Outcome): Option[Outcome] = o match
+  def of(o: library.acquisition.AcquireAttempt.Outcome): Option[Upshot] = o match
     case library.acquisition.AcquireAttempt.Outcome.Closed(_)    => Some(Closed)
     case library.acquisition.AcquireAttempt.Outcome.Fetched(_)   => Some(Fetched)
     case library.acquisition.AcquireAttempt.Outcome.NoCopy       => Some(NoCopy)

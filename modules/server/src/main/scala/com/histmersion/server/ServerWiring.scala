@@ -2,7 +2,7 @@ package com.histmersion
 package server
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.catalogue.geocode.Attempt
 import com.histmersion.api.catalogue.geocode.KindHint
 import com.histmersion.api.catalogue.geocode.Resolution
@@ -160,7 +160,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
 
   /** The first acquisition item (any status) whose text names `doi`. */
   def acquisitionItemNaming(doi: Doi): Option[QueueItem.Id] =
-    queues.naming(Kind.Acquire, doi).headOption.map(_.id)
+    queues.naming(Docket.Acquire, doi).headOption.map(_.id)
 
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
     * Thumbnails come from the converter.

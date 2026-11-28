@@ -74,7 +74,7 @@ private[acquisition] object AcquireCheckRepo:
       String,
       AcquireAttemptRow.Trigger.Wire,
       LastCheck.Generation,
-      domain.acquirerecheck.Outcome.Wire,
+      domain.acquirerecheck.Upshot.Wire,
       Option[Citekey],
       Option[AcquireAttempt.Outcome.Source],
       List[Problem.NotFound.Fetcher],
@@ -131,11 +131,11 @@ private[acquisition] object AcquireCheckRepo:
         val facts =
           scripts.map(w => StoredScripts.parse(w).map(s => AcquireAttempt.Oa(status, url, licence, s.scripts)))
         val found: Option[AcquireAttempt.Outcome] =
-          (domain.acquirerecheck.Outcome.parse(outcome), citekey, source, failed) match
-            case (Some(domain.acquirerecheck.Outcome.Closed), Some(ck), _, _) => Some(AcquireAttempt.Outcome.Closed(ck))
-            case (Some(domain.acquirerecheck.Outcome.Fetched), _, Some(s), _) => Some(AcquireAttempt.Outcome.Fetched(s))
-            case (Some(domain.acquirerecheck.Outcome.NoCopy), _, _, _)        => Some(AcquireAttempt.Outcome.NoCopy)
-            case (Some(domain.acquirerecheck.Outcome.Failed), _, _, Some(why)) =>
+          (domain.acquirerecheck.Upshot.parse(outcome), citekey, source, failed) match
+            case (Some(domain.acquirerecheck.Upshot.Closed), Some(ck), _, _)  => Some(AcquireAttempt.Outcome.Closed(ck))
+            case (Some(domain.acquirerecheck.Upshot.Fetched), _, Some(s), _)  => Some(AcquireAttempt.Outcome.Fetched(s))
+            case (Some(domain.acquirerecheck.Upshot.NoCopy), _, _, _)         => Some(AcquireAttempt.Outcome.NoCopy)
+            case (Some(domain.acquirerecheck.Upshot.Failed), _, _, Some(why)) =>
               Some(AcquireAttempt.Outcome.Failed(why))
             case (None, _, _, _) if outcome == AcquireAttemptRow.LegacyWire =>
               Some(
@@ -190,12 +190,12 @@ private[acquisition] object AcquireCheckRepo:
     val at = attempt.at.toString
     val (outcome, citekey, source, failure, reason, checks) = attempt.outcome match
       case AcquireAttempt.Outcome.Closed(ck) =>
-        (domain.acquirerecheck.Outcome.Closed.wire, Some(ck), None, None, None, None)
+        (domain.acquirerecheck.Upshot.Closed.wire, Some(ck), None, None, None, None)
       case AcquireAttempt.Outcome.Fetched(s) =>
-        (domain.acquirerecheck.Outcome.Fetched.wire, None, Some(s), None, None, None)
-      case AcquireAttempt.Outcome.NoCopy => (domain.acquirerecheck.Outcome.NoCopy.wire, None, None, None, None, None)
+        (domain.acquirerecheck.Upshot.Fetched.wire, None, Some(s), None, None, None)
+      case AcquireAttempt.Outcome.NoCopy => (domain.acquirerecheck.Upshot.NoCopy.wire, None, None, None, None, None)
       case AcquireAttempt.Outcome.Failed(why) =>
-        (domain.acquirerecheck.Outcome.Failed.wire, None, None, Some(why.toNonEmpty), None, None)
+        (domain.acquirerecheck.Upshot.Failed.wire, None, None, Some(why.toNonEmpty), None, None)
       case AcquireAttempt.Outcome.Legacy(r, n) => (AcquireAttemptRow.LegacyWire, None, None, None, Some(r), Some(n))
     val _ =
       sql"""DELETE FROM acquire_attempts
@@ -220,11 +220,11 @@ private[acquisition] object AcquireCheckRepo:
                     $reason, $checks)
             RETURNING item_id""".query[AcquireAttemptRow.Id].run()
 
-  def countSince(since: Instant)(using DbCon): Map[domain.acquirerecheck.Outcome.Wire, RowCount] =
+  def countSince(since: Instant)(using DbCon): Map[domain.acquirerecheck.Upshot.Wire, RowCount] =
     val from = since.toString
     sql"""SELECT outcome, count(*)::int FROM acquire_attempts
            WHERE at >= $from::timestamptz AND outcome <> 'legacy' GROUP BY outcome"""
-      .query[(domain.acquirerecheck.Outcome.Wire, RowCount)]
+      .query[(domain.acquirerecheck.Upshot.Wire, RowCount)]
       .run()
       .toMap
 

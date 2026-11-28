@@ -3,4 +3,4 @@ package server.markdownlint
 
 import com.histmersion.api.checks.FormatIssue
 
-final case class Finding(issue: FormatIssue, edits: List[Edit])
+final case class Offence(issue: FormatIssue, edits: List[Edit])

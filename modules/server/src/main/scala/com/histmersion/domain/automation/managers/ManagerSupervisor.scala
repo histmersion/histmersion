@@ -462,7 +462,7 @@ final class ManagerSupervisor(
         val filed = task.flatMap(t =>
           workLists
             .record(
-              WorkListControllers.ListName(api.automation.queue.Kind.Tasks.label.value),
+              WorkListControllers.ListName(api.automation.queue.Docket.Tasks.label.value),
               QueueAdd(
                 QueueItem.Text(t.value),
                 topic = Some(QueueItem.Topic("agent manager")),

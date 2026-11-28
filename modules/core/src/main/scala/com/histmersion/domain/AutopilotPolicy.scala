@@ -2,12 +2,12 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.autopilotpolicy.PlannedFacts
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.domain.autopilotpolicy.GoalPlanFacts
 import com.histmersion.domain.autopilotpolicy.GoalRow
 import com.histmersion.domain.autopilotpolicy.ManagerRow
-import com.histmersion.domain.autopilotpolicy.Settings
-import com.histmersion.domain.autopilotpolicy.Step
+import com.histmersion.domain.autopilotpolicy.Pacing
+import com.histmersion.domain.autopilotpolicy.Stride
 
 import com.histmersion.api.Plural
 
@@ -113,7 +113,7 @@ object AutopilotPolicy:
       minSources: MinSources,
       approvedToday: ApprovedToday,
       cap: Cap
-  ): Verdict =
+  ): Ruling =
     val n = articles.size
     val bad = articles.flatMap { a =>
       if !a.slugFree.value then Some(s"${a.slug}: the slug is taken now")
@@ -121,20 +121,20 @@ object AutopilotPolicy:
         Some(s"${a.slug}: its filter returns ${a.hits} source(s), fewer than $minSources")
       else None
     }
-    if n == 0 then Verdict.Reject(Rationale("the plan names no article"))
-    else if bad.nonEmpty then Verdict.Reject(Rationale(s"checks failed — ${bad.mkString("; ")}"))
+    if n == 0 then Ruling.Reject(Rationale("the plan names no article"))
+    else if bad.nonEmpty then Ruling.Reject(Rationale(s"checks failed — ${bad.mkString("; ")}"))
     else if n > cap.value then
-      Verdict.Leave(
+      Ruling.Leave(
         Rationale(s"${counted(n, "article")} exceed the daily cap of $cap for one research area")
       )
     else if approvedToday.value + n > cap.value then
-      Verdict.Leave(
+      Ruling.Leave(
         Rationale(
           s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow"
         )
       )
     else
-      Verdict.Approve(
+      Ruling.Approve(
         Rationale(
           s"${counted(n, "article")}, every slug free and every filter at least $minSources sources " +
             s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday.value + n} of $cap today"
@@ -273,15 +273,15 @@ object AutopilotPolicy:
       goals: List[GoalRow],
       managers: List[ManagerRow],
       pausedByAutopilot: Set[ManagerRow.Id],
-      s: Settings
-  ): List[Step] =
+      s: Pacing
+  ): List[Stride] =
     val byId = managers.map(m => m.id -> m).toMap
     val library = List(ManagerRow.Id(ReviewId), ManagerRow.Id(EnrichId)).flatMap { id =>
       byId.get(id).toList.flatMap { m =>
-        Option.when(m.state == Manager.State.Paused.wire)(Step.Resume(id)).toList ++
+        Option.when(m.state == Manager.State.Paused.wire)(Stride.Resume(id)).toList ++
           Option
             .when(id.value == ReviewId && m.extendMinNew.isEmpty && s.extendMinNew.value > 0)(
-              Step.ExtendMinNew(id, s.extendMinNew)
+              Stride.ExtendMinNew(id, s.extendMinNew)
             )
             .toList
       }
@@ -290,23 +290,23 @@ object AutopilotPolicy:
       val done = finished(g.status)
       val seed = byId.get(ManagerRow.Id.seed(g.slug)) match
         case None if done => Nil
-        case None         => List(Step.CreateSeed(g.slug, stagger(s.seedCron, ManagerRow.Id.seed(g.slug)), g.needsPlan))
-        case Some(m)      =>
-          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
-            Option.when(!done && m.cron.isEmpty)(Step.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
+        case None    => List(Stride.CreateSeed(g.slug, stagger(s.seedCron, ManagerRow.Id.seed(g.slug)), g.needsPlan))
+        case Some(m) =>
+          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Stride.Resume(m.id)).toList ++
+            Option.when(!done && m.cron.isEmpty)(Stride.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
             Option
               .when(!done && g.needsPlan.value && !m.planItem.value && m.state != Manager.State.Stopped.wire)(
-                Step.AddPlanItem(m.id, g.slug)
+                Stride.AddPlanItem(m.id, g.slug)
               )
               .toList
       val watchCron = if done then s.finishedWatchCron else s.watchCron
       val watch = byId.get(ManagerRow.Id.watch(g.slug)) match
         case None =>
-          List(Step.CreateWatch(g.slug, stagger(watchCron, ManagerRow.Id.watch(g.slug)), s.watchIngestPerDay))
+          List(Stride.CreateWatch(g.slug, stagger(watchCron, ManagerRow.Id.watch(g.slug)), s.watchIngestPerDay))
         case Some(m) =>
-          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
-            Option.when(m.cron.isEmpty)(Step.SetCron(m.id, stagger(watchCron, m.id))).toList ++
-            Option.when(m.autoIngest.isEmpty)(Step.AutoIngestOn(m.id, s.watchIngestPerDay)).toList
+          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Stride.Resume(m.id)).toList ++
+            Option.when(m.cron.isEmpty)(Stride.SetCron(m.id, stagger(watchCron, m.id))).toList ++
+            Option.when(m.autoIngest.isEmpty)(Stride.AutoIngestOn(m.id, s.watchIngestPerDay)).toList
       seed ++ watch
     }
     library ++ perGoal
@@ -344,7 +344,7 @@ object AutopilotPolicy:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extendDue(
       newSources: NewSources,
-      min: Settings.ExtendMinNew,
+      min: Pacing.ExtendMinNew,
       lastExtend: Option[Instant],
       cooldownDays: CooldownDays,
       now: Instant

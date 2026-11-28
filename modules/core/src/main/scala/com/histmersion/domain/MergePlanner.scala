@@ -965,7 +965,7 @@ object MergePlanner:
     // an acquire/tasks item with the same text here is the same item
     val queueClaimed = scala.collection.mutable.Set.empty[UUID]
     localized.queue
-      .filter(q => writesInitially(q.uid) && q.list != api.automation.queue.Kind.Log.label)
+      .filter(q => writesInitially(q.uid) && q.list != api.automation.queue.Docket.Log.label)
       .sortBy(_.uid.toString)
       .foreach { q =>
         in.local.queue

@@ -4,7 +4,7 @@ package domain.automation.worklists
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueImport
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -132,8 +132,8 @@ class WorkListControllersSuite extends munit.FunSuite:
     val c = controllers()
     val file = QueueItem.Text("# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n")
     val r =
-      c.importText(Kind.Label("tasks"), QueueImport(file))
+      c.importText(Docket.Label("tasks"), QueueImport(file))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.list, r.items, r.replaced), ("tasks", 2, 0))
-    assertEquals(c.exportText(Kind.Label("tasks")).map(_.value.contains("- [x] read Kuhrt")), Right(true))
-    assertEquals(c.files().map(_._1), Kind.values.toList.map(_.file))
+    assertEquals(c.exportText(Docket.Label("tasks")).map(_.value.contains("- [x] read Kuhrt")), Right(true))
+    assertEquals(c.files().map(_._1), Docket.values.toList.map(_.file))

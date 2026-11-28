@@ -497,10 +497,10 @@ final class PlanPools(
   /** A mod's report: recorded, and answered with whether the run may go on. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def guard(report: ModReport, now: PlanQuota.Now = now0)(using WritePermit): GuardAnswer =
-    val src = api.automation.planquota.Source
-      .parse(api.automation.planquota.Source.Wire(report.source.value))
-      .filter(s => s == api.automation.planquota.Source.Mod || s == api.automation.planquota.Source.Interactive)
-      .getOrElse(api.automation.planquota.Source.Mod)
+    val src = api.automation.planquota.Channel
+      .parse(api.automation.planquota.Channel.Wire(report.source.value))
+      .filter(s => s == api.automation.planquota.Channel.Mod || s == api.automation.planquota.Channel.Interactive)
+      .getOrElse(api.automation.planquota.Channel.Mod)
     record(PoolId.ClaudePlan, PlanPools.modReadings(report.rateLimits, src, now))
     verdict(PoolId.ClaudePlan, None, now)._1 match
       case Verdict.Usable(_)           => GuardAnswer(allow = GuardAnswer.Allow.Allow)
@@ -739,7 +739,7 @@ object PlanPools:
       Right(
         o.readings.map(
           _.modify(_.source)
-            .setTo(api.automation.planquota.Source.Probe)
+            .setTo(api.automation.planquota.Channel.Probe)
             .modify(_.observedAt)
             .setTo(Reading.ObservedAt(now.value))
         )
@@ -761,7 +761,7 @@ object PlanPools:
                 Some(Reading.ResetsAt(until)),
                 rejected = Reading.Rejected.Rejected,
                 Reading.ObservedAt(now.value),
-                api.automation.planquota.Source.Probe
+                api.automation.planquota.Channel.Probe
               )
             )
           )
@@ -809,7 +809,7 @@ object PlanPools:
     * the window it names refused.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def claudeReadings(info: Json, source: api.automation.planquota.Source, now: PlanQuota.Now): List[Reading] =
+  def claudeReadings(info: Json, source: api.automation.planquota.Channel, now: PlanQuota.Now): List[Reading] =
     val c = info.cursor
     val status = c.downField("status").as[String].toOption
     val repKind = c.downField("rateLimitType").as[String].toOption
@@ -864,7 +864,7 @@ object PlanPools:
 
   /** A mod's `rateLimits` (`percentUsed`, `resetsAt` ISO) → readings. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def modReadings(ws: List[ModWindow], source: api.automation.planquota.Source, now: PlanQuota.Now): List[Reading] =
+  def modReadings(ws: List[ModWindow], source: api.automation.planquota.Channel, now: PlanQuota.Now): List[Reading] =
     ws.map { w =>
       val reset = w.resetsAt
         .flatMap(t => scala.util.Try(java.time.Instant.parse(t.value).toEpochMilli).toOption)
@@ -915,7 +915,7 @@ object PlanPools:
           wc.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
           rejected = (if reached then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
           Reading.ObservedAt(now.value),
-          api.automation.planquota.Source.AppServer,
+          api.automation.planquota.Channel.AppServer,
           model.map(Reading.Model(_))
         )
       }

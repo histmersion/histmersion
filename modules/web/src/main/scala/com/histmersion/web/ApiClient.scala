@@ -301,16 +301,20 @@ object ApiClient:
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueList(list: api.automation.queue.Kind.Label, all: Boolean = false): Future[QueueListing] =
+  def queueList(list: api.automation.queue.Docket.Label, all: Boolean = false): Future[QueueListing] =
     call(OpsApi.queueList)((Queue.Wire(list.value), all, None, None))
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueForGoal(list: api.automation.queue.Kind.Label, goal: Goal.Slug, all: Boolean = false): Future[QueueListing] =
+  def queueForGoal(
+      list: api.automation.queue.Docket.Label,
+      goal: Goal.Slug,
+      all: Boolean = false
+  ): Future[QueueListing] =
     call(OpsApi.queueList)((Queue.Wire(list.value), all, Some(Queue.Wire(goal.value)), None))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueOfJob(list: api.automation.queue.Kind.Label, job: JobInfo.Id): Future[QueueListing] =
+  def queueOfJob(list: api.automation.queue.Docket.Label, job: JobInfo.Id): Future[QueueListing] =
     call(OpsApi.queueList)((Queue.Wire(list.value), true, None, Some(Queue.Wire(job.value))))
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def activity(
@@ -399,7 +403,7 @@ object ApiClient:
     call(OpsApi.queuePatch)((Queue.Id(id.value), p))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueAdd(list: api.automation.queue.Kind.Label, in: QueueAdd): Future[QueueItem] =
+  def queueAdd(list: api.automation.queue.Docket.Label, in: QueueAdd): Future[QueueItem] =
     call(OpsApi.queueAdd)((Queue.Wire(list.value), in))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")

@@ -9,7 +9,7 @@ import com.histmersion.domain.managerpolicy.StepFacts
 import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.{Pipeline, RunState}
@@ -168,7 +168,7 @@ trait ManagerKindDefinition:
       run: Option[RunInfo],
       mgr: Option[ManagerInfo],
       now: Instant
-  ): Option[Verdict] = None
+  ): Option[Ruling] = None
 
   /** Whether a job of this kind's domain is in flight that a drain waits for. */
   def busy: Boolean = false

@@ -14,9 +14,9 @@ import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.domain.managerpolicy.StepFacts
 import com.histmersion.api.automation.managers.HintEffect
 import com.histmersion.api.automation.managers.ItemOrigin
-import com.histmersion.domain.autopilotpolicy.Settings
+import com.histmersion.domain.autopilotpolicy.Pacing
 import com.histmersion.api.automation.managers.ManagerHint
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
@@ -228,11 +228,11 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     val open = ledger
       .flatMap(_.task)
       .flatMap(i => site.queues.get(QueueItemId(i.value)))
-      .filter(i => i.list == api.automation.queue.Kind.Tasks.label && i.status.value == Queue.Open)
+      .filter(i => i.list == api.automation.queue.Docket.Tasks.label && i.status.value == Queue.Open)
       // the article's collapsed item the ledger lost track of (#934)
       .orElse(
         site.queues
-          .list(api.automation.queue.Kind.Tasks, QueueScope.Open)
+          .list(api.automation.queue.Docket.Tasks, QueueScope.Open)
           .filter(i => ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
           .sortBy(_.id)
           .headOption
@@ -246,7 +246,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case None =>
         site.workLists
           .record(
-            WorkListControllers.ListName(api.automation.queue.Kind.Tasks.label.value),
+            WorkListControllers.ListName(api.automation.queue.Docket.Tasks.label.value),
             QueueAdd(QueueItem.Text(text.value), topic = Some(QueueItem.Topic("agent review"))),
             creator
           )
@@ -407,7 +407,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                   AutopilotPolicy
                     .extendDue(
                       AutopilotPolicy.NewSources(n.value),
-                      Settings.ExtendMinNew(min),
+                      Pacing.ExtendMinNew(min),
                       at.flatMap(a => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(a.value))),
                       AutopilotPolicy.CooldownDays(mcfg.review.extendCooldownDays.value),
                       now
@@ -495,7 +495,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .filter(e =>
             ManagerPolicy.matches(
               e,
-              Candidate.Target(slug.value),
+              Assignable.Target(slug.value),
               tags.map(t => ManagerPolicy.Tag(t.value)),
               Nil,
               goals
@@ -575,7 +575,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case ArticleReview =>
         if ManagerPolicy.waitsFor(
             Item.Kind.ArticleReview,
-            Candidate.Target(item.target.value),
+            Assignable.Target(item.target.value),
             c.openKeys(manager)
           )
         then None

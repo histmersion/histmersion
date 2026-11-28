@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
@@ -220,7 +220,7 @@ object AcquireMatch:
       proposeAt: ProposeThreshold
   ): List[Decision] =
     val key = doi.flatMap(d => doiKeyOf(d.value))
-    val open = items.filter(i => i.list == Kind.Acquire.label && i.status == QueueItem.Status(Queue.Open))
+    val open = items.filter(i => i.list == Docket.Acquire.label && i.status == QueueItem.Status(Queue.Open))
     val (closes, rest) =
       open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(w => s"$w").getOrElse("")).contains))
     val proposals = rest

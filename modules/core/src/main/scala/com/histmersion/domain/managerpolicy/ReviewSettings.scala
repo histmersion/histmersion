@@ -116,7 +116,7 @@ object ReviewSettings:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def evaluateStep(
         label: StepLabel,
-        target: Candidate.Target,
+        target: Assignable.Target,
         failures: Next.Retry.Failures,
         state: ItemState,
         run: Run.Id,

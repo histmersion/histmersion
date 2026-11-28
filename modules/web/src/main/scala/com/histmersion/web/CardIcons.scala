@@ -87,7 +87,7 @@ object CardIcons:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def event(kind: EventSummary.Kind): api.catalogue.eventtaxonomy.Kind.Icon = EventTaxonomy.icon(kind)
+  def event(kind: EventSummary.Kind): api.catalogue.eventtaxonomy.Genre.Icon = EventTaxonomy.icon(kind)
 
   /** Pure: a card icon's markup, for the cards built as HTML (a popup): the same element, class and size as
     * [[Preview.cardView]]'s.

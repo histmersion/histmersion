@@ -1,7 +1,7 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.acquirerecheck.Outcome
+import com.histmersion.domain.acquirerecheck.Upshot
 import com.histmersion.domain.managerpolicy.ReviewSettings
 import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.managers.OaWork
@@ -211,7 +211,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       assertEquals(read, Problem.Stored.Unrecognised(Problem.Stored.Text(text)))
       assertEquals(read.sentence, text, "its text, whole")
       assert(isNoLegalCopy(read), text)
-      assertEquals(AcquireRecheck.failure(read), Outcome.NoCopy, text)
+      assertEquals(AcquireRecheck.failure(read), Upshot.NoCopy, text)
       onFailure(
         read,
         IngestBacklog.Failure.Retry.Failures(0),

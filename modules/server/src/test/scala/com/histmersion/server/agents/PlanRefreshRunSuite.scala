@@ -264,7 +264,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
             Some(Reading.ResetsAt(now() + 3 * 3600000L)),
             rejected = Reading.Rejected.Accepted,
             Reading.ObservedAt(now() - 60 * Min),
-            api.automation.planquota.Source.Run
+            api.automation.planquota.Channel.Run
           )
         )
       )
@@ -324,7 +324,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           Some(Reading.ResetsAt(now() + 3600000L)),
           Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
-          api.automation.planquota.Source.Run
+          api.automation.planquota.Channel.Run
         )
       )
     )
@@ -397,7 +397,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reads.probes.get(), 1)
     assertEquals(
       Transactor(ds).read(PlanQuotaRepo.readings(PoolId.ClaudePlan)).map(r => (r.kind, r.source)).toSet,
-      Set(("five_hour", api.automation.planquota.Source.Probe), ("seven_day", api.automation.planquota.Source.Probe))
+      Set(("five_hour", api.automation.planquota.Channel.Probe), ("seven_day", api.automation.planquota.Channel.Probe))
     )
     // refresh off: today's behaviour — usable, unknown, nothing read
     connect(ds)(sql"DELETE FROM plan_quota_readings".update.run())
@@ -463,7 +463,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
             Some(Reading.ResetsAt(now() + 3600000L)),
             rejected = Reading.Rejected.Accepted,
             Reading.ObservedAt(at.plusSeconds(300 * 60).toEpochMilli),
-            api.automation.planquota.Source.Run
+            api.automation.planquota.Channel.Run
           )
         )
       )
@@ -542,7 +542,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           Some(Reading.ResetsAt(now() + 3600000L)),
           Reading.Rejected.Accepted,
           Reading.ObservedAt(now() - Min),
-          api.automation.planquota.Source.Run
+          api.automation.planquota.Channel.Run
         )
       )
     )
@@ -574,7 +574,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           Some(Reading.ResetsAt(now() + 3600000L)),
           Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
-          api.automation.planquota.Source.Run
+          api.automation.planquota.Channel.Run
         )
       )
     )
@@ -678,7 +678,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
             Some(Reading.ResetsAt(now() + 3600000L)),
             rejected = Reading.Rejected.Accepted,
             Reading.ObservedAt(now() - 60 * Min),
-            api.automation.planquota.Source.AppServer
+            api.automation.planquota.Channel.AppServer
           )
         )
       )
@@ -698,7 +698,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val (v, states, r) = pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)
     assertEquals((v.usable, r.map(x => (x.mode, x.ok))), (true, Some(("app-server", true))))
     assertEquals(reads.codexReads.get(), 1)
-    assert(states.forall(s => !s.stale.stale && s.reading.source == api.automation.planquota.Source.AppServer), states)
+    assert(states.forall(s => !s.stale.stale && s.reading.source == api.automation.planquota.Channel.AppServer), states)
     // opencode on the ChatGPT login signs in by itself: the codex login does not gate it
     assertEquals(
       PlanPools.loginGates(PoolId.ChatgptPlan, ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5"))),

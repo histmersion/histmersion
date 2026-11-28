@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -14,7 +14,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 object QueueItemLink:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def apply(kind: Kind, id: Goal.Plans.GoalLink.QueueNumber, mods: Modifier[HtmlElement]*): HtmlElement =
+  def apply(kind: Docket, id: Goal.Plans.GoalLink.QueueNumber, mods: Modifier[HtmlElement]*): HtmlElement =
     val to = Route.queueItem(kind, id)
     a(
       cls := "link-btn",

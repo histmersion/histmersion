@@ -798,7 +798,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(status(h, full), Queue.Done)
     val checks = AcquisitionTesting.attempts(ds).of(ids.map(checkItem)).view.mapValues(_.head).toMap
     assertEquals(
-      checks.values.flatMap(a => domain.acquirerecheck.Outcome.of(a.outcome)).map(_.wire.value).toList.sorted,
+      checks.values.flatMap(a => domain.acquirerecheck.Upshot.of(a.outcome)).map(_.wire.value).toList.sorted,
       List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy)
     )
     val throttled = Rationale.of(checks(checkItem(ids(3)))).said

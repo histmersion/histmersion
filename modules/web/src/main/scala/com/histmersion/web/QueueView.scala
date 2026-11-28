@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.api.automation.queue.QueueAdd
@@ -104,7 +104,7 @@ object QueueView:
     *   the checkbox's label as (mark done, mark open again)
     */
   final case class Spec(
-      kind: Kind,
+      kind: Docket,
       icon: Icon,
       empty: Spec.Empty,
       untitled: Spec.Untitled,
@@ -122,7 +122,7 @@ object QueueView:
     def reasons: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */
-    def fulfils: Boolean = kind == Kind.Acquire
+    def fulfils: Boolean = kind == Docket.Acquire
 
   object Spec:
 
@@ -139,8 +139,8 @@ object QueueView:
     object TickReopen extends Newtype[String, Pure]
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def spec(kind: Kind): Spec = kind match
-    case Kind.Acquire =>
+  def spec(kind: Docket): Spec = kind match
+    case Docket.Acquire =>
       Spec(
         kind,
         Icon.Acquire,
@@ -150,7 +150,7 @@ object QueueView:
         Some(UiState.acquireDone),
         (Spec.TickDone("mark as got"), Spec.TickReopen("mark as still to get"))
       )
-    case Kind.Tasks =>
+    case Docket.Tasks =>
       Spec(
         kind,
         Icon.Tasks,
@@ -160,7 +160,7 @@ object QueueView:
         Some(UiState.tasksDone),
         (Spec.TickDone("mark as done"), Spec.TickReopen("mark as still open"))
       )
-    case Kind.Log =>
+    case Docket.Log =>
       Spec(
         kind,
         Icon.Log,
@@ -240,7 +240,7 @@ object QueueView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def groups(
-      kind: Kind,
+      kind: Docket,
       items: List[QueueItem]
   ): List[(Option[QueueItem.Topic], List[QueueItem])] =
     val gs = items.groupBy(_.topic).toList.map((t, is) => t -> is.sortBy(_.id))
@@ -269,7 +269,7 @@ object QueueView:
   /** A list changed outside its own window (an upload ticked an acquisition item off): the open window of that list
     * reloads.
     */
-  val changed: EventBus[Kind] = new EventBus[Kind]
+  val changed: EventBus[Docket] = new EventBus[Docket]
 
   /** The write that ticks `item` off as fulfilled by the source `citekey` — the core rule ([[Queue.fulfil]]) the
     * server's OCR job applies too, addressed to the item.
@@ -364,7 +364,7 @@ object QueueView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def pane(kind: Kind, goal: Option[Goal.Slug] = None): HtmlElement =
+  def pane(kind: Docket, goal: Option[Goal.Slug] = None): HtmlElement =
     val sp = spec(kind)
     val recheck = Var(Option.empty[Either[String, Acquire.Checks.RecheckResult]])
     val items = Var(List.empty[QueueItem])
@@ -495,7 +495,7 @@ object QueueView:
           RouteLink(Route.Goal(g), Wording.humanize(Wording.Id(g.value))),
           " · ",
           RouteLink(
-            if kind == Kind.Acquire then Route.Research(ResearchSection.Acquire)
+            if kind == Docket.Acquire then Route.Research(ResearchSection.Acquire)
             else Route.Research(ResearchSection.Backlog),
             "show every item"
           )
@@ -785,10 +785,10 @@ object QueueView:
 
   /** A list as Research's side navigation names it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def listName(kind: Kind): UiLabels.Text = kind match
-    case Kind.Acquire => UiLabels.Text("To acquire")
-    case Kind.Tasks   => UiLabels.Text("Backlog")
-    case Kind.Log     => UiLabels.Text("Worklog")
+  def listName(kind: Docket): UiLabels.Text = kind match
+    case Docket.Acquire => UiLabels.Text("To acquire")
+    case Docket.Tasks   => UiLabels.Text("Backlog")
+    case Docket.Log     => UiLabels.Text("Worklog")
 
   /** Who wrote an item and who ticked it off: the agent run or background job, each a link to its page. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -818,7 +818,7 @@ object QueueView:
       cls := "job-items",
       onMountCallback(_ =>
         scala.concurrent.Future
-          .sequence(Kind.values.toList.map(k => ApiClient.queueOfJob(k.label, jobId)))
+          .sequence(Docket.values.toList.map(k => ApiClient.queueOfJob(k.label, jobId)))
           .onComplete(r => found.set(Some(r.toOption.toList.flatten.flatMap(_.items))))
       ),
       child <-- found.signal.map {
@@ -829,7 +829,7 @@ object QueueView:
             ul(
               cls := "job-items-list",
               is.map { i =>
-                val kind = Kind.parse(i.list).getOrElse(Kind.Log)
+                val kind = Docket.parse(i.list).getOrElse(Docket.Log)
                 li(
                   span(
                     cls := "muted",

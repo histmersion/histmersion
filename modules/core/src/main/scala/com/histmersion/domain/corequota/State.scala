@@ -6,7 +6,7 @@ import java.time.Instant
 import java.time.LocalDate
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
-import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Backoff
 import com.histmersion.domain.CoreQuota.Spent
 import com.histmersion.domain.corequota.Purpose
 import com.histmersion.domain.corequota.Window
@@ -14,8 +14,8 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
 import com.histmersion.domain.CoreQuota.day
 import com.histmersion.domain.corequota.Grant
-import com.histmersion.domain.corequota.Refusal
-import com.histmersion.domain.corequota.Limits
+import com.histmersion.domain.corequota.Denial
+import com.histmersion.domain.corequota.Ceilings
 import com.histmersion.domain.CoreQuota.HeaderValue
 import com.histmersion.domain.CoreQuota.HeaderName
 import com.histmersion.domain.CoreQuota.retryAt
@@ -27,7 +27,7 @@ final case class State(
     day: LocalDate,
     lookupTokens: State.LookupTokens,
     searchTokens: State.SearchTokens,
-    block: Option[Block],
+    block: Option[Backoff],
     window: Option[Window],
     recent: Vector[Instant] = Vector.empty
 ):
@@ -63,16 +63,16 @@ object State:
 
   extension (s0: State)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def reserve(limits: Limits, purpose: Purpose, now: Instant): Either[Refusal, Grant] =
+    def reserve(limits: Ceilings, purpose: Purpose, now: Instant): Either[Denial, Grant] =
       val s = s0.onDay(now)
       val cost = limits.cost(purpose)
       s.block.filter(_.until.isAfter(now)) match
-        case Some(b) => Left(Refusal.Blocked(b.until, b.why))
+        case Some(b) => Left(Denial.Blocked(b.until, b.why))
         case None    =>
           if s.spent.value + cost.value > limits.dailyTokens.value then
-            Left(Refusal.OverBudget(purpose, s.spent, limits.dailyCap))
+            Left(Denial.OverBudget(purpose, s.spent, limits.dailyCap))
           else if purpose == Purpose.Search && s.searchTokens.value + cost.value > limits.searchDailyTokens.value then
-            Left(Refusal.OverBudget(purpose, s.spentOn(Purpose.Search), limits.searchCap))
+            Left(Denial.OverBudget(purpose, s.spentOn(Purpose.Search), limits.searchCap))
           else
             val perMinute = s.window
               .flatMap(_.limit)
@@ -86,8 +86,7 @@ object State:
               else
                 Instant.ofEpochMilli((inWindow(inWindow.size - perMinute).toEpochMilli + Minute).max(now.toEpochMilli))
             val waitMs = slot.toEpochMilli - now.toEpochMilli
-            if waitMs > limits.maxWaitSeconds.value.toLong.max(0L) * 1000L then
-              Left(Refusal.Paced(Grant.WaitMs(waitMs)))
+            if waitMs > limits.maxWaitSeconds.value.toLong.max(0L) * 1000L then Left(Denial.Paced(Grant.WaitMs(waitMs)))
             else
               val spent = purpose match
                 case Purpose.Lookup => s.modify(_.lookupTokens).using(t => LookupTokens(t.value + cost.value))
@@ -105,7 +104,7 @@ object State:
 
   extension (s: State)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def observe(limits: Limits, code: StatusCode, headers: Map[HeaderName, HeaderValue], now: Instant): State =
+    def observe(limits: Ceilings, code: StatusCode, headers: Map[HeaderName, HeaderValue], now: Instant): State =
       def int(name: HeaderName) = headers.get(name).flatMap(_.value.trim.toIntOption)
       val window = Window(
         int(HeaderName("x-ratelimit-limit")).map(Window.Limit(_)),
@@ -117,10 +116,10 @@ object State:
       val pause = now.plusSeconds(limits.exhaustedPauseSeconds.value.toLong.max(1L))
       val until = retry.filter(_.isAfter(now)).getOrElse(pause)
       val why =
-        if code.value == 429 then Some(Block.Rationale.Throttled)
-        else if window.remaining.exists(_.value == 0) then Some(Block.Rationale.Exhausted(window.limit))
+        if code.value == 429 then Some(Backoff.Rationale.Throttled)
+        else if window.remaining.exists(_.value == 0) then Some(Backoff.Rationale.Exhausted(window.limit))
         else None
-      val block = why.map(Block(until, _)) match
+      val block = why.map(Backoff(until, _)) match
         case Some(b) => Some(s.block.filter(_.until.isAfter(b.until)).getOrElse(b))
         case None    => s.block
       val known = window.limit.isDefined || window.remaining.isDefined
@@ -128,7 +127,7 @@ object State:
 
   extension (s0: State)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def view(limits: Limits, now: Instant): UpstreamQuota =
+    def view(limits: Ceilings, now: Instant): UpstreamQuota =
       val s = s0.onDay(now)
       val b = s.block.filter(_.until.isAfter(now))
       UpstreamQuota(

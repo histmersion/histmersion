@@ -13,7 +13,7 @@ import com.histmersion.domain.autopilotpolicy.NextFacts
 import com.histmersion.api.Plural
 import com.histmersion.domain.GoalFocus.finished
 import com.histmersion.domain.goalfocus.Stage
-import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.domain.goalfocus.Thresholds
 import com.histmersion.domain.GoalFocus.Rationale
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.ItemStatus
@@ -66,7 +66,7 @@ object Facts:
 
   extension (f: Facts)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def stage(minSources: Settings.MinSources): Stage =
+    def stage(minSources: Thresholds.MinSources): Stage =
       if f.unreviewed.value > 0 then Stage.Reviewing
       else if f.compileOpen.value > 0 then Stage.Compiling
       else if f.sources.value >= math.max(1, minSources.value) then Stage.Ready
@@ -74,7 +74,7 @@ object Facts:
 
   extension (f: Facts)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def stageWhy(st: Stage, minSources: Settings.MinSources): Rationale = st match
+    def stageWhy(st: Stage, minSources: Thresholds.MinSources): Rationale = st match
       case Stage.Reviewing =>
         Rationale(s"${f.unreviewed} of ${counted(f.articles.value, "article")} still to pass review")
       case Stage.Compiling =>
@@ -88,7 +88,7 @@ object Facts:
 
   extension (f: Facts)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def fit(kids: Map[Goal.Slug, List[Facts]], s: Settings): Fit =
+    def fit(kids: Map[Goal.Slug, List[Facts]], s: Thresholds): Fit =
       if finished(f.status) then Fit.Finished
       else
         val open = unfinishedKids(f, kids)

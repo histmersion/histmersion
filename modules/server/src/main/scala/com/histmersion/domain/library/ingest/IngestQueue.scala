@@ -373,7 +373,7 @@ final class IngestQueue(
   private def matchAcquisitions(citekey: Citekey, jobId: Job.Id)(using WritePermit): List[String] =
     try
       sources.load(citekey).toList.flatMap { s =>
-        val items = queues.list(api.automation.queue.Kind.Acquire, QueueScope.Open).toList
+        val items = queues.list(api.automation.queue.Docket.Acquire, QueueScope.Open).toList
         AcquireMatch
           .decide(
             items,

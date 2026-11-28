@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueueImport
 import com.histmersion.api.checks.lint.LintReport
@@ -41,9 +41,9 @@ object Ops:
   /** What `histmersion queue …` was asked to do. */
   enum QueueCmd extends Cli.Command:
     @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-    case Show(list: Kind.Label, all: Boolean, json: Cli.JsonOutput)
+    case Show(list: Docket.Label, all: Boolean, json: Cli.JsonOutput)
     case Add(
-        list: Kind.Label,
+        list: Docket.Label,
         text: QueueItem.Text,
         topic: Option[QueueItem.Topic],
         reason: Option[Queue.Rationale],
@@ -82,7 +82,7 @@ object Ops:
   def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[String]] =
     val _ = Files.createDirectories(dir)
     val files: List[(String, () => Either[Cli.Error, String])] =
-      Kind.values.toList.map(k => k.file.value -> (() => c.queueExport(Queue.Wire(k.label.value)).map(_.value))) :+
+      Docket.values.toList.map(k => k.file.value -> (() => c.queueExport(Queue.Wire(k.label.value)).map(_.value))) :+
         (GoalsExport.File -> (() => c.goalsExport.map(_.value)))
     files.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
       acc.flatMap { done =>
@@ -102,7 +102,7 @@ object Ops:
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
     if !Files.isDirectory(dir) then Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir"))))
     else
-      Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
+      Docket.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
           val f = dir.resolve(kind.file.value)
           if !Files.isRegularFile(f) then Right(done :+ shown"${kind.file}: absent, skipped")

@@ -23,7 +23,7 @@ import com.histmersion.api.automation.managers.ManagerHint
 import com.histmersion.api.automation.managers.HintAdd
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.api.automation.managers.HintProposal
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.api.automation.autopilot.FocusInfo
 import com.histmersion.api.automation.agentscheduler.SchedulerStatus
@@ -1350,7 +1350,7 @@ final class ManagersControllers(
           .fold((Nil, Nil))(slug => Transactor(ds).read(ManagerRepo.articleFacets(slug)))
         ManagerPolicy.matches(
           e.modify(_.targets).setTo(Nil),
-          i.target.transformInto[Candidate.Target],
+          i.target.transformInto[Assignable.Target],
           tags.map(t => ManagerPolicy.Tag(t.value)),
           Nil,
           goals

@@ -1,9 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.acquirerecheck.Outcome
+import com.histmersion.domain.acquirerecheck.Upshot
 import com.histmersion.domain.acquirerecheck.Held
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.AcquireRecheck
@@ -28,7 +28,7 @@ trait AcquireCheckService:
 
   def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using WritePermit): Unit
 
-  def countSince(since: Instant): Map[Outcome.Wire, RowCount]
+  def countSince(since: Instant): Map[Upshot.Wire, RowCount]
 
   def heldByDoi(dois: List[Doi]): Map[Doi, Held]
 
@@ -43,7 +43,7 @@ object AcquireCheckService:
         WritePermit
     ): Unit =
       db.write(AcquireCheckRepo.record(item, attempt, kept))
-    def countSince(since: Instant): Map[Outcome.Wire, RowCount] =
+    def countSince(since: Instant): Map[Upshot.Wire, RowCount] =
       db.read(AcquireCheckRepo.countSince(since))
     def heldByDoi(dois: List[Doi]): Map[Doi, Held] = db.read(AcquireCheckRepo.heldByDoi(dois))
 
@@ -53,7 +53,7 @@ object AcquireCheckService:
       val wanted = items.toSet
       state.get.attempts.filter((k, as) => wanted(k) && as.nonEmpty)
     def open: Map[AcquireAttemptRow.Id, List[AcquireAttempt]] =
-      of(queues.list(Kind.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireAttemptRow.Id]))
+      of(queues.list(Docket.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireAttemptRow.Id]))
     def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using
         WritePermit
     ): Unit =
@@ -63,10 +63,10 @@ object AcquireCheckService:
         )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def countSince(since: Instant): Map[Outcome.Wire, RowCount] =
+    def countSince(since: Instant): Map[Upshot.Wire, RowCount] =
       state.get.attempts.values.flatten
         .filter(a => !a.at.isBefore(since))
-        .flatMap(a => Outcome.of(a.outcome).map(_.wire))
+        .flatMap(a => Upshot.of(a.outcome).map(_.wire))
         .groupBy(identity)
         .view
         .mapValues(ws => RowCount(ws.size))

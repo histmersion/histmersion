@@ -19,7 +19,7 @@ import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.reviewarticle.ColdReaderAnswer
 import com.histmersion.domain.ReviewArticle.RoundCount
 import com.histmersion.domain.ReviewArticle.FixRun
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 
 final case class Merged(
     round: Merged.Round,

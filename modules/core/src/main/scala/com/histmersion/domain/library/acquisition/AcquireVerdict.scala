@@ -43,8 +43,8 @@ object AcquireVerdict:
   import Settings.Days
 
   final case class Settings(
-      everyDays: domain.acquirerecheck.Settings.EveryDays,
-      retryHours: domain.acquirerecheck.Settings.RetryHours,
+      everyDays: domain.acquirerecheck.Cadence.EveryDays,
+      retryHours: domain.acquirerecheck.Cadence.RetryHours,
       giveUpChecks: Failures,
       giveUpDays: Days
   )

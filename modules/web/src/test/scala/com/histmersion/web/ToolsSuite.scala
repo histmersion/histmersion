@@ -469,7 +469,7 @@ class ToolsSuite extends munit.FunSuite:
       QueueItem.Status(Queue.Open)
     )
     val gs = QueueView.groups(
-      api.automation.queue.Kind.Acquire,
+      api.automation.queue.Docket.Acquire,
       List(
         item(QueueItem.Id(5), Some(QueueItem.Topic("b"))),
         item(QueueItem.Id(2), Some(QueueItem.Topic("a"))),
@@ -508,7 +508,7 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("every queue kind has its window, and back; other windows show no queue") {
-    api.automation.queue.Kind.values.foreach { k =>
+    api.automation.queue.Docket.values.foreach { k =>
       assertEquals(WindowKey.queueOf(WindowKey.ofQueue(k)), Some(k))
       assertEquals(WindowKey.ofQueue(k).wire.value, k.label.value)
     }
@@ -524,7 +524,7 @@ class ToolsSuite extends munit.FunSuite:
       qi(QueueItem.Id(30), QueueItem.List("tasks"), None)
     )
     assertEquals(
-      QueueView.groups(api.automation.queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
+      QueueView.groups(api.automation.queue.Docket.Tasks, its).map((t, is) => t -> is.map(_.id)),
       List[(Option[String], List[Int])](
         Some("Histmersion") -> List(7, 40),
         Some("Corpus hygiene") -> List(12),
@@ -580,7 +580,7 @@ class ToolsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      QueueView.groups(api.automation.queue.Kind.Log, its).map((t, is) => t -> is.map(_.id)),
+      QueueView.groups(api.automation.queue.Docket.Log, its).map((t, is) => t -> is.map(_.id)),
       List(
         Some("2026-09-27") -> List(597, 605),
         Some("2026-09-26") -> List(426),
@@ -625,11 +625,11 @@ class ToolsSuite extends munit.FunSuite:
       qi(QueueItem.Id(3), QueueItem.List("log"), Some(QueueItem.Topic("2026-07-02")))
     )
     assertEquals(
-      QueueView.groups(api.automation.queue.Kind.Log, its).map(_._1),
+      QueueView.groups(api.automation.queue.Docket.Log, its).map(_._1),
       List(Some("2026-07-02"), Some("Notes"), None)
     )
     assertEquals(
-      QueueView.heading(None, UiLabels.Text(QueueView.spec(api.automation.queue.Kind.Log).untitled.value)),
+      QueueView.heading(None, UiLabels.Text(QueueView.spec(api.automation.queue.Docket.Log).untitled.value)),
       ("Undated", Nil)
     )
   }
@@ -637,9 +637,9 @@ class ToolsSuite extends munit.FunSuite:
   test("each list's window: checkboxes and a show-done switch for acquire and tasks, neither for the log") {
     val (acq, tasks, log) =
       (
-        QueueView.spec(api.automation.queue.Kind.Acquire),
-        QueueView.spec(api.automation.queue.Kind.Tasks),
-        QueueView.spec(api.automation.queue.Kind.Log)
+        QueueView.spec(api.automation.queue.Docket.Acquire),
+        QueueView.spec(api.automation.queue.Docket.Tasks),
+        QueueView.spec(api.automation.queue.Docket.Log)
       )
     assert(acq.checkable && tasks.checkable && !log.checkable)
     assertEquals(acq.showDone, Some(UiState.acquireDone))
@@ -649,9 +649,9 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("the count line reads per list") {
-    val acq = QueueView.spec(api.automation.queue.Kind.Acquire);
-    val tasks = QueueView.spec(api.automation.queue.Kind.Tasks)
-    val log = QueueView.spec(api.automation.queue.Kind.Log)
+    val acq = QueueView.spec(api.automation.queue.Docket.Acquire);
+    val tasks = QueueView.spec(api.automation.queue.Docket.Tasks)
+    val log = QueueView.spec(api.automation.queue.Docket.Log)
     val mixed = List(
       qi(QueueItem.Id(1), QueueItem.List("x"), None),
       qi(QueueItem.Id(2), QueueItem.List("x"), None, QueueItem.Status(Queue.Done)),
@@ -692,7 +692,8 @@ class ToolsSuite extends munit.FunSuite:
   // ── adding and editing items ───────────────────────────────────────────────────────────────
 
   test("an added item needs text; a blank topic or reason is left out; the worklog takes no reason") {
-    val tasks = QueueView.spec(api.automation.queue.Kind.Tasks); val log = QueueView.spec(api.automation.queue.Kind.Log)
+    val tasks = QueueView.spec(api.automation.queue.Docket.Tasks);
+    val log = QueueView.spec(api.automation.queue.Docket.Log)
     assertEquals(
       QueueView.validateAdd(tasks, QueueView.AddDraft(text = QueueView.AddDraft.Text("  \n "))).left.map(_.sentence),
       Left("Write the item's text first.")

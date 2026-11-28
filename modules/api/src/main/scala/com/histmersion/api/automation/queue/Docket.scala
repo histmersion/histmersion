@@ -24,12 +24,12 @@ import com.histmersion.api.automation.Queue.InstantKey
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.automation.Queue.Sep
 
-enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes) derives CanEqual:
-  case Acquire extends Kind(Kind.Label("acquire"), Kind.File("ACQUIRE.md"), Kind.Checkboxes.Checkboxes)
-  case Tasks extends Kind(Kind.Label("tasks"), Kind.File("TASKS.md"), Kind.Checkboxes.Checkboxes)
-  case Log extends Kind(Kind.Label("log"), Kind.File("LOG.md"), Kind.Checkboxes.Plain)
+enum Docket(val label: Docket.Label, val file: Docket.File, val checkboxes: Docket.Checkboxes) derives CanEqual:
+  case Acquire extends Docket(Docket.Label("acquire"), Docket.File("ACQUIRE.md"), Docket.Checkboxes.Checkboxes)
+  case Tasks extends Docket(Docket.Label("tasks"), Docket.File("TASKS.md"), Docket.Checkboxes.Checkboxes)
+  case Log extends Docket(Docket.Label("log"), Docket.File("LOG.md"), Docket.Checkboxes.Plain)
 
-object Kind:
+object Docket:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
   type File = File.T
@@ -46,7 +46,7 @@ object Kind:
 
   val all: List[All] = values.toList.map(_.label)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def parse(s: Label): Option[Kind] = values.find(_.label == Label((s).value.trim.toLowerCase))
+  def parse(s: Label): Option[Docket] = values.find(_.label == Label((s).value.trim.toLowerCase))
 
   private val HeadingRe = """^(#{2,6})\s+(.*?)\s*$""".r
 
@@ -58,7 +58,7 @@ object Kind:
 
   private val DateRe = """^(\d{4}-\d{2}-\d{2}).*""".r
 
-  extension (kind: Kind)
+  extension (kind: Docket)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(text: FileText): List[QueueAdd] =
       val out = List.newBuilder[QueueAdd]
@@ -138,15 +138,15 @@ object Kind:
       .map(refactorValue15 => ((refactorValue15)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def defaultPreamble(kind: Kind): Preamble = kind match
-    case Kind.Acquire =>
+  private def defaultPreamble(kind: Docket): Preamble = kind match
+    case Docket.Acquire =>
       Preamble(
         "# 📥 ACQUIRE — the acquisition queue\n\nWhat to buy / borrow / download → Calibre. " +
           "`[ ]` = to get · `[x]` = done.\n\n---"
       )
-    case Kind.Tasks =>
+    case Docket.Tasks =>
       Preamble("# 🛠️ TASKS — the agent's backlog\n\nWhat is left to do. `[ ]` = open · `[x]` = done.\n\n---")
-    case Kind.Log =>
+    case Docket.Log =>
       Preamble("# 📓 LOG — project worklog\n\nWhat was done and when, newest first.\n\n---")
 
   private enum Block:
@@ -154,7 +154,7 @@ object Kind:
     case Item(lines: String)
     case Note(lines: String)
 
-  extension (kind: Kind)
+  extension (kind: Docket)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def render(items: List[QueueItem]): Markdown =
       val (preamble, rest) = items.partition(_.topic.isEmpty)
@@ -196,7 +196,7 @@ object Kind:
       }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def bullet(kind: Kind, i: QueueItem): String =
+  private def bullet(kind: Docket, i: QueueItem): String =
     val marker =
       if !(kind.checkboxes).checkboxes then "- " else if i.status == QueueItem.Status(Done) then "- [x] " else "- [ ] "
     val lines = (i.text).value.linesIterator.toList
@@ -223,7 +223,7 @@ object Kind:
   private def instantKey(s: QueueItem.CreatedAt): InstantKey =
     InstantKey(scala.util.Try(java.time.Instant.parse((s).value).toEpochMilli).getOrElse(0L))
 
-  extension (kind: Kind)
+  extension (kind: Docket)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def markdown(
         items: List[QueueItem],
@@ -241,7 +241,9 @@ object Kind:
               .mkString(Sep)
           val lines = is.sortBy(_.id).map { i =>
             val box =
-              if !(kind.checkboxes).checkboxes then "" else if i.status == QueueItem.Status(Done) then "[x] " else "[ ] "
+              if !(kind.checkboxes).checkboxes then ""
+              else if i.status == QueueItem.Status(Done) then "[x] "
+              else "[ ] "
             val why = i.reason.map(r => s" — _${r}_").getOrElse("")
             s"- $box${(i.text).value.linesIterator.mkString(" ")}$why  `#${i.id}`" +
               notes.get(i.id).fold("")(n => s"\n  - _${n}_")

@@ -14,16 +14,16 @@ import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.Proposal
 
 @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-final case class Evidence(
+final case class Quotation(
     citekey: library.Citekey,
-    offset: Option[Evidence.Offset],
-    quote: Evidence.Quote,
-    ratio: Evidence.Ratio
+    offset: Option[Quotation.Offset],
+    quote: Quotation.Quote,
+    ratio: Quotation.Ratio
 ) derives JsonCodec,
       KindlingsSchema,
       com.histmersion.api.json.Schema
 
-object Evidence:
+object Quotation:
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   type Offset = com.histmersion.Offset
@@ -32,7 +32,7 @@ object Evidence:
   export Proposal.Quote
   export AgentVerify.Ratio
 
-  extension (e: Evidence)
+  extension (e: Quotation)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def evidenceLine: String =
       val at = e.offset.fold("")(o => s" @$o")

@@ -19,24 +19,24 @@ import com.histmersion.lint.LintRule
 import com.histmersion.domain.compilearticle.Extracted
 import com.histmersion.domain.CompileArticle.Description
 
-final case class Evidence(
+final case class Support(
     filter: ArticleDraft.Filter,
     total: RowCount,
     sources: List[SourceFact],
-    claims: Map[Citekey, Evidence.ClaimCount],
+    claims: Map[Citekey, Support.ClaimCount],
     edges: List[EdgeFact],
     disputed: List[Citekey],
     notUsed: List[NotUsed]
 ) derives JsonCodec:
   def used: List[Citekey] =
-    sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
+    sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Support.ClaimCount(0)).hasClaims)
 
-object Evidence:
+object Support:
   type ClaimCount = ClaimCount.T
   object ClaimCount extends Newtype[Int, Pure]:
     extension (n: ClaimCount) def hasClaims: Boolean = n.value > 0
 
-  extension (ev: Evidence)
+  extension (ev: Support)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def evidenceText(extracted: List[Extracted]): Description =
       val bySource = extracted.map(e => e.citekey -> e).toMap

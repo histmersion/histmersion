@@ -14,8 +14,8 @@ class AcquireVerdictSuite extends munit.FunSuite:
   private val now = Instant.parse("2026-11-22T12:00:00Z")
   private val gen = LastCheck.Generation("g1")
   private val settings = AcquireVerdict.Settings(
-    domain.acquirerecheck.Settings.EveryDays(7),
-    domain.acquirerecheck.Settings.RetryHours(6),
+    domain.acquirerecheck.Cadence.EveryDays(7),
+    domain.acquirerecheck.Cadence.RetryHours(6),
     AcquireVerdict.Failures(5),
     AcquireVerdict.Settings.Days(14)
   )

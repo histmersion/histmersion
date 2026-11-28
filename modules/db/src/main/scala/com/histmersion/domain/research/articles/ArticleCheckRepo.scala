@@ -6,7 +6,7 @@ import com.histmersion.api.checks.lint.LintRuleReport
 import com.histmersion.api.checks.lint.LintItem
 import com.histmersion.api.research.critiquepairing.Mention
 import com.histmersion.api.research.critiquepairing.Work
-import com.histmersion.api.research.critiquepairing.Hit
+import com.histmersion.api.research.critiquepairing.MissedPair
 
 import com.histmersion.api.checks.Lint.*
 
@@ -175,7 +175,7 @@ private[articles] object ArticleCheckRepo:
       slug: PairingRepair.Slug,
       updatedAt: Option[PairingRepair.UpdatedAt],
       body: Article.Body,
-      applied: List[Hit]
+      applied: List[MissedPair]
   )
 
   object PairingRepair:

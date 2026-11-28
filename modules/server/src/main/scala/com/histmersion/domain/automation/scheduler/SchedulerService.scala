@@ -10,7 +10,7 @@ import com.histmersion.domain.autopilotpolicy.NextFacts
 import com.histmersion.domain.schedulerpolicy.Candidate
 import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.schedulerpolicy.Resources
+import com.histmersion.domain.schedulerpolicy.Capacity
 import com.histmersion.api.automation.planquota.PoolId
 import com.histmersion.api.automation.agents.PauseReason
 import com.histmersion.api.automation.agents.Billing
@@ -141,7 +141,7 @@ final class SchedulerService(
           f.priority.value + (if f.pinned.value then PinBoost else 0),
           instantOf(f.createdAt.value),
           !GoalFocus.finished(f.status) && f.stage(
-            domain.goalfocus.Settings.MinSources(agents.sourcesToPlan.value)
+            domain.goalfocus.Thresholds.MinSources(agents.sourcesToPlan.value)
           ) == Stage.Gathering,
           NextFacts
             .articlesInProgress(
@@ -154,7 +154,7 @@ final class SchedulerService(
       .toMap
 
   /** The inputs of one pass: the candidates (with their manager and item), the resources. */
-  final case class Inputs(cands: List[Candidate], items: Map[Candidate.Id, (ManagerInfo, ManagerItem)], res: Resources)
+  final case class Inputs(cands: List[Candidate], items: Map[Candidate.Id, (ManagerInfo, ManagerItem)], res: Capacity)
 
   /** Why nothing may start for any manager now (a spend cap reached), if so. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -247,7 +247,7 @@ final class SchedulerService(
         if items.exists(i => i.kind.value == ArticleReview || i.kind.value == ProposeArticles) then
           agents.managerStore
             .openKeys(m.id)
-            .map((k, t) => (Item.Kind(k.value), t.transformInto[domain.managerpolicy.Candidate.Target]))
+            .map((k, t) => (Item.Kind(k.value), t.transformInto[domain.managerpolicy.Assignable.Target]))
         else Nil
       val over = m.config.models.getOrElse(Nil)
       val memo =
@@ -263,7 +263,7 @@ final class SchedulerService(
           .orElse(pools.left.toOption.map(chain => Block(Block.Why.Starved(chain))))
           .orElse(
             Option.when(
-              ManagerPolicy.waitsFor(itemKind, i.target.transformInto[domain.managerpolicy.Candidate.Target], open)
+              ManagerPolicy.waitsFor(itemKind, i.target.transformInto[domain.managerpolicy.Assignable.Target], open)
             )(
               Block(
                 Block.Why.WaitsFor(
@@ -318,10 +318,10 @@ final class SchedulerService(
         .parse(w)
         .toList
         .flatMap(p => pipePools.getOrElseUpdate(p, poolIds(Nil, now, List(p), choose).getOrElse(Nil)))
-    val caps = ms.flatMap(m => m.config.maxRuns.map(r => m.id -> Resources.ManagerCapValue(r.value))).toMap
-    val res = Resources(
-      maxRuns = Resources.MaxRuns(cfg.maxConcurrentRuns.value),
-      occupied = Resources.Occupied(
+    val caps = ms.flatMap(m => m.config.maxRuns.map(r => m.id -> Capacity.ManagerCapValue(r.value))).toMap
+    val res = Capacity(
+      maxRuns = Capacity.MaxRuns(cfg.maxConcurrentRuns.value),
+      occupied = Capacity.Occupied(
         agents.jobRuns
           .count(
             Job.Kind.assume(Agents.JobKind),
@@ -333,19 +333,19 @@ final class SchedulerService(
           .value
       ),
       poolCap = PoolId.values.toList
-        .map(p => Candidate.Pools(p.wire.value) -> Resources.PoolCapValue(poolCap(p)))
+        .map(p => Candidate.Pools(p.wire.value) -> Capacity.PoolCapValue(poolCap(p)))
         .toMap,
       poolUsed = runs
         .flatMap((p, _) => poolsOfRun(p))
         .groupMapReduce(p => Candidate.Pools(p.wire.value))(_ => 1)(_ + _)
         .view
-        .mapValues(Resources.PoolUsedValue(_))
+        .mapValues(Capacity.PoolUsedValue(_))
         .toMap,
       managerCap = caps.map((id, cap) => Candidate.ManagerId(id.value) -> cap),
       managerUsed = caps.keys
-        .map(id => Candidate.ManagerId(id.value) -> Resources.ManagerUsedValue(agents.managerStore.running(id).value))
+        .map(id => Candidate.ManagerId(id.value) -> Capacity.ManagerUsedValue(agents.managerStore.running(id).value))
         .toMap,
-      gatheringUsed = Resources.GatheringUsed(
+      gatheringUsed = Capacity.GatheringUsed(
         runs.count(_._2.exists(g => gs.get(DomainGoal.Slug.assume(g.value)).exists(_.gathering)))
       ),
       stop = stop.orElse(budgetBlock()),

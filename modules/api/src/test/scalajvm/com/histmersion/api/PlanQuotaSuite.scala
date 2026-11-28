@@ -4,7 +4,7 @@ package api
 import com.histmersion.api.automation.planquota.Reading
 import com.histmersion.api.automation.planquota.Rules
 import com.histmersion.api.automation.planquota.Floors
-import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.Channel
 import com.histmersion.api.automation.planquota.PoolStatus
 import com.histmersion.api.automation.planquota.Verdict
 import com.histmersion.api.automation.modelchains.ChainEntry
@@ -64,7 +64,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       limit: Reading.Limit = Reading.Limit("claude"),
       model: Option[Reading.Model] = None
   ) =
-    Reading(limit, kind, used, Some(reset), rejected, seen, Source.Run, model)
+    Reading(limit, kind, used, Some(reset), rejected, seen, Channel.Run, model)
 
   test("floors: per window kind, limit-qualified first, a default for the rest; typos reported"):
     val f = Floors.parse(Floors.Wire("five_hour=30, seven_day = 25%, codex/10080m=20")).toOption.get
@@ -451,4 +451,4 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(decide(Some(RefreshNeed.StaleOnly), enabled = false).left.exists(w => s"$w".contains("off")))
     assertEquals(RefreshMode.parse(RefreshMode.Wire(" Probe ")), Some(RefreshMode.Probe))
     assertEquals(RefreshMode.parse(RefreshMode.Wire("sometimes")), None)
-    assertEquals(Source.parse(Source.Wire("probe")), Some(Source.Probe))
+    assertEquals(Channel.parse(Channel.Wire("probe")), Some(Channel.Probe))

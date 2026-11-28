@@ -186,7 +186,7 @@ object JobsView:
     fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
     id = j => PolledList.ItemId(j.id.value),
     live = (rows, page) => live(rows, page),
-    after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(api.automation.queue.Kind.Acquire)
+    after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(api.automation.queue.Docket.Acquire)
   )
   private def listing = list.listing
 
@@ -324,7 +324,7 @@ object JobsView:
               cls := "muted job-item",
               " · for ",
               QueueItemLink(
-                api.automation.queue.Kind.Acquire,
+                api.automation.queue.Docket.Acquire,
                 Goal.Plans.GoalLink.QueueNumber(i.value),
                 title := (if j.succeeded then shown"acquisition item $i was ticked off by this job"
                           else shown"acquisition item $i is ticked off when this job succeeds"),

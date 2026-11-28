@@ -10,7 +10,7 @@ import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class QueueImported(
@@ -23,7 +23,7 @@ final case class QueueImported(
       api.json.Schema
 
 object QueueImported:
-  export Kind.Label as List
+  export Docket.Label as List
   type Items = Items.T
   object Items extends Newtype[Int, Pure]
   type Notes = Notes.T

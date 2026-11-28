@@ -12,7 +12,7 @@ import com.histmersion.domain.reviewarticle.Verdict
 import com.histmersion.domain.reviewledger.LessonSource
 import com.histmersion.domain.reviewarticle.ColdReaderAnswer
 import com.histmersion.domain.reviewledger.OpenStyle
-import com.histmersion.domain.reviewledger.Passage
+import com.histmersion.domain.reviewledger.Excerpt
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -743,9 +743,9 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(
       e.passages,
       List(
-        Passage(
-          Some(Passage.Heading("Disagreements")),
-          Passage.Text("## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.")
+        Excerpt(
+          Some(Excerpt.Heading("Disagreements")),
+          Excerpt.Text("## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.")
         )
       )
     )

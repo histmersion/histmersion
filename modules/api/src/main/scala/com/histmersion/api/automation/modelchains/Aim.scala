@@ -16,27 +16,27 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.util.problem.Problem.Field
 import com.histmersion.util.problem.Problem.`++`
 
-enum Target:
+enum Aim:
   case Model(ref: ModelRef)
   case Provider(kind: ProviderKind)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def wire: Target.Wire = this match
-    case Model(r)    => Target.Wire(r.wire.value)
-    case Provider(k) => Target.Wire(s"${k.wire}:*")
+  def wire: Aim.Wire = this match
+    case Model(r)    => Aim.Wire(r.wire.value)
+    case Provider(k) => Aim.Wire(s"${k.wire}:*")
 
   def covers(m: ModelRef): Boolean = this match
     case Model(r)    => (r == m)
     case Provider(k) => (m.provider == k)
 
-object Target:
+object Aim:
   type Spec = Spec.T
   object Spec extends Newtype[String, Pure]
   type Wire = Wire.T
   object Wire extends Newtype[String, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def parse(s: Spec, known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Problem, Target] =
+  def parse(s: Spec, known: Set[ProviderKind.Plugin.Name] = Set.empty): Either[Problem, Aim] =
     val t = (s).value.trim
     if t.endsWith(":*") then
       val p = t.dropRight(2)

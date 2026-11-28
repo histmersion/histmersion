@@ -38,26 +38,26 @@ object DraftFacts:
 
   extension (d: DraftFacts)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def articlePublish(minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
-      if !d.filterRecorded.value then Verdict.Reject(Rationale("the run records no coverage filter"))
+    def articlePublish(minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Ruling =
+      if !d.filterRecorded.value then Ruling.Reject(Rationale("the run records no coverage filter"))
       else if d.hits.forall(_.value < minSources.value) then
-        Verdict.Reject(
+        Ruling.Reject(
           Rationale(
             s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
           )
         )
       else if d.problems.nonEmpty then
-        Verdict.Reject(
+        Ruling.Reject(
           Rationale(
             s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
           )
         )
-      else if d.cited.value == 0 then Verdict.Reject(Rationale("the text cites no source"))
-      else if d.create.value && !d.slugFree.value then Verdict.Reject(Rationale(s"the slug ${d.slug} is taken now"))
+      else if d.cited.value == 0 then Ruling.Reject(Rationale("the text cites no source"))
+      else if d.create.value && !d.slugFree.value then Ruling.Reject(Rationale(s"the slug ${d.slug} is taken now"))
       else if approvedToday.value >= cap.value then
-        Verdict.Leave(Rationale(s"the daily cap of $cap drafts is reached; decided tomorrow"))
+        Ruling.Leave(Rationale(s"the daily cap of $cap drafts is reached; decided tomorrow"))
       else
-        Verdict.Approve(
+        Ruling.Approve(
           Rationale(
             s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${counted(d.cited.value, "source")} cited, " +
               s"no self-check problem; ${approvedToday.value + 1} of $cap today"

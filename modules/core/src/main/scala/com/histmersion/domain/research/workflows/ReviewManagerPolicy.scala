@@ -8,7 +8,7 @@ import com.histmersion.api.automation.managers.RunMark
 import com.histmersion.domain.managerpolicy.Next
 import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
@@ -258,7 +258,7 @@ object ReviewManagerPolicy:
   final case class Pick(
       kind: Item.Kind,
       target: Slug,
-      priority: Candidate.Priority,
+      priority: Assignable.Priority,
       why: Rationale
   ):
     /** The item's outcome when a stale article is selected again: why. */
@@ -305,9 +305,9 @@ object ReviewManagerPolicy:
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).
     */
-  val MajorsPriority: Candidate.Priority = Candidate.Priority(1)
-  val UnreviewedPriority: Candidate.Priority = Candidate.Priority(0)
-  val StalePriority: Candidate.Priority = Candidate.Priority(-1)
+  val MajorsPriority: Assignable.Priority = Assignable.Priority(1)
+  val UnreviewedPriority: Assignable.Priority = Assignable.Priority(0)
+  val StalePriority: Assignable.Priority = Assignable.Priority(-1)
 
   /** The review manager's selection, in its order — articles with open MAJORs (most first), never reviewed ones, then
     * stale ones (converged long ago, or their filter gained sources) — at most `batch` articles. With `inferFilter`, an

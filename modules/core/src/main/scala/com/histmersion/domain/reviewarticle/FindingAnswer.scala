@@ -14,7 +14,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.domain.ReviewArticle.MaxEvidence
 import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.reviewarticle.Severity
 
@@ -33,7 +33,7 @@ final case class FindingAnswer(
 object FindingAnswer:
   export Severity.Wire as Severity
   export Finding.{Kind, Where}
-  export Evidence.Quote
+  export Quotation.Quote
   export Finding.{Fix, Problem}
   export CritiqueRef.Wire as Pair
 

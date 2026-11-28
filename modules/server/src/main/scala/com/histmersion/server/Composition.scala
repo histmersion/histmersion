@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.util.problem.{DecodeFailures, Legacy, Problem, Raised}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission, SecurityHeaders}
@@ -386,7 +386,7 @@ object Composition:
       def queueItem(id: CollectionLibrary.QueueItemId) =
         h.workListView
           .list(
-            WorkListControllers.KindOfList(Kind.Acquire.label.value),
+            WorkListControllers.KindOfList(Docket.Acquire.label.value),
             all = WorkListView.IncludeAll(true)
           )
           .map(_.items.find(_.id.value == id.value))

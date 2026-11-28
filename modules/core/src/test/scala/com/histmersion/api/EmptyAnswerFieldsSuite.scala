@@ -3,7 +3,7 @@ package api
 
 import com.histmersion.api.automation.agents.ProbeAnswer
 import com.histmersion.domain.enrichsource.Classification
-import com.histmersion.domain.enrichsource.Window
+import com.histmersion.domain.enrichsource.Frame
 import com.histmersion.domain.enrichsource.FindingGuards
 import com.histmersion.domain.enrichsource.FindingProposal
 import com.histmersion.domain.enrichsource.Findings
@@ -144,7 +144,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(ws.exists(_.value.contains("status evidence is empty")), ws)
 
   private val window =
-    Window(Window.Index(1), None, Window.Text("The Uluburun ship carried ten tons of copper and one ton of tin."))
+    Frame(Frame.Index(1), None, Frame.Text("The Uluburun ship carried ten tons of copper and one ton of tin."))
   private val open =
     FindingGuards(FindingGuards.MinPlacedShare(0.0), FindingGuards.CenturyGapYears(1000000L), Nil, (_, _, _) => true)
   private def proposal(

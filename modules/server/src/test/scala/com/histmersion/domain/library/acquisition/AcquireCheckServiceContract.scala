@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.acquisition
 
 import com.histmersion.domain.acquirerecheck.LastCheck
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
@@ -92,7 +92,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
   private def item(s: AcquisitionStores, text: String): AcquireAttemptRow.Id =
     s.queues
       .add(
-        Kind.Acquire,
+        Docket.Acquire,
         QueueAdd(QueueItem.Text(text)),
         domain.Creator.New.Manual(domain.Creator.Surface.Cli)
       )
@@ -124,9 +124,9 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     assertEquals(
       s.attempts.countSince(T0.plusSeconds(90)),
       Map(
-        domain.acquirerecheck.Outcome.NoCopy.wire -> 1,
-        domain.acquirerecheck.Outcome.Fetched.wire -> 1,
-        domain.acquirerecheck.Outcome.Closed.wire -> 1
+        domain.acquirerecheck.Upshot.NoCopy.wire -> 1,
+        domain.acquirerecheck.Upshot.Fetched.wire -> 1,
+        domain.acquirerecheck.Upshot.Closed.wire -> 1
       )
     )
   }

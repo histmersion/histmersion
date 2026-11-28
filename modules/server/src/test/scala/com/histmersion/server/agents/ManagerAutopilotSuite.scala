@@ -13,7 +13,7 @@ import com.histmersion.domain.autopilotpolicy.ManagerRow
 import com.histmersion.domain.reviewledger.Ledger
 import com.histmersion.domain.reviewledger.Closure
 import com.histmersion.api.automation.managers.ManagerCreate
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -447,12 +447,12 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     assert(
       QueueRows
-        .list(ds, api.automation.queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .exists(_.text.value.startsWith("autopilot: goal-plan"))
     )
     assertEquals(
       QueueRows
-        .list(ds, api.automation.queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .filter(i => s"${i.text}".startsWith("autopilot: goal-plan"))
         .flatMap(_.creator.flatMap(_.workflow))
         .map(w => s"$w")
@@ -529,7 +529,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     )
     assert(
       QueueRows
-        .list(ds, api.automation.queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .exists(_.text.value.contains(s"goal $Goal: compiled → reviewed"))
     )
     val st = a.managing.autopilot
@@ -833,8 +833,8 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "2 of 2 articles approved today: the third waits"
     )
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p2.id)).get, None, None, now) match
-      case Verdict.Leave(w) => assert(s"$w".contains("daily cap"), w)
-      case v                => fail(v.toString)
+      case Ruling.Leave(w) => assert(s"$w".contains("daily cap"), w)
+      case v               => fail(v.toString)
     // a thin filter is rejected with why
     val p3 = TestRuns
       .approvals(ds)
@@ -1030,18 +1030,18 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assert(transact(ds)(AutopilotRepo.get()).lastLintAt.isDefined)
     val deadline = System.currentTimeMillis() + 60000
     while !QueueRows
-        .list(ds, api.automation.queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .exists(_.text.value.startsWith("autopilot: lint --fix")) &&
       System.currentTimeMillis() < deadline
     do Thread.sleep(200)
     assert(
       QueueRows
-        .list(ds, api.automation.queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .exists(_.text.value.startsWith("autopilot: lint --fix"))
     )
     assertEquals(
       QueueRows
-        .list(ds, api.automation.queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .filter(i => s"${i.text}".startsWith("autopilot: lint --fix"))
         .flatMap(_.creator.flatMap(_.workflow))
         .map(w => s"$w")

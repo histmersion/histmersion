@@ -20,7 +20,7 @@ import com.histmersion.domain.reviewarticle.Fix
 import com.histmersion.api.research.CritiquePair
 import com.histmersion.api.research.CritiquePairing
 import com.histmersion.domain.ReviewLedger
-import com.histmersion.api.research.critiquepairing.Hit
+import com.histmersion.api.research.critiquepairing.MissedPair
 import com.histmersion.domain.reviewledger.Regression
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.Content
@@ -96,7 +96,7 @@ object FixerAnswer:
   final private case class Revision(
       check: Article.Edits.ArticleCheck,
       body: Article.Body,
-      hits: List[Hit],
+      hits: List[MissedPair],
       pairs: List[CritiquePair],
       regressions: List[Regression]
   )

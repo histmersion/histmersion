@@ -2,7 +2,7 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.enrichsource.FindingProposal
-import com.histmersion.domain.enrichsource.Window
+import com.histmersion.domain.enrichsource.Frame
 import com.histmersion.domain.enrichsource.FindingGuards
 import com.histmersion.domain.enrichsource.Loaded
 
@@ -96,7 +96,7 @@ object EnrichSource:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def windows(body: SourceBody, windowChars: WindowChars, maxWindows: MaxWindows): List[Window] =
+  def windows(body: SourceBody, windowChars: WindowChars, maxWindows: MaxWindows): List[Frame] =
     val size = math.max(500, windowChars.value)
     val paras = body.value
       .split("\\n\\s*\\n")
@@ -126,7 +126,7 @@ object EnrichSource:
       else if n == 1 then List(all.head)
       else (0 until n).map(i => all(math.round(i.toDouble * (all.size - 1) / (n - 1)).toInt)).distinct.toList
     picked.zipWithIndex.map { case ((h, t), i) =>
-      Window(Window.Index(i + 1), h.map(Window.Heading(_)), Window.Text(t))
+      Frame(Frame.Index(i + 1), h.map(Frame.Heading(_)), Frame.Text(t))
     }
 
   /** Tags are lowercase_snake_case in this corpus (the `non-canonical-tag` lint rule). */

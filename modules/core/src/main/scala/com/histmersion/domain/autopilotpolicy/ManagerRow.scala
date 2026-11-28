@@ -16,7 +16,7 @@ final case class ManagerRow(
     cron: Option[Cron],
     autoIngest: Option[ManagerRow.AutoIngest],
     planItem: ManagerRow.PlanItem = ManagerRow.PlanItem(false),
-    extendMinNew: Option[Settings.ExtendMinNew] = None
+    extendMinNew: Option[Pacing.ExtendMinNew] = None
 )
 
 object ManagerRow:

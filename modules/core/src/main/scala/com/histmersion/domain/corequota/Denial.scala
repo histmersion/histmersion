@@ -7,14 +7,14 @@ import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.CoreQuota.Description
 import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Backoff
 import com.histmersion.domain.corequota.Grant
 import com.histmersion.domain.CoreQuota
 
-enum Refusal:
-  case Blocked(until: Instant, why: Block.Rationale)
-  case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
-  case Paced(waitMs: Refusal.Paced.WaitMs)
+enum Denial:
+  case Blocked(until: Instant, why: Backoff.Rationale)
+  case OverBudget(purpose: Purpose, spent: Denial.OverBudget.Spent, cap: Denial.OverBudget.Cap)
+  case Paced(waitMs: Denial.Paced.WaitMs)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe: Description = this match
@@ -30,7 +30,7 @@ enum Refusal:
           "acquire.core.max-wait-seconds"
       )
 
-object Refusal:
+object Denial:
   object OverBudget:
     export CoreQuota.{Cap, Spent}
 

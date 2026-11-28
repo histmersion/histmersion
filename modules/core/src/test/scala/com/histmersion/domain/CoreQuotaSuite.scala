@@ -1,11 +1,11 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.corequota.Limits
+import com.histmersion.domain.corequota.Ceilings
 import com.histmersion.domain.corequota.State
 import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Block
-import com.histmersion.domain.corequota.Refusal
+import com.histmersion.domain.corequota.Backoff
+import com.histmersion.domain.corequota.Denial
 import com.histmersion.domain.corequota.Window
 
 import com.histmersion.util.problem.Text.sentence
@@ -24,20 +24,20 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class CoreQuotaSuite extends munit.FunSuite:
 
-  private val limits = Limits(
-    perMinute = Limits.PerMinute(3),
-    dailyTokens = Limits.DailyTokens(10),
-    searchDailyTokens = Limits.SearchDailyTokens(6),
-    lookupCost = Limits.LookupCost(1),
-    searchCost = Limits.SearchCost(1),
-    exhaustedPauseSeconds = Limits.ExhaustedPauseSeconds(60),
-    maxWaitSeconds = Limits.MaxWaitSeconds(0)
+  private val limits = Ceilings(
+    perMinute = Ceilings.PerMinute(3),
+    dailyTokens = Ceilings.DailyTokens(10),
+    searchDailyTokens = Ceilings.SearchDailyTokens(6),
+    lookupCost = Ceilings.LookupCost(1),
+    searchCost = Ceilings.SearchCost(1),
+    exhaustedPauseSeconds = Ceilings.ExhaustedPauseSeconds(60),
+    maxWaitSeconds = Ceilings.MaxWaitSeconds(0)
   )
   private val t0 = Instant.parse("2026-10-26T18:50:00Z")
   private val fresh = State.fresh(LocalDate.of(2026, 10, 26))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def granted(s: State, p: Purpose = Purpose.Lookup, at: Instant = t0, l: Limits = limits): State =
+  private def granted(s: State, p: Purpose = Purpose.Lookup, at: Instant = t0, l: Ceilings = limits): State =
     s.reserve(l, p, at).fold(r => fail(s"refused: ${r.describe}"), _.state)
 
   test("CORE's retry time is read as CORE writes it, and as ISO, seconds or an HTTP date"):
@@ -73,12 +73,12 @@ class CoreQuotaSuite extends munit.FunSuite:
       t0
     )
     val until = Instant.parse("2026-10-26T18:52:11Z")
-    assertEquals(s.block, Some(Block(until, Block.Rationale.Throttled)))
+    assertEquals(s.block, Some(Backoff(until, Backoff.Rationale.Throttled)))
     assertEquals(s.window.map(w => (w.limit, w.remaining)), Some((Some(25), Some(0))))
     Purpose.values.foreach { p =>
       assertEquals(
         s.reserve(limits, p, t0.plusSeconds(60)).left.toOption,
-        Some(Refusal.Blocked(until, Block.Rationale.Throttled))
+        Some(Denial.Blocked(until, Backoff.Rationale.Throttled))
       )
     }
     val after = s.reserve(limits, Purpose.Lookup, until.plusSeconds(1))
@@ -97,7 +97,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     )
     assertEquals(
       s.block,
-      Some(Block(t0.plusSeconds(60), Block.Rationale.Exhausted(Some(Window.Limit(10)))))
+      Some(Backoff(t0.plusSeconds(60), Backoff.Rationale.Exhausted(Some(Window.Limit(10)))))
     )
     val plain429 = fresh.observe(limits, CoreQuota.StatusCode(429), Map.empty, t0)
     assertEquals(plain429.block.map(_.until), Some(t0.plusSeconds(60)))
@@ -143,10 +143,10 @@ class CoreQuotaSuite extends munit.FunSuite:
   ):
     val three = (1 to 3).foldLeft(fresh)((s, i) => granted(s, at = t0.plusSeconds(i.toLong)))
     three.reserve(limits, Purpose.Lookup, t0.plusSeconds(10)) match
-      case Left(Refusal.Paced(ms)) => assertEquals(ms, 51_000L) // the first slot (t0+1 s) leaves the window at t0+61 s
-      case other                   => fail(other.toString)
+      case Left(Denial.Paced(ms)) => assertEquals(ms, 51_000L) // the first slot (t0+1 s) leaves the window at t0+61 s
+      case other                  => fail(other.toString)
     // with patience, the call waits for its slot (counted now, sent then)
-    val patient = limits.modify(_.maxWaitSeconds).setTo(Limits.MaxWaitSeconds(60))
+    val patient = limits.modify(_.maxWaitSeconds).setTo(Ceilings.MaxWaitSeconds(60))
     val g = three.reserve(patient, Purpose.Search, t0.plusSeconds(10)).toOption.get
     assertEquals(g.waitMs, 51_000L)
     assertEquals(g.state.searchTokens, 1)
@@ -154,7 +154,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(three.reserve(limits, Purpose.Lookup, t0.plusSeconds(62)).isRight)
 
   test("pacing follows CORE's reported window when it is smaller than per-minute"):
-    val roomy = limits.modify(_.perMinute).setTo(Limits.PerMinute(20))
+    val roomy = limits.modify(_.perMinute).setTo(Ceilings.PerMinute(20))
     val window = fresh.observe(
       roomy,
       CoreQuota.StatusCode(200),
@@ -162,7 +162,7 @@ class CoreQuotaSuite extends munit.FunSuite:
       t0
     )
     val two = (1 to 2).foldLeft(window)((s, i) => granted(s, at = t0.plusSeconds(i.toLong), l = roomy))
-    assert(two.reserve(roomy, Purpose.Lookup, t0.plusSeconds(10)).left.exists(_.isInstanceOf[Refusal.Paced]))
+    assert(two.reserve(roomy, Purpose.Lookup, t0.plusSeconds(10)).left.exists(_.isInstanceOf[Denial.Paced]))
     // a reported window larger than per-minute changes nothing
     val wide = fresh.observe(
       limits,
@@ -179,12 +179,12 @@ class CoreQuotaSuite extends munit.FunSuite:
   test(
     "the daily budget: searches stop at search-daily-tokens, the rest stays for PDF lookups; together at daily-tokens"
   ):
-    val free = limits.modify(_.perMinute).setTo(Limits.PerMinute(1000))
+    val free = limits.modify(_.perMinute).setTo(Ceilings.PerMinute(1000))
     val searches = (1 to 6).foldLeft(fresh)((s, _) => granted(s, Purpose.Search, l = free))
     assertEquals(
       searches.reserve(free, Purpose.Search, t0).left.toOption,
       Some(
-        Refusal.OverBudget(Purpose.Search, Refusal.OverBudget.Spent(6), Refusal.OverBudget.Cap(6))
+        Denial.OverBudget(Purpose.Search, Denial.OverBudget.Spent(6), Denial.OverBudget.Cap(6))
       )
     )
     val lookups = (1 to 4).foldLeft(searches)((s, _) => granted(s, Purpose.Lookup, l = free))
@@ -192,7 +192,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     assertEquals(
       lookups.reserve(free, Purpose.Lookup, t0).left.toOption,
       Some(
-        Refusal.OverBudget(Purpose.Lookup, Refusal.OverBudget.Spent(10), Refusal.OverBudget.Cap(10))
+        Denial.OverBudget(Purpose.Lookup, Denial.OverBudget.Spent(10), Denial.OverBudget.Cap(10))
       )
     )
     // lookups may use what searches left: ten lookups, no searches
@@ -202,7 +202,8 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(searches.reserve(free, Purpose.Search, t0).isLeft)
 
   test("costs are settings: a call costing 3 tokens counts 3"):
-    val dear = limits.modify(_.perMinute).setTo(Limits.PerMinute(1000)).modify(_.searchCost).setTo(Limits.SearchCost(3))
+    val dear =
+      limits.modify(_.perMinute).setTo(Ceilings.PerMinute(1000)).modify(_.searchCost).setTo(Ceilings.SearchCost(3))
     val s = granted(granted(fresh, Purpose.Search, l = dear), Purpose.Search, l = dear)
     assertEquals(s.searchTokens, 6)
     assert(s.reserve(dear, Purpose.Search, t0).isLeft)
@@ -218,7 +219,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     val midnight = Instant.parse("2026-10-27T00:10:00Z")
     val next = blocked.onDay(midnight)
     assertEquals((next.day, next.spent), (LocalDate.of(2026, 10, 27), 0))
-    assert(blocked.reserve(limits, Purpose.Lookup, midnight).left.toOption.exists(_.isInstanceOf[Refusal.Blocked]))
+    assert(blocked.reserve(limits, Purpose.Lookup, midnight).left.toOption.exists(_.isInstanceOf[Denial.Blocked]))
     assertEquals(
       blocked.reserve(limits, Purpose.Lookup, Instant.parse("2026-10-27T00:31:00Z")).map(_.state.lookupTokens),
       Right(1)
@@ -249,18 +250,18 @@ class CoreQuotaSuite extends munit.FunSuite:
 
   test("refusals say what to change"):
     assert(
-      Refusal
-        .OverBudget(Purpose.Search, Refusal.OverBudget.Spent(600), Refusal.OverBudget.Cap(600))
+      Denial
+        .OverBudget(Purpose.Search, Denial.OverBudget.Spent(600), Denial.OverBudget.Cap(600))
         .describe
         .value
         .contains("acquire.core.search-daily-tokens")
     )
     assert(
-      Refusal
-        .OverBudget(Purpose.Lookup, Refusal.OverBudget.Spent(900), Refusal.OverBudget.Cap(900))
+      Denial
+        .OverBudget(Purpose.Lookup, Denial.OverBudget.Spent(900), Denial.OverBudget.Cap(900))
         .describe
         .value
         .contains("acquire.core.daily-tokens")
     )
-    assert(Refusal.Paced(Refusal.Paced.WaitMs(4_200L)).describe.value.contains("5 s"))
-    assert(Refusal.Blocked(t0, Block.Rationale.Throttled).describe.value.contains("HTTP 429"))
+    assert(Denial.Paced(Denial.Paced.WaitMs(4_200L)).describe.value.contains("5 s"))
+    assert(Denial.Blocked(t0, Backoff.Rationale.Throttled).describe.value.contains("HTTP 429"))

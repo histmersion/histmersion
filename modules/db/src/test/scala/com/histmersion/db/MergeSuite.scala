@@ -504,7 +504,7 @@ class MergeSuite extends DbSuite with Bounded:
         Goal.Put(Goal.Title("Goal created at work"), status = Goal.StatusValue("seeding"))
       )
     )
-    val _ = QueueRows.add(work, api.automation.queue.Kind.Tasks, QueueAdd(QueueItem.Text("Find the  Kuhrt reprint")))
+    val _ = QueueRows.add(work, api.automation.queue.Docket.Tasks, QueueAdd(QueueItem.Text("Find the  Kuhrt reprint")))
 
     // ── home ──
     put(
@@ -642,7 +642,8 @@ class MergeSuite extends DbSuite with Bounded:
         Goal.Put(Goal.Title("Goal created at home"), notes = Some(Goal.Notes("home's plan")))
       )
     )
-    val task = QueueRows.add(home, api.automation.queue.Kind.Tasks, QueueAdd(QueueItem.Text("Find the Kuhrt reprint")))
+    val task =
+      QueueRows.add(home, api.automation.queue.Docket.Tasks, QueueAdd(QueueItem.Text("Find the Kuhrt reprint")))
     val _ = QueueRows.patch(home, task.id, QueuePatch(status = Some(QueueItem.Status(Queue.Done))))
     (work, home, sw, sh)
 

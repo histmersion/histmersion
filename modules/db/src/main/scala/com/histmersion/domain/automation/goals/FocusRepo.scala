@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.domain.goalfocus.Thresholds
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
@@ -260,15 +260,15 @@ object FocusRepo:
     )
 
   /** A person's cap (None = the config's). */
-  def maxOverride(using DbCon): Option[Settings.Max] =
+  def maxOverride(using DbCon): Option[Thresholds.Max] =
     sql"SELECT max_active_goals FROM agent_autopilot WHERE id"
       .query[Option[Int]]
       .run()
       .headOption
       .flatten
-      .map(Settings.Max(_))
+      .map(Thresholds.Max(_))
 
-  def setMaxOverride(n: Option[Settings.Max])(using DbCon): Unit =
+  def setMaxOverride(n: Option[Thresholds.Max])(using DbCon): Unit =
     val _ =
       Unused(
         sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run(),

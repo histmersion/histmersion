@@ -6,7 +6,7 @@ import com.histmersion.api.automation.ManagersMarkdown
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
-import com.histmersion.domain.schedulerpolicy.Resources
+import com.histmersion.domain.schedulerpolicy.Capacity
 import com.histmersion.domain.schedulerpolicy.Candidate
 import com.histmersion.Newtype
 
@@ -70,11 +70,11 @@ object Block:
 
     case UnfinishedGoals(detail: Detail)
 
-    case PoolFull(pool: Candidate.Pools, runs: Resources.PoolCapValue)
+    case PoolFull(pool: Candidate.Pools, runs: Capacity.PoolCapValue)
 
-    case ManagerFull(manager: Candidate.ManagerId, maxRuns: Resources.ManagerCapValue)
+    case ManagerFull(manager: Candidate.ManagerId, maxRuns: Capacity.ManagerCapValue)
 
-    case NoPlaceFree(maxRuns: Resources.MaxRuns, occupied: Resources.Occupied, because: Option[Because])
+    case NoPlaceFree(maxRuns: Capacity.MaxRuns, occupied: Capacity.Occupied, because: Option[Because])
 
     case Busy(refusal: Refusal)
 

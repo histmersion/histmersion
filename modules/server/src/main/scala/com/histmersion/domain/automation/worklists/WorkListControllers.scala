@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
@@ -35,12 +35,12 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
-  def kindOf(list: WorkListControllers.KindOfList): Either[Api.Error, Kind] =
-    Kind
-      .parse(Kind.Label(list.value))
+  def kindOf(list: WorkListControllers.KindOfList): Either[Api.Error, Docket] =
+    Docket
+      .parse(Docket.Label(list.value))
       .toRight(
         WorkListControllers.bad(
-          Problem.Unclassified(Legacy.Text(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
+          Problem.Unclassified(Legacy.Text(s"unknown queue list '$list' — one of: ${Docket.all.mkString(", ")}"))
         )
       )
 
@@ -65,9 +65,9 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
           Left(WorkListControllers.bad(Problem.Unclassified(Legacy.Text("queue item text is empty"))))
         else
           val topic = in.topic.map(_.value.trim).filter(_.nonEmpty).map(QueueItem.Topic(_)) match
-            case some @ Some(_)        => some
-            case None if k == Kind.Log => Some(QueueItem.Topic(LocalDate.now(clock).toString))
-            case None                  => None
+            case some @ Some(_)          => some
+            case None if k == Docket.Log => Some(QueueItem.Topic(LocalDate.now(clock).toString))
+            case None                    => None
           // both are 400s, not 500s: `created_at` reaches Postgres as `?::timestamptz` (a malformed
           // one used to surface as a driver error) and `status` was written unchecked.
           for
@@ -103,7 +103,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def exportText(list: Kind.Label): Either[Api.Error, Queue.Markdown] =
+  def exportText(list: Docket.Label): Either[Api.Error, Queue.Markdown] =
     kindOf(WorkListControllers.KindOfList(list.value)).map(k => k.render(queues.list(k, QueueScope.All)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -112,7 +112,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def importText(list: Kind.Label, req: QueueImport): Either[Api.Error, QueueImported] =
+  def importText(list: Docket.Label, req: QueueImport): Either[Api.Error, QueueImported] =
     maintenance.guard(WriteGate.OperationName("queue/import")):
       kindOf(WorkListControllers.KindOfList(list.value)).map { k =>
         val rows = k.parse(Queue.FileText(req.text.value))
@@ -127,8 +127,8 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
       }
 
   /** Every list at once — what `histmersion export <dir>` writes alongside the source notes. */
-  def files(): List[(Kind.File, Queue.Markdown)] =
-    Kind.values.toList.map(k => k.file -> k.render(queues.list(k, QueueScope.All)))
+  def files(): List[(Docket.File, Queue.Markdown)] =
+    Docket.values.toList.map(k => k.file -> k.render(queues.list(k, QueueScope.All)))
 
 object WorkListControllers:
   type ListName = ListName.T

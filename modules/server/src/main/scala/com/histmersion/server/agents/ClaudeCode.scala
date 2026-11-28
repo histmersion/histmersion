@@ -2,7 +2,7 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.api.automation.agents.ModelRef
-import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.Channel
 import com.histmersion.api.automation.planquota.PoolId
 import com.histmersion.api.automation.planquota.Reading
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -245,7 +245,7 @@ object ClaudeCode:
           val rs = j.cursor
             .downField("rate_limit_info")
             .focus
-            .map(PlanPools.claudeReadings(_, Source.Run, PlanQuota.Now(now)))
+            .map(PlanPools.claudeReadings(_, Channel.Run, PlanQuota.Now(now)))
             .getOrElse(Nil)
           pools.record(PoolId.ClaudePlan, rs)
           pools.blocked(PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(s"${b._1}"))
@@ -419,7 +419,7 @@ object ClaudeCode:
         case "rate_limit_event" =>
           c.downField("rate_limit_info")
             .focus
-            .foreach(i => readings ++= PlanPools.claudeReadings(i, Source.Run, PlanQuota.Now(now)))
+            .foreach(i => readings ++= PlanPools.claudeReadings(i, Channel.Run, PlanQuota.Now(now)))
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
           val modelUsage = c.downField("modelUsage").focus.flatMap(_.asObject).toList.flatMap(_.toList)

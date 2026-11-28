@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.Limits
+import com.histmersion.domain.corequota.Ceilings
 import com.histmersion.domain.corequota.Purpose
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -20,7 +20,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.
   */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
-final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, limits: Limits) extends ScholarlyIndex:
+final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, limits: Ceilings) extends ScholarlyIndex:
   val name = ScholarlyIndex.Name("core")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")

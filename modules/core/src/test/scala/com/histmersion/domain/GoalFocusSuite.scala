@@ -4,7 +4,7 @@ package domain
 import com.histmersion.domain.goalfocus.Work
 import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.domain.goalfocus.Facts
-import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.domain.goalfocus.Thresholds
 import com.histmersion.domain.goalfocus.Plan
 import com.histmersion.domain.goalfocus.Pick
 import com.histmersion.domain.goalfocus.Item
@@ -62,7 +62,7 @@ class GoalFocusSuite extends munit.FunSuite:
   ) =
     Facts(slug, parent, status, created, sources, articles, unreviewed, compile, work, stop, pinned, priority, active)
 
-  private val s3 = Settings(max = Settings.Max(3), minSources = Settings.MinSources(3))
+  private val s3 = Thresholds(max = Thresholds.Max(3), minSources = Thresholds.MinSources(3))
 
   private def active(p: Plan) = p.active.map(_.slug)
 
@@ -118,7 +118,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("x2"), Some(Goal.Slug("x")), created = Facts.CreatedAt("2026-10-21T00:00:00Z")),
       g(Goal.Slug("y1"), Some(Goal.Slug("y")), created = Facts.CreatedAt("2026-01-01T00:00:00Z"))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("x1", "x2"))
     assert(s"${p.active(1).why}".contains("a sibling of x1 (active)"), p.active(1).why)
 
@@ -128,7 +128,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("k"), Some(Goal.Slug("p")), created = Facts.CreatedAt("2026-10-22T00:00:00Z")),
       g(Goal.Slug("other"), created = Facts.CreatedAt("2026-01-01T00:00:00Z"))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("p", "k"))
     assert(s"${p.active(1).why}".contains("a sub-goal of p (active)"), p.active(1).why)
 
@@ -140,7 +140,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("b")),
       g(Goal.Slug("a"))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(5)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(5)))
     assertEquals(active(p), List("prio", "more", "old", "a", "b"))
     assert(s"${p.active.head.why}".contains("priority 5"), p.active.head.why)
 
@@ -161,17 +161,21 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("p1"), pinned = Facts.Pinned(true)),
       g(Goal.Slug("p2"), pinned = Facts.Pinned(true))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("p1", "p2"))
     assert(p.active.forall(_.pinned.value) && s"${p.active.head.why}".startsWith("pinned by a person"), p.active)
     assertEquals(p.queue.map(_.slug), List("review"))
-    assertEquals(active(select(goals, s3.modify(_.max).setTo(Settings.Max(1)))), List("p1", "p2"), "pins past the cap")
+    assertEquals(
+      active(select(goals, s3.modify(_.max).setTo(Thresholds.Max(1)))),
+      List("p1", "p2"),
+      "pins past the cap"
+    )
 
   test("no cap (max 0): every candidate is active"):
     assertEquals(
       select(
         (1 to 12).toList.map(i => g(Goal.Slug.assume(s"g$i"))),
-        s3.modify(_.max).setTo(Settings.Max(0))
+        s3.modify(_.max).setTo(Thresholds.Max(0))
       ).active.size,
       12
     )
@@ -185,7 +189,7 @@ class GoalFocusSuite extends munit.FunSuite:
         g(Goal.Slug("kept2"), sources = Facts.Sources(4), active = Facts.Active(true)),
         g(Goal.Slug("better"), sources = Facts.Sources(9))
       )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("kept1", "kept2"))
     assert(s"${p.active.head.why}".startsWith("active, kept until it is reviewed"), p.active.head.why)
     assertEquals(p.joined, Nil)
@@ -196,7 +200,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("pin"), sources = Facts.Sources(0), pinned = Facts.Pinned(true), active = Facts.Active(true)),
       g(Goal.Slug("toreview"), articles = Facts.Articles(2), unreviewed = Facts.Unreviewed(2))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p).toSet, Set("pin", "toreview"))
     assertEquals(
       p.left.map((a, p) => (a, s"$p")),
@@ -211,7 +215,7 @@ class GoalFocusSuite extends munit.FunSuite:
             g(Goal.Slug("gathering"), active = Facts.Active(true)),
             g(Goal.Slug("ready"), sources = Facts.Sources(5))
           ),
-          s3.modify(_.max).setTo(Settings.Max(1))
+          s3.modify(_.max).setTo(Thresholds.Max(1))
         )
       ),
       List("gathering")
@@ -223,7 +227,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("a"), active = Facts.Active(true)),
       g(Goal.Slug("next"), sources = Facts.Sources(4))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("a", "next"))
     assertEquals(p.left.map((a, p) => (a, s"$p")), List("done" -> "it is reviewed"))
     assertEquals(p.joined, List("next"))
@@ -239,7 +243,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("idle"), active = Facts.Active(true), work = Nil),
       g(Goal.Slug("next"))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(1)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(1)))
     assertEquals(active(p), List("next"))
     assertEquals(
       p.left.toMap.get(Goal.Slug("stuck")).map(w => s"$w"),
@@ -270,7 +274,7 @@ class GoalFocusSuite extends munit.FunSuite:
         g(Goal.Slug("byauto"), active = Facts.Active(true), work = List(auto)),
         g(Goal.Slug("next"))
       )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("byauto", "next"))
     assertEquals(p.left.map((a, p) => (a, s"$p")), List("byperson" -> "waits for a person: approval #41"))
     // a proposal behind a plan that waits for a person waits for that person too; behind a pending plan it is fine
@@ -352,12 +356,12 @@ class GoalFocusSuite extends munit.FunSuite:
     val plan = g(Goal.Slug("needsplan"), work = List(w(Work.ItemId(1), ManagerItem.Kind(PlanGoalItem))))
     val s = s3
       .modify(_.plansByPerson)
-      .setTo(Settings.PlansByPerson(true))
+      .setTo(Thresholds.PlansByPerson(true))
       .modify(_.openPersonPlans)
-      .setTo(Settings.OpenPersonPlans(3))
+      .setTo(Thresholds.OpenPersonPlans(3))
     assertEquals(select(List(plan), s).waiting.map(_._2), List(Code.Plans))
     assertEquals(
-      active(select(List(plan), s.modify(_.openPersonPlans).setTo(Settings.OpenPersonPlans(2)))),
+      active(select(List(plan), s.modify(_.openPersonPlans).setTo(Thresholds.OpenPersonPlans(2)))),
       List("needsplan")
     )
     assertEquals(
@@ -366,7 +370,7 @@ class GoalFocusSuite extends munit.FunSuite:
       "an active one keeps its slot"
     )
     assertEquals(
-      active(select(List(plan), s.modify(_.plansByPerson).setTo(Settings.PlansByPerson(false)))),
+      active(select(List(plan), s.modify(_.plansByPerson).setTo(Thresholds.PlansByPerson(false)))),
       List("needsplan"),
       "plans decided by code"
     )
@@ -377,7 +381,7 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("c"), compile = Facts.CompileOpen(1), active = Facts.Active(true)),
       g(Goal.Slug("x"), sources = Facts.Sources(1), active = Facts.Active(true))
     )
-    val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
+    val p = select(goals, s3.modify(_.max).setTo(Thresholds.Max(2)))
     assertEquals(active(p), List("r", "c"))
     assertEquals(p.left.map(_._1), List("x"))
     assert(s"${p.left.head._2}".contains("cap of 2"), p.left)

@@ -2,7 +2,7 @@ package com.histmersion
 package web
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
@@ -297,7 +297,7 @@ object UploadView:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loadItems(): Unit =
     ApiClient
-      .queueList(Kind.Acquire.label, false)
+      .queueList(Docket.Acquire.label, false)
       .foreach(l => openItems.set(l.items.filter(_.status == QueueItem.Status(Queue.Open))))
 
   /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
@@ -336,7 +336,7 @@ object UploadView:
     div(
       cls := "tool-pane upload-pane",
       onMountCallback(_ => loadItems()),
-      QueueView.changed.events.filter(_ == Kind.Acquire) --> (_ => loadItems()),
+      QueueView.changed.events.filter(_ == Docket.Acquire) --> (_ => loadItems()),
       itemPicker,
       // the drop zone doubles as the file picker
       label(

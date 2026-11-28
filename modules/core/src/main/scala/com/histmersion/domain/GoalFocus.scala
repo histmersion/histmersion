@@ -5,7 +5,7 @@ import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.domain.goalfocus.Facts
 import com.histmersion.domain.goalfocus.Work
 import com.histmersion.domain.goalfocus.Stage
-import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.domain.goalfocus.Thresholds
 import com.histmersion.domain.goalfocus.Plan
 import com.histmersion.domain.goalfocus.Fit
 import com.histmersion.domain.goalfocus.Pick
@@ -169,7 +169,7 @@ object GoalFocus:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Settings.MinSources): Rationale =
+  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[Goal.Slug]), minSources: Thresholds.MinSources): Rationale =
     val near = k match
       case (0, Some(s)) if f.parent.contains(s) => List(s"a sub-goal of $s (active)")
       case (0, Some(s)) => List(s"a sibling of $s (active): one parent's sub-goals are finished before another's")
@@ -188,7 +188,7 @@ object GoalFocus:
     * same plan.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def select(goals: List[Facts], s: Settings): Plan =
+  def select(goals: List[Facts], s: Thresholds): Plan =
     val bySlug = goals.map(g => g.slug -> g).toMap
     val kids = goals.filter(_.parent.isDefined).groupBy(_.parent.get)
     val rootMemo = collection.mutable.Map.empty[Goal.Slug, Goal.Slug] // memo of the walk; local to this call

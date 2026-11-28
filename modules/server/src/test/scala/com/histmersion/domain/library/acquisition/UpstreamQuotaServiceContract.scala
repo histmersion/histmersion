@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.acquisition
 
 import com.histmersion.domain.corequota.State
-import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Backoff
 import com.histmersion.domain.corequota.Window
 
 import hearth.kindlings.optics.syntax.*
@@ -25,7 +25,7 @@ abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
       LocalDate.of(2026, 10, 26),
       State.LookupTokens(5),
       State.SearchTokens(2),
-      Some(Block(Instant.parse("2026-10-26T19:00:00Z"), Block.Rationale.Throttled)),
+      Some(Backoff(Instant.parse("2026-10-26T19:00:00Z"), Backoff.Rationale.Throttled)),
       Some(
         Window(
           Some(Window.Limit(25)),

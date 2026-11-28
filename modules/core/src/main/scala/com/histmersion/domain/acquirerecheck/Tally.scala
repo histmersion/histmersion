@@ -4,7 +4,7 @@ package domain.acquirerecheck
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
-import com.histmersion.domain.acquirerecheck.Outcome
+import com.histmersion.domain.acquirerecheck.Upshot
 import com.histmersion.domain.AcquireRecheck.Detail
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
@@ -20,17 +20,17 @@ final case class Tally(
     lastFailure: Option[Detail] = None
 ):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def add(outcome: Outcome, detail: Detail): Tally = outcome match
-    case Outcome.Closed  => this.modify(_.closed).setTo(Tally.Closed(closed.value + 1))
-    case Outcome.Fetched =>
+  def add(outcome: Upshot, detail: Detail): Tally = outcome match
+    case Upshot.Closed  => this.modify(_.closed).setTo(Tally.Closed(closed.value + 1))
+    case Upshot.Fetched =>
       this
         .modify(_.tried)
         .setTo(Tally.Tried(tried.value + 1))
         .modify(_.fetched)
         .setTo(Tally.Fetched(fetched.value + 1))
-    case Outcome.NoCopy =>
+    case Upshot.NoCopy =>
       this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.noCopy).setTo(Tally.NoCopy(noCopy.value + 1))
-    case Outcome.Failed =>
+    case Upshot.Failed =>
       this
         .modify(_.tried)
         .setTo(Tally.Tried(tried.value + 1))

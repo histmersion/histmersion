@@ -1,7 +1,7 @@
 package com.histmersion
 package api
 
-import com.histmersion.domain.enrichsource.Window
+import com.histmersion.domain.enrichsource.Frame
 import com.histmersion.domain.enrichsource.FindingGuards
 import com.histmersion.domain.enrichsource.StatedYear
 import com.histmersion.domain.enrichsource.FindingProposal
@@ -38,7 +38,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       "The town was walled in the 11th century. Vesuvius buried Pompeii in 79 CE. " +
       "Rainfall rose sharply in the next period. The hoard was buried in the 15th c. by its owners."
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val window = Window(Window.Index(1), None, Window.Text(text))
+  private val window = Frame(Frame.Index(1), None, Frame.Text(text))
 
   private val known = Set("Uluburun", "Pompeii")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

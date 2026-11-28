@@ -12,16 +12,16 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
 import com.histmersion.api.research.CritiquePair
 
-final case class Hit(
-    unit: Hit.Unit,
-    from: Hit.From,
-    to: Hit.To,
-    where: Hit.Where,
+final case class MissedPair(
+    unit: MissedPair.Unit,
+    from: MissedPair.From,
+    to: MissedPair.To,
+    where: MissedPair.Where,
     cited: Citekey,
     missing: Citekey,
-    edges: List[Hit.Edges],
-    named: Hit.Named,
-    mechanical: Hit.Mechanical
+    edges: List[MissedPair.Edges],
+    named: MissedPair.Named,
+    mechanical: MissedPair.Mechanical
 ) derives JsonCodec:
   def ref: CritiqueRef = CritiqueRef(cited, missing)
 
@@ -32,7 +32,7 @@ final case class Hit(
        else
          s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)"))
 
-object Hit:
+object MissedPair:
 
   type Unit = Unit.T
   object Unit extends Newtype[Int, Pure]

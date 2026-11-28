@@ -32,20 +32,20 @@ object GoalPlanFacts:
 
   extension (p: GoalPlanFacts)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def goalPlan(maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
+    def goalPlan(maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Ruling =
       if p.subGoals.value + p.queries.value + p.works.value == 0 then
-        Verdict.Reject(Rationale("the plan proposes nothing"))
+        Ruling.Reject(Rationale("the plan proposes nothing"))
       else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
-        Verdict.Reject(
+        Ruling.Reject(
           Rationale(
             s"it proposes ${counted(p.subGoals.value, "sub-goal")} for a goal ${depthText(p.depth)}; " +
               s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
           )
         )
       else if approvedToday.value >= cap.value then
-        Verdict.Leave(Rationale(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
+        Ruling.Leave(Rationale(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
       else
-        Verdict.Approve(
+        Ruling.Approve(
           Rationale(
             s"${counted(p.subGoals.value, "sub-goal")}, ${counted(p.queries.value, "query", "queries")}, ${counted(p.works.value, "work")}" +
               s" (depth ${p.depth} of $maxDepth); ${approvedToday.value + 1} of $cap today"

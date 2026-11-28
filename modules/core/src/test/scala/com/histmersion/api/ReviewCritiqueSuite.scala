@@ -5,7 +5,7 @@ import com.histmersion.domain.reviewarticle.CritiqueRule
 import com.histmersion.domain.reviewarticle.Finding
 import com.histmersion.domain.reviewarticle.Reviewer
 import com.histmersion.domain.reviewarticle.Fix
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.domain.reviewarticle.NotMaterialAnswer
 import com.histmersion.domain.reviewarticle.SkepticAnswer
 import com.histmersion.domain.reviewarticle.FindingAnswer
@@ -320,10 +320,10 @@ class ReviewCritiqueSuite extends munit.FunSuite:
 
   test("claimSentence and qualified: the sentence that holds a quote; hedges and contest words, outside links"):
     assertEquals(
-      Fix.claimSentence(body, Evidence.Quote("the dying god is a universal type (S3)"), minRatio),
+      Fix.claimSentence(body, Quotation.Quote("the dying god is a universal type (S3)"), minRatio),
       Some("The bough proves that the dying god is a universal type (S3) [[frazer1922_golden]].")
     )
-    assertEquals(Fix.claimSentence(body, Evidence.Quote("nothing like this"), minRatio), None)
+    assertEquals(Fix.claimSentence(body, Quotation.Quote("nothing like this"), minRatio), None)
     // an abbreviation or an initial ends no sentence; a quote across two sentences gets both, not the paragraph
     val p = domain.reviewarticle.Fix.Body(
       "Chang et al. (2015, contested) date the split to 6000 BP [[chang2015]]. M. L. West disagrees. It may be older. The end."
@@ -338,11 +338,11 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      Fix.claimSentence(p, Evidence.Quote("Chang et al. (2015, contested) date the split"), minRatio),
+      Fix.claimSentence(p, Quotation.Quote("Chang et al. (2015, contested) date the split"), minRatio),
       Some(Fix.sentences(p).head)
     )
     assertEquals(
-      Fix.claimSentence(p, Evidence.Quote("M. L. West disagrees. It may be older"), minRatio),
+      Fix.claimSentence(p, Quotation.Quote("M. L. West disagrees. It may be older"), minRatio),
       Some("M. L. West disagrees. It may be older.")
     )
     assert(qualified(ReviewArticle.Sentence("The date is disputed [[a2000_x]].")))

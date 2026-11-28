@@ -204,7 +204,7 @@ final class ModelPicker(
     * cap must not read as no cap) and where it comes from.
     */
   final case class Effective(
-      target: api.automation.modelchains.Target.Wire,
+      target: api.automation.modelchains.Aim.Wire,
       allowance: Either[Problems, api.automation.modelchains.Allowance],
       source: SettingSource
   )
@@ -220,7 +220,7 @@ final class ModelPicker(
         case Left(m)   => (Nil, m.at(Problem.Field("agents.allowances")).toVector.toList)
     val saved = Transactor(ds).read(ModelSettingsRepo.allowances).map { s =>
       val a: Either[Problems, api.automation.modelchains.Allowance] = for
-        t <- api.automation.modelchains.Target.parse(api.automation.modelchains.Target.Spec(s.target.value), known())
+        t <- api.automation.modelchains.Aim.parse(api.automation.modelchains.Aim.Spec(s.target.value), known())
         ss <- s.limits
         ls <- ss.map(api.automation.modelchains.Limit.fromSpec).partitionMap(identity) match
           case (Nil, ok)          => Right(ok)
@@ -228,7 +228,7 @@ final class ModelPicker(
         a <- api.automation.modelchains.Allowance
           .of(t, ls, api.automation.modelchains.Allowance.ReservePct(s.reservePct.value))
       yield a
-      Effective(api.automation.modelchains.Target.Wire(s.target.value), a, SettingSource.Saved)
+      Effective(api.automation.modelchains.Aim.Wire(s.target.value), a, SettingSource.Saved)
     }
     val savedTargets = saved.map(_.target).toSet
     (fromConfig.filterNot(e => savedTargets.contains(e.target)) ++ saved, problems)
@@ -246,8 +246,8 @@ final class ModelPicker(
       .filter(e =>
         e.allowance.fold(
           _ =>
-            api.automation.modelchains.Target
-              .parse(api.automation.modelchains.Target.Spec(e.target.value), known())
+            api.automation.modelchains.Aim
+              .parse(api.automation.modelchains.Aim.Spec(e.target.value), known())
               .exists(_.covers(m)),
           _.target.covers(m)
         )
@@ -260,9 +260,9 @@ final class ModelPicker(
     else
       val secs = ModelSettingsRepo.WindowSeconds(a.limits.map(_.window.seconds.value).max)
       a.target match
-        case api.automation.modelchains.Target.Model(r) =>
+        case api.automation.modelchains.Aim.Model(r) =>
           Transactor(ds).read(ModelSettingsRepo.spends(List(r.wire), Nil, secs))
-        case api.automation.modelchains.Target.Provider(k) =>
+        case api.automation.modelchains.Aim.Provider(k) =>
           Transactor(ds).read(ModelSettingsRepo.spends(Nil, List(k.wire.value + ":"), secs))
 
   /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself). `unavailable`: it cannot be

@@ -10,21 +10,21 @@ import com.histmersion.domain.schedulerpolicy.Candidate
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Newtype
 
-final case class Resources(
-    maxRuns: Resources.MaxRuns,
-    occupied: Resources.Occupied,
-    poolCap: Map[Candidate.Pools, Resources.PoolCapValue] = Map.empty,
-    poolUsed: Map[Candidate.Pools, Resources.PoolUsedValue] = Map.empty,
-    managerCap: Map[Candidate.ManagerId, Resources.ManagerCapValue] = Map.empty,
-    managerUsed: Map[Candidate.ManagerId, Resources.ManagerUsedValue] = Map.empty,
-    gatheringUsed: Resources.GatheringUsed = Resources.GatheringUsed(0),
+final case class Capacity(
+    maxRuns: Capacity.MaxRuns,
+    occupied: Capacity.Occupied,
+    poolCap: Map[Candidate.Pools, Capacity.PoolCapValue] = Map.empty,
+    poolUsed: Map[Candidate.Pools, Capacity.PoolUsedValue] = Map.empty,
+    managerCap: Map[Candidate.ManagerId, Capacity.ManagerCapValue] = Map.empty,
+    managerUsed: Map[Candidate.ManagerId, Capacity.ManagerUsedValue] = Map.empty,
+    gatheringUsed: Capacity.GatheringUsed = Capacity.GatheringUsed(0),
     stop: Option[Block] = None,
     recent: List[JobType] = Nil
 ):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def room: Resources.Room = Resources.Room(math.max(0, maxRuns.value - occupied.value))
+  def room: Capacity.Room = Capacity.Room(math.max(0, maxRuns.value - occupied.value))
 
-object Resources:
+object Capacity:
 
   type MaxRuns = MaxRuns.T
   object MaxRuns extends Newtype[Int, Pure]

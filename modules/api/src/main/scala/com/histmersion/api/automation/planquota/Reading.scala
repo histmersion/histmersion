@@ -19,7 +19,7 @@ final case class Reading(
     resetsAt: Option[Reading.ResetsAt],
     rejected: Reading.Rejected,
     observedAt: Reading.ObservedAt,
-    source: Source,
+    source: Channel,
     model: Option[Reading.Model] = None
 )
 

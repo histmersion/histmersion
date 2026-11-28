@@ -6,7 +6,7 @@ import com.histmersion.domain.reviewarticle.Merged
 import com.histmersion.domain.reviewarticle.Snapshot
 import com.histmersion.domain.reviewarticle.Finding
 import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Patched
+import com.histmersion.domain.reviewarticle.Amended
 import com.histmersion.domain.reviewarticle.Report
 import com.histmersion.domain.reviewledger.Closure
 import com.histmersion.domain.reviewarticle.Recheck
@@ -217,7 +217,7 @@ final class ReviewArticlePipeline(
       for
         fixed <- fixer(ctx, st.snap, st.merged, c.ledger, r, c.reasons)
         after = c.ledger.applyFix(fixed, runId(ctx), ReviewLedger.ApplyFixRound(r))
-        patched <- ctx.code[Patched](AgentRepo.StepRecord.Name(s"patch-$r"))(
+        patched <- ctx.code[Amended](AgentRepo.StepRecord.Name(s"patch-$r"))(
           ctx.byAnswer(fixerStep(r))(write(ctx, st.snap, fixed, r, after))
         )
         carry = Carry(
@@ -987,11 +987,11 @@ final class ReviewArticlePipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def write(ctx: RunCtx, s: Snapshot, f: domain.reviewarticle.Fix, r: Int, after: Ledger)(using
       WritePermit
-  )(using Creator.New): Either[Problems, Patched] =
+  )(using Creator.New): Either[Problems, Amended] =
     val bodyChanged = f.body.value.trim != s.body.value.trim
     if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
-      Right(Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(false)))
+      Right(Amended(written = Amended.Written(false), None, conflict = Amended.Conflict(false)))
     else
       val p = Article.Patch(
         body = Option.when(bodyChanged)(f.body),
@@ -1009,19 +1009,19 @@ final class ReviewArticlePipeline(
       )(site.articles.patch(s.slug, p).map(_ => true))(Right(false)) match
         case Right(false) =>
           persist(ctx, after)
-          Right(Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(false)))
+          Right(Amended(written = Amended.Written(false), None, conflict = Amended.Conflict(false)))
         case Right(_) =>
           persist(ctx, after)
           Right(
-            Patched(
-              written = Patched.Written(true),
-              site.articleStore.latestVersion(s.slug).map(v => Patched.PreviousVersion(v.value)),
-              conflict = Patched.Conflict(false)
+            Amended(
+              written = Amended.Written(true),
+              site.articleStore.latestVersion(s.slug).map(v => Amended.PreviousVersion(v.value)),
+              conflict = Amended.Conflict(false)
             )
           )
         case Left(e) if e.code.contains(Api.Error.Code(Write.CodePrecondition)) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
-          Right(Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(true)))
+          Right(Amended(written = Amended.Written(false), None, conflict = Amended.Conflict(true)))
         case Left(e) => Left(e.problems)
 
   /** Bookkeeping: one `log` line, the article's ONE backlog item listing its open MAJORs (#934) — created, rewritten,
@@ -1070,8 +1070,8 @@ final class ReviewArticlePipeline(
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def backlog(ctx: RunCtx, slug: Slug, l: Ledger)(using WritePermit): Ledger =
-    val tasks = api.automation.queue.Kind.Tasks.label
-    val open = site.queues.list(api.automation.queue.Kind.Tasks, QueueScope.Open)
+    val tasks = api.automation.queue.Docket.Tasks.label
+    val open = site.queues.list(api.automation.queue.Docket.Tasks, QueueScope.Open)
     // the ledger's item, else the article's collapsed item it lost track of (#934: never a second one)
     val current = l.task
       .flatMap(i => site.queues.get(QueueItemId(i.value)))

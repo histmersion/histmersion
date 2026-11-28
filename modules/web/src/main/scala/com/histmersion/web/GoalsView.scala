@@ -8,7 +8,7 @@ import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.listfilters.RunFilter
 import com.histmersion.api.automation.listfilters.ApprovalFilter
 import com.histmersion.api.automation.agents.RunRequest
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -585,7 +585,7 @@ object GoalsView:
           case LinkKind.QueueItem =>
             val text = span(shown"#${l.ref} ", span(cls := "muted", l.title.map(_.value).getOrElse("(gone)")))
             l.queue
-              .flatMap(q => Kind.parse(Kind.Label(q.value)))
+              .flatMap(q => Docket.parse(Docket.Label(q.value)))
               .zip(l.ref.value.toIntOption)
               .fold(text)((k, id) => QueueItemLink(k, GoalLink.QueueNumber(id), text)),
         Option.when(l.title.isEmpty && l.kind != LinkKind.Query)(span(cls := "muted", " (missing)")),

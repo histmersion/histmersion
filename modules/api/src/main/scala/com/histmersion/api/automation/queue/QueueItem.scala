@@ -14,7 +14,7 @@ import com.histmersion.api.automation.Queue.Rationale
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.Display
 import com.histmersion.Newtype
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Queue.Done
 import com.histmersion.api.automation.queue.QueuePatch
@@ -47,7 +47,7 @@ object QueueItem:
   type Id = Id.T
   object Id extends Newtype[Int, Pure]:
     given Display[T] = Display(id => s"${id.value}")
-  export Kind.Label as List
+  export Docket.Label as List
   type Text = Text.T
   object Text extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
@@ -76,14 +76,14 @@ object QueueItem:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fulfillable(id: Id, found: Option[QueueItem]): Either[Problem, QueueItem] =
     found match
-      case None                                    => Left(Problem.NotFound.Entity(TypeName.of(Id), Raw(s"$id")))
-      case Some(i) if i.list != Kind.Acquire.label =>
+      case None                                      => Left(Problem.NotFound.Entity(TypeName.of(Id), Raw(s"$id")))
+      case Some(i) if i.list != Docket.Acquire.label =>
         Left(
           Problem.Conflict.WrongState(
             TypeName.of(Id),
             Raw(s"$id"),
             Problem.Conflict.State(s"${i.list}"),
-            Vector(Problem.Conflict.State(s"${Kind.Acquire.label}"))
+            Vector(Problem.Conflict.State(s"${Docket.Acquire.label}"))
           )
         )
       case Some(i) if i.status != Status(Open) =>

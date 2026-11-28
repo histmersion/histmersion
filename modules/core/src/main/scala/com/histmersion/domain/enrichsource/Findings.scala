@@ -20,7 +20,7 @@ import com.histmersion.util.problem.Problem.Where
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.catalogue.Period
-import com.histmersion.domain.enrichsource.Window
+import com.histmersion.domain.enrichsource.Frame
 import com.histmersion.domain.enrichsource.Loaded
 import com.histmersion.domain.EnrichSource.MinRatio
 import com.histmersion.domain.enrichsource.FindingGuards
@@ -49,7 +49,7 @@ object Findings:
   extension (f: Findings)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checkFindings(
-        window: Window,
+        window: Frame,
         minRatio: MinRatio,
         maxAbsYear: CheckFindingsMaxAbsYear,
         within: Option[Period],

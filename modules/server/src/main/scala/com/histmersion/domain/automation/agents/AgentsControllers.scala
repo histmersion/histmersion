@@ -752,8 +752,8 @@ final class AgentsControllers(
       WritePermit
   ): Either[Problems, AllowanceStatus] =
     for
-      t <- api.automation.modelchains.Target
-        .parse(api.automation.modelchains.Target.Spec(in.target.value), knownPluginNames)
+      t <- api.automation.modelchains.Aim
+        .parse(api.automation.modelchains.Aim.Spec(in.target.value), knownPluginNames)
       ls <- in.limits.map(api.automation.modelchains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok)          => Right(ok)
         case (first :: more, _) => Left(Problems.of(first, more*))
@@ -769,7 +769,7 @@ final class AgentsControllers(
         .allowanceStatuses(PlanQuotaRepo.EpochMillis(clock.millis()))
         .find(_.target.value == t.wire.value)
         .toRight(
-          Problem.NotFound.Entity(Problem.TypeName.of(api.automation.modelchains.Target.Wire), Problem.Raw.of(t.wire))
+          Problem.NotFound.Entity(Problem.TypeName.of(api.automation.modelchains.Aim.Wire), Problem.Raw.of(t.wire))
         )
     yield st
 
@@ -784,8 +784,8 @@ final class AgentsControllers(
   private def removeAllowanceHeld(target: AllowanceSet.Target)(using
       WritePermit
   ): Either[Problems, Goal.Plans.Removed] =
-    api.automation.modelchains.Target
-      .parse(api.automation.modelchains.Target.Spec(target.value), knownPluginNames)
+    api.automation.modelchains.Aim
+      .parse(api.automation.modelchains.Aim.Spec(target.value), knownPluginNames)
       .map(t =>
         Goal.Plans.Removed(
           (if Transactor(ds).write(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value))) then

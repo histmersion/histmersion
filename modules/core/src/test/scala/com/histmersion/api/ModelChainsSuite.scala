@@ -256,9 +256,9 @@ class ModelChainsSuite extends munit.FunSuite:
     )
     assert(!a.target.covers(ModelRef(ProviderKind.Local, ModelRef.Model("pro"))))
     assertEquals(
-      api.automation.modelchains.Target
+      api.automation.modelchains.Aim
         .parse(
-          api.automation.modelchains.Target.Spec("gemini:pro"),
+          api.automation.modelchains.Aim.Spec("gemini:pro"),
           Set(api.automation.ProviderKind.Plugin.Name("gemini"))
         )
         .map(_.wire),

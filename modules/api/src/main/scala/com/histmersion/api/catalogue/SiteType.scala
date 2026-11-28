@@ -508,226 +508,226 @@ object SiteType:
     }, {
       val refactorTuple129 = "Q15661340" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple129._1), Id(refactorTuple129._2))
-    } , {
+    }, {
       val refactorTuple333 = "Q515" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple333._1), Id(refactorTuple333._2))
-    } , {
+    }, {
       val refactorTuple131 = "Q15253706" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple131._1), Id(refactorTuple131._2))
-    } , {
+    }, {
       val refactorTuple132 = "Q755017" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple132._1), Id(refactorTuple132._2))
-    } , {
+    }, {
       val refactorTuple336 = "Q532" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple336._1), Id(refactorTuple336._2))
-    } , {
+    }, {
       val refactorTuple337 = "Q3957" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple337._1), Id(refactorTuple337._2))
-    } , {
+    }, {
       val refactorTuple338 = "Q1549591" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple338._1), Id(refactorTuple338._2))
-    } , {
+    }, {
       val refactorTuple339 = "Q5084" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple339._1), Id(refactorTuple339._2))
-    } , {
+    }, {
       val refactorTuple340 = "Q148837" -> Settlement;
       (CatalogRecord.Wikidata.Class(refactorTuple340._1), Id(refactorTuple340._2))
-    } , {
+    }, {
       val refactorTuple138 = "Q3947" -> Villa;
       (CatalogRecord.Wikidata.Class(refactorTuple138._1), Id(refactorTuple138._2))
-    } , {
+    }, {
       val refactorTuple139 = "Q3950" -> Villa;
       (CatalogRecord.Wikidata.Class(refactorTuple139._1), Id(refactorTuple139._2))
-    } , {
+    }, {
       val refactorTuple140 = "Q918230" -> Villa;
       (CatalogRecord.Wikidata.Class(refactorTuple140._1), Id(refactorTuple140._2))
-    } , {
+    }, {
       val refactorTuple141 = "Q131596" -> Villa;
       (CatalogRecord.Wikidata.Class(refactorTuple141._1), Id(refactorTuple141._2))
-    } , {
+    }, {
       val refactorTuple142 = "Q57821" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple142._1), Id(refactorTuple142._2))
-    } , {
+    }, {
       val refactorTuple143 = "Q1785071" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple143._1), Id(refactorTuple143._2))
-    } , {
+    }, {
       val refactorTuple347 = "Q23413" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple347._1), Id(refactorTuple347._2))
-    } , {
+    }, {
       val refactorTuple348 = "Q744099" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple348._1), Id(refactorTuple348._2))
-    } , {
+    }, {
       val refactorTuple349 = "Q88291" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple349._1), Id(refactorTuple349._2))
-    } , {
+    }, {
       val refactorTuple350 = "Q16748868" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple350._1), Id(refactorTuple350._2))
-    } , {
+    }, {
       val refactorTuple351 = "Q192601" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple351._1), Id(refactorTuple351._2))
-    } , {
+    }, {
       val refactorTuple149 = "Q57831" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple149._1), Id(refactorTuple149._2))
-    } , {
+    }, {
       val refactorTuple150 = "Q82117" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple150._1), Id(refactorTuple150._2))
-    } , {
+    }, {
       val refactorTuple151 = "Q57346" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple151._1), Id(refactorTuple151._2))
-    } , {
+    }, {
       val refactorTuple152 = "Q947103" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple152._1), Id(refactorTuple152._2))
-    } , {
+    }, {
       val refactorTuple356 = "Q20034791" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple356._1), Id(refactorTuple356._2))
-    } , {
+    }, {
       val refactorTuple154 = "Q81917" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple154._1), Id(refactorTuple154._2))
-    } , {
+    }, {
       val refactorTuple155 = "Q91312" -> Fortification;
       (CatalogRecord.Wikidata.Class(refactorTuple155._1), Id(refactorTuple155._2))
-    } , {
+    }, {
       val refactorTuple156 = "Q12518" -> Tower;
       (CatalogRecord.Wikidata.Class(refactorTuple156._1), Id(refactorTuple156._2))
-    } , {
+    }, {
       val refactorTuple360 = "Q853854" -> Tower;
       (CatalogRecord.Wikidata.Class(refactorTuple360._1), Id(refactorTuple360._2))
-    } , {
+    }, {
       val refactorTuple361 = "Q200334" -> Tower;
       (CatalogRecord.Wikidata.Class(refactorTuple361._1), Id(refactorTuple361._2))
-    } , {
+    }, {
       val refactorTuple362 = "Q48356" -> Tower;
       (CatalogRecord.Wikidata.Class(refactorTuple362._1), Id(refactorTuple362._2))
-    } , {
+    }, {
       val refactorTuple363 = "Q12280" -> Bridge;
       (CatalogRecord.Wikidata.Class(refactorTuple363._1), Id(refactorTuple363._2))
-    } , {
+    }, {
       val refactorTuple161 = "Q474" -> Aqueduct;
       (CatalogRecord.Wikidata.Class(refactorTuple161._1), Id(refactorTuple161._2))
-    } , {
+    }, {
       val refactorTuple365 = "Q34442" -> Infrastructure;
       (CatalogRecord.Wikidata.Class(refactorTuple365._1), Id(refactorTuple365._2))
-    } , {
+    }, {
       val refactorTuple163 = "Q44539" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple163._1), Id(refactorTuple163._2))
-    } , {
+    }, {
       val refactorTuple164 = "Q29553" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple164._1), Id(refactorTuple164._2))
-    } , {
+    }, {
       val refactorTuple165 = "Q16970" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple165._1), Id(refactorTuple165._2))
-    } , {
+    }, {
       val refactorTuple166 = "Q697295" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple166._1), Id(refactorTuple166._2))
-    } , {
+    }, {
       val refactorTuple370 = "Q44613" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple370._1), Id(refactorTuple370._2))
-    } , {
+    }, {
       val refactorTuple371 = "Q32815" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple371._1), Id(refactorTuple371._2))
-    } , {
+    }, {
       val refactorTuple372 = "Q34627" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple372._1), Id(refactorTuple372._2))
-    } , {
+    }, {
       val refactorTuple373 = "Q1088552" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple373._1), Id(refactorTuple373._2))
-    } , {
+    }, {
       val refactorTuple374 = "Q24398318" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple374._1), Id(refactorTuple374._2))
-    } , {
+    }, {
       val refactorTuple172 = "Q267596" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple172._1), Id(refactorTuple172._2))
-    } , {
+    }, {
       val refactorTuple376 = "Q108325" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple376._1), Id(refactorTuple376._2))
-    } , {
+    }, {
       val refactorTuple377 = "Q2031836" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple377._1), Id(refactorTuple377._2))
-    } , {
+    }, {
       val refactorTuple175 = "Q2977" -> Sanctuary;
       (CatalogRecord.Wikidata.Class(refactorTuple175._1), Id(refactorTuple175._2))
-    } , {
+    }, {
       val refactorTuple176 = "Q381885" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple176._1), Id(refactorTuple176._2))
-    } , {
+    }, {
       val refactorTuple177 = "Q39614" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple177._1), Id(refactorTuple177._2))
-    } , {
+    }, {
       val refactorTuple381 = "Q200141" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple381._1), Id(refactorTuple381._2))
-    } , {
+    }, {
       val refactorTuple179 = "Q34023" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple179._1), Id(refactorTuple179._2))
-    } , {
+    }, {
       val refactorTuple180 = "Q5737" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple180._1), Id(refactorTuple180._2))
-    } , {
+    }, {
       val refactorTuple384 = "Q12516" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple384._1), Id(refactorTuple384._2))
-    } , {
+    }, {
       val refactorTuple182 = "Q173387" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple182._1), Id(refactorTuple182._2))
-    } , {
+    }, {
       val refactorTuple386 = "Q162875" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple386._1), Id(refactorTuple386._2))
-    } , {
+    }, {
       val refactorTuple184 = "Q820477" -> Mine;
       (CatalogRecord.Wikidata.Class(refactorTuple184._1), Id(refactorTuple184._2))
-    } , {
+    }, {
       val refactorTuple185 = "Q188040" -> Mine;
       (CatalogRecord.Wikidata.Class(refactorTuple185._1), Id(refactorTuple185._2))
-    } , {
+    }, {
       val refactorTuple186 = "Q44782" -> Port;
       (CatalogRecord.Wikidata.Class(refactorTuple186._1), Id(refactorTuple186._2))
-    } , {
+    }, {
       val refactorTuple390 = "Q283202" -> Port;
       (CatalogRecord.Wikidata.Class(refactorTuple390._1), Id(refactorTuple390._2))
-    } , {
+    }, {
       val refactorTuple391 = "Q852190" -> Shipwreck;
       (CatalogRecord.Wikidata.Class(refactorTuple391._1), Id(refactorTuple391._2))
-    } , {
+    }, {
       val refactorTuple392 = "Q35509" -> Cave;
       (CatalogRecord.Wikidata.Class(refactorTuple392._1), Id(refactorTuple392._2))
-    } , {
+    }, {
       val refactorTuple190 = "Q1149405" -> Cave;
       (CatalogRecord.Wikidata.Class(refactorTuple190._1), Id(refactorTuple190._2))
-    } , {
+    }, {
       val refactorTuple394 = "Q16560" -> Palace;
       (CatalogRecord.Wikidata.Class(refactorTuple394._1), Id(refactorTuple394._2))
-    } , {
+    }, {
       val refactorTuple395 = "Q4989906" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple395._1), Id(refactorTuple395._2))
-    } , {
+    }, {
       val refactorTuple193 = "Q164240" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple193._1), Id(refactorTuple193._2))
-    } , {
+    }, {
       val refactorTuple397 = "Q10521078" -> Burial;
       (CatalogRecord.Wikidata.Class(refactorTuple397._1), Id(refactorTuple397._2))
-    } , {
+    }, {
       val refactorTuple195 = "Q101659" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple195._1), Id(refactorTuple195._2))
-    } , {
+    }, {
       val refactorTuple399 = "Q193475" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple399._1), Id(refactorTuple399._2))
-    } , {
+    }, {
       val refactorTuple197 = "Q1935728" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple197._1), Id(refactorTuple197._2))
-    } , {
+    }, {
       val refactorTuple401 = "Q170980" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple401._1), Id(refactorTuple401._2))
-    } , {
+    }, {
       val refactorTuple402 = "Q179700" -> Monument;
       (CatalogRecord.Wikidata.Class(refactorTuple402._1), Id(refactorTuple402._2))
-    } , {
+    }, {
       val refactorTuple200 = "Q54831" -> Theatre;
       (CatalogRecord.Wikidata.Class(refactorTuple200._1), Id(refactorTuple200._2))
-    } , {
+    }, {
       val refactorTuple404 = "Q24354" -> Theatre;
       (CatalogRecord.Wikidata.Class(refactorTuple404._1), Id(refactorTuple404._2))
-    } , {
+    }, {
       val refactorTuple405 = "Q1211146" -> Findspot;
       (CatalogRecord.Wikidata.Class(refactorTuple405._1), Id(refactorTuple405._2))
-    } , {
+    }, {
       val refactorTuple203 = ArchaeologicalSite -> Findspot;
       (CatalogRecord.Wikidata.Class(refactorTuple203._1), Id(refactorTuple203._2))
     }

@@ -108,7 +108,7 @@ final class OaBacklog(
       .map(i => Placement.SettledBefore.Item(i.id.value))
     val acquire =
       site.queues
-        .naming(api.automation.queue.Kind.Acquire, doi)
+        .naming(api.automation.queue.Docket.Acquire, doi)
         .headOption
         .map(i => Placement.JoinAcquire.Item(i.id.value))
     IngestBacklog.place(
@@ -467,7 +467,7 @@ final class OaBacklog(
   private def acquireOnce(goals: List[Goal.Slug], doi: Doi, w: OaWork)(using
       WritePermit
   )(using Creator.New): Option[api.automation.queue.QueueItem.Id] =
-    val existing = site.queues.naming(api.automation.queue.Kind.Acquire, doi).headOption.map(_.id)
+    val existing = site.queues.naming(api.automation.queue.Docket.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
       val goal = goals.headOption
       val text = w.acquireText
@@ -497,7 +497,7 @@ final class OaBacklog(
       text.flatMap(t =>
         site.workLists
           .record(
-            WorkListControllers.ListName(api.automation.queue.Kind.Acquire.label.value),
+            WorkListControllers.ListName(api.automation.queue.Docket.Acquire.label.value),
             QueueAdd(
               t,
               topic = goal.map(g => api.automation.queue.QueueItem.Topic(s"goal $g")),
@@ -624,9 +624,11 @@ final class OaBacklog(
                 row(Move, "legal open access", Some(id))
     }
     val untouched =
-      site.queues.list(api.automation.queue.Kind.Acquire, QueueScope.Open).size - (if dryRun then items.size
-                                                                                   else
-                                                                                     out.count(_.action.value == Keep))
+      site.queues.list(api.automation.queue.Docket.Acquire, QueueScope.Open).size - (if dryRun then items.size
+                                                                                     else
+                                                                                       out.count(
+                                                                                         _.action.value == Keep
+                                                                                       ))
     val snap = snapshot(extra =
       if dryRun then
         out

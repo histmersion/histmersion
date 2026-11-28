@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.Channel
 import com.histmersion.api.automation.planquota.RefreshInfo
 import com.histmersion.api.automation.planquota.Rules
 import com.histmersion.api.automation.planquota.PoolId
@@ -128,7 +128,7 @@ class PlanRefreshSuite extends munit.FunSuite:
       .fold(e => fail(e.sentence), identity)
     assertEquals(
       rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected.rejected)).toSet,
-      Set(("five_hour", 12.0, Source.Probe, 5000L, false), ("seven_day", 42.0, Source.Probe, 5000L, false))
+      Set(("five_hour", 12.0, Channel.Probe, 5000L, false), ("seven_day", 42.0, Channel.Probe, 5000L, false))
     )
     assertEquals(rs.find(_.kind.value == "seven_day").flatMap(_.resetsAt), Some(1791522000000L))
     assertEquals(PlanPools.summary(rs, PlanQuota.Now(5000L)), "five_hour 12% used, seven_day 42% used")

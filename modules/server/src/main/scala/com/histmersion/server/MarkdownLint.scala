@@ -2,7 +2,7 @@ package com.histmersion
 package server
 
 import com.histmersion.server.markdownlint.Context
-import com.histmersion.server.markdownlint.Finding
+import com.histmersion.server.markdownlint.Offence
 import com.histmersion.server.markdownlint.Edit
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -141,7 +141,7 @@ object MarkdownLint:
       if fixable.isEmpty || round >= 3 then (t, done)
       else
         // non-overlapping, earliest first; an edit that overlaps an earlier one waits for the next round
-        @tailrec def nonOverlapping(rest: List[Finding], acc: List[Finding], reach: Int): List[Finding] =
+        @tailrec def nonOverlapping(rest: List[Offence], acc: List[Offence], reach: Int): List[Offence] =
           rest match
             case Nil       => acc
             case f :: tail =>
@@ -163,11 +163,11 @@ object MarkdownLint:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def check(text: Scan.Text, field: FormatField, ctx: Context = Context()): List[Finding] =
+  def check(text: Scan.Text, field: FormatField, ctx: Context = Context()): List[Offence] =
     checkPlain(text.value, field, ctx)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def checkPlain(text: String, field: FormatField, ctx: Context): List[Finding] =
+  private def checkPlain(text: String, field: FormatField, ctx: Context): List[Offence] =
     if text.trim.isEmpty then Nil
     else
       val s = new Scan(text, field, ctx)
@@ -328,7 +328,7 @@ object MarkdownLint:
 
   /** One pass over one text. Mutable on purpose: a builder of findings, local to one `check`. */
   final private class Scan(text: String, field: FormatField, ctx: Context):
-    val findings = mutable.ListBuffer.empty[Finding]
+    val findings = mutable.ListBuffer.empty[Offence]
 
     // offsets → (line, column), both 1-based
     private val lineStarts: Array[Int] =
@@ -364,7 +364,7 @@ object MarkdownLint:
     ): Unit =
       val o = math.max(0, math.min(off, text.length))
       val l = lineOf(o)
-      findings += Finding(
+      findings += Offence(
         FormatIssue(
           rule,
           severity.getOrElse(rule.severity),

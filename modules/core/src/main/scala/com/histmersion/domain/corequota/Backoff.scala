@@ -9,9 +9,9 @@ import com.histmersion.lint.LintRule
 import com.histmersion.domain.corequota.Window
 import com.histmersion.Newtype
 
-final case class Block(until: Instant, why: Block.Rationale)
+final case class Backoff(until: Instant, why: Backoff.Rationale)
 
-object Block:
+object Backoff:
   enum Rationale derives CanEqual:
     case Throttled
 

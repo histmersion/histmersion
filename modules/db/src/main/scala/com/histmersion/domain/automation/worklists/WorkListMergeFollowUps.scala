@@ -35,7 +35,7 @@ object WorkListMergeFollowUps extends MergeFollowUps:
     val short = mergeId.toString.take(8)
     val reviews = ap.reviews.map { slug =>
       QueueRepo.insert(
-        api.automation.queue.Kind.Tasks,
+        api.automation.queue.Docket.Tasks,
         QueueAdd(
           QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
           topic = Some(QueueItem.Topic("merge")),
@@ -48,7 +48,7 @@ object WorkListMergeFollowUps extends MergeFollowUps:
     }
     val t = ap.tally
     val log = QueueRepo.insert(
-      api.automation.queue.Kind.Log,
+      api.automation.queue.Docket.Log,
       QueueAdd(
         QueueItem.Text(
           s"Merged the bundle of ${from.value} (${m.bundleId.toString.take(8)}…) as merge $short: " +

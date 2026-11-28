@@ -2,7 +2,7 @@ package com.histmersion
 package server
 
 import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Refusal
+import com.histmersion.domain.corequota.Denial
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -83,6 +83,6 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
         .start()
       try
         assertEquals(second.state.searchTokens, 1)
-        assert(second.unavailable(limits, Purpose.Lookup).exists(_.isInstanceOf[Refusal.Blocked]))
+        assert(second.unavailable(limits, Purpose.Lookup).exists(_.isInstanceOf[Denial.Blocked]))
       finally s.stop()
     }

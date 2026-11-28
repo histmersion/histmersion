@@ -2,10 +2,10 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.acquirerecheck.LastCheck
-import com.histmersion.domain.acquirerecheck.Settings
+import com.histmersion.domain.acquirerecheck.Cadence
 import com.histmersion.domain.acquirerecheck.Held
 import com.histmersion.domain.acquirerecheck.Action
-import com.histmersion.domain.acquirerecheck.Candidate
+import com.histmersion.domain.acquirerecheck.Recheckable
 
 import com.histmersion.util.problem.Text.{line, sentence, sentences}
 import com.histmersion.util.problem.{Problem, Problems}
@@ -47,9 +47,9 @@ object AcquireRecheck:
     * re-check may take, and the hours after which a check that got no answer is due again.
     */
   export LastCheck.Generation as IsDueGeneration
-  export Settings.{EveryDays as IsDueEveryDays, RetryHours as IsDueRetryHours}
+  export Cadence.{EveryDays as IsDueEveryDays, RetryHours as IsDueRetryHours}
   export LastCheck.Generation as NextDueGeneration
-  export Settings.{EveryDays as NextDueEveryDays, RetryHours as NextDueRetryHours}
+  export Cadence.{EveryDays as NextDueEveryDays, RetryHours as NextDueRetryHours}
 
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
@@ -58,8 +58,8 @@ object AcquireRecheck:
   def dueAt(
       last: Option[LastCheck],
       generation: LastCheck.Generation,
-      everyDays: Settings.EveryDays,
-      retryHours: Settings.RetryHours
+      everyDays: Cadence.EveryDays,
+      retryHours: Cadence.RetryHours
   ): Option[Instant] =
     last
       .filter(_.generation == generation)
@@ -89,9 +89,9 @@ object AcquireRecheck:
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def failure(message: Problems): domain.acquirerecheck.Outcome =
-    if IngestBacklog.isNoLegalCopy(message) then domain.acquirerecheck.Outcome.NoCopy
-    else domain.acquirerecheck.Outcome.Failed
+  def failure(message: Problems): domain.acquirerecheck.Upshot =
+    if IngestBacklog.isNoLegalCopy(message) then domain.acquirerecheck.Upshot.NoCopy
+    else domain.acquirerecheck.Upshot.Failed
 
   /** What each fetcher answered when a legal ingest found no copy ([[Problem.NotFound.Copy]]'s answers). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -100,7 +100,7 @@ object AcquireRecheck:
 
   /** Is a pass due: never run (since the start), or `passMinutes` passed since the last. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def passDue(last: Option[Instant], passMinutes: Settings.PassMinutes, now: Instant): Boolean =
+  def passDue(last: Option[Instant], passMinutes: Cadence.PassMinutes, now: Instant): Boolean =
     last.forall(l => !l.plusSeconds(math.max(1, passMinutes.value).toLong * 60L).isAfter(now))
 
   /** The fetcher generation: one short digest of what the legal chain is — its fetchers in order, and each one's plugin
@@ -123,7 +123,7 @@ object AcquireRecheck:
     checks.flatMap(c => dueAt(Some(c), generation, everyDays, retryHours)).minOption
 
   /** The order items are tried in: the never-checked first, then the oldest check, then the item id. */
-  def order(candidates: List[Candidate]): List[Candidate] =
+  def order(candidates: List[Recheckable]): List[Recheckable] =
     candidates.sortBy(c => (c.last.isDefined, c.last.fold(0L)(_.at.toEpochMilli), c.item))
 
   /** Was this item checked by a job that started at `since` (or since then by anything else)? */

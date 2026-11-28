@@ -4,7 +4,7 @@ package domain
 import com.histmersion.domain.compilearticle.SourceFact
 import com.histmersion.domain.compilearticle.Extracted
 import com.histmersion.domain.compilearticle.EdgeFact
-import com.histmersion.domain.compilearticle.Evidence
+import com.histmersion.domain.compilearticle.Support
 import com.histmersion.domain.compilearticle.NotUsed
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Content, Count, Raw, Where}
@@ -85,9 +85,9 @@ object CompileArticle:
       facts: List[SourceFact],
       extracted: List[Extracted],
       edges: List[EdgeFact]
-  ): Evidence =
+  ): Support =
     val in = facts.map(_.citekey).toSet
-    val counts = extracted.map(e => e.citekey -> Evidence.ClaimCount(e.claims.size)).toMap
+    val counts = extracted.map(e => e.citekey -> Support.ClaimCount(e.claims.size)).toMap
     val kept = edges.filter(e => DisagreementKinds.contains(e.kind) && in(e.from) && in(e.to)).distinct
     val disputed = facts
       .filter(f => f.status != Source.Status.Current && f.status != Source.Status.Foundational)
@@ -97,11 +97,10 @@ object CompileArticle:
         NotUsed(e.citekey, e.notUsed.getOrElse(Coverage.Rationale("no claim")))
     } ++
       facts.collect {
-        case f
-            if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
+        case f if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Support.ClaimCount(0)).hasClaims =>
           NotUsed(f.citekey, Coverage.Rationale("retracted: may be cited only to note the retraction"))
       }
-    Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
+    Support(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
   // ── phase 4: the self-check (code) ──────────────────────────────────────────────────────────────
 

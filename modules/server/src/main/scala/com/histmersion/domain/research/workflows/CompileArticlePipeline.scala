@@ -3,7 +3,7 @@ package domain.research.workflows
 
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.compilearticle.Evidence
+import com.histmersion.domain.compilearticle.Support
 import com.histmersion.domain.compilearticle.SourceFact
 import com.histmersion.domain.compilearticle.Extracted
 import com.histmersion.domain.compilearticle.ExtractAnswer
@@ -119,7 +119,7 @@ final class CompileArticlePipeline(
   )(using Creator.New): Either[Halt, String] =
     for
       extracted <- extractAll(ctx, snap, found)
-      ev <- ctx.code[Evidence](StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
+      ev <- ctx.code[Support](StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
       line <-
         if ev.used.isEmpty then
           ctx.code[String](StepRecord.Name("close"))(
@@ -291,7 +291,7 @@ final class CompileArticlePipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-  private def evidenceOf(found: Found, extracted: List[Extracted]): Evidence =
+  private def evidenceOf(found: Found, extracted: List[Extracted]): Support =
     val edges = found.sources.flatMap { s =>
       site.citations
         .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList.map(k => Edge.Kind.Wire(k.value)))
@@ -312,7 +312,7 @@ final class CompileArticlePipeline(
       ctx: RunCtx,
       s: Snap,
       found: Found,
-      ev: Evidence,
+      ev: Support,
       extracted: List[Extracted]
   )(using WritePermit): Either[Halt, ArticleDraft] =
     locally {

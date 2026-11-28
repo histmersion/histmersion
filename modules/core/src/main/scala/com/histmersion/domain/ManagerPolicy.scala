@@ -4,7 +4,7 @@ package domain
 import com.histmersion.domain.managerpolicy.CronStep
 import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.domain.schedulerpolicy.Block
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.domain.managerpolicy.ReviewSettings
 import com.histmersion.api.automation.managers.Hold
 import com.histmersion.api.automation.managers.HintEffect
@@ -173,7 +173,7 @@ object ManagerPolicy:
     * manager's open items (kind, target).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def waitsFor(kind: Item.Kind, target: Candidate.Target, open: List[(Item.Kind, Candidate.Target)]): Boolean =
+  def waitsFor(kind: Item.Kind, target: Assignable.Target, open: List[(Item.Kind, Assignable.Target)]): Boolean =
     (kind == Item.Kind.ArticleReview && open.contains((Item.Kind.InferFilter, target))) ||
       (kind == Item.Kind.ProposeArticles && open.contains((Item.Kind.PlanGoalItem, target)))
 
@@ -195,7 +195,7 @@ object ManagerPolicy:
     * the oldest.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def order(cs: List[Candidate]): List[Candidate] =
+  def order(cs: List[Assignable]): List[Assignable] =
     cs.sortBy(c => (-c.priority.value, c.notBefore.map(_.toEpochMilli).getOrElse(Long.MinValue), c.id))
 
   /** How many runs a manager may start now: the global room (`maxConcurrent` minus every agent run queued or running, a
@@ -304,7 +304,7 @@ object ManagerPolicy:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def matches(
       e: HintEffect,
-      target: Candidate.Target,
+      target: Assignable.Target,
       tags: List[Tag],
       topics: List[Topic],
       goals: List[Goal.Slug]

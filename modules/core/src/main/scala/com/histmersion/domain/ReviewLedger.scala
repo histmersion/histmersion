@@ -6,7 +6,7 @@ import com.histmersion.domain.reviewarticle.Finding
 import com.histmersion.domain.reviewarticle.Reviewer
 import com.histmersion.domain.reviewarticle.Fix
 import com.histmersion.domain.reviewledger.Edited
-import com.histmersion.domain.reviewledger.Passage
+import com.histmersion.domain.reviewledger.Excerpt
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.Text.sentence
@@ -156,13 +156,13 @@ object ReviewLedger:
       }
       .reverse
       .map(_.reverse)
-    def headingOf(i: Int): Option[Passage.Heading] =
+    def headingOf(i: Int): Option[Excerpt.Heading] =
       (i to 0 by -1).iterator.map(b(_)).collectFirst {
         case p if p.linesIterator.nextOption().exists(Heading.matches) =>
-          Passage.Heading(p.linesIterator.next() match { case Heading(h) => h.trim; case h => h })
+          Excerpt.Heading(p.linesIterator.next() match { case Heading(h) => h.trim; case h => h })
       }
     Edited(
-      runs.map(r => Passage(headingOf(r.head), Passage.Text(r.map(b(_)).mkString("\n\n")))),
+      runs.map(r => Excerpt(headingOf(r.head), Excerpt.Text(r.map(b(_)).mkString("\n\n")))),
       a.indices.filterNot(keptA).map(i => Edited.Removed(a(i))).toList
     )
 

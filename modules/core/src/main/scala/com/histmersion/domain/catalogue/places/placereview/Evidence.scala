@@ -10,13 +10,13 @@ import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.domain.catalogue.places.PlaceReview.periodText
-import com.histmersion.domain.catalogue.places.placereview.Proposal
+import com.histmersion.domain.catalogue.places.placereview.Remedy
 import com.histmersion.domain.catalogue.places.PlaceReview.WikidataClasses
 import com.histmersion.Period
 import com.histmersion.domain.catalogue.places.PlaceReview.ExtantYear
 import com.histmersion.domain.catalogue.places.PlaceReview.PolityTypes
 import com.histmersion.domain.catalogue.places.PlaceReview.Rationale
-import com.histmersion.domain.catalogue.places.placereview.Candidate
+import com.histmersion.domain.catalogue.places.placereview.Reclassifiable
 import com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypes
 import com.histmersion.domain.catalogue.places.PlaceReview.SiteTypes
 import com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolity
@@ -63,7 +63,7 @@ object Evidence:
 
   extension (e: Evidence)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def evidenceOf: List[Proposal.EvidenceLine] =
+    def evidenceOf: List[Remedy.EvidenceLine] =
       val types = Option.when(e.featureTypes.nonEmpty)(s"Pleiades types: ${e.featureTypes.mkString(", ")}")
       val tps = Option.when(e.timePeriods.nonEmpty)(s"Pleiades periods: ${e.timePeriods.mkString(", ")}")
       val items = e.items.flatMap(i =>
@@ -72,7 +72,7 @@ object Evidence:
         )
       )
       val desc = e.descriptions.headOption.map(d => s"described as \"$d\"")
-      (types.toList ++ tps.toList ++ items ++ desc.toList).map(Proposal.EvidenceLine(_))
+      (types.toList ++ tps.toList ++ items ++ desc.toList).map(Remedy.EvidenceLine(_))
 
   extension (e: Evidence)
     def polityPeriod: Option[Period] =
@@ -81,19 +81,19 @@ object Evidence:
 
   extension (e: Evidence)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def propose(candidates: List[Candidate] = Nil): Option[Proposal] =
+    def propose(candidates: List[Reclassifiable] = Nil): Option[Remedy] =
       val types = e.featureTypes.map(t => FeatureTypes(t.value.trim.toLowerCase(java.util.Locale.ROOT))).toSet
       val ev = e.evidenceOf
       def to(kind: Place.Kind.Wire, reason: Rationale, period: Option[Period] = None) =
         Option.when(kind != e.kind || period.isDefined)(
-          Proposal.Reclassify(e.id, e.label, e.kind, kind, period, reason, ev)
+          Remedy.Reclassify(e.id, e.label, e.kind, kind, period, reason, ev)
         )
       duplicateOf(e.label) match
         case Some(x) =>
           candidates.filter(_.id != e.id) match
             case List(c) =>
               Some(
-                Proposal.Merge(
+                Remedy.Merge(
                   e.id,
                   e.label,
                   c.id,
@@ -104,7 +104,7 @@ object Evidence:
               )
             case Nil =>
               Some(
-                Proposal.Review(
+                Remedy.Review(
                   e.id,
                   e.label,
                   Rationale(s"withdrawn by Pleiades as a duplicate of '$x'; no seed place has that name"),
@@ -113,7 +113,7 @@ object Evidence:
               )
             case cs =>
               Some(
-                Proposal.Review(
+                Remedy.Review(
                   e.id,
                   e.label,
                   Rationale(
@@ -124,7 +124,7 @@ object Evidence:
               )
         case None if Withdrawn.matches(e.label.value.trim) =>
           Some(
-            Proposal.Review(
+            Remedy.Review(
               e.id,
               e.label,
               Rationale("withdrawn by Pleiades, with no replacement named"),
@@ -148,7 +148,7 @@ object Evidence:
             if e.kind.value == Place.Kind.Polity && write.isEmpty then None
             else
               Some(
-                Proposal
+                Remedy
                   .Reclassify(
                     e.id,
                     e.label,
@@ -171,7 +171,7 @@ object Evidence:
             )
           else if e.kind.value != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then
             Some(
-              Proposal.Review(
+              Remedy.Review(
                 e.id,
                 e.label,
                 Rationale("the linked Wikidata item is a historical country — a polity, or a region named after one"),

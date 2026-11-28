@@ -18,7 +18,7 @@ import com.histmersion.Newtype
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.ReviewArticle.Sentence
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.domain.reviewarticle.CritiqueRule
 import com.histmersion.domain.ReviewArticle.findQuote
 import com.histmersion.api.research.CritiquePair
@@ -115,7 +115,7 @@ object Fix:
     (0 :: cuts).zip(cuts :+ text.length).map((a, b) => text.substring(a, b).trim).filter(_.nonEmpty).map(Sentence(_))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def claimSentence(body: Body, quote: Evidence.Quote, minRatio: CritiqueRule.MinRatio): Option[Sentence] =
+  def claimSentence(body: Body, quote: Quotation.Quote, minRatio: CritiqueRule.MinRatio): Option[Sentence] =
     val q = Option(quote).map(_.value.trim).getOrElse("")
     def has(t: String) = findQuote(q, t, minRatio).accepted
     if q.isEmpty then None

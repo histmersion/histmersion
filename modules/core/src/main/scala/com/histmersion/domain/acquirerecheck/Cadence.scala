@@ -11,17 +11,17 @@ import com.histmersion.domain.AcquireRecheck.Allowance
 import com.histmersion.domain.AcquireRecheck.CheckedToday
 import com.histmersion.domain.acquirerecheck.Shared
 
-final case class Settings(
-    enabled: Settings.Enabled,
-    everyDays: Settings.EveryDays,
-    perDay: Settings.PerDay,
-    perPass: Settings.PerPass,
-    passMinutes: Settings.PassMinutes,
-    sharePercent: Settings.SharePercent,
-    retryHours: Settings.RetryHours
+final case class Cadence(
+    enabled: Cadence.Enabled,
+    everyDays: Cadence.EveryDays,
+    perDay: Cadence.PerDay,
+    perPass: Cadence.PerPass,
+    passMinutes: Cadence.PassMinutes,
+    sharePercent: Cadence.SharePercent,
+    retryHours: Cadence.RetryHours
 )
 
-object Settings:
+object Cadence:
   type Enabled = Enabled.T
   object Enabled extends Newtype[Boolean, Pure]
   type EveryDays = EveryDays.T
@@ -39,7 +39,7 @@ object Settings:
   object RetryHours extends Newtype[Int, Pure]:
     extension (h: RetryHours) def after(at: Instant): Instant = at.plusSeconds(math.max(1, h.value).toLong * 3600L)
 
-  extension (s: Settings)
+  extension (s: Cadence)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def allowance(checkedToday: CheckedToday, shared: Option[Shared]): Allowance =
       val own = math.min(math.max(0, s.perDay.value) - math.max(0, checkedToday.value), math.max(0, s.perPass.value))

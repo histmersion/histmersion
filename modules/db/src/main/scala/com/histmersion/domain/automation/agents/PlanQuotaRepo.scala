@@ -3,7 +3,7 @@ package domain.automation.agents
 
 import com.histmersion.api.automation.planquota.PoolId
 import com.histmersion.api.automation.planquota.Reading
-import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.Channel
 import com.histmersion.api.automation.planquota.RefreshInfo
 
 import com.histmersion.util.problem.{Problem, Problems}
@@ -77,7 +77,7 @@ object PlanQuotaRepo:
           r.map(Reading.ResetsAt(_)),
           (if rej then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
           Reading.ObservedAt(o),
-          Source.parse(Source.Wire(s)).getOrElse(Source.Run),
+          Channel.parse(Channel.Wire(s)).getOrElse(Channel.Run),
           Option(m).filter(_.nonEmpty).map(Reading.Model(_))
         )
       }

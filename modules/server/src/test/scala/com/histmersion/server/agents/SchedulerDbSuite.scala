@@ -12,7 +12,7 @@ import com.histmersion.api.automation.autopilot.FocusSet
 import com.histmersion.api.automation.managers.OaWork
 import com.histmersion.api.automation.agentscheduler.SchedulerSet
 import com.histmersion.api.automation.agents.ApprovalInfo
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.api.automation.agents.DecisionRequest
 import com.histmersion.api.automation.approvaldigest.BulkDecide
 import com.histmersion.api.automation.autopilot.DrainSet
@@ -541,13 +541,13 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     def judged(p: ApprovalInfo) =
       a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, now)
     assert(
-      judged(plan(g(7), 0)).isInstanceOf[Verdict.Approve],
+      judged(plan(g(7), 0)).isInstanceOf[Ruling.Approve],
       "not active in any focus: decided all the same"
     )
-    assert(judged(plan(g(1), 3)).isInstanceOf[Verdict.Approve])
+    assert(judged(plan(g(1), 3)).isInstanceOf[Ruling.Approve])
     judged(plan(g(1), 6)) match
-      case Verdict.Leave(w) => assert(s"$w".contains("limit on open sub-goals"), w)
-      case v                => fail(v.toString)
+      case Ruling.Leave(w) => assert(s"$w".contains("limit on open sub-goals"), w)
+      case v               => fail(v.toString)
 
   test(
     "goal plans wait while too many planned goals are unfinished: no plan-goal run, none decided by code, a person still may"
@@ -589,8 +589,8 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val _ = a.autoApprovals.sweep(Instant.now())
     assertEquals(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).map(_.state), Some("open"))
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, Instant.now()) match
-      case Verdict.Leave(w) => assert(s"$w".contains("limit on unfinished goals"), w)
-      case v                => fail(v.toString)
+      case Ruling.Leave(w) => assert(s"$w".contains("limit on unfinished goals"), w)
+      case v               => fail(v.toString)
     val d = a.digest.digest()
     assert(d.goalPlansWait.exists(_.value.contains("drop to 2")), d)
     assertEquals(d.kinds.find(_.kind.value == "goal-plan").map(_.decidedBy), Some(ApprovalDigest.Waits))
@@ -908,12 +908,12 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
 private object QueueRepoLog:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =
-    QueueRows.list(ds, api.automation.queue.Kind.Log, all = true).exists(_.text.value.startsWith(prefix))
+    QueueRows.list(ds, api.automation.queue.Docket.Log, all = true).exists(_.text.value.startsWith(prefix))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def writers(ds: javax.sql.DataSource, prefix: String): Set[(String, String)] =
     QueueRows
-      .list(ds, api.automation.queue.Kind.Log, all = true)
+      .list(ds, api.automation.queue.Docket.Log, all = true)
       .filter(i => s"${i.text}".startsWith(prefix))
       .flatMap(_.creator)
       .map(c => (c.plugin.fold("")(p => s"$p"), c.workflow.fold("")(w => s"$w")))

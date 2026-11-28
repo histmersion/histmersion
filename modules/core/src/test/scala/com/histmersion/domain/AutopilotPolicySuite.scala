@@ -2,15 +2,15 @@ package com.histmersion
 package domain
 
 import com.histmersion.domain.autopilotpolicy.PlannedFacts
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.domain.autopilotpolicy.DraftFacts
 import com.histmersion.domain.autopilotpolicy.GoalPlanFacts
 import com.histmersion.domain.autopilotpolicy.GoalFacts
-import com.histmersion.domain.autopilotpolicy.Settings
+import com.histmersion.domain.autopilotpolicy.Pacing
 import com.histmersion.domain.autopilotpolicy.GoalRow
-import com.histmersion.domain.autopilotpolicy.Step
+import com.histmersion.domain.autopilotpolicy.Stride
 import com.histmersion.domain.autopilotpolicy.ManagerRow
-import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.Assignable
 import com.histmersion.domain.managerpolicy.ReviewSettings
 import com.histmersion.domain.managerpolicy.Next
 import com.histmersion.api.automation.managers.ItemState
@@ -68,22 +68,22 @@ class AutopilotPolicySuite extends munit.FunSuite:
       )
     )
     articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6)) match
-      case Verdict.Approve(r) =>
+      case Ruling.Approve(r) =>
         assert(s"$r".contains("2 articles") && s"$r".contains("a 9, b 5") && s"$r".contains("2 of 6"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(4), AutopilotPolicy.Cap(6))
-        .isInstanceOf[Verdict.Approve]
+        .isInstanceOf[Ruling.Approve]
     )
     assertEquals(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(6)),
-      Verdict.Leave(
+      Ruling.Leave(
         AutopilotPolicy.Rationale("the area's daily cap is reached (5 of 6 articles approved today); decided tomorrow")
       )
     )
     assert(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(1))
-        .isInstanceOf[Verdict.Leave],
+        .isInstanceOf[Ruling.Leave],
       "a plan larger than the whole cap is a person's"
     )
 
@@ -105,12 +105,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
       AutopilotPolicy.ApprovedToday(0),
       AutopilotPolicy.Cap(6)
     ) match
-      case Verdict.Reject(r) =>
+      case Ruling.Reject(r) =>
         assert(s"$r".contains("a: the slug is taken") && s"$r".contains("b: its filter returns 2"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(Nil, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6))
-        .isInstanceOf[Verdict.Reject]
+        .isInstanceOf[Ruling.Reject]
     )
 
   private val draft =
@@ -130,12 +130,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       draft
         .articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10))
-        .isInstanceOf[Verdict.Approve]
+        .isInstanceOf[Ruling.Approve]
     )
     assert(
       draft
         .articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(10), AutopilotPolicy.Cap(10))
-        .isInstanceOf[Verdict.Leave]
+        .isInstanceOf[Ruling.Leave]
     )
     assert(
       draft
@@ -144,15 +144,15 @@ class AutopilotPolicySuite extends munit.FunSuite:
         .modify(_.slugFree)
         .setTo(DraftFacts.SlugFree(false))
         .articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10))
-        .isInstanceOf[Verdict.Approve],
+        .isInstanceOf[Ruling.Approve],
       "an extension"
     )
 
   test("article-publish: each failed check rejects with why"):
     def why(d: DraftFacts) =
       d.articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10)) match
-        case Verdict.Reject(r) => s"$r"
-        case v                 => fail(v.toString)
+        case Ruling.Reject(r) => s"$r"
+        case v                => fail(v.toString)
     assert(
       why(draft.modify(_.filterRecorded).setTo(DraftFacts.FilterRecorded(false)))
         .contains("no coverage filter")
@@ -184,12 +184,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
     )
     assert(
       p.goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
-        .isInstanceOf[Verdict.Approve]
+        .isInstanceOf[Ruling.Approve]
     )
     p.modify(_.depth)
       .setTo(GoalPlanFacts.Depth(2))
       .goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5)) match
-      case Verdict.Reject(r) =>
+      case Ruling.Reject(r) =>
         assert(s"$r".contains("3 sub-goals") && s"$r".contains("2 level(s) below a root"), r)
       case v => fail(v.toString)
     assert(
@@ -198,7 +198,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         .modify(_.depth)
         .setTo(GoalPlanFacts.Depth(2))
         .goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
-        .isInstanceOf[Verdict.Approve],
+        .isInstanceOf[Ruling.Approve],
       "no sub-goals: fine at any depth"
     )
     assert(
@@ -209,17 +209,17 @@ class AutopilotPolicySuite extends munit.FunSuite:
         .modify(_.works)
         .setTo(GoalPlanFacts.Works(0))
         .goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
-        .isInstanceOf[Verdict.Reject]
+        .isInstanceOf[Ruling.Reject]
     )
     assert(
       p.goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(5))
-        .isInstanceOf[Verdict.Leave]
+        .isInstanceOf[Ruling.Leave]
     )
 
   test("the note marks the decision as the autopilot's; a left one carries none"):
-    assertEquals(Verdict.Approve(AutopilotPolicy.Rationale("r")).note, Some("autopilot: approved — r"))
-    assertEquals(Verdict.Reject(AutopilotPolicy.Rationale("r")).note, Some("autopilot: rejected — r"))
-    assertEquals(Verdict.Leave(AutopilotPolicy.Rationale("r")).note, None)
+    assertEquals(Ruling.Approve(AutopilotPolicy.Rationale("r")).note, Some("autopilot: approved — r"))
+    assertEquals(Ruling.Reject(AutopilotPolicy.Rationale("r")).note, Some("autopilot: rejected — r"))
+    assertEquals(Ruling.Leave(AutopilotPolicy.Rationale("r")).note, None)
 
   test("depth: the parents above a goal; a cycle stops"):
     val parent = Map(Slug("c") -> Slug("b"), Slug("b") -> Slug("a"))
@@ -362,12 +362,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
 
   // ── ensure ─────────────────────────────────────────────────────────────────────────────────────
 
-  private val st = Settings(
+  private val st = Pacing(
     AutopilotPolicy.Cron("@weekly"),
     AutopilotPolicy.Cron("@weekly"),
     AutopilotPolicy.Cron("@monthly"),
-    Settings.WatchIngestPerDay(5),
-    Settings.ExtendMinNew(3)
+    Pacing.WatchIngestPerDay(5),
+    Pacing.ExtendMinNew(3)
   )
 
   test(
@@ -393,18 +393,18 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(steps.map(_.getClass.getSimpleName), List("CreateSeed", "CreateWatch", "CreateWatch"))
     assertEquals(
       steps.head,
-      Step.CreateSeed(
-        Step.CreateSeed.Goal("a"),
+      Stride.CreateSeed(
+        Stride.CreateSeed.Goal("a"),
         stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.seed(Goal.Slug("a"))),
-        planFirst = Step.CreateSeed.PlanFirst(true)
+        planFirst = Stride.CreateSeed.PlanFirst(true)
       )
     )
     assertEquals(
       steps(2),
-      Step.CreateWatch(
-        Step.CreateWatch.Goal("r"),
+      Stride.CreateWatch(
+        Stride.CreateWatch.Goal("r"),
         stagger(AutopilotPolicy.Cron("@monthly"), ManagerRow.Id.watch(Goal.Slug("r"))),
-        Step.CreateWatch.PerDay(5)
+        Stride.CreateWatch.PerDay(5)
       )
     )
 
@@ -466,19 +466,19 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       steps,
       List(
-        Step.Resume(ManagerRow.Id(ReviewId)),
-        Step.ExtendMinNew(ManagerRow.Id(ReviewId), Step.ExtendMinNew.N(3)),
-        Step.Resume(ManagerRow.Id.seed(Goal.Slug("a"))),
-        Step.SetCron(
+        Stride.Resume(ManagerRow.Id(ReviewId)),
+        Stride.ExtendMinNew(ManagerRow.Id(ReviewId), Stride.ExtendMinNew.N(3)),
+        Stride.Resume(ManagerRow.Id.seed(Goal.Slug("a"))),
+        Stride.SetCron(
           ManagerRow.Id.watch(Goal.Slug("a")),
           stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.watch(Goal.Slug("a")))
         ),
-        Step.SetCron(
+        Stride.SetCron(
           ManagerRow.Id.seed(Goal.Slug("b")),
           stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.seed(Goal.Slug("b")))
         ),
-        Step.AddPlanItem(ManagerRow.Id.seed(Goal.Slug("b")), Step.AddPlanItem.Goal("b")),
-        Step.AutoIngestOn(ManagerRow.Id.watch(Goal.Slug("b")), Step.AutoIngestOn.PerDay(5))
+        Stride.AddPlanItem(ManagerRow.Id.seed(Goal.Slug("b")), Stride.AddPlanItem.Goal("b")),
+        Stride.AutoIngestOn(ManagerRow.Id.watch(Goal.Slug("b")), Stride.AutoIngestOn.PerDay(5))
       )
     )
     val done = ms.map(m =>
@@ -492,7 +492,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         .modify(_.planItem)
         .setTo(ManagerRow.PlanItem(true))
         .modify(_.extendMinNew)
-        .setTo(Some(Settings.ExtendMinNew(3)))
+        .setTo(Some(Pacing.ExtendMinNew(3)))
     )
     assertEquals(
       ensure(
@@ -578,7 +578,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       extendDue(
         AutopilotPolicy.NewSources(3),
-        Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         None,
         AutopilotPolicy.CooldownDays(14),
         now
@@ -587,7 +587,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       extendDue(
         AutopilotPolicy.NewSources(2),
-        Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         None,
         AutopilotPolicy.CooldownDays(14),
         now
@@ -597,7 +597,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       extendDue(
         AutopilotPolicy.NewSources(9),
-        Settings.ExtendMinNew(0),
+        Pacing.ExtendMinNew(0),
         None,
         AutopilotPolicy.CooldownDays(14),
         now
@@ -607,7 +607,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       extendDue(
         AutopilotPolicy.NewSources(9),
-        Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         Some(now.minusSeconds(3600)),
         AutopilotPolicy.CooldownDays(14),
         now
@@ -617,7 +617,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       extendDue(
         AutopilotPolicy.NewSources(9),
-        Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         Some(now.minusSeconds(15L * 86400)),
         AutopilotPolicy.CooldownDays(14),
         now
@@ -647,15 +647,15 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       ManagerPolicy.waitsFor(
         Item.Kind.ProposeArticles,
-        Candidate.Target("g"),
-        List((Item.Kind.PlanGoalItem, Candidate.Target("g")))
+        Assignable.Target("g"),
+        List((Item.Kind.PlanGoalItem, Assignable.Target("g")))
       )
     )
     assert(
       !ManagerPolicy.waitsFor(
         Item.Kind.ProposeArticles,
-        Candidate.Target("h"),
-        List((Item.Kind.PlanGoalItem, Candidate.Target("g")))
+        Assignable.Target("h"),
+        List((Item.Kind.PlanGoalItem, Assignable.Target("g")))
       )
     )
     assertEquals(itemKindOf(Kind.Seed, api.ItemKind.Word("plan-goal")), Some(PlanGoalItem))
@@ -713,7 +713,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     )
     s.evaluateStep(
       ManagerPolicy.StepLabel(ArticleCompile),
-      Candidate.Target("x"),
+      Assignable.Target("x"),
       Next.Retry.Failures(0),
       ItemState(),
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
@@ -726,7 +726,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       case n                                       => fail(n.toString)
     s.evaluateStep(
       ManagerPolicy.StepLabel(ArticleCompile),
-      Candidate.Target("x"),
+      Assignable.Target("x"),
       Next.Retry.Failures(1),
       ItemState(),
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),

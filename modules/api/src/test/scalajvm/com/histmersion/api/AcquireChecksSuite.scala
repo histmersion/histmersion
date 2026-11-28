@@ -2,7 +2,7 @@ package com.histmersion
 package api
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -45,14 +45,14 @@ class AcquireChecksSuite extends munit.FunSuite:
   )
 
   test("`queue acquire` says under an item when it was last checked and what each fetcher answered"):
-    val md = QueueListing(Kind.Acquire.label, List(item), List(check)).markdown.map(_.value).getOrElse("")
+    val md = QueueListing(Docket.Acquire.label, List(item), List(check)).markdown.map(_.value).getOrElse("")
     assert(
       md.contains(
         "`#7`\n  - _checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)_"
       ),
       md
     )
-    assert(!Kind.Acquire.markdown(List(item)).value.contains("checked"), "an unchecked item says nothing")
+    assert(!Docket.Acquire.markdown(List(item)).value.contains("checked"), "an unchecked item says nothing")
 
   test("the status line: what is due, what it closed and found this week, today's tries, the next pass"):
     val s = RecheckStatus(

@@ -4,7 +4,7 @@ package web
 import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.api.automation.agents.StepInfo
 import com.histmersion.api.automation.managers.ManagerInfo
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.agents.RunRequest
 
 import com.histmersion.util.problem.Text.sentence
@@ -164,8 +164,8 @@ object GoalPage:
 
     def load(): Unit =
       view.ask(ApiClient.goalView(slug))
-      tasks.ask(ApiClient.queueForGoal(Kind.Tasks.label, slug))
-      toAcquire.ask(ApiClient.queueForGoal(Kind.Acquire.label, slug))
+      tasks.ask(ApiClient.queueForGoal(Docket.Tasks.label, slug))
+      toAcquire.ask(ApiClient.queueForGoal(Docket.Acquire.label, slug))
       if ui.agentsEnabled.agentsEnabled then
         agents.ask(ApiClient.managers.flatMap { all =>
           val mine = all.filter(_.goal.contains(slug))

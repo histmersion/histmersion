@@ -190,8 +190,8 @@ object Pages:
           if ui.agentsEnabled.agentsEnabled then ApprovalsView.pane
           else agentsOff(UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))
         case ResearchSection.Goals   => GoalsView.pane
-        case ResearchSection.Backlog => QueueView.pane(api.automation.queue.Kind.Tasks, goal)
-        case ResearchSection.Acquire => QueueView.pane(api.automation.queue.Kind.Acquire, goal)
+        case ResearchSection.Backlog => QueueView.pane(api.automation.queue.Docket.Tasks, goal)
+        case ResearchSection.Acquire => QueueView.pane(api.automation.queue.Docket.Acquire, goal)
         case ResearchSection.Models  =>
           if ui.agentsEnabled.agentsEnabled then ModelsView.pane
           else agentsOff(UiLabels.Text("No AI models are used: the research agents are off on this server."))
@@ -231,7 +231,7 @@ object Pages:
           case ActivityTab.Runs =>
             if ui.agentsEnabled.agentsEnabled then RunsView.pane
             else agentsOff(UiLabels.Text("No agent runs: the research agents are off on this server."))
-          case ActivityTab.Worklog => QueueView.pane(api.automation.queue.Kind.Log)
+          case ActivityTab.Worklog => QueueView.pane(api.automation.queue.Docket.Log)
           case _                   => JobsView.pane
       )
 

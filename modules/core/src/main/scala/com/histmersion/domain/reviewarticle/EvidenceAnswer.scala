@@ -11,7 +11,7 @@ import com.histmersion.lint.LintRule
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.domain.reviewarticle.Evidence
+import com.histmersion.domain.reviewarticle.Quotation
 import com.histmersion.Newtype
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -27,7 +27,7 @@ object EvidenceAnswer:
     extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
   type Offset = Offset.T
   object Offset extends Newtype[Int, Pure]
-  export Evidence.Quote
+  export Quotation.Quote
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")

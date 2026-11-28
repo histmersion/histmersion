@@ -4,7 +4,7 @@ package domain.automation.approvals
 import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.managers.ManagerInfo
-import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.Ruling
 import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.api.automation.agents.Decision
 import com.histmersion.api.automation.agents.DecisionRequest
@@ -148,8 +148,8 @@ final class AutoApprovals(
     verdict.note match
       case None =>
         val why = verdict match
-          case Verdict.Leave(w) => s"$w"
-          case _                => ""
+          case Ruling.Leave(w) => s"$w"
+          case _               => ""
         mgr.foreach { m =>
           val text = s"approval #${a.id} (${a.kind}) left for a person: $why"
           if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Approval)).exists(_.text.value == text) then
@@ -164,8 +164,8 @@ final class AutoApprovals(
         Nil
       case Some(note) =>
         val decision = verdict match
-          case Verdict.Approve(_) => Decision.Approve
-          case _                  => Decision.Reject
+          case Ruling.Approve(_) => Decision.Approve
+          case _                 => Decision.Reject
         agents.decide(
           DomainApproval.Id(a.id.value),
           DomainApproval.Outcome(decision.wire.value),
@@ -225,7 +225,7 @@ final class AutoApprovals(
     )
 
   /** The checks of one approval as the corpus is now. */
-  def judge(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[ManagerInfo], now: Instant): Verdict =
+  def judge(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[ManagerInfo], now: Instant): Ruling =
     agents.workflows.managerKinds.view
       .flatMap(_.judge(this, a, run, mgr, now))
       .headOption
@@ -233,14 +233,14 @@ final class AutoApprovals(
 
   /** The approvals the engine's own workflows open (a goal's plan). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def judgeOwn(a: ApprovalInfo, now: Instant): Verdict =
+  private def judgeOwn(a: ApprovalInfo, now: Instant): Ruling =
     val day = ManagerPolicy.dayStart(now)
     val caps = cfg.approvals.auto
     a.approvalKind match
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
-          case (_, Some(wait)) => Verdict.Leave(AutopilotPolicy.Rationale(wait.value))
-          case (None, _)       => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
+          case (_, Some(wait)) => Ruling.Leave(AutopilotPolicy.Rationale(wait.value))
+          case (None, _)       => Ruling.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
           case (Some(p), _)    =>
             val raw = a.subject.fold(p.goal.value)(_.value)
             (domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
@@ -268,13 +268,13 @@ final class AutoApprovals(
                   goalPlanCap
                 ) match
                   // decided by code whatever the focus: only the sub-goals it would open are bounded
-                  case v @ Verdict.Approve(_) =>
+                  case v @ Ruling.Approve(_) =>
                     agents.focus
                       .goalPlanBlock(goal, AutopilotPolicy.Proposed(p.subGoals.size))
-                      .fold(v)(d => Verdict.Leave(AutopilotPolicy.Rationale(d.value)))
+                      .fold(v)(d => Ruling.Leave(AutopilotPolicy.Rationale(d.value)))
                   case v => v
-              case _ => Verdict.Leave(AutopilotPolicy.Rationale("the approval names no valid goal"))
-      case _ => Verdict.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
+              case _ => Ruling.Leave(AutopilotPolicy.Rationale("the approval names no valid goal"))
+      case _ => Ruling.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String] =

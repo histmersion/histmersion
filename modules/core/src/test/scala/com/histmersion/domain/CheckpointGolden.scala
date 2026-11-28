@@ -261,17 +261,17 @@ object CheckpointGolden:
 
   private val evidence =
     List(
-      domain.reviewarticle.Evidence(
+      domain.reviewarticle.Quotation(
         library.Citekey("smith1987_tin"),
         Some(Offset(120)),
-        domain.reviewarticle.Evidence.Quote("the route is later"),
-        domain.reviewarticle.Evidence.Ratio(0.97)
+        domain.reviewarticle.Quotation.Quote("the route is later"),
+        domain.reviewarticle.Quotation.Ratio(0.97)
       ),
-      domain.reviewarticle.Evidence(
+      domain.reviewarticle.Quotation(
         library.Citekey("doe2001_tin"),
         None,
-        domain.reviewarticle.Evidence.Quote("q"),
-        domain.reviewarticle.Evidence.Ratio(1.0)
+        domain.reviewarticle.Quotation.Quote("q"),
+        domain.reviewarticle.Quotation.Ratio(1.0)
       )
     )
 

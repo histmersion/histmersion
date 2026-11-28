@@ -1,7 +1,7 @@
 package com.histmersion
 package cli
 
-import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueItem
 
 import com.histmersion.cli.Cli.Following.{Follow, Return}
@@ -24,17 +24,17 @@ class OpsArgsSuite extends munit.FunSuite:
   private def parse(args: String*) = Parsing.parse("queue" +: args*)
 
   test("`queue <list>` shows that list, --all with the done items"):
-    assertEquals(parse("acquire"), Right(QueueCmd.Show(Kind.Label("acquire"), false, json)))
-    assertEquals(parse("tasks"), Right(QueueCmd.Show(Kind.Label("tasks"), false, json)))
-    assertEquals(parse("log", "--json"), Right(QueueCmd.Show(Kind.Label("log"), false, Cli.JsonOutput.Json)))
-    assertEquals(parse("tasks", "--all"), Right(QueueCmd.Show(Kind.Label("tasks"), true, json)))
+    assertEquals(parse("acquire"), Right(QueueCmd.Show(Docket.Label("acquire"), false, json)))
+    assertEquals(parse("tasks"), Right(QueueCmd.Show(Docket.Label("tasks"), false, json)))
+    assertEquals(parse("log", "--json"), Right(QueueCmd.Show(Docket.Label("log"), false, Cli.JsonOutput.Json)))
+    assertEquals(parse("tasks", "--all"), Right(QueueCmd.Show(Docket.Label("tasks"), true, json)))
 
   test("`queue <list> add \"text\"` adds, with --topic and --reason when given"):
     assertEquals(
       parse("acquire", "add", "Eller, Myth of Matriarchal Prehistory"),
       Right(
         QueueCmd.Add(
-          Kind.Label("acquire"),
+          Docket.Label("acquire"),
           QueueItem.Text("Eller, Myth of Matriarchal Prehistory"),
           None,
           None,
@@ -47,7 +47,7 @@ class OpsArgsSuite extends munit.FunSuite:
       case Right(QueueCmd.Add(list, text, topic, Some(reason), AgentIdentity.Nobody, `json`)) =>
         assertEquals(
           (list, text, topic),
-          (Kind.Label("tasks"), QueueItem.Text("enrich x"), Some(QueueItem.Topic("Backlog")))
+          (Docket.Label("tasks"), QueueItem.Text("enrich x"), Some(QueueItem.Topic("Backlog")))
         )
         assertEquals(reason, Queue.Rationale("why"))
       case other => fail(s"${other.toString}")
@@ -164,7 +164,7 @@ class OpsArgsSuite extends munit.FunSuite:
     assert(parse("tasks", "--no-wait").isLeft)
     assertEquals(
       parse("acquire", "--all"),
-      Right(QueueCmd.Show(Kind.Label("acquire"), true, json)),
+      Right(QueueCmd.Show(Docket.Label("acquire"), true, json)),
       "--all without recheck still shows the done items"
     )
 
