@@ -13,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A source as the bundle reads it: its columns, its body's and its original's digests and its ISBNs. */
 final private[sources] case class BSourceRow(
@@ -61,8 +62,10 @@ object BSourceRow:
   object Regions extends Newtype[String, Pure]
   type Tags = Tags.T
   object Tags extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]

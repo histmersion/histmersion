@@ -2,6 +2,7 @@ package com.histmersion
 package domain.media.assets
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** One image figure of a source, as the illustration's choice weighs it: uid, name, size. */
 final case class SourceFigure(
@@ -19,5 +20,7 @@ object SourceFigure:
   object Width extends Newtype[Int, Pure]
   type Height = Height.T
   object Height extends Newtype[Int, Pure]
-  type HasThumb = HasThumb.T
-  object HasThumb extends Newtype[Boolean, Pure]
+  enum HasThumb derives CanEqual:
+    case WithThumb, WithoutThumb
+  object HasThumb extends TwoCases[HasThumb]:
+    extension (hasThumb: HasThumb) def hasThumb: Boolean = hasThumb == WithThumb

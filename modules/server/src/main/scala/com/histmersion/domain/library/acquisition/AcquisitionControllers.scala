@@ -481,7 +481,8 @@ final class AcquisitionControllers(
             AssessmentRecord(
               ck,
               AssessmentRecord.Verdict(verdict.value),
-              AssessmentRecord.Retracted(verdict == Acquire.Verdicts.Retracted),
+              (if verdict == Acquire.Verdicts.Retracted then AssessmentRecord.Retracted.Retracted
+               else AssessmentRecord.Retracted.Standing),
               noticesJson(rw, updates),
               cited.map(c => AssessmentRecord.CitedBy(c.value)),
               influential.map(i => AssessmentRecord.Influential(i.value))

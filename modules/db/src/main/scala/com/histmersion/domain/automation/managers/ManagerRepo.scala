@@ -66,12 +66,14 @@ object ManagerRepo:
   private val AgentRun = AgentJobKinds.Agent.kind
 
   // the jsonb columns, through their DTOs' codecs ([[Jsonb]]); absent fields are left out when written
-  private given configCodec: DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
-  private given stateCodec: DbCodec[ItemState] = Jsonb.codec(ItemState(), dropNulls = Jsonb.DropNulls(true))
-  private given holdCodec: DbCodec[Option[Hold]] = Jsonb.optional[Hold](dropNulls = Jsonb.DropNulls(true))
+  private given configCodec: DbCodec[ManagerConfig] =
+    Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls.DropNulls)
+  private given stateCodec: DbCodec[ItemState] = Jsonb.codec(ItemState(), dropNulls = Jsonb.DropNulls.DropNulls)
+  private given holdCodec: DbCodec[Option[Hold]] = Jsonb.optional[Hold](dropNulls = Jsonb.DropNulls.DropNulls)
   private given statusCodec: DbCodec[Option[Manager.Status]] =
     DbCodec[Option[String]].biMap(_.map(Manager.Status.parse), _.map(_.render))
-  private given effectCodec: DbCodec[Option[HintEffect]] = Jsonb.optional[HintEffect](dropNulls = Jsonb.DropNulls(true))
+  private given effectCodec: DbCodec[Option[HintEffect]] =
+    Jsonb.optional[HintEffect](dropNulls = Jsonb.DropNulls.DropNulls)
 
   // ── managers ───────────────────────────────────────────────────────────────────────────────────
 

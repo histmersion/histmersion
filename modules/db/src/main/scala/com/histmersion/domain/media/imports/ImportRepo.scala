@@ -16,6 +16,7 @@ import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.DeepTime
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What the media imports ask about and what they recorded asking (#1446, V082): the places on the map and the events
   * not asked yet by a provider, the facts a collection's match reads of a place, and `media_checks`. Every method runs
@@ -29,12 +30,18 @@ private[imports] object ImportRepo:
   object Limit extends Newtype[Int, Pure]
   type NameKey = NameKey.T
   object NameKey extends Newtype[String, Pure]
-  type Places = Places.T
-  object Places extends Newtype[Boolean, Pure]
-  type PleiadesOnly = PleiadesOnly.T
-  object PleiadesOnly extends Newtype[Boolean, Pure]
-  type Refresh = Refresh.T
-  object Refresh extends Newtype[Boolean, Pure]
+  enum Places derives CanEqual:
+    case WithPlaces, WithoutPlaces
+  object Places extends TwoCases[Places]:
+    extension (places: Places) def places: Boolean = places == WithPlaces
+  enum PleiadesOnly derives CanEqual:
+    case PleiadesOnly, AnyGazetteer
+  object PleiadesOnly extends TwoCases[PleiadesOnly]:
+    extension (pleiadesOnly: PleiadesOnly) def pleiadesOnly: Boolean = pleiadesOnly == PleiadesOnly
+  enum Refresh derives CanEqual:
+    case Refresh, Reuse
+  object Refresh extends TwoCases[Refresh]:
+    extension (refresh: Refresh) def refresh: Boolean = refresh == Refresh
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
 
@@ -159,8 +166,8 @@ private[imports] object ImportRepo:
         // a refresh without a job's start re-asks every one. Not as "not since now" by this
         // process's clock (#1567): that is whole milliseconds, a check is stamped with the
         // database's microseconds, so a check made in the same millisecond counted as newer
-        val asOf = if refresh.value then since else None
-        val everyOne = refresh.value && since.isEmpty
+        val asOf = if refresh.refresh then since else None
+        val everyOne = refresh.refresh && since.isEmpty
         val events = sql"${eventCandidates(provider, asOf, everyOne)} ORDER BY e.id LIMIT ${n.literal}"
           .query[(Target.Id, Target.Qid, Target.Label)]
           .run()
@@ -234,19 +241,19 @@ private[imports] object ImportRepo:
       pleiadesOnly: PleiadesOnly
   )(using DbCon): Either[Problem, List[Target]] =
     val n = limit.value.max(1)
-    val asOf = if refresh.value then since else None
-    val everyOne = refresh.value && since.isEmpty
+    val asOf = if refresh.refresh then since else None
+    val everyOne = refresh.refresh && since.isEmpty
     (
       place.flatMap(p => domain.catalogue.Place.Id.option(p.value.trim)),
       event.flatMap(e => domain.catalogue.Event.Id.option(e.value.trim))
     ) match
       case (Some(pid), _) =>
-        if !places.value then
+        if !places.places then
           Left(Problem.Unclassified(Legacy.Text("this import is about events: name one with --event")))
         else
           sql"SELECT label FROM places WHERE id = $pid".query[Target.Label].run().headOption match
             case None => Left(Problem.NotFound.Entity(Problem.TypeName.of(CataloguePlace.Id), Problem.Raw.of(pid)))
-            case Some(l) if pleiadesOnly.value && pleiadesIdsIn(List(pid)).isEmpty =>
+            case Some(l) if pleiadesOnly.pleiadesOnly && pleiadesIdsIn(List(pid)).isEmpty =>
               Left(
                 Problem.Unclassified(
                   Legacy.Text(
@@ -256,7 +263,7 @@ private[imports] object ImportRepo:
               )
             case Some(l) => Right(List(Target(Place, Target.Id(pid.value), Target.Qid(""), l)))
       case (None, Some(eid)) =>
-        if places.value then
+        if places.places then
           Left(Problem.Unclassified(Legacy.Text("this import is about places: name one with --place")))
         else
           sql"SELECT label, wikidata FROM events WHERE id = $eid"
@@ -274,9 +281,9 @@ private[imports] object ImportRepo:
                 )
               )
       case (None, None) =>
-        if places.value then
+        if places.places then
           Right(
-            sql"${mapPlaces(check, asOf, everyOne, pleiadesOnly.value)} ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT ${n.literal}"
+            sql"${mapPlaces(check, asOf, everyOne, pleiadesOnly.pleiadesOnly)} ORDER BY (p.kind IN ('site', 'feature')) DESC, u.s DESC, u.n DESC, u.place_id LIMIT ${n.literal}"
               .query[(Target.Id, Target.Label, Option[String], Long, Long)]
               .run()
               .toList
@@ -293,12 +300,11 @@ private[imports] object ImportRepo:
 
   /** How many places (`places`) or events a collection or the depictions import has still to ask. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def collectionPending(check: MediaItemRow.Provider, places: Places, since: Option[Since], pleiadesOnly: PleiadesOnly)(
       using DbCon
   ): RowCount =
-    val q = if places.value then mapPlaces(check, since, everyOne = false, pleiadesOnly.value)
+    val q = if places.places then mapPlaces(check, since, everyOne = false, pleiadesOnly.pleiadesOnly)
     else eventCandidates(check, since, everyOne = false)
     RowCount(sql"SELECT count(*)::int FROM ($q) x".query[Int].run().head)
 

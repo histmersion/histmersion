@@ -139,9 +139,9 @@ final class GoalFocusService(
         ManagerItem.Kind(r.kind.value),
         domain.automation.ItemStatus.Wire(r.status.value),
         Work.Target(r.target.value),
-        (if r.person.value then Work.Person.ForPerson else Work.Person.ForModel),
-        (if r.focusHeld.value then Work.FocusHeld.Held else Work.FocusHeld.Free),
-        (if r.personHeld.value then Work.HeldByPerson.Held else Work.HeldByPerson.Free),
+        (if r.person.person then Work.Person.ForPerson else Work.Person.ForModel),
+        (if r.focusHeld.focusHeld then Work.FocusHeld.Held else Work.FocusHeld.Free),
+        (if r.personHeld.personHeld then Work.HeldByPerson.Held else Work.HeldByPerson.Free),
         r.approval.map(a => Work.Approval(a.value)),
         (if r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove) then Work.ApprovedBy.Person
          else Work.ApprovedBy.Model)
@@ -153,9 +153,9 @@ final class GoalFocusService(
         g.parent.map(p => Goal.Slug.assume(p.value)),
         Goal.Status.Wire(g.status.value),
         Facts.CreatedAt(g.createdAt.value),
-        pinned = (if g.pinned.value then Facts.Pinned.Pinned else Facts.Pinned.Unpinned),
+        pinned = (if g.pinned.pinned then Facts.Pinned.Pinned else Facts.Pinned.Unpinned),
         priority = Facts.Priority(g.priority.value),
-        active = (if g.active.value then Facts.Active.Active else Facts.Active.Inactive),
+        active = (if g.active.active then Facts.Active.Active else Facts.Active.Inactive),
         since = g.since.map(s => Facts.Since(s.value))
       )
     )
@@ -251,8 +251,8 @@ final class GoalFocusService(
         ManagerItem.Kind(w.kind.value),
         domain.automation.ItemStatus.Wire(w.status.value),
         w.goals.map(g => Goal.Slug.assume(g.value)),
-        (if w.person.value then Work.Person.ForPerson else Work.Person.ForModel),
-        (if w.focusHeld.value then Work.FocusHeld.Held else Work.FocusHeld.Free)
+        (if w.person.person then Work.Person.ForPerson else Work.Person.ForModel),
+        (if w.focusHeld.focusHeld then Work.FocusHeld.Held else Work.FocusHeld.Free)
       )
     )
     val hs = GoalFocus.holds(items, plan, r.facts)
@@ -451,7 +451,14 @@ final class GoalFocusService(
         val on = in.action.value.trim.equalsIgnoreCase("pin")
         goal
           .flatMap(g =>
-            known(g).flatMap(s => Either.cond(agents.focusStore.pin(s, FocusRepo.GoalRow.Pinned(on)), s, missing(g)))
+            known(g).flatMap(s =>
+              Either.cond(
+                agents.focusStore
+                  .pin(s, (if on then FocusRepo.GoalRow.Pinned.Pinned else FocusRepo.GoalRow.Pinned.Unpinned)),
+                s,
+                missing(g)
+              )
+            )
           )
           .map { g =>
             event(g, s"focus: ${if on then "pinned" else "unpinned"} by $by")

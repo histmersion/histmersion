@@ -27,6 +27,7 @@ import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
+import com.histmersion.TwoCases
 
 /** The figures that belong with a source's Markdown (plan §1.8).
   *
@@ -40,9 +41,10 @@ import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 @atBoundary(BoundaryKind.Sql, "reads and writes the asset tables and their row codecs")
 private[assets] object AssetRepo:
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
-
-  type ReplaceExisting = ReplaceExisting.T
-  object ReplaceExisting extends Newtype[Boolean, Pure]
+  enum ReplaceExisting derives CanEqual:
+    case Replace, Keep
+  object ReplaceExisting extends TwoCases[ReplaceExisting]:
+    extension (replaceExisting: ReplaceExisting) def replaceExisting: Boolean = replaceExisting == Replace
 
   /** REPLACE the whole set for one source (what a re-conversion does). Returns how many were kept after sha256
     * deduplication.
@@ -68,7 +70,7 @@ private[assets] object AssetRepo:
     plan.renames.foreach((from, to) =>
       Unused(sql"UPDATE assets SET name = $to WHERE citekey = $citekey AND name = $from".update.run(), Unused.Why.Held)
     )
-    val n = insert(citekey, incoming, replaceExisting = ReplaceExisting(true))
+    val n = insert(citekey, incoming, replaceExisting = ReplaceExisting.Replace)
     touch(citekey)
     n
 
@@ -77,7 +79,7 @@ private[assets] object AssetRepo:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def add(citekey: Citekey, assets: List[NewFigure])(using DbCon)(using Creator.New, CreatedAt): RowCount =
-    val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = ReplaceExisting(false))
+    val n = insert(citekey, NewFigure.dedupe(assets), replaceExisting = ReplaceExisting.Keep)
     touch(citekey)
     n
 
@@ -95,13 +97,12 @@ private[assets] object AssetRepo:
     * conversion had produced. For [[replace]] the clause is what updates a kept row in place.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def insert(citekey: Citekey, assets: List[NewFigure], replaceExisting: ReplaceExisting)(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): RowCount =
     assets.foreach { a =>
       val sha = a.sha256
-      if replaceExisting.value then
+      if replaceExisting.replaceExisting then
         // an unchanged picture is not rewritten: its row (and `updated_at`) stays as it was
         Unused(
           sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, creator, created_at)

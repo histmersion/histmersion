@@ -8,6 +8,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** One of a place's types, as its bundle line reads it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -23,8 +24,10 @@ final private[places] case class BPlaceTypeRow(
 object BPlaceTypeRow:
   type TypeLabel = TypeLabel.T
   object TypeLabel extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   type PLo = PLo.T
   object PLo extends Newtype[Long, Pure]
   type PHi = PHi.T

@@ -37,6 +37,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
+import com.histmersion.TwoCases
 
 /** The store of embedded agent runs (migrations V035, V040, V041): a run is a `jobs` row with kind `agent` (its options
   * in `params`), its steps are `agent_steps` (one row per attempt; a `done` row is the checkpoint a resume replays),
@@ -47,8 +48,10 @@ import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @atBoundary(BoundaryKind.Sql, "reads and writes the agent tables and their row codecs")
 object AgentRepo:
-  type ActiveOnly = ActiveOnly.T
-  object ActiveOnly extends Newtype[Boolean, Pure]
+  enum ActiveOnly derives CanEqual:
+    case ActiveOnly, All
+  object ActiveOnly extends TwoCases[ActiveOnly]:
+    extension (activeOnly: ActiveOnly) def activeOnly: Boolean = activeOnly == ActiveOnly
   type OutputChars = OutputChars.T
   object OutputChars extends Newtype[Int, Pure]
   type PageCursor = PageCursor.T
@@ -58,7 +61,7 @@ object AgentRepo:
     * ([[Jsonb]]).
     */
 
-  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = Jsonb.DropNulls(true))
+  private given DbCodec[RunParams] = Jsonb.codec(RunParams(), dropNulls = Jsonb.DropNulls.DropNulls)
   private given DbCodec[Creation] = Jsonb.codec(Creation(Creation.Unreadable))
 
   final private case class RunRow(
@@ -311,13 +314,12 @@ object AgentRepo:
     * waiting).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def forManager(
       managerId: Managers.ManagerInfo.Id,
-      active: ActiveOnly = ActiveOnly(false),
+      active: ActiveOnly = ActiveOnly.All,
       limit: PageSize = PageSize(200)
   )(using DbCon): Vector[RunInfo] =
-    val open = if active.value then sql" AND j.status IN ('queued', 'running', 'paused', 'waiting')" else sql""
+    val open = if active.activeOnly then sql" AND j.status IN ('queued', 'running', 'paused', 'waiting')" else sql""
     sql"$runSelect AND j.manager_id = $managerId$open ORDER BY j.created_at DESC, j.id DESC LIMIT $limit"
       .query[RunRow]
       .run()

@@ -8,6 +8,7 @@ import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
   * plan-goal item (any status).
@@ -38,9 +39,11 @@ object ManagerLight:
   object Cron extends Newtype[String, Pure]
   type StatusNote = StatusNote.T
   object StatusNote extends Newtype[String, Pure]
-  type PlanItem = PlanItem.T
-  object PlanItem extends Newtype[Boolean, Pure]
+  enum PlanItem derives CanEqual:
+    case PlanItem, Standalone
+  object PlanItem extends TwoCases[PlanItem]:
+    extension (planItem: PlanItem) def planItem: Boolean = planItem == PlanItem
 
-  private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls(true))
+  private given DbCodec[ManagerConfig] = Jsonb.codec(ManagerConfig(), dropNulls = Jsonb.DropNulls.DropNulls)
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   given DbCodec[ManagerLight] = DbCodec.derived

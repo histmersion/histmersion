@@ -84,7 +84,7 @@ private[goals] object GoalBundleRepo:
         r.tags.map(t => Bundle.Goal.Tags(t.value)),
         r.regions.map(g => Bundle.Goal.Regions(g.value)),
         range(
-          util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          util.data.exchange.Bundle.RangeIsNull(r.pNull.pNull),
           r.pLo.map(l => util.data.exchange.Bundle.RangeLower(l.value)),
           r.pHi.map(h => util.data.exchange.Bundle.RangeUpper(h.value))
         ),
@@ -115,7 +115,8 @@ private[goals] object GoalBundleRepo:
               Bundle.GoalSchedule(
                 Bundle.GoalSchedule.Kind(x.kind.value),
                 Bundle.GoalSchedule.Cron(x.cron.value),
-                (if x.enabled.value then Bundle.GoalSchedule.Enabled.Enabled else Bundle.GoalSchedule.Enabled.Disabled),
+                (if x.enabled.enabled then Bundle.GoalSchedule.Enabled.Enabled
+                 else Bundle.GoalSchedule.Enabled.Disabled),
                 x.budgetUsd.map(b => Bundle.GoalSchedule.BudgetUsd(b.toDouble))
               )
             )

@@ -145,12 +145,12 @@ object RunService:
       model.map(m => RunRow.Model(m.value)),
       budgetUsd,
       RunRow.BudgetTokens(budgetTokens.value),
-      RunRow.Params(Jsonb.write(params, dropNulls = Jsonb.DropNulls(true)).value),
+      RunRow.Params(Jsonb.write(params, dropNulls = Jsonb.DropNulls.DropNulls).value),
       acquireItem.map(i => RunRow.AcquireItem(i.value)),
       goal.map(g => RunRow.Goal(g.value)),
       parent.map(r => RunRow.Parent(r.value)),
       RunRow.Origin(origin.wire.value),
-      RunRow.DryRun(dryRun.value),
+      (if dryRun.value then RunRow.DryRun.DryRun else RunRow.DryRun.Applied),
       managerId.map(m => RunRow.ManagerId(m.value)),
       managerItem.map(i => RunRow.ManagerItem(i.value))
     )
@@ -197,7 +197,11 @@ object RunService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       db.read(
-        AgentRepo.forManager(Managers.ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit))
+        AgentRepo.forManager(
+          Managers.ManagerInfo.Id(managerId.value),
+          (if active.value then AgentRepo.ActiveOnly.ActiveOnly else AgentRepo.ActiveOnly.All),
+          size(limit)
+        )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
@@ -274,7 +278,7 @@ object RunService:
         r.row.parent.map(p => RunInfo.Id(p.value)),
         Some(RunInfo.Origin(r.row.origin.value)),
         r.resumeAt.map(t => RunInfo.ResumeAt(text(t))),
-        (if r.row.dryRun.value then RunInfo.DryRun.DryRun else RunInfo.DryRun.Apply),
+        (if r.row.dryRun.dryRun then RunInfo.DryRun.DryRun else RunInfo.DryRun.Apply),
         r.row.managerId.map(m => Managers.ManagerInfo.Id(m.value)),
         r.row.managerItem.map(i => Managers.ManagerItem.Id(i.value)),
         r.heartbeatAt.map(t => RunInfo.HeartbeatAt(text(t))),

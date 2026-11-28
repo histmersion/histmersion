@@ -88,7 +88,7 @@ private[places] object PlaceBundleRepo:
           Bundle.Place.Label(r.label.value),
           Bundle.Place.Kind(r.kind.value),
           r.geom.map(g => Bundle.Place.Geom(g.value)),
-          rangeOf(r.pNull.value, r.pLo.map(_.value), r.pHi.map(_.value)),
+          rangeOf(r.pNull.pNull, r.pLo.map(_.value), r.pHi.map(_.value)),
           r.source.map(s => Bundle.Place.Source(s.value)),
           r.properties.flatMap(p => Jsonb.read[Json](Jsonb.JsonText(p.value))),
           names
@@ -98,7 +98,7 @@ private[places] object PlaceBundleRepo:
               Bundle.PlaceName(
                 Bundle.PlaceName.Name(n.name.value),
                 Option(n.lang.value).filter(_.nonEmpty).map(Bundle.PlaceName.Lang(_)),
-                rangeOf(n.pNull.value, n.pLo.map(_.value), n.pHi.map(_.value))
+                rangeOf(n.pNull.pNull, n.pLo.map(_.value), n.pHi.map(_.value))
               )
             ),
           rels
@@ -108,7 +108,7 @@ private[places] object PlaceBundleRepo:
               Bundle.PlaceRelation(
                 Bundle.PlaceRelation.ParentId(x.parentId.value),
                 Bundle.PlaceRelation.Kind(x.kind.value),
-                rangeOf(x.pNull.value, x.pLo.map(_.value), x.pHi.map(_.value))
+                rangeOf(x.pNull.pNull, x.pLo.map(_.value), x.pHi.map(_.value))
               )
             ),
           links
@@ -124,7 +124,7 @@ private[places] object PlaceBundleRepo:
             .map(t =>
               Bundle.PlaceType(
                 Bundle.PlaceType.TypeLabel(t.typeLabel.value),
-                rangeOf(t.pNull.value, t.pLo.map(_.value), t.pHi.map(_.value)),
+                rangeOf(t.pNull.pNull, t.pLo.map(_.value), t.pHi.map(_.value)),
                 t.citekey.map(c => Citekey(c.value))
               )
             ),

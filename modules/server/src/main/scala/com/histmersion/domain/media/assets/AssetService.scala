@@ -492,7 +492,7 @@ object AssetService:
             SourceFigure.Name(a.name.value),
             a.width.map(w => SourceFigure.Width(w.value)),
             a.height.map(h => SourceFigure.Height(h.value)),
-            SourceFigure.HasThumb(a.thumb.isDefined)
+            (if a.thumb.isDefined then SourceFigure.HasThumb.WithThumb else SourceFigure.HasThumb.WithoutThumb)
           )
         )
 

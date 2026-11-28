@@ -11,6 +11,7 @@ import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A `jsonb` column holding a wire DTO, crossing through that DTO's own JSON codec (#1946) — the Vocab.codec rule for
   * JSON: select the column as `col::text`, bind the value as `$v::jsonb`, and a stored document this build cannot read
@@ -20,15 +21,17 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 @atBoundary(BoundaryKind.Sql, "reads and writes jsonb columns through the DTO's JSON codec")
 object Jsonb:
-  type DropNulls = DropNulls.T
-  object DropNulls extends Newtype[Boolean, Pure]
+  enum DropNulls derives CanEqual:
+    case DropNulls, KeepNulls
+  object DropNulls extends TwoCases[DropNulls]:
+    extension (dropNulls: DropNulls) def dropNulls: Boolean = dropNulls == DropNulls
   type JsonText = JsonText.T
   object JsonText extends Newtype[String, Pure]
 
   /** A NULL column reads as `fallback`, and as `None` where the column is read as an `Option` (an outer join's miss).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def codec[A: JsonValueCodec](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] = new DbCodec[A]:
+  def codec[A: JsonValueCodec](fallback: A, dropNulls: DropNulls = DropNulls.KeepNulls): DbCodec[A] = new DbCodec[A]:
     val cols: IArray[Int] = IArray(java.sql.Types.VARCHAR)
     def queryRepr: String = "?"
     def readSingle(rs: java.sql.ResultSet, pos: Int): A = readSingleOption(rs, pos).getOrElse(fallback)
@@ -42,7 +45,7 @@ object Jsonb:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def optional[A: JsonValueCodec](dropNulls: DropNulls = DropNulls(false)): DbCodec[Option[A]] =
+  def optional[A: JsonValueCodec](dropNulls: DropNulls = DropNulls.KeepNulls): DbCodec[Option[A]] =
     DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))), _.map(a => write(a, dropNulls).value))
 
   /** The stored text as an `A`; `None` when it does not decode. */
@@ -66,7 +69,6 @@ object Jsonb:
 
   /** What is bound into the column: compact JSON, without null fields when `dropNulls`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def write[A: JsonValueCodec](a: A, dropNulls: DropNulls = DropNulls(false)): JsonText =
+  def write[A: JsonValueCodec](a: A, dropNulls: DropNulls = DropNulls.KeepNulls): JsonText =
     val j = a.asJson
-    JsonText((if dropNulls.value then j.dropNullValues else j).noSpaces)
+    JsonText((if dropNulls.dropNulls then j.dropNullValues else j).noSpaces)

@@ -173,7 +173,7 @@ final class HttpApi(
     ),
     Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f).left.map(Api.Error(_))),
     Api.importBundle.serverLogic[Identity]((apply, f) =>
-      h.bundles.importBundle(ImportOptions.DryRun(!apply.applies), f)
+      h.bundles.importBundle((if !apply.applies then ImportOptions.DryRun.DryRun else ImportOptions.DryRun.Applied), f)
     ),
     // ── the merge plan (M3) ──
     Api.uploadBundle.serverLogic[Identity](f => h.bundles.upload(f)),

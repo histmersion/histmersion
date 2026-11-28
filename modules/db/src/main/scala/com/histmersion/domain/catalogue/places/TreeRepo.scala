@@ -17,6 +17,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The gazetteer behind the §1.6 aggregation tree: the places a tree's rows were placed in, their ancestors and the
   * edges between them. The library counts the rows (the search's `AggregateRepo.treeRows`);
@@ -51,8 +52,8 @@ private[places] object TreeRepo:
         RegionNode.Label(label.value),
         RegionNode.Kind(kind.value),
         periodOf(periodStart, periodEnd),
-        (if contested.value then RegionNode.Contested.Contested else RegionNode.Contested.Settled),
-        (if withdrawn.value then RegionNode.Withdrawn.Withdrawn else RegionNode.Withdrawn.Current)
+        (if contested.contested then RegionNode.Contested.Contested else RegionNode.Contested.Settled),
+        (if withdrawn.withdrawn then RegionNode.Withdrawn.Withdrawn else RegionNode.Withdrawn.Current)
       )
 
   object RegionNodeRow:
@@ -62,10 +63,14 @@ private[places] object TreeRepo:
     object Label extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Contested = Contested.T
-    object Contested extends Newtype[Boolean, Pure]
-    type Withdrawn = Withdrawn.T
-    object Withdrawn extends Newtype[Boolean, Pure]
+    enum Contested derives CanEqual:
+      case Contested, Settled
+    object Contested extends TwoCases[Contested]:
+      extension (contested: Contested) def contested: Boolean = contested == Contested
+    enum Withdrawn derives CanEqual:
+      case Withdrawn, Standing
+    object Withdrawn extends TwoCases[Withdrawn]:
+      extension (withdrawn: Withdrawn) def withdrawn: Boolean = withdrawn == Withdrawn
 
   final private[histmersion] case class RelationRow(
       childId: RelationRow.ChildId,

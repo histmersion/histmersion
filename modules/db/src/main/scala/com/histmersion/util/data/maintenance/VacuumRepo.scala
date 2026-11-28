@@ -8,14 +8,17 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** `VACUUM` for `histmersion maintenance vacuum`. VACUUM cannot run inside a transaction block, so it runs on a
   * connection in autocommit mode — never in a transaction.
   */
 @atBoundary(BoundaryKind.Sql, "runs vacuum and reads table maintenance state")
 object VacuumRepo:
-  type Analyze = Analyze.T
-  object Analyze extends Newtype[Boolean, Pure]
+  enum Analyze derives CanEqual:
+    case Analyze, VacuumOnly
+  object Analyze extends TwoCases[Analyze]:
+    extension (analyze: Analyze) def analyze: Boolean = analyze == Analyze
 
   /** One table's dead row versions (the statistics collector's count) and its size with indexes and TOAST.
     */
@@ -46,7 +49,6 @@ object VacuumRepo:
   /** Run `VACUUM [(ANALYZE)]` on one table, on a connection outside any transaction. The name must have passed
     * [[Vacuum.plan]] (shape and existence).
     */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def vacuum(table: String, analyze: Analyze)(using con: DbCon): Unit =
     val c = con.connection
     val st = c.createStatement()
@@ -54,7 +56,7 @@ object VacuumRepo:
       val _ = st.execute(
         Vacuum.statement(
           Vacuum.Table(table),
-          (if analyze.value then Vacuum.Request.Analyze.Analyze else Vacuum.Request.Analyze.VacuumOnly)
+          (if analyze.analyze then Vacuum.Request.Analyze.Analyze else Vacuum.Request.Analyze.VacuumOnly)
         )
       )
     } finally st.close()

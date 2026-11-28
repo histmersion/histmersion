@@ -35,7 +35,7 @@ object ImportFixtures:
       limit: ImportRepo.Limit,
       refresh: ImportRepo.Refresh,
       since: Option[ImportRepo.Since] = None,
-      pleiadesOnly: ImportRepo.PleiadesOnly = ImportRepo.PleiadesOnly(false)
+      pleiadesOnly: ImportRepo.PleiadesOnly = ImportRepo.PleiadesOnly.AnyGazetteer
   ): Either[Problem, List[Target]] =
     connect(ds)(ImportRepo.collectionTargets(check, places, place, event, limit, refresh, since, pleiadesOnly))
   def collectionPending(
@@ -43,7 +43,7 @@ object ImportFixtures:
       check: MediaItemRow.Provider,
       places: ImportRepo.Places,
       since: Option[ImportRepo.Since] = None,
-      pleiadesOnly: ImportRepo.PleiadesOnly = ImportRepo.PleiadesOnly(false)
+      pleiadesOnly: ImportRepo.PleiadesOnly = ImportRepo.PleiadesOnly.AnyGazetteer
   ): RowCount = connect(ds)(ImportRepo.collectionPending(check, places, since, pleiadesOnly))
   def placeFacts(
       ds: DataSource,

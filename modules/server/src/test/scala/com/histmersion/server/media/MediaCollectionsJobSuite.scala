@@ -229,11 +229,11 @@ class MediaCollectionsJobSuite extends DbSuite:
       .collectionTargets(
         ds,
         MediaItemRow.Provider(MediaProvider.ArtInstitute),
-        places = ImportFixtures.Places(true),
+        places = ImportFixtures.Places.WithPlaces,
         None,
         None,
         ImportFixtures.Limit(10_000),
-        refresh = ImportFixtures.Refresh(false)
+        refresh = ImportFixtures.Refresh.Reuse
       )
       .fold(p => fail(p.sentence), identity)
     assert(Set("zqmc_site", "zqmc_thebai_a").subsetOf(ts.map(_.id.value).toSet), ts.toString)
@@ -242,11 +242,11 @@ class MediaCollectionsJobSuite extends DbSuite:
         .collectionTargets(
           ds,
           MediaItemRow.Provider(MediaProvider.ArtInstitute),
-          places = ImportFixtures.Places(true),
+          places = ImportFixtures.Places.WithPlaces,
           None,
           Some(Event.Id("e")),
           ImportFixtures.Limit(1),
-          ImportFixtures.Refresh(false)
+          ImportFixtures.Refresh.Reuse
         )
         .isLeft,
       "a collection is about places"

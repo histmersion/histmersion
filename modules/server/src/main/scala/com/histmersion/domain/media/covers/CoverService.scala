@@ -40,7 +40,7 @@ object CoverService:
       db.read(
         CoverRepo.illustrationCandidates(
           only.map(c => CoverRepo.Only(c.value)),
-          CoverRepo.Refresh(refresh.value),
+          (if refresh.value then CoverRepo.Refresh.Refresh else CoverRepo.Refresh.Reuse),
           CoverRepo.Limit(limit.value)
         )
       ).map(Citekey.assume(_))
@@ -49,7 +49,7 @@ object CoverService:
       db.read(
         CoverRepo.coverCandidates(
           only.map(c => CoverRepo.Only(c.value)),
-          CoverRepo.Refresh(refresh.value),
+          (if refresh.value then CoverRepo.Refresh.Refresh else CoverRepo.Refresh.Reuse),
           CoverRepo.Limit(limit.value)
         )
       )

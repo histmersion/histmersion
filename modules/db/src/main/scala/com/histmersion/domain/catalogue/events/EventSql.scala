@@ -13,6 +13,7 @@ import com.augustnagro.magnum.{sql, Frag}
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The events' SQL other queries of the catalogue embed: an event's tier and anchor, the selection of the event list
   * (and of the map's events layer), the map's event tiles' candidates.
@@ -51,15 +52,17 @@ object EventSql:
     */
   final case class Narrow(
       tier: Option[Narrow.Tier] = None,
-      context: Narrow.Context = Narrow.Context(false),
+      context: Narrow.Context = Narrow.Context.Alone,
       area: Option[BBox] = None
   )
 
   object Narrow:
     type Tier = Tier.T
     object Tier extends Newtype[String, Pure]
-    type Context = Context.T
-    object Context extends Newtype[Boolean, Pure]
+    enum Context derives CanEqual:
+      case Context, Alone
+    object Context extends TwoCases[Context]:
+      extension (context: Context) def context: Boolean = context == Context
 
   /** The WHERE of the event list over `events e` with its place `ep` (the area reads the anchor): the events related to
     * the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),
@@ -81,7 +84,7 @@ object EventSql:
     val ps = List.newBuilder[Frag]
     val selected = related.eventWhere(filter, scope)
     if selected.sqlString != "TRUE" then
-      if more.context.value then
+      if more.context.context then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
         ps += (sql"($selected OR ($CatalogueOnly AND $inPeriod))")

@@ -184,7 +184,7 @@ class PlaceGeoSuite extends DbSuite:
         Some(domain.catalogue.Place.Kind.Wire("polity")),
         GeoTime.Within(Year(-2000), Year(-1000), latest = GeoTime.Within.Latest.Earliest),
         PlaceFixtures.Limit(50),
-        pairsByIndex = PlaceFixtures.PairsByIndex(false)
+        pairsByIndex = PlaceFixtures.PairsByIndex.ByScan
       )
     assert(
       plain.sqlString.contains(PlaceFixtures.rangeShadowedSql.sqlString) &&
@@ -542,7 +542,7 @@ class PlaceGeoSuite extends DbSuite:
             Some(domain.catalogue.Place.Kind.Wire("polity")),
             t,
             PlaceFixtures.Limit(limit),
-            pairsByIndex = PlaceFixtures.PairsByIndex(false)
+            pairsByIndex = PlaceFixtures.PairsByIndex.ByScan
           )
         ),
         s"$lo..$hi latest=$latest limit=$limit"

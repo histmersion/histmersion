@@ -22,14 +22,14 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
   stest("made off on first use; a switch changes it once; turning it on forgets the last ensure") { s =>
     val r = a(s).row()
     assertEquals((r.enabled, r.changedBy, r.paused, r.lastEnsureAt), (false, "", Nil, None))
-    assert(a(s).set(enabled = AutopilotRepo.Row.Enabled(true), AutopilotRepo.Row.ChangedBy("p"), Nil))
-    assert(!a(s).set(enabled = AutopilotRepo.Row.Enabled(true), AutopilotRepo.Row.ChangedBy("q"), Nil), "already on")
+    assert(a(s).set(enabled = AutopilotRepo.Row.Enabled.Enabled, AutopilotRepo.Row.ChangedBy("p"), Nil))
+    assert(!a(s).set(enabled = AutopilotRepo.Row.Enabled.Enabled, AutopilotRepo.Row.ChangedBy("q"), Nil), "already on")
     assertEquals(a(s).row().changedBy, "p")
     a(s).ensured(t)
     assertEquals(a(s).row().lastEnsureAt, Some("2026-10-20T08:30:00Z"))
     assert(
       a(s).set(
-        enabled = AutopilotRepo.Row.Enabled(false),
+        enabled = AutopilotRepo.Row.Enabled.Disabled,
         AutopilotRepo.Row.ChangedBy("q"),
         List(AutopilotRepo.Row.Paused("seed:x"), AutopilotRepo.Row.Paused("watch:x"))
       )

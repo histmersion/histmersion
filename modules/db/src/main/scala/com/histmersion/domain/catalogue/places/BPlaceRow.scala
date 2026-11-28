@@ -7,6 +7,7 @@ import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
+import com.histmersion.TwoCases
 
 /** A place of this collection's own, as its bundle line reads it. */
 final private[places] case class BPlaceRow(
@@ -34,8 +35,10 @@ object BPlaceRow:
   object Kind extends Newtype[String, Pure]
   type Geom = Geom.T
   object Geom extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   type PLo = PLo.T
   object PLo extends Newtype[Long, Pure]
   type PHi = PHi.T

@@ -398,7 +398,8 @@ final class EventLinksControllers(
       place,
       EventSql.Narrow(
         Some(EventSql.Narrow.Tier(q.tier.fold(EventTier.Catalogue)(_.value))),
-        context = EventSql.Narrow.Context(q.context.fold(true)(_.context)),
+        context =
+          (if q.context.fold(true)(_.context) then EventSql.Narrow.Context.Context else EventSql.Narrow.Context.Alone),
         q.area.flatMap(a => BBox.parse(BBox.Text(a.value)))
       )
     )

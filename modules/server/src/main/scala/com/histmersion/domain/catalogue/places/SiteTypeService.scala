@@ -46,13 +46,23 @@ object SiteTypeService:
         refresh: Refresh,
         before: Option[DeepTime.SignedYear]
     ): List[(DPlace.Id, WikidataItem.Id, Option[CatalogRecord.Wikidata.ImportClass])] =
-      db.read(SiteTypeRepo.sitesToType(PlaceRepo.Limit(limit.value), SiteTypeRepo.Refresh(refresh.value), before))
-        .map((id, item, cls) =>
-          (id, WikidataItem.Id(item.value), cls.map(c => CatalogRecord.Wikidata.ImportClass(c.value)))
+      db.read(
+        SiteTypeRepo.sitesToType(
+          PlaceRepo.Limit(limit.value),
+          (if refresh.value then SiteTypeRepo.Refresh.Refresh else SiteTypeRepo.Refresh.Reuse),
+          before
         )
+      ).map((id, item, cls) =>
+        (id, WikidataItem.Id(item.value), cls.map(c => CatalogRecord.Wikidata.ImportClass(c.value)))
+      )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
-      db.read(SiteTypeRepo.countSitesToType(SiteTypeRepo.Refresh(refresh.value), before))
+      db.read(
+        SiteTypeRepo.countSitesToType(
+          (if refresh.value then SiteTypeRepo.Refresh.Refresh else SiteTypeRepo.Refresh.Reuse),
+          before
+        )
+      )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
       db.write(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))

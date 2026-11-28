@@ -57,7 +57,7 @@ abstract class JobRunsContract(name: String) extends DbSuite:
       None,
       None,
       origin,
-      RunRow.DryRun(false),
+      RunRow.DryRun.Applied,
       None,
       None
     )

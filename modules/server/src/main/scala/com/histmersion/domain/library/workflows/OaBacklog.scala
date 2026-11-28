@@ -526,7 +526,7 @@ final class OaBacklog(
     val light = agents.managerStore.light().map(m => m.id.value -> m).toMap
     val items = rows.groupBy(_.item).toList.sortBy[Int](_._1.value)
     val out = items.map { (item, rs) =>
-      val first = rs.find(_.isOa.value).getOrElse(rs.head)
+      val first = rs.find(_.isOa.isOa).getOrElse(rs.head)
       val goals = rs.map(_.goal).distinct.map(g => Goal.Slug.assume(g.value))
       val w = light.get(first.managerId.value)
       val watcher = ManagerInfo.Id(first.managerId.value)
@@ -534,7 +534,7 @@ final class OaBacklog(
       val facts = RepairFacts(
         RepairFacts.Item(item.value),
         first.doi,
-        (if rs.exists(_.isOa.value) then RepairFacts.IsOa.Open else RepairFacts.IsOa.Closed),
+        (if rs.exists(_.isOa.isOa) then RepairFacts.IsOa.Open else RepairFacts.IsOa.Closed),
         RepairFacts.Watcher(first.managerId.value),
         (if w.isDefined then RepairFacts.Watching.Watched else RepairFacts.Watching.Unwatched),
         (if w.exists(m =>

@@ -51,7 +51,7 @@ private[articles] object ArticleBundleRepo:
           r.tags.map(t => Bundle.Article.Tags(t.value)),
           r.regions.map(g => Bundle.Article.Regions(g.value)),
           range(
-            util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+            util.data.exchange.Bundle.RangeIsNull(r.pNull.pNull),
             r.pLo.map(l => util.data.exchange.Bundle.RangeLower(l.value)),
             r.pHi.map(h => util.data.exchange.Bundle.RangeUpper(h.value))
           ),

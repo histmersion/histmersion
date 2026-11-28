@@ -271,7 +271,9 @@ object JobRepo:
           VALUES ($id, ${r.kind}, ${r.citekey}, ${r.status},
                   ${r.pipeline}, ${r.pipelineVersion}, ${r.targetKind}, ${r.target}, ${r.model}, ${r.budgetUsd},
                   ${r.budgetTokens}, ${r.params}::jsonb, ${r.acquireItem}, ${r.goal}, ${r.parent}, ${r.origin},
-                  ${r.dryRun}, ${r.managerId}, ${r.managerItem}, ${StoredCreator.column(creator)}::jsonb)""".update
+                  ${r.dryRun.dryRun}, ${r.managerId}, ${r.managerItem}, ${StoredCreator.column(
+        creator
+      )}::jsonb)""".update
       .run()
     Run.Id.applyUnsafe(id)
 

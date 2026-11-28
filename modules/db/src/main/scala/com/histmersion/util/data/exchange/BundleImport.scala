@@ -118,9 +118,9 @@ object BundleImport:
 
     /** `work` written as this collection's own: the change clocks move and a delete leaves a tombstone. */
     def asLocal(work: => Unit): Unit =
-      importing(MergeRepo.Importing(false))
+      importing(MergeRepo.Importing.Merging)
       work
-      importing(MergeRepo.Importing(true))
+      importing(MergeRepo.Importing.Importing)
 
     // what the derived step and pass 2 need
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
@@ -174,10 +174,10 @@ object BundleImport:
     )(rename: (L, L) => Either[Api.Error, ?]): Unit =
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
-          importing(MergeRepo.Importing(false))
+          importing(MergeRepo.Importing.Merging)
           rename(old, label(a)).left
             .foreach(e => throw ImportAbort(NonEmptyVector.toVector(e.problems).toList))
-          importing(MergeRepo.Importing(true))
+          importing(MergeRepo.Importing.Importing)
         }
       }
 

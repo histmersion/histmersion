@@ -11,6 +11,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
+import com.histmersion.TwoCases
 
 /** A finding as the bundle reads it, with its source's uid. */
 final private[sources] case class BFindingRow(
@@ -40,8 +41,10 @@ object BFindingRow:
   object Claim extends Newtype[String, Pure]
   type Region = Region.T
   object Region extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type PeriodName = PeriodName.T
   object PeriodName extends Newtype[String, Pure]

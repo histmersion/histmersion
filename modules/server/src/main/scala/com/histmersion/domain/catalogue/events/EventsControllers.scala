@@ -63,7 +63,7 @@ final class EventsControllers(
   private def narrow(q: Api.EventQuery): EventSql.Narrow =
     EventSql.Narrow(
       q.tier.map(_.value.trim).filter(_.nonEmpty).map(EventSql.Narrow.Tier(_)),
-      EventSql.Narrow.Context(q.context.fold(false)(_.context)),
+      (if q.context.fold(false)(_.context) then EventSql.Narrow.Context.Context else EventSql.Narrow.Context.Alone),
       q.area.flatMap(a => BBox.parse(BBox.Text(a.value)))
     )
 

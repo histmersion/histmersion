@@ -86,8 +86,8 @@ object FocusService:
           g.goal.parentSlug.map(p => FocusRepo.GoalRow.Parent(p.value)),
           FocusRepo.GoalRow.Status(g.goal.status.value),
           FocusRepo.GoalRow.CreatedAt(AutomationState.text(g.createdAt).value),
-          FocusRepo.GoalRow.Active(f.active.value),
-          FocusRepo.GoalRow.Pinned(f.pinned.value),
+          (if f.active.value then FocusRepo.GoalRow.Active.Active else FocusRepo.GoalRow.Active.Inactive),
+          (if f.pinned.value then FocusRepo.GoalRow.Pinned.Pinned else FocusRepo.GoalRow.Pinned.Unpinned),
           FocusRepo.GoalRow.Priority(f.priority.value),
           t(f.since).map(FocusRepo.GoalRow.Since(_)),
           f.why,
@@ -182,7 +182,7 @@ object FocusService:
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def pin(slug: domain.automation.Goal.Slug, pinned: FocusRepo.GoalRow.Pinned)(using WritePermit): Boolean =
-      changeFocus(slug, mustExist = true)(_.modify(_.pinned).setTo(FocusRecord.Pinned(pinned.value)))
+      changeFocus(slug, mustExist = true)(_.modify(_.pinned).setTo(FocusRecord.Pinned(pinned.pinned)))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def priority(slug: domain.automation.Goal.Slug, n: FocusRepo.GoalRow.Priority)(using WritePermit): Boolean =
       changeFocus(slug, mustExist = true)(_.modify(_.priority).setTo(FocusRecord.Priority(n.value)))

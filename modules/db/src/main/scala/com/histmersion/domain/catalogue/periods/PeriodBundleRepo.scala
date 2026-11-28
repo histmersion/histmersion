@@ -43,7 +43,7 @@ private[periods] object PeriodBundleRepo:
         Bundle.Period.Label(r.label.value),
         r.authority.map(a => Bundle.Period.Authority(a.value)),
         range(
-          util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          util.data.exchange.Bundle.RangeIsNull(r.pNull.pNull),
           r.pLo.map(l => util.data.exchange.Bundle.RangeLower(l.value)),
           r.pHi.map(h => util.data.exchange.Bundle.RangeUpper(h.value))
         ),

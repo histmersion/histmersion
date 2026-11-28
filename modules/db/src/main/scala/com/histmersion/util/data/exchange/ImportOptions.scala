@@ -2,6 +2,7 @@ package com.histmersion
 package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 final case class ImportOptions(
     dryRun: ImportOptions.DryRun,
@@ -10,8 +11,10 @@ final case class ImportOptions(
 )
 
 object ImportOptions:
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Applied
+  object DryRun extends TwoCases[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type ChunkChars = ChunkChars.T
   object ChunkChars extends Newtype[Int, Pure]
   type ToleranceKm = ToleranceKm.T

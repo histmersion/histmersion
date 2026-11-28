@@ -91,7 +91,7 @@ private[sources] object SourceBundleRepo:
         r.lon.map(x => Longitude(x.value)),
         r.lat.map(x => Latitude(x.value)),
         range(
-          util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          util.data.exchange.Bundle.RangeIsNull(r.pNull.pNull),
           r.pLo.map(x => util.data.exchange.Bundle.RangeLower(x.value)),
           r.pHi.map(x => util.data.exchange.Bundle.RangeUpper(x.value))
         ),
@@ -142,7 +142,7 @@ private[sources] object SourceBundleRepo:
       Bundle.Assessment(
         r.sourceUid,
         Bundle.Assessment.CheckedAt(r.checkedAt.value),
-        (if r.retracted.value then Bundle.Assessment.Retracted.Retracted else Bundle.Assessment.Retracted.Standing),
+        (if r.retracted.retracted then Bundle.Assessment.Retracted.Retracted else Bundle.Assessment.Retracted.Standing),
         Jsonb.read[Json](Jsonb.JsonText(r.notices.value)).getOrElse(Json.arr()),
         r.citedBy.map(x => Bundle.Assessment.CitedBy(x.value)),
         r.influential.map(x => Bundle.Assessment.Influential(x.value)),
@@ -180,7 +180,7 @@ private[sources] object SourceBundleRepo:
       r.regions.map(t => Bundle.Source.Regions(t.value)),
       r.tags.map(t => Bundle.Source.Tags(t.value)),
       range(
-        util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+        util.data.exchange.Bundle.RangeIsNull(r.pNull.pNull),
         r.pLo.map(x => util.data.exchange.Bundle.RangeLower(x.value)),
         r.pHi.map(x => util.data.exchange.Bundle.RangeUpper(x.value))
       ),

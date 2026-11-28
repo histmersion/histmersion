@@ -33,6 +33,7 @@ import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.database.Jsonb
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{atBoundary, tolerated, BoundaryKind, LintRule}
+import com.histmersion.TwoCases
 
 /** The gazetteer store (plan §1.6a): import, search, hierarchy, and the MATERIALISATION of `finding_places` — the only
   * place that decides which findings belong to which places.
@@ -70,8 +71,10 @@ private[places] object PlaceRepo:
   object Limit extends Newtype[Int, Pure]
   type Name = Name.T
   object Name extends Newtype[String, Pure]
-  type PairsByIndex = PairsByIndex.T
-  object PairsByIndex extends Newtype[Boolean, Pure]
+  enum PairsByIndex derives CanEqual:
+    case ByIndex, ByScan
+  object PairsByIndex extends TwoCases[PairsByIndex]:
+    extension (pairsByIndex: PairsByIndex) def pairsByIndex: Boolean = pairsByIndex == ByIndex
   type RankLevel = RankLevel.T
   object RankLevel extends Newtype[String, Pure]
   type SearchText = SearchText.T
@@ -404,7 +407,7 @@ private[places] object PlaceRepo:
         lks,
         tps,
         hasBoundary =
-          (if r.hasBoundary.value then Place.Entry.HasBoundary.Bounded else Place.Entry.HasBoundary.Unbounded),
+          (if r.hasBoundary.hasBoundary then Place.Entry.HasBoundary.Bounded else Place.Entry.HasBoundary.Unbounded),
         descriptions = descriptionsOf(id),
         timeBasis = r.timeBasis,
         locationPrecision = r.precision.transformInto[Place.Precision],
@@ -645,7 +648,7 @@ private[places] object PlaceRepo:
       time: GeoTime,
       limit: Limit,
       modernFrom: DeepTime.SignedYear = DefaultModernFrom,
-      pairsByIndex: PairsByIndex = PairsByIndex(true)
+      pairsByIndex: PairsByIndex = PairsByIndex.ByIndex
   ): Frag =
     val k = kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
     val window = time.window.map((a, b) => (signed(a), signed(b)))
@@ -709,7 +712,7 @@ private[places] object PlaceRepo:
           // over a range a layer of areas probes its few sketches and OHM shapes for partners through
           // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
           k.filterNot(_ == Place.Kind.Site)
-            .filter(_ => pairsByIndex.value)
+            .filter(_ => pairsByIndex.pairsByIndex)
             .fold(rangeShadowedSql)(_ =>
               sql", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (${rangePairsSql(rest, small = 3, partner = sql"c.tier < 3", smallIsLo = true)} UNION ALL ${rangePairsSql(rest, small = 1, partner = sql"c.tier = 2", smallIsLo = false)}) pr$rangeShadowTestSql)"
             )

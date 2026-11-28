@@ -60,7 +60,7 @@ trait EngineStores:
         goal,
         None,
         RunRow.Origin("person"),
-        RunRow.DryRun(false),
+        RunRow.DryRun.Applied,
         manager,
         item
       )

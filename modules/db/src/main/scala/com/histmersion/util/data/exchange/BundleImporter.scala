@@ -72,7 +72,6 @@ object BundleImporter:
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def failed(
       m: Bundle.Manifest,
       opts: ImportOptions,
@@ -81,7 +80,7 @@ object BundleImporter:
     Bundle.ImportResult(
       m.bundleId,
       m.instance,
-      (if opts.dryRun.value then Bundle.ImportResult.DryRun.DryRun else Bundle.ImportResult.DryRun.Apply),
+      (if opts.dryRun.dryRun then Bundle.ImportResult.DryRun.DryRun else Bundle.ImportResult.DryRun.Apply),
       applied = Bundle.ImportResult.Applied.Skipped,
       Nil,
       Bundle.ImportResult.Blobs(0),
@@ -166,7 +165,7 @@ object BundleImporter:
       Bundle.ImportResult(
         m.bundleId,
         m.instance,
-        (if opts.dryRun.value then Bundle.ImportResult.DryRun.DryRun else Bundle.ImportResult.DryRun.Apply),
+        (if opts.dryRun.dryRun then Bundle.ImportResult.DryRun.DryRun else Bundle.ImportResult.DryRun.Apply),
         applied,
         counts,
         if applied.applied then Bundle.ImportResult.Blobs(needed.size) else Bundle.ImportResult.Blobs(0),
@@ -178,7 +177,7 @@ object BundleImporter:
         Some(Bundle.ImportResult.PlanHash(plan.planHash.value))
       )
 
-    if problems.nonEmpty || opts.dryRun.value then result(applied = Bundle.ImportResult.Applied.Skipped, None)
+    if problems.nonEmpty || opts.dryRun.dryRun then result(applied = Bundle.ImportResult.Applied.Skipped, None)
     else
       writeAll(bundle, input, planned, opts, files, kinds)
       val mergeId = MergeRepo.record(
@@ -209,7 +208,7 @@ object BundleImporter:
     val decisionOf: Map[UUID, Decision] = decided.map(d => d.uid -> d.decision).toMap
     def writes(uid: UUID): Boolean = decisionOf.get(uid).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val needed = neededBlobs(es, writes)
-    MergeRepo.importing(MergeRepo.Importing(true))
+    MergeRepo.importing(MergeRepo.Importing.Importing)
     val w =
       BundleImport.Writer(
         es,
@@ -229,9 +228,9 @@ object BundleImporter:
       val failures = bundle.read(in => blobs(in, needed, w, files, kinds))
       if failures.nonEmpty then throw ImportAbort(failures)
     kinds.steps(ImportStage.AfterBlobs).foreach(_.write(w))
-    MergeRepo.importing(MergeRepo.Importing(false))
+    MergeRepo.importing(MergeRepo.Importing.Merging)
     kinds.steps(ImportStage.Derived).foreach(_.write(w))
-    MergeRepo.importing(MergeRepo.Importing(true))
+    MergeRepo.importing(MergeRepo.Importing.Importing)
 
   /** sha256 → its uses, for the blobs a WRITTEN row needs (an unchanged row's blob is skipped). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

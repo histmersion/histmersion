@@ -77,10 +77,6 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
 
   /** `POST /api/merge/import` — import an uploaded bundle with resolutions. A write. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def importUploaded(req: MergeImportRequest): Either[Api.Error, Bundle.ImportResult] =
     maintenance.guard(WriteGate.OperationName("merge/import")):
@@ -88,7 +84,13 @@ final class BundleControllers(bundles: BundleService, maintenance: WriteGate):
         .sha256(req.bundle.value)
         .left
         .map(Api.Error(_))
-        .flatMap(bundles.importKept(_, req.resolutions, ImportOptions.DryRun(req.dryRun.dryRun)))
+        .flatMap(
+          bundles.importKept(
+            _,
+            req.resolutions,
+            (if req.dryRun.dryRun then ImportOptions.DryRun.DryRun else ImportOptions.DryRun.Applied)
+          )
+        )
 
   /** `POST /api/merge/apply` — carry out the reviewed plan of an uploaded bundle (M5). A write, and the one that takes
     * a backup first (`histmersion backup`'s `pg_dump`, into `backups.dir`). It runs as a background job

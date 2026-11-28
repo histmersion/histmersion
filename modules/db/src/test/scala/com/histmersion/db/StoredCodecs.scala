@@ -20,7 +20,7 @@ object StoredCodecs:
   object Codec:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given [A: JsonValueCodec] => Codec[A] = Codec(
-      (a, drop) => s"${Jsonb.write(a, if drop then Jsonb.DropNulls(true) else Jsonb.DropNulls(false))}",
+      (a, drop) => s"${Jsonb.write(a, if drop then Jsonb.DropNulls.DropNulls else Jsonb.DropNulls.KeepNulls)}",
       t => Jsonb.decode[A](Jsonb.JsonText(s"$t")).left.map(e => s"$e")
     )
 

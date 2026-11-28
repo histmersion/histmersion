@@ -9,6 +9,7 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
@@ -41,8 +42,10 @@ object AutopilotRepo:
   ) derives DbCodec
 
   object Row:
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
+    enum Enabled derives CanEqual:
+      case Enabled, Disabled
+    object Enabled extends TwoCases[Enabled]:
+      extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
     type ChangedAt = ChangedAt.T
     object ChangedAt extends Newtype[String, Pure]
     type ChangedBy = ChangedBy.T
@@ -83,9 +86,9 @@ object AutopilotRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def set(enabled: Row.Enabled, by: Row.ChangedBy, paused: List[Row.Paused])(using DbCon): Boolean =
     made()
-    sql"""UPDATE agent_autopilot SET enabled = $enabled, changed_at = now(), changed_by = $by, paused = $paused::text[],
+    sql"""UPDATE agent_autopilot SET enabled = ${enabled.enabled}, changed_at = now(), changed_by = $by, paused = $paused::text[],
                                      last_ensure_at = NULL
-          WHERE id AND enabled <> $enabled""".update.run() > 0
+          WHERE id AND enabled <> ${enabled.enabled}""".update.run() > 0
 
   /** It made sure of the goals' managers now. */
   def ensured(now: java.time.Instant)(using DbCon): Unit =

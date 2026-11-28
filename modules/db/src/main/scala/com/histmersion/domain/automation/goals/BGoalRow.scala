@@ -9,6 +9,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Jsonb
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A goal's row as a bundle reads it (Magnum maps a SELECT's columns positionally). */
 final private[histmersion] case class BGoalRow(
@@ -45,8 +46,10 @@ object BGoalRow:
   object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
   object Regions extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   type PLo = PLo.T
   object PLo extends Newtype[Long, Pure]
   type PHi = PHi.T

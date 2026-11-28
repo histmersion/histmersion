@@ -151,7 +151,7 @@ class MergeSuite extends DbSuite with Bounded:
       bundle: Path,
       originals: Path,
       res: MergeResolutions = MergeResolutions(),
-      dryRun: ImportOptions.DryRun = ImportOptions.DryRun(false)
+      dryRun: ImportOptions.DryRun = ImportOptions.DryRun.Applied
   ): Bundle.ImportResult =
     BundleImporter
       .run(
@@ -874,7 +874,7 @@ class MergeSuite extends DbSuite with Bounded:
         ByteSource.file(bundle),
         sha256Of(bundle),
         BundleImport
-          .Options(dryRun = ImportOptions.DryRun(false), importChunkChars, importToleranceKm),
+          .Options(dryRun = ImportOptions.DryRun.Applied, importChunkChars, importToleranceKm),
         ContentDirectory(originals),
         res,
         merge,

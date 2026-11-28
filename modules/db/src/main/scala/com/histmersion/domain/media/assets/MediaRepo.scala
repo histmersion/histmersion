@@ -331,7 +331,7 @@ private[assets] object MediaRepo:
       r.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
       r.originalUrl.map(u => MediaItem.OriginalUrl(u.value)),
       r.retrievedAt.map(t => MediaItem.RetrievedAt(t.value)),
-      Option.when(r.hasThumb.value)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(r.uid.value)).value)),
+      Option.when(r.hasThumb.hasThumb)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(r.uid.value)).value)),
       MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(r.uid.value)).value),
       targets
     )
@@ -515,7 +515,7 @@ private[assets] object MediaRepo:
       r.provider.map(p => MediaItem.Provider(p.value)),
       r.license.map(l => MediaItem.License(l.value)),
       r.credit.map(c => MediaItem.Credit(c.value)),
-      Option.when(r.hasThumb.value)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(r.uid.value)).value)),
+      Option.when(r.hasThumb.hasThumb)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(r.uid.value)).value)),
       fileUrl = Some(MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(r.uid.value)).value)),
       sourceUrl = r.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
       licenseUrl = r.licenseUrl.map(u => MediaItem.LicenseUrl(u.value)),

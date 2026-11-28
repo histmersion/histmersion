@@ -13,6 +13,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -89,8 +90,10 @@ object PlanQuotaRepo:
   )
 
   object Pool:
-    type Held = Held.T
-    object Held extends Newtype[Boolean, Pure]
+    enum Held derives CanEqual:
+      case Held, Free
+    object Held extends TwoCases[Held]:
+      extension (held: Held) def held: Boolean = held == Held
     type Floors = Floors.T
     object Floors extends Newtype[String, Pure]
     type RefusalUntil = RefusalUntil.T
@@ -98,7 +101,7 @@ object PlanQuotaRepo:
     type PlanType = PlanType.T
     object PlanType extends Newtype[String, Pure]
 
-  val NoPool: Pool = Pool(Pool.Held(false), None, None, None, None)
+  val NoPool: Pool = Pool(Pool.Held.Free, None, None, None, None)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pool(p: PoolId)(using DbCon): Pool =
@@ -109,7 +112,7 @@ object PlanQuotaRepo:
       .headOption
       .map((h, f, r, u, t) =>
         Pool(
-          Pool.Held(h),
+          (if h then Pool.Held.Held else Pool.Held.Free),
           f.map(Pool.Floors(_)),
           r.map(Problems.asOne),
           u.map(Pool.RefusalUntil(_)),
@@ -121,7 +124,7 @@ object PlanQuotaRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setHold(p: PoolId, held: Pool.Held)(using DbCon): Unit =
     val _ =
-      sql"""INSERT INTO plan_pools (pool, held) VALUES (${p.wire}, $held)
+      sql"""INSERT INTO plan_pools (pool, held) VALUES (${p.wire}, ${held.held})
             ON CONFLICT (pool) DO UPDATE SET held = EXCLUDED.held, updated_at = now()""".update.run()
 
   /** Saved floors; None drops them (config's apply again). */

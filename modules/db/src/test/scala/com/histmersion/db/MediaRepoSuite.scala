@@ -532,7 +532,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         Some(domain.catalogue.Place.Id("zqmd_site")),
         None,
         ImportFixtures.Limit(10),
-        refresh = ImportFixtures.Refresh(false)
+        refresh = ImportFixtures.Refresh.Reuse
       ),
       Right(
         List(
@@ -548,7 +548,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           Some(domain.catalogue.Place.Id("zqmd_nolink")),
           None,
           ImportFixtures.Limit(10),
-          refresh = ImportFixtures.Refresh(false)
+          refresh = ImportFixtures.Refresh.Reuse
         )
         .left
         .exists(_.sentence.contains("no Wikidata link"))
@@ -561,7 +561,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           Some(domain.catalogue.Place.Id("zqmd_nope")),
           None,
           ImportFixtures.Limit(10),
-          refresh = ImportFixtures.Refresh(false)
+          refresh = ImportFixtures.Refresh.Reuse
         )
         .left
         .exists(_.isNotFound)
@@ -574,7 +574,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           None,
           Some(Event.Id("zqmd_battle")),
           ImportFixtures.Limit(10),
-          refresh = ImportFixtures.Refresh(false)
+          refresh = ImportFixtures.Refresh.Reuse
         )
         .map(_.map(_.qid)),
       Right(List("Q90000003"))
@@ -582,7 +582,14 @@ class MediaRepoSuite extends DbSuite with Bounded:
 
   test("targets by default: events with an item, then places with findings by count; asked ones skipped"):
     def mine(refresh: Boolean) = ImportFixtures
-      .targets(ds, Prov, None, None, ImportFixtures.Limit(100000), ImportFixtures.Refresh(refresh))
+      .targets(
+        ds,
+        Prov,
+        None,
+        None,
+        ImportFixtures.Limit(100000),
+        (if refresh then ImportFixtures.Refresh.Refresh else ImportFixtures.Refresh.Reuse)
+      )
       .toOption
       .get
       .filter(_.id.value.startsWith("zqmd"))
@@ -953,7 +960,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         .run()
       ()
     def mine() = ImportFixtures
-      .targets(ds, Prov, None, None, ImportFixtures.Limit(100000), refresh = ImportFixtures.Refresh(false))
+      .targets(ds, Prov, None, None, ImportFixtures.Limit(100000), refresh = ImportFixtures.Refresh.Reuse)
       .toOption
       .get
       .filter(_.id.value.startsWith("zqmd_eq"))
@@ -979,7 +986,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
           None,
           None,
           ImportFixtures.Limit(100000),
-          refresh = ImportFixtures.Refresh(true),
+          refresh = ImportFixtures.Refresh.Refresh,
           Some(ImportFixtures.Since(since))
         )
         .toOption
@@ -1028,7 +1035,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     assert(SourceFixtures.markdown(ds, Citekey("zqmd2022_paper")).value.contains("assets/logo.png"))
     assert(
       CoverFixtures
-        .illustrationCandidates(ds, None, refresh = CoverFixtures.Refresh(false), CoverFixtures.Limit(100000))
+        .illustrationCandidates(ds, None, refresh = CoverFixtures.Refresh.Reuse, CoverFixtures.Limit(100000))
         .contains("zqmd2022_paper")
     )
     val fig = AssetFixtures.figures(ds, Citekey("zqmd2022_paper")).head
@@ -1036,7 +1043,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     AssetFixtures.setSourcePicture(ds, Citekey("zqmd2022_paper"), figUid, MediaRole.Wire(MediaRole.Illustration), None)
     assert(
       !CoverFixtures
-        .illustrationCandidates(ds, None, refresh = CoverFixtures.Refresh(false), CoverFixtures.Limit(100000))
+        .illustrationCandidates(ds, None, refresh = CoverFixtures.Refresh.Reuse, CoverFixtures.Limit(100000))
         .contains("zqmd2022_paper")
     )
     val t = AssetFixtures.sourceThumb(ds, Citekey("zqmd2022_paper")).get
@@ -1125,7 +1132,12 @@ class MediaRepoSuite extends DbSuite with Bounded:
             ON CONFLICT DO NOTHING""".update.run()
     def mine(refresh: Boolean) =
       CoverFixtures
-        .coverCandidates(ds, None, CoverFixtures.Refresh(refresh), CoverFixtures.Limit(100000))
+        .coverCandidates(
+          ds,
+          None,
+          (if refresh then CoverFixtures.Refresh.Refresh else CoverFixtures.Refresh.Reuse),
+          CoverFixtures.Limit(100000)
+        )
         .filter(_.citekey.value.startsWith("zqmd"))
     assertEquals(mine(false).map(k => (k.citekey, k.isbn)), List(("zqmd2022_paper", Some("9780691168388"))))
     ImportFixtures.checked(
@@ -1142,7 +1154,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         .coverCandidates(
           ds,
           Some(CoverFixtures.Only("zqmd2022_paper")),
-          CoverFixtures.Refresh(false),
+          CoverFixtures.Refresh.Reuse,
           CoverFixtures.Limit(10)
         )
         .map(_.citekey),
