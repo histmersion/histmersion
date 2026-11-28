@@ -45,7 +45,7 @@ env:
   LANG: C.UTF-8
   LC_ALL: C.UTF-8
   # the server shards: build.sbt deals a shard's server suites into this many forked groups, at most this many JVMs
-  # at once (4 vCPU / 16 GB runner; sbt itself, and scala-cli for the ledger sites, beside them)
+  # at once (4 vCPU / 16 GB runner; sbt itself beside them)
   HISTMERSION_TEST_FORKS: "3"
   HISTMERSION_TEST_GROUPS_SERVER: "3"
   # -Xss16m: the compiler's deep recursion (forced-run.sh's flag; the default stack overflows in Namer)
@@ -59,16 +59,15 @@ env:
 jobs:
   format:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
-      - uses: ./.github/actions/setup
-      - name: formatting (scalafmt; `just fmt` fixes it)
-        timeout-minutes: 8
-        run: $SBT scalafmtCheckAll scalafmtSbtCheck
-      - if: always()
-        uses: ./.github/actions/thread-dumps
+        with: { fetch-depth: 0, persist-credentials: false }
+      - uses: coursier/setup-action@d5a17f9aaeb260f9ba336a5b582fb49f79c64ac4 # v3.1.0
+        with: { apps: scalafmt }
+      - name: formatting (the scalafmt CLI over every file .scalafmt.conf covers; `just fmt` fixes it)
+        timeout-minutes: 5
+        run: scalafmt --check
 
   converter:
     runs-on: ubuntu-24.04
@@ -89,9 +88,22 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
+        with: { fetch-depth: 0, persist-credentials: false }
       - name: free disk space (the runner's preinstalled SDKs we never use)
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
+      # the launcher alone, pinned and checked: scala-cli-setup also installs a JVM (moving JAVA_HOME off the pinned
+      # GraalVM, so every module compiled again) and fetches sbtn from Maven Central, which rate-limits runners
+      - name: scala-cli (the ledger sites run Scalafix through it, here and nowhere else)
+        env:
+          SCALA_CLI_URL: https://github.com/VirtusLab/scala-cli/releases/download/v1.18.0/scala-cli-x86_64-pc-linux.gz
+          SCALA_CLI_SHA256: eb41442f870bcae75aa5d6622ac96a173dae14fed59f71c97125eb21536bb060
+        run: |
+          mkdir -p "$RUNNER_TEMP/scala-cli"
+          curl -fsSL --retry 5 -o "$RUNNER_TEMP/scala-cli.gz" "$SCALA_CLI_URL"
+          echo "$SCALA_CLI_SHA256  $RUNNER_TEMP/scala-cli.gz" | sha256sum -c -
+          gunzip -c "$RUNNER_TEMP/scala-cli.gz" > "$RUNNER_TEMP/scala-cli/scala-cli"
+          chmod +x "$RUNNER_TEMP/scala-cli/scala-cli"
+          echo "$RUNNER_TEMP/scala-cli" >> "$GITHUB_PATH"
       - uses: ./.github/actions/setup
         with: { save-deps: "true" }
       - name: the week (the compile cache starts afresh each ISO week, so it never grows without bound)
@@ -103,9 +115,11 @@ jobs:
           path: target/sbt-cache
           key: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-${{ github.sha }}
           restore-keys: sbt-cache-${{ runner.os }}-${{ runner.arch }}-${{ steps.week.outputs.week }}-
-      - name: compile every module, list every suite
+      - name: compile every module, write the ledger sites once for every shard (docs/adr/0033), list every suite
         timeout-minutes: 30
-        run: $SBT -J-Xmx6g "$NOFMT" Test/compile ciSuites
+        env:
+          HISTMERSION_LEDGER_SITES_TIMEOUT: "600"
+        run: $SBT -J-Xmx6g "$NOFMT" Test/compile server/ledgerSites ciSuites
       - name: class the suites (unit or IT) and deal them into shards
         id: plan
         run: |
@@ -115,9 +129,9 @@ jobs:
           python3 scripts/ci/plan.py target/ci/classes.tsv target/ci/shards > "$RUNNER_TEMP/matrix.json"
           echo "matrix=$(cat "$RUNNER_TEMP/matrix.json")" >> "$GITHUB_OUTPUT"
           du -sh target/sbt-cache
-      - name: the compilation output, for the test jobs
+      - name: the compilation output and the ledger sites, for the test jobs
         run: |
-          tar -C target -cf - sbt-cache | zstd -T0 -3 -q -o "$RUNNER_TEMP/compiled.tar.zst"
+          tar -C target -cf - sbt-cache guidelines | zstd -T0 -3 -q -o "$RUNNER_TEMP/compiled.tar.zst"
           ls -l "$RUNNER_TEMP/compiled.tar.zst"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -228,20 +242,6 @@ jobs:
           echo "merge base: $(git merge-base HEAD origin/contracts3-pilot)"
       - name: free disk space (the runner's preinstalled SDKs we never use)
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
-      # the launcher alone, pinned and checked: scala-cli-setup also installs a JVM (moving JAVA_HOME off the pinned
-      # GraalVM, so every module compiled again) and fetches sbtn from Maven Central, which rate-limits runners
-      - name: scala-cli (the ledger sites run Scalafix through it)
-        if: contains(matrix.shard, 'server')
-        env:
-          SCALA_CLI_URL: https://github.com/VirtusLab/scala-cli/releases/download/v1.18.0/scala-cli-x86_64-pc-linux.gz
-          SCALA_CLI_SHA256: eb41442f870bcae75aa5d6622ac96a173dae14fed59f71c97125eb21536bb060
-        run: |
-          mkdir -p "$RUNNER_TEMP/scala-cli"
-          curl -fsSL --retry 5 -o "$RUNNER_TEMP/scala-cli.gz" "$SCALA_CLI_URL"
-          echo "$SCALA_CLI_SHA256  $RUNNER_TEMP/scala-cli.gz" | sha256sum -c -
-          gunzip -c "$RUNNER_TEMP/scala-cli.gz" > "$RUNNER_TEMP/scala-cli/scala-cli"
-          chmod +x "$RUNNER_TEMP/scala-cli/scala-cli"
-          echo "$RUNNER_TEMP/scala-cli" >> "$GITHUB_PATH"
       - uses: ./.github/actions/setup
       - name: the pinned GraalVM is the JDK
         run: test "$(command -v java)" = "$JAVA_HOME/bin/java" && java -version
@@ -280,7 +280,7 @@ jobs:
           # one project: its own testOnly (no other project links its tests for nothing); several: the root's,
           # which runs each aggregated project's and reports every failure, not only the first
           if [ "$(echo "$projects" | wc -l)" -eq 1 ]; then cmd="$projects/testOnly *"; else cmd="testOnly *"; fi
-          # every module compiled first: the ledger sites read the SemanticDB of all of them
+          # every module compiled first: the ledger sites from the build job are checked against all of them
           set +e
           $SBT "$NOFMT" Test/compile "$cmd" 2>&1 | tee "$RUNNER_TEMP/sbt.log"
           rc=${PIPESTATUS[0]}
@@ -351,7 +351,7 @@ jobs:
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
+        with: { fetch-depth: 0, persist-credentials: false }
       - name: free disk space (the runner's preinstalled SDKs we never use)
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL &
       - uses: ./.github/actions/setup
@@ -391,7 +391,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
+        with: { fetch-depth: 0, persist-credentials: false }
       - uses: ./.github/actions/setup
       - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         with: { tool: just }
@@ -441,7 +441,7 @@ jobs:
       HISTMERSION_TEST_SHARD_PINS: perf.test.mjs=1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false }
+        with: { fetch-depth: 0, persist-credentials: false }
       - uses: ./.github/actions/setup
       - uses: taiki-e/install-action@75a7c0f87bd666af3cdb75c5b9e9d03ab6044e6f # v2.90.6
         with: { tool: just }
