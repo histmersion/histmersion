@@ -20,8 +20,8 @@ final case class AutopilotStatus(
     on: AutopilotStatus.On,
     since: Option[AutopilotStatus.Since] = None,
     by: Option[AutopilotStatus.By] = None,
-    agentsEnabled: AutopilotStatus.AgentsEnabled = AutopilotStatus.AgentsEnabled.Disabled,
-    managersEnabled: AutopilotStatus.ManagersEnabled = AutopilotStatus.ManagersEnabled.Disabled,
+    agentsEnabled: AutopilotStatus.AgentSwitch = AutopilotStatus.AgentSwitch.Disabled,
+    managersEnabled: AutopilotStatus.ManagingSwitch = AutopilotStatus.ManagingSwitch.Disabled,
     cronsEnabled: AutopilotStatus.CronsEnabled = AutopilotStatus.CronsEnabled.Enabled,
     approvals: List[ApprovalRule] = Nil,
     ingestedToday: AutopilotStatus.IngestedToday = AutopilotStatus.IngestedToday(0),
@@ -83,7 +83,7 @@ final case class AutopilotStatus(
 
 object AutopilotStatus:
   export Autopilot.EngineStatus.{
-    AgentsEnabled,
+    AgentSwitch,
     Backlog,
     BacklogDays,
     By,
@@ -94,7 +94,7 @@ object AutopilotStatus:
     IngestedToday,
     LastBackup,
     LastLint,
-    ManagersEnabled,
+    ManagingSwitch,
     MaxConcurrentRuns,
     On,
     Since

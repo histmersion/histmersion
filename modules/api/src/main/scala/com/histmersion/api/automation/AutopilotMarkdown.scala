@@ -102,11 +102,11 @@ object AutopilotMarkdown:
           s"DRAINING since ${d.since}${if (d.by).value.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
             s"${counted((d.inFlight).value.toLong, "run")} in flight still finishing"
       ),
-      Option.when(!((s.agentsEnabled) == EngineStatus.AgentsEnabled.Enabled))(
+      Option.when(!((s.agentsEnabled) == EngineStatus.AgentSwitch.Enabled))(
         "agents are disabled on this server (agents.enabled = false): nothing runs"
       ),
       Option.when(
-        ((s.agentsEnabled) == EngineStatus.AgentsEnabled.Enabled) && !((s.managersEnabled) == EngineStatus.ManagersEnabled.Enabled)
+        ((s.agentsEnabled) == EngineStatus.AgentSwitch.Enabled) && !((s.managersEnabled) == EngineStatus.ManagingSwitch.Enabled)
       )(
         "the managers are disabled (agents.managers.enabled = false): nothing runs"
       ),

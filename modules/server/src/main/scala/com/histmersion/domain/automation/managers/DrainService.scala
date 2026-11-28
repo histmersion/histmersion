@@ -103,7 +103,6 @@ final class DrainService(
   /** Start or lift the drain; answers the autopilot's status with what it did. */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def set(in: DrainSet, now: Instant = Instant.now(agents.clock))(using WritePermit): EngineStatus =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")

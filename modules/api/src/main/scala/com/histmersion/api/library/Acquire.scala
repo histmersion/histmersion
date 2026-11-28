@@ -17,7 +17,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 object Acquire:
   object Intent:

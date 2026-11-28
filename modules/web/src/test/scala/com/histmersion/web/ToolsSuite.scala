@@ -283,7 +283,7 @@ class ToolsSuite extends munit.FunSuite:
   test("an init job says what it imports; one that skipped periods says which") {
     val plan = InitPlan(
       gazetteer = InitPlan.Gazetteer.Included,
-      periodPresets = InitPlan.PeriodPresets.Included,
+      periodPresets = InitPlan.Presets.Included,
       fetch = List(InitPlan.Fetch("periodo"))
     )
     val init = JobInfo(

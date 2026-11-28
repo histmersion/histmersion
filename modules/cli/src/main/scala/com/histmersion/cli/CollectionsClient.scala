@@ -48,7 +48,6 @@ final class CollectionsClient(c: Client, name: Collection.Name):
   def push(req: CollectionPushRequest): Either[Cli.Error, CollectionPushed] = c.call(CollectionsApi.push)((name, req))
   def updateOne(citekey: Citekey): Either[Cli.Error, CollectionUpdatedOne] =
     c.call(CollectionsApi.updateOne)((name, CollectionUpdateOne(citekey)))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(apply: Api.Apply): Either[Cli.Error, CollectionUpdateAll] =
     c.call(CollectionsApi.updateAll)(
       (
@@ -68,7 +67,6 @@ final class CollectionsClient(c: Client, name: Collection.Name):
     * without collections, the plugin off, a library the server cannot read, no server at all — leaves the command to
     * this machine's own Calibre code.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onServer: Boolean = info.exists(_.reachable.reachable)
 
 object CollectionsClient:

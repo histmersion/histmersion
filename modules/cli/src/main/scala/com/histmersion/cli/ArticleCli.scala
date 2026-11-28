@@ -105,7 +105,6 @@ object ArticleCli:
   /** Package one article note for the server: text, fallback slug/kind, and the mtime that drives the "stored row is
     * newer than the file" skip.
     */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def toImport(file: Path, kind: Article.Kind.Wire, force: Api.Overwrite): Article.Import =
     Article.Import(
       text = Article.Import.Text(Files.readString(file)),

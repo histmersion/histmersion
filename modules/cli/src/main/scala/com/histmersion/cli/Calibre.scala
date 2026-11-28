@@ -156,7 +156,6 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
     * `apply`, write the entries that would change. An entry linked from more than one record (a chapter and its volume)
     * is left alone — which record it should show is a decision for a person, `calibre update <citekey>`.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(
       linked: List[LinkedRecord],
       apply: CollectionSync.Request.Apply

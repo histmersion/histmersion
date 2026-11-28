@@ -12,7 +12,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.{Api, Paging}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** A sync: the gaps it considered, and with `apply` each push made. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

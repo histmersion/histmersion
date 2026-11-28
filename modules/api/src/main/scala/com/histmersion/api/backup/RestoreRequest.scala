@@ -6,7 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** `force` is required while the database holds sources: `pg_restore --clean` drops what is there. */
 final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = RestoreRequest.Force.Safe)

@@ -26,7 +26,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.time.IsoLocal
 import com.histmersion.api.library.Filter
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")

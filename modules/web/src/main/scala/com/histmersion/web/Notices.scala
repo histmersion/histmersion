@@ -39,7 +39,6 @@ object Notices:
   def boardOf(key: WindowKey): Option[Board] = Board.parse(Board.Wire(key.wire.value))
 
   /** The boards to mark seen now: those whose window is open and that have news, at their `latest`. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toMark(open: List[WindowKey], cs: Map[Board.Wire, Counter]): List[(Board, Counter.Latest)] =
     open.flatMap(boardOf).distinct.flatMap { b =>
       cs.get(b.wire).filter(_.fresh.fresh).flatMap(_.latest).map(b -> _)
@@ -47,7 +46,6 @@ object Notices:
 
   /** A counter once its window showed the items up to `at`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seenAt(c: Counter, at: Counter.Seen): Counter =
     val s = UiNotices.advance(c.seen, at)
     c.modify(_.seen)
@@ -56,7 +54,6 @@ object Notices:
       .setTo((if UiNotices.fresh(c.latest, Some(s)) then Counter.Fresh.Fresh else Counter.Fresh.Seen))
 
   /** Is any board among `shown` new? (What the phone's tools button marks.) */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def anyFresh(cs: Map[Board.Wire, Counter], shown: Board => Boolean): Boolean =
     cs.values.exists(c => c.fresh.fresh && Board.parse(c.key).exists(shown))
 

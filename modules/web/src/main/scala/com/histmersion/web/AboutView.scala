@@ -214,7 +214,6 @@ object AboutView:
     load()
 
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def load(): Unit =
     ApiClient
       .about()

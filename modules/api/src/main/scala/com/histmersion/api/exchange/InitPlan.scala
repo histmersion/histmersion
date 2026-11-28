@@ -8,17 +8,16 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 final case class InitPlan(
     gazetteer: InitPlan.Gazetteer = InitPlan.Gazetteer.Skipped,
-    periodPresets: InitPlan.PeriodPresets = InitPlan.PeriodPresets.Skipped,
+    periodPresets: InitPlan.Presets = InitPlan.Presets.Skipped,
     fetch: List[InitPlan.Fetch] = Nil,
     check: InitPlan.Check = InitPlan.Check.NoCheck
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema:
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def isEmpty: Boolean = (!(gazetteer).included && !(periodPresets).included && fetch.isEmpty)
 
 object InitPlan:
@@ -28,10 +27,10 @@ object InitPlan:
     case Included, Skipped
   object Gazetteer extends TwoStates[Gazetteer]:
     extension (gazetteer: Gazetteer) def included: Boolean = gazetteer == Included
-  enum PeriodPresets derives CanEqual:
+  enum Presets derives CanEqual:
     case Included, Skipped
-  object PeriodPresets extends TwoStates[PeriodPresets]:
-    extension (periodPresets: PeriodPresets) def included: Boolean = periodPresets == Included
+  object Presets extends TwoStates[Presets]:
+    extension (periodPresets: Presets) def included: Boolean = periodPresets == Included
   type Fetch = Fetch.T
   object Fetch extends Newtype[String, Pure]
   enum Check derives CanEqual:
@@ -46,11 +45,10 @@ object InitPlan:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val JobKind = ExchangeJobKinds.Init.kind.value
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe(p: InitPlan): String =
     val bundled = List(
       Option.when(((p.gazetteer) == Gazetteer.Included))("bundled gazetteer"),
-      Option.when(((p.periodPresets) == PeriodPresets.Included))("bundled period presets")
+      Option.when(((p.periodPresets) == Presets.Included))("bundled period presets")
     ).flatten
     val fetched =
       Option.when(p.fetch.nonEmpty)(s"${if (p.check).check then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")

@@ -339,7 +339,6 @@ object ActivityView:
 
   /** The detailed lists, for when one kind of work must be seen in full. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def details(ui: UiConfig): HtmlElement =
     p(
       cls := "muted activity-details",

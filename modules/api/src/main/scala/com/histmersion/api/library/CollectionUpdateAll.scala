@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Api
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** An update of every linked item: one row per item, in id order, and whether it was written (`applied`). */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

@@ -398,7 +398,6 @@ final class AgentsControllers(
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
@@ -1361,7 +1360,6 @@ final class AgentsControllers(
   )(using Creator.New): Either[Api.Error, ApprovalInfo] =
     maintenance.guard(WriteGate.OperationName("decide_approval"))(decideHeld(id, decision, req))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"

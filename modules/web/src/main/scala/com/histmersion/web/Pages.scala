@@ -155,7 +155,6 @@ object Pages:
   // ── Research ────────────────────────────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def researchSide(ui: UiConfig, r: Route): List[Modifier[HtmlElement]] =
     val on = r.researchSection
@@ -212,7 +211,6 @@ object Pages:
     * to the list.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def activity(ui: UiConfig, t: ActivityTab, goal: Option[Goal.Slug]): HtmlElement =
     if t.isChip then ActivityView.pane(ui, t, goal)
     else

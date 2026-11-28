@@ -37,7 +37,7 @@ object UiConfigViews:
   def page(
       ui: UiSettings,
       keyRequired: UiConfig.KeyRequired,
-      agentsEnabled: UiConfig.AgentsEnabled,
+      agentsEnabled: UiConfig.AgentSwitch,
       plugins: PluginsReport,
       baseMapSource: UiConfig.BaseMapSource,
       mapLanguage: UiConfig.MapLanguage,

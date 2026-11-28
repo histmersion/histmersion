@@ -5,7 +5,7 @@ import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** An approval's vocabularies as the wire spells them (the api's own copies of the model's). */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")

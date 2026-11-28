@@ -28,7 +28,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Place(
     id: Place.Id,
@@ -233,8 +233,6 @@ object Place:
     def creator: Option[Creation]
     def createdAt: Option[Creation.At]
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
     @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary.hasBoundary)
 
@@ -801,7 +799,7 @@ object Place:
       kind: Option[Override.Kind],
       periodStart: Option[Year],
       periodEnd: Option[Year],
-      periodSet: Override.PeriodSet,
+      periodSet: Override.Dated,
       reason: Option[Rationale],
       sourceKind: Override.SourceKind,
       sourcePeriodStart: Option[Year],
@@ -819,10 +817,10 @@ object Place:
     export Place.Label
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    enum PeriodSet derives CanEqual:
+    enum Dated derives CanEqual:
       case PeriodSet, NoPeriod
-    object PeriodSet extends TwoStates[PeriodSet]:
-      extension (periodSet: PeriodSet) def periodSet: Boolean = periodSet == PeriodSet
+    object Dated extends TwoStates[Dated]:
+      extension (periodSet: Dated) def periodSet: Boolean = periodSet == PeriodSet
     type SourceKind = SourceKind.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object SourceKind extends Newtype[String, Pure]

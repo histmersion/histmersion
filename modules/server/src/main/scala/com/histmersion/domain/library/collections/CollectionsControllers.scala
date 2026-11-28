@@ -93,7 +93,6 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
       citekey(req.citekey).flatMap(service.updateOne(caller, name, _))
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def updateAll(
       caller: Caller,
       name: CollectionsService.CollectionName,
@@ -122,7 +121,6 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   ): Either[Api.Error, CollectionGaps] =
     service.gaps(name, limit)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sync(
       caller: Caller,
       name: CollectionsService.CollectionName,

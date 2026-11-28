@@ -443,7 +443,6 @@ object MergeView:
   /** Follow an apply job (its backup comes first) until it is done. */
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def follow(j: MergeApplyJob): Unit =
     job.set(Some(j))
     if j.state == MergeJobState.Running then

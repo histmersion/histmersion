@@ -3,7 +3,7 @@ package web.setup
 
 import com.histmersion.api.instance.MapStartConfig
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** What a person chose in the setup. `area`: the background map's box to download (`None`: none); `finders`: each
   * open-access finder on or off.

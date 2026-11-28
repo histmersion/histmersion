@@ -11,7 +11,7 @@ import com.histmersion.api.Sha256
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 object Ingest:
   type Disposition = Disposition.T
   object Disposition extends Newtype[String, Pure]

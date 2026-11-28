@@ -26,7 +26,7 @@ object EventsMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def eventScale(e: EventSummary): String =
-    (s"${e.scale} (${if (e.scaleStated) == EventSummary.ScaleStated.Stated then "stated" else "derived"})")
+    (s"${e.scale} (${if (e.scaleStated) == EventSummary.Basis.Stated then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

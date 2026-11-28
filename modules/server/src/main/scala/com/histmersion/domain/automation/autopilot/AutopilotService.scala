@@ -659,9 +659,9 @@ final class AutopilotService(
       (if row.enabled.value then EngineStatus.On.On else EngineStatus.On.Off),
       Some(EngineStatus.Since(row.changedAt.value)),
       Option(row.changedBy.value).filter(_.nonEmpty).map(by => EngineStatus.By(by)),
-      (if cfg.enabled.value then EngineStatus.AgentsEnabled.Enabled else EngineStatus.AgentsEnabled.Disabled),
-      (if cfg.managers.enabled.value then EngineStatus.ManagersEnabled.Enabled
-       else EngineStatus.ManagersEnabled.Disabled),
+      (if cfg.enabled.value then EngineStatus.AgentSwitch.Enabled else EngineStatus.AgentSwitch.Disabled),
+      (if cfg.managers.enabled.value then EngineStatus.ManagingSwitch.Enabled
+       else EngineStatus.ManagingSwitch.Disabled),
       (if cfg.scheduler.enabled.value then EngineStatus.CronsEnabled.Enabled else EngineStatus.CronsEnabled.Disabled),
       List(
         rule(

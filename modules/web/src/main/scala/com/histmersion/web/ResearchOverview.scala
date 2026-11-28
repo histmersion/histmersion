@@ -388,7 +388,6 @@ object ResearchOverview:
   /** The page. */
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig): HtmlElement =
     val status = Var(Option.empty[AutopilotStatus])
     val managers = Var(List.empty[Managers.ManagerInfo])

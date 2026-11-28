@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 object AgentScheduler:
   /** Why the scheduler started, keeps waiting or holds an item: the narration of its decision, not a failure. */

@@ -40,7 +40,7 @@ class UiConfigViewsSuite extends munit.FunSuite:
     val page = UiConfigViews.page(
       ui,
       keyRequired = UiConfig.KeyRequired.KeyRequired,
-      agentsEnabled = UiConfig.AgentsEnabled.Enabled,
+      agentsEnabled = UiConfig.AgentSwitch.Enabled,
       plugins = PluginsReport(),
       baseMapSource = UiConfig.BaseMapSource("local"),
       mapLanguage = UiConfig.MapLanguage("de"),
@@ -86,7 +86,7 @@ class UiConfigViewsSuite extends munit.FunSuite:
         UiConfig.CountersPollSeconds(ui.countersPollSeconds.value),
         UiConfig.JobPollMs(ui.jobPollMs.value),
         keyRequired = UiConfig.KeyRequired.KeyRequired,
-        agentsEnabled = UiConfig.AgentsEnabled.Enabled,
+        agentsEnabled = UiConfig.AgentSwitch.Enabled,
         UiConfig.TilesTone(ui.tilesTone.value),
         PluginsReport(),
         UiConfig.DocsUrl(ui.docsUrl.value),

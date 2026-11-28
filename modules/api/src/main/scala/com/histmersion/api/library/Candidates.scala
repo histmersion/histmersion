@@ -65,7 +65,6 @@ object Candidates:
     object By extends Newtype[String, Pure]
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(_.title)
       .setTo(a.title.orElse(b.title))

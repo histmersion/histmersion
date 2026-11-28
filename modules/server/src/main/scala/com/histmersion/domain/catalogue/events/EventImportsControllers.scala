@@ -92,7 +92,6 @@ final class EventImportsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def rederiveJob(caller: Caller, req: EventRederiveRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     for

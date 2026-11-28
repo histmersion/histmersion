@@ -7,7 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** Add source `citekey`'s stored original to a collection as a new item — or with `replace`, swap the file of the item
   * it is linked to.

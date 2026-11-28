@@ -37,7 +37,6 @@ final class SiteTypesControllers(
   private def polite(intervalMs: PluginEvents.IntervalMs): Polite =
     PluginEvents.polite(http, settings().media, intervalMs)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"

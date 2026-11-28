@@ -449,7 +449,6 @@ final class AcquisitionControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def assessNow(req: AssessRequest, store: Boolean = true)(using
@@ -589,7 +588,6 @@ final class AcquisitionControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def followupsNow(
@@ -1171,7 +1169,6 @@ final class AcquisitionControllers(
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
     CreatorControllers(req.createdBy, req.via).overRest.left.map(Api.Error(_)).flatMap(ingestAs(req, _))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ingestAs(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
       ingestNow(

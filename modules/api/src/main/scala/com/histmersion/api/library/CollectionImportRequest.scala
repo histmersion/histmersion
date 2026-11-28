@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format` (else the
   * collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off acquisition

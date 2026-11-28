@@ -169,8 +169,8 @@ final class Bootstrap(
       gazetteer =
         (if !onlyEmpty || places.count().value == 0 then InitPlan.Gazetteer.Included else InitPlan.Gazetteer.Skipped),
       periodPresets =
-        (if !onlyEmpty || periods.count().value == 0 || periodImports.seedOutdated then InitPlan.PeriodPresets.Included
-         else InitPlan.PeriodPresets.Skipped),
+        (if !onlyEmpty || periods.count().value == 0 || periodImports.seedOutdated then InitPlan.Presets.Included
+         else InitPlan.Presets.Skipped),
       fetch = if fetch then cfg.init.sources.map(s => InitPlan.Fetch(s.value)) else Nil
     )
 

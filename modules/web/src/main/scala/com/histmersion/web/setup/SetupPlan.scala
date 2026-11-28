@@ -49,7 +49,6 @@ object SetupPlan:
     ).flatten ++ finders ++ start :+ (ConfigEdit.Change.Key("setup.completed") -> Some(ConfigEdit.Change.Value("true")))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def downloads(c: SetupChoices): List[SetupDownload] =
     c.area.map(SetupDownload.Map(_)).toList ++
       Option.when(c.boundaries.on)(SetupDownload.Boundaries) ++

@@ -7,7 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** What became of an imported book's cover: one line for a person, a `warning` when it could not be stored. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")

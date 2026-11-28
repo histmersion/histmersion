@@ -48,7 +48,6 @@ object BaseMaps:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The local style an extract draws best: Readable when it can draw it whole, else Physical. Pure. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def defaultLocal(s: Option[Basemap.Status]): BaseMap =
     if s.exists(st => st.available.available && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then
       BaseMap.Readable
@@ -503,13 +502,11 @@ object BaseMaps:
   private def setPrefs(f: MapPrefs => MapPrefs): Unit = UiState.set(UiState.mapOptions := f(UiState.mapOptions.now()))()
 
   /** The relief as the server has it, when it can be drawn. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def relief(s: Option[Basemap.Status]): Option[Basemap.LayerInfo] =
     s.flatMap(_.layers.find(l => l.layer == Basemap.Layer.Terrain.wire && l.present.present && l.error.isEmpty))
 
   /** Relief deeper than the extract: a focus region downloaded, or the on-demand relief on. Pure. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def deeperRelief(i: Basemap.LayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled.enabled)
 
   /** The app zoom from which Physical draws its contours (its style's `contours` layer: MapLibre zoom 10). */
@@ -544,7 +541,6 @@ object BaseMaps:
     * outside every focus region with the on-demand relief off (the contours there follow the extract's coarse relief).
     * `None`: they are drawn. Pure.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contoursNote(s: Option[Basemap.Status], z: Double, v: GeoBounds): Option[String] =
     relief(s).flatMap { i =>
       val inFocus = i.focus.exists(f => BBox.parse(f.bbox).exists(meets(v, _)))
@@ -562,7 +558,6 @@ object BaseMaps:
     */
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
     else if soft then Some("not drawn without a GPU")

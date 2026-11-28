@@ -60,7 +60,6 @@ final class AutoApprovals(
     a.runId.flatMap(id => Run.Id.option(id.value)).flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&

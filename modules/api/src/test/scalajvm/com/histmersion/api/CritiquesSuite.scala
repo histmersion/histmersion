@@ -186,7 +186,6 @@ class CritiquesSuite extends munit.FunSuite:
       Some(CritiqueRef(Citekey("b2001_y"), Citekey("a2000_x")))
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pair(
       src: Citekey,
       kind: CritiquePair.Kinds,

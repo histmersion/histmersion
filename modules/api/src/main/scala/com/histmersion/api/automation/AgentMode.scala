@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 enum AgentMode(val wire: AgentMode.Wire) derives CanEqual:
   case Working extends AgentMode(AgentMode.Wire("working"))
@@ -36,7 +36,6 @@ object AgentMode:
     val t = (s).value.trim.toLowerCase
     values.find(m => m.wire == Wire(t) || m.toString.toLowerCase == t)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On): AgentMode =
     if !(autopilotOn).on then Paused else if (draining).on then Finishing else Working
 
@@ -56,7 +55,6 @@ object AgentMode:
       object On extends TwoStates[On]:
         extension (on: On) def on: Boolean = on == On
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def steps(autopilotOn: Step.Autopilot.On, draining: Step.Drain.On, to: AgentMode): List[Step] = to match
     case Working =>
       Option.when(((draining) == Step.Drain.On.On))(Step.Drain(Step.Drain.On.Off)).toList ++ Option.when(

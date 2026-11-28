@@ -28,7 +28,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.api.catalogue.EventSummary
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
