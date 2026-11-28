@@ -9,7 +9,6 @@ final case class WikidataItem(
 )
 
 object WikidataItem:
-  type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  export plugin.WikidataId as Id
   type CommonsCategory = CommonsCategory.T
   object CommonsCategory extends Newtype[String, Pure]

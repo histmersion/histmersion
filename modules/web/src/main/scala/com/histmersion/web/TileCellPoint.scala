@@ -7,6 +7,7 @@ import org.scalajs.dom
 
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.Geo
 
 /** A CELL of a server tile: `n` items of one kind counted where there were more than a tile keeps alone
   * (`ui.map-tiles`, docs/map-layers.md) — at the items' mean point, with the least and the greatest middle of their
@@ -27,10 +28,8 @@ final case class TileCellPoint(
 object TileCellPoint:
   type Key = Key.T
   object Key extends Newtype[String, Pure]
-  type Lat = Lat.T
-  object Lat extends Newtype[Double, Pure]
-  type Lon = Lon.T
-  object Lon extends Newtype[Double, Pure]
+  export Geo.Latitude as Lat
+  export Geo.Longitude as Lon
   export Member.N
   type MidLo = MidLo.T
   object MidLo extends Newtype[Double, Pure]

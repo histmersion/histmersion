@@ -59,7 +59,7 @@ final class SeedService(
     goals
       .map(g => g -> Goal.Slug.assume(g.slug.value))
       .filter((g, slug) =>
-        !GoalFocus.finished(Goal.Status.Wire(g.status.value)) &&
+        !GoalFocus.finished(g.status) &&
           sources.get(slug).fold(0)(_.value) == 0 && watchers(watcherOf(slug))
       )
       .filter((_, slug) => lastSweep(slug).forall(t => !t.plusSeconds(every).isAfter(now)))

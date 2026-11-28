@@ -23,6 +23,7 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.TwoCases
+import com.histmersion.api.automation.Queue
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
@@ -43,8 +44,7 @@ object ReviewLedger:
   object PassageMargin extends Newtype[Int, Pure]
   type StubbornLimit = StubbornLimit.T
   object StubbornLimit extends Newtype[Int, Pure]
-  type TaskText = TaskText.T
-  object TaskText extends Newtype[String, Pure]
+  export Queue.QueueItem.Text as TaskText
   type TaskTextLimit = TaskTextLimit.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TaskTextLimit extends Newtype[Int, Pure]

@@ -24,7 +24,7 @@ object Indexes:
       coreKey: Option[Plugins.CoreKey] = None,
       core: CoreBudget
   ): (List[ScholarlyIndex], CitationAlerts) =
-    val key = coreKey.map(k => ApiKey(k.value)).orElse(cfg.core.key)
+    val key = coreKey.map(k => k).orElse(cfg.core.key)
     val openalex = OpenAlexIndex(cfg, http)
     val all: Map[ScholarlyIndex.Name, ScholarlyIndex] = Map(
       ScholarlyIndex.Name("openalex") -> openalex,

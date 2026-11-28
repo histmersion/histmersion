@@ -74,6 +74,7 @@ import com.histmersion.plugin.CollectionChange
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.TwoCases
+import com.histmersion.api.library.Collection
 
 /** The library's source collections — the Calibre library, archive.org — run by the library: searching one, importing
   * an item into the library, linking a source to an item, pushing a source's original into one, rewriting its items
@@ -142,8 +143,7 @@ object CollectionsService:
   object Limit extends Newtype[Int, Pure]
 
   /** A source collection, by the name the registry knows it under. */
-  type CollectionName = CollectionName.T
-  object CollectionName extends Newtype[String, Pure]
+  export Collection.Name as CollectionName
   enum SearchUnlinked derives CanEqual:
     case Unlinked, All
   object SearchUnlinked extends TwoCases[SearchUnlinked]:

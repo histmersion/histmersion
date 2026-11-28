@@ -5,6 +5,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.automation.Approval
 
 /** What a run may change without a person: `manual` (the default) records an approval and waits, `auto` applies at
   * once. `statusChange` covers every status an agent proposes beyond filling `unassessed` with
@@ -23,8 +24,7 @@ final case class AgentApprovalsConfig(
 ) derives ConfigReader
 
 object AgentApprovalsConfig:
-  type Gate = Gate.T
-  object Gate extends Newtype[String, Pure]
+  export Approval.Mode.Wire as Gate
 
   /** `auto` or `checked`, in any case. */
 

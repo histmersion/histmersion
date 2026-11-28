@@ -70,7 +70,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       store: MediaStore
   )(using WritePermit)(using Creator.New): MediaImportReport =
     val failed = List.newBuilder[String]
-    val allow = LicencePolicy.of(Licence.AllowList(col.conf.licences.value))
+    val allow = LicencePolicy.of(col.conf.licences)
     val places = targets.filter(_.targetType == ImportRepo.Place)
     val facts = store.placeFacts(places.map(placeId))
 
@@ -196,7 +196,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       db: MediaStore,
       failed: scala.collection.mutable.Builder[String, List[String]]
   )(using WritePermit)(using Creator.New): MediaImportReport =
-    val allow = LicencePolicy.of(Licence.AllowList(col.conf.licences.value))
+    val allow = LicencePolicy.of(col.conf.licences)
     val known = db.known(col.provider, judged.map(j => AssetService.ProviderKey(j.rec.key.value)).distinct)
     def knownOf(rec: MediaRecord) = known.get(AssetService.ProviderKey(rec.key.value))
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)

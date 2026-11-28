@@ -227,7 +227,7 @@ object Commons:
           WikidataStatement
             .best(item.statements, WikidataStatement.BestPer(1))
             .headOption
-            .map(st => WikidataId(q.value) -> fileTitle(File.Title(st.file.value)))
+            .map(st => q -> fileTitle(File.Title(st.file.value)))
         )
         .toMap
 

@@ -38,8 +38,7 @@ object ManagerPolicy:
   object DueCount extends Newtype[Int, Pure]
   type InFlightCount = InFlightCount.T
   object InFlightCount extends Newtype[Int, Pure]
-  type InstantText = InstantText.T
-  object InstantText extends Newtype[String, Pure]
+  export Managers.ManagerInfo.NextTickAt as InstantText
   type MaxConcurrent = MaxConcurrent.T
   object MaxConcurrent extends Newtype[Int, Pure]
   type MinIntervalMinutes = MinIntervalMinutes.T

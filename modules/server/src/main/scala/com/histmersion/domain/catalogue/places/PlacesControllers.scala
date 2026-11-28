@@ -108,7 +108,7 @@ final class PlacesControllers(
         )
       case p =>
         val time = GeoPick.resolve(
-          q.asOf.map(y => Year(y.value)),
+          q.asOf.map(y => y),
           q.from.map(y => Year(y.value)),
           q.to.map(y => Year(y.value)),
           p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid)

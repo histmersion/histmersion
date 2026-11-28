@@ -605,7 +605,7 @@ final class SchedulerService(
       now: Instant = Instant.now(agents.clock)
   ): Stalls.StallReport =
     val n = math.max(0, days.fold(cfg.autopilot.stallDays.value)(_.value))
-    val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(DomainGoal.Status.Wire(g.status.value)))
+    val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(g.status))
     val progress = agents.managerStore.lastProgress()
     val articles = agents.workflows.linked()
     val bySubj = agents.approvalStore.openLight().groupBy(_.subject)

@@ -588,7 +588,7 @@ final class AgentsControllers(
       val shown = c.active.map(_.value).orElse(c.models.headOption.map(_.model.value))
       val entry = c.models.find(e => shown.contains(e.model.value))
       RoleModel(
-        Role.Wire(c.role.value),
+        c.role,
         shown.map(RoleModel.Model(_)),
         ready = (if c.active.isDefined then RoleModel.Ready.Ready else RoleModel.Ready.Unready),
         if c.active.isDefined then Nil
@@ -656,7 +656,7 @@ final class AgentsControllers(
   private def chainOf(role: Role): Either[Problems, ModelChains.RoleChain] =
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
-      .find(_.role.value == role.wire.value)
+      .find(_.role == role.wire)
       .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Role.Wire), Problem.Raw.of(role.wire)))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
@@ -890,7 +890,7 @@ final class AgentsControllers(
     for
       _ <- enabled.left.map(Api.Error(_))
       p <- Pipeline
-        .parse(Pipeline.Wire(req.pipeline.value))
+        .parse(req.pipeline)
         .toRight(
           Api.Error(
             Problem.Invalid.Unknown.here(

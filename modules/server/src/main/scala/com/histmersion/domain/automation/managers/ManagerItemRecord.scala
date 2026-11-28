@@ -7,6 +7,7 @@ import java.time.Instant
 import com.histmersion.domain.automation.Run
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.automation.ItemStatus
 
 /** A manager's work item as [[ManagerService.InMemory]] holds it. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -39,8 +40,7 @@ object ManagerItemRecord:
   object Kind extends Newtype[String, Pure]
   type Target = Target.T
   object Target extends Newtype[String, Pure]
-  type Status = Status.T
-  object Status extends Newtype[String, Pure]
+  export ItemStatus.Wire as Status
   type Priority = Priority.T
   object Priority extends Newtype[Int, Pure]
   type Attempts = Attempts.T

@@ -147,14 +147,7 @@ object PmTiles:
     object Clustered extends TwoCases[Clustered]:
       extension (clustered: Clustered) def clustered: Boolean = clustered == Clustered
     export PmTiles.{Zoom as MaxZoom, Zoom as MinZoom}
-    type MinLon = MinLon.T
-    object MinLon extends Newtype[Double, Pure]
-    type MinLat = MinLat.T
-    object MinLat extends Newtype[Double, Pure]
-    type MaxLon = MaxLon.T
-    object MaxLon extends Newtype[Double, Pure]
-    type MaxLat = MaxLat.T
-    object MaxLat extends Newtype[Double, Pure]
+    export api.catalogue.{Latitude as MaxLat, Latitude as MinLat, Longitude as MaxLon, Longitude as MinLon}
     export PmTiles.Zoom as CenterZoom
     type CenterLon = CenterLon.T
     object CenterLon extends Newtype[Double, Pure]

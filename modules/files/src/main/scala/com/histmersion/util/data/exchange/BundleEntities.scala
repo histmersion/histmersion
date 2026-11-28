@@ -108,7 +108,7 @@ final case class BundleEntities(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def blobRefs: Map[Sha256, List[BlobUse]] =
     (sources.flatMap(s =>
-      s.bodySha256.map(sha => Sha256(sha.value) -> BlobUse.Body(s.uid)).toList ++
+      s.bodySha256.map(sha => sha -> BlobUse.Body(s.uid)).toList ++
         s.originalSha256.zip(s.originalExt).map((sha, ext) => Sha256(sha.value) -> BlobUse.Original(s.uid, ext)).toList
     ) ++
       versions.map(v => Sha256(v.bodySha256.value) -> BlobUse.VersionBody(v.uid)) ++

@@ -221,7 +221,7 @@ final class ManagersControllers(
         infoId = id.transformInto[ManagerInfo.Id]
         _ <- Either.cond(
           agents.managerStore
-            .create(infoId, k, g, state, in.config, c.map(x => ManagerInfo.Cron(x.text.value)), c.flatMap(_.next(now))),
+            .create(infoId, k, g, state, in.config, c.map(x => x.text), c.flatMap(_.next(now))),
           (),
           conflict(Problem.Conflict.AlreadyExists(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(id)))
         )
@@ -381,7 +381,7 @@ final class ManagersControllers(
                 Creator.New
             ): ManagerInfo.Id =
               val goal = Some(slug.transformInto[Goal.Slug])
-              val c = cron.map(x => ManagerInfo.Cron(x.text.value))
+              val c = cron.map(x => x.text)
               if !ManagerRepo.createIn(id, k, goal, state, config, c, cron.flatMap(_.next(now))) then
                 throw Refused(
                   conflict(Problem.Conflict.AlreadyExists(Problem.TypeName.of(ManagerLight.Id), Problem.Raw.of(id)))
@@ -454,7 +454,7 @@ final class ManagersControllers(
         if in.cron.isDefined || m.nextTickAt.isEmpty then x.next(now)
         else m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
       )
-      _ = agents.managerStore.setConfig(m.id, c, cron.map(x => ManagerInfo.Cron(x.text.value)), next)
+      _ = agents.managerStore.setConfig(m.id, c, cron.map(x => x.text), next)
       _ = record(
         m.id,
         None,
@@ -1244,7 +1244,7 @@ final class ManagersControllers(
       e <- checkEffect(
         m,
         p.effect,
-        ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
+        ht.itemId.flatMap(i => agents.managerStore.item(i)),
         proposal = true
       ).left.map(_.problems)
       w <- HintEffect.Action.verb(e.action) match
@@ -1265,7 +1265,7 @@ final class ManagersControllers(
       _ = Transactor(ds).write(ManagerRepo.setHintEffect(ht.id, Some(e)))
       _ = record(
         m.id,
-        ht.itemId.map(i => ManagerItem.Id(i.value)),
+        ht.itemId.map(i => i),
         None,
         Feed.Hint,
         s"hint #${ht.id}: the proposed ${ManagersMarkdown.effect(e)} approved by a person$w".take(2000)
@@ -1423,7 +1423,7 @@ final class ManagersControllers(
               Some(goal),
               State.Paused,
               c,
-              Some(ManagerInfo.Cron(cron.text.value)),
+              Some(cron.text),
               cron.next(now)
             ),
             Unused.Why.Held
@@ -1444,12 +1444,12 @@ final class ManagersControllers(
             .setTo(Some(sweeps.map(_.wire)))
             .modify(_.budgetUsd)
             .setTo(budget.orElse(m.config.budgetUsd))
-          val next = if m.cron.exists(_.value == cron.text.value) && m.nextTickAt.isDefined then
+          val next = if m.cron.exists(_ == cron.text) && m.nextTickAt.isDefined then
             m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
           else cron.next(now)
           // the manager is read back below (`manager(id)`): one removed meanwhile is not found there
           Unused(
-            agents.managerStore.setConfig(id, c, Some(ManagerInfo.Cron(cron.text.value)), next),
+            agents.managerStore.setConfig(id, c, Some(cron.text), next),
             Unused.Why.ReadBack
           )
           if !in.enabled.enabled then cancelSweep(m, sw, ManagerItem.Outcome("its schedule was turned off"))

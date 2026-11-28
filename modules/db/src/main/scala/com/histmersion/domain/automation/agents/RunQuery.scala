@@ -22,8 +22,7 @@ final case class RunQuery(
 object RunQuery:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
-  type UpTo = UpTo.T
-  object UpTo extends Newtype[String, Pure]
+  export AgentRepo.PageCursor as UpTo
   type Status = Status.T
   object Status extends Newtype[String, Pure]
   type Pipelines = Pipelines.T

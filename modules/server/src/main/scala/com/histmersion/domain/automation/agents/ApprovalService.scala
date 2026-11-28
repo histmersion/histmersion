@@ -314,7 +314,7 @@ object ApprovalService:
     def approval(id: Approval.Id): Option[ApprovalInfo] = rows.find(_.id.value == id.value).map(info)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def approvals(state: Option[ApprovalState], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
-      newest(rows.filter(r => state.forall(_.wire.value == r.state.value)))
+      newest(rows.filter(r => state.forall(_.wire == r.state)))
         .take(math.max(1, limit.value))
         .toList
         .map(info)
@@ -338,7 +338,7 @@ object ApprovalService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def matches(q: ApprovalQuery, except: String)(r: ApprovalRecord): Boolean =
       lazy val run = r.jobId.flatMap(j => runs.get(Run.Id.assume(j.value)))
-      (except == "state" || q.state.forall(_.wire.value == r.state.value)) &&
+      (except == "state" || q.state.forall(_.wire == r.state)) &&
       (except == "kind" || q.kinds.isEmpty || q.kinds.exists(_.wire.value == r.kind.value)) &&
       q.subject.forall(t =>
         contains(r.subject.map(_.value), t.value) || contains(r.citekey.map(_.value), t.value) || contains(

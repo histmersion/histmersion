@@ -234,7 +234,7 @@ final class AcquisitionControllers(
   def markCandidates(m: CandidateMark): Either[Api.Error, CandidateMarked] =
     maintenance.guard(WriteGate.OperationName("candidates/mark")):
       Candidates.State
-        .parse(Candidates.State.Wire(m.state.value))
+        .parse(m.state)
         .toRight(
           Api.Error(unknownState(Problem.Raw.of(m.state)), Some(Api.Error.Code(Write.CodeInvalid)))
         )

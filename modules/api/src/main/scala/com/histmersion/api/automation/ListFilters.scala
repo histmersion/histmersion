@@ -18,6 +18,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
 import com.histmersion.api.RowCount
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.library.Facet
 
 /** The facet counts travel in the [[FacetsHeader]] response header, so the JSON body stays the plain array older
   * clients read.
@@ -35,8 +36,7 @@ object ListFilters:
   object OptionLabel extends Newtype[String, Pure]
   type Qualifier = Qualifier.T
   object Qualifier extends Newtype[String, Pure]
-  type Term = Term.T
-  object Term extends Newtype[String, Pure]
+  export Facet.Value as Term
   export com.histmersion.api.time.TimeBound
 
   val FacetsHeader = "X-Facet-Counts"

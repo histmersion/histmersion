@@ -559,8 +559,6 @@ object ModelChains:
         api.json.Schema
 
   object RoleChain:
-    type Role = Role.T
-    object Role extends Newtype[String, Pure]:
-      given Display[T] = Display(role => Wording.humanize(Wording.Id(role.value)))
+    export AgentRole.Wire as Role
     type Active = Active.T
     object Active extends Newtype[String, Pure]

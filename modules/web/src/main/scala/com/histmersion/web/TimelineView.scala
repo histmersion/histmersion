@@ -373,8 +373,8 @@ object TimelineView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hoverText(b: TimeBucket): UiLabels.Text =
-    val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value
-    else shown"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
+    val years = if b.start.value == b.end.value then Fmt.yr(b.start).value
+    else shown"${Fmt.yr(b.start)}–${Fmt.yr(Year(b.end.value))}"
     UiLabels.Text(shown"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

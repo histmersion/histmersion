@@ -59,7 +59,7 @@ object SourcesData:
           context.config,
           context.format(ck => Citekey.option(ck.value).exists(stored))
         ),
-        Lint.ItemLimit(maxItems.value)
+        maxItems
       )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

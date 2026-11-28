@@ -33,6 +33,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.config.edit.SettingKind.valueTypeEquality
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.plugin.Secret
 
 /** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
   * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
@@ -46,8 +47,7 @@ object PluginHost:
   object ConfigPath extends Newtype[String, Pure]
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
-  type SecretValue = SecretValue.T
-  object SecretValue extends Newtype[String, Pure]
+  export Secret.Resolved as SecretValue
   type Warning = Warning.T
   object Warning extends Newtype[String, Pure]
 
@@ -620,7 +620,7 @@ object PluginHost:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def secret(s: Secret) =
       resolved(s)
-        .map(v => Secret.Resolved(v.value))
+        .map(v => v)
     def secretVaults = vaults
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.Upstream(upstream.value))

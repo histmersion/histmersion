@@ -636,7 +636,7 @@ object ManagerService:
       RowCount(
         items.count(i =>
           i.managerId.value == managerId.value && kinds.exists(_.value == i.kind.value) &&
-            statuses.exists(_.value == i.status.value) &&
+            statuses.exists(_ == i.status) &&
             (focusHeld || !this.focusHeld(i))
         )
       )
@@ -733,7 +733,7 @@ object ManagerService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus])(using WritePermit): Boolean =
       val at = now
-      changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
+      changeItems(i => i.id.value == itemId.value && from.exists(_.wire == i.status))(
         _.modify(_.state).setTo(state).modify(_.updatedAt).setTo(at)
       ) > 0
 
@@ -784,7 +784,7 @@ object ManagerService:
         from: List[ItemStatus]
     )(using WritePermit): Boolean =
       val at = now
-      changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
+      changeItems(i => i.id.value == itemId.value && from.exists(_.wire == i.status))(
         _.modify(_.status)
           .setTo(ManagerItemRecord.Status(status.wire.value))
           .modify(_.outcome)
@@ -797,7 +797,7 @@ object ManagerService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState)(using WritePermit): Boolean =
       val at = now
-      changeItems(i => i.id.value == itemId.value && i.status.value == ItemStatus.Pending.wire.value)(
+      changeItems(i => i.id.value == itemId.value && i.status == ItemStatus.Pending.wire)(
         _.modify(_.status)
           .setTo(ManagerItemRecord.Status(ItemStatus.Active.wire.value))
           .modify(_.runId)

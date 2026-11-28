@@ -407,7 +407,7 @@ object PlaceService:
           parentsOf(p, asOf),
           kidsOf(apiId(id), asOf).toList.map(_.summary),
           Place.Counts.Findings(0),
-          asOf.map(y => Year(y.value)),
+          asOf.map(y => y),
           (if p.contested then Place.Entry.Contested.Contested else Place.Entry.Contested.Settled),
           links = p.links.sortBy(l => (l.scheme.value, l.externalId.value)).toList
         )

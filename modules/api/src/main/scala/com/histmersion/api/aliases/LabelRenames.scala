@@ -9,12 +9,12 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.library.Label as LibraryLabel
 
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object LabelRenames:
-  type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  export LibraryLabel.Text as Label
 
   private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
 

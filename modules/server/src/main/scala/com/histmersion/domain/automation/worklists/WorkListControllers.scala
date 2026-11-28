@@ -31,7 +31,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def kindOf(list: WorkListControllers.KindOfList): Either[Api.Error, Kind] =
     Kind
-      .parse(Kind.Label(list.value))
+      .parse(list)
       .toRight(
         WorkListControllers.bad(
           Problem.Unclassified(Legacy.Text(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
@@ -125,10 +125,8 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     Kind.values.toList.map(k => k.file -> Queue.render(k, queues.list(k, QueueScope.All)))
 
 object WorkListControllers:
-  type ListName = ListName.T
-  object ListName extends Newtype[String, Pure]
-  type KindOfList = KindOfList.T
-  object KindOfList extends Newtype[String, Pure]
+  export Queue.Kind.Label as ListName
+  export Queue.Kind.Label as KindOfList
 
   private def bad(message: Problem): Api.Error = Api.Error(message)
 

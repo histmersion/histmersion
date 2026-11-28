@@ -13,8 +13,7 @@ final case class TimeBucket(start: TimeBucket.Start, end: TimeBucket.End, count:
       api.json.Schema
 
 object TimeBucket:
-  type Start = Start.T
-  object Start extends Newtype[Long, Pure]
+  export api.catalogue.Year as Start
   type End = End.T
   object End extends Newtype[Long, Pure]
   type Count = Count.T

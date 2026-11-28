@@ -117,9 +117,7 @@ object AssetLinkService:
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def create(in: AssetLink.Put)(using WritePermit)(using Creator.New): Either[Api.Error, AssetLink] =
-      if !state.get.assets.exists(a =>
-          a.citekey.exists(_.value == in.citekey.value) && a.name.value == in.assetName.value
-        )
+      if !state.get.assets.exists(a => a.citekey.exists(_.value == in.citekey.value) && a.name == in.assetName)
       then Left(noFigure(in))
       else
         val after = state.updateAndGet { s =>

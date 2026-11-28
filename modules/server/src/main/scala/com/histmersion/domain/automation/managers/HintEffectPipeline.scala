@@ -122,7 +122,7 @@ final class HintEffectPipeline(
         items.map(i =>
           Loaded.Items(s"${i.target.value} (${i.kind.value}, ${i.status.value}, priority ${i.priority.value})")
         )
-      val itemTarget = ht.itemId.flatMap(i => connect(ds)(ManagerRepo.item(ManagerItem.Id(i.value)))).map(_.target)
+      val itemTarget = ht.itemId.flatMap(i => connect(ds)(ManagerRepo.item(i))).map(_.target)
       Loaded(
         m.id,
         m.kind,

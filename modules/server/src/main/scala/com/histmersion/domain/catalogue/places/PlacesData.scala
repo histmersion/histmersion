@@ -55,7 +55,7 @@ object PlacesData:
       Lint.report(
         rule,
         PlaceReviewRepo.proposalsIn().map(p => LintItem(Citekey(p.id.value), LintItem.Detail(p.detail.value))),
-        Lint.ItemLimit(maxItems.value)
+        maxItems
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override val fix: Option[SafeFix] = Some(
@@ -89,7 +89,7 @@ object PlacesData:
       Lint.report(
         rule,
         PlaceReviewRepo.relocationsIn().map(r => LintItem(Citekey(r.id.value), LintItem.Detail(r.detail.value))),
-        Lint.ItemLimit(maxItems.value)
+        maxItems
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override val fix: Option[SafeFix] = Some(

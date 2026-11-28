@@ -11,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.TwoCases
+import com.histmersion.api.automation.PlanQuota
 
 /** The central agent scheduler, pure (docs/research-goal-advancement.md "As built"): ONE decision per managers' tick
   * about which pending manager items start a run now, across every job type — goal plans, article proposals, candidate
@@ -156,8 +157,7 @@ object SchedulerPolicy:
       extension (gathering: Gathering) def gathering: Boolean = gathering == Gathering
     type ItemPriority = ItemPriority.T
     object ItemPriority extends Newtype[Int, Pure]
-    type Pools = Pools.T
-    object Pools extends Newtype[String, Pure]
+    export PlanQuota.PoolId.Wire as Pools
     enum Person derives CanEqual:
       case ForPerson, ForModel
     object Person extends TwoCases[Person]:

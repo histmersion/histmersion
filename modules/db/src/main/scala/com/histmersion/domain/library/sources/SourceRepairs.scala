@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.config.Limits
 
 /** The library's repairs that run as several transactions: the re-chunk of the corpus and of the stale sources (one
   * transaction per source, so a large corpus never sits in one) and the safe fixes of `lint --fix`.
@@ -166,8 +167,7 @@ final class SourceRepairs(db: Transactor):
     )
 
 object SourceRepairs:
-  type MaxChars = MaxChars.T
-  object MaxChars extends Newtype[Long, Pure]
+  export Limits.ReindexChars as MaxChars
   type MaxSources = MaxSources.T
   object MaxSources extends Newtype[Int, Pure]
 

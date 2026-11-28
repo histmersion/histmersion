@@ -132,7 +132,7 @@ object MergeView:
       decision: Option[MergeDecision],
       text: Option[MergeResolution.Text] = None
   ): MergeResolutions =
-    val rest = r.resolve.filterNot(_.issue.value == issue.value)
+    val rest = r.resolve.filterNot(_.issue == issue)
     r.modify(_.resolve)
       .setTo(
         (rest ++ decision.map(d =>
@@ -150,7 +150,7 @@ object MergeView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def chosen(r: MergeResolutions, issue: MergeIssue.Id): Option[MergeDecision] =
     r.resolve
-      .find(_.issue.value == issue.value)
+      .find(_.issue == issue)
       .flatMap(x => MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption)
 
   /** What a decision kind means, in words. */
@@ -680,7 +680,7 @@ object MergeView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def review(i: MergeIssue): HtmlElement =
-    val mine = res.now().resolve.find(_.issue.value == i.id.value)
+    val mine = res.now().resolve.find(_.issue == i.id)
     div(
       cls := "merge-issue-review",
       h3(

@@ -868,8 +868,7 @@ object Managers:
   object ManagerHint:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
-    type ItemId = ItemId.T
-    object ItemId extends Newtype[Long, Pure]
+    export Managers.ManagerItem.Id as ItemId
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     type Author = Author.T

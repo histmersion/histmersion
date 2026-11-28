@@ -33,8 +33,6 @@ final case class EventPatch(
     via: Option[Creation.Via] = None
 ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema, CanEqual
 object EventPatch:
-
-  type Geometry = Geometry.T
-  object Geometry extends Newtype[String, Pure]
+  export EventGeometry.Geojson as Geometry
   type Wikidata = Wikidata.T
   object Wikidata extends Newtype[String, Pure]

@@ -4,6 +4,7 @@ package domain.media.assets
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.exchange.Bundle
 
 /** A figure's row as its listing reads it (Magnum maps a SELECT's columns positionally). */
 final private[assets] case class AssetInfoRow(
@@ -16,8 +17,7 @@ final private[assets] case class AssetInfoRow(
 ) derives DbCodec
 
 object AssetInfoRow:
-  type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  export Bundle.Asset.FileName as Name
   type Mime = Mime.T
   object Mime extends Newtype[String, Pure]
   type Bytes = Bytes.T

@@ -179,7 +179,7 @@ object PlacesMarkdown:
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src = p.source.map(s => s"  \n**Source:** $s").getOrElse("") +
       d.siteType
-        .flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
+        .flatMap(t => SiteTypes.get(t))
         .map(t => s"  \n**Site type:** ${t.label}")
         .getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +

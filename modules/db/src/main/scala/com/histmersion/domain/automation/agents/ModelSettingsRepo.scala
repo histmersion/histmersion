@@ -15,6 +15,7 @@ import com.histmersion.util.database.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.automation.AgentRole
 
 /** The model chains and allowances saved over config (migration V060), and the spends an allowance counts — summed from
   * `agent_steps`, the one place tokens and cost are written. Stateless.
@@ -22,8 +23,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @atBoundary(BoundaryKind.Sql, "reads and writes the model settings tables and their row codecs")
 private[agents] object ModelSettingsRepo:
-  type ChainRole = ChainRole.T
-  object ChainRole extends Newtype[String, Pure]
+  export AgentRole.Wire as ChainRole
   type WindowSeconds = WindowSeconds.T
   object WindowSeconds extends Newtype[Long, Pure]
 

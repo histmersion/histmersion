@@ -151,7 +151,7 @@ final class GoalFocusService(
       Facts(
         Goal.Slug.assume(g.slug.value),
         g.parent.map(p => Goal.Slug.assume(p.value)),
-        Goal.Status.Wire(g.status.value),
+        g.status,
         Facts.CreatedAt(g.createdAt.value),
         pinned = (if g.pinned.pinned then Facts.Pinned.Pinned else Facts.Pinned.Unpinned),
         priority = Facts.Priority(g.priority.value),
@@ -332,7 +332,7 @@ final class GoalFocusService(
         .getOrElse(s, Nil)
         .filterNot(k => seen(k.slug.value))
         .map { k =>
-          (if GoalFocus.finished(Goal.Status.Wire(k.status.value)) then 0 else 1) + open(
+          (if GoalFocus.finished(k.status) then 0 else 1) + open(
             k.slug.value,
             seen + k.slug.value
           )
@@ -349,7 +349,7 @@ final class GoalFocusService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def unfinishedPlanned(): AutopilotPolicy.Unfinished =
     AutopilotPolicy.unfinishedPlanned(
-      agents.focusStore.goals().map(g => Goal.Slug.assume(g.slug.value) -> Goal.Status.Wire(g.status.value)),
+      agents.focusStore.goals().map(g => Goal.Slug.assume(g.slug.value) -> g.status),
       agents.goals.planned()
     )
 

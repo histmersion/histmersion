@@ -160,8 +160,7 @@ object Source:
     object ArxivId extends Newtype[String, Pure]
     type FoundBy = FoundBy.T
     object FoundBy extends Newtype[String, Pure]
-    type State = State.T
-    object State extends Newtype[String, Pure]
+    export Candidates.State.Wire as State
     type FirstSeen = FirstSeen.T
     object FirstSeen extends Newtype[String, Pure]
     type LastSeen = LastSeen.T

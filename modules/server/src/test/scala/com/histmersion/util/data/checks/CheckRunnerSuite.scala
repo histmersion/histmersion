@@ -37,7 +37,7 @@ class CheckRunnerSuite extends munit.FunSuite:
       Lint.report(
         rule,
         List.tabulate(items)(i => LintItem(Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))),
-        Lint.ItemLimit(maxItems.value)
+        maxItems
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

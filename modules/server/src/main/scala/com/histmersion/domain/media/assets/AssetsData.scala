@@ -28,5 +28,5 @@ object AssetsData:
       Lint.report(
         rule,
         MediaRepo.licenceGaps().map((id, detail) => LintItem(Citekey(id.value), LintItem.Detail(detail.value))),
-        ItemLimit(maxItems.value)
+        maxItems
       )

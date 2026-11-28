@@ -45,8 +45,7 @@ object FocusRepo:
     object Title extends Newtype[String, Pure]
     type Parent = Parent.T
     object Parent extends Newtype[String, Pure]
-    type Status = Status.T
-    object Status extends Newtype[String, Pure]
+    export Goal.Status.Wire as Status
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
     enum Active derives CanEqual:

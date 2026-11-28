@@ -41,7 +41,7 @@ object IiifRoutes:
               Iiif.Rotation(rotation.value),
               IiifControllers.Filename(filename.value)
             )
-            .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
+            .map((bytes, mime) => (bytes, mime))
         }
       }
     )

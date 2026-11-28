@@ -45,7 +45,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
   private val provider: String = BuiltinMedia.providerOf(BuiltinMedia.ProviderOfName(name.value)).value
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val allow = LicencePolicy.of(
-    Licence.AllowList(BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), cfg).value)
+    BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), cfg)
   )
 
   /** What the host decided about one picture: its licence key for the counts, and the item and rights when it may be

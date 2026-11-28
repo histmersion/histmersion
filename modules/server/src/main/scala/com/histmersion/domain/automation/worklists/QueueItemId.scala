@@ -1,11 +1,7 @@
 package com.histmersion
 package domain.automation.worklists
 
-import io.github.iltotore.iron.*
-import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.automation.Queue
 
 /** A work-list item's id (`queue_items.id`): what `queue patch|rm <id>` and a goal's `queue-item` link name. */
-type QueueItemId = QueueItemId.T
-
-object QueueItemId extends Newtype[Int, Pure]:
-  extension (id: QueueItemId) def next: QueueItemId = QueueItemId(id.value + 1)
+export Queue.QueueItem.Id as QueueItemId

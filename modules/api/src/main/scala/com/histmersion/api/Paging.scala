@@ -106,7 +106,7 @@ object Paging:
               .map((name, vs) =>
                 (
                   Facet.Name(name.value),
-                  vs.map((term, n) => (Facet.Value(term.value), Facet.Count(n.value)))
+                  vs.map((term, n) => (term, Facet.Count(n.value)))
                 )
               )
           )

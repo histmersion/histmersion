@@ -100,7 +100,7 @@ final class SourcePictures(
       FigurePick.choose(weighed, rules) match
         case None       => Left(SourcePictures.IllustrateText("no figure fit to illustrate it"))
         case Some(pick) =>
-          val row = figs.find(_.name.value == pick.name.value).get
+          val row = figs.find(_.name == pick.name).get
           val uid = AssetService.AssetUid(row.uid.value)
           val line = MediaSourceLine(
             com.histmersion.api.library.Citekey(citekey.value),

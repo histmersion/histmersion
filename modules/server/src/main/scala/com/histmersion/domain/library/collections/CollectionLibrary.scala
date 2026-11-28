@@ -46,8 +46,7 @@ trait CollectionLibrary:
   ): Either[Api.Error, Ingest.Report]
 
 object CollectionLibrary:
-  type Bytes = Bytes.T
-  object Bytes extends Newtype[Array[Byte], Pure]
+  export Api.FileBytes as Bytes
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
   type QueueItemId = QueueItemId.T

@@ -64,7 +64,7 @@ object MediaRoutes:
       ),
       Api.asset.serverLogic[Identity]((ck, name) =>
         citekey(ck.value)(k => assets.figure(k, AssetService.AssetName(name.value)))
-          .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
+          .map((bytes, mime) => (bytes, mime))
       ),
       // media geo + asset links (1.6)
       Api.mediaGeo.serverLogicSuccess[Identity](q => assets.mediaGeo(q)),
@@ -97,11 +97,11 @@ object MediaRoutes:
       Api.mediaThumb.serverLogic[Identity](uid =>
         assets
           .thumb(AssetService.AssetUid(uid.value))
-          .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
+          .map((bytes, mime) => (bytes, mime))
       ),
       Api.mediaFile.serverLogic[Identity](uid =>
         assets
           .file(AssetService.AssetUid(uid.value))
-          .map((bytes, mime) => (Api.FileBytes(bytes.value), Api.ContentType(mime.value)))
+          .map((bytes, mime) => (bytes, mime))
       )
     )

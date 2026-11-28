@@ -214,8 +214,7 @@ object Storage:
       extension (partial: Partial) def partial: Boolean = partial == Partial
     type Detail = Detail.T
     object Detail extends Newtype[String, Pure]
-    type Shrink = Shrink.T
-    object Shrink extends Newtype[String, Pure]
+    export Storage.Hint as Shrink
     type Volume = Volume.T
     object Volume extends Newtype[String, Pure]
     type Host = Host.T

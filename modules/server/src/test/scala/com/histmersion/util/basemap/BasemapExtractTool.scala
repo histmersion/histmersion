@@ -88,7 +88,7 @@ object BasemapExtractTool:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def boxOf(h: PmTiles.Header): BBox =
-    BBox(Longitude(h.minLon.value), Latitude(h.minLat.value), Longitude(h.maxLon.value), Latitude(h.maxLat.value))
+    BBox(h.minLon, h.minLat, h.maxLon, h.maxLat)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")

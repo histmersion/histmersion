@@ -3,6 +3,7 @@ package domain.media.figures
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.exchange.Bundle
 
 /** Which of a paper's own figures illustrates it on a hover card (#1446). Pure: the figures come from the OCR
   * conversion (the converter names them after their page, `fig-0004-03.png` = page 4, picture 3; docling's scans
@@ -40,8 +41,7 @@ object FigurePick:
   )
 
   object Figure:
-    type Name = Name.T
-    object Name extends Newtype[String, Pure]
+    export Bundle.Asset.FileName as Name
     type Width = Width.T
     object Width extends Newtype[Int, Pure]
     type Height = Height.T
