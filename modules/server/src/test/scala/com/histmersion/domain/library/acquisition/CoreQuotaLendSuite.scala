@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.Purpose
+import com.histmersion.domain.library.acquisition.Purpose
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Header

@@ -1,8 +1,8 @@
 package com.histmersion
 package server
 
-import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Denial
+import com.histmersion.domain.library.acquisition.Purpose
+import com.histmersion.domain.library.acquisition.Denial
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}

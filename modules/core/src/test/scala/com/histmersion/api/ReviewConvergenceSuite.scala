@@ -1,24 +1,24 @@
 package com.histmersion
 package api
 
-import com.histmersion.domain.reviewarticle.CritiqueRule
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewledger.Status
-import com.histmersion.domain.reviewledger.Entry
-import com.histmersion.domain.reviewledger.Closure
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewarticle.Verdict
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.BodyCorpus
+import com.histmersion.domain.research.workflows.CritiqueRule
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Status
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.Closure
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Verdict
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Check
+import com.histmersion.domain.research.workflows.BodyCorpus
 import com.histmersion.api.research.critiquepairing.Work
-import com.histmersion.domain.reviewarticle.FixGuards
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.FixerAnswer
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewarticle.WontFix
-import com.histmersion.domain.reviewarticle.SetAsideAnswer
+import com.histmersion.domain.research.workflows.FixGuards
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.WontFix
+import com.histmersion.domain.research.workflows.SetAsideAnswer
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
@@ -169,7 +169,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       f.finalRegression(
         List(p(CritiqueState.Addressed)),
         List(p(CritiqueState.Open)),
-        domain.reviewarticle.Fix.Body(""),
+        domain.research.workflows.Fix.Body(""),
         minRatio
       )
     )
@@ -177,7 +177,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       !f.finalRegression(
         List(p(CritiqueState.Open)),
         List(p(CritiqueState.Open)),
-        domain.reviewarticle.Fix.Body(""),
+        domain.research.workflows.Fix.Body(""),
         minRatio
       ),
       "open from the start: a discovery"
@@ -196,12 +196,17 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       fact.finalRegression(
         Nil,
         Nil,
-        domain.reviewarticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
+        domain.research.workflows.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
         minRatio
       )
     )
     assert(
-      !fact.finalRegression(Nil, Nil, domain.reviewarticle.Fix.Body("Another passage altogether, edited."), minRatio)
+      !fact.finalRegression(
+        Nil,
+        Nil,
+        domain.research.workflows.Fix.Body("Another passage altogether, edited."),
+        minRatio
+      )
     )
     assert(
       !fact
@@ -210,7 +215,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         .finalRegression(
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
+          domain.research.workflows.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
           minRatio
         ),
       "a reader's confusion in edited text is a discovery, not a factual regression"
@@ -267,7 +272,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
 
   // ── the regression guard ───────────────────────────────────────────────────────────────────────
 
-  private val tinBefore = domain.reviewarticle.Fix.Body(
+  private val tinBefore = domain.research.workflows.Fix.Body(
     """Tin reached the Aegean by sea [[knapp2016_tin]]; [[zz2024_iso]] traces it to Central Asia.
       |
       |The date of the wreck is about 1320 BCE [[knapp2016_tin]].
@@ -325,16 +330,16 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def together(b: domain.reviewarticle.Fix.Body, r: CritiqueRef) =
+  private def together(b: domain.research.workflows.Fix.Body, r: CritiqueRef) =
     CritiquePair.together(b, r, t => Some(Citekey(t.value)))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def cites(b: domain.reviewarticle.Fix.Body, ck: domain.library.Citekey) =
+  private def cites(b: domain.research.workflows.Fix.Body, ck: domain.library.Citekey) =
     AgentVerify.wikilinks(AgentVerify.Text(b.value)).exists(_.value == ck.value)
 
   test("guard: a closed pair split apart, a fixed text written back, a citation the fix rests on dropped"):
     val l = ledgerWith(pairFixed, textFixed)
     assertEquals(l.guard(tinBefore, tinBefore, together, cites, minRatio), Nil)
-    val split = domain.reviewarticle.Fix.Body(
+    val split = domain.research.workflows.Fix.Body(
       tinBefore.value
         .replace("; [[zz2024_iso]] traces it to Central Asia.", ".\n\nIt came from Central Asia [[zz2024_iso]].")
     )
@@ -342,14 +347,14 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assert(
       s"${l.guard(tinBefore, split, together, cites, minRatio).head.why}".contains("no longer cited in one paragraph")
     )
-    val back = domain.reviewarticle.Fix.Body(
+    val back = domain.research.workflows.Fix.Body(
       tinBefore.value.replace("The date of the wreck is about 1320 BCE", "The date of the wreck is argued")
     )
     assertEquals(
       l.guard(tinBefore, back, together, cites, minRatio).map(r => (r.id, s"${r.why}".take(24))),
       List(("R1", "the text it fixed is bac"))
     )
-    val dropped = domain.reviewarticle.Fix.Body(
+    val dropped = domain.research.workflows.Fix.Body(
       tinBefore.value
         .replace(" [[zz2024_iso]] traces it to Central Asia", " an isotope study traces it to Central Asia")
     )
@@ -363,7 +368,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
 
   // ── the fixer's guards ─────────────────────────────────────────────────────────────────────────
 
-  private val body = domain.reviewarticle.Fix.Body(
+  private val body = domain.research.workflows.Fix.Body(
     """Tin reached the Aegean by sea [[knapp2016_tin]].
       |
       |Kullmann answers West's reading of the cargo [[zz2015_kull]].
@@ -407,7 +412,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   ).get
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val resolve = (t: Article.Link.Target) => Some(t.value).filter(keys).map(Citekey(_))
-  private def pairsOf(b: domain.reviewarticle.Fix.Body) = CritiquePair.build(b, resolve, edges, Nil)
+  private def pairsOf(b: domain.research.workflows.Fix.Body) = CritiquePair.build(b, resolve, edges, Nil)
   private def guards(l: Ledger) = FixGuards(
     pairsOf,
     (b0, b1) => l.guard(b0, b1, (b, r) => CritiquePair.find(pairsOf(b), r).exists(!_.open), cites, minRatio),

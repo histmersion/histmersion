@@ -2,7 +2,7 @@ package com.histmersion
 package server.views
 
 import com.histmersion.api.automation.queue.Docket
-import com.histmersion.domain.acquirerecheck.Rationale
+import com.histmersion.domain.library.acquisition.Rationale
 import com.histmersion.api.automation.queue.GoalRef
 
 import io.scalaland.chimney.dsl.*
@@ -69,7 +69,7 @@ final class WorkListView(
                 Acquire.Checks.AcquireCheck(
                   i.id,
                   Acquire.Checks.AcquireCheck.CheckedAt(last.at.toString),
-                  domain.acquirerecheck.Upshot
+                  domain.library.acquisition.Upshot
                     .of(last.outcome)
                     .fold(AcquireAttemptRow.LegacyWire)(_.wire)
                     .transformInto[Acquire.Checks.AcquireCheck.Outcome],
@@ -103,7 +103,7 @@ object WorkListView:
     * enum's `Outcome.Wire`, the record's `Outcome`), so chimney-iron's same-name pairing does not apply.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  given Transformer[domain.acquirerecheck.Upshot.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
+  given Transformer[domain.library.acquisition.Upshot.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
     Acquire.Checks.AcquireCheck.Outcome(wire.value)
   type IncludeAll = IncludeAll.T
   object IncludeAll extends Newtype[Boolean, Pure]

@@ -2,12 +2,12 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.api.automation.agents.ProbeAnswer
-import com.histmersion.domain.reviewarticle.SkepticAnswer
-import com.histmersion.domain.reviewarticle.FixerAnswer
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.RulesAnswer
-import com.histmersion.domain.enrichsource.Findings
-import com.histmersion.domain.compilearticle.DraftAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.research.workflows.DraftAnswer
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.util.json.RawJson

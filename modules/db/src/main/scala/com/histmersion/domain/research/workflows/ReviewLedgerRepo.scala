@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.research.workflows.Ledger
 
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.json.RawJson

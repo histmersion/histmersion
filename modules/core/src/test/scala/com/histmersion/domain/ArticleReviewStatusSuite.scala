@@ -1,13 +1,13 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Entry
-import com.histmersion.domain.reviewledger.Status
-import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.Status
+import com.histmersion.domain.research.workflows.Closure
 
 import com.histmersion.testsupport.ComparedByValue.given
 

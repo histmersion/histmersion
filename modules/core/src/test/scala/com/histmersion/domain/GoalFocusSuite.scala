@@ -1,13 +1,13 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.goalfocus.Work
+import com.histmersion.domain.automation.goals.Work
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.goalfocus.Facts
-import com.histmersion.domain.goalfocus.Thresholds
-import com.histmersion.domain.goalfocus.Plan
-import com.histmersion.domain.goalfocus.Pick
-import com.histmersion.domain.goalfocus.Item
+import com.histmersion.domain.automation.goals.Facts
+import com.histmersion.domain.automation.goals.Thresholds
+import com.histmersion.domain.automation.goals.Plan
+import com.histmersion.domain.automation.goals.Pick
+import com.histmersion.domain.automation.goals.Item
 import com.histmersion.api.automation.autopilot.FocusInfo
 import com.histmersion.api.automation.autopilot.FocusGoal
 import com.histmersion.api.automation.autopilot.FocusWaiting
@@ -79,7 +79,11 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(active(p), List("review", "compile", "ready"))
     assertEquals(
       p.active.map(_.stage),
-      List(domain.goalfocus.Stage.Reviewing, domain.goalfocus.Stage.Compiling, domain.goalfocus.Stage.Ready)
+      List(
+        domain.automation.goals.Stage.Reviewing,
+        domain.automation.goals.Stage.Compiling,
+        domain.automation.goals.Stage.Ready
+      )
     )
     assertEquals(p.queue.map(_.slug), List("gather"))
     assert(s"${p.active.head.why}".startsWith("reviewing: 1 of 2 articles still to pass review"), p.active.head.why)
@@ -391,7 +395,8 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("holds: a queued goal's pending model items are held; an active goal's focus holds released; in flight never"):
     val goals = List(g(Goal.Slug("on"), active = Facts.Active(true)), g(Goal.Slug("off")))
-    val plan = Plan(active = List(Pick(Goal.Slug("on"), domain.goalfocus.Stage.Gathering, GoalFocus.Rationale(""))))
+    val plan =
+      Plan(active = List(Pick(Goal.Slug("on"), domain.automation.goals.Stage.Gathering, GoalFocus.Rationale(""))))
     val items = List(
       Item(
         Work.ItemId(1),
@@ -458,7 +463,8 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("p"), active = Facts.Active(true)),
       g(Goal.Slug("k"), Some(Goal.Slug("p")))
     )
-    val plan = Plan(active = List(Pick(Goal.Slug("p"), domain.goalfocus.Stage.Gathering, GoalFocus.Rationale(""))))
+    val plan =
+      Plan(active = List(Pick(Goal.Slug("p"), domain.automation.goals.Stage.Gathering, GoalFocus.Rationale(""))))
     val items = List(
       Item(
         Work.ItemId(1),

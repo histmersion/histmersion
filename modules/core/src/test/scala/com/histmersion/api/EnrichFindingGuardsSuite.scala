@@ -1,11 +1,11 @@
 package com.histmersion
 package api
 
-import com.histmersion.domain.enrichsource.Frame
-import com.histmersion.domain.enrichsource.FindingGuards
-import com.histmersion.domain.enrichsource.StatedYear
-import com.histmersion.domain.enrichsource.FindingProposal
-import com.histmersion.domain.enrichsource.Findings
+import com.histmersion.domain.library.workflows.Frame
+import com.histmersion.domain.library.workflows.FindingGuards
+import com.histmersion.domain.library.workflows.StatedYear
+import com.histmersion.domain.library.workflows.FindingProposal
+import com.histmersion.domain.library.workflows.Findings
 import com.histmersion.api.catalogue.geocode.KindHint
 
 import com.histmersion.util.problem.Text.sentence

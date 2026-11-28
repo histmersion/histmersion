@@ -2,14 +2,14 @@ package com.histmersion
 package domain.automation.managers
 
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.automation.managers.ReviewSettings
 import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.automation.managers.StepFacts
 import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.autopilotpolicy.Ruling
+import com.histmersion.domain.automation.autopilot.Ruling
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.{Pipeline, RunState}

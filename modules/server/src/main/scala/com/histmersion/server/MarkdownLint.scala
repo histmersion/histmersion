@@ -1,9 +1,9 @@
 package com.histmersion
 package server
 
-import com.histmersion.server.markdownlint.Context
-import com.histmersion.server.markdownlint.Offence
-import com.histmersion.server.markdownlint.Edit
+import com.histmersion.domain.research.articles.lint.Context
+import com.histmersion.domain.research.articles.lint.Offence
+import com.histmersion.domain.research.articles.lint.Edit
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import scala.annotation.tailrec

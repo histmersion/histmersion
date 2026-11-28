@@ -1,11 +1,11 @@
 package com.histmersion
 package domain.research.articles
 
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.server.markdownlint.Context
-import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.Fix
-import com.histmersion.domain.reviewarticle.Snapshot
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.articles.lint.Context
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.Fix
+import com.histmersion.domain.research.workflows.Snapshot
 import com.histmersion.api.research.critiquepairing.MissedPair
 import com.histmersion.api.research.critiquepairing.Mention
 import com.histmersion.api.research.critiquepairing.Work

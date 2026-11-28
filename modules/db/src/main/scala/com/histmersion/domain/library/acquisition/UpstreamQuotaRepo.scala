@@ -1,9 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.State
-import com.histmersion.domain.corequota.Backoff
-import com.histmersion.domain.corequota.Window
+import com.histmersion.domain.library.acquisition.State
+import com.histmersion.domain.library.acquisition.Backoff
+import com.histmersion.domain.library.acquisition.Window
 
 import com.histmersion.domain.CoreQuota
 

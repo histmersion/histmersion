@@ -1,11 +1,11 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.managerpolicy.CronStep
+import com.histmersion.domain.automation.managers.CronStep
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.schedulerpolicy.Block
-import com.histmersion.domain.managerpolicy.Assignable
-import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.domain.automation.managers.Assignable
+import com.histmersion.domain.automation.managers.ReviewSettings
 import com.histmersion.api.automation.managers.Hold
 import com.histmersion.api.automation.managers.HintEffect
 import com.histmersion.api.automation.managers.ManagerHint

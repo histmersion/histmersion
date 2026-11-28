@@ -1,18 +1,18 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.enrichsource.FindingGuards
-import com.histmersion.domain.enrichsource.Frame
-import com.histmersion.domain.enrichsource.StatedYear
-import com.histmersion.domain.enrichsource.FindingProposal
-import com.histmersion.domain.enrichsource.Classification
-import com.histmersion.domain.enrichsource.StatedPeriod
-import com.histmersion.domain.enrichsource.Findings
-import com.histmersion.domain.enrichsource.Loaded
+import com.histmersion.domain.library.workflows.FindingGuards
+import com.histmersion.domain.library.workflows.Frame
+import com.histmersion.domain.library.workflows.StatedYear
+import com.histmersion.domain.library.workflows.FindingProposal
+import com.histmersion.domain.library.workflows.Classification
+import com.histmersion.domain.library.workflows.StatedPeriod
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.library.workflows.Loaded
 import com.histmersion.api.catalogue.geocode.KindHint
-import com.histmersion.domain.enrichsource.VerifiedFindings
-import com.histmersion.domain.enrichsource.Notes
-import com.histmersion.domain.enrichsource.Classified
+import com.histmersion.domain.library.workflows.VerifiedFindings
+import com.histmersion.domain.library.workflows.Notes
+import com.histmersion.domain.library.workflows.Classified
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.Text.{sentence, sentences}

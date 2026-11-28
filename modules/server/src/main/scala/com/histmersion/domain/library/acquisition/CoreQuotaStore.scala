@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.State
+import com.histmersion.domain.library.acquisition.State
 
 import com.histmersion.domain.CoreQuota
 import com.histmersion.util.database.WritePermit

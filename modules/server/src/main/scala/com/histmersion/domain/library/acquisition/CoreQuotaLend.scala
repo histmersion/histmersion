@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.Ceilings
-import com.histmersion.domain.corequota.Purpose
+import com.histmersion.domain.library.acquisition.Ceilings
+import com.histmersion.domain.library.acquisition.Purpose
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Header

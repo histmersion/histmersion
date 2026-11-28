@@ -1,7 +1,7 @@
 package com.histmersion
 package server
 
-import com.histmersion.server.markdownlint.Context
+import com.histmersion.domain.research.articles.lint.Context
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}

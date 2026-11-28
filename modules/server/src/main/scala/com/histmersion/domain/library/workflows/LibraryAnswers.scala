@@ -1,9 +1,9 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.domain.enrichsource.Classification
-import com.histmersion.domain.enrichsource.Findings
-import com.histmersion.domain.enrichsource.Notes
+import com.histmersion.domain.library.workflows.Classification
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.library.workflows.Notes
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.domain.EnrichSource

@@ -1,12 +1,12 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Fix
-import com.histmersion.domain.reviewledger.Edited
-import com.histmersion.domain.reviewledger.Excerpt
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Fix
+import com.histmersion.domain.research.workflows.Edited
+import com.histmersion.domain.research.workflows.Excerpt
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.Text.sentence
@@ -44,7 +44,6 @@ object ReviewLedger:
   type ClosedLimit = ClosedLimit.T
   object ClosedLimit extends Newtype[Int, Pure]
   type PassageMargin = PassageMargin.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object PassageMargin extends Newtype[Int, Pure]
   type StubbornLimit = StubbornLimit.T
   object StubbornLimit extends Newtype[Int, Pure]
@@ -166,7 +165,7 @@ object ReviewLedger:
       a.indices.filterNot(keptA).map(i => Edited.Removed(a(i))).toList
     )
 
-  import com.histmersion.domain.reviewledger.Regression.Rationale
+  import com.histmersion.domain.research.workflows.Regression.Rationale
 
   /** The text of the article's one collapsed item — as [[taskText]] writes it, or as the interactive skill does
     * (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id rewrites the open one

@@ -4,13 +4,13 @@ package domain.automation.approvals
 import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.managers.ManagerInfo
-import com.histmersion.domain.autopilotpolicy.Ruling
+import com.histmersion.domain.automation.autopilot.Ruling
 import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.api.automation.agents.Decision
 import com.histmersion.api.automation.agents.DecisionRequest
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.domain.autopilotpolicy.GoalPlanFacts
+import com.histmersion.domain.automation.autopilot.GoalPlanFacts
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
 

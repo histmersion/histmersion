@@ -1,11 +1,11 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.compilearticle.SourceFact
-import com.histmersion.domain.compilearticle.Extracted
-import com.histmersion.domain.compilearticle.EdgeFact
-import com.histmersion.domain.compilearticle.Support
-import com.histmersion.domain.compilearticle.NotUsed
+import com.histmersion.domain.research.workflows.SourceFact
+import com.histmersion.domain.research.workflows.Extracted
+import com.histmersion.domain.research.workflows.EdgeFact
+import com.histmersion.domain.research.workflows.Support
+import com.histmersion.domain.research.workflows.NotUsed
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Content, Count, Raw, Where}
 import com.histmersion.util.problem.Text.sentence

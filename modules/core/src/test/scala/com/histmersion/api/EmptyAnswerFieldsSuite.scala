@@ -2,34 +2,34 @@ package com.histmersion
 package api
 
 import com.histmersion.api.automation.agents.ProbeAnswer
-import com.histmersion.domain.enrichsource.Classification
-import com.histmersion.domain.enrichsource.Frame
-import com.histmersion.domain.enrichsource.FindingGuards
-import com.histmersion.domain.enrichsource.FindingProposal
-import com.histmersion.domain.enrichsource.Findings
-import com.histmersion.domain.compilearticle.ClaimAnswer
-import com.histmersion.domain.compilearticle.ExtractAnswer
-import com.histmersion.domain.compilearticle.SourceFact
-import com.histmersion.domain.compilearticle.Extracted
-import com.histmersion.domain.compilearticle.Corpus
-import com.histmersion.domain.compilearticle.DraftAnswer
-import com.histmersion.domain.reviewarticle.FindingAnswer
-import com.histmersion.domain.reviewarticle.RulesAnswer
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.ReaderFindingAnswer
-import com.histmersion.domain.reviewarticle.SkepticAnswer
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.FixerAnswer
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewarticle.RejectionAnswer
-import com.histmersion.domain.reviewarticle.Prior
-import com.histmersion.domain.reviewarticle.CheckAnswer
-import com.histmersion.domain.reviewarticle.WontFixAnswer
-import com.histmersion.domain.reviewarticle.RecheckAnswer
-import com.histmersion.domain.reviewarticle.Recheck
+import com.histmersion.domain.library.workflows.Classification
+import com.histmersion.domain.library.workflows.Frame
+import com.histmersion.domain.library.workflows.FindingGuards
+import com.histmersion.domain.library.workflows.FindingProposal
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.research.workflows.ClaimAnswer
+import com.histmersion.domain.research.workflows.ExtractAnswer
+import com.histmersion.domain.research.workflows.SourceFact
+import com.histmersion.domain.research.workflows.Extracted
+import com.histmersion.domain.research.workflows.Corpus
+import com.histmersion.domain.research.workflows.DraftAnswer
+import com.histmersion.domain.research.workflows.FindingAnswer
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.ReaderFindingAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.RejectionAnswer
+import com.histmersion.domain.research.workflows.Prior
+import com.histmersion.domain.research.workflows.CheckAnswer
+import com.histmersion.domain.research.workflows.WontFixAnswer
+import com.histmersion.domain.research.workflows.RecheckAnswer
+import com.histmersion.domain.research.workflows.Recheck
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
@@ -174,8 +174,8 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("notes: empty notes fail"):
     assertEquals(
-      domain.enrichsource
-        .Notes(domain.enrichsource.Notes.Value("  "))
+      domain.library.workflows
+        .Notes(domain.library.workflows.Notes.Value("  "))
         .checkNotes(_ => true, _ => true)
         .left
         .map(_.map(_.sentence)),
@@ -246,7 +246,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Extracted(
         domain.library.Citekey("a2019_tin"),
         List(
-          domain.compilearticle.Claim(
+          domain.research.workflows.Claim(
             domain.library.Citekey("a2019_tin"),
             ClaimAnswer.Claim("c"),
             domain.Proposal.Quote("q"),
@@ -448,14 +448,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val s1 = Finding(
       Finding.Id("S1"),
       Reviewer.Skeptic,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("date"),
       Finding.Where("Intro"),
       Finding.Quote(""),
       Finding.Problem("the date is wrong"),
       Finding.Fix("")
     )
-    val m = Merged(Merged.Round(1), domain.reviewarticle.Verdict.Major, List(s1), None, Nil, Nil)
+    val m = Merged(Merged.Round(1), domain.research.workflows.Verdict.Major, List(s1), None, Nil, Nil)
     val bc = BodyCorpus(_.value == "a2019_tin", _.value == "a2019_tin", _ => Nil)
     def problems(a: FixerAnswer) =
       a.checkFix(
@@ -519,7 +519,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     Finding(
       Finding.Id("R1"),
       Reviewer.Rules,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("term"),
       Finding.Where("Intro"),
       Finding.Quote("Tin reached the Aegean"),
@@ -640,14 +640,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val r1 = Finding(
       Finding.Id("R1"),
       Reviewer.Rules,
-      domain.reviewarticle.Severity.Minor,
+      domain.research.workflows.Severity.Minor,
       Finding.Kind("language"),
       Finding.Where("Intro"),
       Finding.Quote(""),
       Finding.Problem("wordy"),
       Finding.Fix("")
     )
-    val m = Merged(Merged.Round(1), domain.reviewarticle.Verdict.Minor, List(r1), None, Nil, Nil)
+    val m = Merged(Merged.Round(1), domain.research.workflows.Verdict.Minor, List(r1), None, Nil, Nil)
     val bc = BodyCorpus(_.value == "a2019_tin", _.value == "a2019_tin", _ => Nil)
     def problems(w: WontFixAnswer) =
       FixerAnswer(Nil, Nil, Nil, Nil, FixerAnswer.Notes(""), wontFix = List(w))

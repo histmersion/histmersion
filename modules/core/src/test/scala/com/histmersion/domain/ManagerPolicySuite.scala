@@ -1,19 +1,19 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.managerpolicy.Assignable
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Assignable
 import com.histmersion.api.automation.managers.HintEffect
 import com.histmersion.api.automation.managers.ManagerHint
 import com.histmersion.api.automation.managers.ManagerInfo
-import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.domain.automation.scheduler.Block
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.managerpolicy.StepFacts
-import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.automation.managers.StepFacts
+import com.histmersion.domain.automation.managers.Next
 import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.managers.EnqueueKind
 import com.histmersion.api.automation.managers.Sweep
-import com.histmersion.domain.managerpolicy.CronStep
+import com.histmersion.domain.automation.managers.CronStep
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{Legacy, Problem}

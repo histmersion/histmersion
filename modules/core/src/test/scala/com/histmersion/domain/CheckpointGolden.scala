@@ -1,24 +1,24 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.enrichsource.Classified
-import com.histmersion.domain.enrichsource.StatedPeriod
-import com.histmersion.domain.enrichsource.Findings
-import com.histmersion.domain.enrichsource.FindingProposal
+import com.histmersion.domain.library.workflows.Classified
+import com.histmersion.domain.library.workflows.StatedPeriod
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.library.workflows.FindingProposal
 import com.histmersion.api.catalogue.geocode.KindHint
-import com.histmersion.domain.enrichsource.StatedYear
-import com.histmersion.domain.enrichsource.VerifiedFindings
-import com.histmersion.domain.enrichsource.VerifiedFinding
-import com.histmersion.domain.enrichsource.Geocoded
-import com.histmersion.domain.enrichsource.GeocodeChoice
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewarticle.Report
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.SpotCheck
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.enrichsource.Loaded
+import com.histmersion.domain.library.workflows.StatedYear
+import com.histmersion.domain.library.workflows.VerifiedFindings
+import com.histmersion.domain.library.workflows.VerifiedFinding
+import com.histmersion.domain.library.workflows.Geocoded
+import com.histmersion.domain.library.workflows.GeocodeChoice
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.Check
+import com.histmersion.domain.research.workflows.SpotCheck
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.library.workflows.Loaded
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -261,46 +261,46 @@ object CheckpointGolden:
 
   private val evidence =
     List(
-      domain.reviewarticle.Quotation(
+      domain.research.workflows.Quotation(
         library.Citekey("smith1987_tin"),
         Some(Offset(120)),
-        domain.reviewarticle.Quotation.Quote("the route is later"),
-        domain.reviewarticle.Quotation.Ratio(0.97)
+        domain.research.workflows.Quotation.Quote("the route is later"),
+        domain.research.workflows.Quotation.Ratio(0.97)
       ),
-      domain.reviewarticle.Quotation(
+      domain.research.workflows.Quotation(
         library.Citekey("doe2001_tin"),
         None,
-        domain.reviewarticle.Quotation.Quote("q"),
-        domain.reviewarticle.Quotation.Ratio(1.0)
+        domain.research.workflows.Quotation.Quote("q"),
+        domain.research.workflows.Quotation.Ratio(1.0)
       )
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  val reviewFindings: Golden[domain.reviewarticle.Finding] = Golden(
+  val reviewFindings: Golden[domain.research.workflows.Finding] = Golden(
     "review-finding.ndjson",
-    domain.reviewarticle.Finding(
-      domain.reviewarticle.Finding.Id("S1"),
+    domain.research.workflows.Finding(
+      domain.research.workflows.Finding.Id("S1"),
       Reviewer.Skeptic,
       Severity.Major,
-      domain.reviewarticle.Finding.Kind("missing-critique"),
-      domain.reviewarticle.Finding.Where("## Origins"),
-      domain.reviewarticle.Finding.Quote("tin came"),
-      domain.reviewarticle.Finding.Problem("The critique is not cited."),
-      domain.reviewarticle.Finding.Fix("Cite it."),
+      domain.research.workflows.Finding.Kind("missing-critique"),
+      domain.research.workflows.Finding.Where("## Origins"),
+      domain.research.workflows.Finding.Quote("tin came"),
+      domain.research.workflows.Finding.Problem("The critique is not cited."),
+      domain.research.workflows.Finding.Fix("Cite it."),
       evidence,
-      escalated = domain.reviewarticle.Finding.Escalated(true),
+      escalated = domain.research.workflows.Finding.Escalated(true),
       pair = Some(CritiqueRef(Citekey("doe2001_tin"), Citekey("smith1987_tin")))
     ) ::
       (for r <- Reviewer.values.toList; s <- Severity.values.toList
-      yield domain.reviewarticle.Finding(
-        domain.reviewarticle.Finding.Id(s"${r.prefix}1"),
+      yield domain.research.workflows.Finding(
+        domain.research.workflows.Finding.Id(s"${r.prefix}1"),
         r,
         s,
-        domain.reviewarticle.Finding.Kind("style"),
-        domain.reviewarticle.Finding.Where(""),
-        domain.reviewarticle.Finding.Quote(""),
-        domain.reviewarticle.Finding.Problem("A problem."),
-        domain.reviewarticle.Finding.Fix("")
+        domain.research.workflows.Finding.Kind("style"),
+        domain.research.workflows.Finding.Where(""),
+        domain.research.workflows.Finding.Quote(""),
+        domain.research.workflows.Finding.Problem("A problem."),
+        domain.research.workflows.Finding.Fix("")
       ))
   )
 
@@ -308,7 +308,7 @@ object CheckpointGolden:
     "review-report.ndjson",
     Report(
       Reviewer.Rules,
-      domain.reviewarticle.Verdict.Major,
+      domain.research.workflows.Verdict.Major,
       reviewFindings.values.take(2),
       Some(ColdReaderAnswer.ExplainBack("It says the route is later.")),
       List(ReviewArticle.ExplainSlotsValue("disagreement")),
@@ -338,21 +338,21 @@ object CheckpointGolden:
         )
       )
     ) ::
-      domain.reviewarticle.Verdict.values.toList.map(v => Report(Reviewer.ColdReader, v, Nil))
+      domain.research.workflows.Verdict.values.toList.map(v => Report(Reviewer.ColdReader, v, Nil))
   )
 
   val merged: Golden[Merged] = Golden(
     "review-merged.ndjson",
     Merged(
       Merged.Round(2),
-      domain.reviewarticle.Verdict.Major,
+      domain.research.workflows.Verdict.Major,
       reviewFindings.values.take(3),
       Some(ColdReaderAnswer.ExplainBack("Explained back.")),
       List(ReviewArticle.ExplainSlotsValue("open")),
       proposals.values.take(1),
-      List(domain.reviewarticle.Finding.Id("S1"))
+      List(domain.research.workflows.Finding.Id("S1"))
     ) ::
-      domain.reviewarticle.Verdict.values.toList.map(v => Merged(Merged.Round(1), v, Nil, None, Nil, Nil))
+      domain.research.workflows.Verdict.values.toList.map(v => Merged(Merged.Round(1), v, Nil, None, Nil, Nil))
   )
 
   val workRefs: Golden[WorkRef] = Golden(

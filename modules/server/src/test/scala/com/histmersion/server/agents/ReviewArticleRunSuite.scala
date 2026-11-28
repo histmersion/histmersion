@@ -3,22 +3,22 @@ package server.agents
 
 import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.api.automation.agents.RunRequest
-import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.research.workflows.Ledger
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.Verdict
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.Verdict
 import com.histmersion.api.automation.agents.RunParams
-import com.histmersion.domain.reviewledger.Status
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Amended
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewledger.LessonSource
+import com.histmersion.domain.research.workflows.Status
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Amended
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.LessonSource
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.domain.reviewledger.Entry
+import com.histmersion.domain.research.workflows.Entry
 import com.histmersion.api.automation.agents.ModelOverride
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewarticle.Report
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.Report
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -565,7 +565,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val fixStep = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(40000)))
       .find(_.name.value == "fixer-1")
       .flatMap(_.output)
-      .flatMap(o => RawJson.decode[domain.reviewarticle.Fix](o.value).toOption)
+      .flatMap(o => RawJson.decode[domain.research.workflows.Fix](o.value).toOption)
       .get
     assertEquals(
       fixStep.edits.map(e => (e.index, e.op.wire, e.anchor, e.applied)),
@@ -889,7 +889,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val fixStep = steps
       .find(_.name.value == "fixer-1")
       .flatMap(_.output)
-      .flatMap(o => RawJson.decode[domain.reviewarticle.Fix](o.value).toOption)
+      .flatMap(o => RawJson.decode[domain.research.workflows.Fix](o.value).toOption)
       .get
     assertEquals(fixStep.reasons.map(_.citekey.value: String), List(Ck2))
     assertEquals(
@@ -1435,7 +1435,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val (_, h) = handlers(PanelClient(Model)); seed(h)
     val legacy = Finding(
       Finding.Id("C1"),
-      domain.reviewarticle.Reviewer.ColdReader,
+      domain.research.workflows.Reviewer.ColdReader,
       Severity.Major,
       Finding.Kind("term"),
       Finding.Where("explain-back"),
@@ -1514,7 +1514,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
         Entry(
           Finding(
             Finding.Id("R1"),
-            domain.reviewarticle.Reviewer.Rules,
+            domain.research.workflows.Reviewer.Rules,
             Severity.Major,
             Finding.Kind("term"),
             Finding.Where("Intro"),

@@ -1,17 +1,17 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Severity
 import com.histmersion.api.automation.managers.ItemState
-import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.automation.managers.Next
 import com.histmersion.api.automation.managers.RunMark
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Closure
-import com.histmersion.domain.reviewarticle.Check
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Closure
+import com.histmersion.domain.research.workflows.Check
 import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -339,16 +339,16 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val l1 = Ledger(Ledger.Slug("tin")).absorb(List(sk), run, Closure.Round(1))._1
     val l2 = l1
       .applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           List(Finding.Id("S1")),
           Nil,
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1)
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1)
         ),
         run,
         ReviewLedger.ApplyFixRound(1)

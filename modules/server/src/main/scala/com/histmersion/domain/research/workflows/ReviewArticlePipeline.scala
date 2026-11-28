@@ -1,30 +1,30 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Amended
-import com.histmersion.domain.reviewarticle.Report
-import com.histmersion.domain.reviewledger.Closure
-import com.histmersion.domain.reviewarticle.Recheck
-import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewledger.OpenStyle
-import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewarticle.CritiqueRule
-import com.histmersion.domain.reviewarticle.Prior
-import com.histmersion.domain.reviewarticle.RulesAnswer
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.SkepticAnswer
-import com.histmersion.domain.reviewarticle.SpotRule
-import com.histmersion.domain.reviewledger.Edited
-import com.histmersion.domain.reviewarticle.RecheckAnswer
-import com.histmersion.domain.reviewledger.Entry
-import com.histmersion.domain.reviewarticle.FixGuards
-import com.histmersion.domain.reviewarticle.FixerAnswer
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Amended
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.Closure
+import com.histmersion.domain.research.workflows.Recheck
+import com.histmersion.domain.research.workflows.Check
+import com.histmersion.domain.research.workflows.OpenStyle
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.CritiqueRule
+import com.histmersion.domain.research.workflows.Prior
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.SpotRule
+import com.histmersion.domain.research.workflows.Edited
+import com.histmersion.domain.research.workflows.RecheckAnswer
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.FixGuards
+import com.histmersion.domain.research.workflows.FixerAnswer
 import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -142,7 +142,7 @@ final class ReviewArticlePipeline(
       merged: Merged,
       snap: Snapshot,
       carry: Carry,
-      unwritten: Option[domain.reviewarticle.Fix.Body],
+      unwritten: Option[domain.research.workflows.Fix.Body],
       targeted: Boolean = false
   )
 
@@ -182,11 +182,11 @@ final class ReviewArticlePipeline(
   private def minRatio: AgentVerify.MinRatio = AgentVerify.MinRatio(lib.verify.quoteMinRatio.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def domainBody(b: domain.reviewarticle.Fix.Body): domain.research.Article.Body =
+  private def domainBody(b: domain.research.workflows.Fix.Body): domain.research.Article.Body =
     domain.research.Article.Body(b.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def apiBody(b: domain.reviewarticle.Fix.Body): Article.Body = Article.Body(b.value)
+  private def apiBody(b: domain.research.workflows.Fix.Body): Article.Body = Article.Body(b.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def checked[O](r: Either[List[Problem], (O, List[String])]): Either[List[Problem], Checked[O]] =
@@ -263,7 +263,7 @@ final class ReviewArticlePipeline(
       slug: Slug,
       r: Int,
       carry: Carry,
-      unwritten: Option[domain.reviewarticle.Fix.Body],
+      unwritten: Option[domain.research.workflows.Fix.Body],
       fixable: Boolean,
       confirming: Option[Snapshot] = None
   )(using WritePermit)(using Creator.New): Either[Halt, State] =
@@ -325,7 +325,7 @@ final class ReviewArticlePipeline(
       r: Int,
       prev: Snapshot,
       carry: Carry,
-      unwritten: Option[domain.reviewarticle.Fix.Body]
+      unwritten: Option[domain.research.workflows.Fix.Body]
   )(using WritePermit)(using Creator.New): Either[Halt, State] =
     for
       snap <- ctx.code[Snapshot](AgentRepo.StepRecord.Name(s"snapshot-$r"))(
@@ -442,7 +442,7 @@ final class ReviewArticlePipeline(
       .map(_.modify(_.by).setTo(Some(by(ctx, "skeptic"))))
 
   /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
-  private def setAsideReasons(ctx: RunCtx, f: domain.reviewarticle.Fix): List[CritiqueReason] =
+  private def setAsideReasons(ctx: RunCtx, f: domain.research.workflows.Fix): List[CritiqueReason] =
     (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason)) ++ f.pairsAside)
       .distinctBy(r => (r.src, r.dst))
       .map(_.modify(_.by).setTo(Some(by(ctx, "fixer"))))
@@ -504,7 +504,7 @@ final class ReviewArticlePipeline(
   private def snapshot(
       ctx: RunCtx,
       slug: Slug,
-      unwritten: Option[domain.reviewarticle.Fix.Body],
+      unwritten: Option[domain.research.workflows.Fix.Body],
       reasons: List[CritiqueReason]
   ): Either[Problems, Snapshot] =
     site.articles.get(slug).left.map(_.problems).flatMap { v =>
@@ -513,7 +513,8 @@ final class ReviewArticlePipeline(
       if body.value.trim.isEmpty then Left(Problem.Run.Needs(Problem.Run.Need.Body(Problem.Raw.of(slug))))
       else
         val cut = body.value.length > cfg.review.articleChars.value
-        val text = if cut then domain.reviewarticle.Fix.Body(body.value.take(cfg.review.articleChars.value)) else body
+        val text =
+          if cut then domain.research.workflows.Fix.Body(body.value.take(cfg.review.articleChars.value)) else body
         // the stored body's cited sources; a dry run's unwritten body keeps those it still links
         val linked = AgentVerify.wikilinks(AgentVerify.Text(text.value)).toSet
         val cited =
@@ -543,7 +544,7 @@ final class ReviewArticlePipeline(
     * finds in the new body and not in the old one — what the edits broke.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int, before: Option[domain.reviewarticle.Fix.Body])(using
+  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int, before: Option[domain.research.workflows.Fix.Body])(using
       WritePermit
   ): List[Finding] =
     val body = mechanical(
@@ -587,7 +588,7 @@ final class ReviewArticlePipeline(
     * queries, as the page renderer does.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def isTarget(body: domain.reviewarticle.Fix.Body): Slug => Boolean =
+  private def isTarget(body: domain.research.workflows.Fix.Body): Slug => Boolean =
     val resolve = site.articles.pageLinks(
       AgentVerify.wikilinks(AgentVerify.Text(body.value)).map(w => WikiLinks.Occurrence.Target(w.value))
     )
@@ -842,7 +843,7 @@ final class ReviewArticlePipeline(
       l: Ledger,
       r: Int,
       reasons: List[CritiqueReason]
-  )(using WritePermit): Either[Halt, domain.reviewarticle.Fix] =
+  )(using WritePermit): Either[Halt, domain.research.workflows.Fix] =
     val explain = m.explainBack.fold("")(e => s"\n\nThe cold reader's explain-back: $e")
     val history = l.promptText(OpenStyle.Omit, ReviewLedger.ClosedLimit(cfg.review.ledgerClosedLines.value))
     val ledger = if history.isEmpty then ""
@@ -873,28 +874,28 @@ final class ReviewArticlePipeline(
     val extra = if ctx.dryRun then reasons else Nil
     val pairsMemo = java.util.concurrent.ConcurrentHashMap[String, List[CritiquePair]]()
     val citedMemo = java.util.concurrent.ConcurrentHashMap[String, Set[String]]()
-    def pairsOf(b: domain.reviewarticle.Fix.Body) =
+    def pairsOf(b: domain.research.workflows.Fix.Body) =
       if b == s.body then s.critiques
       else
         pairsMemo.computeIfAbsent(
           b.value,
           x => site.articles.critiques(s.slug, Article.Body(x), extra)
         )
-    def cites(b: domain.reviewarticle.Fix.Body, ck: Citekey) =
+    def cites(b: domain.research.workflows.Fix.Body, ck: Citekey) =
       citedMemo.computeIfAbsent(
         b.value,
         x => site.articles.citedSources(Article.Body(x)).map(c => c.value: String).toSet
       )(ck.value)
-    def answered(b: domain.reviewarticle.Fix.Body, ref: CritiqueRef) =
+    def answered(b: domain.research.workflows.Fix.Body, ref: CritiqueRef) =
       CritiquePair.find(pairsOf(b), ref).exists(!_.open)
     val guards = FixGuards(
       pairsOf,
       (b0, b1) => l.guard(b0, b1, answered, cites, minRatio),
       b =>
         val (repaired, hits) = site.articles.repairPairing(apiBody(b))
-        (domain.reviewarticle.Fix.Body(repaired.value), hits)
+        (domain.research.workflows.Fix.Body(repaired.value), hits)
     )
-    ctx.llm[FixerAnswer, domain.reviewarticle.Fix](
+    ctx.llm[FixerAnswer, domain.research.workflows.Fix](
       fixerStep(r),
       StepAgent.Fixer,
       Prompt.UserText(user),
@@ -985,7 +986,7 @@ final class ReviewArticlePipeline(
     * meanwhile) drops this fix — the next round reviews their text — and never overwrites it.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def write(ctx: RunCtx, s: Snapshot, f: domain.reviewarticle.Fix, r: Int, after: Ledger)(using
+  private def write(ctx: RunCtx, s: Snapshot, f: domain.research.workflows.Fix, r: Int, after: Ledger)(using
       WritePermit
   )(using Creator.New): Either[Problems, Amended] =
     val bodyChanged = f.body.value.trim != s.body.value.trim
@@ -1037,15 +1038,15 @@ final class ReviewArticlePipeline(
     val c = st.carry
     val last = st.merged
     val outcome =
-      domain.reviewarticle.Outcome(
+      domain.research.workflows.Outcome(
         slug,
-        domain.reviewarticle.Outcome.Rounds(end.round),
+        domain.research.workflows.Outcome.Rounds(end.round),
         last.verdict,
         last.majors,
-        domain.reviewarticle.Outcome.Applied(c.applied),
-        domain.reviewarticle.Outcome.Rejected(c.rejectedCount),
-        domain.reviewarticle.Outcome.Fixed(c.fixed),
-        domain.reviewarticle.Outcome.Approvals(last.proposals.size)
+        domain.research.workflows.Outcome.Applied(c.applied),
+        domain.research.workflows.Outcome.Rejected(c.rejectedCount),
+        domain.research.workflows.Outcome.Fixed(c.fixed),
+        domain.research.workflows.Outcome.Approvals(last.proposals.size)
       )
     val ledger = persist(ctx, backlog(ctx, slug, c.ledger))
     // the checklist as the run leaves it: the stored body (a dry run's revision held in memory)
@@ -1055,7 +1056,7 @@ final class ReviewArticlePipeline(
           site.articles
             .get(slug, brief = ArticlesControllers.GetBrief(true))
             .toOption
-            .map(v => domain.reviewarticle.Fix.Body(v.article.body.value))
+            .map(v => domain.research.workflows.Fix.Body(v.article.body.value))
         )
         .getOrElse(st.snap.body)
     val pairs = site.articles.critiques(slug, apiBody(body), if ctx.dryRun then c.reasons else Nil)
@@ -1064,7 +1065,7 @@ final class ReviewArticlePipeline(
       (if end.deferred.isEmpty then ""
        else
          s"; ${Plural.count(Plural.CountN(end.deferred.size.toLong), Plural.CountSingular("new MAJOR"))} of the final pass deferred to the next run") +
-      s"; ledger ${ledger.entries.count(_.status == domain.reviewledger.Status.Fixed)} fixed, ${ledger.open.size} open" +
+      s"; ledger ${ledger.entries.count(_.status == domain.research.workflows.Status.Fixed)} fixed, ${ledger.open.size} open" +
       (if pairs.isEmpty then "" else s"; critiques ${CritiquePair.summary(pairs)}")
     PipelineDef.log(site.workLists, ctx, PipelineDef.LogLine(line)).map(_.value)
 

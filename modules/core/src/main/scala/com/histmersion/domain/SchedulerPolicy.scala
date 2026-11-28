@@ -1,16 +1,16 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.schedulerpolicy.JobType
-import com.histmersion.domain.schedulerpolicy.Settings
-import com.histmersion.domain.schedulerpolicy.Candidate
-import com.histmersion.domain.schedulerpolicy.Scored
-import com.histmersion.domain.schedulerpolicy.Strategy
-import com.histmersion.domain.schedulerpolicy.PassState
-import com.histmersion.domain.schedulerpolicy.Block
-import com.histmersion.domain.schedulerpolicy.Capacity
-import com.histmersion.domain.schedulerpolicy.Decision
-import com.histmersion.domain.schedulerpolicy.Wait
+import com.histmersion.domain.automation.scheduler.JobType
+import com.histmersion.domain.automation.scheduler.Settings
+import com.histmersion.domain.automation.scheduler.Candidate
+import com.histmersion.domain.automation.scheduler.Scored
+import com.histmersion.domain.automation.scheduler.Strategy
+import com.histmersion.domain.automation.scheduler.PassState
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.domain.automation.scheduler.Capacity
+import com.histmersion.domain.automation.scheduler.Decision
+import com.histmersion.domain.automation.scheduler.Wait
 
 import hearth.kindlings.optics.syntax.*
 

@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.workflows
 
 import com.histmersion.api.catalogue.geocode.KindHint
-import com.histmersion.domain.enrichsource.FindingGuards
+import com.histmersion.domain.library.workflows.FindingGuards
 
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.config.AgentEnrichGuardsConfig

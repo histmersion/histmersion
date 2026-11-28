@@ -12,12 +12,12 @@ import com.histmersion.api.automation.autopilot.FocusSet
 import com.histmersion.api.automation.managers.OaWork
 import com.histmersion.api.automation.agentscheduler.SchedulerSet
 import com.histmersion.api.automation.agents.ApprovalInfo
-import com.histmersion.domain.autopilotpolicy.Ruling
+import com.histmersion.domain.automation.autopilot.Ruling
 import com.histmersion.api.automation.agents.DecisionRequest
 import com.histmersion.api.automation.approvaldigest.BulkDecide
 import com.histmersion.api.automation.autopilot.DrainSet
 import com.histmersion.api.automation.Stall
-import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.research.workflows.Ledger
 import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.util.json.RawJson.*
 

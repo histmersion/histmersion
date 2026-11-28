@@ -9,11 +9,11 @@ import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.managers.ManagerUpdate
 import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.api.automation.autopilot.AutopilotSet
-import com.histmersion.domain.autopilotpolicy.ManagerRow
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Closure
 import com.histmersion.api.automation.managers.ManagerCreate
-import com.histmersion.domain.autopilotpolicy.Ruling
+import com.histmersion.domain.automation.autopilot.Ruling
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}

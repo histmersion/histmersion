@@ -2,10 +2,10 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.api.automation.agents.ModelRef
-import com.histmersion.domain.acquirerecheck.LastCheck
+import com.histmersion.domain.library.acquisition.LastCheck
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueueAdd
-import com.histmersion.domain.acquirerecheck.Rationale
+import com.histmersion.domain.library.acquisition.Rationale
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -798,7 +798,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(status(h, full), Queue.Done)
     val checks = AcquisitionTesting.attempts(ds).of(ids.map(checkItem)).view.mapValues(_.head).toMap
     assertEquals(
-      checks.values.flatMap(a => domain.acquirerecheck.Upshot.of(a.outcome)).map(_.wire.value).toList.sorted,
+      checks.values.flatMap(a => domain.library.acquisition.Upshot.of(a.outcome)).map(_.wire.value).toList.sorted,
       List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy)
     )
     val throttled = Rationale.of(checks(checkItem(ids(3)))).said

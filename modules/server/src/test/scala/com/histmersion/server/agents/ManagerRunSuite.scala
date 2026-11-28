@@ -9,11 +9,11 @@ import com.histmersion.api.automation.managers.EnqueueRequest
 import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.api.automation.managers.ManagerUpdate
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Severity
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Closure
 import com.histmersion.api.automation.managers.ItemPatch
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.ModelOverride
@@ -238,7 +238,11 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def finding(id: Finding.Id, r: domain.reviewarticle.Reviewer, kind: Finding.Kind = Finding.Kind("synth")) =
+  private def finding(
+      id: Finding.Id,
+      r: domain.research.workflows.Reviewer,
+      kind: Finding.Kind = Finding.Kind("synth")
+  ) =
     Finding(
       id,
       r,
@@ -292,8 +296,8 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       Ledger(Ledger.Slug("zzagent_m1"))
         .absorb(
           List(
-            finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules),
-            finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic)
+            finding(Finding.Id("R1"), domain.research.workflows.Reviewer.Rules),
+            finding(Finding.Id("S1"), domain.research.workflows.Reviewer.Skeptic)
           ),
           Run.Id.assume("old"),
           Closure.Round(1)
@@ -317,7 +321,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     assertEquals((r1.params.fix, r1.params.rounds), (Some(true), Some(3)))
     assertEquals(i1.state.before, Some(2))
     // m1: 2 → 1 → 0 over three runs; each Again waits for the cooldown
-    settle(r1.id, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules)))
+    settle(r1.id, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R1"), domain.research.workflows.Reviewer.Rules)))
     a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_m1")).status, "pending")
     assertEquals(item(ManagerItem.Target("zzagent_m1")).notBefore, Some("2026-10-15T12:30:00Z"))
@@ -326,7 +330,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managers.tick(t0.plusSeconds(31 * 60))
     val run2 = item(ManagerItem.Target("zzagent_m1")).runId.get
     assertNotEquals(run2, r1.id)
-    settle(run2, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R2"), domain.reviewarticle.Reviewer.Rules)))
+    settle(run2, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R2"), domain.research.workflows.Reviewer.Rules)))
     a.managers.tick(t0.plusSeconds(32 * 60))
     a.managers.tick(t0.plusSeconds(70 * 60))
     val run3 = item(ManagerItem.Target("zzagent_m1")).runId.get
@@ -342,7 +346,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     settle(
       m2run,
       Ledger.Slug("zzagent_m2"),
-      List(finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic, Finding.Kind("missing-critique")))
+      List(finding(Finding.Id("S1"), domain.research.workflows.Reviewer.Skeptic, Finding.Kind("missing-critique")))
     )
     a.managers.tick(t0.plusSeconds(72 * 60))
     assertEquals(item(ManagerItem.Target("zzagent_m2")).status, "pending")
@@ -356,7 +360,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     settle(
       m2run2,
       Ledger.Slug("zzagent_m2"),
-      List(finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic, Finding.Kind("missing-critique")))
+      List(finding(Finding.Id("S1"), domain.research.workflows.Reviewer.Skeptic, Finding.Kind("missing-critique")))
     )
     a.managers.tick(t0.plusSeconds(104 * 60))
     val stopped = item(ManagerItem.Target("zzagent_m2"))
@@ -420,7 +424,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_m5")).state.pairsBefore, Some(2))
-    val sk = finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic, Finding.Kind("missing-critique"))
+    val sk = finding(Finding.Id("S1"), domain.research.workflows.Reviewer.Skeptic, Finding.Kind("missing-critique"))
     settle(item(ManagerItem.Target("zzagent_m5")).runId.get, Ledger.Slug("zzagent_m5"), List(sk))
     // between the runs the article takes up one critique, in the paragraph that cites the source: 2 → 1
     val addressed = Article.Body(
@@ -480,8 +484,8 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       Ledger(Ledger.Slug("zzagent_m3"))
         .absorb(
           List(
-            finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules),
-            finding(Finding.Id("R2"), domain.reviewarticle.Reviewer.Rules)
+            finding(Finding.Id("R1"), domain.research.workflows.Reviewer.Rules),
+            finding(Finding.Id("R2"), domain.research.workflows.Reviewer.Rules)
           ),
           Run.Id.assume("x"),
           Closure.Round(1)
@@ -494,8 +498,8 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       m3.runId.get,
       Ledger.Slug("zzagent_m3"),
       List(
-        finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules),
-        finding(Finding.Id("R2"), domain.reviewarticle.Reviewer.Rules)
+        finding(Finding.Id("R1"), domain.research.workflows.Reviewer.Rules),
+        finding(Finding.Id("R2"), domain.research.workflows.Reviewer.Rules)
       )
     )
     // m4: fails three times

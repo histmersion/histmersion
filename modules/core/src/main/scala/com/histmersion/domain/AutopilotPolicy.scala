@@ -1,13 +1,13 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.autopilotpolicy.PlannedFacts
-import com.histmersion.domain.autopilotpolicy.Ruling
-import com.histmersion.domain.autopilotpolicy.GoalPlanFacts
-import com.histmersion.domain.autopilotpolicy.GoalRow
-import com.histmersion.domain.autopilotpolicy.ManagerRow
-import com.histmersion.domain.autopilotpolicy.Pacing
-import com.histmersion.domain.autopilotpolicy.Stride
+import com.histmersion.domain.automation.autopilot.PlannedFacts
+import com.histmersion.domain.automation.autopilot.Ruling
+import com.histmersion.domain.automation.autopilot.GoalPlanFacts
+import com.histmersion.domain.automation.autopilot.GoalRow
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.automation.autopilot.Pacing
+import com.histmersion.domain.automation.autopilot.Stride
 
 import com.histmersion.api.Plural
 

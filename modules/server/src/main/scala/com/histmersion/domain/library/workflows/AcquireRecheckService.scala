@@ -2,13 +2,13 @@ package com.histmersion
 package domain.library.workflows
 
 import com.histmersion.api.automation.queue.QueueItem
-import com.histmersion.domain.acquirerecheck.Shared
-import com.histmersion.domain.acquirerecheck.Recheckable
-import com.histmersion.domain.acquirerecheck.LastCheck
-import com.histmersion.domain.acquirerecheck.JobPlan
-import com.histmersion.domain.acquirerecheck.Tally
+import com.histmersion.domain.library.acquisition.Shared
+import com.histmersion.domain.library.acquisition.Recheckable
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.domain.library.acquisition.JobPlan
+import com.histmersion.domain.library.acquisition.Tally
 import com.histmersion.api.automation.queue.QueueAdd
-import com.histmersion.domain.acquirerecheck.Rationale
+import com.histmersion.domain.library.acquisition.Rationale
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -83,16 +83,16 @@ final class AcquireRecheckService(
   import AcquireRecheckService.{By, Judged, Line}
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def settings: domain.acquirerecheck.Cadence =
+  private def settings: domain.library.acquisition.Cadence =
     val c = rcfg
-    domain.acquirerecheck.Cadence(
-      domain.acquirerecheck.Cadence.Enabled(c.enabled.value),
-      domain.acquirerecheck.Cadence.EveryDays(c.everyDays.value),
-      domain.acquirerecheck.Cadence.PerDay(c.perDay.value),
-      domain.acquirerecheck.Cadence.PerPass(c.perPass.value),
-      domain.acquirerecheck.Cadence.PassMinutes(c.passMinutes.value),
-      domain.acquirerecheck.Cadence.SharePercent(c.sharePercent.value),
-      domain.acquirerecheck.Cadence.RetryHours(c.retryHours.value)
+    domain.library.acquisition.Cadence(
+      domain.library.acquisition.Cadence.Enabled(c.enabled.value),
+      domain.library.acquisition.Cadence.EveryDays(c.everyDays.value),
+      domain.library.acquisition.Cadence.PerDay(c.perDay.value),
+      domain.library.acquisition.Cadence.PerPass(c.perPass.value),
+      domain.library.acquisition.Cadence.PassMinutes(c.passMinutes.value),
+      domain.library.acquisition.Cadence.SharePercent(c.sharePercent.value),
+      domain.library.acquisition.Cadence.RetryHours(c.retryHours.value)
     )
 
   private def kept: AcquireAttempt.Kept = rcfg.attemptsKept.transformInto[AcquireAttempt.Kept]
@@ -136,8 +136,8 @@ final class AcquireRecheckService(
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def countOf(
-      counts: Map[domain.acquirerecheck.Upshot.Wire, RowCount],
-      o: domain.acquirerecheck.Upshot
+      counts: Map[domain.library.acquisition.Upshot.Wire, RowCount],
+      o: domain.library.acquisition.Upshot
   ): Int =
     counts.get(o.wire).fold(0)(_.value)
 
@@ -149,7 +149,11 @@ final class AcquireRecheckService(
 
   /** One open item with what the rules need: its DOIs (in the order its text names them), the action, its last check.
     */
-  final private case class Facts(item: QueueItem, action: domain.acquirerecheck.Action, attempts: List[AcquireAttempt]):
+  final private case class Facts(
+      item: QueueItem,
+      action: domain.library.acquisition.Action,
+      attempts: List[AcquireAttempt]
+  ):
     def last: Option[AcquireAttempt] = attempts.headOption
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -180,11 +184,14 @@ final class AcquireRecheckService(
   private def triedToday(now: Instant): (Int, Int) =
     val c = checks.countSince(ManagerPolicy.dayStart(now))
     (
-      countOf(c, domain.acquirerecheck.Upshot.Fetched) + countOf(c, domain.acquirerecheck.Upshot.NoCopy) + countOf(
+      countOf(c, domain.library.acquisition.Upshot.Fetched) + countOf(
         c,
-        domain.acquirerecheck.Upshot.Failed
+        domain.library.acquisition.Upshot.NoCopy
+      ) + countOf(
+        c,
+        domain.library.acquisition.Upshot.Failed
       ),
-      countOf(c, domain.acquirerecheck.Upshot.Fetched)
+      countOf(c, domain.library.acquisition.Upshot.Fetched)
     )
 
   /** The shared daily legal ingest allowance as the re-check sees it (None: the autopilot is off or has no cap). */
@@ -214,7 +221,7 @@ final class AcquireRecheckService(
   private def fetchable(fs: List[Facts]): List[Facts] =
     val byId = fs.map(f => f.item.id.value -> f).toMap
     AcquireRecheck
-      .order(fs.filter(_.action.isInstanceOf[domain.acquirerecheck.Action.Fetch]).map(candidate))
+      .order(fs.filter(_.action.isInstanceOf[domain.library.acquisition.Action.Fetch]).map(candidate))
       .flatMap(c => byId.get(c.item.value))
 
   /** The items a pass would try, in order: due, the never-checked first, then the oldest check. */
@@ -236,7 +243,7 @@ final class AcquireRecheckService(
         case None       => scheduledPass(s, now)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def scheduledPass(s: domain.acquirerecheck.Cadence, now: Instant)(using WritePermit): List[Line] =
+  private def scheduledPass(s: domain.library.acquisition.Cadence, now: Instant)(using WritePermit): List[Line] =
     if !s.enabled.value || !AcquireRecheck.passDue(
         Option(lastPass.get).filter(_ > 0).map(Instant.ofEpochMilli),
         s.passMinutes,
@@ -327,7 +334,7 @@ final class AcquireRecheckService(
     val base = RecheckResult(
       dryRun = RecheckResult.DryRun.Apply,
       RecheckResult.Open(fs.size),
-      RecheckResult.WithDoi(fs.count(_.action != domain.acquirerecheck.Action.NoDoi))
+      RecheckResult.WithDoi(fs.count(_.action != domain.library.acquisition.Action.NoDoi))
     )
     if in.all.all then
       val stopped = latestJob()
@@ -369,7 +376,7 @@ final class AcquireRecheckService(
       val upTo = math.min(
         dueNow.size,
         s.modify(_.perPass)
-          .setTo(in.limit.fold(s.perPass)(l => domain.acquirerecheck.Cadence.PerPass(l.value)))
+          .setTo(in.limit.fold(s.perPass)(l => domain.library.acquisition.Cadence.PerPass(l.value)))
           .allowance(AcquireRecheck.CheckedToday(tried), shared(now, fetchedToday))
           .value
       )
@@ -462,12 +469,12 @@ final class AcquireRecheckService(
         progress(JobInfo.Progress("closing the items the corpus holds with their text"))
         val fs = facts(None)
         val closed = fs
-          .collect { case f @ Facts(_, domain.acquirerecheck.Action.Close(ck), _) => f -> ck }
+          .collect { case f @ Facts(_, domain.library.acquisition.Action.Close(ck), _) => f -> ck }
           .flatMap((f, ck) => close(f, ck, gen, Instant.now(agents.clock), Some(jobId)))
         val before = checks.countSince(plan.since)
-        def n(o: domain.acquirerecheck.Upshot) = countOf(before, o)
-        val triedByJob = n(domain.acquirerecheck.Upshot.Fetched) + n(domain.acquirerecheck.Upshot.NoCopy) + n(
-          domain.acquirerecheck.Upshot.Failed
+        def n(o: domain.library.acquisition.Upshot) = countOf(before, o)
+        val triedByJob = n(domain.library.acquisition.Upshot.Fetched) + n(domain.library.acquisition.Upshot.NoCopy) + n(
+          domain.library.acquisition.Upshot.Failed
         )
         val byId = fs.map(f => f.item.id.value -> f).toMap
         val now = Instant.now(agents.clock)
@@ -477,10 +484,10 @@ final class AcquireRecheckService(
         val start = Tally(
           Tally.Total(triedByJob + picks.size),
           Tally.Tried(triedByJob),
-          Tally.Closed(n(domain.acquirerecheck.Upshot.Closed)),
-          Tally.Fetched(n(domain.acquirerecheck.Upshot.Fetched)),
-          Tally.NoCopy(n(domain.acquirerecheck.Upshot.NoCopy)),
-          Tally.Failed(n(domain.acquirerecheck.Upshot.Failed))
+          Tally.Closed(n(domain.library.acquisition.Upshot.Closed)),
+          Tally.Fetched(n(domain.library.acquisition.Upshot.Fetched)),
+          Tally.NoCopy(n(domain.library.acquisition.Upshot.NoCopy)),
+          Tally.Failed(n(domain.library.acquisition.Upshot.Failed))
         )
         report(start.progressLine)
         @annotation.tailrec
@@ -541,7 +548,7 @@ final class AcquireRecheckService(
     val up = upstream()
     val gen = up.fetcherGeneration
     val fs = facts(in.id)
-    val closes = fs.collect { case f @ Facts(_, domain.acquirerecheck.Action.Close(ck), _) => f -> ck }
+    val closes = fs.collect { case f @ Facts(_, domain.library.acquisition.Action.Close(ck), _) => f -> ck }
     val dueNow = if in.id.isDefined || in.all.all then fetchable(fs) else due(fs, gen, now)
     val (tried, fetchedToday) = triedToday(now)
     val perPass = in.limit.fold(s.perPass.value)(_.value)
@@ -550,13 +557,13 @@ final class AcquireRecheckService(
       else if in.all.all then dueNow.size
       else
         s.modify(_.perPass)
-          .setTo(domain.acquirerecheck.Cadence.PerPass(perPass))
+          .setTo(domain.library.acquisition.Cadence.PerPass(perPass))
           .allowance(AcquireRecheck.CheckedToday(tried), shared(now, fetchedToday))
           .value
     val picks = dueNow.take(room)
-    val withDoi = fs.count(_.action != domain.acquirerecheck.Action.NoDoi)
+    val withDoi = fs.count(_.action != domain.library.acquisition.Action.NoDoi)
     val noDoi = fs
-      .filter(_.action == domain.acquirerecheck.Action.NoDoi)
+      .filter(_.action == domain.library.acquisition.Action.NoDoi)
       .map(f =>
         RecheckRow(
           RecheckRow.Item(f.item.id.value),
@@ -592,7 +599,7 @@ final class AcquireRecheckService(
         )
       ) ++
         dueNow.zipWithIndex.map { (f, i) =>
-          val into = f.action match { case domain.acquirerecheck.Action.Fetch(_, into) => into; case _ => None }
+          val into = f.action match { case domain.library.acquisition.Action.Fetch(_, into) => into; case _ => None }
           RecheckRow(
             RecheckRow.Item(f.item.id.value),
             doiOf(f).map(apiDoi),
@@ -675,7 +682,7 @@ final class AcquireRecheckService(
         )
 
   /** One item tried: its row, what it found, and the fetcher's or the chain's own words. */
-  final private case class Tried(row: RecheckRow, outcome: domain.acquirerecheck.Upshot, detail: String)
+  final private case class Tried(row: RecheckRow, outcome: domain.library.acquisition.Upshot, detail: String)
 
   /** One item through the legal chain, recorded. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -683,8 +690,8 @@ final class AcquireRecheckService(
       WritePermit
   ): Tried =
     val (doi, into) = f.action match
-      case domain.acquirerecheck.Action.Fetch(d, i) => (Some(d), i)
-      case _                                        => (None, None)
+      case domain.library.acquisition.Action.Fetch(d, i) => (Some(d), i)
+      case _                                             => (None, None)
     val (found, answers, ck) = doi match
       case None =>
         (
@@ -705,7 +712,7 @@ final class AcquireRecheckService(
               )
             case Left(m) =>
               AcquireRecheck.failure(m) match
-                case domain.acquirerecheck.Upshot.NoCopy =>
+                case domain.library.acquisition.Upshot.NoCopy =>
                   (AcquireAttempt.Outcome.NoCopy, AcquireRecheck.answers(m), into.map(apiCk))
                 case _ => (AcquireAttempt.Outcome.Failed(m), Vector.empty, into.map(apiCk))
         catch
@@ -721,7 +728,7 @@ final class AcquireRecheckService(
     val tried = AcquireAttempt(now, AcquireAttempt.Trigger.Recheck, generation, found, answers, None)
     checks.record(keyOf(f.item), tried, kept)
     val why = Rationale.of(tried)
-    val outcome = domain.acquirerecheck.Upshot.of(found).getOrElse(domain.acquirerecheck.Upshot.Failed)
+    val outcome = domain.library.acquisition.Upshot.of(found).getOrElse(domain.library.acquisition.Upshot.Failed)
     Tried(
       RecheckRow(
         RecheckRow.Item(f.item.id.value),
@@ -767,7 +774,8 @@ final class AcquireRecheckService(
         if dueNow.isEmpty then
           AcquireRecheck
             .nextDue(
-              fs.filter(_.action.isInstanceOf[domain.acquirerecheck.Action.Fetch]).flatMap(_.last.map(LastCheck.of)),
+              fs.filter(_.action.isInstanceOf[domain.library.acquisition.Action.Fetch])
+                .flatMap(_.last.map(LastCheck.of)),
               gen,
               s.everyDays,
               s.retryHours
@@ -788,13 +796,13 @@ final class AcquireRecheckService(
         else None
       RecheckStatus(
         enabled = RecheckStatus.Enabled.Enabled,
-        RecheckStatus.WithDoi(fs.count(_.action != domain.acquirerecheck.Action.NoDoi)),
+        RecheckStatus.WithDoi(fs.count(_.action != domain.library.acquisition.Action.NoDoi)),
         RecheckStatus.Due(dueNow.size),
         RecheckStatus.TriedToday(tried),
         RecheckStatus.PerDay(s.perDay.value),
         RecheckStatus.FetchedToday(fetchedToday),
-        RecheckStatus.ClosedWeek(countOf(week, domain.acquirerecheck.Upshot.Closed)),
-        RecheckStatus.FetchedWeek(countOf(week, domain.acquirerecheck.Upshot.Fetched)),
+        RecheckStatus.ClosedWeek(countOf(week, domain.library.acquisition.Upshot.Closed)),
+        RecheckStatus.FetchedWeek(countOf(week, domain.library.acquisition.Upshot.Fetched)),
         RecheckStatus.EveryDays(s.everyDays.value),
         next.map(RecheckStatus.NextPass(_)),
         note.map(RecheckStatus.Note(_)),
@@ -840,9 +848,9 @@ final class AcquireRecheckService(
     val s = verdictSettings
     fs.map { f =>
       val verdict = f.action match
-        case domain.acquirerecheck.Action.NoDoi       => AcquireVerdict.NoIdentifier
-        case domain.acquirerecheck.Action.Close(_)    => AcquireVerdict.Converting(None)
-        case domain.acquirerecheck.Action.Fetch(_, _) =>
+        case domain.library.acquisition.Action.NoDoi       => AcquireVerdict.NoIdentifier
+        case domain.library.acquisition.Action.Close(_)    => AcquireVerdict.Converting(None)
+        case domain.library.acquisition.Action.Fetch(_, _) =>
           AcquireVerdict.of(AcquireVerdict.Identifier.Named, f.attempts, gen, s, now)
       Judged(f.item, verdict, f.attempts)
     }

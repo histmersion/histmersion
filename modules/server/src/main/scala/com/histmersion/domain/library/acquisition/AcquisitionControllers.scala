@@ -3,7 +3,7 @@ package domain.library.acquisition
 
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueueAdd
-import com.histmersion.domain.acquirerecheck.LastCheck
+import com.histmersion.domain.library.acquisition.LastCheck
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.{Creator, CreatorControllers}
 import com.histmersion.util.json.RawJson.*

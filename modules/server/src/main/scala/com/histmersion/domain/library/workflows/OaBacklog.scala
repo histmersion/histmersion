@@ -9,7 +9,7 @@ import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.api.automation.queue.QueueAdd
-import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.automation.managers.ReviewSettings
 import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.api.library.repairacquire.RepairResult
 import com.histmersion.api.library.repairacquire.RepairRow

@@ -1,12 +1,12 @@
 package com.histmersion
 package server
 
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Entry
-import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.Closure
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -75,7 +75,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         finding(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Problem("a decorative citation")),
         Entry.Run.assume(RunA),
         Entry.Round(1),
-        domain.reviewledger.Status.Rejected,
+        domain.research.workflows.Status.Rejected,
         closed = Some(
           Closure(
             Closure.By("fixer"),
@@ -89,7 +89,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         finding(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Problem("term not defined")),
         Entry.Run.assume(RunA),
         Entry.Round(1),
-        domain.reviewledger.Status.Fixed,
+        domain.research.workflows.Status.Fixed,
         closed = Some(Closure(Closure.By("cold-reader"), Closure.Round(2), Closure.Run.assume(RunA)))
       ),
       Entry(

@@ -6,18 +6,18 @@ import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Next
 import com.histmersion.api.automation.managers.Hold
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.agents.ApprovalInfo
-import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.automation.managers.StepFacts
 import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.api.automation.managers.ArticleSpec
 import com.histmersion.api.automation.managers.ItemState
-import com.histmersion.domain.managerpolicy.CronStep
-import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.domain.automation.managers.CronStep
+import com.histmersion.domain.automation.scheduler.Block
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.api.automation.agents.Origin
@@ -808,7 +808,7 @@ final class ManagerSupervisor(
         decision.waiting
           .filter(_._1.c.managerId.value == m.id.value)
           .map(_._2)
-          .filterNot(_.why == domain.schedulerpolicy.Wait.Why.Busy(Block.Refusal.Settled))
+          .filterNot(_.why == domain.automation.scheduler.Wait.Why.Busy(Block.Refusal.Settled))
       val blocked = waits.map(_.why).find(_.isBudget)
       val starved = waits.filter(_.code == SchedulerPolicy.Code.Blocked).map(_.why).find(_.isStarved)
       val full = waits.exists(w =>

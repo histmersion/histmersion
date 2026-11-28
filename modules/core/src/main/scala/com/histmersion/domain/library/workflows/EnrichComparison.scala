@@ -1,9 +1,9 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.domain.enrichsource.VerifiedFindings
-import com.histmersion.domain.enrichsource.Geocoded
-import com.histmersion.domain.enrichsource.Classified
+import com.histmersion.domain.library.workflows.VerifiedFindings
+import com.histmersion.domain.library.workflows.Geocoded
+import com.histmersion.domain.library.workflows.Classified
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.JsonCodec.given
 
@@ -45,7 +45,7 @@ object EnrichComparison extends OutputComparison:
               loop(tail, checked + n, passed + n - v.quoteFailed.fold(0)(_.value))
             case None => loop(tail, checked, passed)
         case s :: tail =>
-          s.output.flatMap(o => RawJson.decode[domain.enrichsource.Findings](o.value).toOption) match
+          s.output.flatMap(o => RawJson.decode[domain.library.workflows.Findings](o.value).toOption) match
             case Some(f) =>
               val n = f.findings.size
               val fails =

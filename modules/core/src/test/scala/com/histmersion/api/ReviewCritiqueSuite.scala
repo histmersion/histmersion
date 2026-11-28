@@ -1,24 +1,24 @@
 package com.histmersion
 package api
 
-import com.histmersion.domain.reviewarticle.CritiqueRule
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Fix
-import com.histmersion.domain.reviewarticle.Quotation
-import com.histmersion.domain.reviewarticle.NotMaterialAnswer
-import com.histmersion.domain.reviewarticle.SkepticAnswer
-import com.histmersion.domain.reviewarticle.FindingAnswer
-import com.histmersion.domain.reviewarticle.RecheckAnswer
-import com.histmersion.domain.reviewarticle.Prior
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.SetAsideAnswer
-import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.FixerAnswer
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Closure
-import com.histmersion.domain.reviewledger.Status
+import com.histmersion.domain.research.workflows.CritiqueRule
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Fix
+import com.histmersion.domain.research.workflows.Quotation
+import com.histmersion.domain.research.workflows.NotMaterialAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.FindingAnswer
+import com.histmersion.domain.research.workflows.RecheckAnswer
+import com.histmersion.domain.research.workflows.Prior
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.SetAsideAnswer
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Closure
+import com.histmersion.domain.research.workflows.Status
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
@@ -88,7 +88,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   private def mc(
       id: Finding.Id,
       pair: Option[CritiqueRef.Wire],
-      sev: domain.reviewarticle.Severity = domain.reviewarticle.Severity.Major
+      sev: domain.research.workflows.Severity = domain.research.workflows.Severity.Major
   ) =
     Finding(
       id,
@@ -111,7 +111,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
 
   /** The article: S1–S3 state the claim unqualified; S8 hedged; S9 not in it at all. */
-  private val body = domain.reviewarticle.Fix.Body(
+  private val body = domain.research.workflows.Fix.Body(
     """Frazer shows that the dying god is a universal type (S1), and that the dying god is a universal type (S2) [[frazer1922_golden]].
       |
       |The bough proves that the dying god is a universal type (S3) [[frazer1922_golden]].
@@ -137,7 +137,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       (
         List(
           (
-            domain.reviewarticle.Severity.Major,
+            domain.research.workflows.Severity.Major,
             Some(CritiqueRef(Citekey("smith1987_dying"), Citekey("frazer1922_golden")))
           )
         ),
@@ -157,7 +157,10 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         Nil,
         last = ReviewArticle.CheckCritiquesLast(false)
       )
-      assertEquals(fs.map(_.severity), List(domain.reviewarticle.Severity.Minor, domain.reviewarticle.Severity.Minor))
+      assertEquals(
+        fs.map(_.severity),
+        List(domain.research.workflows.Severity.Minor, domain.research.workflows.Severity.Minor)
+      )
       assert(
         fs.head.problem.value.contains(
           "(recorded minor: lee1990_ritual>frazer1922_golden is addressed — both sources are cited in one paragraph)"
@@ -184,7 +187,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     List(pass1, confirm, recheck).foreach { rule =>
       val (fs, ps, ws) =
         Reviewer.Skeptic.checkCritiques(List(f), rule, proposed, last = ReviewArticle.CheckCritiquesLast(false))
-      assertEquals((fs.map(_.severity), ps), (List(domain.reviewarticle.Severity.Minor), Nil))
+      assertEquals((fs.map(_.severity), ps), (List(domain.research.workflows.Severity.Minor), Nil))
       assert(
         fs.head.problem.value.contains(
           "no edge is recorded between [[new2020_critic]] and [[frazer1922_golden]] — its proposed edge waits for approval"
@@ -220,27 +223,27 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         .checkCritiques(List(mc(Finding.Id("S1"), None)), pass1, Nil, last = ReviewArticle.CheckCritiquesLast(true))
         ._1
         .map(_.severity),
-      List(domain.reviewarticle.Severity.Minor)
+      List(domain.research.workflows.Severity.Minor)
     )
     assertEquals(
       Reviewer.Skeptic
         .checkCritiques(List(mc(Finding.Id("S1"), None)), recheck, Nil, last = ReviewArticle.CheckCritiquesLast(false))
         ._1
         .map(_.severity),
-      List(domain.reviewarticle.Severity.Minor)
+      List(domain.research.workflows.Severity.Minor)
     )
     // minors and other kinds pass untouched
     val other = mc(Finding.Id("S2"), None).modify(_.kind).setTo(Finding.Kind("date"))
     assertEquals(
       Reviewer.Skeptic
         .checkCritiques(
-          List(other, mc(Finding.Id("S3"), None, domain.reviewarticle.Severity.Minor)),
+          List(other, mc(Finding.Id("S3"), None, domain.research.workflows.Severity.Minor)),
           pass1,
           Nil,
           last = ReviewArticle.CheckCritiquesLast(false)
         )
         ._1,
-      List(other, mc(Finding.Id("S3"), None, domain.reviewarticle.Severity.Minor))
+      List(other, mc(Finding.Id("S3"), None, domain.research.workflows.Severity.Minor))
     )
 
   test("calibration (§6.9): MAJOR only when the article cites the criticised work and states the claim unqualified"):
@@ -249,11 +252,11 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     // stands: open pair, frazer cited, the quoted sentence carries no hedge
     assertEquals(
       one(mc(Finding.Id("S3"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))))._1.map(_.severity),
-      List(domain.reviewarticle.Severity.Major)
+      List(domain.research.workflows.Severity.Major)
     )
     // the sentence is hedged ("may", "perhaps"): minor, with the sentence
     val (h, _, hw) = one(mc(Finding.Id("S8"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))))
-    assertEquals(h.map(_.severity), List(domain.reviewarticle.Severity.Minor))
+    assertEquals(h.map(_.severity), List(domain.research.workflows.Severity.Minor))
     assert(
       h.head.problem.value
         .contains("the article already qualifies the claim: \"Frazer argued that the dying god may be"),
@@ -268,12 +271,12 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         mc(Finding.Id("S9"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))),
         last = CheckCritiquesLast(true)
       )._1.map(_.severity),
-      List(domain.reviewarticle.Severity.Minor)
+      List(domain.research.workflows.Severity.Minor)
     )
     assertEquals(
       one(mc(Finding.Id("S9"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))), recheck)._1
         .map(_.severity),
-      List(domain.reviewarticle.Severity.Minor)
+      List(domain.research.workflows.Severity.Minor)
     )
     // the criticised work is not cited: the article states none of its claims
     val uncited = CritiquePair(
@@ -286,7 +289,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       mc(Finding.Id("S1"), Some(CritiqueRef.Wire("frazer1922_golden>old1900_myth"))),
       pass1.modify(_.pairs).setTo(uncited :: pairs)
     )
-    assertEquals(u.map(_.severity), List(domain.reviewarticle.Severity.Minor))
+    assertEquals(u.map(_.severity), List(domain.research.workflows.Severity.Minor))
     assert(
       u.head.problem.value.contains("the article does not cite [[old1900_myth]], so it states none of its claims"),
       u.head.problem
@@ -307,15 +310,15 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         mc(Finding.Id("S1"), Some(CritiqueRef.Wire("frazer1922_golden>new2010_rites"))),
         pass1.modify(_.pairs).setTo(older :: pairs)
       )._1.map(_.severity),
-      List(domain.reviewarticle.Severity.Major)
+      List(domain.research.workflows.Severity.Major)
     )
     // no body to check against (a rule without one): the quote is not held
     assertEquals(
       one(
         mc(Finding.Id("S9"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))),
-        pass1.modify(_.body).setTo(domain.reviewarticle.Fix.Body(""))
+        pass1.modify(_.body).setTo(domain.research.workflows.Fix.Body(""))
       )._1.map(_.severity),
-      List(domain.reviewarticle.Severity.Major)
+      List(domain.research.workflows.Severity.Major)
     )
 
   test("claimSentence and qualified: the sentence that holds a quote; hedges and contest words, outside links"):
@@ -325,7 +328,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     assertEquals(Fix.claimSentence(body, Quotation.Quote("nothing like this"), minRatio), None)
     // an abbreviation or an initial ends no sentence; a quote across two sentences gets both, not the paragraph
-    val p = domain.reviewarticle.Fix.Body(
+    val p = domain.research.workflows.Fix.Body(
       "Chang et al. (2015, contested) date the split to 6000 BP [[chang2015]]. M. L. West disagrees. It may be older. The end."
     )
     assertEquals(
@@ -525,7 +528,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       .get
     assertEquals(rep.findings.map(_.pair.map(_.wire)), List(Some("smith1987_dying>frazer1922_golden")))
     assertEquals(rep.notMaterial.map(_.ref.wire), List("brown1999_rites>frazer1922_golden"))
-    assertEquals(rep.verdict, domain.reviewarticle.Verdict.Major)
+    assertEquals(rep.verdict, domain.research.workflows.Verdict.Major)
     // a MAJOR verdict whose only MAJOR code records minor (an addressed pair) is corrected, not sent back
     val onDone = a
       .modify(_.findings)
@@ -541,7 +544,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       onDone
         .checkSkeptic(last = ReviewArticle.CheckSkepticLast(false), _ => true, _ => None, minRatio, None, Some(pass1))
         .map(_._1.verdict),
-      Right(domain.reviewarticle.Verdict.Minor)
+      Right(domain.research.workflows.Verdict.Minor)
     )
     // without the ruling it goes back
     assert(
@@ -577,19 +580,19 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         )
         .toOption
         .get
-    assertEquals(r.findings.map(_.severity), List(domain.reviewarticle.Severity.Minor))
+    assertEquals(r.findings.map(_.severity), List(domain.research.workflows.Severity.Minor))
     assert(ws.exists(_.contains("is addressed")), ws)
 
   private val merged = Merged(
     Merged.Round(1),
-    domain.reviewarticle.Verdict.Major,
+    domain.research.workflows.Verdict.Major,
     List(
       mc(Finding.Id("S1"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))),
       mc(Finding.Id("S2"), None),
       Finding(
         Finding.Id("R1"),
         Reviewer.Rules,
-        domain.reviewarticle.Severity.Major,
+        domain.research.workflows.Severity.Major,
         Finding.Kind("synth"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -628,13 +631,13 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assertEquals(
       ok,
       List(
-        domain.reviewarticle.SetAside(
-          domain.reviewarticle.SetAside.Id("S1"),
+        domain.research.workflows.SetAside(
+          domain.research.workflows.SetAside.Id("S1"),
           CritiqueRef(Citekey("smith1987_dying"), Citekey("frazer1922_golden")),
           Coverage.Rationale("Cited for the date only.")
         ),
-        domain.reviewarticle.SetAside(
-          domain.reviewarticle.SetAside.Id("S2"),
+        domain.research.workflows.SetAside(
+          domain.research.workflows.SetAside.Id("S2"),
           CritiqueRef(Citekey("brown1999_rites"), Citekey("frazer1922_golden")),
           Coverage.Rationale("Off the point.")
         )
@@ -690,7 +693,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   test(
     "the fixer's answer: a set-aside decides a MAJOR, with no edit; the ledger closes it as set aside, with the reason"
   ):
-    val body = domain.reviewarticle.Fix.Body(
+    val body = domain.research.workflows.Fix.Body(
       "Tin [[knapp2016_tin]].\n\n## Disagreements\n\nArgued [[knapp2016_tin]].\n\n## Open questions\n\nOpen [[knapp2016_tin]].\n\n## Not used\n\n- none\n"
     )
     val corpus = BodyCorpus(_.value == "knapp2016_tin", _.value == "knapp2016_tin", _ => Nil)
@@ -764,7 +767,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assertEquals(
       closed
         .absorb(
-          List(e.finding.modify(_.severity).setTo(domain.reviewarticle.Severity.Minor)),
+          List(e.finding.modify(_.severity).setTo(domain.research.workflows.Severity.Minor)),
           Run.Id("13d17bd3-fd7e-e870-9798-400086850fa9"),
           Closure.Round(1)
         )

@@ -1,7 +1,7 @@
 package com.histmersion
 package server.agents
 
-import com.histmersion.domain.compilearticle.SourceFact
+import com.histmersion.domain.research.workflows.SourceFact
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.domain.research.workflows.*

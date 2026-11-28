@@ -23,7 +23,7 @@ import com.histmersion.api.automation.managers.ManagerHint
 import com.histmersion.api.automation.managers.HintAdd
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.api.automation.managers.HintProposal
-import com.histmersion.domain.managerpolicy.Assignable
+import com.histmersion.domain.automation.managers.Assignable
 import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.api.automation.autopilot.FocusInfo
 import com.histmersion.api.automation.agentscheduler.SchedulerStatus

@@ -9,7 +9,7 @@ import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.managers.Hold
 import com.histmersion.api.automation.managers.HintEffect
-import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.research.workflows.Ledger
 import com.histmersion.api.automation.modelchains.LimitSpec
 import com.histmersion.util.nonempty.NonEmptyVector
 

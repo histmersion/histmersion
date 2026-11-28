@@ -2,7 +2,7 @@ package com.histmersion
 package domain.automation.managers
 
 import com.histmersion.api.automation.autopilot.DrainInfo
-import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.domain.automation.scheduler.Block
 import com.histmersion.api.automation.autopilot.DrainSet
 import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.api.automation.queue.QueueAdd

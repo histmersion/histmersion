@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.research
 
-import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.research.workflows.Ledger
 
 import com.histmersion.api.research.{Article, CritiqueReason}
 

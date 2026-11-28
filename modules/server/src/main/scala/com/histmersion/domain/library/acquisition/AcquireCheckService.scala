@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.acquirerecheck.Upshot
-import com.histmersion.domain.acquirerecheck.Held
+import com.histmersion.domain.library.acquisition.Upshot
+import com.histmersion.domain.library.acquisition.Held
 import com.histmersion.api.automation.queue.Docket
 
 import com.histmersion.api.automation.Queue

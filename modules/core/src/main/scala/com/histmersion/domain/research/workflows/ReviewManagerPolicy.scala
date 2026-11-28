@@ -2,13 +2,13 @@ package com.histmersion
 package domain.research.workflows
 
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.research.workflows.Ledger
 import com.histmersion.api.automation.managers.RunMark
-import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.automation.managers.Next
 import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.managerpolicy.Assignable
+import com.histmersion.domain.automation.managers.Assignable
 import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence

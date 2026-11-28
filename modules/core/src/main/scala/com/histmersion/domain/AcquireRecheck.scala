@@ -1,11 +1,11 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.acquirerecheck.LastCheck
-import com.histmersion.domain.acquirerecheck.Cadence
-import com.histmersion.domain.acquirerecheck.Held
-import com.histmersion.domain.acquirerecheck.Action
-import com.histmersion.domain.acquirerecheck.Recheckable
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.domain.library.acquisition.Cadence
+import com.histmersion.domain.library.acquisition.Held
+import com.histmersion.domain.library.acquisition.Action
+import com.histmersion.domain.library.acquisition.Recheckable
 
 import com.histmersion.util.problem.Text.{line, sentence, sentences}
 import com.histmersion.util.problem.{Problem, Problems}
@@ -89,9 +89,9 @@ object AcquireRecheck:
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def failure(message: Problems): domain.acquirerecheck.Upshot =
-    if IngestBacklog.isNoLegalCopy(message) then domain.acquirerecheck.Upshot.NoCopy
-    else domain.acquirerecheck.Upshot.Failed
+  def failure(message: Problems): domain.library.acquisition.Upshot =
+    if IngestBacklog.isNoLegalCopy(message) then domain.library.acquisition.Upshot.NoCopy
+    else domain.library.acquisition.Upshot.Failed
 
   /** What each fetcher answered when a legal ingest found no copy ([[Problem.NotFound.Copy]]'s answers). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

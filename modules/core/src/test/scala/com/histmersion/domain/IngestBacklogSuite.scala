@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.acquirerecheck.Upshot
-import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.library.acquisition.Upshot
+import com.histmersion.domain.automation.managers.ReviewSettings
 import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.api.automation.managers.OaWork
 import com.histmersion.api.automation.managers.ManagerInfo

@@ -6,7 +6,7 @@ import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.catalogue.geocode.Attempt
 import com.histmersion.api.catalogue.geocode.KindHint
 import com.histmersion.api.catalogue.geocode.Resolution
-import com.histmersion.server.markdownlint.Context
+import com.histmersion.domain.research.articles.lint.Context
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.catalogue.places.PlaceScope

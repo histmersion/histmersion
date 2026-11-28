@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.acquirerecheck.LastCheck
+import com.histmersion.domain.library.acquisition.LastCheck
 
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.library.Citekey

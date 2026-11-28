@@ -9,7 +9,7 @@ import com.histmersion.api.automation.agents.Usage
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.agents.DecisionRequest
-import com.histmersion.domain.enrichsource.Notes
+import com.histmersion.domain.library.workflows.Notes
 import com.histmersion.api.automation.agents.Origin
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given

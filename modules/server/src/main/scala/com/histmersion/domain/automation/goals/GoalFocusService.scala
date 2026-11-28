@@ -1,19 +1,19 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.domain.goalfocus.Thresholds
+import com.histmersion.domain.automation.goals.Thresholds
 import com.histmersion.api.automation.autopilot.FocusInfo
-import com.histmersion.domain.goalfocus.Facts
+import com.histmersion.domain.automation.goals.Facts
 import com.histmersion.api.automation.managers.ManagerInfo
-import com.histmersion.domain.goalfocus.Work
+import com.histmersion.domain.automation.goals.Work
 import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.api.automation.managers.ManagerEvent
-import com.histmersion.domain.goalfocus.Plan
-import com.histmersion.domain.goalfocus.Item
+import com.histmersion.domain.automation.goals.Plan
+import com.histmersion.domain.automation.goals.Item
 import com.histmersion.api.automation.managers.Hold
-import com.histmersion.domain.managerpolicy.Assignable
+import com.histmersion.domain.automation.managers.Assignable
 import com.histmersion.api.automation.managers.ItemOrigin
-import com.histmersion.domain.goalfocus.Pick
+import com.histmersion.domain.automation.goals.Pick
 import com.histmersion.api.automation.autopilot.FocusGoal
 import com.histmersion.api.automation.autopilot.FocusWaiting
 import com.histmersion.api.automation.autopilot.FocusSet

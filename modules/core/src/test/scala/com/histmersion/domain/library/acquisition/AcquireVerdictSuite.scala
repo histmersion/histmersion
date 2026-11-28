@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.acquirerecheck.LastCheck
+import com.histmersion.domain.library.acquisition.LastCheck
 
 import com.histmersion.domain.{AcquireRecheck, Actor}
 import com.histmersion.domain.library.Citekey
@@ -14,8 +14,8 @@ class AcquireVerdictSuite extends munit.FunSuite:
   private val now = Instant.parse("2026-11-22T12:00:00Z")
   private val gen = LastCheck.Generation("g1")
   private val settings = AcquireVerdict.Settings(
-    domain.acquirerecheck.Cadence.EveryDays(7),
-    domain.acquirerecheck.Cadence.RetryHours(6),
+    domain.library.acquisition.Cadence.EveryDays(7),
+    domain.library.acquisition.Cadence.RetryHours(6),
     AcquireVerdict.Failures(5),
     AcquireVerdict.Settings.Days(14)
   )

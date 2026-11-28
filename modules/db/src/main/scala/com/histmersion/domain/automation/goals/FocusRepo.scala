@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.automation.goals
 
-import com.histmersion.domain.goalfocus.Thresholds
+import com.histmersion.domain.automation.goals.Thresholds
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given

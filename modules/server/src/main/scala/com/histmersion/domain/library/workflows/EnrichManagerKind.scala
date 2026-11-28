@@ -2,10 +2,10 @@ package com.histmersion
 package domain.library.workflows
 
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.automation.managers.ReviewSettings
 import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.automation.managers.StepFacts
 import com.histmersion.domain.PriorRun
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.Origin

@@ -1,8 +1,8 @@
 package com.histmersion
 package server
 
-import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Denial
+import com.histmersion.domain.library.acquisition.Purpose
+import com.histmersion.domain.library.acquisition.Denial
 
 import com.histmersion.testsupport.ComparedByValue.given
 

@@ -6,9 +6,9 @@ import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.api.automation.managers.Sweep
 import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.automation.managers.StepFacts
 import com.histmersion.api.automation.autopilot.EngineStatus
-import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.automation.managers.ReviewSettings
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.automation.workflows.InTreeWorkflow

@@ -1,22 +1,22 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.autopilotpolicy.PlannedFacts
-import com.histmersion.domain.autopilotpolicy.Ruling
-import com.histmersion.domain.autopilotpolicy.DraftFacts
-import com.histmersion.domain.autopilotpolicy.GoalPlanFacts
-import com.histmersion.domain.autopilotpolicy.GoalFacts
-import com.histmersion.domain.autopilotpolicy.Pacing
-import com.histmersion.domain.autopilotpolicy.GoalRow
-import com.histmersion.domain.autopilotpolicy.Stride
-import com.histmersion.domain.autopilotpolicy.ManagerRow
-import com.histmersion.domain.managerpolicy.Assignable
-import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.automation.autopilot.PlannedFacts
+import com.histmersion.domain.automation.autopilot.Ruling
+import com.histmersion.domain.automation.autopilot.DraftFacts
+import com.histmersion.domain.automation.autopilot.GoalPlanFacts
+import com.histmersion.domain.automation.autopilot.GoalFacts
+import com.histmersion.domain.automation.autopilot.Pacing
+import com.histmersion.domain.automation.autopilot.GoalRow
+import com.histmersion.domain.automation.autopilot.Stride
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.automation.managers.Assignable
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Next
 import com.histmersion.api.automation.managers.ItemState
-import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.automation.managers.StepFacts
 import com.histmersion.api.automation.managers.ManagerConfig
-import com.histmersion.domain.autopilotpolicy.NextFacts
+import com.histmersion.domain.automation.autopilot.NextFacts
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence

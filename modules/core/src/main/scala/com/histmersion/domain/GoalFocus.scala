@@ -2,15 +2,15 @@ package com.histmersion
 package domain
 
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.goalfocus.Facts
-import com.histmersion.domain.goalfocus.Work
-import com.histmersion.domain.goalfocus.Stage
-import com.histmersion.domain.goalfocus.Thresholds
-import com.histmersion.domain.goalfocus.Plan
-import com.histmersion.domain.goalfocus.Fit
-import com.histmersion.domain.goalfocus.Pick
-import com.histmersion.domain.goalfocus.Item
-import com.histmersion.domain.goalfocus.Holds
+import com.histmersion.domain.automation.goals.Facts
+import com.histmersion.domain.automation.goals.Work
+import com.histmersion.domain.automation.goals.Stage
+import com.histmersion.domain.automation.goals.Thresholds
+import com.histmersion.domain.automation.goals.Plan
+import com.histmersion.domain.automation.goals.Fit
+import com.histmersion.domain.automation.goals.Pick
+import com.histmersion.domain.automation.goals.Item
+import com.histmersion.domain.automation.goals.Holds
 
 import hearth.kindlings.optics.syntax.*
 

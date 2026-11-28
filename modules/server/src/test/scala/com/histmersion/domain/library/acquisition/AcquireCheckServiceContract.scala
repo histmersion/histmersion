@@ -1,12 +1,12 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.acquirerecheck.LastCheck
+import com.histmersion.domain.library.acquisition.LastCheck
 import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.queue.QueuePatch
-import com.histmersion.domain.acquirerecheck.Held
+import com.histmersion.domain.library.acquisition.Held
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -124,9 +124,9 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     assertEquals(
       s.attempts.countSince(T0.plusSeconds(90)),
       Map(
-        domain.acquirerecheck.Upshot.NoCopy.wire -> 1,
-        domain.acquirerecheck.Upshot.Fetched.wire -> 1,
-        domain.acquirerecheck.Upshot.Closed.wire -> 1
+        domain.library.acquisition.Upshot.NoCopy.wire -> 1,
+        domain.library.acquisition.Upshot.Fetched.wire -> 1,
+        domain.library.acquisition.Upshot.Closed.wire -> 1
       )
     )
   }

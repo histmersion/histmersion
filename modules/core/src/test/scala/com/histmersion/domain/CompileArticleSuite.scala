@@ -1,14 +1,14 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.compilearticle.ClaimAnswer
-import com.histmersion.domain.compilearticle.ExtractAnswer
-import com.histmersion.domain.compilearticle.SourceFact
-import com.histmersion.domain.compilearticle.Extracted
-import com.histmersion.domain.compilearticle.EdgeFact
-import com.histmersion.domain.compilearticle.NotUsed
-import com.histmersion.domain.compilearticle.Corpus
-import com.histmersion.domain.compilearticle.DraftAnswer
+import com.histmersion.domain.research.workflows.ClaimAnswer
+import com.histmersion.domain.research.workflows.ExtractAnswer
+import com.histmersion.domain.research.workflows.SourceFact
+import com.histmersion.domain.research.workflows.Extracted
+import com.histmersion.domain.research.workflows.EdgeFact
+import com.histmersion.domain.research.workflows.NotUsed
+import com.histmersion.domain.research.workflows.Corpus
+import com.histmersion.domain.research.workflows.DraftAnswer
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -105,7 +105,7 @@ class CompileArticleSuite extends munit.FunSuite:
     SourceFact(Citekey("c2001_old"), Title("Old"), Some(Year(2001)), Source.Status.Current)
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def claim(ck: Citekey) = domain.compilearticle.Claim(
+  private def claim(ck: Citekey) = domain.research.workflows.Claim(
     ck,
     ClaimAnswer.Claim(s"claim of $ck"),
     Proposal.Quote("q"),

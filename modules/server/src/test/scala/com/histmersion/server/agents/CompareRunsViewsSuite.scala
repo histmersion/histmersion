@@ -7,12 +7,12 @@ import com.histmersion.api.automation.agents.Usage
 import com.histmersion.api.automation.agents.ModelOverride
 import com.histmersion.api.automation.agents.RunDetail
 import com.histmersion.api.automation.agents.RunParams
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.Report
-import com.histmersion.domain.reviewarticle.Verdict
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.Verdict
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence

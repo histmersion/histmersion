@@ -1,10 +1,10 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.enrichsource.FindingProposal
-import com.histmersion.domain.enrichsource.Frame
-import com.histmersion.domain.enrichsource.FindingGuards
-import com.histmersion.domain.enrichsource.Loaded
+import com.histmersion.domain.library.workflows.FindingProposal
+import com.histmersion.domain.library.workflows.Frame
+import com.histmersion.domain.library.workflows.FindingGuards
+import com.histmersion.domain.library.workflows.Loaded
 
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Problem.{Content, Field, Invalid, Raw, Share, Where}

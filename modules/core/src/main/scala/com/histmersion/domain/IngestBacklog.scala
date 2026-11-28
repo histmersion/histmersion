@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.managerpolicy.ReviewSettings
-import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Next
 
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}

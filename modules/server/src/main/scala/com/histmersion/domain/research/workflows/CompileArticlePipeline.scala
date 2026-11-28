@@ -3,13 +3,13 @@ package domain.research.workflows
 
 import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.RunInfo
-import com.histmersion.domain.compilearticle.Support
-import com.histmersion.domain.compilearticle.SourceFact
-import com.histmersion.domain.compilearticle.Extracted
-import com.histmersion.domain.compilearticle.ExtractAnswer
-import com.histmersion.domain.compilearticle.EdgeFact
-import com.histmersion.domain.compilearticle.DraftAnswer
-import com.histmersion.domain.compilearticle.Corpus
+import com.histmersion.domain.research.workflows.Support
+import com.histmersion.domain.research.workflows.SourceFact
+import com.histmersion.domain.research.workflows.Extracted
+import com.histmersion.domain.research.workflows.ExtractAnswer
+import com.histmersion.domain.research.workflows.EdgeFact
+import com.histmersion.domain.research.workflows.DraftAnswer
+import com.histmersion.domain.research.workflows.Corpus
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson

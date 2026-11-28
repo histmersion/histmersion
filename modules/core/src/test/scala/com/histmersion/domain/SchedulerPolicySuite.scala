@@ -1,13 +1,13 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.schedulerpolicy.Candidate
-import com.histmersion.domain.schedulerpolicy.Block
-import com.histmersion.domain.schedulerpolicy.Settings
-import com.histmersion.domain.schedulerpolicy.Capacity
-import com.histmersion.domain.schedulerpolicy.JobType
-import com.histmersion.domain.schedulerpolicy.Decision
-import com.histmersion.domain.schedulerpolicy.Scored
+import com.histmersion.domain.automation.scheduler.Candidate
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.domain.automation.scheduler.Settings
+import com.histmersion.domain.automation.scheduler.Capacity
+import com.histmersion.domain.automation.scheduler.JobType
+import com.histmersion.domain.automation.scheduler.Decision
+import com.histmersion.domain.automation.scheduler.Scored
 
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -66,7 +66,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
     "review=9, compile=8, extend=7, filter=6, propose=5, goal-plan=4, enrich=3, sweep=2, currency=1"
   )
   private def settings(
-      st: domain.schedulerpolicy.Strategy,
+      st: domain.automation.scheduler.Strategy,
       aging: Settings.AgingHours = Settings.AgingHours(24),
       maxWait: Settings.MaxWaitHours = Settings.MaxWaitHours(72),
       minShare: Settings.MinShare = Settings.MinShare(0.0),

@@ -1,16 +1,16 @@
 package com.histmersion
 package domain.automation.scheduler
 
-import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.domain.automation.scheduler.Block
 import com.histmersion.api.automation.Stall
 import com.histmersion.api.automation.agents.ModelOverride
-import com.histmersion.domain.schedulerpolicy.Decision
-import com.histmersion.domain.goalfocus.Stage
-import com.histmersion.domain.autopilotpolicy.NextFacts
-import com.histmersion.domain.schedulerpolicy.Candidate
+import com.histmersion.domain.automation.scheduler.Decision
+import com.histmersion.domain.automation.goals.Stage
+import com.histmersion.domain.automation.autopilot.NextFacts
+import com.histmersion.domain.automation.scheduler.Candidate
 import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.api.automation.managers.ManagerItem
-import com.histmersion.domain.schedulerpolicy.Capacity
+import com.histmersion.domain.automation.scheduler.Capacity
 import com.histmersion.api.automation.planquota.PoolId
 import com.histmersion.api.automation.agents.PauseReason
 import com.histmersion.api.automation.agents.Billing
@@ -21,8 +21,8 @@ import com.histmersion.api.automation.agentscheduler.StrategyLine
 import com.histmersion.api.automation.agentscheduler.PoolUse
 import com.histmersion.api.automation.agentscheduler.TypeLine
 import com.histmersion.api.automation.agentscheduler.Started
-import com.histmersion.domain.schedulerpolicy.Scored
-import com.histmersion.domain.schedulerpolicy.Wait
+import com.histmersion.domain.automation.scheduler.Scored
+import com.histmersion.domain.automation.scheduler.Wait
 import com.histmersion.api.automation.agentscheduler.WhyInfo
 import com.histmersion.api.automation.agentscheduler.SchedulerSet
 import com.histmersion.api.automation.queue.QueueAdd
@@ -102,7 +102,7 @@ final class SchedulerService(
 
   /** The settings in effect now. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def settings: domain.schedulerpolicy.Settings = SchedulerPolicy.settings(
+  def settings: domain.automation.scheduler.Settings = SchedulerPolicy.settings(
     ManagerDefaultsViews.scheduler(cfg.scheduler),
     chosen.map(c => SchedulerPolicy.StrategyName(c._1.value))
   )
@@ -113,7 +113,7 @@ final class SchedulerService(
       at: Instant,
       dry: Boolean,
       in: Inputs,
-      s: domain.schedulerpolicy.Settings,
+      s: domain.automation.scheduler.Settings,
       d: Decision
   )
 
@@ -141,7 +141,7 @@ final class SchedulerService(
           f.priority.value + (if f.pinned.value then PinBoost else 0),
           instantOf(f.createdAt.value),
           !GoalFocus.finished(f.status) && f.stage(
-            domain.goalfocus.Thresholds.MinSources(agents.sourcesToPlan.value)
+            domain.automation.goals.Thresholds.MinSources(agents.sourcesToPlan.value)
           ) == Stage.Gathering,
           NextFacts
             .articlesInProgress(
@@ -247,7 +247,7 @@ final class SchedulerService(
         if items.exists(i => i.kind.value == ArticleReview || i.kind.value == ProposeArticles) then
           agents.managerStore
             .openKeys(m.id)
-            .map((k, t) => (Item.Kind(k.value), t.transformInto[domain.managerpolicy.Assignable.Target]))
+            .map((k, t) => (Item.Kind(k.value), t.transformInto[domain.automation.managers.Assignable.Target]))
         else Nil
       val over = m.config.models.getOrElse(Nil)
       val memo =
@@ -263,7 +263,8 @@ final class SchedulerService(
           .orElse(pools.left.toOption.map(chain => Block(Block.Why.Starved(chain))))
           .orElse(
             Option.when(
-              ManagerPolicy.waitsFor(itemKind, i.target.transformInto[domain.managerpolicy.Assignable.Target], open)
+              ManagerPolicy
+                .waitsFor(itemKind, i.target.transformInto[domain.automation.managers.Assignable.Target], open)
             )(
               Block(
                 Block.Why.WaitsFor(
@@ -351,7 +352,7 @@ final class SchedulerService(
       stop = stop.orElse(budgetBlock()),
       recent = agents.managerStore
         .recentKinds(PageSize.assume(math.max(1, cfg.scheduler.shareWindow.value)))
-        .map(k => domain.schedulerpolicy.JobType.of(Candidate.Kind(k.value)))
+        .map(k => domain.automation.scheduler.JobType.of(Candidate.Kind(k.value)))
     )
     Inputs(cands, perManager.flatMap((m, is) => is.map(i => Candidate.Id(i.id.value) -> (m, i))).toMap, res)
 
@@ -454,7 +455,7 @@ final class SchedulerService(
         .map((p, cap) =>
           PoolUse(PoolUse.Pool(p.value), PoolUse.Used(res.poolUsed.get(p).fold(0)(_.value)), PoolUse.Cap(cap.value))
         ),
-      domain.schedulerpolicy.JobType.values.toList.map(t =>
+      domain.automation.scheduler.JobType.values.toList.map(t =>
         TypeLine(
           TypeLine.JobType(t.wire.value),
           TypeLine.Label(t.label.value),

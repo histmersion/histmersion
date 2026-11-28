@@ -1,18 +1,18 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Closure
-import com.histmersion.domain.reviewledger.Status
-import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.Verdict
-import com.histmersion.domain.reviewledger.LessonSource
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewledger.OpenStyle
-import com.histmersion.domain.reviewledger.Excerpt
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Closure
+import com.histmersion.domain.research.workflows.Status
+import com.histmersion.domain.research.workflows.Check
+import com.histmersion.domain.research.workflows.Verdict
+import com.histmersion.domain.research.workflows.LessonSource
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.OpenStyle
+import com.histmersion.domain.research.workflows.Excerpt
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -170,16 +170,16 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(!same(cov, cov.modify(_.kind).setTo(Finding.Kind("citation"))))
 
   test("transitions: claimed by the fixer, then fixed by its reviewer; not fixed carries the note"):
-    val fixed = domain.reviewarticle.Fix(
-      domain.reviewarticle.Fix.Body("body"),
+    val fixed = domain.research.workflows.Fix(
+      domain.research.workflows.Fix.Body("body"),
       Nil,
       List(Finding.Id("R1"), Finding.Id("S1")),
       Nil,
       Nil,
       Nil,
-      domain.reviewarticle.Fix.Notes(""),
-      domain.reviewarticle.Fix.WordsBefore(1),
-      domain.reviewarticle.Fix.WordsAfter(1)
+      domain.research.workflows.Fix.Notes(""),
+      domain.research.workflows.Fix.WordsBefore(1),
+      domain.research.workflows.Fix.WordsAfter(1)
     )
     val l = fresh.applyFix(
       fixed,
@@ -258,29 +258,29 @@ class ReviewLedgerSuite extends munit.FunSuite:
   test(
     "transitions: a verified rejection closes with the record's sentence and teaches a lesson; a minor may be declined"
   ):
-    val fix = domain.reviewarticle.Fix(
-      domain.reviewarticle.Fix.Body("body"),
+    val fix = domain.research.workflows.Fix(
+      domain.research.workflows.Fix.Body("body"),
       Nil,
       Nil,
       List(
-        domain.reviewarticle.Rejection(
-          domain.reviewarticle.Rejection.Id("S1"),
+        domain.research.workflows.Rejection(
+          domain.research.workflows.Rejection.Id("S1"),
           ReviewArticle.Rationale("the record dates it"),
           Citekey("ck2019"),
-          domain.reviewarticle.Rejection.Quote("Its cargo dates to 1320 BCE."),
-          domain.reviewarticle.Rejection.Ratio(1.0)
+          domain.research.workflows.Rejection.Quote("Its cargo dates to 1320 BCE."),
+          domain.research.workflows.Rejection.Ratio(1.0)
         )
       ),
       Nil,
       Nil,
-      domain.reviewarticle.Fix.Notes(""),
-      domain.reviewarticle.Fix.WordsBefore(1),
-      domain.reviewarticle.Fix.WordsAfter(1),
+      domain.research.workflows.Fix.Notes(""),
+      domain.research.workflows.Fix.WordsBefore(1),
+      domain.research.workflows.Fix.WordsAfter(1),
       wontFix = List(
-        domain.reviewarticle
-          .WontFix(domain.reviewarticle.WontFix.Id("C1"), ReviewArticle.Rationale("defined in the glossary")),
-        domain.reviewarticle.WontFix(
-          domain.reviewarticle.WontFix.Id("R1"),
+        domain.research.workflows
+          .WontFix(domain.research.workflows.WontFix.Id("C1"), ReviewArticle.Rationale("defined in the glossary")),
+        domain.research.workflows.WontFix(
+          domain.research.workflows.WontFix.Id("R1"),
           ReviewArticle.Rationale("a major cannot be declined")
         )
       )
@@ -304,40 +304,40 @@ class ReviewLedgerSuite extends munit.FunSuite:
   test("transitions: a fixed finding raised again is re-opened; a rejected one is re-opened and escalated"):
     val fixedAll =
       fresh.applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           Nil,
           List(
-            domain.reviewarticle.Rejection(
-              domain.reviewarticle.Rejection.Id("S1"),
+            domain.research.workflows.Rejection(
+              domain.research.workflows.Rejection.Id("S1"),
               ReviewArticle.Rationale("dated"),
               Citekey("ck"),
-              domain.reviewarticle.Rejection.Quote("q"),
-              domain.reviewarticle.Rejection.Ratio(1.0)
+              domain.research.workflows.Rejection.Quote("q"),
+              domain.research.workflows.Rejection.Ratio(1.0)
             )
           ),
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1)
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1)
         ),
         ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
         ReviewLedger.ApplyFixRound(1)
       )
     val l = fixedAll
       .applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           List(Finding.Id("R1")),
           Nil,
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1)
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1)
         ),
         ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
         ReviewLedger.ApplyFixRound(1)
@@ -368,18 +368,20 @@ class ReviewLedgerSuite extends munit.FunSuite:
     // a declined minor raised again stays declined; raised as MAJOR it opens
     val declined =
       fresh.applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           Nil,
           Nil,
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1),
-          wontFix =
-            List(domain.reviewarticle.WontFix(domain.reviewarticle.WontFix.Id("C1"), ReviewArticle.Rationale("fine")))
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1),
+          wontFix = List(
+            domain.research.workflows
+              .WontFix(domain.research.workflows.WontFix.Id("C1"), ReviewArticle.Rationale("fine"))
+          )
         ),
         ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
         ReviewLedger.ApplyFixRound(1)
@@ -526,19 +528,19 @@ class ReviewLedgerSuite extends munit.FunSuite:
       .absorb(List(count), Run.Id("b7f86a38-be91-c3c1-64ae-ba52940975e8"), Closure.Round(1))
       ._1
     val declined = minor.applyFix(
-      domain.reviewarticle.Fix(
-        domain.reviewarticle.Fix.Body("body"),
+      domain.research.workflows.Fix(
+        domain.research.workflows.Fix.Body("body"),
         Nil,
         Nil,
         Nil,
         Nil,
         Nil,
-        domain.reviewarticle.Fix.Notes(""),
-        domain.reviewarticle.Fix.WordsBefore(1),
-        domain.reviewarticle.Fix.WordsAfter(1),
+        domain.research.workflows.Fix.Notes(""),
+        domain.research.workflows.Fix.WordsBefore(1),
+        domain.research.workflows.Fix.WordsAfter(1),
         wontFix = List(
-          domain.reviewarticle
-            .WontFix(domain.reviewarticle.WontFix.Id("C1"), ReviewArticle.Rationale("names, not terms"))
+          domain.research.workflows
+            .WontFix(domain.research.workflows.WontFix.Id("C1"), ReviewArticle.Rationale("names, not terms"))
         )
       ),
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
@@ -561,9 +563,9 @@ class ReviewLedgerSuite extends munit.FunSuite:
   test("lessons: trimmed, never twice, the newest 15 kept"):
     val l = Ledger(Ledger.Slug("tin")).learn(
       List(
-        domain.reviewarticle.Recheck.Lessons("  every date needs  its [[citekey]] "),
-        domain.reviewarticle.Recheck.Lessons(""),
-        domain.reviewarticle.Recheck.Lessons("Every date needs its [[citekey]]")
+        domain.research.workflows.Recheck.Lessons("  every date needs  its [[citekey]] "),
+        domain.research.workflows.Recheck.Lessons(""),
+        domain.research.workflows.Recheck.Lessons("Every date needs its [[citekey]]")
       ),
       LessonSource.Recheck,
       ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
@@ -571,7 +573,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(l.lessons.map(_.text), List("every date needs its [[citekey]]"))
     val many = l.learn(
-      (1 to 20).map(i => domain.reviewarticle.Recheck.Lessons(s"lesson $i")).toList,
+      (1 to 20).map(i => domain.research.workflows.Recheck.Lessons(s"lesson $i")).toList,
       LessonSource.Recheck,
       ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
       ReviewLedger.LearnRound(3)
@@ -580,7 +582,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(many.lessons.last.text, "lesson 20")
     assertEquals(
       l.learn(
-        List(domain.reviewarticle.Recheck.Lessons("x" * 500)),
+        List(domain.research.workflows.Recheck.Lessons("x" * 500)),
         LessonSource.Recheck,
         ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.LearnRound(3)
@@ -594,21 +596,21 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("a verification pass applies checks, absorbs its findings and keeps its lessons"):
     val l = fresh.applyFix(
-      domain.reviewarticle.Fix(
-        domain.reviewarticle.Fix.Body("b"),
+      domain.research.workflows.Fix(
+        domain.research.workflows.Fix.Body("b"),
         Nil,
         List(Finding.Id("S1")),
         Nil,
         Nil,
         Nil,
-        domain.reviewarticle.Fix.Notes(""),
-        domain.reviewarticle.Fix.WordsBefore(1),
-        domain.reviewarticle.Fix.WordsAfter(1)
+        domain.research.workflows.Fix.Notes(""),
+        domain.research.workflows.Fix.WordsBefore(1),
+        domain.research.workflows.Fix.WordsAfter(1)
       ),
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyFixRound(1)
     )
-    val rc = domain.reviewarticle.Recheck(
+    val rc = domain.research.workflows.Recheck(
       Reviewer.Skeptic,
       List(
         Check(
@@ -628,7 +630,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
           Finding.Quote("Where the tin")
         )
       ),
-      List(domain.reviewarticle.Recheck.Lessons("cite the year"))
+      List(domain.research.workflows.Recheck.Lessons("cite the year"))
     )
     val after = l.applyRecheck(
       rc,
@@ -644,16 +646,16 @@ class ReviewLedgerSuite extends munit.FunSuite:
   test("merged: the open findings in reviewer order, under ledger ids, with their verdict"):
     val l = fresh
       .applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           List(Finding.Id("R1")),
           Nil,
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1)
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1)
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)
@@ -679,16 +681,16 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(Ledger(Ledger.Slug("tin")).promptText(OpenStyle.Full, ReviewLedger.ClosedLimit(60)), "")
     val l = fresh
       .applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           List(Finding.Id("R1"), Finding.Id("S1")),
           Nil,
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1)
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1)
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)
@@ -707,7 +709,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
         ReviewLedger.ApplyChecksRound(2)
       )
       .learn(
-        List(domain.reviewarticle.Recheck.Lessons("cite the year")),
+        List(domain.research.workflows.Recheck.Lessons("cite the year")),
         LessonSource.Recheck,
         ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.LearnRound(2)
@@ -732,11 +734,11 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("editedPassages: the changed paragraphs with a paragraph of margin, under their heading; what was removed"):
     val before =
-      domain.reviewarticle.Fix.Body(
+      domain.research.workflows.Fix.Body(
         "Intro one.\n\n## Disagreements\n\nThe date is argued.\n\nA second point.\n\n## Open\n\nMines.\n\nLast."
       )
     val after =
-      domain.reviewarticle.Fix.Body(
+      domain.research.workflows.Fix.Body(
         "Intro one.\n\n## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.\n\n## Open\n\nMines.\n\nLast."
       )
     val e = editedPassages(before, after)
@@ -756,9 +758,9 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assert(!e.text.value.contains("Mines"))
     // two edits far apart are two passages; an insertion with no removal; no change at all
-    val two = editedPassages(before, domain.reviewarticle.Fix.Body(after.value.replace("Last.", "Last, revised.")))
+    val two = editedPassages(before, domain.research.workflows.Fix.Body(after.value.replace("Last.", "Last, revised.")))
     assertEquals(two.passages.size, 2)
-    assertEquals(editedPassages(before, domain.reviewarticle.Fix.Body(before.value + "\n\nAdded.")).removed, Nil)
+    assertEquals(editedPassages(before, domain.research.workflows.Fix.Body(before.value + "\n\nAdded.")).removed, Nil)
     assert(editedPassages(before, before).isEmpty)
     assertEquals(
       editedPassages(before, after, margin = ReviewLedger.PassageMargin(0)).passages.map(_.text),
@@ -768,24 +770,24 @@ class ReviewLedgerSuite extends munit.FunSuite:
   test("taskText (#934): one line per article listing its open MAJORs, cut to size; none when none is open"):
     val esc = fresh
       .applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           Nil,
           List(
-            domain.reviewarticle.Rejection(
-              domain.reviewarticle.Rejection.Id("S1"),
+            domain.research.workflows.Rejection(
+              domain.research.workflows.Rejection.Id("S1"),
               ReviewArticle.Rationale("dated"),
               Citekey("ck"),
-              domain.reviewarticle.Rejection.Quote("q"),
-              domain.reviewarticle.Rejection.Ratio(1.0)
+              domain.research.workflows.Rejection.Quote("q"),
+              domain.research.workflows.Rejection.Ratio(1.0)
             )
           ),
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1)
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1)
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)
@@ -863,32 +865,34 @@ class ReviewLedgerSuite extends munit.FunSuite:
   test("the ledger round-trips through JSON (what review_ledgers stores and a step checkpoints)"):
     val l = fresh
       .applyFix(
-        domain.reviewarticle.Fix(
-          domain.reviewarticle.Fix.Body("b"),
+        domain.research.workflows.Fix(
+          domain.research.workflows.Fix.Body("b"),
           Nil,
           List(Finding.Id("R1")),
           List(
-            domain.reviewarticle.Rejection(
-              domain.reviewarticle.Rejection.Id("S1"),
+            domain.research.workflows.Rejection(
+              domain.research.workflows.Rejection.Id("S1"),
               ReviewArticle.Rationale("dated"),
               Citekey("ck"),
-              domain.reviewarticle.Rejection.Quote("q"),
-              domain.reviewarticle.Rejection.Ratio(1.0)
+              domain.research.workflows.Rejection.Quote("q"),
+              domain.research.workflows.Rejection.Ratio(1.0)
             )
           ),
           Nil,
           Nil,
-          domain.reviewarticle.Fix.Notes(""),
-          domain.reviewarticle.Fix.WordsBefore(1),
-          domain.reviewarticle.Fix.WordsAfter(1),
-          wontFix =
-            List(domain.reviewarticle.WontFix(domain.reviewarticle.WontFix.Id("C1"), ReviewArticle.Rationale("fine")))
+          domain.research.workflows.Fix.Notes(""),
+          domain.research.workflows.Fix.WordsBefore(1),
+          domain.research.workflows.Fix.WordsAfter(1),
+          wontFix = List(
+            domain.research.workflows
+              .WontFix(domain.research.workflows.WontFix.Id("C1"), ReviewArticle.Rationale("fine"))
+          )
         ),
         ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.ApplyFixRound(1)
       )
       .learn(
-        List(domain.reviewarticle.Recheck.Lessons("x")),
+        List(domain.research.workflows.Recheck.Lessons("x")),
         LessonSource.Recheck,
         ReviewLedger.LearnRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
         ReviewLedger.LearnRound(1)

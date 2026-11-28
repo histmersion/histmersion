@@ -1,11 +1,11 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.Grant
-import com.histmersion.domain.corequota.State
-import com.histmersion.domain.corequota.Ceilings
-import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Denial
+import com.histmersion.domain.library.acquisition.Grant
+import com.histmersion.domain.library.acquisition.State
+import com.histmersion.domain.library.acquisition.Ceilings
+import com.histmersion.domain.library.acquisition.Purpose
+import com.histmersion.domain.library.acquisition.Denial
 
 import com.histmersion.config.CoreServiceConfig
 import com.histmersion.domain.CoreQuota

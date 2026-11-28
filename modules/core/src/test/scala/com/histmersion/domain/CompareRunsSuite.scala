@@ -1,17 +1,17 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.enrichsource.VerifiedFinding
-import com.histmersion.domain.enrichsource.FindingProposal
-import com.histmersion.domain.enrichsource.VerifiedFindings
-import com.histmersion.domain.enrichsource.GeocodeChoice
-import com.histmersion.domain.enrichsource.Classified
-import com.histmersion.domain.enrichsource.Geocoded
-import com.histmersion.domain.reviewarticle.Severity
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.Report
-import com.histmersion.domain.reviewarticle.Verdict
+import com.histmersion.domain.library.workflows.VerifiedFinding
+import com.histmersion.domain.library.workflows.FindingProposal
+import com.histmersion.domain.library.workflows.VerifiedFindings
+import com.histmersion.domain.library.workflows.GeocodeChoice
+import com.histmersion.domain.library.workflows.Classified
+import com.histmersion.domain.library.workflows.Geocoded
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.Verdict
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -216,7 +216,7 @@ class CompareRunsSuite extends munit.FunSuite:
   )
 
   test("the quote check reads accepted answers (their own counts) and rejected ones (the verifier's reasons)"):
-    val rejected = domain.enrichsource
+    val rejected = domain.library.workflows
       .Findings(
         List(
           FindingProposal(
@@ -491,14 +491,14 @@ class CompareRunsSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def f(
-      id: domain.reviewarticle.Finding.Id,
+      id: domain.research.workflows.Finding.Id,
       sev: Severity,
-      where: domain.reviewarticle.Finding.Where,
-      problem: domain.reviewarticle.Finding.Problem,
-      quote: domain.reviewarticle.Finding.Quote = domain.reviewarticle.Finding.Quote(""),
-      kind: domain.reviewarticle.Finding.Kind = domain.reviewarticle.Finding.Kind("term")
+      where: domain.research.workflows.Finding.Where,
+      problem: domain.research.workflows.Finding.Problem,
+      quote: domain.research.workflows.Finding.Quote = domain.research.workflows.Finding.Quote(""),
+      kind: domain.research.workflows.Finding.Kind = domain.research.workflows.Finding.Kind("term")
   ) =
-    domain.reviewarticle.Finding(
+    domain.research.workflows.Finding(
       id,
       Reviewer
         .parse(if id.value.startsWith("R") then Reviewer.Wire("rules")
@@ -510,73 +510,73 @@ class CompareRunsSuite extends munit.FunSuite:
       where,
       quote,
       problem,
-      domain.reviewarticle.Finding.Fix("")
+      domain.research.workflows.Finding.Fix("")
     )
 
   test("same major: the same where and a similar problem, or the same quoted passage"):
     assert(
       ReviewComparison.sameMajor(
         f(
-          domain.reviewarticle.Finding.Id("R1"),
+          domain.research.workflows.Finding.Id("R1"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("Intro"),
-          domain.reviewarticle.Finding.Problem("tin is not defined")
+          domain.research.workflows.Finding.Where("Intro"),
+          domain.research.workflows.Finding.Problem("tin is not defined")
         ),
         f(
-          domain.reviewarticle.Finding.Id("R2"),
+          domain.research.workflows.Finding.Id("R2"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("intro"),
-          domain.reviewarticle.Finding.Problem("Tin is not defined at all")
+          domain.research.workflows.Finding.Where("intro"),
+          domain.research.workflows.Finding.Problem("Tin is not defined at all")
         )
       )
     )
     assert(
       !ReviewComparison.sameMajor(
         f(
-          domain.reviewarticle.Finding.Id("R1"),
+          domain.research.workflows.Finding.Id("R1"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("Intro"),
-          domain.reviewarticle.Finding.Problem("tin is not defined")
+          domain.research.workflows.Finding.Where("Intro"),
+          domain.research.workflows.Finding.Problem("tin is not defined")
         ),
         f(
-          domain.reviewarticle.Finding.Id("R2"),
+          domain.research.workflows.Finding.Id("R2"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("Dates"),
-          domain.reviewarticle.Finding.Problem("tin is not defined")
+          domain.research.workflows.Finding.Where("Dates"),
+          domain.research.workflows.Finding.Problem("tin is not defined")
         )
       )
     )
     assert(
       !ReviewComparison.sameMajor(
         f(
-          domain.reviewarticle.Finding.Id("R1"),
+          domain.research.workflows.Finding.Id("R1"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("Intro"),
-          domain.reviewarticle.Finding.Problem("tin is not defined")
+          domain.research.workflows.Finding.Where("Intro"),
+          domain.research.workflows.Finding.Problem("tin is not defined")
         ),
         f(
-          domain.reviewarticle.Finding.Id("R2"),
+          domain.research.workflows.Finding.Id("R2"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("Intro"),
-          domain.reviewarticle.Finding.Problem("the date is wrong")
+          domain.research.workflows.Finding.Where("Intro"),
+          domain.research.workflows.Finding.Problem("the date is wrong")
         )
       )
     )
     assert(
       ReviewComparison.sameMajor(
         f(
-          domain.reviewarticle.Finding.Id("S1"),
+          domain.research.workflows.Finding.Id("S1"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("A"),
-          domain.reviewarticle.Finding.Problem("x"),
-          domain.reviewarticle.Finding.Quote("Its cargo dates to 1320")
+          domain.research.workflows.Finding.Where("A"),
+          domain.research.workflows.Finding.Problem("x"),
+          domain.research.workflows.Finding.Quote("Its cargo dates to 1320")
         ),
         f(
-          domain.reviewarticle.Finding.Id("R4"),
+          domain.research.workflows.Finding.Id("R4"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("B"),
-          domain.reviewarticle.Finding.Problem("y"),
-          domain.reviewarticle.Finding.Quote("its cargo dates to 1320")
+          domain.research.workflows.Finding.Where("B"),
+          domain.research.workflows.Finding.Problem("y"),
+          domain.research.workflows.Finding.Quote("its cargo dates to 1320")
         )
       )
     )
@@ -585,24 +585,24 @@ class CompareRunsSuite extends munit.FunSuite:
     val pairs = ReviewComparison.overlap(
       List(
         f(
-          domain.reviewarticle.Finding.Id("R1"),
+          domain.research.workflows.Finding.Id("R1"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("I"),
-          domain.reviewarticle.Finding.Problem("tin undefined here")
+          domain.research.workflows.Finding.Where("I"),
+          domain.research.workflows.Finding.Problem("tin undefined here")
         ),
         f(
-          domain.reviewarticle.Finding.Id("R2"),
+          domain.research.workflows.Finding.Id("R2"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("I"),
-          domain.reviewarticle.Finding.Problem("tin undefined here")
+          domain.research.workflows.Finding.Where("I"),
+          domain.research.workflows.Finding.Problem("tin undefined here")
         )
       ),
       List(
         f(
-          domain.reviewarticle.Finding.Id("R9"),
+          domain.research.workflows.Finding.Id("R9"),
           Severity.Major,
-          domain.reviewarticle.Finding.Where("I"),
-          domain.reviewarticle.Finding.Problem("tin undefined here")
+          domain.research.workflows.Finding.Where("I"),
+          domain.research.workflows.Finding.Problem("tin undefined here")
         )
       )
     )
@@ -631,11 +631,11 @@ class CompareRunsSuite extends munit.FunSuite:
               Step.Output(
                 List(
                   f(
-                    domain.reviewarticle.Finding.Id("M1"),
+                    domain.research.workflows.Finding.Id("M1"),
                     Severity.Minor,
-                    domain.reviewarticle.Finding.Where("Body"),
-                    domain.reviewarticle.Finding.Problem("no Disagreements"),
-                    kind = domain.reviewarticle.Finding.Kind("structure")
+                    domain.research.workflows.Finding.Where("Body"),
+                    domain.research.workflows.Finding.Problem("no Disagreements"),
+                    kind = domain.research.workflows.Finding.Kind("structure")
                   )
                 ).asJson.noSpaces
               )
@@ -644,23 +644,23 @@ class CompareRunsSuite extends munit.FunSuite:
         )
     )
     val r1 = f(
-      domain.reviewarticle.Finding.Id("R1"),
+      domain.research.workflows.Finding.Id("R1"),
       Severity.Major,
-      domain.reviewarticle.Finding.Where("Intro"),
-      domain.reviewarticle.Finding.Problem("tin is not defined")
+      domain.research.workflows.Finding.Where("Intro"),
+      domain.research.workflows.Finding.Problem("tin is not defined")
     )
     val s1 = f(
-      domain.reviewarticle.Finding.Id("S1"),
+      domain.research.workflows.Finding.Id("S1"),
       Severity.Major,
-      domain.reviewarticle.Finding.Where("Dates"),
-      domain.reviewarticle.Finding.Problem("the date is wrong"),
-      kind = domain.reviewarticle.Finding.Kind("date")
+      domain.research.workflows.Finding.Where("Dates"),
+      domain.research.workflows.Finding.Problem("the date is wrong"),
+      kind = domain.research.workflows.Finding.Kind("date")
     )
     val c1 = f(
-      domain.reviewarticle.Finding.Id("C1"),
+      domain.research.workflows.Finding.Id("C1"),
       Severity.Minor,
-      domain.reviewarticle.Finding.Where("Intro"),
-      domain.reviewarticle.Finding.Problem("what is bronze")
+      domain.research.workflows.Finding.Where("Intro"),
+      domain.research.workflows.Finding.Problem("what is bronze")
     )
     val a = review(
       RunHead.Id("a"),
@@ -675,10 +675,10 @@ class CompareRunsSuite extends munit.FunSuite:
       )
     )
     val r1b = f(
-      domain.reviewarticle.Finding.Id("R1"),
+      domain.research.workflows.Finding.Id("R1"),
       Severity.Major,
-      domain.reviewarticle.Finding.Where("intro"),
-      domain.reviewarticle.Finding.Problem("Tin is never defined, tin is not defined")
+      domain.research.workflows.Finding.Where("intro"),
+      domain.research.workflows.Finding.Problem("Tin is never defined, tin is not defined")
     )
     val b = review(
       RunHead.Id("b"),

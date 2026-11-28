@@ -1,13 +1,13 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.domain.compilearticle.ExtractAnswer
-import com.histmersion.domain.compilearticle.DraftAnswer
-import com.histmersion.domain.reviewarticle.RulesAnswer
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.SkepticAnswer
-import com.histmersion.domain.reviewarticle.RecheckAnswer
-import com.histmersion.domain.reviewarticle.FixerAnswer
+import com.histmersion.domain.research.workflows.ExtractAnswer
+import com.histmersion.domain.research.workflows.DraftAnswer
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.RecheckAnswer
+import com.histmersion.domain.research.workflows.FixerAnswer
 import com.histmersion.domain.FilterAnswer
 import com.histmersion.domain.ArticlesAnswer
 import com.histmersion.domain.automation.agents.SttpAiJson.given

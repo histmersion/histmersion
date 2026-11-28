@@ -2,7 +2,7 @@ package com.histmersion
 package domain.library.acquisition
 
 import com.histmersion.api.library.acquire.RetractionRow
-import com.histmersion.domain.corequota.State
+import com.histmersion.domain.library.acquisition.State
 
 import com.histmersion.api.library.Acquire
 import com.histmersion.domain.CoreQuota

@@ -1,15 +1,15 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.acquirerecheck.LastCheck
-import com.histmersion.domain.acquirerecheck.Cadence
-import com.histmersion.domain.acquirerecheck.Held
-import com.histmersion.domain.acquirerecheck.Action
-import com.histmersion.domain.acquirerecheck.Rationale
-import com.histmersion.domain.acquirerecheck.Shared
-import com.histmersion.domain.acquirerecheck.Recheckable
-import com.histmersion.domain.acquirerecheck.JobPlan
-import com.histmersion.domain.acquirerecheck.Tally
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.domain.library.acquisition.Cadence
+import com.histmersion.domain.library.acquisition.Held
+import com.histmersion.domain.library.acquisition.Action
+import com.histmersion.domain.library.acquisition.Rationale
+import com.histmersion.domain.library.acquisition.Shared
+import com.histmersion.domain.library.acquisition.Recheckable
+import com.histmersion.domain.library.acquisition.JobPlan
+import com.histmersion.domain.library.acquisition.Tally
 
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
@@ -166,15 +166,15 @@ class AcquireRecheckSuite extends munit.FunSuite:
   test("a failed legal ingest: no legal copy, or no answer"):
     assertEquals(
       failure(Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)),
-      domain.acquirerecheck.Upshot.NoCopy
+      domain.library.acquisition.Upshot.NoCopy
     )
     assertEquals(
       failure(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))),
-      domain.acquirerecheck.Upshot.Failed
+      domain.library.acquisition.Upshot.Failed
     )
     assertEquals(
-      domain.acquirerecheck.Upshot.values.toList.flatMap(o => domain.acquirerecheck.Upshot.parse(o.wire)),
-      domain.acquirerecheck.Upshot.values.toList
+      domain.library.acquisition.Upshot.values.toList.flatMap(o => domain.library.acquisition.Upshot.parse(o.wire)),
+      domain.library.acquisition.Upshot.values.toList
     )
 
   test("the reason: the day, what was found and what each fetcher answered"):
@@ -480,11 +480,11 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("the job's progress line counts what it found, with the last no-answer's reason, shortened"):
     val t = Tally(total = Tally.Total(453))
-      .add(domain.acquirerecheck.Upshot.Closed, AcquireRecheck.Detail("a2020_x"))
-      .add(domain.acquirerecheck.Upshot.Fetched, AcquireRecheck.Detail("unpaywall"))
-      .add(domain.acquirerecheck.Upshot.NoCopy, Detail("none"))
+      .add(domain.library.acquisition.Upshot.Closed, AcquireRecheck.Detail("a2020_x"))
+      .add(domain.library.acquisition.Upshot.Fetched, AcquireRecheck.Detail("unpaywall"))
+      .add(domain.library.acquisition.Upshot.NoCopy, Detail("none"))
       .add(
-        domain.acquirerecheck.Upshot.Failed,
+        domain.library.acquisition.Upshot.Failed,
         Detail("HTTP 429 Too Many Requests from api.example.invalid — retry after 3600 seconds, said the upstream")
       )
     assertEquals(t.tried, 3)

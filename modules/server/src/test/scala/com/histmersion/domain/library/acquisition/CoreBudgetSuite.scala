@@ -1,8 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
-import com.histmersion.domain.corequota.Grant
-import com.histmersion.domain.corequota.State
+import com.histmersion.domain.library.acquisition.Grant
+import com.histmersion.domain.library.acquisition.State
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}

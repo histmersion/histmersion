@@ -1,25 +1,25 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.Quotation
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.CritiqueRule
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewarticle.Fix.headings
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.EvidenceAnswer
-import com.histmersion.domain.reviewarticle.Report
-import com.histmersion.domain.reviewarticle.SpotCheck
-import com.histmersion.domain.reviewarticle.SpotCheckAnswer
-import com.histmersion.domain.reviewarticle.SpotRule
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.NotMaterialAnswer
-import com.histmersion.domain.reviewarticle.Prior
-import com.histmersion.domain.reviewarticle.CheckAnswer
-import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.SetAsideAnswer
-import com.histmersion.domain.reviewarticle.SetAside
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.Quotation
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.CritiqueRule
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.Fix.headings
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.EvidenceAnswer
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.SpotCheck
+import com.histmersion.domain.research.workflows.SpotCheckAnswer
+import com.histmersion.domain.research.workflows.SpotRule
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.NotMaterialAnswer
+import com.histmersion.domain.research.workflows.Prior
+import com.histmersion.domain.research.workflows.CheckAnswer
+import com.histmersion.domain.research.workflows.Check
+import com.histmersion.domain.research.workflows.SetAsideAnswer
+import com.histmersion.domain.research.workflows.SetAside
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.Problem
@@ -193,7 +193,7 @@ object ReviewArticle:
   private def norm(h: String): String = h.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z ]", "").trim
 
   /** The finding kind of the coverage checks (#958): hand-written generated sections, and drift. */
-  val CoverageKind: domain.reviewarticle.Finding.Kind = domain.reviewarticle.Finding.Kind("coverage")
+  val CoverageKind: domain.research.workflows.Finding.Kind = domain.research.workflows.Finding.Kind("coverage")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def findQuote(quote: String, body: String, minRatio: CritiqueRule.MinRatio): AgentVerify.QuoteMatch =
@@ -218,15 +218,15 @@ object ReviewArticle:
       body: MechanicalBody,
       isTarget: research.Slug => Boolean,
       generated: MechanicalGenerated = MechanicalGenerated(false)
-  ): List[domain.reviewarticle.Finding] =
+  ): List[domain.research.workflows.Finding] =
     val hs = headings(body)
     def f(
-        sev: domain.reviewarticle.Severity,
-        kind: domain.reviewarticle.Finding.Kind,
-        where: domain.reviewarticle.Finding.Where,
-        quote: domain.reviewarticle.Finding.Quote,
-        problem: domain.reviewarticle.Finding.Problem,
-        fix: domain.reviewarticle.Finding.Fix
+        sev: domain.research.workflows.Severity,
+        kind: domain.research.workflows.Finding.Kind,
+        where: domain.research.workflows.Finding.Where,
+        quote: domain.research.workflows.Finding.Quote,
+        problem: domain.research.workflows.Finding.Problem,
+        fix: domain.research.workflows.Finding.Fix
     ) =
       (sev, kind, where, quote, problem, fix)
     val articleSlug = Article.Slug(slug.value)
@@ -234,15 +234,15 @@ object ReviewArticle:
       .articleFiller(List(articleSlug -> body))
       .map(i =>
         f(
-          domain.reviewarticle.Severity.Minor,
-          domain.reviewarticle.Finding.Kind("language"),
-          domain.reviewarticle.Finding.Where("body"),
-          domain.reviewarticle.Finding.Quote(""),
-          domain.reviewarticle.Finding.Problem.of(
-            domain.reviewarticle.Finding.Problem.Cause
-              .Filler(domain.reviewarticle.Finding.Problem.Rest(i.detail.fillerMatches))
+          domain.research.workflows.Severity.Minor,
+          domain.research.workflows.Finding.Kind("language"),
+          domain.research.workflows.Finding.Where("body"),
+          domain.research.workflows.Finding.Quote(""),
+          domain.research.workflows.Finding.Problem.of(
+            domain.research.workflows.Finding.Problem.Cause
+              .Filler(domain.research.workflows.Finding.Problem.Rest(i.detail.fillerMatches))
           ),
-          domain.reviewarticle.Finding.Fix("rewrite the sentence")
+          domain.research.workflows.Finding.Fix("rewrite the sentence")
         )
       )
     // the lint rule's own test, one paragraph at a time (a link to an article is not a citation)
@@ -251,23 +251,24 @@ object ReviewArticle:
       .filter(p => Article.Lint.articleUncitedParagraphs(List(articleSlug -> Article.Body(p.value))).nonEmpty)
       .map(p =>
         f(
-          domain.reviewarticle.Severity.Major,
-          domain.reviewarticle.Finding.Kind("citation"),
-          domain.reviewarticle.Finding.Where(p.value.split("\\s+").take(8).mkString(" ")),
-          domain.reviewarticle.Finding.Quote(p.value.take(200)),
-          domain.reviewarticle.Finding.Problem.of(domain.reviewarticle.Finding.Problem.Cause.UncitedParagraph),
-          domain.reviewarticle.Finding
+          domain.research.workflows.Severity.Major,
+          domain.research.workflows.Finding.Kind("citation"),
+          domain.research.workflows.Finding.Where(p.value.split("\\s+").take(8).mkString(" ")),
+          domain.research.workflows.Finding.Quote(p.value.take(200)),
+          domain.research.workflows.Finding.Problem
+            .of(domain.research.workflows.Finding.Problem.Cause.UncitedParagraph),
+          domain.research.workflows.Finding
             .Fix("cite the source the paragraph rests on, or move it to the unresolved section")
         )
       )
     val escaped = Option.when(body.value.contains("\\[\\["))(
       f(
-        domain.reviewarticle.Severity.Major,
-        domain.reviewarticle.Finding.Kind("citation"),
-        domain.reviewarticle.Finding.Where("body"),
-        domain.reviewarticle.Finding.Quote("\\[\\["),
-        domain.reviewarticle.Finding.Problem("escaped link brackets render as text and link nothing"),
-        domain.reviewarticle.Finding.Fix("write [[citekey]] unescaped")
+        domain.research.workflows.Severity.Major,
+        domain.research.workflows.Finding.Kind("citation"),
+        domain.research.workflows.Finding.Where("body"),
+        domain.research.workflows.Finding.Quote("\\[\\["),
+        domain.research.workflows.Finding.Problem("escaped link brackets render as text and link nothing"),
+        domain.research.workflows.Finding.Fix("write [[citekey]] unescaped")
       )
     )
     val sourcesCited = hs
@@ -275,12 +276,13 @@ object ReviewArticle:
       .take(1)
       .map(h =>
         f(
-          domain.reviewarticle.Severity.Major,
-          domain.reviewarticle.Finding.Kind("section"),
-          domain.reviewarticle.Finding.Where(h),
-          domain.reviewarticle.Finding.Quote(s"## $h"),
-          domain.reviewarticle.Finding.Problem.of(domain.reviewarticle.Finding.Problem.Cause.HandWrittenSourcesCited),
-          domain.reviewarticle.Finding.Fix("delete the section")
+          domain.research.workflows.Severity.Major,
+          domain.research.workflows.Finding.Kind("section"),
+          domain.research.workflows.Finding.Where(h),
+          domain.research.workflows.Finding.Quote(s"## $h"),
+          domain.research.workflows.Finding.Problem
+            .of(domain.research.workflows.Finding.Problem.Cause.HandWrittenSourcesCited),
+          domain.research.workflows.Finding.Fix("delete the section")
         )
       )
     val handWritten =
@@ -290,12 +292,13 @@ object ReviewArticle:
           .take(1)
           .map(h =>
             f(
-              domain.reviewarticle.Severity.Major,
+              domain.research.workflows.Severity.Major,
               CoverageKind,
-              domain.reviewarticle.Finding.Where(h),
-              domain.reviewarticle.Finding.Quote(s"## $h"),
-              domain.reviewarticle.Finding.Problem.of(domain.reviewarticle.Finding.Problem.Cause.HandWrittenNotUsed),
-              domain.reviewarticle.Finding
+              domain.research.workflows.Finding.Where(h),
+              domain.research.workflows.Finding.Quote(s"## $h"),
+              domain.research.workflows.Finding.Problem
+                .of(domain.research.workflows.Finding.Problem.Cause.HandWrittenNotUsed),
+              domain.research.workflows.Finding
                 .Fix("delete the section; give each left-out source's reason in `reasons` instead")
             )
           ) ++
@@ -305,12 +308,13 @@ object ReviewArticle:
             .toList
             .map(l =>
               f(
-                domain.reviewarticle.Severity.Major,
+                domain.research.workflows.Severity.Major,
                 CoverageKind,
-                domain.reviewarticle.Finding.Where("Method"),
-                domain.reviewarticle.Finding.Quote(l.take(200)),
-                domain.reviewarticle.Finding.Problem.of(domain.reviewarticle.Finding.Problem.Cause.HandWrittenMethod),
-                domain.reviewarticle.Finding.Fix("delete the note")
+                domain.research.workflows.Finding.Where("Method"),
+                domain.research.workflows.Finding.Quote(l.take(200)),
+                domain.research.workflows.Finding.Problem
+                  .of(domain.research.workflows.Finding.Problem.Cause.HandWrittenMethod),
+                domain.research.workflows.Finding.Fix("delete the note")
               )
             )
     val missing = Snapshot
@@ -318,15 +322,15 @@ object ReviewArticle:
       .filterNot(alts => hs.exists(h => alts.exists(a => norm(h).startsWith(a))))
       .map(alts =>
         f(
-          domain.reviewarticle.Severity.Major,
-          domain.reviewarticle.Finding.Kind("section"),
-          domain.reviewarticle.Finding.Where("headings"),
-          domain.reviewarticle.Finding.Quote(""),
-          domain.reviewarticle.Finding.Problem.of(
-            domain.reviewarticle.Finding.Problem.Cause
-              .MissingSection(alts.map(domain.reviewarticle.Finding.Problem.Section(_)))
+          domain.research.workflows.Severity.Major,
+          domain.research.workflows.Finding.Kind("section"),
+          domain.research.workflows.Finding.Where("headings"),
+          domain.research.workflows.Finding.Quote(""),
+          domain.research.workflows.Finding.Problem.of(
+            domain.research.workflows.Finding.Problem.Cause
+              .MissingSection(alts.map(domain.research.workflows.Finding.Problem.Section(_)))
           ),
-          domain.reviewarticle.Finding.Fix("add the section")
+          domain.research.workflows.Finding.Fix("add the section")
         )
       )
     val dup = hs
@@ -336,30 +340,30 @@ object ReviewArticle:
       .sorted
       .map(h =>
         f(
-          domain.reviewarticle.Severity.Minor,
-          domain.reviewarticle.Finding.Kind("section"),
-          domain.reviewarticle.Finding.Where(h),
-          domain.reviewarticle.Finding.Quote(s"## $h"),
-          domain.reviewarticle.Finding.Problem("a duplicated heading"),
-          domain.reviewarticle.Finding.Fix("merge the two sections")
+          domain.research.workflows.Severity.Minor,
+          domain.research.workflows.Finding.Kind("section"),
+          domain.research.workflows.Finding.Where(h),
+          domain.research.workflows.Finding.Quote(s"## $h"),
+          domain.research.workflows.Finding.Problem("a duplicated heading"),
+          domain.research.workflows.Finding.Fix("merge the two sections")
         )
       )
     val dangling = wikilinks(body.value)
       .filterNot(t => research.Slug.option(t).exists(isTarget))
       .map(t =>
         f(
-          domain.reviewarticle.Severity.Major,
-          domain.reviewarticle.Finding.Kind("citation"),
-          domain.reviewarticle.Finding.Where(s"[[$t]]"),
-          domain.reviewarticle.Finding.Quote(s"[[$t]]"),
-          domain.reviewarticle.Finding.Problem(s"[[$t]] is neither a citekey nor an article"),
-          domain.reviewarticle.Finding.Fix("link a real citekey or article")
+          domain.research.workflows.Severity.Major,
+          domain.research.workflows.Finding.Kind("citation"),
+          domain.research.workflows.Finding.Where(s"[[$t]]"),
+          domain.research.workflows.Finding.Quote(s"[[$t]]"),
+          domain.research.workflows.Finding.Problem(s"[[$t]] is neither a citekey nor an article"),
+          domain.research.workflows.Finding.Fix("link a real citekey or article")
         )
       )
     (filler ++ uncited ++ escaped ++ sourcesCited ++ handWritten ++ missing ++ dup ++ dangling).zipWithIndex.map {
       case ((sev, k, w, q, p, fx), i) =>
-        domain.reviewarticle.Finding(
-          domain.reviewarticle.Finding.Id(s"M${i + 1}"),
+        domain.research.workflows.Finding(
+          domain.research.workflows.Finding.Id(s"M${i + 1}"),
           Reviewer.Mechanical,
           sev,
           k,
@@ -377,7 +381,7 @@ object ReviewArticle:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def coverageDrift(c: Coverage, from: Merged.Round): List[domain.reviewarticle.Finding] =
+  def coverageDrift(c: Coverage, from: Merged.Round): List[domain.research.workflows.Finding] =
     def keys(cks: List[ApiCitekey]) =
       val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
       if cks.size > 40 then s"$shown (+${cks.size - 40} more)" else shown
@@ -385,38 +389,38 @@ object ReviewArticle:
       val (sev, problem, fix) = d.kind match
         case DriftKind.Unplaced =>
           (
-            domain.reviewarticle.Severity.Major,
-            domain.reviewarticle.Finding.Problem.of(
-              domain.reviewarticle.Finding.Problem.Cause
-                .UnplacedSources(domain.reviewarticle.Finding.Problem.Count(d.citekeys.size), d.citekeys.take(40))
+            domain.research.workflows.Severity.Major,
+            domain.research.workflows.Finding.Problem.of(
+              domain.research.workflows.Finding.Problem.Cause
+                .UnplacedSources(domain.research.workflows.Finding.Problem.Count(d.citekeys.size), d.citekeys.take(40))
             ),
             "cite each one where its record bears on the question, or give its reason in `reasons` (read the record first)"
           )
         case DriftKind.ReasonForCited =>
           (
-            domain.reviewarticle.Severity.Minor,
-            domain.reviewarticle.Finding.Problem(
+            domain.research.workflows.Severity.Minor,
+            domain.research.workflows.Finding.Problem(
               s"a reason is stored for ${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the article cites: ${keys(d.citekeys)}"
             ),
             "remove the reason (an empty one in `reasons`)"
           )
         case DriftKind.ReasonOutside =>
           (
-            domain.reviewarticle.Severity.Minor,
-            domain.reviewarticle.Finding.Problem(
+            domain.research.workflows.Severity.Minor,
+            domain.research.workflows.Finding.Problem(
               s"a reason is stored for ${Plural.count(Plural.CountN(d.citekeys.size.toLong), Plural.CountSingular("source"))} the filter no longer returns: ${keys(d.citekeys)}"
             ),
             "remove the reason (an empty one in `reasons`)"
           )
-      domain.reviewarticle.Finding(
-        domain.reviewarticle.Finding.Id(s"M${from.value + i}"),
+      domain.research.workflows.Finding(
+        domain.research.workflows.Finding.Id(s"M${from.value + i}"),
         Reviewer.Mechanical,
         sev,
         CoverageKind,
-        domain.reviewarticle.Finding.Where(Article.Coverage.NotUsedHeading),
-        domain.reviewarticle.Finding.Quote(""),
+        domain.research.workflows.Finding.Where(Article.Coverage.NotUsedHeading),
+        domain.research.workflows.Finding.Quote(""),
         problem,
-        domain.reviewarticle.Finding.Fix(fix)
+        domain.research.workflows.Finding.Fix(fix)
       )
     }
 
@@ -462,12 +466,12 @@ object ReviewArticle:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def verdictOf(
-      stated: domain.reviewarticle.Verdict.Wire,
-      fs: List[domain.reviewarticle.Finding],
+      stated: domain.research.workflows.Verdict.Wire,
+      fs: List[domain.research.workflows.Finding],
       last: VerdictOfLast
-  ): Either[Problem, domain.reviewarticle.Verdict] =
-    val derived = domain.reviewarticle.Verdict.of(fs)
-    domain.reviewarticle.Verdict.parse(Option(stated).getOrElse(domain.reviewarticle.Verdict.Wire(""))) match
+  ): Either[Problem, domain.research.workflows.Verdict] =
+    val derived = domain.research.workflows.Verdict.of(fs)
+    domain.research.workflows.Verdict.parse(Option(stated).getOrElse(domain.research.workflows.Verdict.Wire(""))) match
       case None if !last.value && Option(stated).forall(_.value.trim.isEmpty) =>
         Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictGiven)))
       case None if !last.value =>
@@ -480,18 +484,18 @@ object ReviewArticle:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def settle(
       r: Reviewer,
-      verdict: Either[Problem, domain.reviewarticle.Verdict],
-      fs: List[domain.reviewarticle.Finding],
+      verdict: Either[Problem, domain.research.workflows.Verdict],
+      fs: List[domain.research.workflows.Finding],
       problems: List[Problem],
       dropped: List[String],
       last: LastRound
-  )(build: domain.reviewarticle.Verdict => Report): Either[List[Problem], (Report, List[String])] =
+  )(build: domain.research.workflows.Verdict => Report): Either[List[Problem], (Report, List[String])] =
     val all = problems ++ verdict.left.toOption.toList
     if all.nonEmpty && !last.value then Left(all)
     else
       Right(
         (
-          build(verdict.getOrElse(domain.reviewarticle.Verdict.of(fs))),
+          build(verdict.getOrElse(domain.research.workflows.Verdict.of(fs))),
           all.map(p => s"${r.wire}: dropped — ${p.sentence}") ++ dropped
         )
       )
@@ -605,21 +609,21 @@ object ReviewArticle:
     */
   object TermCount:
 
-    val Kind: domain.reviewarticle.Finding.Kind = domain.reviewarticle.Finding.Kind("term-count")
-    val Where: domain.reviewarticle.Finding.Where = domain.reviewarticle.Finding.Where("explain-back")
+    val Kind: domain.research.workflows.Finding.Kind = domain.research.workflows.Finding.Kind("term-count")
+    val Where: domain.research.workflows.Finding.Where = domain.research.workflows.Finding.Where("explain-back")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def problem(n: ColdReaderAnswer.TermsUndefined): domain.reviewarticle.Finding.Problem =
-      domain.reviewarticle.Finding.Problem(
+    def problem(n: ColdReaderAnswer.TermsUndefined): domain.research.workflows.Finding.Problem =
+      domain.research.workflows.Finding.Problem(
         s"$n terms undefined (count only; the individual findings carry the severity)"
       )
-    val Fix: domain.reviewarticle.Finding.Fix =
-      domain.reviewarticle.Finding.Fix("define each on first use, and add a Glossary")
+    val Fix: domain.research.workflows.Finding.Fix =
+      domain.research.workflows.Finding.Fix("define each on first use, and add a Glossary")
 
     /** The count finding — this one, or the MAJOR "N terms are undefined (more than 8)" earlier runs stored. */
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def is(f: domain.reviewarticle.Finding): Boolean =
+    def is(f: domain.research.workflows.Finding): Boolean =
       f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.value.trim.isEmpty) &&
         normalise(Option(f.where).map(_.value).getOrElse("")) == normalise(Where.value) &&
         (f.kind == Kind || (f.kind.value == "term" && Option(f.problem).exists(_.isTermCount)))
@@ -646,7 +650,8 @@ object ReviewArticle:
   // ── the critique checklist (docs/research-review-convergence.md §6.8) ──────────────────────────
 
   /** The finding kind of an omitted critique. */
-  val MissingCritique: domain.reviewarticle.Finding.Kind = domain.reviewarticle.Finding.Kind("missing-critique")
+  val MissingCritique: domain.research.workflows.Finding.Kind =
+    domain.research.workflows.Finding.Kind("missing-critique")
 
   /** GRADE hedges and contest words: a sentence carrying one already qualifies its claim. */
   private val Hedge =
@@ -714,9 +719,9 @@ object ReviewArticle:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def onePerPair(
-      fs: List[domain.reviewarticle.Finding],
+      fs: List[domain.research.workflows.Finding],
       heldBySkeptic: List[CritiqueRef]
-  ): (List[domain.reviewarticle.Finding], List[String]) =
+  ): (List[domain.research.workflows.Finding], List[String]) =
     val withPair = fs.filter(f => f.isMissingCritique && f.pair.isDefined)
     val keep = fs.filter { f =>
       if !f.isMissingCritique || f.pair.isEmpty then true
@@ -744,7 +749,7 @@ object ReviewArticle:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkNotMaterial(
       as: List[NotMaterialAnswer],
-      fs: List[domain.reviewarticle.Finding],
+      fs: List[domain.research.workflows.Finding],
       rule: CritiqueRule,
       last: CheckNotMaterialLast
   ): (List[CritiqueReason], List[Problem], List[String]) =
@@ -798,7 +803,7 @@ object ReviewArticle:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def holdPairChecks(
       checks: List[Check],
-      asked: List[domain.reviewarticle.Finding],
+      asked: List[domain.research.workflows.Finding],
       pairs: List[CritiquePair]
   ): (List[Check], List[String]) =
     val held = checks.map { c =>
@@ -825,16 +830,16 @@ object ReviewArticle:
   /** The kinds of finding that are factual errors: the only MAJORs a verification pass may raise outside the edited
     * passages, and only with evidence code verified.
     */
-  val FactualKinds: Set[domain.reviewarticle.Finding.Kind] =
+  val FactualKinds: Set[domain.research.workflows.Finding.Kind] =
     Set(
-      domain.reviewarticle.Finding.Kind("contradictory"),
-      domain.reviewarticle.Finding.Kind("extrapolatory"),
-      domain.reviewarticle.Finding.Kind("decorative"),
-      domain.reviewarticle.Finding.Kind("recall"),
-      domain.reviewarticle.Finding.Kind("date"),
-      domain.reviewarticle.Finding.Kind("status"),
-      domain.reviewarticle.Finding.Kind("settled-but-contested"),
-      domain.reviewarticle.Finding.Kind("number")
+      domain.research.workflows.Finding.Kind("contradictory"),
+      domain.research.workflows.Finding.Kind("extrapolatory"),
+      domain.research.workflows.Finding.Kind("decorative"),
+      domain.research.workflows.Finding.Kind("recall"),
+      domain.research.workflows.Finding.Kind("date"),
+      domain.research.workflows.Finding.Kind("status"),
+      domain.research.workflows.Finding.Kind("settled-but-contested"),
+      domain.research.workflows.Finding.Kind("number")
     )
 
   /** At most this many lessons per answer, each at most this long. */
@@ -845,7 +850,7 @@ object ReviewArticle:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private[domain] def key(f: domain.reviewarticle.Finding): (String, String) =
+  private[domain] def key(f: domain.research.workflows.Finding): (String, String) =
     (normalise(f.where.value), normalise(f.problem.value))
 
   /** One findings list for the round: mechanical first, then rules, cold reader, skeptic; duplicates (the same `where`
@@ -858,14 +863,14 @@ object ReviewArticle:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def merge(
       round: MergeRound,
-      mechanicalFindings: List[domain.reviewarticle.Finding],
+      mechanicalFindings: List[domain.research.workflows.Finding],
       reports: List[Report],
-      rejectedBefore: List[domain.reviewarticle.Finding]
+      rejectedBefore: List[domain.research.workflows.Finding]
   ): Merged =
     val all = mechanicalFindings ++ reports.sortBy(_.reviewer.ordinal).flatMap(_.findings)
     // a duplicate is dropped, but the records it cites join the finding that is kept
     val kept = all
-      .foldLeft(Vector.empty[domain.reviewarticle.Finding]) { (acc, f) =>
+      .foldLeft(Vector.empty[domain.research.workflows.Finding]) { (acc, f) =>
         acc.indexWhere(g => key(g) == key(f)) match
           case -1 => acc :+ f
           case i  => acc.updated(i, acc(i).copy(evidence = mergeEvidence(acc(i).evidence, f.evidence)))
@@ -873,10 +878,11 @@ object ReviewArticle:
       .toList
       .map(f =>
         if rejectedBefore.exists(_.sameFinding(f)) then
-          f.modify(_.escalated).setTo(domain.reviewarticle.Finding.Escalated(true))
+          f.modify(_.escalated).setTo(domain.research.workflows.Finding.Escalated(true))
         else f
       )
-    val verdict = domain.reviewarticle.Verdict.worst(reports.map(_.verdict) :+ domain.reviewarticle.Verdict.of(kept))
+    val verdict =
+      domain.research.workflows.Verdict.worst(reports.map(_.verdict) :+ domain.research.workflows.Verdict.of(kept))
     val cold = reports.find(_.reviewer == Reviewer.ColdReader)
     Merged(
       round,
@@ -932,7 +938,7 @@ object ReviewArticle:
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def checkBody(
       slug: research.Slug,
-      before: domain.reviewarticle.Fix.Body,
+      before: domain.research.workflows.Fix.Body,
       kind: Snapshot.Kind,
       draft: Article.Edits.Draft,
       corpus: BodyCorpus
@@ -947,7 +953,7 @@ object ReviewArticle:
           es,
           a => a.text.flatMap(t => links(t.value).headOption).map(_.inside(Problem.Where("its text is refused")))
         )
-      case Article.Edits.Draft.Body(t) => Article.Edits.Applied(domain.reviewarticle.Fix.Body(t.value.trim), Nil)
+      case Article.Edits.Draft.Body(t) => Article.Edits.Applied(domain.research.workflows.Fix.Body(t.value.trim), Nil)
     val body = applied.body
     val bodyProblems: List[Problem] =
       if body.value.trim.isEmpty then List(Content.Answer(Content.Requirement.BodyGiven))
@@ -988,7 +994,7 @@ object ReviewArticle:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkSetAside(
       as: List[SetAsideAnswer],
-      byId: Map[SetAside.Id, domain.reviewarticle.Finding],
+      byId: Map[SetAside.Id, domain.research.workflows.Finding],
       critiques: List[CritiquePair]
   ): (List[SetAside], List[CritiqueReason], List[Problem]) =
     def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(w => s"$w".trim.replaceAll("\\s+", " ")).getOrElse("")
@@ -1009,7 +1015,7 @@ object ReviewArticle:
         case Some(p) => Right(p)
     val results: List[Either[Problem, Either[SetAside, CritiqueReason]]] = as.map { a =>
       val idText = Option(a.id).map(_.value.trim).getOrElse("")
-      val id = domain.reviewarticle.Finding.Id(idText)
+      val id = domain.research.workflows.Finding.Id(idText)
       val reason = reasonOf(a)
       val named = Option(a.pair).flatten
         .map(_.value.trim)
@@ -1057,10 +1063,10 @@ object ReviewArticle:
   def checkReasons(
       stated: List[Coverage.Reason],
       coverage: Option[Coverage],
-      body: domain.reviewarticle.Fix.Body,
+      body: domain.research.workflows.Fix.Body,
       isCitekey: library.Citekey => Boolean,
       m: Merged,
-      applied: Set[domain.reviewarticle.Fix.Applied]
+      applied: Set[domain.research.workflows.Fix.Applied]
   ): (List[Coverage.Reason], List[Problem]) =
     coverage match
       case None =>

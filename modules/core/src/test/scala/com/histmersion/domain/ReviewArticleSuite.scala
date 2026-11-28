@@ -1,32 +1,32 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.reviewarticle.FindingAnswer
-import com.histmersion.domain.reviewarticle.Snapshot
-import com.histmersion.domain.reviewarticle.Reviewer
-import com.histmersion.domain.reviewarticle.RulesAnswer
-import com.histmersion.domain.reviewarticle.ColdReaderAnswer
-import com.histmersion.domain.reviewarticle.ReaderFindingAnswer
-import com.histmersion.domain.reviewarticle.Finding
-import com.histmersion.domain.reviewarticle.SkepticAnswer
-import com.histmersion.domain.reviewarticle.Report
-import com.histmersion.domain.reviewarticle.Merged
-import com.histmersion.domain.reviewarticle.BodyCorpus
-import com.histmersion.domain.reviewarticle.FixerAnswer
-import com.histmersion.domain.reviewarticle.RejectionAnswer
-import com.histmersion.domain.reviewarticle.EvidenceAnswer
-import com.histmersion.domain.reviewarticle.Outcome
-import com.histmersion.domain.reviewarticle.Prior
-import com.histmersion.domain.reviewarticle.CheckAnswer
-import com.histmersion.domain.reviewarticle.Check
-import com.histmersion.domain.reviewarticle.RecheckAnswer
-import com.histmersion.domain.reviewarticle.Recheck
-import com.histmersion.domain.reviewarticle.WontFixAnswer
-import com.histmersion.domain.reviewarticle.WontFix
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Entry
-import com.histmersion.domain.reviewarticle.SpotCheckAnswer
-import com.histmersion.domain.reviewarticle.SpotRule
+import com.histmersion.domain.research.workflows.FindingAnswer
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.ReaderFindingAnswer
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.RejectionAnswer
+import com.histmersion.domain.research.workflows.EvidenceAnswer
+import com.histmersion.domain.research.workflows.Outcome
+import com.histmersion.domain.research.workflows.Prior
+import com.histmersion.domain.research.workflows.CheckAnswer
+import com.histmersion.domain.research.workflows.Check
+import com.histmersion.domain.research.workflows.RecheckAnswer
+import com.histmersion.domain.research.workflows.Recheck
+import com.histmersion.domain.research.workflows.WontFixAnswer
+import com.histmersion.domain.research.workflows.WontFix
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.SpotCheckAnswer
+import com.histmersion.domain.research.workflows.SpotRule
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
@@ -114,7 +114,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(problems.exists(_.contains("'unresolved' or 'open questions'")), problems)
     assert(problems.exists(_.contains("[[nobody2020_x]] is neither")), problems)
     // filler is minor; a missing section is major
-    assert(fs.find(_.problem.value.contains("filler")).exists(_.severity == domain.reviewarticle.Severity.Minor))
+    assert(fs.find(_.problem.value.contains("filler")).exists(_.severity == domain.research.workflows.Severity.Minor))
     assert(fs.find(_.problem.value.contains("'not used'")).exists(_.major))
 
   test("mechanical: an index article needs no section set; a link to an article is not a citation"):
@@ -151,8 +151,8 @@ class ReviewArticleSuite extends munit.FunSuite:
       a.checkRules(last = ReviewArticle.CheckRulesLast(false)).left.exists(_.exists(_.sentence.contains("'severe'")))
     )
     val (r, ws) = a.checkRules(last = ReviewArticle.CheckRulesLast(true)).toOption.get
-    assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", domain.reviewarticle.Severity.Major)))
-    assertEquals(r.verdict, domain.reviewarticle.Verdict.Major)
+    assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", domain.research.workflows.Severity.Major)))
+    assertEquals(r.verdict, domain.research.workflows.Verdict.Major)
     assert(ws.exists(_.contains("dropped")), ws)
 
   test("a verdict worse than the findings is a finding left out; a milder one is corrected"):
@@ -171,7 +171,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     assertEquals(
       tooBad.checkRules(last = ReviewArticle.CheckRulesLast(true)).map(_._1.verdict),
-      Right(domain.reviewarticle.Verdict.Minor)
+      Right(domain.research.workflows.Verdict.Minor)
     )
     val tooMild = RulesAnswer(
       RulesAnswer.Verdict("PASS"),
@@ -182,7 +182,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     assertEquals(
       tooMild.checkRules(last = ReviewArticle.CheckRulesLast(false)).map(_._1.verdict),
-      Right(domain.reviewarticle.Verdict.Major)
+      Right(domain.research.workflows.Verdict.Major)
     )
 
   test("cold reader: code adds an empty explain-back slot as MAJOR and more than 8 undefined terms as a MINOR count"):
@@ -204,14 +204,14 @@ class ReviewArticleSuite extends munit.FunSuite:
       ColdReaderAnswer.OpaqueSentences(0)
     )
     val (r, _) = a.checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get
-    assertEquals(r.verdict, domain.reviewarticle.Verdict.Major)
+    assertEquals(r.verdict, domain.research.workflows.Verdict.Major)
     assertEquals(r.findings.map(_.id), List("C1", "C2", "C3"))
     assert(r.findings.exists(f => f.major && f.problem.value.contains("'disagreement'")))
     assertEquals(
       r.findings.filter(TermCount.is).map(f => (f.severity, f.kind, f.problem)),
       List(
         (
-          domain.reviewarticle.Severity.Minor,
+          domain.research.workflows.Severity.Minor,
           "term-count",
           "9 terms undefined (count only; the individual findings carry the severity)"
         )
@@ -269,7 +269,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val (r, warnings) =
       a.checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).fold(ps => fail(ps.mkString("; ")), identity)
-    assertEquals((r.verdict, r.emptySlots, r.findings), (domain.reviewarticle.Verdict.Pass, Nil, Nil))
+    assertEquals((r.verdict, r.emptySlots, r.findings), (domain.research.workflows.Verdict.Pass, Nil, Nil))
     assertEquals(warnings, Nil)
 
   test("cold reader: the term count is MINOR at any count, and none at 8 or fewer"):
@@ -286,7 +286,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     for n <- List(9, 27, 500).map(ColdReaderAnswer.TermsUndefined(_)) do
       assertEquals(
         countOf(n).map(f => (f.severity, f.problem.value.takeWhile(_ != ' '))),
-        List((domain.reviewarticle.Severity.Minor, n.toString)),
+        List((domain.research.workflows.Severity.Minor, n.toString)),
         n
       )
 
@@ -311,13 +311,13 @@ class ReviewArticleSuite extends munit.FunSuite:
         ColdReaderAnswer.TermsUndefined(27),
         ColdReaderAnswer.OpaqueSentences(0)
       ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get
-    assertEquals(r.verdict, domain.reviewarticle.Verdict.Minor)
+    assertEquals(r.verdict, domain.research.workflows.Verdict.Minor)
     assertEquals(ws, Nil)
     assertEquals(
       r.findings.map(_.severity),
-      List(domain.reviewarticle.Severity.Minor, domain.reviewarticle.Severity.Minor)
+      List(domain.research.workflows.Severity.Minor, domain.research.workflows.Severity.Minor)
     )
-    assertEquals(merge(ReviewArticle.MergeRound(1), Nil, List(r), Nil).verdict, domain.reviewarticle.Verdict.Minor)
+    assertEquals(merge(ReviewArticle.MergeRound(1), Nil, List(r), Nil).verdict, domain.research.workflows.Verdict.Minor)
     assertEquals(
       ColdReaderAnswer(
         ColdReaderAnswer.Verdict("PASS"),
@@ -327,7 +327,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         ColdReaderAnswer.TermsUndefined(3),
         ColdReaderAnswer.OpaqueSentences(0)
       ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).map(_._1.verdict),
-      Right(domain.reviewarticle.Verdict.Pass)
+      Right(domain.research.workflows.Verdict.Pass)
     )
     // a named term the reader marks MAJOR keeps its severity
     val major = ColdReaderAnswer(
@@ -338,10 +338,10 @@ class ReviewArticleSuite extends munit.FunSuite:
       ColdReaderAnswer.TermsUndefined(27),
       ColdReaderAnswer.OpaqueSentences(0)
     ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get._1
-    assertEquals(major.verdict, domain.reviewarticle.Verdict.Major)
+    assertEquals(major.verdict, domain.research.workflows.Verdict.Major)
     assertEquals(
       major.findings.map(f => (f.kind, f.severity)),
-      List(("term", domain.reviewarticle.Severity.Major), ("term-count", domain.reviewarticle.Severity.Minor))
+      List(("term", domain.research.workflows.Severity.Major), ("term-count", domain.research.workflows.Severity.Minor))
     )
     // a MAJOR verdict with no major finding and no count is still a finding left out
     assert(
@@ -359,7 +359,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val legacy = Finding(
       Finding.Id("C4"),
       Reviewer.ColdReader,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("term"),
       Finding.Where("explain-back"),
       Finding.Quote(""),
@@ -414,7 +414,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val m1 = Finding(
       Finding.Id("M1"),
       Reviewer.Mechanical,
-      domain.reviewarticle.Severity.Minor,
+      domain.research.workflows.Severity.Minor,
       Finding.Kind("language"),
       Finding.Where("body"),
       Finding.Quote(""),
@@ -423,12 +423,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val rule = Report(
       Reviewer.Rules,
-      domain.reviewarticle.Verdict.Minor,
+      domain.research.workflows.Verdict.Minor,
       List(
         Finding(
           Finding.Id("R1"),
           Reviewer.Rules,
-          domain.reviewarticle.Severity.Minor,
+          domain.research.workflows.Severity.Minor,
           Finding.Kind("x"),
           Finding.Where("Intro"),
           Finding.Quote("q"),
@@ -439,12 +439,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val cold = Report(
       Reviewer.ColdReader,
-      domain.reviewarticle.Verdict.Minor,
+      domain.research.workflows.Verdict.Minor,
       List(
         Finding(
           Finding.Id("C1"),
           Reviewer.ColdReader,
-          domain.reviewarticle.Severity.Minor,
+          domain.research.workflows.Severity.Minor,
           Finding.Kind("term"),
           Finding.Where("Intro"),
           Finding.Quote("q"),
@@ -455,12 +455,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val skep = Report(
       Reviewer.Skeptic,
-      domain.reviewarticle.Verdict.Major,
+      domain.research.workflows.Verdict.Major,
       List(
         Finding(
           Finding.Id("S1"),
           Reviewer.Skeptic,
-          domain.reviewarticle.Severity.Major,
+          domain.research.workflows.Severity.Major,
           Finding.Kind("date"),
           Finding.Where("Intro"),
           Finding.Quote("q"),
@@ -470,7 +470,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     )
     val m = merge(ReviewArticle.MergeRound(1), List(m1), List(skep, cold, rule), Nil)
-    assertEquals(m.verdict, domain.reviewarticle.Verdict.Major)
+    assertEquals(m.verdict, domain.research.workflows.Verdict.Major)
     assertEquals(m.findings.map(_.id), List("M1", "R1", "C1", "S1"))
     val dup = rule
       .modify(_.findings)
@@ -485,7 +485,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val before = Finding(
       Finding.Id("S2"),
       Reviewer.Skeptic,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("date"),
       Finding.Where("Dates"),
       Finding.Quote("1320 BCE"),
@@ -505,8 +505,8 @@ class ReviewArticleSuite extends munit.FunSuite:
       ReviewArticle.MergeRound(2),
       Nil,
       List(
-        Report(Reviewer.Skeptic, domain.reviewarticle.Verdict.Major, List(again)),
-        Report(Reviewer.Rules, domain.reviewarticle.Verdict.Major, List(other))
+        Report(Reviewer.Skeptic, domain.research.workflows.Verdict.Major, List(again)),
+        Report(Reviewer.Rules, domain.research.workflows.Verdict.Major, List(other))
       ),
       List(before)
     )
@@ -515,12 +515,12 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("gate and rounds"):
     val major = Merged(
       Merged.Round(1),
-      domain.reviewarticle.Verdict.Major,
+      domain.research.workflows.Verdict.Major,
       List(
         Finding(
           Finding.Id("S1"),
           Reviewer.Skeptic,
-          domain.reviewarticle.Severity.Major,
+          domain.research.workflows.Severity.Major,
           Finding.Kind(""),
           Finding.Where(""),
           Finding.Quote(""),
@@ -534,9 +534,9 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val minor = major
       .modify(_.verdict)
-      .setTo(domain.reviewarticle.Verdict.Minor)
+      .setTo(domain.research.workflows.Verdict.Minor)
       .modify(_.findings)
-      .setTo(major.findings.map(_.modify(_.severity).setTo(domain.reviewarticle.Severity.Minor)))
+      .setTo(major.findings.map(_.modify(_.severity).setTo(domain.research.workflows.Severity.Minor)))
     assert(minor.done(Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
     assert(!major.done(Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
     assert(major.done(Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(false)))
@@ -576,12 +576,12 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   private val merged = Merged(
     Merged.Round(1),
-    domain.reviewarticle.Verdict.Major,
+    domain.research.workflows.Verdict.Major,
     List(
       Finding(
         Finding.Id("S1"),
         Reviewer.Skeptic,
-        domain.reviewarticle.Severity.Major,
+        domain.research.workflows.Severity.Major,
         Finding.Kind("date"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -591,7 +591,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding(
         Finding.Id("C1"),
         Reviewer.ColdReader,
-        domain.reviewarticle.Severity.Major,
+        domain.research.workflows.Severity.Major,
         Finding.Kind("term"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -601,7 +601,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding(
         Finding.Id("R1"),
         Reviewer.Rules,
-        domain.reviewarticle.Severity.Minor,
+        domain.research.workflows.Severity.Minor,
         Finding.Kind("language"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -823,7 +823,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val c =
       checkBody(
         Slug("tin"),
-        domain.reviewarticle.Fix.Body(""),
+        domain.research.workflows.Fix.Body(""),
         Snapshot.Kind("concept"),
         Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text("Tin [[ghost2020_x]].\n\n## Sources cited\n")),
         corpus
@@ -835,7 +835,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val ok = checkBody(
       Slug("tin"),
-      domain.reviewarticle.Fix.Body(""),
+      domain.research.workflows.Fix.Body(""),
       Snapshot.Kind("concept"),
       Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text(Good)),
       corpus
@@ -845,7 +845,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(
       checkBody(
         Slug("tin"),
-        domain.reviewarticle.Fix.Body(""),
+        domain.research.workflows.Fix.Body(""),
         Snapshot.Kind("index"),
         Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text("More tin [[knapp2016_tin]].")),
         corpus
@@ -931,8 +931,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(
       fs.map(f => (f.id, f.severity, f.kind)),
       List(
-        ("M4", domain.reviewarticle.Severity.Major, CoverageKind),
-        ("M5", domain.reviewarticle.Severity.Minor, CoverageKind)
+        ("M4", domain.research.workflows.Severity.Major, CoverageKind),
+        ("M5", domain.research.workflows.Severity.Minor, CoverageKind)
       )
     )
     assertEquals(fs.head.problem, "1 source the filter returns is neither cited nor given a reason: [[iso2024_new]]")
@@ -958,7 +958,7 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   private val unplaced = Merged(
     Merged.Round(1),
-    domain.reviewarticle.Verdict.Major,
+    domain.research.workflows.Verdict.Major,
     coverageDrift(cov, Merged.Round(1)),
     None,
     Nil,
@@ -1117,11 +1117,11 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
     val e2 =
-      domain.reviewarticle.Quotation(
+      domain.research.workflows.Quotation(
         Citekey("knapp2016_tin"),
         None,
-        domain.reviewarticle.Quotation.Quote("one ton of tin"),
-        domain.reviewarticle.Quotation.Ratio(1.0)
+        domain.research.workflows.Quotation.Quote("one ton of tin"),
+        domain.research.workflows.Quotation.Ratio(1.0)
       )
     val dup = rr.findings.head.copy(id = Finding.Id("R9"), evidence = List(e2))
     val m = merge(ReviewArticle.MergeRound(1), Nil, List(rr, rr.modify(_.findings).setTo(List(dup))), Nil)
@@ -1155,7 +1155,7 @@ class ReviewArticleSuite extends munit.FunSuite:
             Finding(
               Finding.Id("C2"),
               Reviewer.ColdReader,
-              domain.reviewarticle.Severity.Minor,
+              domain.research.workflows.Severity.Minor,
               Finding.Kind("term"),
               Finding.Where("x"),
               Finding.Quote(""),
@@ -1171,7 +1171,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding(
         Finding.Id("S1"),
         Reviewer.Skeptic,
-        domain.reviewarticle.Severity.Major,
+        domain.research.workflows.Severity.Major,
         Finding.Kind("date"),
         Finding.Where("Dates"),
         Finding.Quote(""),
@@ -1180,11 +1180,11 @@ class ReviewArticleSuite extends munit.FunSuite:
         escalated = Finding.Escalated(true)
       )
     )
-    val m = Merged(Merged.Round(2), domain.reviewarticle.Verdict.Major, open, None, Nil, Nil)
+    val m = Merged(Merged.Round(2), domain.research.workflows.Verdict.Major, open, None, Nil, Nil)
     val o = Outcome(
       Outcome.Slug("sea_peoples"),
       Outcome.Rounds(2),
-      domain.reviewarticle.Verdict.Major,
+      domain.research.workflows.Verdict.Major,
       open,
       Outcome.Applied(3),
       Outcome.Rejected(1),
@@ -1198,14 +1198,15 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   test("verdicts order PASS < MINOR < MAJOR and parse in any case"):
     assertEquals(
-      domain.reviewarticle.Verdict.worst(List(domain.reviewarticle.Verdict.Minor, domain.reviewarticle.Verdict.Pass)),
-      domain.reviewarticle.Verdict.Minor
+      domain.research.workflows.Verdict
+        .worst(List(domain.research.workflows.Verdict.Minor, domain.research.workflows.Verdict.Pass)),
+      domain.research.workflows.Verdict.Minor
     )
     assertEquals(
-      domain.reviewarticle.Verdict.parse(domain.reviewarticle.Verdict.Wire("major")),
-      Some(domain.reviewarticle.Verdict.Major)
+      domain.research.workflows.Verdict.parse(domain.research.workflows.Verdict.Wire("major")),
+      Some(domain.research.workflows.Verdict.Major)
     )
-    assertEquals(domain.reviewarticle.Verdict.of(Nil), domain.reviewarticle.Verdict.Pass)
+    assertEquals(domain.research.workflows.Verdict.of(Nil), domain.research.workflows.Verdict.Pass)
 
   // ── the review ledger: checks, the verification pass, declining a minor ──────────────────────────
 
@@ -1213,7 +1214,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   private val askedTin = Finding(
     Finding.Id("R1"),
     Reviewer.Rules,
-    domain.reviewarticle.Severity.Major,
+    domain.research.workflows.Severity.Major,
     Finding.Kind("term"),
     Finding.Where("Intro"),
     Finding.Quote("Tin reached the Aegean by sea"),
@@ -1224,7 +1225,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Finding(
       Finding.Id("R4"),
       Reviewer.Rules,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("date"),
       Finding.Where("Disagreements"),
       Finding.Quote("Two dates are argued"),
@@ -1333,7 +1334,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val count = Finding(
       Finding.Id("C3"),
       Reviewer.ColdReader,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("term"),
       Finding.Where("explain-back"),
       Finding.Quote(""),
@@ -1414,7 +1415,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           Finding(
             Finding.Id("C1"),
             Reviewer.ColdReader,
-            domain.reviewarticle.Severity.Major,
+            domain.research.workflows.Severity.Major,
             Finding.Kind("term"),
             Finding.Where("Intro"),
             Finding.Quote("Tin reached"),
@@ -1436,16 +1437,16 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("scope: inside the edited passages anything stands; outside, a MAJOR only as a factual error with evidence"):
     val edited = Article.Body("Tin, the scarce half of bronze, reached the Aegean by sea [[knapp2016_tin]].")
     val ev =
-      domain.reviewarticle.Quotation(
+      domain.research.workflows.Quotation(
         Citekey("knapp2016_tin"),
         None,
-        domain.reviewarticle.Quotation.Quote("ten tons of copper"),
-        domain.reviewarticle.Quotation.Ratio(1.0)
+        domain.research.workflows.Quotation.Quote("ten tons of copper"),
+        domain.research.workflows.Quotation.Ratio(1.0)
       )
     val inside = Finding(
       Finding.Id("S1"),
       Reviewer.Skeptic,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("synth"),
       Finding.Where("Intro"),
       Finding.Quote("the scarce half of bronze"),
@@ -1465,14 +1466,17 @@ class ReviewArticleSuite extends munit.FunSuite:
       None
     )
     val (down, w) = outside.scope(edited, minRatio)
-    assertEquals(down.severity, domain.reviewarticle.Severity.Minor)
+    assertEquals(down.severity, domain.research.workflows.Severity.Minor)
     assert(w.exists(_.contains("\"a bridge claim\" is outside the edited passages")), w)
     assertEquals(
       outside.modify(_.kind).setTo(Finding.Kind("date")).scope(edited, minRatio)._1.severity,
-      domain.reviewarticle.Severity.Minor,
+      domain.research.workflows.Severity.Minor,
       "a factual kind still needs its evidence"
     )
-    assertEquals(outside.modify(_.severity).setTo(domain.reviewarticle.Severity.Minor).scope(edited, minRatio)._2, None)
+    assertEquals(
+      outside.modify(_.severity).setTo(domain.research.workflows.Severity.Minor).scope(edited, minRatio)._2,
+      None
+    )
 
   test("checkRecheck: checks, scoped findings with verified evidence, at most three lessons"):
     val ev = evidenceCheck(isCk, record.get, minRatio)
@@ -1537,7 +1541,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(rc.checks.map(c => (c.id, c.fixed)), List(("R1", true), ("R4", false)))
     assertEquals(
       rc.findings.map(f => (f.kind, f.severity)),
-      List(("recall", domain.reviewarticle.Severity.Major), ("weight", domain.reviewarticle.Severity.Minor))
+      List(("recall", domain.research.workflows.Severity.Major), ("weight", domain.research.workflows.Severity.Minor))
     )
     assertEquals(rc.lessons, List("one", "two", "three"))
     assert(ws.exists(_.contains("\"too short\" is outside the edited passages")), ws)
@@ -1606,7 +1610,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val cover = Finding(
       Finding.Id("R8"),
       Reviewer.Rules,
-      domain.reviewarticle.Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("coverage"),
       Finding.Where("Not used"),
       Finding.Quote(""),
@@ -1918,7 +1922,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     storedSentences.foreach(p => assertEquals(Finding.Problem.of(p.cause), p, p))
 
   test("the sentences the pipeline acts on read as their causes; any other sentence is Other"):
-    import com.histmersion.domain.reviewarticle.Finding.Problem.Cause
+    import com.histmersion.domain.research.workflows.Finding.Problem.Cause
     assertEquals(Finding.Problem("a paragraph with no [[citekey]]").cause, Cause.UncitedParagraph)
     assertEquals(
       Finding.Problem("a hand-written Sources cited section (the page generates it)").cause,

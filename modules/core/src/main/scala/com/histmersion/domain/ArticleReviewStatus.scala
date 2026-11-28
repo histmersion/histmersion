@@ -1,8 +1,8 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.reviewledger.Ledger
-import com.histmersion.domain.reviewledger.Entry
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Entry
 
 import com.histmersion.api.Plural
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}

@@ -1,12 +1,12 @@
 package com.histmersion
 package domain
 
-import com.histmersion.domain.corequota.Ceilings
-import com.histmersion.domain.corequota.State
-import com.histmersion.domain.corequota.Purpose
-import com.histmersion.domain.corequota.Backoff
-import com.histmersion.domain.corequota.Denial
-import com.histmersion.domain.corequota.Window
+import com.histmersion.domain.library.acquisition.Ceilings
+import com.histmersion.domain.library.acquisition.State
+import com.histmersion.domain.library.acquisition.Purpose
+import com.histmersion.domain.library.acquisition.Backoff
+import com.histmersion.domain.library.acquisition.Denial
+import com.histmersion.domain.library.acquisition.Window
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
