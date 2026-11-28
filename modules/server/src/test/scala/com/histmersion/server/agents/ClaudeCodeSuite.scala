@@ -357,7 +357,9 @@ class ClaudeCodeSuite extends munit.FunSuite:
   test("parse: every rate_limit_event window becomes a reading of the Claude plan (§3a P1)"):
     val o = ClaudeCode.parse(stream(Init, RateLimit, Turn2, Success))
     val rs = o.readings.map(r =>
-      s"${r.limit} ${r.kind} ${math.round(r.usedPct.value)} ${r.resetsAt.getOrElse(0L)} ${r.rejected} ${r.source.wire}"
+      s"${r.limit} ${r.kind} ${math.round(r.usedPct.value)} ${r.resetsAt.getOrElse(0L)} ${{
+          r.rejected
+        }.rejected} ${r.source.wire}"
     )
     assertEquals(
       rs.toSet,

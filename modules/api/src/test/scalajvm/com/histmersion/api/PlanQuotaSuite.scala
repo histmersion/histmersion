@@ -45,7 +45,7 @@ class PlanQuotaSuite extends munit.FunSuite:
       used: Reading.UsedPct,
       reset: Reading.ResetsAt = Reading.ResetsAt(Now + 60 * Min),
       seen: Reading.ObservedAt = Reading.ObservedAt(Now - Min),
-      rejected: Reading.Rejected = Reading.Rejected(false),
+      rejected: Reading.Rejected = Reading.Rejected.Accepted,
       limit: Reading.Limit = Reading.Limit("claude"),
       model: Option[Reading.Model] = None
   ) =
@@ -96,7 +96,7 @@ class PlanQuotaSuite extends munit.FunSuite:
   test("usable only while every window keeps MORE than its floor left"):
     val (ok, _) = verdict(
       List(r(FiveHour, Reading.UsedPct(70)), r(SevenDay, Reading.UsedPct(74))),
-      held = PlanQuota.PoolStatus.Held(false),
+      held = PlanQuota.PoolStatus.Held.Released,
       None,
       Rules0,
       NowAt
@@ -104,7 +104,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(ok.usable, ok)
     val (low, states) = verdict(
       List(r(FiveHour, Reading.UsedPct(75)), r(SevenDay, Reading.UsedPct(10))),
-      held = PlanQuota.PoolStatus.Held(false),
+      held = PlanQuota.PoolStatus.Held.Released,
       None,
       Rules0,
       NowAt
@@ -114,7 +114,7 @@ class PlanQuotaSuite extends munit.FunSuite:
         assert(s"$why".contains("five_hour: 25% left, floor 25%"), why)
         assertEquals(until, Some(Now + 60 * Min), "until the blocking window resets")
       case other => fail(s"not blocked: $other")
-    assertEquals(states.map(_.usable), List(false, true))
+    assertEquals(states.map(_.usable.usable), List(false, true))
 
   test("the earliest reset among the blocking windows is when the run is looked at again"):
     val (v, _) = verdict(
@@ -122,7 +122,7 @@ class PlanQuotaSuite extends munit.FunSuite:
         r(FiveHour, Reading.UsedPct(90), reset = Reading.ResetsAt(Now + 30 * Min)),
         r(SevenDay, Reading.UsedPct(95), reset = Reading.ResetsAt(Now + 3000 * Min))
       ),
-      held = PlanQuota.PoolStatus.Held(false),
+      held = PlanQuota.PoolStatus.Held.Released,
       None,
       Rules0,
       NowAt
@@ -136,15 +136,15 @@ class PlanQuotaSuite extends munit.FunSuite:
     val (v1, _) =
       verdict(
         List(r(FiveHour, Reading.UsedPct(1))),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         Some((Rationale("ordinary usage not allowed"), None)),
         Rules0,
         NowAt
       )
     assertEquals(v1, Verdict.Blocked(Rationale("ordinary usage not allowed"), None))
     val (v2, _) = verdict(
-      List(r(Window10080, Reading.UsedPct(3), rejected = Reading.Rejected(true), limit = Reading.Limit("codex"))),
-      held = PlanQuota.PoolStatus.Held(false),
+      List(r(Window10080, Reading.UsedPct(3), rejected = Reading.Rejected.Rejected, limit = Reading.Limit("codex"))),
+      held = PlanQuota.PoolStatus.Held.Released,
       None,
       Rules0,
       NowAt
@@ -152,7 +152,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(!v2.usable)
     val (v3, _) = verdict(
       Nil,
-      held = PlanQuota.PoolStatus.Held(false),
+      held = PlanQuota.PoolStatus.Held.Released,
       Some((Rationale("gone"), Some(Verdict.Blocked.Until(Now - 1)))),
       Rules0,
       NowAt
@@ -161,17 +161,17 @@ class PlanQuotaSuite extends munit.FunSuite:
 
   test("the hold switch wins over everything"):
     val (v, _) =
-      verdict(List(r(FiveHour, Reading.UsedPct(0))), held = PlanQuota.PoolStatus.Held(true), None, Rules0, NowAt)
+      verdict(List(r(FiveHour, Reading.UsedPct(0))), held = PlanQuota.PoolStatus.Held.Held, None, Rules0, NowAt)
     assert(v match { case Verdict.Blocked(w, None) => s"$w".contains("held"); case _ => false }, v)
 
   test("no reading is unknown: usable, said so; a window whose reset passed has started over"):
     assertEquals(
-      verdict(Nil, held = PlanQuota.PoolStatus.Held(false), None, Rules0, NowAt)._1,
+      verdict(Nil, held = PlanQuota.PoolStatus.Held.Released, None, Rules0, NowAt)._1,
       Verdict.Usable(Some(PlanQuota.Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
     )
     val (v, states) = verdict(
       List(r(FiveHour, Reading.UsedPct(99), reset = Reading.ResetsAt(Now - 1))),
-      held = PlanQuota.PoolStatus.Held(false),
+      held = PlanQuota.PoolStatus.Held.Released,
       None,
       Rules0,
       NowAt
@@ -183,7 +183,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(
       verdict(
         List(r(FiveHour, Reading.UsedPct(60), seen = old)),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt
@@ -192,7 +192,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     )
     val (v, _) = verdict(
       List(r(FiveHour, Reading.UsedPct(70), seen = old)),
-      held = PlanQuota.PoolStatus.Held(false),
+      held = PlanQuota.PoolStatus.Held.Released,
       None,
       Rules0,
       NowAt
@@ -202,7 +202,7 @@ class PlanQuotaSuite extends munit.FunSuite:
   test("newest reading per window; a fallback model's bucket counts only for that model"):
     val older = r(FiveHour, Reading.UsedPct(99), seen = Reading.ObservedAt(Now - 5 * Min))
     val newer = r(FiveHour, Reading.UsedPct(10), seen = Reading.ObservedAt(Now - Min))
-    assert(verdict(List(older, newer), held = PlanQuota.PoolStatus.Held(false), None, Rules0, NowAt)._1.usable)
+    assert(verdict(List(older, newer), held = PlanQuota.PoolStatus.Held.Released, None, Rules0, NowAt)._1.usable)
     val reserve = r(
       Window10080,
       Reading.UsedPct(100),
@@ -212,7 +212,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(
       verdict(
         List(reserve),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt,
@@ -222,7 +222,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assert(
       !verdict(
         List(reserve),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt,
@@ -231,7 +231,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     )
 
   test("pools: claude-code the Claude plan, codex the ChatGPT plan, opencode openai/… only on a ChatGPT login"):
-    val (plain, oc) = (Logins(), Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt(true)))
+    val (plain, oc) = (Logins(), Logins(opencodeChatgpt = PlanQuota.Logins.OpencodeChatgpt.Chatgpt))
     assertEquals(poolOf(ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("opus")), plain), Some(PoolId.ClaudePlan))
     assertEquals(poolOf(ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5")), plain), Some(PoolId.ChatgptPlan))
     assertEquals(poolOf(ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5")), oc), Some(PoolId.ChatgptPlan))
@@ -252,8 +252,8 @@ class PlanQuotaSuite extends munit.FunSuite:
 
   test("pools: a CLI set to use an API key draws on no plan — it bills the API, so it is paid"):
     val keyed = Logins(
-      claudeCodeApiKey = PlanQuota.Logins.ClaudeCodeApiKey(true),
-      codexApiKey = PlanQuota.Logins.CodexApiKey(true)
+      claudeCodeApiKey = PlanQuota.Logins.ClaudeCodeApiKey.ApiKey,
+      codexApiKey = PlanQuota.Logins.CodexApiKey.ApiKey
     )
     assertEquals(poolOf(ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("opus")), keyed), None)
     assertEquals(poolOf(ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5")), keyed), None)
@@ -267,7 +267,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assertEquals(
       poolOf(
         ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5")),
-        Logins(claudeCodeApiKey = PlanQuota.Logins.ClaudeCodeApiKey(true))
+        Logins(claudeCodeApiKey = PlanQuota.Logins.ClaudeCodeApiKey.ApiKey)
       ),
       Some(PoolId.ChatgptPlan)
     )
@@ -291,24 +291,30 @@ class PlanQuotaSuite extends munit.FunSuite:
     val rules = Rules0.modify(_.floors).setTo(Floors(Map(Floors.ByKindKey("seven_day") -> Floors.Floor(40))))
     val stale = List(r(SevenDay, Reading.UsedPct(51), seen = Old))
     assert(
-      !verdict(stale, held = PlanQuota.PoolStatus.Held(false), None, rules, NowAt)._1.usable,
+      !verdict(stale, held = PlanQuota.PoolStatus.Held.Released, None, rules, NowAt)._1.usable,
       "49 < 40 + 10: paused on the stale reading"
     )
     assertEquals(
-      refreshNeed(stale, held = PlanQuota.PoolStatus.Held(false), None, rules, NowAt),
+      refreshNeed(stale, held = PlanQuota.PoolStatus.Held.Released, None, rules, NowAt),
       Some(RefreshNeed.StaleOnly)
     )
     assertEquals(decide(Some(RefreshNeed.StaleOnly)), Right(Some(RefreshNeed.StaleOnly)))
 
   test("#989: below its floor on a FRESH reading pauses without a refresh; stale AND below the floor too"):
     assertEquals(
-      refreshNeed(List(r(FiveHour, Reading.UsedPct(80))), held = PlanQuota.PoolStatus.Held(false), None, Rules0, NowAt),
+      refreshNeed(
+        List(r(FiveHour, Reading.UsedPct(80))),
+        held = PlanQuota.PoolStatus.Held.Released,
+        None,
+        Rules0,
+        NowAt
+      ),
       None
     )
     assertEquals(
       refreshNeed(
         List(r(FiveHour, Reading.UsedPct(80), seen = Old)),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt
@@ -320,7 +326,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assertEquals(
       refreshNeed(
         List(r(FiveHour, Reading.UsedPct(80)), r(SevenDay, Reading.UsedPct(70), seen = Old)),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt
@@ -333,7 +339,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assertEquals(
       refreshNeed(
         List(r(FiveHour, Reading.UsedPct(10), seen = Old)),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt
@@ -342,11 +348,11 @@ class PlanQuotaSuite extends munit.FunSuite:
       "stale but usable"
     )
     val stale = List(r(FiveHour, Reading.UsedPct(70), seen = Old))
-    assertEquals(refreshNeed(stale, held = PlanQuota.PoolStatus.Held(true), None, Rules0, NowAt), None)
+    assertEquals(refreshNeed(stale, held = PlanQuota.PoolStatus.Held.Held, None, Rules0, NowAt), None)
     assertEquals(
       refreshNeed(
         stale,
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         Some((Rationale("no"), None)),
         Rules0,
         NowAt
@@ -356,7 +362,7 @@ class PlanQuotaSuite extends munit.FunSuite:
     assertEquals(
       refreshNeed(
         stale,
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         Some((Rationale("no"), Some(Verdict.Blocked.Until(Now - 1)))),
         Rules0,
         NowAt
@@ -366,8 +372,8 @@ class PlanQuotaSuite extends munit.FunSuite:
     )
     assertEquals(
       refreshNeed(
-        List(r(FiveHour, Reading.UsedPct(70), seen = Old, rejected = Reading.Rejected(true))),
-        held = PlanQuota.PoolStatus.Held(false),
+        List(r(FiveHour, Reading.UsedPct(70), seen = Old, rejected = Reading.Rejected.Rejected)),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt
@@ -377,13 +383,13 @@ class PlanQuotaSuite extends munit.FunSuite:
 
   test("#989: no reading at all (or only windows whose reset passed) — read before the first use"):
     assertEquals(
-      refreshNeed(Nil, held = PlanQuota.PoolStatus.Held(false), None, Rules0, NowAt),
+      refreshNeed(Nil, held = PlanQuota.PoolStatus.Held.Released, None, Rules0, NowAt),
       Some(RefreshNeed.NoReading)
     )
     assertEquals(
       refreshNeed(
         List(r(FiveHour, Reading.UsedPct(99), reset = Reading.ResetsAt(Now - 1))),
-        held = PlanQuota.PoolStatus.Held(false),
+        held = PlanQuota.PoolStatus.Held.Released,
         None,
         Rules0,
         NowAt

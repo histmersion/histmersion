@@ -146,7 +146,7 @@ class SettingsWebSuite extends munit.FunSuite:
           PluginStatus.Id("x"),
           PluginStatus.Version("1"),
           PluginStatus.SpiVersion(2),
-          enabled = PluginStatus.Enabled(true),
+          enabled = PluginStatus.Enabled.Enabled,
           state = PluginState.Wire("registered")
         )
       ),
@@ -158,7 +158,7 @@ class SettingsWebSuite extends munit.FunSuite:
           PluginStatus.Id("x"),
           PluginStatus.Version("1"),
           PluginStatus.SpiVersion(2),
-          enabled = PluginStatus.Enabled(false),
+          enabled = PluginStatus.Enabled.Disabled,
           state = PluginState.Wire("disabled")
         )
       ),
@@ -171,7 +171,7 @@ class SettingsWebSuite extends munit.FunSuite:
             PluginStatus.Id("x"),
             PluginStatus.Version("1"),
             PluginStatus.SpiVersion(2),
-            enabled = PluginStatus.Enabled(true),
+            enabled = PluginStatus.Enabled.Enabled,
             state = PluginState.Wire("failed"),
             errors = List(
               Problem.Config.Setting(Problem.SettingKey("histmersion.plugins.x.api-key"), Problem.Config.Fault.Empty),
@@ -190,7 +190,7 @@ class SettingsWebSuite extends munit.FunSuite:
           PluginStatus.Id("oa-core"),
           PluginStatus.Version("1"),
           PluginStatus.SpiVersion(2),
-          enabled = PluginStatus.Enabled(true),
+          enabled = PluginStatus.Enabled.Enabled,
           state = PluginState.Wire("registered"),
           provides = List(
             PluginDescription.Provides("source-fetcher:oa-core"),

@@ -10,6 +10,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 object ConfigEdit:
 
@@ -114,12 +115,12 @@ object ConfigEdit:
 
   final case class Page(
       file: Option[Page.File] = None,
-      exists: Page.Exists = Page.Exists(false),
+      exists: Page.Exists = Page.Exists.Missing,
       version: Page.Version = Page.Version("none"),
       sections: List[Section] = Nil,
       problems: List[Page.Problems] = Nil,
-      restartable: Page.Restartable = Page.Restartable(false),
-      setupDue: Page.SetupDue = Page.SetupDue(false)
+      restartable: Page.Restartable = Page.Restartable.Manual,
+      setupDue: Page.SetupDue = Page.SetupDue.SetUp
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
@@ -134,16 +135,22 @@ object ConfigEdit:
     type File = File.T
     object File extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Exists = Exists.T
-    object Exists extends Newtype[Boolean, Pure]
+    enum Exists derives CanEqual:
+      case Exists, Missing
+    object Exists extends TwoStates[Exists]:
+      extension (exists: Exists) def exists: Boolean = exists == Exists
     type Version = Version.T
     object Version extends Newtype[String, Pure]
     type Problems = Problems.T
     object Problems extends Newtype[String, Pure]
-    type Restartable = Restartable.T
-    object Restartable extends Newtype[Boolean, Pure]
-    type SetupDue = SetupDue.T
-    object SetupDue extends Newtype[Boolean, Pure]
+    enum Restartable derives CanEqual:
+      case Restartable, Manual
+    object Restartable extends TwoStates[Restartable]:
+      extension (restartable: Restartable) def restartable: Boolean = restartable == Restartable
+    enum SetupDue derives CanEqual:
+      case SetupDue, SetUp
+    object SetupDue extends TwoStates[SetupDue]:
+      extension (setupDue: SetupDue) def setupDue: Boolean = setupDue == SetupDue
 
   final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives JsonCodec, KindlingsSchema
 
@@ -155,8 +162,8 @@ object ConfigEdit:
   final case class Write(
       changes: List[Change],
       version: Option[Write.Version] = None,
-      literalConsent: Write.LiteralConsent = Write.LiteralConsent(false),
-      reload: Write.Reload = Write.Reload(true)
+      literalConsent: Write.LiteralConsent = Write.LiteralConsent.Withheld,
+      reload: Write.Reload = Write.Reload.Reload
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -164,10 +171,14 @@ object ConfigEdit:
   object Write:
     type Version = Version.T
     object Version extends Newtype[String, Pure]
-    type LiteralConsent = LiteralConsent.T
-    object LiteralConsent extends Newtype[Boolean, Pure]
-    type Reload = Reload.T
-    object Reload extends Newtype[Boolean, Pure]
+    enum LiteralConsent derives CanEqual:
+      case Consented, Withheld
+    object LiteralConsent extends TwoStates[LiteralConsent]:
+      extension (literalConsent: LiteralConsent) def consented: Boolean = literalConsent == Consented
+    enum Reload derives CanEqual:
+      case Reload, Later
+    object Reload extends TwoStates[Reload]:
+      extension (reload: Reload) def reload: Boolean = reload == Reload
 
   /** A changed setting a running server takes on only after a restart, and why (the part of the server it sizes or
     * binds is built once): an explanation, not a failure.
@@ -185,11 +196,11 @@ object ConfigEdit:
       unchanged: List[Written.Unchanged] = Nil,
       backup: Option[Written.Backup] = None,
       version: Written.Version = Written.Version("none"),
-      created: Written.Created = Written.Created(false),
+      created: Written.Created = Written.Created.Updated,
       restart: List[RestartNote] = Nil,
       warnings: List[Written.Warnings] = Nil,
       reload: Option[ReloadReport] = None,
-      restartable: Written.Restartable = Written.Restartable(false)
+      restartable: Written.Restartable = Written.Restartable.Manual
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -206,13 +217,17 @@ object ConfigEdit:
     object Backup extends Newtype[String, Pure]
     type Version = Version.T
     object Version extends Newtype[String, Pure]
-    type Created = Created.T
-    object Created extends Newtype[Boolean, Pure]
+    enum Created derives CanEqual:
+      case Created, Updated
+    object Created extends TwoStates[Created]:
+      extension (created: Created) def created: Boolean = created == Created
     type Warnings = Warnings.T
     object Warnings extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Restartable = Restartable.T
-    object Restartable extends Newtype[Boolean, Pure]
+    enum Restartable derives CanEqual:
+      case Restartable, Manual
+    object Restartable extends TwoStates[Restartable]:
+      extension (restartable: Restartable) def restartable: Boolean = restartable == Restartable
 
   /** What the server says once a restart is under way. */
   type Notice = Notice.T
@@ -224,8 +239,10 @@ object ConfigEdit:
         api.json.Schema
 
   object Restart:
-    type Accepted = Accepted.T
-    object Accepted extends Newtype[Boolean, Pure]
+    enum Accepted derives CanEqual:
+      case Accepted, Declined
+    object Accepted extends TwoStates[Accepted]:
+      extension (accepted: Accepted) def accepted: Boolean = accepted == Accepted
 
   val CodeChanged = "settings_changed"
 

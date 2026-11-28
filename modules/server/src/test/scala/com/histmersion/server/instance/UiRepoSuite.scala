@@ -121,18 +121,18 @@ class UiRepoSuite extends DbSuite:
     )
     val proposed = board(Board.Approvals)
     assert(proposed.count.get.value >= before + 1, proposed.toString)
-    assert(proposed.fresh.value, proposed.toString)
+    assert(proposed.fresh.fresh, proposed.toString)
     assert(proposed.latest.exists(_.value > t0.value), proposed.toString)
     val latest = proposed.latest.get
     markSeen(Board.Approvals, UiNotices.Counter.Seen(latest.value))
     val read = board(Board.Approvals)
     assertEquals(read.seen.map(_.value), Some(latest.value))
     // another suite may propose one at the same moment; ours is read either way
-    assert(read.latest != Some(latest) || !read.fresh.value, read.toString)
+    assert(read.latest != Some(latest) || !read.fresh.fresh, read.toString)
     connect(ds)(sql"UPDATE approvals SET state = 'rejected', decided_at = now() WHERE id = $id".update.run())
     val decided = board(Board.Approvals)
     assert(decided.latest.exists(_ > latest), decided.toString)
-    assert(decided.fresh.value, decided.toString)
+    assert(decided.fresh.fresh, decided.toString)
 
   test("a goal changed after the mark is news"):
     val t0 = now()
@@ -142,7 +142,7 @@ class UiRepoSuite extends DbSuite:
         .run()
     )
     val g = board(Board.Goals)
-    assert(g.fresh.value && g.latest.exists(_.value > t0.value), g.toString)
+    assert(g.fresh.fresh && g.latest.exists(_.value > t0.value), g.toString)
     assertEquals(g.count, None, "goals are not counted")
 
   test("a board's counter carries the seen mark it is given, and none for a board never opened"):

@@ -238,7 +238,7 @@ class PassageFinderSuite extends munit.FunSuite:
       max = PassageFinder.MaxMatches(5),
       context = PassageFinder.ContextChars(0)
     )
-    assertEquals((r.matches, r.capped), (5, true))
+    assertEquals((r.matches, r.capped.capped), (5, true))
     assert(PassagesMarkdown.render(r).contains("5+ matches (counting stopped)"))
 
   test("an empty body or no match renders a one-line answer"):

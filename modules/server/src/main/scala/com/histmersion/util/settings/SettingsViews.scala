@@ -29,12 +29,12 @@ object SettingsViews:
       )
     ConfigEdit.Page(
       s.file.map(f => ConfigEdit.Page.File(f.value)),
-      ConfigEdit.Page.Exists(s.exists.value),
+      (if s.exists.value then ConfigEdit.Page.Exists.Exists else ConfigEdit.Page.Exists.Missing),
       ConfigEdit.Page.Version(s.version.value),
       sections,
       s.problems.map(p => ConfigEdit.Page.Problems(p.value)),
-      ConfigEdit.Page.Restartable(restartable),
-      ConfigEdit.Page.SetupDue(s.setupDue.value)
+      (if restartable then ConfigEdit.Page.Restartable.Restartable else ConfigEdit.Page.Restartable.Manual),
+      (if s.setupDue.value then ConfigEdit.Page.SetupDue.SetupDue else ConfigEdit.Page.SetupDue.SetUp)
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -86,13 +86,13 @@ object SettingsViews:
       o.unchanged.map(k => ConfigEdit.Written.Unchanged(k.value)),
       o.backup.map(b => ConfigEdit.Written.Backup(b.value)),
       ConfigEdit.Written.Version(o.version.value),
-      ConfigEdit.Written.Created(o.created.value),
+      (if o.created.value then ConfigEdit.Written.Created.Created else ConfigEdit.Written.Created.Updated),
       o.restart.map((k, why) =>
         ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
       ),
       o.warnings.map(w => ConfigEdit.Written.Warnings(w.value)),
       reload,
-      ConfigEdit.Written.Restartable(restartable)
+      (if restartable then ConfigEdit.Written.Restartable.Restartable else ConfigEdit.Written.Restartable.Manual)
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

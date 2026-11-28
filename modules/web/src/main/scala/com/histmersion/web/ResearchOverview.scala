@@ -166,7 +166,9 @@ object ResearchOverview:
     val busy = Var(false)
     val failed = Var(Option.empty[String])
     val mode = status.signal.map(
-      _.map(s => AgentMode.of(s.on, AgentMode.Step.Drain.On(s.drain.isDefined)))
+      _.map(s =>
+        AgentMode.of(s.on, (if s.drain.isDefined then AgentMode.Step.Drain.On.On else AgentMode.Step.Drain.On.Off))
+      )
     )
     def choose(m: AgentMode): Unit = write { () =>
       busy.set(true)
@@ -394,10 +396,10 @@ object ResearchOverview:
       cls := "research-overview",
       onMountCallback { _ =>
         ApiClient.autopilot.foreach(s => status.set(Some(s)))
-        if ui.agentsEnabled.value then ApiClient.managers.foreach(managers.set)
+        if ui.agentsEnabled.agentsEnabled then ApiClient.managers.foreach(managers.set)
       },
       stateLine(),
-      if ui.agentsEnabled.value then agentsCard(status)
+      if ui.agentsEnabled.agentsEnabled then agentsCard(status)
       else
         p(
           cls := "muted",
@@ -408,11 +410,11 @@ object ResearchOverview:
       ,
       div(
         cls := "research-columns",
-        if ui.agentsEnabled.value then decisionsCard() else emptyNode,
+        if ui.agentsEnabled.agentsEnabled then decisionsCard() else emptyNode,
         goalsCard(status.signal, managers.signal)
       ),
       activityCard(ui),
-      if ui.agentsEnabled.value then
+      if ui.agentsEnabled.agentsEnabled then
         // open, as the managers were this page before: folding them away is the reader's choice
         htmlTag("details")(
           cls := "research-managers",

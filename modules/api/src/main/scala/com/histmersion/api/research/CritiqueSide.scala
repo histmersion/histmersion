@@ -9,19 +9,22 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class CritiqueSide(
     citekey: Citekey,
     title: Option[Title] = None,
     year: Option[Year] = None,
-    cited: CritiqueSide.Cited = CritiqueSide.Cited(false),
+    cited: CritiqueSide.Cited = CritiqueSide.Cited.Uncited,
     mentions: CritiqueSide.Mentions = CritiqueSide.Mentions(0)
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
 
 object CritiqueSide:
-  type Cited = Cited.T
-  object Cited extends Newtype[Boolean, Pure]
+  enum Cited derives CanEqual:
+    case Cited, Uncited
+  object Cited extends TwoStates[Cited]:
+    extension (cited: Cited) def cited: Boolean = cited == Cited
   type Mentions = Mentions.T
   object Mentions extends Newtype[Int, Pure]

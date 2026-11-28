@@ -168,7 +168,7 @@ class PluginCatalogueSuite extends DbSuite:
   test("the plugin's catalogue: parts in order, a page followed, a refused record and a failed part reported"):
     val http = fake
     val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = generation), http)
-    val r = run(h, dry = EventImportRequest.DryRun(false))
+    val r = run(h, dry = EventImportRequest.DryRun.Apply)
     assertEquals((r.records, r.kept, r.created), (2, 2, 2), r.toString)
     assert(
       r.failed.exists(f =>
@@ -203,14 +203,14 @@ class PluginCatalogueSuite extends DbSuite:
     p2Up = true
     val http = fake
     val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = generation), http)
-    val r = run(h, dry = EventImportRequest.DryRun(false))
+    val r = run(h, dry = EventImportRequest.DryRun.Apply)
     assertEquals((r.records, r.created, r.pending), (1, 1, 0), r.toString)
     assertEquals(http.requests.map(_._1).toList, List("https://zq.example/api/p2"))
     assertEquals(h.eventImporter.catalogues.map(_.id), List("gvp", "noaa", "wikidata", Catalogue))
     // the built-ins still answer by their aliases; an unknown one lists the plugin's
     val job = h.eventImports.importJob(
       Caller.Local,
-      EventImportRequest(EventImportRequest.Provider("usgs"), dryRun = EventImportRequest.DryRun(true))
+      EventImportRequest(EventImportRequest.Provider("usgs"), dryRun = EventImportRequest.DryRun.DryRun)
     )
     assert(
       job.left.exists(_.problems.sentences.mkString("; ").contains(s"one of: gvp, noaa, wikidata, $Catalogue")),
@@ -222,7 +222,7 @@ class PluginCatalogueSuite extends DbSuite:
     val h = CatalogueWiring(Deps(cfg, ds, ds, plugins = off), fake)
     assert(
       h.eventImports
-        .importJob(Caller.Local, EventImportRequest(CatalogueRequest, dryRun = EventImportRequest.DryRun(true)))
+        .importJob(Caller.Local, EventImportRequest(CatalogueRequest, dryRun = EventImportRequest.DryRun.DryRun))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown event catalogue"))
     )
@@ -326,7 +326,7 @@ class PluginCatalogueSuite extends DbSuite:
         Floods,
         EventImportRequest(
           FloodsRequest,
-          dryRun = EventImportRequest.DryRun(false),
+          dryRun = EventImportRequest.DryRun.Apply,
           to = Some(EventImportRequest.To(3000L))
         ),
         None,

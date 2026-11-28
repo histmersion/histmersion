@@ -282,8 +282,8 @@ class ToolsSuite extends munit.FunSuite:
   // #770: an init job showed as "Init" with no subject
   test("an init job says what it imports; one that skipped periods says which") {
     val plan = InitPlan(
-      gazetteer = InitPlan.Gazetteer(true),
-      periodPresets = InitPlan.PeriodPresets(true),
+      gazetteer = InitPlan.Gazetteer.Included,
+      periodPresets = InitPlan.PeriodPresets.Included,
       fetch = List(InitPlan.Fetch("periodo"))
     )
     val init = JobInfo(
@@ -379,7 +379,7 @@ class ToolsSuite extends munit.FunSuite:
         Ingest.Params(
           citekey = Citekey("anthony2007_horse"),
           filename = Some(Bundle.Asset.FileName("a.pdf")),
-          quality = Ingest.Params.Quality(true),
+          quality = Ingest.Params.Quality.Quality,
           title = None,
           authors = List(AuthorName("David W. Anthony")),
           year = Some(Year(2007)),

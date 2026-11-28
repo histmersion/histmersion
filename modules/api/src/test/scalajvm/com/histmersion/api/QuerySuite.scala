@@ -50,7 +50,7 @@ class QuerySuite extends munit.FunSuite:
         List(QueryResult.Columns("n")),
         List(row("209")),
         QueryResult.RowCount(1),
-        QueryResult.Truncated(false),
+        QueryResult.Truncated.Complete,
         QueryResult.ElapsedMs(7)
       )
     )
@@ -60,7 +60,7 @@ class QuerySuite extends munit.FunSuite:
         List(QueryResult.Columns("n")),
         List(row("1")),
         QueryResult.RowCount(1),
-        QueryResult.Truncated(true),
+        QueryResult.Truncated.Truncated,
         QueryResult.ElapsedMs(7)
       )
     )
@@ -74,7 +74,7 @@ class QuerySuite extends munit.FunSuite:
             List(QueryResult.Columns("n")),
             Nil,
             QueryResult.RowCount(0),
-            QueryResult.Truncated(false),
+            QueryResult.Truncated.Complete,
             QueryResult.ElapsedMs(1)
           )
         )
@@ -90,18 +90,18 @@ class QuerySuite extends munit.FunSuite:
         SchemaTable.Name("sources"),
         SchemaTable.Kind("table"),
         List(
-          SchemaColumn(SchemaColumn.Name("citekey"), SchemaColumn.DataType("text"), SchemaColumn.Nullable(false)),
-          SchemaColumn(SchemaColumn.Name("title"), SchemaColumn.DataType("text"), SchemaColumn.Nullable(false)),
-          SchemaColumn(SchemaColumn.Name("ocr_markdown"), SchemaColumn.DataType("text"), SchemaColumn.Nullable(true))
+          SchemaColumn(SchemaColumn.Name("citekey"), SchemaColumn.DataType("text"), SchemaColumn.Nullable.Required),
+          SchemaColumn(SchemaColumn.Name("title"), SchemaColumn.DataType("text"), SchemaColumn.Nullable.Required),
+          SchemaColumn(SchemaColumn.Name("ocr_markdown"), SchemaColumn.DataType("text"), SchemaColumn.Nullable.Nullable)
         )
       ),
       SchemaTable(
         SchemaTable.Name("queue_items"),
         SchemaTable.Kind("table"),
         List(
-          SchemaColumn(SchemaColumn.Name("id"), SchemaColumn.DataType("integer"), SchemaColumn.Nullable(false)),
-          SchemaColumn(SchemaColumn.Name("list"), SchemaColumn.DataType("text"), SchemaColumn.Nullable(false)),
-          SchemaColumn(SchemaColumn.Name("text"), SchemaColumn.DataType("text"), SchemaColumn.Nullable(false))
+          SchemaColumn(SchemaColumn.Name("id"), SchemaColumn.DataType("integer"), SchemaColumn.Nullable.Required),
+          SchemaColumn(SchemaColumn.Name("list"), SchemaColumn.DataType("text"), SchemaColumn.Nullable.Required),
+          SchemaColumn(SchemaColumn.Name("text"), SchemaColumn.DataType("text"), SchemaColumn.Nullable.Required)
         )
       )
     )

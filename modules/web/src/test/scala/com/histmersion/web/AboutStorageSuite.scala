@@ -72,7 +72,7 @@ class AboutStorageSuite extends munit.FunSuite:
           Some(Storage.Entry.Path("/d/plugins")),
           None,
           None,
-          exists = Storage.Entry.Exists(false)
+          exists = Storage.Entry.Exists.Missing
         ),
         Storage.Entry(
           Storage.Entry.Key("basemap"),
@@ -81,7 +81,7 @@ class AboutStorageSuite extends munit.FunSuite:
           Some(Storage.Entry.Path("/c/basemap")),
           (Some(600_000_000L)).map(ByteCount.apply),
           (Some(3L)).map(Storage.FileCount.apply),
-          partial = Storage.Entry.Partial(true),
+          partial = Storage.Entry.Partial.Partial,
           volume = Some(Storage.Entry.Volume(vol))
         ),
         Storage.Entry(
@@ -146,8 +146,8 @@ class AboutStorageSuite extends munit.FunSuite:
 
   test("measuring: the window says so; an older server's About has no Storage section"):
     assertEquals(AboutView.storage(Storage.Report()), Nil)
-    val m = AboutView.storage(Storage.Report(measuring = Storage.Report.Measuring(true)))
+    val m = AboutView.storage(Storage.Report(measuring = Storage.Report.Measuring.Measuring))
     assertEquals(m.map(_.title), List("Storage"))
     assertEquals(m.head.rows, List(AboutView.Row("", "measuring…")))
-    val again = AboutView.storage(report.modify(_.measuring).setTo(Storage.Report.Measuring(true)))
+    val again = AboutView.storage(report.modify(_.measuring).setTo(Storage.Report.Measuring.Measuring))
     assertEquals(again.head.rows.head.detail, Some("measured 30 s ago · measuring…"))

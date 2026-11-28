@@ -71,9 +71,9 @@ object ShelfRow:
       Target.item(m.kind, m.id),
       m.title.value,
       m.kind.label.value,
-      if m.read.value then "Read" else "Not read yet",
+      if m.read.read then "Read" else "Not read yet",
       m.openedAt.fold("")(o => s"opened ${ago(o.value)}"),
-      !m.read.value
+      !m.read.read
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

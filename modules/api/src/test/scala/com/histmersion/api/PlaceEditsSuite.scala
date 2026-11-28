@@ -158,8 +158,8 @@ class PlaceEditsSuite extends munit.FunSuite:
       Place.NameChanged.Label("Sea of Galilee"),
       Place.NameChanged.Name("Lake Kinneret"),
       Place.NameChanged.Lang("en"),
-      added = Place.NameChanged.Added(true),
-      changed = Place.NameChanged.Changed(true)
+      added = Place.NameChanged.Added.Added,
+      changed = Place.NameChanged.Changed.Changed
     )
     assertEquals(
       PlacesMarkdown.placeNameChanged(added),
@@ -167,17 +167,17 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     assert(
       PlacesMarkdown
-        .placeNameChanged(added.modify(_.changed).setTo(Place.NameChanged.Changed(false)))
+        .placeNameChanged(added.modify(_.changed).setTo(Place.NameChanged.Changed.Unchanged))
         .contains("was already a name added by hand")
     )
     assert(
       PlacesMarkdown
-        .placeNameChanged(added.modify(_.wasImported).setTo(Place.NameChanged.WasImported(true)))
+        .placeNameChanged(added.modify(_.wasImported).setTo(Place.NameChanged.WasImported.Imported))
         .contains("(a name the seed gives)")
     )
     assert(
       PlacesMarkdown
-        .placeNameChanged(added.modify(_.added).setTo(Place.NameChanged.Added(false)))
+        .placeNameChanged(added.modify(_.added).setTo(Place.NameChanged.Added.Kept))
         .startsWith("removed the name **Lake Kinneret** (en) from")
     )
     assertEquals(PlacesMarkdown.manualPlaceNames(Nil), "_No names added by hand._")
@@ -231,7 +231,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      Place.Overrides.edit(Place.OverrideSet(reset = Place.OverrideSet.Reset(true))),
+      Place.Overrides.edit(Place.OverrideSet(reset = Place.OverrideSet.Reset.Reset)),
       Right(Place.OverrideEdit.Reset)
     )
 
@@ -257,7 +257,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      refused(Place.OverrideSet(kind = Some(Place.OverrideSet.Kind("region")), reset = Place.OverrideSet.Reset(true))),
+      refused(Place.OverrideSet(kind = Some(Place.OverrideSet.Kind("region")), reset = Place.OverrideSet.Reset.Reset)),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -276,7 +276,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     assertEquals(
       RawJson.parse("""{"reset":true}""").flatMap(_.as[Place.OverrideSet]),
-      Right(Place.OverrideSet(reset = Place.OverrideSet.Reset(true)))
+      Right(Place.OverrideSet(reset = Place.OverrideSet.Reset.Reset))
     )
 
   test("a period as a reader sees it, and the Markdown of an override"):
@@ -287,7 +287,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     val set = Place.OverrideChanged(
       Place.Id("pleiades_886355306"),
       Place.OverrideChanged.Label("Regio XII (Piscina Publica)"),
-      reset = Place.OverrideChanged.Reset(false),
+      reset = Place.OverrideChanged.Reset.Set,
       Place.KindValue("site"),
       Place.KindValue("region"),
       Place.Dating.Description("undated"),
@@ -311,7 +311,7 @@ class PlaceEditsSuite extends munit.FunSuite:
         .placeOverrideChanged(
           set
             .modify(_.reset)
-            .setTo(Place.OverrideChanged.Reset(true))
+            .setTo(Place.OverrideChanged.Reset.Reset)
             .modify(_.kindBefore)
             .setTo(Place.KindValue("region"))
             .modify(_.kindAfter)
@@ -328,7 +328,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Some(Place.Override.Kind("region")),
       Some(Year(-7)),
       None,
-      periodSet = Place.Override.PeriodSet(true),
+      periodSet = Place.Override.PeriodSet.PeriodSet,
       Some(Place.Rationale("one of the 14 regiones")),
       Place.Override.SourceKind("site"),
       None,
@@ -433,7 +433,7 @@ class PlaceEditsSuite extends munit.FunSuite:
             pointLat = Some(Latitude(1)),
             pointLon = Some(Longitude(1)),
             reason = Some(Place.Rationale("x")),
-            reset = Place.OverrideSet.Reset(true)
+            reset = Place.OverrideSet.Reset.Reset
           )
       ),
       Left(Some(Write.CodeInvalid))
@@ -472,7 +472,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     val moved = Place.OverrideChanged(
       Place.Id("pleiades_952097"),
       Place.OverrideChanged.Label("Parthyene/Parthia"),
-      reset = Place.OverrideChanged.Reset(false),
+      reset = Place.OverrideChanged.Reset.Set,
       Place.KindValue("region"),
       Place.KindValue("region"),
       Place.Dating.Description("900 BCE–300 CE"),
@@ -510,7 +510,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       None,
       None,
       None,
-      periodSet = Place.Override.PeriodSet(false),
+      periodSet = Place.Override.PeriodSet.NoPeriod,
       Some(Place.Rationale("Pleiades reprPoint")),
       Place.Override.SourceKind("region"),
       Some(Year(-900)),

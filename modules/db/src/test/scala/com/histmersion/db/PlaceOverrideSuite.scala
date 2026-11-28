@@ -186,7 +186,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(placesOf(1), Set(City))
     val o = PlaceFixtures.overrides(ds, Some(Regio))
     assertEquals(
-      o.map(x => (x.kind, x.periodSet, x.sourceKind, x.reason)),
+      o.map(x => (x.kind, x.periodSet.periodSet, x.sourceKind, x.reason)),
       List((Some("region"), false, "site", Some(Place.Rationale("one of the 14 regiones"))))
     )
     assertEquals(PlaceFixtures.overrides(ds, None).filter(_.placeId.value.startsWith("zzpo")).size, 1)
@@ -233,7 +233,7 @@ class PlaceOverrideSuite extends DbSuite with Bounded:
     assertEquals(PlaceFixtures.rename(ds, DPlace.Id("zzpo_regio_xii"), Regio), Right(()))
     val r = PlaceFixtures.setOverride(ds, Regio, Place.OverrideEdit.Reset, tol).toOption.get
     assertEquals(
-      (r.reset, r.kindAfter, r.periodBefore, r.periodAfter, r.findingsAfter),
+      (r.reset.reset, r.kindAfter, r.periodBefore, r.periodAfter, r.findingsAfter),
       (true, "site", "7 BCE–410 CE", "undated", 2)
     )
     assertEquals(row(Regio), ("site", "(,)", false))

@@ -104,18 +104,18 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("claude-plan")), "Claude plan")
     assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("chatgpt-plan")), "ChatGPT plan")
     assertEquals(
-      Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(false)),
+      Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On.On, draining = AgentMode.Step.Drain.On.Off),
       "Agents: working"
     )
     assertEquals(
-      Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On(true), draining = AgentMode.Step.Drain.On(true)),
+      Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On.On, draining = AgentMode.Step.Drain.On.On),
       "Agents: finishing current work, then pausing"
     )
     assertEquals(Wording.Drain, "Finish current work, then pause")
     val glance = UiNotices.AgentsGlance(
       running = UiNotices.AgentsGlance.Running(3),
       queued = UiNotices.AgentsGlance.Queued(12),
-      on = UiNotices.AgentsGlance.On(true)
+      on = UiNotices.AgentsGlance.On.On
     )
     assertEquals(glance.wording, "Agents working · 3 runs")
     assertEquals((glance.modify(_.running).setTo(UiNotices.AgentsGlance.Running(1))).wording, "Agents working · 1 run")
@@ -133,19 +133,19 @@ class WordingSuite extends munit.FunSuite:
       "Agents on · nothing to do"
     )
     assertEquals(
-      (glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining(true))).wording,
+      (glance.modify(_.draining).setTo(UiNotices.AgentsGlance.Draining.Draining)).wording,
       "Agents finishing current work · 3 runs"
     )
     assertEquals(
       (glance
         .modify(_.draining)
-        .setTo(UiNotices.AgentsGlance.Draining(true))
+        .setTo(UiNotices.AgentsGlance.Draining.Draining)
         .modify(_.running)
         .setTo(UiNotices.AgentsGlance.Running(0)))
         .wording,
       "Agents paused"
     )
-    assertEquals((glance.modify(_.on).setTo(UiNotices.AgentsGlance.On(false))).wording, "Agents paused")
+    assertEquals((glance.modify(_.on).setTo(UiNotices.AgentsGlance.On.Off)).wording, "Agents paused")
     assertEquals(Wording.decisions(Wording.Decisions.Open(0)), None)
     assertEquals(Wording.decisions(Wording.Decisions.Open(1)), Some("1 needs your decision"))
     assertEquals(Wording.decisions(Wording.Decisions.Open(2)), Some("2 need your decision"))

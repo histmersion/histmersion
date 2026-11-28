@@ -71,7 +71,7 @@ class AssetLinksControllersSuite extends munit.FunSuite:
     )
     assertEquals(
       c.delete(AssetLinkService.LinkId(1L)),
-      Right(AssetLink.Deleted(AssetLink.Id(1L), AssetLink.Deleted.Value(true)))
+      Right(AssetLink.Deleted(AssetLink.Id(1L), AssetLink.Deleted.Value.Deleted))
     )
 
   test("a held lock refuses every write"):

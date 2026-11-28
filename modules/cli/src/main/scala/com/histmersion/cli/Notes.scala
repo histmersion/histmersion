@@ -39,7 +39,7 @@ object Notes:
       citekey = Some(Citekey(file.getFileName.toString.stripSuffix(".md"))),
       body = body(file, text),
       mtime = Some(NoteImport.Mtime(Files.getLastModifiedTime(file).toMillis)),
-      force = NoteImport.Force(force.value)
+      force = (if force.overwrites then NoteImport.Force.Force else NoteImport.Force.Safe)
     )
 
   /** The converted full text this note points at via `md_path`, resolved relative to the repo root = three parents up

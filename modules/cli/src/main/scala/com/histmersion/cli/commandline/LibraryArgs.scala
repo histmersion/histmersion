@@ -168,7 +168,11 @@ object LibraryArgs:
     def command: Either[Problem, Cli.Command] =
       (ck_.toOption, all_.getOrElse(false)) match
         case (Some(ck), false) if !apply_.getOrElse(false) => Right(CalibreCmd.Command.UpdateOne(ck, json_()))
-        case (None, true)     => Right(CalibreCmd.Command.UpdateAll(Api.Apply(apply_.getOrElse(false)), json_()))
+        case (None, true)                                  =>
+          Right(
+            CalibreCmd.Command
+              .UpdateAll((if apply_.getOrElse(false) then Api.Apply.Apply else Api.Apply.DryRun), json_())
+          )
         case (Some(_), false) =>
           Left(
             Problem.Invalid.Inconsistent.here(

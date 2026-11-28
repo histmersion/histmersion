@@ -207,14 +207,16 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     val r = PlaceFixtures
       .addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en"))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assertEquals((r.changed, r.wasImported, r.label), (true, false, "Sea of Galilee"))
+    assertEquals((r.changed.changed, r.wasImported.wasImported, r.label), (true, false, "Sea of Galilee"))
     // a name the seed already gives becomes manual: kept even when a later seed drops it
     val again = PlaceFixtures
       .addName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en"))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assertEquals((again.changed, again.wasImported), (true, true))
+    assertEquals((again.changed.changed, again.wasImported.wasImported), (true, true))
     assertEquals(
-      PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).map(_.changed),
+      PlaceFixtures
+        .addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en"))
+        .map(_.changed.changed),
       Right(false),
       "adding twice changes nothing"
     )

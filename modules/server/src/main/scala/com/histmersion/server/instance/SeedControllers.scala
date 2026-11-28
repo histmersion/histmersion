@@ -63,7 +63,7 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
               Right(
                 importer.run(
                   SeedNoteFiles(dir, corpusRoot)(using deps.textFiles),
-                  SeedImport.RunForce(req.force.value),
+                  SeedImport.RunForce(req.force.force),
                   SeedFolder.MaxBytes(cfg.limits.assetBytes.value)
                 )
               )

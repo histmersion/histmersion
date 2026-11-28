@@ -7,13 +7,14 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** What became of an imported book's cover: one line for a person, a `warning` when it could not be stored. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionCover(
     line: CollectionCover.Line,
-    warning: CollectionCover.Warning = CollectionCover.Warning(false)
+    warning: CollectionCover.Warning = CollectionCover.Warning.Fine
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
@@ -22,5 +23,7 @@ object CollectionCover:
   type Line = Line.T
   object Line extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type Warning = Warning.T
-  object Warning extends Newtype[Boolean, Pure]
+  enum Warning derives CanEqual:
+    case Warning, Fine
+  object Warning extends TwoStates[Warning]:
+    extension (warning: Warning) def warning: Boolean = warning == Warning

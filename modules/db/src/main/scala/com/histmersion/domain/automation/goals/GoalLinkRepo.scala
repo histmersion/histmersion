@@ -224,9 +224,10 @@ object GoalLinkRepo:
     val at = next.map(_.toString)
     val _ =
       sql"""INSERT INTO goal_schedules (goal_slug, kind, cron, enabled, budget_usd, next_run_at, creator)
-            VALUES ($goal, ${kind.wire}, $cron, $enabled, $budgetUsd, $at::timestamptz, ${StoredCreator.column(
-          creator
-        )}::jsonb)
+            VALUES ($goal, ${kind.wire}, $cron, ${enabled.enabled}, $budgetUsd, $at::timestamptz, ${StoredCreator
+          .column(
+            creator
+          )}::jsonb)
             ON CONFLICT (goal_slug, kind) DO UPDATE SET cron = EXCLUDED.cron, enabled = EXCLUDED.enabled,
               budget_usd = EXCLUDED.budget_usd, next_run_at = EXCLUDED.next_run_at, updated_at = now()""".update.run()
 

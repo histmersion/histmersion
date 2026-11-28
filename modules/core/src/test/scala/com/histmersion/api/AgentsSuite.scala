@@ -231,7 +231,7 @@ class AgentsSuite extends munit.FunSuite:
   test("RunParams: missing options decode as their defaults"):
     assertEquals(RawJson.decode[RunParams]("{}"), Right(RunParams()))
     assert(!RunParams().fixes)
-    assert(RunParams(fix = Some(Agents.RunRequest.Fix(true))).fixes)
+    assert(RunParams(fix = Some(Agents.RunRequest.Fix.Fix)).fixes)
 
   test("RunState: a run waits for an approval only from running, and leaves it only to the queue or cancelled"):
     import RunState.*
@@ -260,8 +260,8 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(Pipeline.CompileArticle.roles, List(Role.Extractor, Role.Writer))
     assertEquals(Pipeline.CurrencyCheck.roles, Nil)
     assertEquals(Pipeline.AcquisitionSweep.roles, List(Role.Planner))
-    assert(ApprovalKind.GoalPlan.blocking.value && ApprovalKind.ArticlePublish.blocking.value)
-    assert(!ApprovalKind.StatusChange.blocking.value && !ApprovalKind.Edge.blocking.value)
+    assert(ApprovalKind.GoalPlan.blocking.blocking && ApprovalKind.ArticlePublish.blocking.blocking)
+    assert(!ApprovalKind.StatusChange.blocking.blocking && !ApprovalKind.Edge.blocking.blocking)
     assertEquals(
       Goal.Plans.ScheduleKind.parse(api.automation.ScheduleKind.Wire("acquisition")).map(_.pipeline),
       Some(Pipeline.AcquisitionSweep)
@@ -270,7 +270,7 @@ class AgentsSuite extends munit.FunSuite:
     // a run stored before P3 reads its new options as absent
     assertEquals(
       RawJson.decode[RunParams]("""{"fix":true}"""),
-      Right(RunParams(fix = Some(Agents.RunRequest.Fix(true))))
+      Right(RunParams(fix = Some(Agents.RunRequest.Fix.Fix)))
     )
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
@@ -286,7 +286,7 @@ class AgentsSuite extends munit.FunSuite:
           Some(api.library.Title("X")),
           Some(Year(2020)),
           citekey = Some(Citekey("x2020_y")),
-          inCorpus = PlannedWork.InCorpus(true),
+          inCorpus = PlannedWork.InCorpus.InCorpus,
           why = Goal.Rationale("core")
         )
       ),
@@ -333,7 +333,7 @@ class AgentsSuite extends munit.FunSuite:
       Goal.Slug("g"),
       ScheduleKind.Currency,
       GoalSchedule.Cron("@daily"),
-      enabled = GoalSchedule.Enabled(false),
+      enabled = GoalSchedule.Enabled.Disabled,
       Some(GoalSchedule.BudgetUsd(0.5)),
       None,
       None,
@@ -480,7 +480,7 @@ class AgentsSuite extends munit.FunSuite:
       Agents.RunInfo.Pipeline("enrich-source"),
       Agents.RunInfo.Target("x2020"),
       Agents.RunInfo.Status("done"),
-      dryRun = Agents.RunInfo.DryRun(true),
+      dryRun = Agents.RunInfo.DryRun.DryRun,
       params = RunParams(modelFor =
         Some(List(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("local:h"))))
       )
@@ -521,7 +521,7 @@ class AgentsSuite extends munit.FunSuite:
     assert(
       !AgentsMarkdown
         .run(
-          d.modify(_.run).setTo(r.modify(_.dryRun).setTo(Agents.RunInfo.DryRun(false))).modify(_.steps).setTo(Nil),
+          d.modify(_.run).setTo(r.modify(_.dryRun).setTo(Agents.RunInfo.DryRun.Apply)).modify(_.steps).setTo(Nil),
           withMessages = false
         )
         .contains("dry run")

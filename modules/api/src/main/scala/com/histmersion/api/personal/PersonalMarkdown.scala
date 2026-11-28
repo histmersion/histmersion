@@ -64,7 +64,7 @@ object PersonalMarkdown:
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   def readLine(m: ReadMark): String =
     val state =
-      if (m.read) == ReadMark.Read(true) then s"read ${m.readAt.fold("")(a => minute(a.value))}" else "not read yet"
+      if (m.read) == ReadMark.Read.Read then s"read ${m.readAt.fold("")(a => minute(a.value))}" else "not read yet"
     s"- **${m.title}** — ${m.kind.label.value.toLowerCase} `${m.id.value}` · $state" + m.openedAt.fold("")(o =>
       s" · opened ${minute(o.value)}"
     )

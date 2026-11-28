@@ -72,7 +72,7 @@ class AboutSuite extends munit.FunSuite:
       BuildStamp.Version("1.2.3"),
       Some(BuildStamp.GitCommit("abc123def456")),
       Some(BuildStamp.CommitDate("2026-10-01T10:00:00+02:00")),
-      dirty = BuildStamp.Dirty(true)
+      dirty = BuildStamp.Dirty.Dirty
     ),
     health = Health(
       Health.Status("degraded"),
@@ -170,7 +170,7 @@ class AboutSuite extends munit.FunSuite:
     val read = AboutMarkdown.render(
       about
         .modify(_.configFile)
-        .setTo(ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded(true)))
+        .setTo(ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded.Loaded))
     )
     assert(read.contains("- config file: /c/histmersion.conf (read)"), read)
     val none = AboutMarkdown.render(
@@ -220,7 +220,7 @@ class AboutSuite extends munit.FunSuite:
   test("About renders the config file line"):
     assertEquals(
       ConfigFileInfo.describe(
-        ConfigFileInfo(Some(ConfigFileInfo.Path("/c/h.conf")), loaded = ConfigFileInfo.Loaded(true))
+        ConfigFileInfo(Some(ConfigFileInfo.Path("/c/h.conf")), loaded = ConfigFileInfo.Loaded.Loaded)
       ),
       "/c/h.conf (read)"
     )
@@ -232,7 +232,7 @@ class AboutSuite extends munit.FunSuite:
       ConfigFileInfo.describe(
         ConfigFileInfo(
           Some(ConfigFileInfo.Path("/c/h.conf")),
-          loaded = ConfigFileInfo.Loaded(true),
+          loaded = ConfigFileInfo.Loaded.Loaded,
           List(ConfigFileInfo.UnknownKeys("histmersion.x"))
         )
       ),

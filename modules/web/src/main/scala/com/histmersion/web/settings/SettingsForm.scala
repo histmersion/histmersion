@@ -99,7 +99,13 @@ object SettingsForm:
           ),
           disabled <-- draft.isEmpty.combineWith(Auth.writable).map((empty, w) => empty || !w),
           onClick --> (_ =>
-            SettingsStore.save(draft.changes, SettingsStore.SaveLiteralConsent(consent())).foreach(_ => draft.clear())
+            SettingsStore
+              .save(
+                draft.changes,
+                (if consent() then SettingsStore.SaveLiteralConsent.Consented
+                 else SettingsStore.SaveLiteralConsent.Withheld)
+              )
+              .foreach(_ => draft.clear())
           )
         ),
         button(

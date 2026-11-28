@@ -628,8 +628,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           AgentLeaseInfo(
             AgentLeaseInfo.Owner(o.value),
             AgentLeaseInfo.Until(u.value),
-            AgentLeaseInfo.Expired(expired),
-            AgentLeaseInfo.ThisServer(mine)
+            (if expired then AgentLeaseInfo.Expired.Expired else AgentLeaseInfo.Expired.Live),
+            (if mine then AgentLeaseInfo.ThisServer.ThisServer else AgentLeaseInfo.ThisServer.OtherServer)
           )
         ),
       upstreamQuotas,

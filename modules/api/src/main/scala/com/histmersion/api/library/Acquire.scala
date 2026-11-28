@@ -17,6 +17,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 object Acquire:
   object Intent:
@@ -145,7 +146,7 @@ object Acquire:
       citekey: Citekey,
       refusals: List[Problem.NotFound.Answer] = Nil
   ): Option[Outcome] =
-    Option.when(((work.isOa) == Source.Candidate.IsOa(true))) {
+    Option.when(((work.isOa) == Source.Candidate.IsOa.OpenAccess)) {
       val who =
         work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
@@ -296,7 +297,7 @@ object Acquire:
   def rankFollowups(rows: List[FollowupRow]): List[FollowupRow] =
     rows.sortBy { r =>
       val strong = r.intents.map(_.value.toLowerCase).exists(i => i == "result" || i == "methodology")
-      (if (r.isInfluential).value then 0 else 1, if strong then 0 else 1, -r.year.fold(0L)(y => (y).value))
+      (if (r.isInfluential).isInfluential then 0 else 1, if strong then 0 else 1, -r.year.fold(0L)(y => (y).value))
     }
 
   final case class RetractionRow(
@@ -396,25 +397,29 @@ object Acquire:
       object Said extends Newtype[String, Pure]
 
     final case class RecheckRequest(
-        dryRun: RecheckRequest.DryRun = RecheckRequest.DryRun(false),
+        dryRun: RecheckRequest.DryRun = RecheckRequest.DryRun.Apply,
         limit: Option[RecheckRequest.Limit] = None,
         id: Option[RecheckRequest.Id] = None,
         by: Option[RecheckRequest.By] = None,
-        all: RecheckRequest.All = RecheckRequest.All(false)
+        all: RecheckRequest.All = RecheckRequest.All.Due
     ) derives JsonCodec,
           KindlingsSchema,
           api.json.Schema
 
     object RecheckRequest:
-      type DryRun = DryRun.T
-      object DryRun extends Newtype[Boolean, Pure]
+      enum DryRun derives CanEqual:
+        case DryRun, Apply
+      object DryRun extends TwoStates[DryRun]:
+        extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
       type Limit = Limit.T
       object Limit extends Newtype[Int, Pure]
       export Queue.QueueItem.Id
       type By = By.T
       object By extends Newtype[String, Pure]
-      type All = All.T
-      object All extends Newtype[Boolean, Pure]
+      enum All derives CanEqual:
+        case All, Due
+      object All extends TwoStates[All]:
+        extension (all: All) def all: Boolean = all == All
 
     final case class RecheckRow(
         item: RecheckRow.Item,
@@ -452,8 +457,10 @@ object Acquire:
           api.json.Schema
 
     object RecheckResult:
-      type DryRun = DryRun.T
-      object DryRun extends Newtype[Boolean, Pure]
+      enum DryRun derives CanEqual:
+        case DryRun, Apply
+      object DryRun extends TwoStates[DryRun]:
+        extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
       type Open = Open.T
       object Open extends Newtype[Int, Pure]
       type WithDoi = WithDoi.T
@@ -485,9 +492,10 @@ object Acquire:
     object RecheckJob:
 
       /** A re-check job's plan, in its detail. */
-
-      type All = All.T
-      object All extends Newtype[Boolean, Pure]
+      enum All derives CanEqual:
+        case All, Due
+      object All extends TwoStates[All]:
+        extension (all: All) def all: Boolean = all == All
       export Plural.Count as UpTo
       type Since = Since.T
       object Since extends Newtype[String, Pure]
@@ -506,7 +514,7 @@ object Acquire:
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def describe(j: RecheckJob): String =
         "the acquisition list's legal re-check of " +
-          (if (j.all).value then "every open item with a DOI"
+          (if (j.all).all then "every open item with a DOI"
            else s"up to ${Plural.count(j.upTo, Plural.CountSingular("due item"))}") +
           j.resumes.fold("")(id => s" (resuming job $id)")
 
@@ -528,8 +536,10 @@ object Acquire:
           api.json.Schema
 
     object RecheckStatus:
-      type Enabled = Enabled.T
-      object Enabled extends Newtype[Boolean, Pure]
+      enum Enabled derives CanEqual:
+        case Enabled, Disabled
+      object Enabled extends TwoStates[Enabled]:
+        extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
       type WithDoi = WithDoi.T
       object WithDoi extends Newtype[Int, Pure]
       type Due = Due.T

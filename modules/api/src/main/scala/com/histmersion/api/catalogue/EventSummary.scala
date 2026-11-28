@@ -10,6 +10,7 @@ import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Api
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
@@ -26,7 +27,7 @@ final case class EventSummary(
     description: Option[EventSummary.Description] = None,
     citekey: Option[Citekey] = None,
     scale: EventSummary.Scale = EventSummary.Scale(EventScale.Local),
-    scaleStated: EventSummary.ScaleStated = EventSummary.ScaleStated(false),
+    scaleStated: EventSummary.ScaleStated = EventSummary.ScaleStated.Inferred,
     tier: EventSummary.Tier = EventSummary.Tier(EventTier.Attested),
     precision: EventSummary.Precision = EventSummary.Precision(EventPrecision.Precise),
     central: Option[EventSummary.Central] = None,
@@ -49,9 +50,10 @@ object EventSummary:
   object Description extends Newtype[String, Pure]
   type Scale = Scale.T
   object Scale extends Newtype[String, Pure]
-  type ScaleStated = ScaleStated.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object ScaleStated extends Newtype[Boolean, Pure]
+  enum ScaleStated derives CanEqual:
+    case Stated, Inferred
+  object ScaleStated extends TwoStates[ScaleStated]:
+    extension (scaleStated: ScaleStated) def scaleStated: Boolean = scaleStated == Stated
   export Api.EventQuery.Tier
   export EventGeo.Precision
   export CatalogRecord.Central

@@ -108,7 +108,7 @@ object Critiques:
         ck,
         r.map(_._1),
         r.flatMap(_._2),
-        CritiqueSide.Cited(cited(ck)),
+        (if cited(ck) then CritiqueSide.Cited.Cited else CritiqueSide.Cited.Uncited),
         CritiqueSide.Mentions(mentions.getOrElse(ck, 0))
       )
     edges
@@ -150,8 +150,8 @@ object Critiques:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ranked(pairs: List[CritiquePair]): List[CritiquePair] =
     def tier(p: CritiquePair) =
-      if !(p.critic.cited).value && (p.criticised.cited).value then 0
-      else if (p.critic.cited).value && (p.criticised.cited).value then 1
+      if !(p.critic.cited).cited && (p.criticised.cited).cited then 0
+      else if (p.critic.cited).cited && (p.criticised.cited).cited then 1
       else 2
     def kind(p: CritiquePair) = p.kinds
       .map { k =>
@@ -192,7 +192,7 @@ object Critiques:
       .map(_.value)
       .map(t => "\"" + (if t.length > 90 then t.take(89).trim + "…" else t) + "\"")
       .toList)
-    val cited = if (s.cited).value then "cited" else "not cited"
+    val cited = if (s.cited).cited then "cited" else "not cited"
     (s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

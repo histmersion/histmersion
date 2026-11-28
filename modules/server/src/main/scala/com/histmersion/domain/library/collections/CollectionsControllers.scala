@@ -99,7 +99,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
       name: CollectionsService.CollectionName,
       req: CollectionUpdateAll.Request
   ): Either[Api.Error, CollectionUpdateAll] =
-    if req.apply.value then
+    if req.apply.applies then
       maintenance.guard(WriteGate.OperationName("collections/update"))(
         service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(true))
       )
@@ -128,7 +128,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
       name: CollectionsService.CollectionName,
       req: CollectionSync.Request
   ): Either[Api.Error, CollectionSync] =
-    if req.apply.value then
+    if req.apply.applies then
       maintenance.guard(WriteGate.OperationName("collections/sync"))(service.sync(caller, name, req))
     else service.sync(caller, name, req)
 

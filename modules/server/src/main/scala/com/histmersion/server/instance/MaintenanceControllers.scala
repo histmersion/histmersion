@@ -164,7 +164,7 @@ final class MaintenanceControllers(
     val before = backups.guardedRows
     for
       archive <- backups.resolve(PreparedBackup.File(req.file.value))
-      _ <- if req.force.value || before.value == 0 then Right(()) else Left(backups.refusal(before))
+      _ <- if req.force.force || before.value == 0 then Right(()) else Left(backups.refusal(before))
     yield (archive, before)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

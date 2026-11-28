@@ -115,7 +115,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           place = named("troy", "Troy", "site"),
           parents = Nil,
           counts = None,
-          contested = Place.Entry.Contested(true)
+          contested = Place.Entry.Contested.Contested
         )
       )
     assertEquals(bare.byline, "Site · contested extent")
@@ -341,7 +341,9 @@ class PlaceHoverSuite extends munit.FunSuite:
       AboutView.sections(
         about
           .modify(_.configFile)
-          .setTo(ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded(true)))
+          .setTo(
+            ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded.Loaded)
+          )
       )
     val cf = withFile.head.rows.find(_.label == "config file").get
     assertEquals((cf.value, cf.detail), ("read", Some("/c/histmersion.conf")))
@@ -357,7 +359,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.Id("media-met"),
           PluginStatus.Version("1.0.0"),
           PluginStatus.SpiVersion(1),
-          enabled = PluginStatus.Enabled(true),
+          enabled = PluginStatus.Enabled.Enabled,
           PluginState.Wire("registered"),
           List(PluginDescription.Provides("media-collection:met"))
         ),
@@ -365,7 +367,7 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.Id("portal"),
           PluginStatus.Version("0.2.0"),
           PluginStatus.SpiVersion(1),
-          enabled = PluginStatus.Enabled(true),
+          enabled = PluginStatus.Enabled.Enabled,
           PluginState.Wire("registered"),
           List(
             PluginDescription.Provides("media-collection:portal"),
@@ -380,14 +382,14 @@ class PlaceHoverSuite extends munit.FunSuite:
           PluginStatus.Id("1password"),
           PluginStatus.Version("1.0.0"),
           PluginStatus.SpiVersion(1),
-          enabled = PluginStatus.Enabled(false),
+          enabled = PluginStatus.Enabled.Disabled,
           PluginState.Wire("disabled")
         ),
         PluginStatus(
           PluginStatus.Id("broken"),
           PluginStatus.Version("0.1.0"),
           PluginStatus.SpiVersion(1),
-          enabled = PluginStatus.Enabled(true),
+          enabled = PluginStatus.Enabled.Enabled,
           PluginState.Wire("failed"),
           errors = List(Problem.Unclassified(Legacy.Text("histmersion.plugins.broken.x: bad")))
         )

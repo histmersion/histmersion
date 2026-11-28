@@ -30,7 +30,10 @@ object CandidatesCmd:
       cmd match
         case Command.Sweep(goal, writes) =>
           c.call(AcquireApi.sweepCandidates)(
-            CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(writes.dry))
+            CandidateSweep.Request(
+              CandidateSweep.Request.Goal(goal),
+              (if writes.dry then CandidateSweep.Request.DryRun.DryRun else CandidateSweep.Request.DryRun.Apply)
+            )
           ).map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
         case Command.Mark(ids, as) =>
           c.call(AcquireApi.markCandidates)(

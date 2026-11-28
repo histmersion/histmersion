@@ -22,7 +22,7 @@ object ExchangeJobKinds:
     JobKindMeaning(
       "The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."
     ),
-    stoppable = JobKindEntry.OfStoppable(true),
+    stoppable = JobKindEntry.OfStoppable.Stoppable,
     subject = InitPlan.Detail.of(_).map(p => JobKinds.Subject(InitPlan.describe(p)))
   )
 

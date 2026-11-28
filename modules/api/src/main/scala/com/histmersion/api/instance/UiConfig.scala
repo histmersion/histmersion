@@ -9,6 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 final case class UiConfig(
     tiles: UiConfig.Tiles,
@@ -29,15 +30,15 @@ final case class UiConfig(
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
     countersPollSeconds: UiConfig.CountersPollSeconds = UiConfig.CountersPollSeconds(30),
     jobPollMs: UiConfig.JobPollMs = UiConfig.JobPollMs(1000),
-    keyRequired: UiConfig.KeyRequired = UiConfig.KeyRequired(false),
-    agentsEnabled: UiConfig.AgentsEnabled = UiConfig.AgentsEnabled(false),
+    keyRequired: UiConfig.KeyRequired = UiConfig.KeyRequired.Open,
+    agentsEnabled: UiConfig.AgentsEnabled = UiConfig.AgentsEnabled.Disabled,
     tilesTone: UiConfig.TilesTone = UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
     docsUrl: UiConfig.DocsUrl = UiConfig.DocsUrl(""),
     baseMapSource: UiConfig.BaseMapSource = api.basemap.BaseMapSource.Wire("auto"),
     mapLanguage: UiConfig.MapLanguage = UiConfig.MapLanguage("en"),
     mapStart: MapStartConfig = MapStartConfig(),
-    setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false),
+    setupDue: UiConfig.SetupDue = UiConfig.SetupDue.SetUp,
     buildId: BuildId = BuildId("")
 ) derives JsonCodec,
       KindlingsSchema,
@@ -78,11 +79,14 @@ object UiConfig:
   object JobPollMs extends Newtype[Int, Pure]
 
   /** Whether the page must send the API key: it was let in with the key, not as a trusted network's. */
-  type KeyRequired = KeyRequired.T
-  object KeyRequired extends Newtype[Boolean, Pure]
-  type AgentsEnabled = AgentsEnabled.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object AgentsEnabled extends Newtype[Boolean, Pure]
+  enum KeyRequired derives CanEqual:
+    case KeyRequired, Open
+  object KeyRequired extends TwoStates[KeyRequired]:
+    extension (keyRequired: KeyRequired) def keyRequired: Boolean = keyRequired == KeyRequired
+  enum AgentsEnabled derives CanEqual:
+    case Enabled, Disabled
+  object AgentsEnabled extends TwoStates[AgentsEnabled]:
+    extension (agentsEnabled: AgentsEnabled) def agentsEnabled: Boolean = agentsEnabled == Enabled
   type TilesTone = TilesTone.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TilesTone extends Newtype[String, Pure]
@@ -96,5 +100,7 @@ object UiConfig:
   export api.basemap.BaseMapSource.Wire as BaseMapSource
   type MapLanguage = MapLanguage.T
   object MapLanguage extends Newtype[String, Pure]
-  type SetupDue = SetupDue.T
-  object SetupDue extends Newtype[Boolean, Pure]
+  enum SetupDue derives CanEqual:
+    case SetupDue, SetUp
+  object SetupDue extends TwoStates[SetupDue]:
+    extension (setupDue: SetupDue) def setupDue: Boolean = setupDue == SetupDue

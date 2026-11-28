@@ -9,13 +9,14 @@ import com.histmersion.api.ItemKind
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class ReadMark(
     kind: ItemKind,
     id: ItemKey,
     title: ReadMark.Title,
-    read: ReadMark.Read = ReadMark.Read(false),
+    read: ReadMark.Read = ReadMark.Read.Unread,
     readAt: Option[ReadMark.ReadAt] = None,
     openedAt: Option[ReadMark.OpenedAt] = None
 ) derives JsonCodec,
@@ -25,8 +26,10 @@ final case class ReadMark(
 object ReadMark:
 
   export com.histmersion.api.library.Title
-  type Read = Read.T
-  object Read extends Newtype[Boolean, Pure]
+  enum Read derives CanEqual:
+    case Read, Unread
+  object Read extends TwoStates[Read]:
+    extension (read: Read) def read: Boolean = read == Read
   type ReadAt = ReadAt.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object ReadAt extends Newtype[String, Pure]

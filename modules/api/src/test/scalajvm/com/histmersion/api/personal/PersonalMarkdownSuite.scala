@@ -48,7 +48,7 @@ class PersonalMarkdownSuite extends munit.FunSuite:
           ItemKind.Article,
           ItemKey("a"),
           ReadMark.Title("A"),
-          read = ReadMark.Read(true),
+          read = ReadMark.Read.Read,
           readAt = Some(ReadMark.ReadAt("2026-10-30T12:40:00Z"))
         )
       ),

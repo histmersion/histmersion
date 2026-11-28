@@ -193,7 +193,7 @@ final class Client(
   def facets(field: Api.Facets.Field, prefix: Option[Api.Facets.Prefix], f: Filter): Either[Cli.Error, List[Facet]] =
     call(Api.facets)((field, prefix, f))
   def getSource(ck: Citekey): Either[Cli.Error, Source.WithFindings] =
-    call(Api.getSource)((ck, Api.SourceViewQuery.FullText(true)))
+    call(Api.getSource)((ck, Api.SourceViewQuery.FullText.FullText))
   def findings(q: Api.FindingsQuery): Either[Cli.Error, List[GeoHit]] = call(Api.findings)(q)
   def findingsPage(q: Api.FindingsQuery): Either[Cli.Error, GeoHitPage] = call(Api.findingsPage)(q)
   def aggregate(q: Api.AggregateQuery): Either[Cli.Error, TimeHistogram] = call(Api.aggregate)(q)
@@ -255,7 +255,7 @@ final class Client(
   /** The bundle file is the request body, streamed from disk. */
   def verifyBundle(file: java.io.File): Either[Cli.Error, Bundle.VerifyResult] = call(Api.verifyBundle)(file)
   def importBundle(writes: Cli.Writes, file: java.io.File): Either[Cli.Error, Bundle.ImportResult] =
-    call(Api.importBundle)((Api.Apply(writes.dry), file))
+    call(Api.importBundle)(((if writes.dry then Api.Apply.DryRun else Api.Apply.Apply), file))
   // the merge plan (M3): the bundle is uploaded once, then planned and imported by its sha256
   def uploadBundle(file: java.io.File): Either[Cli.Error, Bundle.Upload] = call(Api.uploadBundle)(file)
   def mergePlan(req: MergePlan.Request): Either[Cli.Error, MergePlan] = call(Api.mergePlan)(req)
@@ -289,13 +289,15 @@ final class Client(
       in: Source.Put,
       strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Source.WithFindings] =
-    call(Api.putSource)((ck, in, Api.Overwrite(strict.strictly)))
+    call(Api.putSource)((ck, in, (if strict.strictly then Api.Strictness.Strict else Api.Strictness.Lenient)))
   def patchSource(
       ck: Citekey,
       p: Source.Patch,
       strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Source.WithFindings] =
-    call(Api.patchSource)((ck, Source.Patch.Request.of(p), Api.Apply(strict.strictly)))
+    call(Api.patchSource)(
+      (ck, Source.Patch.Request.of(p), (if strict.strictly then Api.Strictness.Strict else Api.Strictness.Lenient))
+    )
   // the formatting lint of agent-written Markdown
   def lintSource(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
   def fixSourceFormat(ck: Citekey): Either[Cli.Error, FormatReport] = call(Api.fixSourceFormat)(ck)
@@ -355,7 +357,7 @@ final class Client(
       source: Api.ExternalPlaces.Source,
       writes: Cli.Writes
   ): Either[Cli.Error, Place.ImportResult] =
-    call(Api.fetchExternalPlaces)((source, Api.Apply(writes.dry)))
+    call(Api.fetchExternalPlaces)((source, (if writes.dry then Api.Apply.DryRun else Api.Apply.Apply)))
   def placeSources: Either[Cli.Error, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
   def loadPlaces(source: Api.ExternalPlaces.Source, apply: Api.Apply): Either[Cli.Error, JobInfo] =
     call(Api.loadPlaces)((source, apply))
@@ -368,7 +370,7 @@ final class Client(
       to: Option[Api.PlacesGeoQuery.To]
   ): Either[Cli.Error, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
   def period(id: Period.Id): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
-  def seedPeriods(replace: Api.Overwrite = Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] =
+  def seedPeriods(replace: Api.Overwrite = Api.Overwrite.Keep): Either[Cli.Error, Period.ImportResult] =
     call(Api.seedPeriods)(replace)
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def importPeriods(
@@ -382,7 +384,7 @@ final class Client(
       collections: List[CorpusCounts.Periods.Collection]
   ): Either[Cli.Error, Period.ImportResult] =
     call(Api.fetchPeriods)((source, collections))
-  def init(fetch: Api.Overwrite): Either[Cli.Error, JobInfo] = call(Api.init)(fetch)
+  def init(fetch: Api.Fetching): Either[Cli.Error, JobInfo] = call(Api.init)(fetch)
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
   def listEvents(q: Api.EventQuery): Either[Cli.Error, EventList] = call(Api.events)(q)
   def getEvent(id: Event.Uid): Either[Cli.Error, EventDetail] = call(Api.getEvent)(id)
@@ -416,19 +418,19 @@ final class Client(
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
   def getArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.View] =
-    call(Api.getArticle)((slug, Article.FullText(false)))
+    call(Api.getArticle)((slug, Article.FullText.SummaryOnly))
   def putArticle(
       slug: ReviewGoal.Slug,
       in: Article.Put,
       strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Article.View] =
-    call(Api.putArticle)((slug, in, Api.Overwrite(strict.strictly)))
+    call(Api.putArticle)((slug, in, (if strict.strictly then Api.Strictness.Strict else Api.Strictness.Lenient)))
   def patchArticle(
       slug: ReviewGoal.Slug,
       p: Article.Patch,
       strict: Cli.Strict = Cli.Strict.Leniently
   ): Either[Cli.Error, Article.View] =
-    call(Api.patchArticle)((slug, p, Api.Apply(strict.strictly)))
+    call(Api.patchArticle)((slug, p, (if strict.strictly then Api.Strictness.Strict else Api.Strictness.Lenient)))
   def deleteArticle(slug: ReviewGoal.Slug): Either[Cli.Error, Article.Deleted] = call(Api.deleteArticle)(slug)
   def articleCoverage(slug: ReviewGoal.Slug): Either[Cli.Error, Coverage] = call(Api.articleCoverage)(slug)
   def articleReview(slug: ReviewGoal.Slug): Either[Cli.Error, Article.ReviewView] = call(Api.articleReview)(slug)
@@ -462,7 +464,8 @@ final class Client(
     */
   def ingest(p: Ingest.Params, file: java.io.File): Either[Cli.Error, Ingest.Accepted] =
     call(Api.ingest)((p, file))
-  def reocr(ck: Citekey, quality: Api.Overwrite): Either[Cli.Error, Ingest.Accepted] = call(Api.reocr)((ck, quality))
+  def reocr(ck: Citekey, quality: Ingest.Params.Quality): Either[Cli.Error, Ingest.Accepted] =
+    call(Api.reocr)((ck, quality))
   def job(id: SpatialHierarchyResult.Job.Id): Either[Cli.Error, JobInfo] = poll(Api.job)(id)
   def basemapStatus(): Either[Cli.Error, Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Either[Cli.Error, JobInfo] = call(BasemapApi.fetch)(q)

@@ -109,7 +109,7 @@ final class EventImports(
     given Creator.New = importer(provider)
     val info = infoOf(provider)
     val catalogue = registered().get(provider)
-    val dryRun = req.dryRun.value
+    val dryRun = req.dryRun.dryRun
     val to = SignedYear(req.to.fold(ec.maxYear.value)(_.value))
     val from = req.from.map(f => SignedYear(f.value))
     val limit = req.limit.map(_.value).filter(_ > 0).getOrElse(ec.defaultLimit.value)
@@ -121,7 +121,7 @@ final class EventImports(
       EventProviders.Thresholds.OutsideMagnitude(req.minMagnitude.fold(ec.noaa.outsideMinMagnitude.value)(_.value)),
       area
     )
-    if req.refresh.value && !dryRun then store.clearParts(provider)
+    if req.refresh.refresh && !dryRun then store.clearParts(provider)
     val scope = EventProviders.scope(th)
     val done =
       if dryRun then Set.empty[String] else EventProviders.partsIn(store.partsDone(provider).map(_.value), scope)
@@ -133,7 +133,7 @@ final class EventImports(
     var report =
       EventImportReport(
         EventImportReport.Provider(provider.value),
-        EventImportReport.DryRun(dryRun),
+        (if dryRun then EventImportReport.DryRun.DryRun else EventImportReport.DryRun.Apply),
         licence = info.fold(EventImportReport.Licence(""))(i => EventImportReport.Licence(i.licence.value)),
         citation = info.fold(EventImportReport.Citation(""))(i => EventImportReport.Citation(i.citation.value))
       )
@@ -224,7 +224,7 @@ final class EventImports(
             report,
             EventImportReport(
               EventImportReport.Provider(provider.value),
-              EventImportReport.DryRun(dryRun),
+              (if dryRun then EventImportReport.DryRun.DryRun else EventImportReport.DryRun.Apply),
               EventImportReport.Records(recs.size),
               EventImportReport.Kept(kept.size),
               EventImportReport.Created(created),
@@ -372,7 +372,7 @@ final class EventImports(
           .fold("")(n => s" ($n)")}, ${prec(b)}"
     } ++ Option.when(undecodable.value > 0)(s"$undecodable stored record(s) no longer decode — left alone").toList
     val out = EventRederiveReport(
-      EventRederiveReport.DryRun(dryRun),
+      (if dryRun then EventRederiveReport.DryRun.DryRun else EventRederiveReport.DryRun.Apply),
       provider.toList
         .ifEmpty((CatalogProvider.all ++ registered().keys).distinct)
         .map(p => EventRederiveReport.Providers(p.value)),

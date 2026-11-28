@@ -99,9 +99,9 @@ object PassageFinder:
             PassageResult(
               com.histmersion.api.library.Citekey(citekey.value),
               PassageResult.Query(q),
-              PassageResult.Regex(regex.value),
+              (if regex.value then PassageResult.Regex.Regex else PassageResult.Regex.Literal),
               PassageResult.Matches(spans.size),
-              PassageResult.Capped(capped),
+              (if capped then PassageResult.Capped.Capped else PassageResult.Capped.Complete),
               PassageResult.Total(ranges.size),
               shown.toList,
               PassageResult.BodyChars(text.length)

@@ -287,7 +287,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
           Some(
             ManagerConfig(
               includeTags = Some(List(IncludeTag)),
-              inferFilter = Some(ManagerConfig.InferFilter(true)),
+              inferFilter = Some(ManagerConfig.InferFilter.Infer),
               cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))
             )
           )
@@ -431,7 +431,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
     )
     val m =
       a.managing
-        .create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused(false))))
+        .create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused.Active)))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((m.id, m.kind, m.goal.map(_.value: String)), (seedId(ref(Goal)), "seed", Some(Goal)))
     assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug))).isLeft, "one per area")

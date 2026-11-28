@@ -278,7 +278,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
           api.library.Citekey(ck(d).value),
           Some(Doi(d)),
           Some(api.library.Title(s"Ingested $d")),
-          created = Ingest.Report.Created(true),
+          created = Ingest.Report.Created.Created,
           Some(
             PdfInfo(
               PdfInfo.Source("unpaywall"),
@@ -323,7 +323,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On, Some(AutopilotSet.By("test"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -463,7 +463,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     a.autopilot.ensureNow(Instant.now())
     val st = a.scheduler.status()
     note("dry pass", AgentSchedulerMarkdown.status(st))
-    assert(st.dry.value, st)
+    assert(st.dry.dry, st)
     assertEquals(st.started.size, 3)
     assertEquals(runs(), Vector.empty, "a dry pass starts nothing")
 
@@ -638,7 +638,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
         ApprovalDigest.BulkDecide(
           ApprovalDigest.BulkDecide.Decision("reject"),
           kind = Some(api.automation.Approval.Kind.Wire("goal-plan")),
-          dryRun = ApprovalDigest.BulkDecide.DryRun(true)
+          dryRun = ApprovalDigest.BulkDecide.DryRun.DryRun
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -708,9 +708,9 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
   test("drain: nothing new starts, the runs in flight finish, drained once none runs; undrain and on lift it"):
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
-    val drained = a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("test"))))
+    val drained = a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On, Some(Autopilot.DrainSet.By("test"))))
     note("drain on, nothing running", a.autopilotPage(drained))
-    assert(drained.drain.exists(_.drained.value), drained.drain)
+    assert(drained.drain.exists(_.drained.drained), drained.drain)
     val clock = Clock()
     clock.tick(a)
     assertEquals(runs(), Vector.empty, "nothing starts while draining")
@@ -727,12 +727,12 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     note(
       "drain off",
       a.autopilotPage(
-        a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("test"))))
+        a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.Off, Some(Autopilot.DrainSet.By("test"))))
       )
     )
     clock.tick(a)
     assertEquals(runs().size, 3)
-    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("test"))))
+    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On, Some(Autopilot.DrainSet.By("test"))))
     clock.tick(a)
     val d = a.managing.autopilot.drain.getOrElse(fail("draining"))
     assertEquals((d.drained, d.inFlight), (false, 3))
@@ -741,11 +741,11 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     // the runs in flight finish (here: cancelled): drained
     runs().foreach(r => a.engine.cancel(ApiIds.run(r.id)))
     clock.tick(a)
-    assert(a.managing.autopilot.drain.exists(_.drained.value))
+    assert(a.managing.autopilot.drain.exists(_.drained.drained))
     assertEquals(runs().count(r => r.status.value == "queued"), 0, "still nothing new")
     // turning the autopilot on lifts it
     val st = a.managing
-      .setAutopilot(AutopilotSet(on = AutopilotSet.On(true), Some(AutopilotSet.By("test"))))
+      .setAutopilot(AutopilotSet(on = AutopilotSet.On.On, Some(AutopilotSet.By("test"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -764,7 +764,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     assertEquals(r.stalled.find(_.slug.value == g(4).value).map(_.code), Some(Stalls.Code.Person))
     assert(r.stalled.exists(_.code.value == Stalls.Code.Queue), r.byReason)
     assertEquals(a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(3))).stalled, Nil, "they all started today")
-    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On(true)))
+    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On))
     note("stalls while draining", StallsMarkdown.report(a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(0)))))
     assert(
       a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(0))).stalled.forall(_.code.value == Stalls.Code.Drain)
@@ -784,10 +784,10 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       )
     up.sweepFinds = Map(
       g(1).value -> List(
-        cand(Source.Candidate.Id(1), g(1), oa = Source.Candidate.IsOa(true)),
-        cand(Source.Candidate.Id(2), g(1), oa = Source.Candidate.IsOa(false))
+        cand(Source.Candidate.Id(1), g(1), oa = Source.Candidate.IsOa.OpenAccess),
+        cand(Source.Candidate.Id(2), g(1), oa = Source.Candidate.IsOa.Closed)
       ),
-      g(2).value -> List(cand(Source.Candidate.Id(3), g(2), oa = Source.Candidate.IsOa(true))),
+      g(2).value -> List(cand(Source.Candidate.Id(3), g(2), oa = Source.Candidate.IsOa.OpenAccess)),
       g(3).value -> Nil,
       g(4).value -> Nil
     )
@@ -824,7 +824,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       1
     )
     // draining: no seeding
-    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On(true)))
+    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On))
     clock.tick(a)
     assertEquals(seeded.size, 4)
 

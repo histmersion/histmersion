@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** Add source `citekey`'s stored original to a collection as a new item — or with `replace`, swap the file of the item
   * it is linked to.
@@ -15,11 +16,13 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class CollectionPushRequest(
     citekey: Citekey,
-    replace: CollectionPushRequest.Replace = CollectionPushRequest.Replace(false)
+    replace: CollectionPushRequest.Replace = CollectionPushRequest.Replace.Keep
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
 
 object CollectionPushRequest:
-  type Replace = Replace.T
-  object Replace extends Newtype[Boolean, Pure]
+  enum Replace derives CanEqual:
+    case Replace, Keep
+  object Replace extends TwoStates[Replace]:
+    extension (replace: Replace) def replace: Boolean = replace == Replace

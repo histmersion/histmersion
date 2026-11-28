@@ -14,6 +14,7 @@ import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class AssetLink(
@@ -48,8 +49,10 @@ object AssetLink:
         api.json.Schema
 
   object Deleted:
-    type Value = Value.T
-    object Value extends Newtype[Boolean, Pure]
+    enum Value derives CanEqual:
+      case Deleted, Kept
+    object Value extends TwoStates[Value]:
+      extension (value: Value) def deleted: Boolean = value == Deleted
 
   final case class List(
       total: RowCount,

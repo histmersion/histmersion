@@ -564,7 +564,7 @@ object LibraryTools:
   final case class PassagesInput(
       citekey: Citekey,
       query: Api.PassagesQuery.Q,
-      regex: Api.PassagesQuery.Regex = Api.PassagesQuery.Regex(false),
+      regex: Api.PassagesQuery.Regex = Api.PassagesQuery.Regex.Literal,
       limit: Option[Api.PassagesQuery.Limit] = None,
       context: Option[Api.PassagesQuery.Context] = None
   ) derives JsonCodec

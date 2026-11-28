@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** One source the library lists as not in a collection: its push metadata, where its original is (`local`, `stored`,
   * `none`, `unknown`) and whether it counts as a gap (a record with no fetched file never does).
@@ -41,5 +42,7 @@ object CollectionGapRow:
   export CalibreGap.StoredOriginal
   type Original = Original.T
   object Original extends Newtype[String, Pure]
-  type Counted = Counted.T
-  object Counted extends Newtype[Boolean, Pure]
+  enum Counted derives CanEqual:
+    case Counted, Uncounted
+  object Counted extends TwoStates[Counted]:
+    extension (counted: Counted) def counted: Boolean = counted == Counted

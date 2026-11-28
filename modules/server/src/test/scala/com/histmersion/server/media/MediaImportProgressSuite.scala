@@ -26,7 +26,7 @@ class MediaImportProgressSuite extends munit.FunSuite:
   private val r =
     MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),
-      dryRun = RepairAcquire.RepairRequest.DryRun(false),
+      dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
       targets = MediaImportReport.Targets(100),
       stored = MediaImportReport.Stored(80),
       linked = MediaImportReport.Linked(82),

@@ -63,7 +63,7 @@ final class EventsControllers(
   private def narrow(q: Api.EventQuery): EventSql.Narrow =
     EventSql.Narrow(
       q.tier.map(_.value.trim).filter(_.nonEmpty).map(EventSql.Narrow.Tier(_)),
-      EventSql.Narrow.Context(q.context.fold(false)(_.value)),
+      EventSql.Narrow.Context(q.context.fold(false)(_.context)),
       q.area.flatMap(a => BBox.parse(BBox.Text(a.value)))
     )
 
@@ -220,7 +220,7 @@ final class EventsControllers(
       val to = now(id)
       if events.delete(to) then
         Right(
-          EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), EventDeleted.Deleted(true))
+          EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), EventDeleted.Deleted.Deleted)
         )
       else Left(notFound(Problem.NotFound.Entity(Problem.TypeName.of(Event.Id), Problem.Raw(s"$id"))))
 

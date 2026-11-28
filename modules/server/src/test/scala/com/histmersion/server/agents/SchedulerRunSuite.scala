@@ -244,7 +244,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private def work(
       doi: api.library.Doi,
       title: api.library.Title,
-      inDb: WorkRef.InDb = WorkRef.InDb(false)
+      inDb: WorkRef.InDb = WorkRef.InDb.Missing
   ) =
     WorkRef(
       doi = Some(doi),
@@ -281,7 +281,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       "zzagent tin trade" -> List(
         work(ApiDoi("10.5555/zzagent.a"), ApiTitle("A")),
         work(ApiDoi("10.5555/zzagent.b"), ApiTitle("B")),
-        work(ApiDoi("10.5555/zzagent.in"), ApiTitle("In"), inDb = WorkRef.InDb(true)),
+        work(ApiDoi("10.5555/zzagent.in"), ApiTitle("In"), inDb = WorkRef.InDb.InDb),
         work(ApiDoi("10.5555/zzagent.q"), ApiTitle("Queued"))
       )
     )
@@ -367,7 +367,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
           CandidateSweep.Again(stored.size),
           Map.empty,
           CandidateSweep.Unseen(stored.count(_.state == Source.Candidate.State("new"))),
-          CandidateSweep.DryRun(dryRun.value)
+          (if dryRun.value then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply)
         )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -514,7 +514,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         api.automation.Goal.Plans.ScheduleKind.Wire("currency"),
         ScheduleSet(
           api.automation.Goal.Plans.ScheduleSet.Cron("@weekly"),
-          enabled = api.automation.Goal.Plans.ScheduleSet.Enabled(false)
+          enabled = api.automation.Goal.Plans.ScheduleSet.Enabled.Disabled
         ),
         Now
       )
@@ -544,7 +544,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         Goal,
         ScheduleKind.Currency,
         api.automation.Goal.Plans.GoalSchedule.Cron("@daily"),
-        api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        api.automation.Goal.Plans.GoalSchedule.Enabled.Enabled,
         Some(BigDecimal("0.1")),
         Some(Instant.parse("2026-10-05T00:00:00Z"))
       )
@@ -554,7 +554,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         Goal,
         ScheduleKind.Acquisition,
         api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
-        api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        api.automation.Goal.Plans.GoalSchedule.Enabled.Enabled,
         Some(BigDecimal("0.25")),
         Some(Instant.parse("2026-11-01T00:00:00Z"))
       )
@@ -591,7 +591,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         Goal,
         ScheduleKind.Currency,
         api.automation.Goal.Plans.GoalSchedule.Cron("@monthly"),
-        api.automation.Goal.Plans.GoalSchedule.Enabled(false),
+        api.automation.Goal.Plans.GoalSchedule.Enabled.Disabled,
         None,
         None
       )
@@ -610,7 +610,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         Goal,
         ScheduleKind.Acquisition,
         api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"),
-        api.automation.Goal.Plans.GoalSchedule.Enabled(true),
+        api.automation.Goal.Plans.GoalSchedule.Enabled.Enabled,
         None,
         None
       )
@@ -652,7 +652,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     val before = CorpusSnapshot.of(ds)
     val run = start(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun(true)))
+      RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun))
     )
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)
@@ -685,7 +685,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     val before = CorpusSnapshot.of(ds)
     val run = start(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget, dryRun = Some(RunRequest.DryRun(true)))
+      RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun))
     )
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)

@@ -69,7 +69,13 @@ object ItemActions:
           cls("is-on") <-- read,
           child.text <-- read.map(r => if r then "Mark as unread" else "Mark as read"),
           onClick --> (_ =>
-            writing(MyItems.setRead(ref, ReadMark.Read(!MyItems.readNow(ref.identity.getOrElse(Target.Identity(""))))))
+            writing(
+              MyItems.setRead(
+                ref,
+                (if !MyItems.readNow(ref.identity.getOrElse(Target.Identity(""))) then ReadMark.Read.Read
+                 else ReadMark.Read.Unread)
+              )
+            )
           )
         )
       ),

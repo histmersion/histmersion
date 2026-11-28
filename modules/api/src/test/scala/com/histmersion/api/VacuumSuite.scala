@@ -29,7 +29,7 @@ class VacuumSuite extends munit.FunSuite:
       Vacuum.plan(Vacuum.Request(), defaults, existing),
       Right(
         VacuumPlan(
-          VacuumPlan.Analyze(false),
+          VacuumPlan.Analyze.VacuumOnly,
           List(
             Vacuum.Request.Tables("places"),
             Vacuum.Request.Tables("place_names"),
@@ -41,14 +41,14 @@ class VacuumSuite extends munit.FunSuite:
     assertEquals(
       Vacuum.plan(
         Vacuum.Request(
-          analyze = Vacuum.Request.Analyze(true),
+          analyze = Vacuum.Request.Analyze.Analyze,
           tables = List(Vacuum.Request.Tables(" Findings "), Vacuum.Request.Tables("events,findings"))
         ),
         defaults,
         existing
       ),
       Right(
-        VacuumPlan(VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("findings"), Vacuum.Request.Tables("events")))
+        VacuumPlan(VacuumPlan.Analyze.Analyze, List(Vacuum.Request.Tables("findings"), Vacuum.Request.Tables("events")))
       )
     )
 
@@ -73,11 +73,11 @@ class VacuumSuite extends munit.FunSuite:
 
   test("the statement quotes the table; ANALYZE only when asked"):
     assertEquals(
-      Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze(false)),
+      Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze.VacuumOnly),
       "VACUUM \"place_names\""
     )
     assertEquals(
-      Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze(true)),
+      Vacuum.statement(Vacuum.Table("place_names"), analyze = Vacuum.Request.Analyze.Analyze),
       "VACUUM (ANALYZE) \"place_names\""
     )
 
@@ -85,14 +85,14 @@ class VacuumSuite extends munit.FunSuite:
     assertEquals(
       Vacuum.describe(
         VacuumPlan(
-          VacuumPlan.Analyze(true),
+          VacuumPlan.Analyze.Analyze,
           List(Vacuum.Request.Tables("places"), Vacuum.Request.Tables("place_names"))
         )
       ),
       "VACUUM (ANALYZE) of places, place_names"
     )
     assertEquals(
-      Vacuum.describe(VacuumPlan(VacuumPlan.Analyze(false), List(Vacuum.Request.Tables("places")))),
+      Vacuum.describe(VacuumPlan(VacuumPlan.Analyze.VacuumOnly, List(Vacuum.Request.Tables("places")))),
       "VACUUM of places"
     )
     assertEquals(
@@ -117,7 +117,7 @@ class VacuumSuite extends munit.FunSuite:
       JobInfo.CreatedAt("t"),
       JobInfo.UpdatedAt("t"),
       detail =
-        Some(VacuumPlan.Detail(Some(VacuumPlan(VacuumPlan.Analyze(false), List(Vacuum.Request.Tables("places"))))))
+        Some(VacuumPlan.Detail(Some(VacuumPlan(VacuumPlan.Analyze.VacuumOnly, List(Vacuum.Request.Tables("places"))))))
     )
     assertEquals(JobDetail.subject(job), Some("VACUUM of places"))
     assert(IngestMarkdown.job(job).contains("- **vacuums:** VACUUM of places"))
@@ -126,6 +126,6 @@ class VacuumSuite extends munit.FunSuite:
     assertEquals(RawJson.parse("""{}""").flatMap(_.as[Vacuum.Request]), Right(Vacuum.Request()))
     assertEquals(
       RawJson.parse("""{"analyze":true,"tables":["places"]}""").flatMap(_.as[Vacuum.Request]),
-      Right(Vacuum.Request(Vacuum.Request.Analyze(true), List(Vacuum.Request.Tables("places"))))
+      Right(Vacuum.Request(Vacuum.Request.Analyze.Analyze, List(Vacuum.Request.Tables("places"))))
     )
     assert(RawJson.parse("""{"full":true}""").flatMap(_.as[Vacuum.Request]).isLeft)

@@ -102,7 +102,7 @@ class PreviewSuite extends munit.FunSuite:
         Place.Link.Relation("exact_match")
       )
     ),
-    hasBoundary = Place.Entry.HasBoundary(false),
+    hasBoundary = Place.Entry.HasBoundary.Unbounded,
     descriptions = List(
       Place.Description(
         Place.Description.Text("former country in Modern Day Spain"),
@@ -170,7 +170,7 @@ class PreviewSuite extends munit.FunSuite:
         .setTo(Some(Year(-1180L)))
         .modify(_.source)
         .setTo(Some(Place.Summary.Source("Pleiades (pleiades.stoa.org), CC-BY"))),
-      hasBoundary = Place.Entry.HasBoundary(true),
+      hasBoundary = Place.Entry.HasBoundary.Bounded,
       links = Nil
     )
     val s = Preview.card(seed)

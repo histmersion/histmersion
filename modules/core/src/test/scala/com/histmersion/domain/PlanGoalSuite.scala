@@ -178,7 +178,7 @@ class PlanGoalSuite extends munit.FunSuite:
           Some(api.catalogue.Year(2020)),
           Nil,
           Some(api.library.Citekey("a2020_x")),
-          inCorpus = PlannedWork.InCorpus(true),
+          inCorpus = PlannedWork.InCorpus.InCorpus,
           why = Rationale("a")
         )
       )

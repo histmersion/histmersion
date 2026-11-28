@@ -104,7 +104,7 @@ class MediaTrafficSuite extends DbSuite:
     all.foreach(p =>
       run(
         s"$p (dry run)",
-        MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(true), limit = Some(MediaImportRequest.Limit(20)))
+        MediaImportRequest(p, dryRun = MediaImportRequest.DryRun.DryRun, limit = Some(MediaImportRequest.Limit(20)))
       )
     )
 
@@ -112,7 +112,7 @@ class MediaTrafficSuite extends DbSuite:
       "wikidata, one place",
       MediaImportRequest(
         MediaItem.Provider("wikidata"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491"))
       )
     )
@@ -120,7 +120,7 @@ class MediaTrafficSuite extends DbSuite:
       "wikidata, one event",
       MediaImportRequest(
         MediaItem.Provider("wikidata"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         event = Some(Event.Id("fall_of_x"))
       )
     )
@@ -128,7 +128,7 @@ class MediaTrafficSuite extends DbSuite:
       "depicts, one event",
       MediaImportRequest(
         MediaItem.Provider("depicts"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         event = Some(Event.Id("battle_of_kadesh"))
       )
     )
@@ -136,7 +136,7 @@ class MediaTrafficSuite extends DbSuite:
       "met, one place",
       MediaImportRequest(
         MediaItem.Provider("met"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491"))
       )
     )
@@ -144,7 +144,7 @@ class MediaTrafficSuite extends DbSuite:
       "cleveland, one place",
       MediaImportRequest(
         MediaItem.Provider("cleveland"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("geonames_146669"))
       )
     )
@@ -152,7 +152,7 @@ class MediaTrafficSuite extends DbSuite:
       "aic, one place",
       MediaImportRequest(
         MediaItem.Provider("aic"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("geonames_146669"))
       )
     )
@@ -160,7 +160,7 @@ class MediaTrafficSuite extends DbSuite:
       "loc, one place",
       MediaImportRequest(
         MediaItem.Provider("loc"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491"))
       )
     )
@@ -168,7 +168,7 @@ class MediaTrafficSuite extends DbSuite:
       "pleiades, one place",
       MediaImportRequest(
         MediaItem.Provider("pleiades"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_757208100"))
       )
     )
@@ -176,7 +176,7 @@ class MediaTrafficSuite extends DbSuite:
       "opencontext, one place",
       MediaImportRequest(
         MediaItem.Provider("opencontext"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_697725"))
       )
     )
@@ -184,7 +184,7 @@ class MediaTrafficSuite extends DbSuite:
       "smithsonian, one place",
       MediaImportRequest(
         MediaItem.Provider("smithsonian"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("geonames_357994"))
       )
     )
@@ -192,7 +192,7 @@ class MediaTrafficSuite extends DbSuite:
       "europeana, one place",
       MediaImportRequest(
         MediaItem.Provider("europeana"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491"))
       )
     )
@@ -201,22 +201,22 @@ class MediaTrafficSuite extends DbSuite:
       "wikidata, one place again, --refresh",
       MediaImportRequest(
         MediaItem.Provider("wikidata"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491")),
-        refresh = MediaImportRequest.Refresh(true)
+        refresh = MediaImportRequest.Refresh.Refresh
       )
     )
     run(
       "met, one place again, --refresh",
       MediaImportRequest(
         MediaItem.Provider("met"),
-        dryRun = MediaImportRequest.DryRun(false),
+        dryRun = MediaImportRequest.DryRun.Apply,
         place = Some(Place.Id("pleiades_570491")),
-        refresh = MediaImportRequest.Refresh(true)
+        refresh = MediaImportRequest.Refresh.Refresh
       )
     )
 
-    all.foreach(p => job(p, MediaImportRequest(p, dryRun = MediaImportRequest.DryRun(false))))
+    all.foreach(p => job(p, MediaImportRequest(p, dryRun = MediaImportRequest.DryRun.Apply)))
 
     // the names an import is refused under
     run("an unknown provider", MediaImportRequest(MediaItem.Provider("rijks")))
@@ -224,7 +224,7 @@ class MediaTrafficSuite extends DbSuite:
       "an alias",
       MediaImportRequest(
         MediaItem.Provider("commons"),
-        dryRun = MediaImportRequest.DryRun(true),
+        dryRun = MediaImportRequest.DryRun.DryRun,
         limit = Some(MediaImportRequest.Limit(2))
       )
     )

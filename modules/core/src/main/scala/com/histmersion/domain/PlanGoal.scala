@@ -284,8 +284,8 @@ object PlanGoal:
           r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
           r.authors.take(6).map(a => com.histmersion.api.library.AuthorName(a.value)),
           r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
-          PlannedWork.InCorpus(r.inDb.value),
-          PlannedWork.IsOa(r.isOa.value),
+          (if r.inDb.value then PlannedWork.InCorpus.InCorpus else PlannedWork.InCorpus.Missing),
+          (if r.isOa.value then PlannedWork.IsOa.OpenAccess else PlannedWork.IsOa.Closed),
           w.why
         )
     }

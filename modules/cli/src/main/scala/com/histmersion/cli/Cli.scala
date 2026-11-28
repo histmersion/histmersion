@@ -462,10 +462,11 @@ object Cli:
           }
         case TopCommand.Seed(dir, force) =>
           Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
-            case Some(p) => hostSeed(c, p, Api.Overwrite(force))
+            case Some(p) => hostSeed(c, p, (if force then Api.Overwrite.Overwrite else Api.Overwrite.Keep))
             case None    =>
-              c.seed(SeedRequest(SeedRequest.Dir(dir), SeedRequest.Force(force)))
-                .map(report) // server-side (bind-mounted) corpus
+              c.seed(
+                SeedRequest(SeedRequest.Dir(dir), (if force then SeedRequest.Force.Force else SeedRequest.Force.Safe))
+              ).map(report) // server-side (bind-mounted) corpus
         case TopCommand.Reindex() =>
           reindexLoop(c, None, 0, 0)
         case TopCommand.Search(q, group, depth, asOf, samples, unit, brief, f0, json) =>
@@ -519,7 +520,7 @@ object Cli:
               c.sourceView(
                 Api.SourceViewQuery(
                   Citekey(ck),
-                  Api.SourceViewQuery.FullText(full),
+                  (if full then Api.SourceViewQuery.FullText.FullText else Api.SourceViewQuery.FullText.SummaryOnly),
                   section.map(Api.SourceViewQuery.Section(_)),
                   heading.map(Api.SourceViewQuery.Heading(_)),
                   offset.map(Api.SourceViewQuery.Offset(_)),
@@ -538,7 +539,7 @@ object Cli:
             Api.PassagesQuery(
               Citekey(ck),
               Api.PassagesQuery.Q(q),
-              Api.PassagesQuery.Regex(regex),
+              (if regex then Api.PassagesQuery.Regex.Regex else Api.PassagesQuery.Regex.Literal),
               limit.map(Api.PassagesQuery.Limit(_)),
               context.map(Api.PassagesQuery.Context(_))
             )
@@ -568,7 +569,7 @@ object Cli:
           val p = Path.of(file)
           if !Files.isRegularFile(p) then Left(Error(Problem.Unclassified(Legacy.Text(s"no such file: $file"))))
           // an explicit `put` is always deliberate → force past the "newer in DB" guard
-          else c.importNote(Notes.toImport(p, force = Api.Overwrite(true))).map(report)
+          else c.importNote(Notes.toImport(p, force = Api.Overwrite.Overwrite)).map(report)
         case TopCommand.Patch(
               ck,
               json,
@@ -689,10 +690,19 @@ object Cli:
           if !yes && !confirm(Question(s"Restore '$file' into the server's database? This DROPS what is there."))
           then Left(Error(Problem.Unclassified(Legacy.Text("aborted"))))
           else
-            c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force)))
-              .map(r => out.println(Markdown.restored(r)))
+            c.restore(
+              RestoreRequest(
+                RestoreRequest.File(file),
+                (if force then RestoreRequest.Force.Force else RestoreRequest.Force.Safe)
+              )
+            ).map(r => out.println(Markdown.restored(r)))
         case TopCommand.Vacuum(analyze, tables, following) =>
-          c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
+          c.vacuum(
+            Vacuum.Request(
+              (if analyze then Vacuum.Request.Analyze.Analyze else Vacuum.Request.Analyze.VacuumOnly),
+              tables.map(Vacuum.Request.Tables(_))
+            )
+          ).flatMap { j =>
             out.println(
               s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
                 "(`histmersion jobs` lists it)"

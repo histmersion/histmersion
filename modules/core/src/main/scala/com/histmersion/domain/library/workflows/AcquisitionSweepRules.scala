@@ -88,12 +88,12 @@ object AcquisitionSweepRules:
     val skipped = scala.collection.mutable.Map.empty[LeftOut, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
       w.doi.flatMap(d => Doi.normalize(d.value)) match
-        case None                           => skipped(LeftOut.NoDoi) += 1
-        case Some(_) if w.isRetracted.value => skipped(LeftOut.Retracted) += 1
-        case Some(_) if w.inDb.value        => skipped(LeftOut.InCorpus) += 1
-        case Some(d) if queued.contains(d)  => skipped(LeftOut.AlreadyQueued) += 1
-        case Some(d) if seen.contains(d)    => ()
-        case Some(d)                        =>
+        case None                                 => skipped(LeftOut.NoDoi) += 1
+        case Some(_) if w.isRetracted.isRetracted => skipped(LeftOut.Retracted) += 1
+        case Some(_) if w.inDb.inDb               => skipped(LeftOut.InCorpus) += 1
+        case Some(d) if queued.contains(d)        => skipped(LeftOut.AlreadyQueued) += 1
+        case Some(d) if seen.contains(d)          => ()
+        case Some(d)                              =>
           seen(d) = Candidate(
             d,
             w.title.getOrElse(Title(d.value)),
@@ -200,7 +200,7 @@ object AcquisitionSweepRules:
   def acquireText(c: Candidate, goal: Goal.Slug, why: Rationale): AcquireText =
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
-    val oa = if c.isOa.value then " (open access)" else ""
+    val oa = if c.isOa.isOa then " (open access)" else ""
     val reason = Option(why).map(w => s"$w".trim).filter(_.nonEmpty).fold("")(w => s": $w")
     AcquireText(
       s"${if head.isEmpty then "" else s"$head. "}${c.title}. https://doi.org/${c.doi}$oa — for goal $goal$reason"

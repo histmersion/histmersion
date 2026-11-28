@@ -534,9 +534,9 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     val run = item(ManagerItem.Target("zzagent_p1")).runId.get
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
     val p = a.managing
-      .action(ReviewLight, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns(true)))
+      .action(ReviewLight, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns.Pause))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(p.pauseRuns.value)
+    assert(p.pauseRuns.pauseRuns)
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "paused")
     // pausing it is not a settle: the item stays active
     a.managers.tick(t0)
@@ -817,7 +817,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
         HintAdd(
           Managers.HintAdd.Text("Check the tin isotopes this time."),
           item = Some(Managers.HintAdd.Item("zzagent_n1")),
-          once = Some(Managers.HintAdd.Once(true))
+          once = Some(Managers.HintAdd.Once.Once)
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)

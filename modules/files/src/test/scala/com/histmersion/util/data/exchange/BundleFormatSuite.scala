@@ -294,8 +294,8 @@ class BundleFormatSuite extends munit.FunSuite:
     val r = Bundle.ImportResult(
       U1,
       Bundle.Instance(I, Some(Bundle.Instance.Label("work"))),
-      dryRun = Bundle.ImportResult.DryRun(false),
-      applied = Bundle.ImportResult.Applied(false),
+      dryRun = Bundle.ImportResult.DryRun.Apply,
+      applied = Bundle.ImportResult.Applied.Skipped,
       List(Bundle.KindCounts(Bundle.Kind.Source, inserted = Bundle.KindCounts.Inserted(2))),
       Bundle.ImportResult.Blobs(0),
       List(Problem.Conflict.Held(Problem.Where("source x"), Problem.Conflict.Hold.Merges)),
@@ -315,7 +315,7 @@ class BundleFormatSuite extends munit.FunSuite:
           r.modify(_.problems)
             .setTo(Nil)
             .modify(_.applied)
-            .setTo(Bundle.ImportResult.Applied(true))
+            .setTo(Bundle.ImportResult.Applied.Applied)
             .modify(_.counts)
             .setTo(Nil)
         )

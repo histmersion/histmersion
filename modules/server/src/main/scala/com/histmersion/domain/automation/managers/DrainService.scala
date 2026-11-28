@@ -59,7 +59,7 @@ final class DrainService(
       DrainInfo(
         DrainInfo.Since(since.value),
         DrainInfo.By(by.value),
-        DrainInfo.Drained(at.isDefined && active == 0),
+        (if at.isDefined && active == 0 then DrainInfo.Drained.Drained else DrainInfo.Drained.Running),
         at.map(a => DrainInfo.DrainedAt(a.value)),
         DrainInfo.InFlight(active)
       )
@@ -107,9 +107,9 @@ final class DrainService(
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def set(in: DrainSet, now: Instant = Instant.now(agents.clock))(using WritePermit): EngineStatus =
     val by = in.by.map(_.value.trim).filter(_.nonEmpty).getOrElse("person")
-    val changed = agents.autopilotRow.setDrain(in.on.value, AutopilotRepo.Row.ChangedBy(by))
+    val changed = agents.autopilotRow.setDrain(in.on.on, AutopilotRepo.Row.ChangedBy(by))
     val line =
-      if in.on.value then
+      if in.on.on then
         (if changed then s"draining (by $by): nothing new starts; the runs in flight finish" else "draining already"
       )
       else if changed then s"drain lifted (by $by): the scheduler admits work again"

@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class FollowupRow(
     title: Option[Title] = None,
@@ -14,7 +15,7 @@ final case class FollowupRow(
     doi: Option[Doi] = None,
     arxiv: Option[FollowupRow.Arxiv] = None,
     citedBy: Option[FollowupRow.CitedBy] = None,
-    isInfluential: FollowupRow.IsInfluential = FollowupRow.IsInfluential(false),
+    isInfluential: FollowupRow.IsInfluential = FollowupRow.IsInfluential.Ordinary,
     intents: List[FollowupRow.Intents] = Nil,
     contexts: List[FollowupRow.Contexts] = Nil,
     proposedKind: FollowupRow.ProposedKind = FollowupRow.ProposedKind("cites"),
@@ -27,8 +28,10 @@ object FollowupRow:
   type Arxiv = Arxiv.T
   object Arxiv extends Newtype[String, Pure]
   export Acquire.CitedByCount as CitedBy
-  type IsInfluential = IsInfluential.T
-  object IsInfluential extends Newtype[Boolean, Pure]
+  enum IsInfluential derives CanEqual:
+    case Influential, Ordinary
+  object IsInfluential extends TwoStates[IsInfluential]:
+    extension (isInfluential: IsInfluential) def isInfluential: Boolean = isInfluential == Influential
   type Intents = Intents.T
   object Intents extends Newtype[String, Pure]
   type Contexts = Contexts.T

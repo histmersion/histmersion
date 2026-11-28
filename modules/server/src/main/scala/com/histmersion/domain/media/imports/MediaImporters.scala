@@ -108,7 +108,7 @@ object MediaImporters:
         MediaProvider.Info.Over(safe(MediaImporter.over(c.asks)).map(_.value).getOrElse("places")),
         MediaProvider.Info.Description(safe(c.description).map(_.value).getOrElse("")),
         PluginDescription.Id(own.fold(pluginOf(n).value)(_.plugin.value)),
-        builtin = MediaProvider.Info.Builtin(firstParty),
+        builtin = (if firstParty then MediaProvider.Info.Builtin.Builtin else MediaProvider.Info.Builtin.Plugin),
         MediaProvider.Info.Licences(if firstParty then "" else allowFor(n).value)
       )
     }

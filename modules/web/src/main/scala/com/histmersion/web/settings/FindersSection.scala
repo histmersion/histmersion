@@ -58,7 +58,7 @@ object FindersSection:
             SettingsForm.Item.Key(shown"plugins.${p.id}.enabled"),
             Some(SettingsForm.Item.Name(Wording.plugin(Wording.PluginId(p.id.value)))),
             None,
-            fallback = Some(SettingsForm.Item.Fallback(p.enabled.toString))
+            fallback = Some(SettingsForm.Item.Fallback(p.enabled.enabled.toString))
           )
         )
       )

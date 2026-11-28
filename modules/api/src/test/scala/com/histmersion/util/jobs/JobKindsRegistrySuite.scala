@@ -19,7 +19,7 @@ class JobKindsRegistrySuite extends munit.FunSuite:
       JobInfo.Kind("alpha"),
       JobKindName("Alpha"),
       JobKindMeaning("Does alpha."),
-      stoppable = JobKindEntry.Stoppable(true)
+      stoppable = JobKindEntry.Stoppable.Stoppable
     )
   private val b =
     JobKindEntry(

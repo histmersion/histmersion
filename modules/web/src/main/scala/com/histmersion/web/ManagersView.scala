@@ -246,14 +246,14 @@ object ManagersView:
                   Option(g("includeGoal")).filter(_.nonEmpty).map(ManagerConfig.IncludeGoal(_)),
                   Option(models.collect { case Right(m) => m }).filter(_.nonEmpty),
                   whole(g("staleAfterDays")).map(ManagerConfig.StaleAfterDays(_)),
-                  inf.map(ManagerConfig.InferFilter(_)),
+                  inf.map((if _ then ManagerConfig.InferFilter.Infer else ManagerConfig.InferFilter.Explicit)),
                   whole(g("minSources")).map(ManagerConfig.MinSources(_)),
                   whole(g("maxArticles")).map(ManagerConfig.MaxArticles(_)),
                   sweeps.map(_.collect { case Right(s) => s.wire }.distinct),
-                  ai.map(ManagerConfig.AutoIngest(_)),
+                  ai.map((if _ then ManagerConfig.AutoIngest.Auto else ManagerConfig.AutoIngest.Manual)),
                   whole(g("autoIngestPerDay")).map(ManagerConfig.AutoIngestPerDay(_)),
                   daily.toDoubleOption.map(ManagerConfig.DailyUsd(_)),
-                  aa.map(ManagerConfig.AutoApprove(_)),
+                  aa.map((if _ then ManagerConfig.AutoApprove.Auto else ManagerConfig.AutoApprove.Manual)),
                   whole(g("extendMinNew")).map(ManagerConfig.ExtendMinNew(_))
                 )
               )
@@ -280,9 +280,9 @@ object ManagersView:
       "maxArticles" -> c.maxArticles.fold("")(_.toString),
       "autoIngestPerDay" -> c.autoIngestPerDay.fold("")(_.toString),
       "extendMinNew" -> c.extendMinNew.fold("")(_.toString),
-      "inferFilter" -> c.inferFilter.fold("")(b => if b.value then "on" else "off"),
-      "autoApprove" -> c.autoApprove.fold("")(b => if b.value then "on" else "off"),
-      "autoIngest" -> c.autoIngest.fold("")(b => if b.value then "on" else "off"),
+      "inferFilter" -> c.inferFilter.fold("")(b => if b.inferFilter then "on" else "off"),
+      "autoApprove" -> c.autoApprove.fold("")(b => if b.autoApprove then "on" else "off"),
+      "autoIngest" -> c.autoIngest.fold("")(b => if b.autoIngest then "on" else "off"),
       "sweeps" -> c.sweeps.fold("")(_.mkString(", ")),
       "budgetUsd" -> c.budgetUsd.fold("")(_.toString),
       "dailyUsd" -> c.dailyUsd.fold("")(_.toString),
@@ -362,15 +362,15 @@ object ManagersView:
       tag: Managers.HintEffect.Tag,
       until: Managers.HintEffect.Until,
       untilSource: Managers.HintEffect.UntilSource,
-      suggest: Managers.HintAdd.Suggest = Managers.HintAdd.Suggest(false)
+      suggest: Managers.HintAdd.Suggest = Managers.HintAdd.Suggest.Direct
   ): Either[Managers.HintAdd.Text, HintAdd] =
     val t = text.value.trim
     val none = HintEffect.Action.none(action)
     val itemText = Option(item.value.trim).filter(_.nonEmpty).map(HintAdd.Item(_))
     if t.isEmpty then Left(Managers.HintAdd.Text("a hint needs text"))
-    else if suggest.value && !none then
+    else if suggest.suggest && !none then
       Left(Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
-    else if suggest.value then Right(HintAdd(HintAdd.Text(t), itemText, Some(once), suggest = Some(suggest)))
+    else if suggest.suggest then Right(HintAdd(HintAdd.Text(t), itemText, Some(once), suggest = Some(suggest)))
     else if none then Right(HintAdd(HintAdd.Text(t), itemText, Some(once)))
     else
       HintEffect.Action.verb(action).filter(HintEffect.Verb.Actions.contains) match
@@ -547,7 +547,7 @@ object ManagersView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def focusHead(f: Autopilot.FocusInfo): FocusHead =
     FocusHead(
-      (if f.on.value then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
+      (if f.on.on then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
         (if f.maxFrom.value == "person" then " (cap set by a person)" else "") +
         (if f.held.value > 0 then s" · ${counted(f.held.value, "item")} held" else "")
     )
@@ -577,7 +577,7 @@ object ManagersView:
           _.fold(e => failure.set(Some(shown"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) })
         )
     def pinButton(g: Autopilot.FocusGoal) =
-      val (verb, tip) = if g.pinned.value then ("unpin", "Let the focus choose again")
+      val (verb, tip) = if g.pinned.pinned then ("unpin", "Let the focus choose again")
       else ("pin", "Keep this goal active (it takes a slot now)")
       button(
         typ := "button",
@@ -642,7 +642,7 @@ object ManagersView:
               div(
                 cls := "job-subject",
                 goalLink(g.slug),
-                Option.when(g.pinned.value)(span(cls := "muted", " · pinned")),
+                Option.when(g.pinned.pinned)(span(cls := "muted", " · pinned")),
                 span(cls := "muted", shown" · ${g.title}")
               ),
               div(cls := "job-progress", shown"${g.why}"),
@@ -683,7 +683,7 @@ object ManagersView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def drainLine(d: Autopilot.DrainInfo): DrainLine =
     val line =
-      if d.drained.value then
+      if d.drained.drained then
         s"Paused since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
       else
         s"Finishing current work, then pausing (since ${d.since}${
@@ -722,12 +722,12 @@ object ManagersView:
           _.fold(e => failure.set(Some(s"drain: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
         )
     def flip(on: Autopilot.AutopilotSet.On): Unit =
-      pending.set(Some(on.value))
+      pending.set(Some(on.on))
       ApiClient.setAutopilot(on).onComplete { r =>
         pending.set(None)
         r.fold(e => failure.set(Some(s"autopilot: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
       }
-    val shownOn = st.signal.combineWith(pending.signal).map((s, p) => p.orElse(s.map(_.on.value)).getOrElse(false))
+    val shownOn = st.signal.combineWith(pending.signal).map((s, p) => p.orElse(s.map(_.on.on)).getOrElse(false))
     div(
       cls := "autopilot",
       onMountCallback(_ => load()),
@@ -742,8 +742,8 @@ object ManagersView:
               .combineWith(st.signal.map(_.flatMap(_.drain).isDefined))
               .map((on, draining) =>
                 Wording.agentsState(
-                  AgentMode.Step.Autopilot.On(on),
-                  AgentMode.Step.Drain.On(draining)
+                  (if on then AgentMode.Step.Autopilot.On.On else AgentMode.Step.Autopilot.On.Off),
+                  (if draining then AgentMode.Step.Drain.On.On else AgentMode.Step.Drain.On.Off)
                 )
               )
           ),
@@ -753,14 +753,14 @@ object ManagersView:
                 Icon.Managers,
                 "Pause",
                 "Pause the seeding managers and watchers the autopilot runs",
-                () => flip(Autopilot.AutopilotSet.On(false))
+                () => flip(Autopilot.AutopilotSet.On.Off)
               )
             else
               WriteButton(
                 Icon.Managers,
                 "Start working",
                 "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself",
-                () => flip(Autopilot.AutopilotSet.On(true))
+                () => flip(Autopilot.AutopilotSet.On.On)
               )
           )
         ),
@@ -772,14 +772,14 @@ object ManagersView:
                 Icon.Managers,
                 Wording.Undrain,
                 "The scheduler admits work again (undrain)",
-                () => drain(Autopilot.DrainSet.On(false))
+                () => drain(Autopilot.DrainSet.On.Off)
               )
             case None =>
               WriteButton(
                 Icon.Managers,
                 Wording.Drain,
                 "Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)",
-                () => drain(Autopilot.DrainSet.On(true))
+                () => drain(Autopilot.DrainSet.On.On)
               )
           }
         )
@@ -812,7 +812,9 @@ object ManagersView:
               .map(r => s"${ApprovalsView.kindLabel(r.kind).toLowerCase}: ${r.mode}")
               .mkString(" · ")
           ),
-          Option.when(!s.cronsEnabled.value)(p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)),
+          Option.when(!s.cronsEnabled.cronsEnabled)(
+            p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)
+          ),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
           s.focus.map(f => focusPanel(f, x => st.update(_.map(_.modify(_.focus).setTo(Some(x)))), failure)),
           ul(
@@ -1093,7 +1095,7 @@ object ManagersView:
           s.stop.map(x => p(cls := "form-error", role := "alert", s"nothing starts: $x")),
           div(
             cls := "muted",
-            (if s.dry.value then "what a pass would do now (nothing started) · "
+            (if s.dry.dry then "what a pass would do now (nothing started) · "
              else s.at.fold("")(t => s"last pass $t · ")) +
               s.types
                 .filter(t => t.waiting.value > 0 || t.recent.value > 0)
@@ -1392,7 +1394,7 @@ object ManagersView:
               d.manager.cron.fold("No cron: its sweeps run only when re-opened by hand.")(c =>
                 s"Cron `$c` (UTC)" + d.manager.nextTickAt.fold("")(t => s", next $t") +
                   (if d.manager.state == State.Active.wire then "" else " — fires once it is resumed") + ". " +
-                  (if d.manager.effective.autoIngest.exists(_.value)
+                  (if d.manager.effective.autoIngest.exists(_.autoIngest)
                    then
                      s"Legal open-access picks are ingested, at most ${d.manager.effective.autoIngestPerDay.fold(0)(_.value)} a day (legal open access only)."
                    else "Its picks go to the acquisition list (auto-ingest off).")
@@ -1866,18 +1868,18 @@ object ManagersView:
                 hint(
                   HintAdd.Text(text.now()),
                   HintAdd.Item(item.now()),
-                  HintAdd.Once(once.now()),
+                  (if once.now() then HintAdd.Once.Once else HintAdd.Once.Standing),
                   action.now().fold(HintEffect.Verb.NoAction)(_.word),
                   HintEffect.Targets(targets.now()),
                   HintEffect.Tag(tag.now()),
                   HintEffect.Until(until.now()),
                   HintEffect.UntilSource(source.now()),
-                  HintAdd.Suggest(suggest.now())
+                  (if suggest.now() then HintAdd.Suggest.Suggest else HintAdd.Suggest.Direct)
                 ) match
                   case Left(e)  => error.set(Some(e.value))
                   case Right(h) =>
                     error.set(None)
-                    write(if h.suggest.exists(_.value) then
+                    write(if h.suggest.exists(_.suggest) then
                       WriteLabel("hint (a model suggests its action: see Approvals)")
                     else WriteLabel("hint"))(ApiClient.managerAddHint(id, h))
                     text.set(""); targets.set(""); tag.set(""); until.set(""); source.set(""); suggest.set(false)

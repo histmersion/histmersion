@@ -187,7 +187,7 @@ final class AcquisitionTools(
               in.citekey,
               in.arxiv,
               in.refetch,
-              Ingest.Request.LegalOnly(in.legalOnly.value),
+              (if in.legalOnly.value then Ingest.Request.LegalOnly.LegalOnly else Ingest.Request.LegalOnly.AnySource),
               in.createdBy
             )
           )
@@ -250,7 +250,11 @@ final class AcquisitionTools(
                 render(
                   h.sweepCandidates(
                     CandidateSweep
-                      .Request(CandidateSweep.Request.Goal(g), CandidateSweep.Request.DryRun(in.dryRun.value))
+                      .Request(
+                        CandidateSweep.Request.Goal(g),
+                        (if in.dryRun.value then CandidateSweep.Request.DryRun.DryRun
+                         else CandidateSweep.Request.DryRun.Apply)
+                      )
                   )
                 )(CandidatesMarkdown.sweep)
               case None => McpOut.missing(Problem.Field("goal"))
@@ -312,15 +316,15 @@ object AcquisitionTools:
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class RefsInput(
       id: RefsRequest.Id,
-      apply: RefsRequest.Apply = RefsRequest.Apply(false),
+      apply: RefsRequest.Apply = RefsRequest.Apply.DryRun,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class AssessInput(
       id: Option[AssessRequest.Id] = None,
-      apply: AssessRequest.Apply = AssessRequest.Apply(false),
-      forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false),
+      apply: AssessRequest.Apply = AssessRequest.Apply.DryRun,
+      forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus.KeepStatus,
       updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions(false),
       retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false),
       createdBy: Option[Creation.By] = None
@@ -337,7 +341,7 @@ object AcquisitionTools:
       id: FollowupsRequest.Id,
       since: Option[FollowupsRequest.Since] = None,
       limit: Option[FollowupsRequest.Limit] = None,
-      apply: FollowupsRequest.Apply = FollowupsRequest.Apply(false),
+      apply: FollowupsRequest.Apply = FollowupsRequest.Apply.DryRun,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -345,7 +349,7 @@ object AcquisitionTools:
       id: Ingest.Request.Id,
       citekey: Option[Citekey] = None,
       arxiv: Option[Ingest.Request.Arxiv] = None,
-      refetch: Ingest.Request.Refetch = Ingest.Request.Refetch(false),
+      refetch: Ingest.Request.Refetch = Ingest.Request.Refetch.Reuse,
       legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(true),
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec

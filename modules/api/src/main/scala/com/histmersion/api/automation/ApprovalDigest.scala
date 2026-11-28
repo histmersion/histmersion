@@ -13,6 +13,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -80,7 +81,7 @@ object ApprovalDigest:
       subject: Option[BulkDecide.Subject] = None,
       ids: List[Open.Id] = Nil,
       note: Option[BulkDecide.Note] = None,
-      dryRun: BulkDecide.DryRun = BulkDecide.DryRun(false),
+      dryRun: BulkDecide.DryRun = BulkDecide.DryRun.Apply,
       limit: Option[BulkDecide.Limit] = None,
       by: Option[BulkDecide.By] = None,
       createdBy: Option[Creation.By] = None,
@@ -94,8 +95,10 @@ object ApprovalDigest:
     type Subject = Subject.T
     object Subject extends Newtype[String, Pure]
     export Approval.Note
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     type Limit = Limit.T
     object Limit extends Newtype[Int, Pure]
     type By = By.T
@@ -112,7 +115,7 @@ object ApprovalDigest:
 
   final case class BulkResult(
       decision: BulkResult.Decision,
-      dryRun: BulkResult.DryRun = BulkResult.DryRun(false),
+      dryRun: BulkResult.DryRun = BulkResult.DryRun.Apply,
       matched: BulkResult.Matched = BulkResult.Matched(0),
       decided: List[BulkResult.Decided] = Nil,
       failed: List[BulkFailed] = Nil,
@@ -124,8 +127,10 @@ object ApprovalDigest:
   object BulkResult:
     type Decision = Decision.T
     object Decision extends Newtype[String, Pure]
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     type Matched = Matched.T
     object Matched extends Newtype[Int, Pure]
     type Decided = Decided.T

@@ -113,7 +113,8 @@ final class HttpApi(
     Api.config
       .in(extractFromRequest(_.header(Admission.Header)))
       .serverLogicSuccess[Identity](admitted =>
-        h.instance.uiConfig(UiConfig.KeyRequired(!admitted.contains(Admission.Trusted.wire)))
+        h.instance.uiConfig((if !admitted.contains(Admission.Trusted.wire) then UiConfig.KeyRequired.KeyRequired
+                             else UiConfig.KeyRequired.Open))
       ),
     // the toolbar's counts and "something new" marks: REST only, like `config` (UiApi says why)
     UiApi.counters.serverLogicSuccess[Identity](_ => h.instance.uiCounters),
@@ -172,8 +173,8 @@ final class HttpApi(
       h.bundles.exportBundle(since.map(s => BundleScope.Since.At(s.value))).map((f, d) => (f, Api.FileName(d.value)))
     ),
     Api.verifyBundle.serverLogic[Identity](f => h.bundles.verify(f).left.map(Api.Error(_))),
-    Api.importBundle.serverLogic[Identity]((dryRun, f) =>
-      h.bundles.importBundle(ImportOptions.DryRun(dryRun.value), f)
+    Api.importBundle.serverLogic[Identity]((apply, f) =>
+      h.bundles.importBundle(ImportOptions.DryRun(!apply.applies), f)
     ),
     // ── the merge plan (M3) ──
     Api.uploadBundle.serverLogic[Identity](f => h.bundles.upload(f)),
@@ -217,7 +218,7 @@ final class HttpApi(
           h.placeCard(
             p,
             asOf.map(a => DeepTime.SignedYear(a.value)),
-            PlaceCardView.WithCounts(counts.map(_.value).getOrElse(false))
+            PlaceCardView.WithCounts(counts.map(_.detail).getOrElse(false))
           )
         )
     ),
@@ -225,10 +226,10 @@ final class HttpApi(
     (source, apply) =>
       h.bootstrap.loadGazetteer(
         Gazetteer.Kind.Wire(source.value),
-        GazetteerLoad.LoadApply(apply.value)
+        GazetteerLoad.LoadApply(apply.applies)
       )
   ) ++ PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
-    Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch.value))
+    Api.init.serverLogic[Identity](fetch => h.bootstrap.init(fetch.fetches))
     // ── events (plan §1.2) and attestations (plan §1.3) ──────────────────────────────────────
   ) ++ EventsRoutes(
     h.events,
@@ -265,7 +266,7 @@ final class HttpApi(
       CreatorControllers.rest(p)(h.ingest.controllers.ingest(p, Upload.handed(HandedFile.snapshot(file))))
     ),
     Api.reocr.serverLogic[Identity]((ck, quality) =>
-      HttpApi.citekey(ck).flatMap(c => h.ingest.controllers.reocr(c, Ingest.Params.Quality(quality.value)))
+      HttpApi.citekey(ck).flatMap(c => h.ingest.controllers.reocr(c, quality))
     ),
     Api.original.serverLogic[Identity](ck =>
       // the stored original is served from where the store keeps it (the HTTP layer streams a file)

@@ -160,7 +160,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
             Agents.RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
             Some(Managers.RunMark.Before(2)),
             Managers.RunMark.After(2),
-            churn = Managers.RunMark.Churn(true),
+            churn = Managers.RunMark.Churn.Churn,
             pairsBefore = Some(Managers.RunMark.PairsBefore(5)),
             pairsAfter = Some(Managers.RunMark.PairsAfter(5))
           )

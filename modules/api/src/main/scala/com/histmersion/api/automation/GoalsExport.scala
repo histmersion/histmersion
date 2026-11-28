@@ -143,7 +143,7 @@ object GoalsExport:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def scheduleLine(s: GoalSchedule): String =
-    val state = if (s.enabled) == GoalSchedule.Enabled(true) then "on" else "off"
+    val state = if (s.enabled) == GoalSchedule.Enabled.Enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b.value)} USD")
     (s"${s.kind.wire} · `${s.cron}` · $state$budget")
 

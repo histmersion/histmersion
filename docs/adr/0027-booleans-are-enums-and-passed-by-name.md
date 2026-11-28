@@ -53,6 +53,19 @@ are written to the report but not emitted as lints, and the report is the fixtur
   `Switch.{On, Off}`), with its operations on the companion. On the wire it is a string (ADR 0026); in the database the
   column may stay `boolean` with the enum's `DbCodec` mapping it (no migration, the data untouched), or become text
   with a Flyway migration that keeps the data.
+- An enum that was a Boolean in JSON (a wire record, a stored record or setting, a bundle, a checkpoint) has a
+  companion that extends `TwoStates` (`modules/api`, `api/TwoStates.scala`; the api layer owns the wire's codecs, owner
+  2026-11-28): its codec writes the case's name, and reads the Boolean an earlier version wrote as the state it meant,
+  `true` the first case and `false` the second, so stored JSON and older clients still read. A query parameter that
+  was a Boolean stays `true`/`false` on the wire and is mapped to the enum where the endpoint is declared. A `boolean`
+  column keeps its data: `NewtypeColumns.twoStates` maps it (db layer), and `domain/TwoStateTransformers` gives Chimney
+  the conversion between such an enum and a domain Boolean newtype (domain layer, no codec). The lint rule `derives`
+  reads an instance lifted from `TwoStates` as it reads one lifted from a newtype's base, and lists `api/TwoStates.scala`
+  as the codecs' home.
+- A Boolean newtype that served several parameters of different meaning becomes one enum per meaning: `Api.Apply`
+  (apply or dry run; the `dryRun` parameters of `importBundle` and `fetchExternalPlaces` map `true` to `DryRun`),
+  `Api.Strictness` (`strict`), `Api.Fetching` (`init`'s `fetch`), and `reocr`'s `quality` takes
+  `Ingest.Params.Quality`.
 - A Boolean that is a computed answer (`def isEmpty: Boolean`, a predicate passed to `filter`) stays: it is a result,
   not a parameter, and neither key counts it.
 - Where a Boolean parameter stays (a library's callback, a pure helper), its callers name it.

@@ -7,7 +7,7 @@ class ReloadMarkdownSuite extends munit.FunSuite:
   test("ReloadMarkdown: failed, unchanged and published reports"):
     val failed = ReloadMarkdown.report(
       ReloadReport(
-        ReloadReport.Published(false),
+        ReloadReport.Published.Unpublished,
         ReloadReport.Generation(3),
         errors = List(ReloadReport.Errors("pool: connection refused"))
       )
@@ -15,12 +15,12 @@ class ReloadMarkdownSuite extends munit.FunSuite:
     assert(failed.contains("failed — generation 3 stays") && failed.contains("connection refused"), failed)
     assert(
       ReloadMarkdown
-        .report(ReloadReport(ReloadReport.Published(false), ReloadReport.Generation(3)))
+        .report(ReloadReport(ReloadReport.Published.Unpublished, ReloadReport.Generation(3)))
         .contains("Nothing in the config differs")
     )
     val ok = ReloadMarkdown.report(
       ReloadReport(
-        ReloadReport.Published(true),
+        ReloadReport.Published.Published,
         ReloadReport.Generation(4),
         applied = List(ReloadReport.Applied("histmersion.db.url")),
         restartOnly = List(ReloadReport.RestartOnly("histmersion.server.port")),

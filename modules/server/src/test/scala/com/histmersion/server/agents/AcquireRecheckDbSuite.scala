@@ -253,7 +253,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         api.library.Citekey(ck.value),
         Some(api.library.Doi(d.value)),
         Some(api.library.Title("found")),
-        created = Ingest.Report.Created(true),
+        created = Ingest.Report.Created.Created,
         Some(PdfInfo(PdfInfo.Source("unpaywall"), None, ByteCount(2048), None)),
         Ingest.Report.EdgesAdded(0),
         None,
@@ -380,17 +380,21 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(asked(up).size, 2)
     val later = Instant.now().plusSeconds(8L * 86400L)
     assertEquals(
-      a.acquireRecheck.run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true)), later).toOption.get.due,
+      a.acquireRecheck
+        .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun), later)
+        .toOption
+        .get
+        .due,
       2,
       "a week later both are due"
     )
     assertEquals(
-      a.acquireRecheck.run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true))).toOption.get.due,
+      a.acquireRecheck.run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun)).toOption.get.due,
       0
     )
     up.generation = AcquireRecheck.LastCheck.Generation("g2") // a new fetcher, a new key
     val dry = a.acquireRecheck
-      .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true)))
+      .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(dry.due, 2)
     assertEquals(asked(up).size, 2, "a dry run asks no fetcher")
@@ -519,7 +523,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val r = a.acquireRecheck.run(RecheckRequest()).toOption.get
     assert(r.note.exists(_.value.contains("draining")), r.toString)
     assertEquals(
-      a.acquireRecheck.run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true))).toOption.get.due,
+      a.acquireRecheck.run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun)).toOption.get.due,
       1
     )
     assertEquals(asked(up), Nil)
@@ -762,7 +766,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
           noCopy(d)
         )
     val r = a.acquireRecheck.run(
-      RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true), by = Some(Acquire.Checks.RecheckRequest.By("test")))
+      RecheckRequest(all = Acquire.Checks.RecheckRequest.All.All, by = Some(Acquire.Checks.RecheckRequest.By("test")))
     )
     val job = jobOf(r)
     assertEquals((r.toOption.get.withDoi, r.toOption.get.allowance), (7, 6))
@@ -813,7 +817,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val later = Instant.now().plusSeconds(7L * 3600L)
     assertEquals(
       a.acquireRecheck
-        .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun(true)), later)
+        .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun), later)
         .toOption
         .get
         .rows
@@ -858,9 +862,9 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val ids = (1 to 3).toList.map(i => item(h, s"o$i"))
     val gate = Gate()
     up.answer = (d, _) => gate.hold(d)
-    val job = jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true))))
+    val job = jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All.All)))
     assert(gate.started.await(30, java.util.concurrent.TimeUnit.SECONDS))
-    val second = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
+    val second = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All.All))
     assert(
       second.left.exists(e =>
         e.problems.sentences.mkString("; ").contains(s"job ${job.id}") && e.code.exists(
@@ -893,7 +897,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val job = jobOf(
       a.acquireRecheck.run(
         RecheckRequest(
-          all = Acquire.Checks.RecheckRequest.All(true),
+          all = Acquire.Checks.RecheckRequest.All.All,
           by = Some(Acquire.Checks.RecheckRequest.By("test"))
         )
       )
@@ -965,7 +969,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
           RecheckJob.Detail(
             Some(
               RecheckJob(
-                all = Acquire.Checks.RecheckJob.All(true),
+                all = Acquire.Checks.RecheckJob.All.All,
                 since = RecheckJob.Since(since.toString),
                 by = Acquire.Checks.RecheckJob.By("cli")
               )
@@ -983,13 +987,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       Transactor(ds).read(JobRepo.get(jobKey(j.id))).flatMap(_.problems),
       Some(NonEmptyVector.of[Problem](Problem.Run.Interrupted))
     )
-    val r = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))
+    val r = a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All.All))
     val job = jobOf(r)
     assert(r.toOption.get.note.exists(_.value.contains(s"resumes job ${j.id}")), r.toString)
     assertEquals(ended(a, job.id).progress, Some("4/4 items · 0 closed · 0 fetched · 4 no legal copy · 0 failed"))
     assertEquals(asked(up).map(_._1), List(doi("r3"), doi("r4")))
     // a fresh --all after a finished one starts over, every item again
-    val again = jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true))))
+    val again = jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All.All)))
     assertEquals(again.detail.flatMap(RecheckJob.Detail.of).flatMap(_.resumes), None)
     val _ = ended(a, again.id)
     assertEquals(asked(up).size, 6)
@@ -1004,7 +1008,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
           RecheckJob.Detail(
             Some(
               RecheckJob(
-                all = Acquire.Checks.RecheckJob.All(true),
+                all = Acquire.Checks.RecheckJob.All.All,
                 since = RecheckJob.Since(Instant.now().toString),
                 by = Acquire.Checks.RecheckJob.By("cli")
               )
@@ -1074,7 +1078,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       )
     )
     val ids = (1 to 3).toList.map(i => item(h, s"u$i"))
-    val done = ended(a, jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All(true)))).id)
+    val done = ended(a, jobOf(a.acquireRecheck.run(RecheckRequest(all = Acquire.Checks.RecheckRequest.All.All))).id)
     assertEquals(done.progress, Some("3/3 items · 0 closed · 0 fetched · 3 no legal copy · 0 failed"), done.toString)
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
     assertEquals(AcquisitionTesting.attempts(ds).of(ids.map(checkItem)).size, 3)

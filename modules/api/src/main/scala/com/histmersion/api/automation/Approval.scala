@@ -5,6 +5,7 @@ import com.histmersion.api.WireEnumValues
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.TwoStates
 
 /** An approval's vocabularies as the wire spells them (the api's own copies of the model's). */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -33,22 +34,22 @@ object Approval:
     * decision and the run never waits.
     */
   enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking) derives CanEqual:
-    case StatusChange extends Kind(Kind.Wire("status-change"), Kind.Blocking(false))
-    case Edge extends Kind(Kind.Wire("edge"), Kind.Blocking(false))
-    case GoalPlan extends Kind(Kind.Wire("goal-plan"), Kind.Blocking(true))
-    case ArticlePublish extends Kind(Kind.Wire("article-publish"), Kind.Blocking(true))
+    case StatusChange extends Kind(Kind.Wire("status-change"), Kind.Blocking.Advisory)
+    case Edge extends Kind(Kind.Wire("edge"), Kind.Blocking.Advisory)
+    case GoalPlan extends Kind(Kind.Wire("goal-plan"), Kind.Blocking.Blocking)
+    case ArticlePublish extends Kind(Kind.Wire("article-publish"), Kind.Blocking.Blocking)
 
     /** An article's inferred coverage filter (infer-filter): approving records it on the article. */
-    case ArticleFilter extends Kind(Kind.Wire("article-filter"), Kind.Blocking(false))
+    case ArticleFilter extends Kind(Kind.Wire("article-filter"), Kind.Blocking.Advisory)
 
     /** The articles planned for a research area (propose-articles): approving lets its seeding manager compile them.
       */
-    case ArticlePlan extends Kind(Kind.Wire("article-plan"), Kind.Blocking(false))
+    case ArticlePlan extends Kind(Kind.Wire("article-plan"), Kind.Blocking.Advisory)
 
     /** A structured action for a process manager (hold, prioritise, skip, a settings change) that a MODEL proposed from
       * a hint (phase 3): applied only when a person approves it. `subject` = the manager.
       */
-    case HintEffect extends Kind(Kind.Wire("hint-effect"), Kind.Blocking(false))
+    case HintEffect extends Kind(Kind.Wire("hint-effect"), Kind.Blocking.Advisory)
 
     /** About a goal or an article (`subject`), not a source. */
     def aboutSubject: Boolean = (this != StatusChange && this != Edge)
@@ -62,8 +63,10 @@ object Approval:
   object Kind:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
-    type Blocking = Blocking.T
-    object Blocking extends Newtype[Boolean, Pure]
+    enum Blocking derives CanEqual:
+      case Blocking, Advisory
+    object Blocking extends TwoStates[Blocking]:
+      extension (blocking: Blocking) def blocking: Boolean = blocking == Blocking
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

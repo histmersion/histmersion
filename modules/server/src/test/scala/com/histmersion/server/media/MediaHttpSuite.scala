@@ -162,12 +162,12 @@ class MediaHttpSuite extends DbSuite:
       h.imports
         .importMedia(MediaImportRequest(place = Some(PlaceId)))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(dry.dryRun.value)
+    assert(dry.dryRun.dryRun)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
     assertEquals(AssetFixtures.thumbs(ds, Target.TargetType("place"), PlaceTarget), Nil)
     val done =
       h.imports
-        .importMedia(MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
+        .importMedia(MediaImportRequest(dryRun = MediaImportRequest.DryRun.Apply, place = Some(PlaceId)))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((done.stored, done.linked, done.categories), (1, 1, 1))
     assertEquals(
@@ -244,7 +244,7 @@ class MediaHttpSuite extends DbSuite:
         assert(RawJson.decode[List[MediaGeoHit]](gb).exists(_.exists(_.uid == t.uid)), gb)
         val (cs, cb) = send("POST", s"$url/api/media/fill-licences", "")
         assertEquals(cs, 200, cb)
-        assert(RawJson.decode[FigureLicenceFill](cb).exists(!_.applied.value), cb)
+        assert(RawJson.decode[FigureLicenceFill](cb).exists(!_.applied.applied), cb)
       finally b.stop()
     }
 

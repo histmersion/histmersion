@@ -255,7 +255,7 @@ class CollectionsSuite extends munit.FunSuite:
       r.byLicence,
       List(
         MediaCount(MediaCount.Key("CC0-1.0"), MediaCount.N(2)),
-        MediaCount(MediaCount.Key("not open access"), MediaCount.N(1), allowed = MediaCount.Allowed(false))
+        MediaCount(MediaCount.Key("not open access"), MediaCount.N(1), allowed = MediaCount.Allowed.Blocked)
       )
     )
     assertEquals(r.failed.size, 2, "the two objects the stand-in has no record of are lines, not the end")

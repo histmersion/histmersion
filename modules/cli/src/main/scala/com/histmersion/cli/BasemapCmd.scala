@@ -49,8 +49,8 @@ object BasemapCmd:
               z.map(Basemap.FetchQuery.MaxZoom(_)),
               tz.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
               bbox.map(Basemap.FetchQuery.Bbox(_)),
-              Basemap.FetchQuery.DryRun(writes.dry),
-              Basemap.FetchQuery.KeepAll(keepAll),
+              (if writes.dry then Basemap.FetchQuery.DryRun.DryRun else Basemap.FetchQuery.DryRun.Apply),
+              (if keepAll then Basemap.FetchQuery.KeepAll.KeepAll else Basemap.FetchQuery.KeepAll.Trim),
               focus.map(Basemap.FetchQuery.Focus(_))
             )
           ).flatMap { j =>
@@ -65,6 +65,6 @@ object BasemapCmd:
             Basemap.RemoveQuery(
               Basemap.RemoveQuery.Layer(l),
               focus.map(Basemap.RemoveQuery.Focus(_)),
-              Basemap.RemoveQuery.Cache(cache)
+              (if cache then Basemap.RemoveQuery.Cache.Cache else Basemap.RemoveQuery.Cache.NoCache)
             )
           ).map(r => Cli.out.println(BasemapMarkdown.removed(r)))

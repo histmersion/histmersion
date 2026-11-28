@@ -122,7 +122,8 @@ object CollectionsTools:
                         CollectionImportRequest.Id(id.value),
                         in.citekey,
                         in.format.map(f => CollectionImportRequest.Format(f.value)),
-                        CollectionImportRequest.Convert(in.convert.value)
+                        (if in.convert.value then CollectionImportRequest.Convert.Convert
+                         else CollectionImportRequest.Convert.AsIs)
                       )
                     )
                   )(
@@ -139,7 +140,17 @@ object CollectionsTools:
                   case _         => noId
               case "push" =>
                 in.citekey.fold(noCitekey)(ck =>
-                  answer(c.push(me, name, CollectionPushRequest(ck, CollectionPushRequest.Replace(in.replace.value))))(
+                  answer(
+                    c.push(
+                      me,
+                      name,
+                      CollectionPushRequest(
+                        ck,
+                        (if in.replace.value then CollectionPushRequest.Replace.Replace
+                         else CollectionPushRequest.Replace.Keep)
+                      )
+                    )
+                  )(
                     CollectionsMarkdown.pushed
                   )
                 )
@@ -152,9 +163,10 @@ object CollectionsTools:
                       c.updateAll(
                         me,
                         name,
-                        CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(in.apply.value))
+                        CollectionUpdateAll.Request((if in.apply.value then CollectionUpdateAll.Request.Apply.Apply
+                                                     else CollectionUpdateAll.Request.Apply.DryRun))
                       )
-                    )(u => CollectionsMarkdown.updateAll(u.rows, u.applied.value))
+                    )(u => CollectionsMarkdown.updateAll(u.rows, u.applied.applied))
               case "set" =>
                 val fields = in.fields.flatMap(f =>
                   f.value.split(":", 2) match
@@ -175,7 +187,8 @@ object CollectionsTools:
                     me,
                     name,
                     CollectionSync.Request(
-                      CollectionSync.Request.Apply(in.apply.value),
+                      (if in.apply.value then CollectionSync.Request.Apply.Apply
+                       else CollectionSync.Request.Apply.DryRun),
                       in.limit.map(l => CollectionSync.Request.Limit(l.value))
                     )
                   )

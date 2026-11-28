@@ -39,7 +39,7 @@ object DirSize:
       bytes: Result.Bytes,
       files: Result.Files,
       exists: Result.Exists,
-      partial: Result.Partial = Result.Partial(false),
+      partial: Result.Partial = Result.Partial.Whole,
       unreadable: Result.Unreadable = Result.Unreadable(0)
   )
 
@@ -84,16 +84,16 @@ object DirSize:
     val unlimited: Budget = Budget(MaxEntries(Long.MaxValue), DeadlineNanos(Long.MaxValue))
 
   def measure(root: Path, budget: Budget): Result =
-    if !Files.exists(root) then Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(false))
+    if !Files.exists(root) then Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists.Missing)
     else if Files.isRegularFile(root) then
       val _ = budget.take()
       Result(
         Result.Bytes(scala.util.Try(Files.size(root)).getOrElse(0L)),
         Result.Files(1L),
-        exists = Result.Exists(true)
+        exists = Result.Exists.Exists
       )
     else if budget.exhausted then
-      Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists(true), partial = Result.Partial(true))
+      Result(Result.Bytes(0L), Result.Files(0L), exists = Result.Exists.Exists, partial = Result.Partial.Partial)
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
       var bytes = 0L
@@ -121,8 +121,8 @@ object DirSize:
       Result(
         Result.Bytes(bytes),
         Result.Files(files),
-        exists = Result.Exists(true),
-        Result.Partial(partial),
+        exists = Result.Exists.Exists,
+        if partial then Result.Partial.Partial else Result.Partial.Whole,
         Result.Unreadable(unreadable)
       )
 

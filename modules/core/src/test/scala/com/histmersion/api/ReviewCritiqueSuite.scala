@@ -38,7 +38,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def side(ck: Citekey, cited: CritiqueSide.Cited) =
-    CritiqueSide(ck, cited = cited, mentions = CritiqueSide.Mentions(if cited.value then 1 else 0))
+    CritiqueSide(ck, cited = cited, mentions = CritiqueSide.Mentions(if cited.cited then 1 else 0))
   private def pair(
       src: Citekey,
       dst: Citekey,
@@ -46,9 +46,9 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       reason: Option[Coverage.Rationale] = None
   ) =
     CritiquePair(
-      side(src, cited = CritiqueSide.Cited(false)),
+      side(src, cited = CritiqueSide.Cited.Uncited),
       List(CritiquePair.Kinds("refutes")),
-      side(dst, cited = CritiqueSide.Cited(true)),
+      side(dst, cited = CritiqueSide.Cited.Cited),
       state,
       reason
     )
@@ -254,9 +254,9 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     // the criticised work is not cited: the article states none of its claims
     val uncited = CritiquePair(
-      side(Citekey("frazer1922_golden"), cited = CritiqueSide.Cited(true)),
+      side(Citekey("frazer1922_golden"), cited = CritiqueSide.Cited.Cited),
       List(CritiquePair.Kinds("refutes")),
-      side(Citekey("old1900_myth"), cited = CritiqueSide.Cited(false)),
+      side(Citekey("old1900_myth"), cited = CritiqueSide.Cited.Uncited),
       CritiqueState.Open
     )
     val (u, _, _) = one(
@@ -270,9 +270,9 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     // superseded_by is stored on the OLDER work: there the source is the criticised side
     val older = CritiquePair(
-      side(Citekey("frazer1922_golden"), cited = CritiqueSide.Cited(true)),
+      side(Citekey("frazer1922_golden"), cited = CritiqueSide.Cited.Cited),
       List(CritiquePair.Kinds("superseded_by")),
-      side(Citekey("new2010_rites"), cited = CritiqueSide.Cited(false)),
+      side(Citekey("new2010_rites"), cited = CritiqueSide.Cited.Uncited),
       CritiqueState.Open
     )
     assertEquals(

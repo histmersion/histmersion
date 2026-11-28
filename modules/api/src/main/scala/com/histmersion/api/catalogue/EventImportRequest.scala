@@ -8,27 +8,30 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventImportRequest(
     provider: EventImportRequest.Provider,
-    dryRun: EventImportRequest.DryRun = EventImportRequest.DryRun(true),
+    dryRun: EventImportRequest.DryRun = EventImportRequest.DryRun.DryRun,
     limit: Option[EventImportRequest.Limit] = None,
     bbox: Option[EventImportRequest.Bbox] = None,
     from: Option[EventImportRequest.From] = None,
     to: Option[EventImportRequest.To] = None,
     minVei: Option[EventImportRequest.MinVei] = None,
     minMagnitude: Option[EventImportRequest.MinMagnitude] = None,
-    refresh: EventImportRequest.Refresh = EventImportRequest.Refresh(false),
+    refresh: EventImportRequest.Refresh = EventImportRequest.Refresh.Reuse,
     createdBy: Option[Creation.By] = None,
     via: Option[Creation.Via] = None
 ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object EventImportRequest:
   export EventImportReport.Provider
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Apply
+  object DryRun extends TwoStates[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
   type Bbox = Bbox.T
@@ -41,5 +44,7 @@ object EventImportRequest:
   object MinVei extends Newtype[Int, Pure]
   type MinMagnitude = MinMagnitude.T
   object MinMagnitude extends Newtype[Double, Pure]
-  type Refresh = Refresh.T
-  object Refresh extends Newtype[Boolean, Pure]
+  enum Refresh derives CanEqual:
+    case Refresh, Reuse
+  object Refresh extends TwoStates[Refresh]:
+    extension (refresh: Refresh) def refresh: Boolean = refresh == Refresh

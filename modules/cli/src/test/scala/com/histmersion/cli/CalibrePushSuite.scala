@@ -31,8 +31,8 @@ class CalibrePushSuite extends munit.FunSuite:
 
   private val Pdf = "%PDF-1.4 server copy"
 
-  private val Stored = Some(CalibreGap.StoredOriginal(true))
-  private val NotStored = Some(CalibreGap.StoredOriginal(false))
+  private val Stored = Some(CalibreGap.StoredOriginal.Stored)
+  private val NotStored = Some(CalibreGap.StoredOriginal.Missing)
 
   private def gap(
       ck: Citekey,
@@ -337,7 +337,7 @@ class CalibrePushSuite extends munit.FunSuite:
         captured(
           CalibreCmd.syncGaps(
             new Client(s.url),
-            apply = Api.Apply(true),
+            apply = Api.Apply.Apply,
             None,
             json = Cli.JsonOutput.Text,
             calibre(shell),
@@ -353,7 +353,7 @@ class CalibrePushSuite extends munit.FunSuite:
         captured(
           CalibreCmd.syncGaps(
             new Client(s.url),
-            apply = Api.Apply(false),
+            apply = Api.Apply.DryRun,
             None,
             json = Cli.JsonOutput.Text,
             calibre(shell),

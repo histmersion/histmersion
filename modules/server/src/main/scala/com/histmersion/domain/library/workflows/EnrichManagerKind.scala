@@ -153,7 +153,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   private def priorRuns(c: ManagerContext, ck: Citekey): List[AutoEnrich.PriorRun] =
     c.runsFor(Pipeline.EnrichSource, ManagerContext.ItemTarget(ck.value))
       .toList
-      .filterNot(_.dryRun.value)
+      .filterNot(_.dryRun.dryRun)
       .flatMap(r =>
         Run.State
           .parse(Run.State.Wire(r.status.value))

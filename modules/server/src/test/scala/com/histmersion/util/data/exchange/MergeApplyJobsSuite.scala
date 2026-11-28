@@ -26,7 +26,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     MergeApplyResult(
       UUID.randomUUID(),
       api.exchange.Bundle.Instance(UUID.randomUUID(), None),
-      applied = MergeApplyResult.Applied(true),
+      applied = MergeApplyResult.Applied.Applied,
       MergeApplyResult.PlanHash("abc")
     )
 

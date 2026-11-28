@@ -25,7 +25,13 @@ class NoticesSuite extends munit.FunSuite:
       seen: Option[Counter.Seen],
       count: Option[Counter.Count] = None
   ) =
-    Counter(key, count, latest, seen, Counter.Fresh(UiNotices.fresh(latest, seen)))
+    Counter(
+      key,
+      count,
+      latest,
+      seen,
+      (if UiNotices.fresh(latest, seen) then Counter.Fresh.Fresh else Counter.Fresh.Seen)
+    )
 
   test("each watched window is its own board; the others watch none"):
     assertEquals(Notices.boardOf(WindowKey.Goals), Some(Board.Goals))
@@ -67,12 +73,12 @@ class NoticesSuite extends munit.FunSuite:
   test("once marked, a board is not new, and an older mark never moves it back"):
     val marked = Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), Some(t1Seen)), t2Seen)
     assertEquals(marked.seen, Some(t2Seen))
-    assert(!marked.fresh.value)
+    assert(!marked.fresh.fresh)
     val kept = Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), Some(t2Seen)), t1Seen)
     assertEquals(kept.seen, Some(t2Seen))
-    assert(!kept.fresh.value)
+    assert(!kept.fresh.fresh)
     // a change after the mark is news again
-    assert(Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), None), t1Seen).fresh.value)
+    assert(Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), None), t1Seen).fresh.fresh)
 
   test("the phone's tools button marks news among the boards it shows"):
     val cs = Map(

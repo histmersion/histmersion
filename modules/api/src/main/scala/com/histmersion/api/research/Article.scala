@@ -39,6 +39,7 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.automation.Goal
+import com.histmersion.api.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Article(
@@ -58,8 +59,10 @@ final case class Article(
 object Article:
   type Export = Export.T
   object Export extends Newtype[String, Pure]
-  type FullText = FullText.T
-  object FullText extends Newtype[Boolean, Pure]
+  enum FullText derives CanEqual:
+    case FullText, SummaryOnly
+  object FullText extends TwoStates[FullText]:
+    extension (fullText: FullText) def fullText: Boolean = fullText == FullText
   type Heading = Heading.T
   object Heading extends Newtype[String, Pure]
   type Lede = Lede.T
@@ -360,8 +363,10 @@ object Article:
   final case class Deleted(slug: Slug, deleted: Deleted.Value) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object Deleted:
-    type Value = Value.T
-    object Value extends Newtype[Boolean, Pure]
+    enum Value derives CanEqual:
+      case Deleted, Kept
+    object Value extends TwoStates[Value]:
+      extension (value: Value) def deleted: Boolean = value == Deleted
 
   object Edits:
     type Anchor = Anchor.T
@@ -672,9 +677,10 @@ object Article:
       def clean: Boolean = (problems.isEmpty)
 
     object ArticleCheck:
-
-      type Fatal = Fatal.T
-      object Fatal extends Newtype[Boolean, Pure]
+      enum Fatal derives CanEqual:
+        case Fatal, Recoverable
+      object Fatal extends TwoStates[Fatal]:
+        extension (fatal: Fatal) def fatal: Boolean = fatal == Fatal
       type WordsBefore = WordsBefore.T
       object WordsBefore extends Newtype[Int, Pure]
       type WordsAfter = WordsAfter.T
@@ -691,7 +697,7 @@ object Article:
             .mkString("\n")
       val verdict =
         if (c.clean) == (true) then "No problems: these are the checks code runs on the answer, and it would pass them."
-        else if (c.fatal) == ArticleCheck.Fatal(true) then
+        else if (c.fatal) == ArticleCheck.Fatal.Fatal then
           s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}, at least one FATAL (never written):"
         else s"${Plural.count(Plural.CountN((c.problems.size).toLong), Plural.CountSingular("problem"))}:"
       val problems = if (c.clean) == (true) then "" else "\n\n" + c.problems.map(p => s"- ${p.sentence}").mkString("\n")
@@ -824,8 +830,8 @@ object Article:
       slug: Option[Slug] = None,
       kind: Option[Kind.Wire] = None,
       mtime: Option[Import.Mtime] = None,
-      force: Import.Force = Import.Force(false),
-      strict: Import.Strict = Import.Strict(false),
+      force: Import.Force = Import.Force.Safe,
+      strict: Import.Strict = Import.Strict.Lenient,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
@@ -834,10 +840,14 @@ object Article:
     export Article.Body as Text
     type Mtime = Mtime.T
     object Mtime extends Newtype[Long, Pure]
-    type Force = Force.T
-    object Force extends Newtype[Boolean, Pure]
-    type Strict = Strict.T
-    object Strict extends Newtype[Boolean, Pure]
+    enum Force derives CanEqual:
+      case Force, Safe
+    object Force extends TwoStates[Force]:
+      extension (force: Force) def force: Boolean = force == Force
+    enum Strict derives CanEqual:
+      case Strict, Lenient
+    object Strict extends TwoStates[Strict]:
+      extension (strict: Strict) def strict: Boolean = strict == Strict
 
   enum Kind:
     case Concept, Myth, Culture, Region, Timeline, Report, Index
@@ -1317,10 +1327,10 @@ object Article:
     )
     def outcomeLine(f: ReviewFinding): String =
       val base = f.outcome.value match
-        case "wont-fix"                                               => "won't fix"
-        case "set-aside"                                              => "set aside"
-        case "open" if ((f.deferred) == ReviewFinding.Deferred(true)) => "open (left for the next run)"
-        case other                                                    => other
+        case "wont-fix"                                                  => "won't fix"
+        case "set-aside"                                                 => "set aside"
+        case "open" if ((f.deferred) == ReviewFinding.Deferred.Deferred) => "open (left for the next run)"
+        case other                                                       => other
       val when = f.closedRunNumber.zip(f.closedRound).fold("")((run, round) => s" in run $run, round $round")
       val by = f.closedBy.filter(_.value.nonEmpty).fold("")(b => s" by ${named(b.value)}")
       val note = Option(f.note.value).map(_.trim).filter(_.nonEmpty).fold("")(n => s": $n")

@@ -6,6 +6,7 @@ import com.histmersion.api.library.Confidence
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @movesTo(FeaturePlace.ApiUi)
@@ -47,17 +48,19 @@ object ConfidenceStyle:
   object IconPart:
     type D = D.T
     object D extends Newtype[String, Pure]
-    type Filled = Filled.T
-    object Filled extends Newtype[Boolean, Pure]
+    enum Filled derives CanEqual:
+      case Filled, Outlined
+    object Filled extends TwoStates[Filled]:
+      extension (filled: Filled) def filled: Boolean = filled == Filled
 
-  private val Ring = IconPart(IconPart.D("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z"), filled = IconPart.Filled(false))
+  private val Ring = IconPart(IconPart.D("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z"), filled = IconPart.Filled.Outlined)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def iconParts(c: Confidence): List[IconPart] = c match
     case Confidence.High =>
-      List(IconPart(IconPart.D("M5 0.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9z"), filled = IconPart.Filled(true)))
-    case Confidence.Medium => List(Ring, IconPart(IconPart.D("M5 5V1A4 4 0 1 1 1 5Z"), filled = IconPart.Filled(true)))
-    case Confidence.Low    => List(Ring, IconPart(IconPart.D("M5 1A4 4 0 0 1 5 9Z"), filled = IconPart.Filled(true)))
+      List(IconPart(IconPart.D("M5 0.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9z"), filled = IconPart.Filled.Filled))
+    case Confidence.Medium => List(Ring, IconPart(IconPart.D("M5 5V1A4 4 0 1 1 1 5Z"), filled = IconPart.Filled.Filled))
+    case Confidence.Low    => List(Ring, IconPart(IconPart.D("M5 1A4 4 0 0 1 5 9Z"), filled = IconPart.Filled.Filled))
     case Confidence.Contested => List(Ring)
 
   val IconViewBox = "0 0 10 10"
@@ -66,7 +69,7 @@ object ConfidenceStyle:
   def icon(c: Confidence): Html =
     val parts = Html.concat(
       iconParts(c).map(p =>
-        if (p.filled) == IconPart.Filled(true) then html"""<path d="${p.d}" fill="currentColor"/>"""
+        if (p.filled) == IconPart.Filled.Filled then html"""<path d="${p.d}" fill="currentColor"/>"""
         else html"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
       )
     )

@@ -17,7 +17,7 @@ class DoiIngestSuite extends munit.FunSuite:
       assertEquals(
         DoiIngest.request(t),
         Right(
-          Ingest.Request(Ingest.Request.Id("10.1017/S0003598X00000001"), legalOnly = Ingest.Request.LegalOnly(true))
+          Ingest.Request(Ingest.Request.Id("10.1017/S0003598X00000001"), legalOnly = Ingest.Request.LegalOnly.LegalOnly)
         ),
         t
       )
@@ -26,21 +26,21 @@ class DoiIngestSuite extends munit.FunSuite:
   test("an arXiv id, bare or prefixed, asks the legal chain only"):
     assertEquals(
       DoiIngest.request("2101.01234"),
-      Right(Ingest.Request(Ingest.Request.Id("arxiv:2101.01234"), legalOnly = Ingest.Request.LegalOnly(true)))
+      Right(Ingest.Request(Ingest.Request.Id("arxiv:2101.01234"), legalOnly = Ingest.Request.LegalOnly.LegalOnly))
     )
     assertEquals(
       DoiIngest.request("arXiv:2101.01234v2"),
-      Right(Ingest.Request(Ingest.Request.Id("arXiv:2101.01234v2"), legalOnly = Ingest.Request.LegalOnly(true)))
+      Right(Ingest.Request(Ingest.Request.Id("arXiv:2101.01234v2"), legalOnly = Ingest.Request.LegalOnly.LegalOnly))
     )
     assertEquals(
       DoiIngest.request("hep-th/9901001"),
-      Right(Ingest.Request(Ingest.Request.Id("arxiv:hep-th/9901001"), legalOnly = Ingest.Request.LegalOnly(true)))
+      Right(Ingest.Request(Ingest.Request.Id("arxiv:hep-th/9901001"), legalOnly = Ingest.Request.LegalOnly.LegalOnly))
     )
 
   test("every request the form can send is legal-only"):
     List("10.1/x", "10.12345/abc.def", "2101.01234")
       .flatMap(DoiIngest.request(_).toOption)
-      .foreach(r => assert(r.legalOnly.value, r.toString))
+      .foreach(r => assert(r.legalOnly.legalOnly, r.toString))
 
   test("anything else is refused with what to type"):
     assert(DoiIngest.request("").isLeft)

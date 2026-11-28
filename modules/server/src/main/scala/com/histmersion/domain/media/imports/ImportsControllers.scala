@@ -140,7 +140,7 @@ final class ImportsControllers(
                 place,
                 event,
                 ImportService.TargetsLimit(cfg().limit(req.limit.map(l => MediaConfig.Limit(l.value))).value),
-                ImportService.Refresh(req.refresh.value),
+                ImportService.Refresh(req.refresh.refresh),
                 None
               )
               .left
@@ -148,9 +148,9 @@ final class ImportsControllers(
               .map { targets =>
                 val run = imp.start()
                 val report =
-                  run.run(targets, MediaImporter.DryRun(req.dryRun.value), ImportService.Refresh(req.refresh.value))
+                  run.run(targets, MediaImporter.DryRun(req.dryRun.dryRun), ImportService.Refresh(req.refresh.refresh))
                 scribe.info(
-                  s"media import ${imp.check} (${if req.dryRun.value then "dry run" else "stored"}): ${targets.size} target(s), " +
+                  s"media import ${imp.check} (${if req.dryRun.dryRun then "dry run" else "stored"}): ${targets.size} target(s), " +
                     s"${report.files} file(s), ${report.stored} stored, ${run.requests} request(s)"
                 )
                 report.modify(_.pending).setTo(MediaImportReport.Pending(imp.pending(None).value))
@@ -159,7 +159,7 @@ final class ImportsControllers(
         }
       }
     // a dry run stores nothing but runs the importer, which may: under the gate too
-    if req.dryRun.value then jobs.guarded(WriteGate.OperationName("media_import"))(go)
+    if req.dryRun.dryRun then jobs.guarded(WriteGate.OperationName("media_import"))(go)
     else if !ImportsControllers.single(req) then
       Left(
         ImportsControllers.error(
@@ -187,7 +187,7 @@ final class ImportsControllers(
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def importJob(req: MediaImportRequest)(using Creator.New): Either[Api.Error, JobInfo] =
     providerOf(req.provider).flatMap { imp =>
-      if req.dryRun.value then
+      if req.dryRun.dryRun then
         Left(
           ImportsControllers.error(
             Problem.Unclassified(Legacy.Text("a dry run answers at once: POST /api/media/import")),
@@ -196,7 +196,7 @@ final class ImportsControllers(
         )
       else
         val single = ImportsControllers.single(req)
-        val refresh = ImportService.Refresh(req.refresh.value)
+        val refresh = ImportService.Refresh(req.refresh.refresh)
         targetsOf(req).flatMap { (place, event) =>
           // the one target must exist (and have an item) before a job is started for it
           val check =
@@ -212,9 +212,9 @@ final class ImportsControllers(
             val what =
               (if single then s"${imp.title} of ${req.place.map(_.value).orElse(req.event.map(_.value)).getOrElse("")}"
                else s"${imp.title} of ${cap.fold(s"every ${imp.over}")(n => s"up to $n ${imp.over}")} not asked yet") +
-                (if req.refresh.value then " (refresh)" else "")
+                (if req.refresh.refresh then " (refresh)" else "")
             // a refresh asks again what was asked before this job started — a resumed job too
-            val since = Option.when(req.refresh.value)(ImportService.Since(clock.millis()))
+            val since = Option.when(req.refresh.refresh)(ImportService.Since(clock.millis()))
             jobs.start(ImportsControllers.ImportJobKind, JobKinds.Subject(what)) { progress =>
               given Creator.New = importer(imp)
               Right(ImportsControllers.summary(runImport(imp, place, event, refresh, single, cap, since, progress)))
@@ -285,7 +285,7 @@ final class ImportsControllers(
                 if single || (r.items.value == 0 && r.failed.nonEmpty) then next
                 else loop(next, seen ++ targets.map(ImportsControllers.seenKey))
     val out = loop(
-      MediaImportReport(MediaItem.Provider(imp.check.value), dryRun = MediaImportRequest.DryRun(false)),
+      MediaImportReport(MediaItem.Provider(imp.check.value), dryRun = MediaImportRequest.DryRun.Apply),
       Set.empty
     )
     scribe.info(

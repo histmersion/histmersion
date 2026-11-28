@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
@@ -34,8 +35,10 @@ object RunCompare:
   object RunSide:
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
     type Model = Model.T
     object Model extends Newtype[String, Pure]
     type CostUsd = CostUsd.T

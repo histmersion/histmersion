@@ -12,5 +12,5 @@ object AgentJobKinds:
       JobInfo.Kind("agent"),
       JobKinds.Wire("Agent run"),
       JobKindMeaning("An agent run; the agent runs window shows its steps."),
-      ownControl = JobKindEntry.OfOwnControl(true)
+      ownControl = JobKindEntry.OfOwnControl.OwnControl
     )

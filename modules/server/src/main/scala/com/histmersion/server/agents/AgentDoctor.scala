@@ -91,7 +91,7 @@ final class AgentDoctor(
         case ProviderKind.ClaudeCode => (claudeCode(models, allowances), Nil)
         case ProviderKind.Codex      => (codex(models), Nil)
         case ProviderKind.Opencode   => (opencode(models), Nil)
-        case _                       => http(k, models, online.value)
+        case _                       => http(k, models, online.online)
       val priced = models.map { m =>
         resolve(m) match
           case Right((_, b)) => ok(s"model ${m.wire}", s"${b.describe}; its client can be built")
@@ -111,12 +111,12 @@ final class AgentDoctor(
         .toList
       ProviderDoctor(
         ProviderDoctor.Provider(k.wire.value),
-        ProviderDoctor.Used(models.nonEmpty),
+        (if models.nonEmpty then ProviderDoctor.Used.Used else ProviderDoctor.Used.Unused),
         models.map(m => ProviderDoctor.Models(m.wire.value)),
         off ++ checks ++ priced,
         upstream
       )
-    } ++ plugins(chained, online.value)
+    } ++ plugins(chained, online.online)
     val roleChecks = chains.flatMap {
       case (r, Left(m))                        => List(fail(s"role ${r.wire}", m.sentences.mkString("; ")))
       case (r, Right((Nil, _))) if neededBy(r) =>
@@ -137,7 +137,12 @@ final class AgentDoctor(
           e.allowance.fold(why => List(fail(s"allowance ${e.target}", why.sentences.mkString("; "))), _ => Nil)
         ) ++
         roleChecks
-    DoctorReport(DoctorReport.Enabled(cfg.enabled.value), online, providers, global)
+    DoctorReport(
+      (if cfg.enabled.value then DoctorReport.Enabled.Enabled else DoctorReport.Enabled.Disabled),
+      online,
+      providers,
+      global
+    )
 
   /** One section per PLUGIN provider: what it is, its own checks, its free model listing (online only), and every
     * chained model priced and buildable. Nothing it does is allowed to throw the report away.
@@ -192,7 +197,7 @@ final class AgentDoctor(
         }
         ProviderDoctor(
           ProviderDoctor.Provider(name.value),
-          ProviderDoctor.Used(models.nonEmpty),
+          (if models.nonEmpty then ProviderDoctor.Used.Used else ProviderDoctor.Used.Unused),
           models.map(m => ProviderDoctor.Models(m.wire.value)),
           ok("plugin", safe("its title", p.title.value, identity)) :: (own ++ listing ++ priced),
           upstream

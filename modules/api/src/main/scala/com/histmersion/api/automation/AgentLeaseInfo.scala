@@ -8,6 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 final case class AgentLeaseInfo(
     owner: AgentLeaseInfo.Owner,
@@ -19,8 +20,8 @@ final case class AgentLeaseInfo(
       api.json.Schema:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe: String =
-    (s"$owner${if (thisServer).value then " (this server)" else ""} until $until${
-        if (expired).value then " — expired" else ""
+    (s"$owner${if (thisServer).thisServer then " (this server)" else ""} until $until${
+        if (expired).expired then " — expired" else ""
       }")
 
 object AgentLeaseInfo:
@@ -29,7 +30,11 @@ object AgentLeaseInfo:
   object Owner extends Newtype[String, Pure]
   type Until = Until.T
   object Until extends Newtype[String, Pure]
-  type Expired = Expired.T
-  object Expired extends Newtype[Boolean, Pure]
-  type ThisServer = ThisServer.T
-  object ThisServer extends Newtype[Boolean, Pure]
+  enum Expired derives CanEqual:
+    case Expired, Live
+  object Expired extends TwoStates[Expired]:
+    extension (expired: Expired) def expired: Boolean = expired == Expired
+  enum ThisServer derives CanEqual:
+    case ThisServer, OtherServer
+  object ThisServer extends TwoStates[ThisServer]:
+    extension (thisServer: ThisServer) def thisServer: Boolean = thisServer == ThisServer

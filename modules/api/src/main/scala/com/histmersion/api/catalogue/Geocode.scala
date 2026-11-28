@@ -9,6 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Citekey
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** Pleiades snaps imprecise places to stand-in points: 17 places, three of them "Mesopotamia", share 37.5 N 37.5 E, and
   * some sit on the centre of an atlas grid square ([[LocationPrecision.GridCell]]). Such points rank below every
@@ -257,7 +258,7 @@ object Geocode:
       lon: Longitude,
       lat: Latitude,
       tier: Gazetteer.Rank = Gazetteer.Rank(0),
-      gridCell: Candidate.GridCell = Candidate.GridCell(false)
+      gridCell: Candidate.GridCell = Candidate.GridCell.Exact
   ):
     def undated: Boolean = (from.isEmpty && to.isEmpty)
 
@@ -283,14 +284,18 @@ object Geocode:
 
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type ByLabel = ByLabel.T
-    object ByLabel extends Newtype[Boolean, Pure]
+    enum ByLabel derives CanEqual:
+      case ByLabel, ByPosition
+    object ByLabel extends TwoStates[ByLabel]:
+      extension (byLabel: ByLabel) def byLabel: Boolean = byLabel == ByLabel
     type Dimension = Dimension.T
     object Dimension extends Newtype[Int, Pure]
     type Area = Area.T
     object Area extends Newtype[Double, Pure]
-    type GridCell = GridCell.T
-    object GridCell extends Newtype[Boolean, Pure]
+    enum GridCell derives CanEqual:
+      case GridCell, Exact
+    object GridCell extends TwoStates[GridCell]:
+      extension (gridCell: GridCell) def gridCell: Boolean = gridCell == GridCell
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -334,8 +339,9 @@ object Geocode:
     cs.sortBy { c =>
       val (t, gap) = timeRank(c, at)
       (
-        if ((isPlaceholder(c, placeholderMin)) == (true)) || ((c.gridCell) == Candidate.GridCell(true)) then 1 else 0,
-        if (c.byLabel) == Candidate.ByLabel(true) then 0 else 1,
+        if ((isPlaceholder(c, placeholderMin)) == (true)) || ((c.gridCell) == Candidate.GridCell.GridCell) then 1
+        else 0,
+        if (c.byLabel) == Candidate.ByLabel.ByLabel then 0 else 1,
         c.tier.value: Int,
         kindRank(c.kind, hint).value: Int,
         if broad(c.kind) && c.dimension.value == 0 then 1 else 0,
@@ -375,7 +381,7 @@ object Geocode:
   ): Option[Resolution] =
     ranked.headOption.map { c =>
       val rough = Option.when(((isPlaceholder(c, placeholderMin)) == (true)))(Approximation.Rough(c.shared))
-      val grid = Option.when(((c.gridCell) == Candidate.GridCell(true)) && rough.isEmpty)(Approximation.GridSquare)
+      val grid = Option.when(((c.gridCell) == Candidate.GridCell.GridCell) && rough.isEmpty)(Approximation.GridSquare)
       Resolution(asked, c.id, c.label, c.lon, c.lat, attempt.approx.toList ++ rough.toList ++ grid.toList)
     }
 

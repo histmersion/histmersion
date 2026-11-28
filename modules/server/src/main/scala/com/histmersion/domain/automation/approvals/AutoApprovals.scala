@@ -65,7 +65,7 @@ final class AutoApprovals(
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&
         manager
-          .flatMap(_.config.autoApprove.map(_.value))
+          .flatMap(_.config.autoApprove.map(_.autoApprove))
           .getOrElse(cfg.approvals.checked(k.transformInto[Approval.Kind]))
     )
 

@@ -454,14 +454,14 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
     assertEquals(run.status, "done", run.error)
     assertEquals(
       run.params,
-      RunParams(fix = Some(Agents.RunRequest.Fix(true)), rounds = Some(Agents.RunRequest.Rounds(2)))
+      RunParams(fix = Some(Agents.RunRequest.Fix.Fix), rounds = Some(Agents.RunRequest.Rounds(2)))
     )
 
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
@@ -580,7 +580,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -626,7 +626,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -675,7 +675,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -732,7 +732,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -768,7 +768,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       .toOption
       .get
     assert(
-      draft.fatal.value && draft.problems.exists(_.sentence.contains("zzagent_ghost")) && draft.problems.exists(
+      draft.fatal.fatal && draft.problems.exists(_.sentence.contains("zzagent_ghost")) && draft.problems.exists(
         _.sentence.contains("no [[citekey]]")
       ),
       draft.problems
@@ -840,7 +840,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -916,7 +916,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -1051,7 +1051,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(3))
       )
     )
@@ -1218,7 +1218,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
           RunRequest(
             Agents.RunRequest.Pipeline("review-article"),
             SlugTarget,
-            fix = Some(Agents.RunRequest.Fix(true)),
+            fix = Some(Agents.RunRequest.Fix.Fix),
             rounds = Some(Agents.RunRequest.Rounds(2))
           )
         ),
@@ -1561,13 +1561,13 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(3)),
-        dryRun = Some(Agents.RunRequest.DryRun(true))
+        dryRun = Some(Agents.RunRequest.DryRun.DryRun)
       )
     )
     assertEquals(run.status, "done", run.error)
-    assert(run.dryRun.value)
+    assert(run.dryRun.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Body.value.trim)
 
@@ -1732,7 +1732,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        dryRun = Some(Agents.RunRequest.DryRun(true))
+        dryRun = Some(Agents.RunRequest.DryRun.DryRun)
       )
     )
     val r2 = start(
@@ -1740,7 +1740,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        dryRun = Some(Agents.RunRequest.DryRun(true)),
+        dryRun = Some(Agents.RunRequest.DryRun.DryRun),
         modelFor = List(ModelOverride(Agents.ModelOverride.Role("reviewer"), HaikuOverride))
       )
     )
@@ -1973,7 +1973,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -2065,7 +2065,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -2112,7 +2112,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -2206,7 +2206,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -2270,7 +2270,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -2317,7 +2317,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(2))
       )
     )
@@ -2367,7 +2367,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(3))
       )
     )
@@ -2438,7 +2438,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       RunRequest(
         Agents.RunRequest.Pipeline("review-article"),
         SlugTarget,
-        fix = Some(Agents.RunRequest.Fix(true)),
+        fix = Some(Agents.RunRequest.Fix.Fix),
         rounds = Some(Agents.RunRequest.Rounds(3))
       )
     )

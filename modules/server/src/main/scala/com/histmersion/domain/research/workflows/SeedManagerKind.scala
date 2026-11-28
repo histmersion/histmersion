@@ -351,7 +351,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 tags = sp.filter.tags.map(t => RunRequest.Tags(t.value)),
                 goal = m.goal
               ),
-              _.modify(_.chainReview).setTo(Some(RunParams.ChainReview(false))),
+              _.modify(_.chainReview).setTo(Some(RunParams.ChainReview.Alone)),
               item.state,
               ManagerContext.StartWhat("compile-article (new; its review follows as an item)"),
               out

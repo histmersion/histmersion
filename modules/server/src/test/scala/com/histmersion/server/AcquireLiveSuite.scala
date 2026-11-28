@@ -110,7 +110,7 @@ class AcquireLiveSuite extends munit.FunSuite:
           Acquire.classify(
             r.intents.map(i => Acquire.Intent.Wire(i.value)),
             r.contexts.map(c => Acquire.CitationContext(c.value)),
-            r.isInfluential.value,
+            r.isInfluential.isInfluential,
             r.year,
             work.year
           )

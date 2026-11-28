@@ -28,7 +28,7 @@ final case class CritiquePair(
 
   def critic: CritiqueSide = if Critiques.olderFirst(kinds) then dst else src
 
-  def bearing: Boolean = (((open) == (true)) && ((criticised.cited) == CritiqueSide.Cited(true)))
+  def bearing: Boolean = (((open) == (true)) && ((criticised.cited) == CritiqueSide.Cited.Cited))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def line: String = (s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]")

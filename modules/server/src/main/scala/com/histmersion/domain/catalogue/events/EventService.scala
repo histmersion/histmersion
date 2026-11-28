@@ -203,7 +203,7 @@ object EventService:
       ) &&
       EventTaxonomy
         .condition(clean(sel.kind.map(_.value)).map(EventTaxonomy.KindCondition.Filter(_)))
-        .forall(c => c.kinds.contains(EventSummary.Kind(e.kind.value)) != c.negate.value) &&
+        .forall(c => c.kinds.contains(EventSummary.Kind(e.kind.value)) != c.negate.negate) &&
       clean(sel.historicity.map(_.value)).map(_.toLowerCase).forall(_ == e.historicity.value) &&
       sel.placeId.forall(p => e.placeId.contains(p))
 

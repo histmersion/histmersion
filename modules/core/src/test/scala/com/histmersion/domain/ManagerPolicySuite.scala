@@ -414,7 +414,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      c.map(x => (x.staleAfterDays, x.inferFilter, x.minSources, x.maxArticles)),
+      c.map(x => (x.staleAfterDays, x.inferFilter.map(_.inferFilter), x.minSources, x.maxArticles)),
       Right((Some(30), Some(false), Some(3), Some(4)))
     )
     assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("infer-filter=maybe"))).isLeft)
@@ -490,7 +490,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(ReviewSettings.forKind(Manager.Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
     val d = watch.managerDefaults(mcfg)
     assertEquals(
-      (d.autoIngest, d.autoIngestPerDay, d.sweeps),
+      (d.autoIngest.map(_.autoIngest), d.autoIngestPerDay, d.sweeps),
       (Some(false), Some(5), Some(List("acquisition", "currency")))
     )
     val c = ManagerConfig.parse(
@@ -501,7 +501,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)),
+      c.map(x => (x.sweeps, x.autoIngest.map(_.autoIngest), x.autoIngestPerDay)),
       Right((Some(List("acquisition", "currency")), Some(true), Some(3)))
     )
     assert(
@@ -520,28 +520,28 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(watch.ingestAllowance(ManagerConfig(), WatchManagerDefaults.IngestedToday(0)), 0)
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest(false))),
+        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Manual)),
         WatchManagerDefaults.IngestedToday(0)
       ),
       0
     )
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest(true))),
+        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto)),
         WatchManagerDefaults.IngestedToday(0)
       ),
       5
     )
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest(true))),
+        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto)),
         WatchManagerDefaults.IngestedToday(4)
       ),
       1
     )
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest(true))),
+        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto)),
         WatchManagerDefaults.IngestedToday(9)
       ),
       0
@@ -549,7 +549,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(
       watch.ingestAllowance(
         ManagerConfig(
-          autoIngest = Some(Managers.ManagerConfig.AutoIngest(true)),
+          autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto),
           autoIngestPerDay = Some(Managers.ManagerConfig.AutoIngestPerDay(2))
         ),
         WatchManagerDefaults.IngestedToday(1)

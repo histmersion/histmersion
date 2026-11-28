@@ -127,12 +127,12 @@ class ManagersViewSuite extends munit.FunSuite:
   test("the focus: its heading, an active goal's pace, the goals that cannot use a slot by why"):
     import com.histmersion.api.automation.Autopilot.*
     assertEquals(
-      ManagersView.focusHead(FocusInfo(on = FocusInfo.On(true), max = FocusInfo.Max(8), held = FocusInfo.Held(3))),
+      ManagersView.focusHead(FocusInfo(on = FocusInfo.On.On, max = FocusInfo.Max(8), held = FocusInfo.Held(3))),
       "Focus: at most 8 active goals · 3 items held"
     )
     assertEquals(
       ManagersView.focusHead(
-        FocusInfo(on = FocusInfo.On(false), max = FocusInfo.Max(0), maxFrom = FocusInfo.MaxFrom("person"))
+        FocusInfo(on = FocusInfo.On.Off, max = FocusInfo.Max(0), maxFrom = FocusInfo.MaxFrom("person"))
       ),
       "Focus: not in force (cap set by a person)"
     )
@@ -175,21 +175,21 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagersView.hint(
         Managers.HintAdd.Text("prefer 2019"),
         Managers.HintAdd.Item(""),
-        once = Managers.HintAdd.Once(false),
+        once = Managers.HintAdd.Once.Standing,
         Managers.HintEffect.Action("none"),
         Managers.HintEffect.Targets(""),
         Managers.HintEffect.Tag(""),
         Managers.HintEffect.Until(""),
         Managers.HintEffect.UntilSource("")
       ),
-      Right(HintAdd(Managers.HintAdd.Text("prefer 2019"), None, Some(Managers.HintAdd.Once(false))))
+      Right(HintAdd(Managers.HintAdd.Text("prefer 2019"), None, Some(Managers.HintAdd.Once.Standing)))
     )
     assertEquals(
       ManagersView
         .hint(
           Managers.HintAdd.Text("x"),
           Managers.HintAdd.Item("tin"),
-          once = Managers.HintAdd.Once(true),
+          once = Managers.HintAdd.Once.Once,
           Managers.HintEffect.Action("none"),
           Managers.HintEffect.Targets(""),
           Managers.HintEffect.Tag(""),
@@ -202,7 +202,7 @@ class ManagersViewSuite extends munit.FunSuite:
     val p = ManagersView.hint(
       Managers.HintAdd.Text("first"),
       Managers.HintAdd.Item(""),
-      once = Managers.HintAdd.Once(false),
+      once = Managers.HintAdd.Once.Standing,
       Managers.HintEffect.Action("prioritise"),
       Managers.HintEffect.Targets("a, b"),
       Managers.HintEffect.Tag(""),
@@ -215,7 +215,7 @@ class ManagersViewSuite extends munit.FunSuite:
         .hint(
           Managers.HintAdd.Text("wait"),
           Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once(false),
+          once = Managers.HintAdd.Once.Standing,
           Managers.HintEffect.Action("hold"),
           Managers.HintEffect.Targets("a"),
           Managers.HintEffect.Tag(""),
@@ -229,7 +229,7 @@ class ManagersViewSuite extends munit.FunSuite:
         .hint(
           Managers.HintAdd.Text("wait"),
           Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once(false),
+          once = Managers.HintAdd.Once.Standing,
           Managers.HintEffect.Action("hold"),
           Managers.HintEffect.Targets("a"),
           Managers.HintEffect.Tag(""),
@@ -244,7 +244,7 @@ class ManagersViewSuite extends munit.FunSuite:
         .hint(
           Managers.HintAdd.Text("skip"),
           Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once(false),
+          once = Managers.HintAdd.Once.Standing,
           Managers.HintEffect.Action("skip"),
           Managers.HintEffect.Targets(""),
           Managers.HintEffect.Tag(""),
@@ -258,7 +258,7 @@ class ManagersViewSuite extends munit.FunSuite:
         .hint(
           Managers.HintAdd.Text(" "),
           Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once(false),
+          once = Managers.HintAdd.Once.Standing,
           Managers.HintEffect.Action("none"),
           Managers.HintEffect.Targets(""),
           Managers.HintEffect.Tag(""),
@@ -289,7 +289,7 @@ class ManagersViewSuite extends munit.FunSuite:
     val f = ManagersView.fields(
       ManagerConfig(
         staleAfterDays = Some(Managers.ManagerConfig.StaleAfterDays(30)),
-        inferFilter = Some(Managers.ManagerConfig.InferFilter(false)),
+        inferFilter = Some(Managers.ManagerConfig.InferFilter.Explicit),
         minSources = Some(Managers.ManagerConfig.MinSources(4)),
         maxArticles = Some(Managers.ManagerConfig.MaxArticles(3))
       )
@@ -304,7 +304,9 @@ class ManagersViewSuite extends munit.FunSuite:
       ("30", "off", "4", "3")
     )
     assertEquals(
-      ManagersView.config(f).map(c => (c.staleAfterDays, c.inferFilter, c.minSources, c.maxArticles)),
+      ManagersView
+        .config(f)
+        .map(c => (c.staleAfterDays, c.inferFilter.map(_.inferFilter), c.minSources, c.maxArticles)),
       Right((Some(30), Some(false), Some(4), Some(3)))
     )
     assert(ManagersView.config(Map(ManagersView.ConfigKey("inferFilter") -> ManagersView.ConfigText("maybe"))).isLeft)
@@ -383,11 +385,11 @@ class ManagersViewSuite extends munit.FunSuite:
         Goal.Slug(""),
         Goal.Notes(" origin "),
         GoalsView.TagsText("tin, trade, tin"),
-        plan = GoalsView.NewAreaPlan(true),
-        seed = GoalsView.NewAreaSeed(false)
+        plan = GoalsView.NewAreaPlan.Plan,
+        seed = GoalsView.NewAreaSeed.NoSeed
       )
     assertEquals(
-      a.map(x => (x.slug, x.put.title, x.put.notes, x.put.tags, x.plan, x.seed)),
+      a.map(x => (x.slug, x.put.title, x.put.notes, x.put.tags, x.plan.plan, x.seed.seed)),
       Right(
         ("bronze-age-tin-where-from", "Bronze-Age Tin: where from?", Some("origin"), List("tin", "trade"), true, false)
       )
@@ -399,8 +401,8 @@ class ManagersViewSuite extends munit.FunSuite:
           Goal.Slug(""),
           Goal.Notes(""),
           GoalsView.TagsText(""),
-          GoalsView.NewAreaPlan(true),
-          GoalsView.NewAreaSeed(true)
+          GoalsView.NewAreaPlan.Plan,
+          GoalsView.NewAreaSeed.Seed
         )
         .isLeft
     )
@@ -412,8 +414,8 @@ class ManagersViewSuite extends munit.FunSuite:
           Goal.Slug("Not A Slug"),
           Goal.Notes(""),
           GoalsView.TagsText(""),
-          GoalsView.NewAreaPlan(true),
-          GoalsView.NewAreaSeed(true)
+          GoalsView.NewAreaPlan.Plan,
+          GoalsView.NewAreaSeed.Seed
         )
         .map(_.slug),
       Right("Not A Slug")
@@ -425,8 +427,8 @@ class ManagersViewSuite extends munit.FunSuite:
           Goal.Slug("my-area"),
           Goal.Notes(""),
           GoalsView.TagsText(""),
-          GoalsView.NewAreaPlan(false),
-          GoalsView.NewAreaSeed(true)
+          GoalsView.NewAreaPlan.NoPlan,
+          GoalsView.NewAreaSeed.Seed
         )
         .map(_.slug),
       Right("my-area")
@@ -445,15 +447,15 @@ class ManagersViewSuite extends munit.FunSuite:
         Goal.Slug(""),
         Goal.Notes("where from"),
         GoalsView.TagsText("tin"),
-        GoalsView.NewAreaPlan(true),
-        GoalsView.NewAreaSeed(true),
+        GoalsView.NewAreaPlan.Plan,
+        GoalsView.NewAreaSeed.Seed,
         GoalsView.Watch.Watched
       )
       .toOption
       .get
     val req = a.create
     assertEquals(
-      (req.slug, req.goal.title, req.goal.notes, req.plan, req.seed, req.watch.isDefined),
+      (req.slug, req.goal.title, req.goal.notes, req.plan.plan, req.seed.seed, req.watch.isDefined),
       ("tin", "Tin", Some("where from"), true, true, true)
     )
     val goal = Goal(Goal.Slug("tin"), Goal.Title("Tin"), Goal.StatusValue("planned"))
@@ -465,20 +467,20 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagersView.hint(
         Managers.HintAdd.Text("leave tin alone until December"),
         Managers.HintAdd.Item(""),
-        Managers.HintAdd.Once(false),
+        Managers.HintAdd.Once.Standing,
         Managers.HintEffect.Action("none"),
         Managers.HintEffect.Targets(""),
         Managers.HintEffect.Tag(""),
         Managers.HintEffect.Until(""),
         Managers.HintEffect.UntilSource(""),
-        suggest = Managers.HintAdd.Suggest(true)
+        suggest = Managers.HintAdd.Suggest.Suggest
       ),
       Right(
         HintAdd(
           Managers.HintAdd.Text("leave tin alone until December"),
           None,
-          Some(Managers.HintAdd.Once(false)),
-          suggest = Some(Managers.HintAdd.Suggest(true))
+          Some(Managers.HintAdd.Once.Standing),
+          suggest = Some(Managers.HintAdd.Suggest.Suggest)
         )
       )
     )
@@ -487,13 +489,13 @@ class ManagersViewSuite extends munit.FunSuite:
         .hint(
           Managers.HintAdd.Text("x"),
           Managers.HintAdd.Item(""),
-          Managers.HintAdd.Once(false),
+          Managers.HintAdd.Once.Standing,
           Managers.HintEffect.Action("skip"),
           Managers.HintEffect.Targets("tin"),
           Managers.HintEffect.Tag(""),
           Managers.HintEffect.Until(""),
           Managers.HintEffect.UntilSource(""),
-          suggest = Managers.HintAdd.Suggest(true)
+          suggest = Managers.HintAdd.Suggest.Suggest
         )
         .isLeft
     )
@@ -506,13 +508,13 @@ class ManagersViewSuite extends munit.FunSuite:
       Goal.Slug(""),
       Goal.Notes(""),
       GoalsView.TagsText(""),
-      plan = GoalsView.NewAreaPlan(false),
-      seed = GoalsView.NewAreaSeed(false),
+      plan = GoalsView.NewAreaPlan.NoPlan,
+      seed = GoalsView.NewAreaSeed.NoSeed,
       watch = GoalsView.Watch.Watched
     )
     assertEquals(
       off.map(_.watch),
-      Right(Some(ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest(false)))))
+      Right(Some(ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Manual))))
     )
     val on =
       GoalsView.newArea(
@@ -520,10 +522,10 @@ class ManagersViewSuite extends munit.FunSuite:
         Goal.Slug(""),
         Goal.Notes(""),
         GoalsView.TagsText(""),
-        plan = GoalsView.NewAreaPlan(false),
-        seed = GoalsView.NewAreaSeed(false),
+        plan = GoalsView.NewAreaPlan.NoPlan,
+        seed = GoalsView.NewAreaSeed.NoSeed,
         watch = GoalsView.Watch.Watched,
-        autoIngest = Managers.ManagerConfig.AutoIngest(true),
+        autoIngest = Managers.ManagerConfig.AutoIngest.Auto,
         perDay = GoalsView.PerDay("3")
       )
     assertEquals(on.map(_.watch.flatMap(_.autoIngestPerDay)), Right(Some(3)))
@@ -534,10 +536,10 @@ class ManagersViewSuite extends munit.FunSuite:
           Goal.Slug(""),
           Goal.Notes(""),
           GoalsView.TagsText(""),
-          GoalsView.NewAreaPlan(false),
-          GoalsView.NewAreaSeed(false),
+          GoalsView.NewAreaPlan.NoPlan,
+          GoalsView.NewAreaSeed.NoSeed,
           watch = GoalsView.Watch.Watched,
-          autoIngest = Managers.ManagerConfig.AutoIngest(true),
+          autoIngest = Managers.ManagerConfig.AutoIngest.Auto,
           perDay = GoalsView.PerDay("lots")
         )
         .isLeft
@@ -549,8 +551,8 @@ class ManagersViewSuite extends munit.FunSuite:
           Goal.Slug(""),
           Goal.Notes(""),
           GoalsView.TagsText(""),
-          GoalsView.NewAreaPlan(false),
-          GoalsView.NewAreaSeed(false)
+          GoalsView.NewAreaPlan.NoPlan,
+          GoalsView.NewAreaSeed.NoSeed
         )
         .map(_.watch),
       Right(None)
@@ -585,7 +587,7 @@ class ManagersViewSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)),
+      c.map(x => (x.sweeps, x.autoIngest.map(_.autoIngest), x.autoIngestPerDay)),
       Right((Some(List("currency", "acquisition")), Some(true), Some(2)))
     )
     assert(ManagersView.config(Map(ManagersView.ConfigKey("sweeps") -> ManagersView.ConfigText("weekly"))).isLeft)
@@ -593,7 +595,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.fields(
         ManagerConfig(
-          autoIngest = Some(Managers.ManagerConfig.AutoIngest(false)),
+          autoIngest = Some(Managers.ManagerConfig.AutoIngest.Manual),
           sweeps = Some(List(Managers.Sweep.Wire("currency")))
         )
       )(ManagersView.ConfigKey("autoIngest")),
@@ -633,12 +635,12 @@ class ManagersViewSuite extends munit.FunSuite:
         ManagersView.ConfigKey("extendMinNew") -> ManagersView.ConfigText("3")
       )
     )
-    assertEquals(c.map(x => (x.autoApprove, x.extendMinNew)), Right((Some(true), Some(3))))
+    assertEquals(c.map(x => (x.autoApprove.map(_.autoApprove), x.extendMinNew)), Right((Some(true), Some(3))))
     assert(
       ManagersView.config(Map(ManagersView.ConfigKey("autoApprove") -> ManagersView.ConfigText("sometimes"))).isLeft
     )
     assertEquals(
-      ManagersView.fields(ManagerConfig(autoApprove = Some(Managers.ManagerConfig.AutoApprove(false))))(
+      ManagersView.fields(ManagerConfig(autoApprove = Some(Managers.ManagerConfig.AutoApprove.Manual)))(
         ManagersView.ConfigKey("autoApprove")
       ),
       "off"
@@ -773,7 +775,7 @@ class DrainLineSuite extends munit.FunSuite:
         .drainLine(
           DrainInfo(
             DrainInfo.Since("t"),
-            drained = DrainInfo.Drained(true),
+            drained = DrainInfo.Drained.Drained,
             drainedAt = Some(DrainInfo.DrainedAt("t2"))
           )
         )

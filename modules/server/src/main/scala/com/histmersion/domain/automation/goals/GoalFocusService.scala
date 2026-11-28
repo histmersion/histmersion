@@ -383,7 +383,7 @@ final class GoalFocusService(
         FocusGoal.Status(f.fold("")(_.status.value)),
         FocusGoal.Stage(p.stage.wire.value),
         Autopilot.Rationale(s"${p.why}"),
-        FocusGoal.Pinned(p.pinned.value),
+        (if p.pinned.value then FocusGoal.Pinned.Pinned else FocusGoal.Pinned.Unpinned),
         FocusGoal.Priority(f.fold(0)(_.priority.value)),
         p.since.map(s => FocusGoal.Since(s.value)),
         if active then f.flatMap(x => GoalFocus.doing(x.work)).map(d => FocusGoal.Doing(d.value)) else None,
@@ -408,7 +408,7 @@ final class GoalFocusService(
         )
       else None
     FocusInfo(
-      FocusInfo.On(inForce),
+      (if inForce then FocusInfo.On.On else FocusInfo.On.Off),
       FocusInfo.Max(max.value),
       from,
       plan.active.map(goal(_, active = true)),
@@ -419,7 +419,7 @@ final class GoalFocusService(
           FocusWaiting.Slug(s.value),
           FocusWaiting.Code(c.value),
           Autopilot.Rationale(s"$w"),
-          FocusWaiting.Pinned(byGoal.get(s).exists(_.pinned.value))
+          (if byGoal.get(s).exists(_.pinned.value) then FocusWaiting.Pinned.Pinned else FocusWaiting.Pinned.Unpinned)
         )
       ),
       FocusInfo.Held(agents.managerStore.focusHeldCount().value),

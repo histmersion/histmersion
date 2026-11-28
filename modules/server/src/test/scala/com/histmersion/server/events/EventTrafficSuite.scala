@@ -134,33 +134,33 @@ class EventTrafficSuite extends DbSuite:
     sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).eventImporter.catalogues.asJson.noSpaces}\n"
     run(
       "gvp (dry run)",
-      EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(true))
+      EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun.DryRun)
     )
-    run("gvp", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false)))
-    run("noaa", EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false)))
+    run("gvp", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun.Apply))
+    run("noaa", EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun.Apply))
     run(
       "wikidata",
-      EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun(false))
+      EventImportRequest(EventImportRequest.Provider("wikidata"), dryRun = EventImportRequest.DryRun.Apply)
     )
-    run("gvp again", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun(false)))
+    run("gvp again", EventImportRequest(EventImportRequest.Provider("gvp"), dryRun = EventImportRequest.DryRun.Apply))
     run(
       "noaa again",
-      EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun(false))
+      EventImportRequest(EventImportRequest.Provider("noaa"), dryRun = EventImportRequest.DryRun.Apply)
     )
     run(
       "wikidata again, --refresh",
       EventImportRequest(
         EventImportRequest.Provider("wikidata"),
-        dryRun = EventImportRequest.DryRun(false),
-        refresh = EventImportRequest.Refresh(true)
+        dryRun = EventImportRequest.DryRun.Apply,
+        refresh = EventImportRequest.Refresh.Refresh
       )
     )
     run(
       "smithsonian, --limit 1",
       EventImportRequest(
         EventImportRequest.Provider("smithsonian"),
-        dryRun = EventImportRequest.DryRun(false),
-        refresh = EventImportRequest.Refresh(true),
+        dryRun = EventImportRequest.DryRun.Apply,
+        refresh = EventImportRequest.Refresh.Refresh,
         limit = Some(EventImportRequest.Limit(1))
       )
     )

@@ -28,6 +28,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.api.catalogue.EventSummary
+import com.histmersion.api.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
@@ -233,8 +234,10 @@ object Bundle:
   object Assessment:
     type CheckedAt = CheckedAt.T
     object CheckedAt extends Newtype[String, Pure]
-    type Retracted = Retracted.T
-    object Retracted extends Newtype[Boolean, Pure]
+    enum Retracted derives CanEqual:
+      case Retracted, Standing
+    object Retracted extends TwoStates[Retracted]:
+      extension (retracted: Retracted) def retracted: Boolean = retracted == Retracted
     export api.library.Acquire.CitedByCount as CitedBy
     type Influential = Influential.T
     object Influential extends Newtype[Int, Pure]
@@ -865,8 +868,10 @@ object Bundle:
     export api.automation.ScheduleKind.Wire as Kind
     type Cron = Cron.T
     object Cron extends Newtype[String, Pure]
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
+    enum Enabled derives CanEqual:
+      case Enabled, Disabled
+    object Enabled extends TwoStates[Enabled]:
+      extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
     type BudgetUsd = BudgetUsd.T
     object BudgetUsd extends Newtype[Double, Pure]
 
@@ -890,11 +895,14 @@ object Bundle:
     def changed: ChangedCount = ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
 
   object ImportResult:
-
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
-    type Applied = Applied.T
-    object Applied extends Newtype[Boolean, Pure]
+    enum DryRun derives CanEqual:
+      case DryRun, Apply
+    object DryRun extends TwoStates[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
+    enum Applied derives CanEqual:
+      case Applied, Skipped
+    object Applied extends TwoStates[Applied]:
+      extension (applied: Applied) def applied: Boolean = applied == Applied
     type Blobs = Blobs.T
     object Blobs extends Newtype[Int, Pure]
     type Conflicts = Conflicts.T
@@ -1250,7 +1258,9 @@ object Bundle:
         api.json.Schema
 
   object VerifyResult:
-    type Ok = Ok.T
-    object Ok extends Newtype[Boolean, Pure]
+    enum Ok derives CanEqual:
+      case Ok, Failed
+    object Ok extends TwoStates[Ok]:
+      extension (ok: Ok) def ok: Boolean = ok == Ok
     type BlobsChecked = BlobsChecked.T
     object BlobsChecked extends Newtype[Int, Pure]

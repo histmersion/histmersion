@@ -522,7 +522,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       priority: ManagerContext.Priority
   )(using WritePermit): Unit =
     if itemKind.value == ArticleReview then
-      val on = m.config.inferFilter.fold(cfg.managers.review.inferFilter.value)(_.value)
+      val on = m.config.inferFilter.fold(cfg.managers.review.inferFilter.value)(_.inferFilter)
       val has = site.articles.recordedFilter(Slug.assume(target.value)).isDefined
       val manager = ManagerLight.Id(m.id.value)
       if on && !has && !c.hasItem(manager, Item.Kind.InferFilter, target) then
@@ -580,7 +580,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                   RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
                   RunRequest.Target(item.target.value),
                   budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value)),
-                  fix = Some(RunRequest.Fix(true)),
+                  fix = Some(RunRequest.Fix.Fix),
                   rounds = Some(RunRequest.Rounds(rounds))
                 ),
                 identity,
@@ -628,7 +628,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                 RunRequest.Target(item.target.value),
                 budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
               ),
-              _.modify(_.chainReview).setTo(Some(RunParams.ChainReview(false))),
+              _.modify(_.chainReview).setTo(Some(RunParams.ChainReview.Alone)),
               item.state,
               ManagerContext.StartWhat("compile-article (extend; its review follows as an item)"),
               out

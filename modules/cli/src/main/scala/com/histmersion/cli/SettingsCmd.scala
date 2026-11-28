@@ -45,8 +45,9 @@ object SettingsCmd:
   )(using console: Console): Either[Cli.Error, Unit] =
     val w = ConfigEdit.Write(
       List(ConfigEdit.Change(ConfigEdit.Change.Key(key), value.map(ConfigEdit.Change.Value(_)))),
-      literalConsent = ConfigEdit.Write.LiteralConsent(consent),
-      reload = ConfigEdit.Write.Reload(reload)
+      literalConsent =
+        (if consent then ConfigEdit.Write.LiteralConsent.Consented else ConfigEdit.Write.LiteralConsent.Withheld),
+      reload = (if reload then ConfigEdit.Write.Reload.Reload else ConfigEdit.Write.Reload.Later)
     )
     def viaFile = local(w).map(out => if reload then out.modify(_.reload).setTo(c.configReload.toOption) else out)
     val done = if onlyLocal then viaFile else orLocal(c.writeSettings(w), viaFile)
@@ -110,7 +111,7 @@ object SettingsCmd:
         )
         ConfigEdit.Page(
           Some(ConfigEdit.Page.File(f.shown.value)),
-          ConfigEdit.Page.Exists(state.text.isDefined),
+          (if state.text.isDefined then ConfigEdit.Page.Exists.Exists else ConfigEdit.Page.Exists.Missing),
           ConfigEdit.Page.Version(state.version.value),
           fields.map(_.section).distinct.map(id => ConfigEdit.Section(id, fields = fields.filter(_.section == id))),
           loaded.fold(
@@ -131,14 +132,14 @@ object SettingsCmd:
           )
           .left
           .map(failed)
-        out <- fw.write(edits, None, SettingPolicy.LiteralConsent(w.literalConsent.value)).left.map(failed)
+        out <- fw.write(edits, None, SettingPolicy.LiteralConsent(w.literalConsent.consented)).left.map(failed)
       yield ConfigEdit.Written(
         ConfigEdit.Written.File(out.file.value),
         out.changed.map(k => ConfigEdit.Written.Changed(k.value)),
         out.unchanged.map(k => ConfigEdit.Written.Unchanged(k.value)),
         out.backup.map(b => ConfigEdit.Written.Backup(b.value)),
         ConfigEdit.Written.Version(out.version.value),
-        ConfigEdit.Written.Created(out.created.value),
+        (if out.created.value then ConfigEdit.Written.Created.Created else ConfigEdit.Written.Created.Updated),
         out.restart.map((k, why) =>
           ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))
         ),

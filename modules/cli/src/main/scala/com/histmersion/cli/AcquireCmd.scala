@@ -48,8 +48,8 @@ object AcquireCmd:
       console: Console
   ): Either[Cli.Error, RetractionsUpdate] =
     c.retractionsStatus match
-      case Left(e)                      => Left(e)
-      case Right(r) if !r.running.value =>
+      case Left(e)                        => Left(e)
+      case Right(r) if !r.running.running =>
         r.error match
           case Some(msg) =>
             Left(Cli.Error.answered(Problem.Unclassified(Legacy.Text(s"the refresh failed: ${msg.sentence}"))))
@@ -163,7 +163,12 @@ object AcquireCmd:
           AcquireClient(c).wikirefs(Title(url)).map(r => Output.emit(json, r)(AcquireMarkdown.wikirefs))
         case Command.Refs(id, writes, json) =>
           AcquireClient(c)
-            .refs(RefsRequest(RefsRequest.Id(id), RefsRequest.Apply(writes.applies)))
+            .refs(
+              RefsRequest(
+                RefsRequest.Id(id),
+                (if writes.applies then RefsRequest.Apply.Apply else RefsRequest.Apply.DryRun)
+              )
+            )
             .map(r => Output.emit(json, r)(AcquireMarkdown.refs))
         case Command.AssessUpdateRetractions(json) =>
           val client = AcquireClient(c)
@@ -180,7 +185,7 @@ object AcquireCmd:
                 FollowupsRequest.Id(id),
                 since.map(FollowupsRequest.Since(_)),
                 limit.map(FollowupsRequest.Limit(_)),
-                FollowupsRequest.Apply(writes.applies)
+                (if writes.applies then FollowupsRequest.Apply.Apply else FollowupsRequest.Apply.DryRun)
               )
             )
             .map(r => Output.emit(json, r)(AcquireMarkdown.followups))
@@ -207,8 +212,8 @@ object AcquireCmd:
                 c,
                 path,
                 Citekey(citekey.getOrElse("")),
-                Ingest.Params.Quality(quality),
-                Ingest.Params.Force(force),
+                (if quality then Ingest.Params.Quality.Quality else Ingest.Params.Quality.Fast),
+                (if force then Ingest.Params.Force.Force else Ingest.Params.Force.Safe),
                 title.map(Title(_)),
                 authors.map(AuthorName(_)),
                 year.map(y => Year(y.toLong)),
@@ -235,8 +240,8 @@ object AcquireCmd:
                     Ingest.Request.Id(id),
                     citekey.map(Citekey(_)),
                     arxiv.map(Ingest.Request.Arxiv(_)),
-                    Ingest.Request.Refetch(refetch),
-                    Ingest.Request.LegalOnly(legalOnly)
+                    (if refetch then Ingest.Request.Refetch.Refetch else Ingest.Request.Refetch.Reuse),
+                    (if legalOnly then Ingest.Request.LegalOnly.LegalOnly else Ingest.Request.LegalOnly.AnySource)
                   )
                 )
                 .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
@@ -259,6 +264,10 @@ object AcquireCmd:
         case Command.Assess(id, writes, force, json) =>
           AcquireClient(c)
             .assess(
-              AssessRequest(AssessRequest.Id(id), AssessRequest.Apply(writes.applies), AssessRequest.ForceStatus(force))
+              AssessRequest(
+                AssessRequest.Id(id),
+                (if writes.applies then AssessRequest.Apply.Apply else AssessRequest.Apply.DryRun),
+                (if force then AssessRequest.ForceStatus.ForceStatus else AssessRequest.ForceStatus.KeepStatus)
+              )
             )
             .map(a => Output.emit(json, a)(AcquireMarkdown.assessment))

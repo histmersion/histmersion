@@ -216,11 +216,11 @@ object LibraryAgentTools:
         .modify(_.rowCount)
         .setTo(com.histmersion.api.library.Query.QueryResult.RowCount(rows))
         .modify(_.truncated)
-        .setTo(com.histmersion.api.library.Query.QueryResult.Truncated(true))
+        .setTo(com.histmersion.api.library.Query.QueryResult.Truncated.Truncated)
     else r
     val more = if shown.rows.size < r.rows.size then
       s"\n\n_…${r.rows.size - shown.rows.size}${
-          if r.truncated.value then "+" else ""
+          if r.truncated.truncated then "+" else ""
         } more rows not shown — select only the rows you need " +
         "(`WHERE citekey IN (…)`, `LIMIT`), never a whole table_"
     else ""

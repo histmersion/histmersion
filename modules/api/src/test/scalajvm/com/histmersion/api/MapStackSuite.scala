@@ -9,8 +9,8 @@ class MapStackSuite extends munit.FunSuite:
 
   test("every point pane is above every area pane"):
     assert(MapStack.pointsAboveAreas(MapStack.order))
-    val firstPoint = MapStack.order.indexWhere(_.point.value)
-    assert(MapStack.order.take(firstPoint).forall(!_.point.value))
+    val firstPoint = MapStack.order.indexWhere(_.point.point)
+    assert(MapStack.order.take(firstPoint).forall(!_.point.point))
     assert(
       MapStack.order.contains(Pane.Sites) && MapStack.order.indexOf(Pane.Sites) > MapStack.order.indexOf(Pane.Areas)
     )
@@ -24,5 +24,5 @@ class MapStackSuite extends munit.FunSuite:
   test("each DOM pane's class; the areas are the canvas, under every pane"):
     assertEquals(Pane.AreaPoints.cssClass, "hd-pane--area-points")
     assertEquals(Pane.Markers.cssClass, "hd-pane--markers")
-    assertEquals(MapStack.order.filter(_.canvas.value), List(Pane.Areas))
+    assertEquals(MapStack.order.filter(_.canvas.canvas), List(Pane.Areas))
     assertEquals(MapStack.domPanes.headOption, Some(Pane.AreaPoints))

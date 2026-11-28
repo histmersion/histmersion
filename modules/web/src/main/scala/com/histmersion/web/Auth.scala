@@ -73,7 +73,7 @@ object Auth:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(keyRequired: UiConfig.KeyRequired): Unit =
     started = true
-    required.set(keyRequired.value)
+    required.set(keyRequired.keyRequired)
 
   /** What the page shows when the server refused even its settings: the key prompt alone, in `into`. A key that was
     * kept and refused is dropped; a key entered is kept and the page starts again with it (the address, and with it the

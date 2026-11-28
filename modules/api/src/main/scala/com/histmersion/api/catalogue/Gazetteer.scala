@@ -22,6 +22,7 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @atBoundary(BoundaryKind.Json, "reads gazetteer download files into place records")
 object Gazetteer:
@@ -102,10 +103,10 @@ object Gazetteer:
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
       .values
-      .map(_.minBy((m, via) => (if (m.native) == Place.Match.Native(true) then 0 else 1, via)))
+      .map(_.minBy((m, via) => (if (m.native) == Place.Match.Native.Native then 0 else 1, via)))
       .toList
       .sortBy((m, via) =>
-        (if (m.native) == Place.Match.Native(true) then 0 else 1, via, rank(m).value: Int, m.placeId.value: String)
+        (if (m.native) == Place.Match.Native.Native then 0 else 1, via, rank(m).value: Int, m.placeId.value: String)
       )
       .headOption
       .map(_._1.placeId)
@@ -130,9 +131,9 @@ object Gazetteer:
         Validity(
           Some(Year((end).value - math.max(0, (windowYears).value))),
           Some(end),
-          startUnknown = Validity.StartUnknown(true)
+          startUnknown = Validity.StartUnknown.StartUnknown
         )
-      case Span(from, to) => Validity(from, to, startUnknown = Validity.StartUnknown(false))
+      case Span(from, to) => Validity(from, to, startUnknown = Validity.StartUnknown.StartKnown)
 
   val DefaultPointAreaKinds: List[DefaultPointAreaKinds] = List(
     PointAreaKinds(Place.Kind.Region),
@@ -615,8 +616,10 @@ object Gazetteer:
     object Title extends Newtype[String, Pure]
     type File = File.T
     object File extends Newtype[String, Pure]
-    type Present = Present.T
-    object Present extends Newtype[Boolean, Pure]
+    enum Present derives CanEqual:
+      case Present, Absent
+    object Present extends TwoStates[Present]:
+      extension (present: Present) def present: Boolean = present == Present
     type PinnedVersion = PinnedVersion.T
     object PinnedVersion extends Newtype[String, Pure]
     type ImportedVersion = ImportedVersion.T

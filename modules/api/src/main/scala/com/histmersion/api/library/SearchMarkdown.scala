@@ -112,7 +112,7 @@ object SearchMarkdown:
     if rows.isEmpty then (s"_No $field in the current filter._")
     else
       val items = rows.map(f =>
-        s"- ${f.value}${contestedMark(f.contested.value, f.value.value)} (${f.count})" +
+        s"- ${f.value}${contestedMark(f.contested.contested, f.value.value)} (${f.count})" +
           f.id.map(i => s" · `$i`").getOrElse("")
       )
       (s"### $field (${rows.size})\n\n${items.mkString("\n")}")
@@ -226,7 +226,7 @@ object SearchMarkdown:
       val when = if b.kind == Bucket.Kind(Tree.KindTime) then ""
       else Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("")
       val id = b.placeId.map(i => s" `$i`").getOrElse("")
-      val line = s"$pad- **${b.label}**${contestedMark(b.contested.value, b.label.value)}$id — " +
+      val line = s"$pad- **${b.label}**${contestedMark(b.contested.contested, b.label.value)}$id — " +
         s"${b.count} $unit$over$when"
       val kids = treeLines(b.children, unit, ((depth) + 1))
       val samps = b.samples.map(x => s"$pad  - ${x.citekey} — ${x.title}")

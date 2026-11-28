@@ -210,7 +210,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
       Right(List("zr_walls"))
     )
     assertEquals(
-      c.importNote(Article.Import(note, mtime = Some(Article.Import.Mtime(1000L)), force = Article.Import.Force(true)))
+      c.importNote(Article.Import(note, mtime = Some(Article.Import.Mtime(1000L)), force = Article.Import.Force.Force))
         .map(_.imported),
       Right(1)
     )

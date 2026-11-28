@@ -38,12 +38,12 @@ class UiNoticesSuite extends munit.FunSuite:
   test("a counter carries a count only for a counted board"):
     assertEquals(
       counter(Board.Tasks, Some(Counter.Count(3)), Some(l2), Some(s1)),
-      Counter(Board.Wire("tasks"), Some(Counter.Count(3)), Some(l2), Some(s1), fresh = Counter.Fresh(true))
+      Counter(Board.Wire("tasks"), Some(Counter.Count(3)), Some(l2), Some(s1), fresh = Counter.Fresh.Fresh)
     )
     assertEquals(counter(Board.Goals, Some(Counter.Count(26)), Some(l1), Some(s1)).count, None)
     assertEquals(
       counter(Board.Log, Some(Counter.Count(9)), None, None),
-      Counter(Board.Wire("log"), None, None, None, fresh = Counter.Fresh(false))
+      Counter(Board.Wire("log"), None, None, None, fresh = Counter.Fresh.Seen)
     )
 
   test("boards parse from their wire keys, which are the windows' own"):
@@ -52,7 +52,7 @@ class UiNoticesSuite extends munit.FunSuite:
     assertEquals(Board.parse(Board.Wire("jobs")), None)
     assertEquals(Board.parse(Board.Wire(null)), None)
     assertEquals(Board.wires, List("goals", "tasks", "approvals", "acquire", "log"))
-    assertEquals(Board.values.filter(_.counted.value).map(_.wire).toList, List("tasks", "approvals", "acquire"))
+    assertEquals(Board.values.filter(_.counted.counted).map(_.wire).toList, List("tasks", "approvals", "acquire"))
 
   test("the mark only moves forward"):
     assertEquals(advance(None, s1), t1)

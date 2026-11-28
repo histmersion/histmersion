@@ -591,7 +591,7 @@ final class Engine(
     val scheduled = run.origin.contains(Origin.Scheduler.wire)
     val ingested = run.origin.contains(Origin.FromIngest.wire)
     // a dry run writes nothing, its backlog item included
-    if (scheduled || ingested) && !run.dryRun.value then
+    if (scheduled || ingested) && !run.dryRun.dryRun then
       val why = settled match
         case Left(Halt.Fail(m)) => Some(s"failed: ${m.sentence.take(300)}")
         case Left(Halt.Pause(r, _, _)) if ingested && (r == PauseReason.Allowance || r == PauseReason.PlanQuota) => None

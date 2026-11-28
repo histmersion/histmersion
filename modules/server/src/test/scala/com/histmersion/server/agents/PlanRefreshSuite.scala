@@ -151,7 +151,7 @@ class PlanRefreshSuite extends munit.FunSuite:
         ClaudeCodeConfig.LimitCooldownMinutes(60)
       )
       .fold(e => fail(e.sentence), identity)
-    assertEquals(rr.filter(_.rejected.value).map(_.kind), List("five_hour"))
+    assertEquals(rr.filter(_.rejected.rejected).map(_.kind), List("five_hour"))
     // no reset in the message: the cool-down
     val noReset = limit.replace("|1791236400", "")
     assertEquals(

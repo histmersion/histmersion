@@ -112,7 +112,7 @@ object ArticleCli:
       slug = Some(Article.Slug(file.getFileName.toString.stripSuffix(".md"))),
       kind = Some(kind),
       mtime = Some(Article.Import.Mtime(Files.getLastModifiedTime(file).toMillis)),
-      force = Article.Import.Force(force.value)
+      force = (if force.overwrites then Article.Import.Force.Force else Article.Import.Force.Safe)
     )
 
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
@@ -236,9 +236,9 @@ object ArticleCli:
           else
             // an explicit `put` is always deliberate → force past the "newer in DB" guard
             val fallback = kind.getOrElse(kindOf(p.toAbsolutePath.getParent))
-            val req = toImport(p, fallback, force = Api.Overwrite(true))
+            val req = toImport(p, fallback, force = Api.Overwrite.Overwrite)
               .modify(_.strict)
-              .setTo(Article.Import.Strict(strict.strictly))
+              .setTo((if strict.strictly then Article.Import.Strict.Strict else Article.Import.Strict.Lenient))
             c.importArticle(req).map { r =>
               report(r)
               // the import answers with counts only: ask for the article's formatting problems by the

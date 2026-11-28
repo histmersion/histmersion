@@ -52,7 +52,7 @@ object ReviewManagerPolicy:
       ReviewSettings.BackoffMinutes(math.max(1, m.backoffMinutes.value)),
       ReviewSettings.MaxBackoffMinutes(math.max(1, m.maxBackoffMinutes.value)),
       ReviewSettings.StaleAfterDays(math.max(0, c.staleAfterDays.fold(d.staleAfterDays.value)(_.value))),
-      ReviewSettings.InferFilter(c.inferFilter.fold(d.inferFilter.value)(_.value))
+      ReviewSettings.InferFilter(c.inferFilter.fold(d.inferFilter.value)(_.inferFilter))
     )
 
   /** The defaults as a config (what `effective` shows for an unset key). */
@@ -71,7 +71,8 @@ object ReviewManagerPolicy:
       refillBatch = Some(ManagerConfig.RefillBatch(d.refillBatch.value)),
       maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
       staleAfterDays = Some(ManagerConfig.StaleAfterDays(d.staleAfterDays.value)),
-      inferFilter = Some(ManagerConfig.InferFilter(d.inferFilter.value)),
+      inferFilter =
+        Some((if d.inferFilter.value then ManagerConfig.InferFilter.Infer else ManagerConfig.InferFilter.Explicit)),
       dailyUsd = ManagerPolicy.dailyCap(ManagerConfig(), m),
       extendMinNew = Some(ManagerConfig.ExtendMinNew(d.extendMinNew.value))
     )
@@ -175,7 +176,7 @@ object ReviewManagerPolicy:
           RunMark.After(f.openMajors.value),
           RunMark.MaxReopened(f.maxReopened.value),
           RunMark.Escalated(f.escalated.value),
-          RunMark.Churn(f.onlyMissingCritiques.value),
+          (if f.onlyMissingCritiques.value then RunMark.Churn.Churn else RunMark.Churn.Progress),
           state.pairsBefore.map(b => RunMark.PairsBefore(b.value)),
           f.openPairs.map(p => RunMark.PairsAfter(p.value))
         )

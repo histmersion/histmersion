@@ -139,13 +139,13 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
 
       val v = post(s"$url/api/bundle/verify", exp.body)
       assertEquals(v.statusCode, 200, v.body)
-      assert(decode[Bundle.VerifyResult](v.body).ok.value, v.body)
+      assert(decode[Bundle.VerifyResult](v.body).ok.ok, v.body)
       assertEquals(post(s"$url/api/bundle/verify", exp.body, None).statusCode, 401)
 
       val i = post(s"$url/api/bundle/import", exp.body)
       assertEquals(i.statusCode, 200, i.body)
       val res = decode[Bundle.ImportResult](i.body)
-      assert(res.applied.value, i.body)
+      assert(res.applied.applied, i.body)
       assertEquals(res.changed, 0, i.body)
 
       assertEquals(post(s"$url/api/bundle/import", Array.emptyByteArray).statusCode, 400)
@@ -178,7 +178,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
 
       val im = postJson(s"$url/api/merge/import", s"""{"bundle":"${u.sha256}","dryRun":true}""")
       assertEquals(im.statusCode, 200, im.body)
-      assert(decode[Bundle.ImportResult](im.body).dryRun.value, im.body)
+      assert(decode[Bundle.ImportResult](im.body).dryRun.dryRun, im.body)
 
       // merge apply: a plan that is not the one reviewed is refused; its own bundle changes nothing,
       // so the apply is a no-op (no backup is taken); and it is not an MCP tool
@@ -188,7 +188,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
       val sj = decode[MergeApplyJob](stale.body)
       assertEquals(sj.state, MergeJobState.Done, stale.body)
       val st = sj.result.getOrElse(fail(stale.body))
-      assert(!st.applied.value && st.problems.exists(_.sentence.contains("not 0badc0de")), stale.body)
+      assert(!st.applied.applied && st.problems.exists(_.sentence.contains("not 0badc0de")), stale.body)
       // …and can be asked about again by its id
       val again = get(s"$url/api/merge/apply/${sj.job}")
       assertEquals(again.statusCode, 200)
@@ -198,7 +198,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
       assertEquals(clean.changes, 0)
       val ap = postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"${clean.planHash}"}""")
       val applied = decode[MergeApplyJob](ap.body).result.getOrElse(fail(ap.body))
-      assert(applied.applied.value && applied.mergeId.isEmpty && applied.backup.isEmpty, ap.body)
+      assert(applied.applied.applied && applied.mergeId.isEmpty && applied.backup.isEmpty, ap.body)
       assertEquals(
         postJson(s"$url/api/merge/apply", s"""{"bundle":"${u.sha256}","planHash":"x"}""", None).statusCode,
         401
@@ -374,7 +374,7 @@ class BundleHttpSuite extends DbSuite with db.Bounded:
         val d = decode[MergeApplyJob](String(done.body, "UTF-8"))
         assertEquals((d.state, d.planHash), (MergeJobState.Done, "0badc0de"))
         assert(
-          d.result.exists(r => !r.applied.value && r.problems.exists(_.sentence.contains("not 0badc0de"))),
+          d.result.exists(r => !r.applied.applied && r.problems.exists(_.sentence.contains("not 0badc0de"))),
           d.toString
         )
         val i = decode[MergeApplyJob](String(get(s"$url/api/merge/apply/$cut").body, "UTF-8"))

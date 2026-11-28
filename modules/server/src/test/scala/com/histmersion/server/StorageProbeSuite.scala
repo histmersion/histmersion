@@ -214,7 +214,7 @@ class StorageProbeSuite extends munit.FunSuite:
         Some("vector 2.0 MB · terrain download unfinished 1.0 kB · map cache 3.0 kB")
       )
       assert(!r.entries.exists(_.key.value == "database"), r.entries)
-      assert(r.volumes.nonEmpty && r.entries.filter(_.exists.value).forall(_.volume.isDefined), r)
+      assert(r.volumes.nonEmpty && r.entries.filter(_.exists.exists).forall(_.volume.isDefined), r)
       assertEquals(Storage.total(r.entries), 7000L + 7000L + 2000L + 2_004_000L)
       assert(r.measuredAt.isDefined && r.tookMillis.isDefined)
       assertEquals(r.problems, Nil)
@@ -230,7 +230,7 @@ class StorageProbeSuite extends munit.FunSuite:
       Right(Nil),
       MeasureBudget(MeasureBudget.MaxEntries(5), MeasureBudget.DeadlineNanos(Long.MaxValue))
     )
-    assert(r.entries.exists(_.partial.value), r.entries)
+    assert(r.entries.exists(_.partial.partial), r.entries)
     assert(r.problems.exists(_.value.contains("storage.max-entries")), r.problems)
 
   // ── the cache ────────────────────────────────────────────────────────────────────────────────
@@ -266,8 +266,8 @@ class StorageProbeSuite extends munit.FunSuite:
       () => StorageCache.Instant(0L),
       r => pending += r
     )
-    assertEquals(c.get(StorageCache.WaitMillis(0)), Storage.Report(measuring = Storage.Report.Measuring(true)))
-    assertEquals(c.get(StorageCache.WaitMillis(5)), Storage.Report(measuring = Storage.Report.Measuring(true)))
+    assertEquals(c.get(StorageCache.WaitMillis(0)), Storage.Report(measuring = Storage.Report.Measuring.Measuring))
+    assertEquals(c.get(StorageCache.WaitMillis(5)), Storage.Report(measuring = Storage.Report.Measuring.Measuring))
     assertEquals(pending.size, 1)
     pending.head()
     assertEquals(c.get(StorageCache.WaitMillis(0)).measuredAt, Some("m1"))

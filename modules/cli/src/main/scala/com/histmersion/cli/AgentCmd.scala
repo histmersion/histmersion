@@ -144,7 +144,7 @@ object AgentCmd:
             else
               c.call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target))
                 .map(r =>
-                  Cli.out.println(if r.removed.value then s"The saved allowance of $target is removed."
+                  Cli.out.println(if r.removed.removed then s"The saved allowance of $target is removed."
                   else s"No saved allowance for $target.")
                 )
           else
@@ -166,7 +166,7 @@ object AgentCmd:
             GenerateRequest(rts.map(GenerateRequest.Runtimes(_)), out.map(GenerateRequest.Out(_)))
           ).map(r => Cli.out.println(AgentsMarkdown.generated(r)))
         case Command.Doctor(offline) =>
-          c.call(AgentsApi.doctor)(Some(DoctorReport.Online(offline)))
+          c.call(AgentsApi.doctor)(Some((if offline then DoctorReport.Online.Online else DoctorReport.Online.Offline)))
             .map(d => Cli.out.println(AgentsMarkdown.doctor(d)))
         case Command.Probe(ck, model) =>
           c.call(AgentsApi.probe)(ProbeRequest(Citekey(ck), model.map(ProbeRequest.Model(_))))
@@ -252,11 +252,11 @@ object AgentCmd:
         case Command.QuotaShow()  => c.call(AgentsApi.quota)(()).map(q => Cli.out.println(AgentsMarkdown.quota(q)))
         case Command.QuotaHold(p) =>
           c.call(AgentsApi.setPool)(
-            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
+            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold.Hold)))
           ).map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         case Command.QuotaRelease(p) =>
           c.call(AgentsApi.setPool)(
-            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(false))))
+            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold.Release)))
           ).map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         case Command.QuotaFloors(p, change) =>
           val floors = change match
@@ -267,7 +267,11 @@ object AgentCmd:
           ).map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         case Command.QuotaFallthrough(role, on) =>
           c.call(AgentsApi.setFallthrough)(
-            (PlanQuota.PoolIdText(role), PlanQuota.FallthroughSet(PlanQuota.FallthroughSet.Fallthrough(on)))
+            (
+              PlanQuota.PoolIdText(role),
+              PlanQuota.FallthroughSet((if on then PlanQuota.FallthroughSet.Fallthrough.Fallthrough
+                                        else PlanQuota.FallthroughSet.Fallthrough.Stop))
+            )
           ).map(q => Cli.out.println(AgentsMarkdown.quota(q)))
         case Command.QuotaRefresh(p) =>
           c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p.map(PlanQuota.QuotaRefresh.Pool(_))))
@@ -289,7 +293,7 @@ object AgentCmd:
                   r.model.map(RunRequest.Model(_)),
                   r.budgetUsd.map(RunRequest.BudgetUsd(_)),
                   r.budgetTokens.map(RunRequest.BudgetTokens(_)),
-                  Option.when(r.fix)(RunRequest.Fix(true)),
+                  Option.when(r.fix)(RunRequest.Fix.Fix),
                   r.rounds.map(RunRequest.Rounds(_)),
                   r.item.map(Queue.QueueItem.Id(_)),
                   r.title.map(RunRequest.Title(_)),
@@ -298,7 +302,7 @@ object AgentCmd:
                   r.topics.map(RunRequest.Topics(_)),
                   r.tags.map(RunRequest.Tags(_)),
                   r.goal.map(Goal.Slug(_)),
-                  Option.when(r.writes.dry)(RunRequest.DryRun(true)),
+                  Option.when(r.writes.dry)(RunRequest.DryRun.DryRun),
                   over
                 )
               ).flatMap(x =>

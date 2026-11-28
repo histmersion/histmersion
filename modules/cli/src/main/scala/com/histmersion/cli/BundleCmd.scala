@@ -79,7 +79,7 @@ object BundleCmd:
         case Command.Verify(file, json) =>
           existing(file).left.map(Cli.Error(_)).flatMap(c.verifyBundle).flatMap { r =>
             Output.emit(json, r)(BundleMarkdown.verify)
-            if r.ok.value then Right(())
+            if r.ok.ok then Right(())
             else
               Left(
                 Cli.Error.answered(Problem.Unclassified(Legacy.Text("the bundle did not verify")))
@@ -100,7 +100,7 @@ object BundleCmd:
                   MergeImportRequest(
                     MergeImportRequest.Bundle(u.sha256.value),
                     r,
-                    MergeImportRequest.DryRun(writes.dry)
+                    (if writes.dry then MergeImportRequest.DryRun.DryRun else MergeImportRequest.DryRun.Apply)
                   )
                 )
               yield x

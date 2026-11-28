@@ -53,7 +53,7 @@ class AcquireChecksSuite extends munit.FunSuite:
 
   test("the status line: what is due, what it closed and found this week, today's tries, the next pass"):
     val s = RecheckStatus(
-      enabled = Acquire.Checks.RecheckStatus.Enabled(true),
+      enabled = Acquire.Checks.RecheckStatus.Enabled.Enabled,
       withDoi = Acquire.Checks.RecheckStatus.WithDoi(455),
       due = Acquire.Checks.RecheckStatus.Due(12),
       triedToday = Acquire.Checks.RecheckStatus.TriedToday(5),
@@ -74,13 +74,13 @@ class AcquireChecksSuite extends munit.FunSuite:
         .endsWith("(held while the autopilot drains)")
     )
     assertEquals(
-      AcquireChecksMarkdown.line(RecheckStatus(enabled = Acquire.Checks.RecheckStatus.Enabled(false))),
+      AcquireChecksMarkdown.line(RecheckStatus(enabled = Acquire.Checks.RecheckStatus.Enabled.Disabled)),
       "acquire re-check: off (acquire.recheck.enabled = false)"
     )
 
   test("the autopilot status and about carry the line; the re-check's finds are named among the day's ingests"):
     val r = RecheckStatus(
-      enabled = Acquire.Checks.RecheckStatus.Enabled(true),
+      enabled = Acquire.Checks.RecheckStatus.Enabled.Enabled,
       withDoi = Acquire.Checks.RecheckStatus.WithDoi(3),
       due = Acquire.Checks.RecheckStatus.Due(1),
       triedToday = Acquire.Checks.RecheckStatus.TriedToday(2),
@@ -88,7 +88,7 @@ class AcquireChecksSuite extends munit.FunSuite:
       fetchedToday = Acquire.Checks.RecheckStatus.FetchedToday(2)
     )
     val st = AutopilotStatus(
-      on = AutopilotStatus.On(true),
+      on = AutopilotStatus.On.On,
       ingestedToday = AutopilotStatus.IngestedToday(9),
       ingestCap = AutopilotStatus.IngestCap(60),
       acquireRecheck = Some(r)
@@ -105,7 +105,7 @@ class AcquireChecksSuite extends munit.FunSuite:
 
   test("a pass's report: the counts and one line per item; a dry run says it asked no fetcher"):
     val r = RecheckResult(
-      dryRun = Acquire.Checks.RecheckResult.DryRun(false),
+      dryRun = Acquire.Checks.RecheckResult.DryRun.Apply,
       open = Acquire.Checks.RecheckResult.Open(4),
       withDoi = Acquire.Checks.RecheckResult.WithDoi(3),
       due = Acquire.Checks.RecheckResult.Due(2),
@@ -147,7 +147,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     assert(md.contains("- #1 https://doi.org/10.1/a · closed [[a2020_x]]: in the corpus with its original"), md)
     val dry = AcquireChecksMarkdown.result(
       RecheckResult(
-        dryRun = Acquire.Checks.RecheckResult.DryRun(true),
+        dryRun = Acquire.Checks.RecheckResult.DryRun.DryRun,
         rows = List(
           RecheckRow(
             Acquire.Checks.RecheckRow.Item(3),
@@ -166,13 +166,13 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     assert(
       AcquireChecksMarkdown
-        .result(RecheckResult(dryRun = Acquire.Checks.RecheckResult.DryRun(false)))
+        .result(RecheckResult(dryRun = Acquire.Checks.RecheckResult.DryRun.Apply))
         .contains("_Nothing to do._")
     )
 
   test("a pass that runs as a job: what it re-checks and how to follow it; the jobs list names it"):
     val detail = RecheckJob(
-      all = Acquire.Checks.RecheckJob.All(true),
+      all = Acquire.Checks.RecheckJob.All.All,
       since = Acquire.Checks.RecheckJob.Since("2026-10-27T10:00:00Z"),
       by = Acquire.Checks.RecheckJob.By("cli")
     )
@@ -184,7 +184,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     val md = AcquireChecksMarkdown.result(
       RecheckResult(
-        dryRun = Acquire.Checks.RecheckResult.DryRun(false),
+        dryRun = Acquire.Checks.RecheckResult.DryRun.Apply,
         open = Acquire.Checks.RecheckResult.Open(460),
         withDoi = Acquire.Checks.RecheckResult.WithDoi(453),
         due = Acquire.Checks.RecheckResult.Due(453),
@@ -204,7 +204,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     assertEquals(
       RecheckJob.describe(
         RecheckJob(
-          all = Acquire.Checks.RecheckJob.All(false),
+          all = Acquire.Checks.RecheckJob.All.Due,
           upTo = Acquire.Checks.RecheckJob.UpTo(5),
           resumes = Some(Acquire.Checks.RecheckJob.Resumes("j-0"))
         )
@@ -220,7 +220,7 @@ class AcquireChecksSuite extends munit.FunSuite:
         )
       )
     val s = RecheckStatus(
-      enabled = Acquire.Checks.RecheckStatus.Enabled(true),
+      enabled = Acquire.Checks.RecheckStatus.Enabled.Enabled,
       withDoi = Acquire.Checks.RecheckStatus.WithDoi(453),
       due = Acquire.Checks.RecheckStatus.Due(300),
       perDay = Acquire.Checks.RecheckStatus.PerDay(40),
@@ -238,7 +238,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     assertEquals(
       AcquireChecksMarkdown.line(
         RecheckStatus(
-          enabled = Acquire.Checks.RecheckStatus.Enabled(false),
+          enabled = Acquire.Checks.RecheckStatus.Enabled.Disabled,
           job = Some(SpatialHierarchyResult.Job.Id("job j-1 running: 0/2 items"))
         )
       ),

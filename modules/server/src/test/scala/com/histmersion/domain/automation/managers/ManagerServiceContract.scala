@@ -65,8 +65,8 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     )
     assertEquals((got.counts, got.inFlight, got.lastEvent, got.spentTodayUsd), (ItemCounts(), 0, None, 0.0))
     assertEquals(m(s).get(ManagerInfo.Id("nope")), None)
-    assert(m(s).setState(ManagerInfo.Id("review"), State.Active, pauseRuns = ManagerInfo.PauseRuns(true)))
-    assert(!m(s).setState(ManagerInfo.Id("nope"), State.Active, pauseRuns = ManagerInfo.PauseRuns(false)))
+    assert(m(s).setState(ManagerInfo.Id("review"), State.Active, pauseRuns = ManagerInfo.PauseRuns.Pause))
+    assert(!m(s).setState(ManagerInfo.Id("nope"), State.Active, pauseRuns = ManagerInfo.PauseRuns.Run))
     assertEquals(m(s).get(ManagerInfo.Id("review")).map(x => (x.state, x.pauseRuns)), Some(("active", true)))
     assert(
       m(s).setConfig(ManagerInfo.Id("review"), ManagerConfig(lowWater = Some(ManagerConfig.LowWater(3))), None, None)

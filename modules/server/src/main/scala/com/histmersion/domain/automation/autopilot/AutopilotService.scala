@@ -126,7 +126,7 @@ final class AutopilotService(
     val changedBy = AutopilotRepo.Row.ChangedBy(by)
     val row = agents.autopilotRow.row()
     val changes =
-      if in.on.value then
+      if in.on.on then
         val turned = agents.autopilotRow.set(enabled = AutopilotRepo.Row.Enabled(true), changedBy, row.paused)
         // turning it on lifts a drain: the person wants it running
         val undrained = Option.when(agents.autopilotRow.setDrain(on = false, changedBy))(s"drain lifted by $by")
@@ -139,7 +139,7 @@ final class AutopilotService(
         ids.foreach { id =>
           val managerId = ManagerInfo.Id(id.value)
           Unused(
-            agents.managerStore.setState(managerId, State.Paused, pauseRuns = ManagerInfo.PauseRuns(false)),
+            agents.managerStore.setState(managerId, State.Paused, pauseRuns = ManagerInfo.PauseRuns.Run),
             Unused.Why.Idempotent
           )
           event(managerId, s"paused: the autopilot was turned off by $by (its runs in flight go on)")
@@ -156,7 +156,7 @@ final class AutopilotService(
           s"turned off by $by",
           s"paused ${Plural.count(Plural.CountN(ids.size.toLong), Plural.CountSingular("manager"))} it ran (turning it on resumes them)"
         )
-    log(s"autopilot ${if in.on.value then "on" else "off"} (by $by): ${changes.mkString("; ")}")
+    log(s"autopilot ${if in.on.on then "on" else "off"} (by $by): ${changes.mkString("; ")}")
     agents.managers.nudge()
     status(now).modify(_.changes).setTo(changes.map(c => EngineStatus.Changes(c)))
 
@@ -190,7 +190,7 @@ final class AutopilotService(
           m.goal.flatMap(g => DomainGoal.Slug.option(g.value)),
           DomainManager.State.Wire(m.state.value),
           m.cron.map(c => AutopilotPolicy.Cron(c.value)),
-          m.config.autoIngest.map(a => ManagerRow.AutoIngest(a.value)),
+          m.config.autoIngest.map(a => ManagerRow.AutoIngest(a.autoIngest)),
           ManagerRow.PlanItem(m.planItem.value),
           m.config.extendMinNew.map(n => AutopilotPolicy.Settings.ExtendMinNew(n.value))
         )
@@ -294,7 +294,7 @@ final class AutopilotService(
       case Step.CreateWatch(goal, cron, perDay) =>
         val id = watchId(Goal.Ref(goal.value))
         val c = ManagerConfig(
-          autoIngest = Some(Managers.ManagerConfig.AutoIngest(true)),
+          autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto),
           autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(perDay.value))
         )
         Option.when(
@@ -321,7 +321,7 @@ final class AutopilotService(
         }
       case Step.Resume(rowId) =>
         val id = ManagerInfo.Id(rowId.value)
-        Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = ManagerInfo.PauseRuns(false))) {
+        Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = ManagerInfo.PauseRuns.Run)) {
           agents.autopilotRow.unpaused(id)
           event(id, "resumed by the autopilot")
           s"$id resumed"
@@ -342,7 +342,7 @@ final class AutopilotService(
           val c =
             m.config
               .modify(_.autoIngest)
-              .setTo(Some(ManagerConfig.AutoIngest(true)))
+              .setTo(Some(ManagerConfig.AutoIngest.Auto))
               .modify(_.autoIngestPerDay)
               .setTo(m.config.autoIngestPerDay.orElse(Some(ManagerConfig.AutoIngestPerDay(perDay.value))))
           Option.when(
@@ -656,12 +656,13 @@ final class AutopilotService(
           r.modify(_.mode).setTo(ApprovalRule.Mode("auto (in the run, unchecked)"))
         case r => r
     val st = EngineStatus(
-      EngineStatus.On(row.enabled.value),
+      (if row.enabled.value then EngineStatus.On.On else EngineStatus.On.Off),
       Some(EngineStatus.Since(row.changedAt.value)),
       Option(row.changedBy.value).filter(_.nonEmpty).map(by => EngineStatus.By(by)),
-      EngineStatus.AgentsEnabled(cfg.enabled.value),
-      EngineStatus.ManagersEnabled(cfg.managers.enabled.value),
-      EngineStatus.CronsEnabled(cfg.scheduler.enabled.value),
+      (if cfg.enabled.value then EngineStatus.AgentsEnabled.Enabled else EngineStatus.AgentsEnabled.Disabled),
+      (if cfg.managers.enabled.value then EngineStatus.ManagersEnabled.Enabled
+       else EngineStatus.ManagersEnabled.Disabled),
+      (if cfg.scheduler.enabled.value then EngineStatus.CronsEnabled.Enabled else EngineStatus.CronsEnabled.Disabled),
       List(
         rule(
           Agents.ApprovalKind.GoalPlan,

@@ -24,7 +24,7 @@ object MapHandle:
 
   private var serial = 0
 
-  private val pointPane: MapStack.Pane => Boolean = _.point == MapStack.Pane.Point(true)
+  private val pointPane: MapStack.Pane => Boolean = _.point == MapStack.Pane.Point.Point
 
   private val paneName: MapStack.Pane => String = _.cssClass.stripPrefix("hd-pane--")
 

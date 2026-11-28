@@ -69,7 +69,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       target: RunInfo.Target,
       steps: List[StepInfo],
       status: RunInfo.Status = RunInfo.Status("done"),
-      dry: RunInfo.DryRun = RunInfo.DryRun(false),
+      dry: RunInfo.DryRun = RunInfo.DryRun.Apply,
       overrides: List[ModelOverride] = Nil
   ): RunDetail =
     RunDetail(
@@ -122,7 +122,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
         EnrichSource,
         X2020,
         List(s),
-        dry = RunInfo.DryRun(true),
+        dry = RunInfo.DryRun.DryRun,
         overrides = List(ModelOverride(ModelOverride.Role("writer"), ModelOverride.Model("anthropic:y")))
       )
     )

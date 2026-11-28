@@ -94,9 +94,9 @@ final class CurrencyCheckPipeline(
       upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
         case Left(m)  => ctx.warn(s"assess ${t.citekey}: ${m.sentences.mkString("; ")}"); None
         case Right(a) =>
-          if a.isRetracted.value then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
+          if a.isRetracted.isRetracted then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
           if ctx.dryRun then ctx.write(s"assess [[${t.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
-          Some((t.citekey, a.isRetracted.value))
+          Some((t.citekey, a.isRetracted.isRetracted))
     }
     Assessed(Assessed.Checked(results.flatten.size), results.flatten.collect { case (ck, true) => ck })
 

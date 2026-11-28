@@ -14,6 +14,7 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ByteCount
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 object Vacuum:
   type DeadRows = DeadRows.T
   object DeadRows extends Newtype[Long, Pure]
@@ -52,11 +53,11 @@ object Vacuum:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statement(table: Table, analyze: Request.Analyze): String =
     val q = "\"" + (table).value.replace("\"", "\"\"") + "\""
-    if (analyze).value then (s"VACUUM (ANALYZE) $q") else (s"VACUUM $q")
+    if (analyze).analyze then (s"VACUUM (ANALYZE) $q") else (s"VACUUM $q")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def describe(p: VacuumPlan): String =
-    (s"${if (p.analyze) == Request.Analyze(true) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
+    (s"${if (p.analyze) == Request.Analyze.Analyze then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -74,11 +75,13 @@ object Vacuum:
   /** A re-seed or a gazetteer load leaves the old row versions behind as dead tuples, which autovacuum reaches only
     * slowly on tables that size.
     */
-  final case class Request(analyze: Request.Analyze = Request.Analyze(false), tables: List[Request.Tables] = Nil)
+  final case class Request(analyze: Request.Analyze = Request.Analyze.VacuumOnly, tables: List[Request.Tables] = Nil)
       derives StrictJson
   object Request:
-    type Analyze = Analyze.T
-    object Analyze extends Newtype[Boolean, Pure]
+    enum Analyze derives CanEqual:
+      case Analyze, VacuumOnly
+    object Analyze extends TwoStates[Analyze]:
+      extension (analyze: Analyze) def analyze: Boolean = analyze == Analyze
     type Tables = Tables.T
     object Tables extends Newtype[String, Pure]
 

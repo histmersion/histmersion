@@ -168,7 +168,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
 
     val counted = MediaImportReport(
       provider = com.histmersion.api.media.MediaItem.Provider(check),
-      dryRun = MediaImportRequest.DryRun(dryRun.value),
+      dryRun = (if dryRun.value then MediaImportRequest.DryRun.DryRun else MediaImportRequest.DryRun.Apply),
       targets = MediaImportReport.Targets(found.asked.size),
       items = MediaImportReport.Items(found.read.value),
       statements = MediaImportReport.Statements(uses.size),

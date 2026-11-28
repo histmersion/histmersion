@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class IssueHunk(
     conflict: IssueHunk.Conflict,
@@ -17,8 +18,10 @@ final case class IssueHunk(
       api.json.Schema
 
 object IssueHunk:
-  type Conflict = Conflict.T
-  object Conflict extends Newtype[Boolean, Pure]
+  enum Conflict derives CanEqual:
+    case Conflict, Clean
+  object Conflict extends TwoStates[Conflict]:
+    extension (conflict: Conflict) def conflict: Boolean = conflict == Conflict
   type Base = Base.T
   object Base extends Newtype[String, Pure]
   type Left = Left.T

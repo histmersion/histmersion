@@ -150,7 +150,14 @@ final class Bootstrap(
             Some(Api.Error.Code(Write.CodeInvalid))
           )
         )
-        .flatMap(k => start(InitPlan(fetch = List(InitPlan.Fetch(k.wire.value)), check = InitPlan.Check(!apply.value))))
+        .flatMap(k =>
+          start(
+            InitPlan(
+              fetch = List(InitPlan.Fetch(k.wire.value)),
+              check = (if !apply.value then InitPlan.Check.Check else InitPlan.Check.NoCheck)
+            )
+          )
+        )
 
   /** What an init job will import: everything bundled, or (on a first start) only what is empty, plus the network
     * sources when asked. Decided up front and stored on the job (#770).
@@ -159,8 +166,11 @@ final class Bootstrap(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[server] def plan(fetch: Boolean, onlyEmpty: Boolean): InitPlan =
     InitPlan(
-      gazetteer = InitPlan.Gazetteer(!onlyEmpty || places.count().value == 0),
-      periodPresets = InitPlan.PeriodPresets(!onlyEmpty || periods.count().value == 0 || periodImports.seedOutdated),
+      gazetteer =
+        (if !onlyEmpty || places.count().value == 0 then InitPlan.Gazetteer.Included else InitPlan.Gazetteer.Skipped),
+      periodPresets =
+        (if !onlyEmpty || periods.count().value == 0 || periodImports.seedOutdated then InitPlan.PeriodPresets.Included
+         else InitPlan.PeriodPresets.Skipped),
       fetch = if fetch then cfg.init.sources.map(s => InitPlan.Fetch(s.value)) else Nil
     )
 
@@ -194,8 +204,8 @@ final class Bootstrap(
       r
     val steps: List[(String, () => Either[String, String])] =
       List(
-        Option.when(p.gazetteer.value)("gazetteer" -> (() => seedPlaces(note))),
-        Option.when(p.periodPresets.value)(
+        Option.when(p.gazetteer.included)("gazetteer" -> (() => seedPlaces(note))),
+        Option.when(p.periodPresets.included)(
           "period presets" -> (() =>
             periodImports
               .applySeed(replace = PeriodImports.Replace(false))
@@ -210,8 +220,8 @@ final class Bootstrap(
           )
         )
       ).flatten ++ p.fetch.map(s =>
-        s"${if p.check.value then "dry run of" else "fetch"} $s" -> (() =>
-          fetchSource(s.value, withSkipped, p.check.value, note)
+        s"${if p.check.check then "dry run of" else "fetch"} $s" -> (() =>
+          fetchSource(s.value, withSkipped, p.check.check, note)
         )
       )
     val results = steps.map { (name, step) =>

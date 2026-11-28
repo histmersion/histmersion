@@ -32,7 +32,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
       List(AuthorName("Zq Author")),
       None,
       None,
-      Source.Candidate.IsOa(false),
+      Source.Candidate.IsOa.Closed,
       None,
       List(by)
     )

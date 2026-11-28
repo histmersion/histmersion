@@ -29,7 +29,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
   private def sch(
       k: ScheduleKind,
       cron: GoalSchedule.Cron,
-      on: GoalSchedule.Enabled = GoalSchedule.Enabled(true),
+      on: GoalSchedule.Enabled = GoalSchedule.Enabled.Enabled,
       usd: Option[GoalSchedule.BudgetUsd] = None,
       next: Option[GoalSchedule.NextRunAt] = None
   ) =
@@ -75,7 +75,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
           sch(
             ScheduleKind.Currency,
             GoalSchedule.Cron("@weekly"),
-            on = GoalSchedule.Enabled(false),
+            on = GoalSchedule.Enabled.Disabled,
             next = Some(GoalSchedule.NextRunAt("2026-10-18T00:00:00Z"))
           )
         ),
@@ -123,7 +123,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
     )
     val v = view(m, Nil)
     assertEquals(
-      v.map(s => (s.goal, s.kind, s.cron, s.enabled, s.budgetUsd, s.nextRunAt)),
+      v.map(s => (s.goal, s.kind, s.cron, s.enabled.enabled, s.budgetUsd, s.nextRunAt)),
       List(("tin", ScheduleKind.Currency, "@daily", true, Some(0.5), Some("2026-10-18T00:00:00Z")))
     )
     assert(v.head.lastNote.exists(_.value.contains("paused")), v.head.lastNote)

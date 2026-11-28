@@ -84,8 +84,8 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private val SweepKind = ManagerItem.Kind(AcquisitionSweep)
   private val CurrencyKind = ManagerItem.Kind(CurrencyCheck)
   private val EnrichKind = ManagerItem.Kind(SourceEnrich)
-  private val Open = WorkRef.IsOa(true)
-  private val Closed = WorkRef.IsOa(false)
+  private val Open = WorkRef.IsOa.OpenAccess
+  private val Closed = WorkRef.IsOa.Closed
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val StartedKind = ManagerEvent.Kind(Feed.Started)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -212,7 +212,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           api.library.Citekey(ck.value),
           Some(Doi(doi)),
           Some(api.library.Title(s"Ingested $doi")),
-          created = Ingest.Report.Created(true),
+          created = Ingest.Report.Created.Created,
           Some(
             PdfInfo(
               PdfInfo.Source("unpaywall"),
@@ -305,7 +305,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           ManagerCreate.Kind("watch"),
           Some(GoalSlug),
           ManagerConfig(
-            autoIngest = Some(ManagerConfig.AutoIngest(true)),
+            autoIngest = Some(ManagerConfig.AutoIngest.Auto),
             autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(2))
           )
         ),
@@ -615,7 +615,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           HintAdd.Text("wait with A until December"),
           effect = Some(hold),
           author = Some(HintAdd.Author("mcp")),
-          propose = Some(HintAdd.Propose(true))
+          propose = Some(HintAdd.Propose.Propose)
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -649,7 +649,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
         HintAdd(
           HintAdd.Text("drop B"),
           effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))),
-          propose = Some(HintAdd.Propose(true))
+          propose = Some(HintAdd.Propose.Propose)
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -694,7 +694,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
                 config = Some(ManagerConfig(rounds = Some(ManagerConfig.Rounds(99))))
               )
             ),
-            propose = Some(HintAdd.Propose(true))
+            propose = Some(HintAdd.Propose.Propose)
           )
         )
         .left
@@ -711,7 +711,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
               config = Some(ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(1))))
             )
           ),
-          propose = Some(HintAdd.Propose(true))
+          propose = Some(HintAdd.Propose.Propose)
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -748,7 +748,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val hint = a.managing
       .addHint(
         ApiIds.manager(Enrich),
-        HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest(true)))
+        HintAdd(HintAdd.Text("please leave A alone until December"), suggest = Some(HintAdd.Suggest.Suggest))
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val run = connect(ds)(AgentRepo.list(None, PageSize(20))).find(_.pipeline.value == "hint-effect").get
@@ -786,7 +786,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
           HintAdd(
             HintAdd.Text("x"),
             effect = Some(HintEffect(HintEffect.Action("skip"), List(HintEffect.Targets(CkB.value)))),
-            suggest = Some(HintAdd.Suggest(true))
+            suggest = Some(HintAdd.Suggest.Suggest)
           )
         )
         .isLeft
@@ -796,7 +796,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     val before = Transactor(ds).read(ManagerRepo.hints(Enrich, live = false)).size
     assert(
       b.managing
-        .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest(true))))
+        .addHint(ApiIds.manager(Enrich), HintAdd(HintAdd.Text("x"), suggest = Some(HintAdd.Suggest.Suggest)))
         .left
         .exists(
           _.problems.sentences

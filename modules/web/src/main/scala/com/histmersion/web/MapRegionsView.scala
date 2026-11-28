@@ -85,7 +85,7 @@ object MapRegionsView:
       case Left(m)  => error.set(Some(m.sentence))
       case Right(q) =>
         error.set(None)
-        follow(ApiClient.basemapFetch(q), Option.when(dryRun.value)(q))
+        follow(ApiClient.basemapFetch(q), Option.when(dryRun.dryRun)(q))
 
   /** Follow the job until it ends; a dry run that succeeds marks its fetch as checked. */
   private def follow(started: Future[JobInfo], dry: Option[Basemap.FetchQuery]): Unit =
@@ -107,7 +107,7 @@ object MapRegionsView:
                 if !j.isTerminal then poll(id, dry)
                 else
                   if j.succeeded then
-                    dry.foreach(q => checked.set(Some(q.copy(dryRun = Basemap.FetchQuery.DryRun(false)))))
+                    dry.foreach(q => checked.set(Some(q.copy(dryRun = Basemap.FetchQuery.DryRun.Apply))))
                   load()
               }
             )
@@ -125,7 +125,7 @@ object MapRegionsView:
     checked.signal.combineWith(box.signal, content.signal, depth.signal, pick.signal, job.signal, Auth.writable).map {
       (ok, _, _, _, _, j, writable) =>
         writable && !j.exists(!_.isTerminal) && ok
-          .exists(q => current(dryRun = Basemap.FetchQuery.DryRun(false)).toOption.contains(q))
+          .exists(q => current(dryRun = Basemap.FetchQuery.DryRun.Apply).toOption.contains(q))
     }
 
   private val busy: Signal[Boolean] = job.signal.map(_.exists(!_.isTerminal))
@@ -213,7 +213,7 @@ object MapRegionsView:
             cls := "btn map-region-check",
             "check the size",
             disabled <-- busy,
-            onClick --> (_ => start(dryRun = Basemap.FetchQuery.DryRun(true)))
+            onClick --> (_ => start(dryRun = Basemap.FetchQuery.DryRun.DryRun))
           ),
           button(
             typ := "button",
@@ -221,7 +221,7 @@ object MapRegionsView:
             "download",
             title := "check the size first",
             disabled <-- canDownload.map(!_),
-            onClick --> (_ => start(dryRun = Basemap.FetchQuery.DryRun(false)))
+            onClick --> (_ => start(dryRun = Basemap.FetchQuery.DryRun.Apply))
           )
         )
       ),
@@ -264,7 +264,7 @@ object MapRegionsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def downloaded(s: Basemap.Status): HtmlElement =
-    val map = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present.value)
+    val map = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present.present)
     val focus = s.layers.find(_.layer == Basemap.Layer.Terrain.wire).toList.flatMap(_.focus)
     dl(
       cls := "about-rows map-regions-downloaded",
@@ -275,7 +275,7 @@ object MapRegionsView:
             span(s"${m.bbox.getOrElse("")}, zoom ≤ ${m.maxZoom.getOrElse(0)}"),
             span(
               cls := "about-detail muted",
-              s"${Backup.humanBytes(ByteCount(s.layers.filter(_.present.value).map(_.bytes.value).sum))} in all"
+              s"${Backup.humanBytes(ByteCount(s.layers.filter(_.present.present).map(_.bytes.value).sum))} in all"
             ),
             button(
               typ := "button",

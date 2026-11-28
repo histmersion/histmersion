@@ -265,7 +265,9 @@ object ArticleArgs extends CommandLine.Entry:
     private val force = flag("force", "Overwrite articles newer than the files")
 
     def command: Either[Problem, Cli.Command] =
-      Right(ArticleCommand.Import(dir(), Api.Overwrite(force.getOrElse(false))))
+      Right(
+        ArticleCommand.Import(dir(), (if force.getOrElse(false) then Api.Overwrite.Overwrite else Api.Overwrite.Keep))
+      )
 
   final private class ArticleVersions() extends Leaf(Parent, "versions", "Show the edit history of one article"):
     private val slug = arg[ReviewGoal.Slug]("slug")

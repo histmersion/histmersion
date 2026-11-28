@@ -12,7 +12,7 @@ object ConfigViews:
   def configFile(file: UserConfigFile): ConfigFileInfo =
     ConfigFileInfo(
       file.path.map(p => ConfigFileInfo.Path(p.toString)),
-      ConfigFileInfo.Loaded(file.loaded.value),
+      (if file.loaded.value then ConfigFileInfo.Loaded.Loaded else ConfigFileInfo.Loaded.Absent),
       file.unknownKeys.map(k => ConfigFileInfo.UnknownKeys(k.value))
     )
 

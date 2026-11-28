@@ -218,7 +218,7 @@ class MediaSourcesSuite extends DbSuite:
     val h = MediaWiring(Deps(cfg, ds), FakeMediaHttp(u => Left(s"unexpected $u")), conv)
     val dry =
       h.covers
-        .covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers(false)))
+        .covers(MediaCoversRequest(citekey = Some(ApiPaper), covers = MediaCoversRequest.Covers.Skipped))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(
       dry.lines,
@@ -235,9 +235,9 @@ class MediaSourcesSuite extends DbSuite:
     val done = h.covers
       .covers(
         MediaCoversRequest(
-          dryRun = RepairAcquire.RepairRequest.DryRun(false),
+          dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
           citekey = Some(ApiPaper),
-          covers = MediaCoversRequest.Covers(false)
+          covers = MediaCoversRequest.Covers.Skipped
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -250,7 +250,7 @@ class MediaSourcesSuite extends DbSuite:
     assertEquals((t.role, t.width, t.height), ("illustration", Some(330), Some(250)))
     assertEquals(AssetFixtures.thumb(ds, MediaItemRow.Uid(t.uid.value)).map(_._1), Some("image/jpeg"))
     assert(
-      h.covers.covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun(false))).isLeft,
+      h.covers.covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun.Apply)).isLeft,
       "a run over every source is a job"
     )
 
@@ -264,9 +264,9 @@ class MediaSourcesSuite extends DbSuite:
     val r = h.covers
       .covers(
         MediaCoversRequest(
-          dryRun = RepairAcquire.RepairRequest.DryRun(false),
+          dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
           citekey = Some(ApiBook),
-          illustrations = MediaCoversRequest.Illustrations(false)
+          illustrations = MediaCoversRequest.Illustrations.Skipped
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -300,9 +300,9 @@ class MediaSourcesSuite extends DbSuite:
     val none = h.covers
       .covers(
         MediaCoversRequest(
-          dryRun = RepairAcquire.RepairRequest.DryRun(false),
+          dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
           citekey = Some(ApiPaper),
-          illustrations = MediaCoversRequest.Illustrations(false),
+          illustrations = MediaCoversRequest.Illustrations.Skipped,
           isbn = Some(MediaCoversRequest.Isbn("9780000000019"))
         )
       )
@@ -407,13 +407,13 @@ class MediaSourcesSuite extends DbSuite:
     }
     val h = MediaWiring(Deps(cfg, ds), fake)
     assert(
-      h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun(true))).isLeft,
+      h.imports.importJob(MediaImportRequest(dryRun = MediaImportRequest.DryRun.DryRun)).isLeft,
       "a dry run is not a job"
     )
     val j =
       h.imports
         .importJob(
-          MediaImportRequest(dryRun = MediaImportRequest.DryRun(false), limit = Some(MediaImportRequest.Limit(3)))
+          MediaImportRequest(dryRun = MediaImportRequest.DryRun.Apply, limit = Some(MediaImportRequest.Limit(3)))
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(j.kind.value: String, ImportsControllers.ImportJobKind.value: String)

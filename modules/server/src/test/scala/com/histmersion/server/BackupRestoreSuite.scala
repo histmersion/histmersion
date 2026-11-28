@@ -331,7 +331,7 @@ class BackupRestoreSuite extends DbSuite:
     sql("DROP OWNED BY zz_gone_owner"); sql("DROP OWNED BY zz_gone_reader")
     admin("DROP ROLE zz_gone_owner"); admin("DROP ROLE zz_gone_reader")
 
-    val r = h.upkeep.restore(RestoreRequest(dump.file, force = RestoreRequest.Force(true)))
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = RestoreRequest.Force.Force))
     assert(r.isRight, r.toString)
     assert(!r.toOption.get.warnings.exists(_.value.contains("does not exist")), r.toString)
     assertEquals(
@@ -347,6 +347,6 @@ class BackupRestoreSuite extends DbSuite:
     val dump = takeBackup(h)
     sql("TRUNCATE sources CASCADE")
     assertEquals((h.library.search.sources(Filter(limit = Filter.Limit(10))).total.value: Int), 0)
-    val r = h.upkeep.restore(RestoreRequest(dump.file, force = RestoreRequest.Force(false)))
+    val r = h.upkeep.restore(RestoreRequest(dump.file, force = RestoreRequest.Force.Safe))
     assert(r.isRight, r.toString)
     assert(r.toOption.get.sourcesAfter.value > 0, r.toString)

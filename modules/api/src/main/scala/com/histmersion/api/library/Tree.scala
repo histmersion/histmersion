@@ -313,7 +313,7 @@ object Tree:
                 placeId = Some(Place.Id(node.id.value)),
                 count = distinct(mine),
                 overlap = overlapOf(mine, allKids.map(at)),
-                contested = Bucket.Contested(node.contested.value),
+                contested = (if node.contested.contested then Bucket.Contested.Contested else Bucket.Contested.Settled),
                 children = kids,
                 alsoUnder = elsewhere,
                 samples = if kids.isEmpty then sampleOf(mine, samples) else Nil

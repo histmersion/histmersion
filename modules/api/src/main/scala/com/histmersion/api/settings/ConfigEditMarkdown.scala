@@ -43,7 +43,7 @@ object ConfigEditMarkdown:
     val head = List(
       s"# Settings",
       "",
-      s"File: ${p.file.fold("none")(f => s"`$f`" + (if (p.exists) == Page.Exists(true) then "" else " (not there yet)"))}"
+      s"File: ${p.file.fold("none")(f => s"`$f`" + (if (p.exists) == Page.Exists.Exists then "" else " (not there yet)"))}"
     )
     val problems = if p.problems.isEmpty then Nil else "" :: "**Problems:**" :: p.problems.map(x => s"- $x")
     val body = p.sections.flatMap { s =>
@@ -75,5 +75,5 @@ object ConfigEditMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def restart(r: Restart): String =
-    if (r.accepted) == Restart.Accepted(true) then (s"# Restarting\n\n${r.notice}")
+    if (r.accepted) == Restart.Accepted.Accepted then (s"# Restarting\n\n${r.notice}")
     else (s"# Not restarted\n\n${r.notice}")

@@ -56,7 +56,7 @@ object ModelsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entryState(e: ChainEntry): String =
-    if e.usable.value then "is-usable" else if !e.ready.value then "is-unready" else "is-paused"
+    if e.usable.usable then "is-usable" else if !e.ready.ready then "is-unready" else "is-paused"
 
   /** A plan window's bar: how much is used (0..100) and where its floor sits, as the share USED at which the floor is
     * reached (a floor of 25 % left sits at 75 %).
@@ -106,10 +106,12 @@ object ModelsView:
 
     def check(offline: Boolean): Unit =
       busy.set(true)
-      ApiClient.agentDoctor(Agents.DoctorReport.Online(offline)).onComplete { r =>
-        busy.set(false)
-        r.fold(e => failure.set(Some(e.getMessage)), d => doctor.set(Some(d)))
-      }
+      ApiClient
+        .agentDoctor((if offline then Agents.DoctorReport.Online.Online else Agents.DoctorReport.Online.Offline))
+        .onComplete { r =>
+          busy.set(false)
+          r.fold(e => failure.set(Some(e.getMessage)), d => doctor.set(Some(d)))
+        }
 
     div(
       cls := "tool-pane models-pane",
@@ -139,7 +141,7 @@ object ModelsView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def body(m: ModelsInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
-      Option.when(!m.enabled.value)(
+      Option.when(!m.enabled.enabled)(
         p(
           cls := "muted",
           "Embedded agents are off on this server (agents.enabled); chains and allowances can still be set."
@@ -209,7 +211,7 @@ object ModelsView:
         cls := "allowance-list",
         q.plans.map { pl =>
           li(
-            cls := s"allowance ${if pl.usable.value then "is-usable" else "is-paused"}",
+            cls := s"allowance ${if pl.usable.usable then "is-usable" else "is-paused"}",
             div(
               cls := "allowance-head",
               strong(pl.title),
@@ -219,10 +221,11 @@ object ModelsView:
                 s" · floors ${if pl.floors.value.isEmpty then "none" else floorsText(pl.floors)} (${pl.floorsSource})" +
                   pl.planType.fold("")(t => s" · plan $t")
               ),
-              if !pl.available.value then
+              if !pl.available.available then
                 span(cls := "run-paused", s" · ${pl.reason.map(w => shown"$w").getOrElse("unavailable: no login")}")
-              else if pl.held.value then span(cls := "run-paused", " · held")
-              else if pl.usable.value then span(cls := "muted", pl.reason.fold(" · usable")(r => shown" · usable ($r)"))
+              else if pl.held.held then span(cls := "run-paused", " · held")
+              else if pl.usable.usable then
+                span(cls := "muted", pl.reason.fold(" · usable")(r => shown" · usable ($r)"))
               else
                 span(
                   cls := "run-paused",
@@ -239,13 +242,17 @@ object ModelsView:
                       typ := "button",
                       cls := "link-btn",
                       disabled <-- busy,
-                      title := (if pl.held.value then "let agent runs use this plan again"
+                      title := (if pl.held.held then "let agent runs use this plan again"
                                 else "pause every agent use of this plan"),
-                      if pl.held.value then "release" else "hold",
+                      if pl.held.held then "release" else "hold",
                       onClick --> (_ =>
                         write(
                           ApiClient
-                            .setPool(pl.pool, PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold(!pl.held.value))))
+                            .setPool(
+                              pl.pool,
+                              PlanQuota.PoolSet(hold = Some((if !pl.held.held then PlanQuota.PoolSet.Hold.Hold
+                                                             else PlanQuota.PoolSet.Hold.Release)))
+                            )
                         )
                       )
                     ),
@@ -269,7 +276,7 @@ object ModelsView:
               pl.refresh.fold("No fresh reading is taken (refresh off)")(m => s"Fresh reading by $m") +
                 s" · refreshed ${pl.refreshesToday} time${if pl.refreshesToday.value == 1 then "" else "s"} today" +
                 pl.lastRefresh.fold("")(r =>
-                  s" · last ${r.at} (${r.trigger}): ${if r.ok.value then "" else "failed — "}${r.detail}"
+                  s" · last ${r.at} (${r.trigger}): ${if r.ok.ok then "" else "failed — "}${r.detail}"
                 )
             ),
             if pl.windows.isEmpty then
@@ -287,7 +294,7 @@ object ModelsView:
                       s"${Wording.humanize(Wording.Id(w.limit.value))}: ${Wording.allowanceWindow(w.kind).toLowerCase}"
                   ),
                   div(
-                    cls := s"allowance-bar plan-bar ${if w.usable.value then "" else "is-over"}",
+                    cls := s"allowance-bar plan-bar ${if w.usable.usable then "" else "is-over"}",
                     styleAttr := s"--pct:$used%; --floor:$floorAt%",
                     role := "img",
                     aria.label := s"$used % used, floor at ${w.floor} % left"
@@ -295,7 +302,7 @@ object ModelsView:
                   span(
                     cls := "muted",
                     s"$used % used · floor ${w.floor} % left" + w.resetsAt.fold("")(t => s" · resets $t") +
-                      s" · read ${ageText(w.ageSeconds.value)} from ${w.source}" + (if w.stale.value then " (stale)"
+                      s" · read ${ageText(w.ageSeconds.value)} from ${w.source}" + (if w.stale.stale then " (stale)"
                                                                                     else "")
                   )
                 )
@@ -388,12 +395,12 @@ object ModelsView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def allowanceRow(a: AllowanceStatus, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     li(
-      cls := s"allowance ${if a.usable.value then "is-usable" else "is-paused"}",
+      cls := s"allowance ${if a.usable.usable then "is-usable" else "is-paused"}",
       div(
         cls := "allowance-head",
         code(a.target),
         span(cls := "muted", s" · ${a.source}${if a.reservePct.value > 0 then s" · reserve ${a.reservePct}%" else ""}"),
-        if a.usable.value then span(cls := "muted", " · has headroom")
+        if a.usable.usable then span(cls := "muted", " · has headroom")
         else
           span(
             cls := "run-paused",
@@ -426,7 +433,7 @@ object ModelsView:
             Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(l.limit.value))
           ),
           div(
-            cls := s"allowance-bar ${if l.usable.value then "" else "is-over"}",
+            cls := s"allowance-bar ${if l.usable.usable then "" else "is-over"}",
             styleAttr := s"--pct:${usedPct(l)}%",
             role := "img",
             aria.label := s"${usedPct(l)} % used"
@@ -515,20 +522,20 @@ object ModelsView:
       ul(cls := "doctor-checks", cs.map(c => li(level(c.level), s" ${c.name}: ${c.detail}")))
     div(
       cls := "doctor",
-      h4(s"Provider check${if d.online.value then "" else " (offline)"}"),
+      h4(s"Provider check${if d.online.online then "" else " (offline)"}"),
       checks(d.checks),
       d.providers.map { p =>
         htmlTag[org.scalajs.dom.HTMLElement]("details")(
           // a used provider with a problem starts unfolded
           onMountCallback(ctx =>
-            if p.used.value && p.level != CheckLevel.Ok then ctx.thisNode.ref.setAttribute("open", "")
+            if p.used.used && p.level != CheckLevel.Ok then ctx.thisNode.ref.setAttribute("open", "")
           ),
           htmlTag("summary")(
             level(p.level),
             s" ${p.provider}",
             span(
               cls := "muted",
-              if p.used.value then s" · used by ${p.models.mkString(", ")}" else " · no role uses it"
+              if p.used.used then s" · used by ${p.models.mkString(", ")}" else " · no role uses it"
             )
           ),
           checks(p.checks)

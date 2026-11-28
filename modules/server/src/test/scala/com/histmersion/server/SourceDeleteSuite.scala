@@ -276,7 +276,7 @@ class SourceDeleteSuite extends DbSuite:
     val d = h.library.sources
       .delete(DelCk, Source.DeleteRequest())
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(!d.applied.value && !d.refused, d.toString)
+    assert(!d.applied.applied && !d.refused, d.toString)
     assertEquals(d.title, s"Title $Old")
     import com.histmersion.api.library.DeletePart.*
     assertEquals(
@@ -355,7 +355,7 @@ class SourceDeleteSuite extends DbSuite:
         body
       )
       val e = h.library.sources
-        .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+        .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply))
         .swap
         .getOrElse(fail("the delete was not refused"))
       assert(
@@ -384,7 +384,7 @@ class SourceDeleteSuite extends DbSuite:
       .delete(DelCk, Source.DeleteRequest())
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(d.blockers.map(_.kind), List(DeleteBlocker.Kind.Event, DeleteBlocker.Kind.Job))
-    assert(h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true))).isLeft)
+    assert(h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply)).isLeft)
     assert(SourceFixtures.load(ds, DelCk).isDefined)
 
   test(
@@ -406,9 +406,9 @@ class SourceDeleteSuite extends DbSuite:
     seed()
     val theUid = uid(Del)
     val d = h.library.sources
-      .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(d.applied.value && d.filesFailed.isEmpty, d.toString)
+    assert(d.applied.applied && d.filesFailed.isEmpty, d.toString)
     assertEquals(d.calibreId, Some("1693"), "Calibre's id is reported, never touched")
 
     assert(SourceFixtures.load(ds, DelCk).isEmpty)
@@ -478,7 +478,7 @@ class SourceDeleteSuite extends DbSuite:
     put(source(TwinCk))
     connect(ds)(sql"UPDATE sources SET sha256 = $Sha WHERE citekey = $Twin".update.run(): Unit)
     val d = h.library.sources
-      .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      .delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(!d.files.map(_.value).contains(spool.resolve(s"$Sha.pdf").toString), d.files.toString)
     assert(Files.exists(spool.resolve(s"$Sha.pdf")))
@@ -489,7 +489,7 @@ class SourceDeleteSuite extends DbSuite:
       Left(Api.Error(Problem.Unclassified(Legacy.Text("never ran")))) // set inside the lock, read after it
     var dry: Either[Api.Error, Source.Deletion] = Left(Api.Error(Problem.Unclassified(Legacy.Text("never ran"))))
     val _ = h.maintenance.exclusively(WriteGate.OperationName("test-restore")) {
-      out = h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply(true)))
+      out = h.library.sources.delete(DelCk, Source.DeleteRequest(apply = Source.DeleteRequest.Apply.Apply))
       dry = h.library.sources.delete(DelCk, Source.DeleteRequest())
       Right(())
     }

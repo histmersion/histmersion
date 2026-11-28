@@ -70,7 +70,7 @@ class MetaFilesSuite extends munit.FunSuite:
     withServer { (url, seen) =>
       val dir = tempDir()
       List("ACQUIRE.md", "TASKS.md", "LOG.md", "GOALS.md").foreach(f => Files.writeString(dir.resolve(f), "- [ ] x\n"))
-      val got = Ops.readMeta(new Client(url), dir, replace = Api.Overwrite(true))
+      val got = Ops.readMeta(new Client(url), dir, replace = Api.Overwrite.Overwrite)
       assert(got.isRight, got.toString)
       assertEquals(
         seen(),

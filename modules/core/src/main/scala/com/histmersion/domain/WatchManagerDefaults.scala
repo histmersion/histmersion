@@ -24,7 +24,7 @@ final case class WatchManagerDefaults(
       maxOpen = Some(ManagerConfig.MaxOpen(2 * maxRuns.value)),
       maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
       sweeps = Some(Sweep.values.toList.map(_.wire)),
-      autoIngest = Some(ManagerConfig.AutoIngest(false)),
+      autoIngest = Some(ManagerConfig.AutoIngest.Manual),
       autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(autoIngestPerDay.value)),
       dailyUsd = ManagerPolicy.dailyCap(ManagerConfig(), m)
     )
@@ -37,7 +37,7 @@ final case class WatchManagerDefaults(
       c: ManagerConfig,
       ingestedToday: WatchManagerDefaults.IngestedToday
   ): WatchManagerDefaults.IngestAllowance =
-    if !c.autoIngest.contains(ManagerConfig.AutoIngest(true)) then WatchManagerDefaults.IngestAllowance(0)
+    if !c.autoIngest.contains(ManagerConfig.AutoIngest.Auto) then WatchManagerDefaults.IngestAllowance(0)
     else
       WatchManagerDefaults.IngestAllowance(
         math.max(0, c.autoIngestPerDay.fold(autoIngestPerDay.value)(_.value) - math.max(0, ingestedToday.value))

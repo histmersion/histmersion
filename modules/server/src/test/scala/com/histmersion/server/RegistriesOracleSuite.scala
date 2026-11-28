@@ -52,8 +52,8 @@ class RegistriesOracleSuite extends munit.FunSuite:
     "init" -> InitPlan.Detail(
       Some(
         InitPlan(
-          gazetteer = InitPlan.Gazetteer(true),
-          periodPresets = InitPlan.PeriodPresets(true),
+          gazetteer = InitPlan.Gazetteer.Included,
+          periodPresets = InitPlan.PeriodPresets.Included,
           fetch = List(InitPlan.Fetch("land"))
         )
       )
@@ -62,7 +62,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
     "vacuum" -> VacuumPlan.Detail(
       Some(
         VacuumPlan(
-          analyze = VacuumPlan.Analyze(true),
+          analyze = VacuumPlan.Analyze.Analyze,
           tables = List(Vacuum.Request.Tables("sources"), Vacuum.Request.Tables("places"))
         )
       )
@@ -73,7 +73,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
     "recheck" -> Acquire.Checks.RecheckJob.Detail(
       Some(
         Acquire.Checks.RecheckJob(
-          all = Acquire.Checks.RecheckJob.All(true),
+          all = Acquire.Checks.RecheckJob.All.All,
           upTo = Acquire.Checks.RecheckJob.UpTo(7),
           since = Acquire.Checks.RecheckJob.Since("2026-10-01")
         )

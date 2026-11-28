@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -31,9 +32,10 @@ object EventRederiveReport:
   object Report extends Newtype[String, Pure]
 
   /** An events re-dating job's report, in its detail. */
-
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Apply
+  object DryRun extends TwoStates[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type Providers = Providers.T
   object Providers extends Newtype[String, Pure]
   type Records = Records.T
@@ -61,7 +63,7 @@ object EventRederiveReport:
         s"${r.providers.mkString(", ")}: ${r.records} record(s) re-derived (${r.fromRaw} from the catalogue's own record)"
       ),
       Some(
-        s"${r.changed} dating(s) ${if (r.dryRun) == DryRun(true) then "would change" else "changed"}, ${r.updated} event(s) refreshed"
+        s"${r.changed} dating(s) ${if (r.dryRun) == DryRun.DryRun then "would change" else "changed"}, ${r.updated} event(s) refreshed"
       ),
       Option.when(r.after.nonEmpty)(s"precision ${counts(r.before)} → ${counts(r.after)}"),
       Option.when((r.offMap).value > 0)(s"${r.offMap} imprecise (off the map, on the list)"),
@@ -72,6 +74,6 @@ object EventRederiveReport:
   def markdown(r: EventRederiveReport): Report =
     val head =
       s"## Event re-derivation — ${r.providers.mkString(", ")}${
-          if (r.dryRun).value then " (dry run: nothing stored)" else ""
+          if (r.dryRun).dryRun then " (dry run: nothing stored)" else ""
         }"
     Report((head :: "" :: (summary(r)).split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))

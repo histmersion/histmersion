@@ -239,7 +239,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val _ =
       PlaceFixtures.upsertPlaces(home, List(site("zz_seed_site", Place.Label("A seed site"), 30.0, 39.0)), Dataset.Seed)
     val r = importInto(home, bundle, sh)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(text(home, "SELECT dataset FROM places WHERE id = 'zz_my_site'"), Some("local"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_my_site'"), Some("zz_my_site"))
     assertEquals(text(home, "SELECT dataset FROM periods WHERE id = 'zz_my_period'"), Some("local"))
@@ -293,7 +293,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       sh,
       MergeResolutions(List(MergeResolution(MergeResolution.Issue(q.id.value), MergeResolution.Decision("keep-right"))))
     )
-    assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assert(a.applied.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(text(home, "SELECT ST_AsText(geom) FROM places WHERE id = 'zz_ugarit'"), Some("POINT(35.78 35.6)"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_troy_burns'"), Some("pleiades_550595"))
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'work_troy'"), 0)
@@ -359,7 +359,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         domain.automation.Goal.Slug("zz_goal"),
         ScheduleKind.Currency,
         Goal.Plans.GoalSchedule.Cron("@weekly"),
-        Goal.Plans.GoalSchedule.Enabled(true),
+        Goal.Plans.GoalSchedule.Enabled.Enabled,
         None,
         Some(java.time.Instant.now())
       )
@@ -370,7 +370,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assertEquals(g.links.map(_.map(_.kind)), Some(List("query", "source")))
     assertEquals(g.schedules.map(_.map(_.cron)), Some(List("@weekly")))
     val r = importInto(home, bundle, sh)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(
       connect(home)(GoalLinkRepo.planAndBudget(domain.automation.Goal.Slug("zz_goal")))
         .flatMap(_._1)
@@ -397,7 +397,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         domain.automation.Goal.Slug("zz_goal"),
         ScheduleKind.Currency,
         Goal.Plans.GoalSchedule.Cron("@daily"),
-        Goal.Plans.GoalSchedule.Enabled(true),
+        Goal.Plans.GoalSchedule.Enabled.Enabled,
         None,
         None
       )
@@ -426,7 +426,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val p = planIn(home, again, sh)
     assert(p.info.exists(_.value.contains("its currency schedule differs")), p.info.mkString("\n"))
     val a = applyIn(home, again, sh)
-    assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assert(a.applied.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(
       Transactor(home)
         .read(GoalLinkRepo.refsIn(domain.automation.Goal.Slug("zz_goal"), LinkKind.Query))
@@ -465,7 +465,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     )
     val g = entitiesOf(exportOf(work, sw)).goals.find(_.slug.value == "zz_goal").getOrElse(fail("no goal"))
     assertEquals(
-      g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled, x.budgetUsd))),
+      g.schedules.map(_.map(x => (x.kind, x.cron, x.enabled.enabled, x.budgetUsd))),
       Some(List(("acquisition", "@weekly", true, Some(0.3))))
     )
 
@@ -510,7 +510,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val bundle = exportOf(work, sw)
     assertEquals(entitiesOf(bundle).articleAliases.map(_.alias), List("zz_first_slug"))
     val a = applyIn(home, bundle, sh)
-    assert(a.applied.value, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
+    assert(a.applied.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(a.tally.eventsMerged, 1)
     assertEquals(count(home, "SELECT count(*)::int FROM events"), 1)
     assertEquals(text(home, "SELECT description FROM events WHERE id = 'kadesh_1274'"), Some("work's account"))
@@ -599,7 +599,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       )
     )
     val first = importInto(home, exportOf(work, sw), sh)
-    assert(first.applied.value, first.problems.mkString("\n"))
+    assert(first.applied.applied, first.problems.mkString("\n"))
     // work renames the place: its event follows by key (V055)
     assert(
       PlaceFixtures
@@ -616,7 +616,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(p.info.exists(_.value.contains("renamed zz_new_site in the bundle")), p.info.mkString("\n"))
     assertEquals(p.problems, Nil)
     val r = importInto(home, bundle, sh)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 0)
     assertEquals(text(home, "SELECT place_id FROM place_names WHERE name = 'My site'"), Some("zz_new_site"))
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_site'"), Some("zz_new_site"))
@@ -630,7 +630,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val _ =
       PlaceFixtures.upsertPlaces(work, List(site("zz_old_site", Place.Label("My site"), 34.6, 40.0)), Dataset.Local)
     val first = importInto(home, exportOf(work, sw), sh)
-    assert(first.applied.value, first.problems.mkString("\n"))
+    assert(first.applied.applied, first.problems.mkString("\n"))
     val _ =
       PlaceFixtures.upsertPlaces(home, List(site("zz_taken", Place.Label("A seed site"), 30.0, 39.0)), Dataset.Seed)
     assert(
@@ -657,7 +657,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assert(!p.issues.exists(_.kind == Issue.Kind.PlaceDiffers), p.issues.map(_.title).mkString("\n"))
     assert(p.info.exists(_.value.contains("it keeps its id")), p.info.mkString("\n"))
     val r = importInto(home, bundle, sh)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(text(home, "SELECT label FROM places WHERE id = 'zz_taken'"), Some("A seed site"))
     assertEquals(count(home, "SELECT count(*)::int FROM places WHERE id = 'zz_old_site'"), 1)
     assertEquals(text(home, "SELECT place_id FROM events WHERE id = 'zz_at_taken'"), Some("zz_old_site"))
@@ -702,7 +702,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     assertEquals(es.goalAliases.map(_.alias), List("zz_goal_before"))
     assertEquals(es.placeAliases.map(_.alias), List("zz_pl_before"))
     val r = importInto(home, bundle, sh)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, BEventRow.Id("zz_ev_before")), Some("zz_ev_after"))
     assertEquals(
       Transactor(home).read(GoalRepo.renamedTo(domain.automation.Goal.Slug("zz_goal_before"))),
@@ -723,7 +723,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       EventPut(EventSummary.Label("Home's own X"), EventSummary.Kind("battle"))
     )
     val second = importInto(home, exportOf(work, sw), sh)
-    assert(second.applied.value, second.problems.mkString("\n"))
+    assert(second.applied.applied, second.problems.mkString("\n"))
     assertEquals(EventFixtures.renamedTo(home, BEventRow.Id("zz_ev_x")), None) // a live id here, never an alias
 
   test("place renames keep the old id as an alias: refused when taken, dropped when renamed back"):
@@ -785,7 +785,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
     val res = MergeApplyResult(
       java.util.UUID.randomUUID(),
       Bundle.Instance(java.util.UUID.randomUUID(), Some(Bundle.Instance.Label("work"))),
-      applied = MergeApplyResult.Applied(true),
+      applied = MergeApplyResult.Applied.Applied,
       MergeApplyResult.PlanHash("abc123"),
       notes = List(MergeApplyResult.Notes("a note"))
     )

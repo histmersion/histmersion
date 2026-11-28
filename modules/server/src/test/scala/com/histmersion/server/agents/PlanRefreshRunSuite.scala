@@ -253,7 +253,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
             PlanQuota.Reading.Kind("five_hour"),
             PlanQuota.Reading.UsedPct(70),
             Some(Reading.ResetsAt(now() + 3 * 3600000L)),
-            rejected = PlanQuota.Reading.Rejected(false),
+            rejected = PlanQuota.Reading.Rejected.Accepted,
             Reading.ObservedAt(now() - 60 * Min),
             PlanQuota.Source.Run
           )
@@ -274,7 +274,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(Map(Plan -> plan, Paid -> paid), reads); seed(h)
     staleReading()
     assert(
-      !a.models.chains.find(_.role.value == "extractor").get.models.head.usable.value,
+      !a.models.chains.find(_.role.value == "extractor").get.models.head.usable.usable,
       "looking does not refresh: paused on the stale reading"
     )
     assertEquals(reads.probes.get(), 0)
@@ -299,7 +299,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       (pool.refreshesToday, pool.lastRefresh.map(r => (r.trigger, r.mode, r.ok))),
       (1, Some(("pick", "probe", true)))
     )
-    assert(pool.windows.forall(w => w.source.value == "probe" && !w.stale.value), pool.windows)
+    assert(pool.windows.forall(w => w.source.value == "probe" && !w.stale.stale), pool.windows)
     assert(AgentsMarkdown.pool(pool).contains("refreshed once today"), AgentsMarkdown.pool(pool))
 
   test("#989: below its floor on a FRESH reading the run pauses with no refresh; a hold is never refreshed away"):
@@ -313,7 +313,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           PlanQuota.Reading.Kind("five_hour"),
           PlanQuota.Reading.UsedPct(90),
           Some(Reading.ResetsAt(now() + 3600000L)),
-          PlanQuota.Reading.Rejected(false),
+          PlanQuota.Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
           PlanQuota.Source.Run
         )
@@ -321,7 +321,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     )
     val run = startAndRun(a)
     assert(run.status.value == "paused" && run.error.exists(_.sentence.startsWith("plan-quota:")), run.error)
-    a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold(true))))
+    a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold.Hold)))
       .left
       .map(Api.Error(_))
     connect(ds)(sql"UPDATE plan_quota_readings SET observed_at = now() - interval '1 hour'".update.run())
@@ -452,7 +452,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
             PlanQuota.Reading.Kind("five_hour"),
             PlanQuota.Reading.UsedPct(40),
             Some(Reading.ResetsAt(now() + 3600000L)),
-            rejected = PlanQuota.Reading.Rejected(false),
+            rejected = PlanQuota.Reading.Rejected.Accepted,
             Reading.ObservedAt(at.plusSeconds(300 * 60).toEpochMilli),
             PlanQuota.Source.Run
           )
@@ -531,7 +531,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           PlanQuota.Reading.Kind("five_hour"),
           PlanQuota.Reading.UsedPct(10),
           Some(Reading.ResetsAt(now() + 3600000L)),
-          PlanQuota.Reading.Rejected(false),
+          PlanQuota.Reading.Rejected.Accepted,
           Reading.ObservedAt(now() - Min),
           PlanQuota.Source.Run
         )
@@ -542,7 +542,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       a.picker.cool(Plan, Some(java.time.Instant.ofEpochMilli(since + 6 * 86400000L)), PlanQuotaRepo.EpochMillis(since))
     val head = a.models.chains.find(_.role.value == "extractor").get.models.head
     assert(
-      !head.usable.value && head.cooling.value && head.problems.exists(_.sentence.contains(ModelPicker.CoolingWhy)),
+      !head.usable.usable && head.cooling.cooling && head.problems.exists(_.sentence.contains(ModelPicker.CoolingWhy)),
       head
     )
     val listed = AgentsMarkdown.roleChain(a.models.chains.find(_.role.value == "extractor").get)
@@ -563,13 +563,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
           PlanQuota.Reading.Kind("five_hour"),
           PlanQuota.Reading.UsedPct(99),
           Some(Reading.ResetsAt(now() + 3600000L)),
-          PlanQuota.Reading.Rejected(false),
+          PlanQuota.Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
           PlanQuota.Source.Run
         )
       )
     )
-    assert(a.models.chains.find(_.role.value == "extractor").get.models.head.cooling.value)
+    assert(a.models.chains.find(_.role.value == "extractor").get.models.head.cooling.cooling)
     // the person reset the plan: `agent quota refresh claude-plan` reads 0% used — the model is back
     Thread.sleep(5)
     val refreshed = a
@@ -619,18 +619,20 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reads.probes.get(), 0)
     val pool = a.quota.plans.find(_.pool.value == "claude-plan").get
     assert(
-      !pool.available.value && !pool.usable.value && pool.reason.exists(w => s"$w".startsWith("unavailable: no login")),
+      !pool.available.available && !pool.usable.usable && pool.reason.exists(w =>
+        s"$w".startsWith("unavailable: no login")
+      ),
       pool
     )
     assert(AgentsMarkdown.pool(pool).contains("**unavailable: no login"), AgentsMarkdown.pool(pool))
     val entry = a.models.chains.find(_.role.value == "extractor").get.models.head
-    assert(!entry.usable.value && entry.problems.exists(_.sentence.contains("no login")), entry)
+    assert(!entry.usable.usable && entry.problems.exists(_.sentence.contains("no login")), entry)
     val forced = a
       .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
-    assert(!forced.pools.head.refreshed.value && forced.pools.head.detail.value.contains("no login"), forced)
+    assert(!forced.pools.head.refreshed.refreshed && forced.pools.head.detail.value.contains("no login"), forced)
     assertEquals(reads.probes.get(), 0)
     // logged in with an API key where the plan is wanted is no plan login either
     reads.auth = """{"loggedIn":true,"authMethod":"api_key"}"""
@@ -665,7 +667,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
             PlanQuota.Reading.Kind("300m"),
             PlanQuota.Reading.UsedPct(72),
             Some(Reading.ResetsAt(now() + 3600000L)),
-            rejected = PlanQuota.Reading.Rejected(false),
+            rejected = PlanQuota.Reading.Rejected.Accepted,
             Reading.ObservedAt(now() - 60 * Min),
             PlanQuota.Source.AppServer
           )
@@ -687,7 +689,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val (v, states, r) = pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)
     assertEquals((v.usable, r.map(x => (x.mode, x.ok))), (true, Some(("app-server", true))))
     assertEquals(reads.codexReads.get(), 1)
-    assert(states.forall(s => !s.stale.value && s.reading.source == PlanQuota.Source.AppServer), states)
+    assert(states.forall(s => !s.stale.stale && s.reading.source == PlanQuota.Source.AppServer), states)
     // opencode on the ChatGPT login signs in by itself: the codex login does not gate it
     assertEquals(
       PlanPools.loginGates(PoolId.ChatgptPlan, ModelRef(ProviderKind.Opencode, Agents.ModelRef.Model("openai/gpt-5"))),

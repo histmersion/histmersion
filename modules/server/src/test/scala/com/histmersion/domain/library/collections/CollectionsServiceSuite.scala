@@ -116,10 +116,10 @@ class CollectionsServiceSuite extends munit.FunSuite:
     val pushedIds = scala.collection.mutable.ListBuffer.empty[(Citekey, Source.CalibreId)]
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def pushMeta(citekey: domain.library.Citekey) =
-      Right(gap(Citekey(citekey.value), Some(CalibreGap.StoredOriginal(true)), id = Some(Source.CalibreId("2"))))
+      Right(gap(Citekey(citekey.value), Some(CalibreGap.StoredOriginal.Stored), id = Some(Source.CalibreId("2"))))
     override def pushed(req: CalibrePushRequest) =
       pushedIds += req.citekey -> req.calibreId;
-      Right(CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
+      Right(CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok.Ok))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
     override def original(citekey: domain.library.Citekey) =
@@ -136,10 +136,10 @@ class CollectionsServiceSuite extends munit.FunSuite:
       CalibreGaps(
         CalibreGaps.Count(4),
         List(
-          gap(Citekey("zz_a"), Some(CalibreGap.StoredOriginal(true))),
-          gap(Citekey("zz_b"), Some(CalibreGap.StoredOriginal(false))),
+          gap(Citekey("zz_a"), Some(CalibreGap.StoredOriginal.Stored)),
+          gap(Citekey("zz_b"), Some(CalibreGap.StoredOriginal.Missing)),
           gap(Citekey("zz_c"), None),
-          gap(Citekey("zz_d"), Some(CalibreGap.StoredOriginal(true)), CalibreGap.Provenance("calibre"))
+          gap(Citekey("zz_d"), Some(CalibreGap.StoredOriginal.Stored), CalibreGap.Provenance("calibre"))
         )
       )
 

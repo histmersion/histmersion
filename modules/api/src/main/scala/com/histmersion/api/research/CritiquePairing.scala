@@ -12,6 +12,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 object CritiquePairing:
   object Instruction:
@@ -42,7 +43,7 @@ object CritiquePairing:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def line: String =
       (s"paragraph \"$where\" names $named and cites [[$cited]] (${edges.mkString("; ")}) but not [[$missing]] — " +
-        (if (mechanical).value then s"cite [[$missing]] there (fixable)"
+        (if (mechanical).mechanical then s"cite [[$missing]] there (fixable)"
          else
            s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)"))
 
@@ -56,8 +57,10 @@ object CritiquePairing:
     type Edges = Edges.T
     object Edges extends Newtype[String, Pure]
     export Work.Names as Named
-    type Mechanical = Mechanical.T
-    object Mechanical extends Newtype[Boolean, Pure]
+    enum Mechanical derives CanEqual:
+      case Mechanical, Judged
+    object Mechanical extends TwoStates[Mechanical]:
+      extension (mechanical: Mechanical) def mechanical: Boolean = mechanical == Mechanical
 
   private def letters(s: String): String =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
@@ -160,7 +163,8 @@ object CritiquePairing:
           y,
           cs.flatMap(_._3).distinct.map(edgeLine),
           n,
-          mechanical = Hit.Mechanical(citedAnywhere(y) && (m == Mention.Strong || !shared))
+          mechanical = (if citedAnywhere(y) && (m == Mention.Strong || !shared) then Hit.Mechanical.Mechanical
+                        else Hit.Mechanical.Judged)
         )
       }
     }
@@ -169,7 +173,7 @@ object CritiquePairing:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def repair(body: Article.Body, hs: List[Hit]): (Article.Body, List[Hit]) =
     val todo = hs
-      .filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical(true))))
+      .filter((refactorCallback => ((refactorCallback.mechanical) == Hit.Mechanical.Mechanical)))
       .groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else

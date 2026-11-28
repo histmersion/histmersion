@@ -62,7 +62,7 @@ object MyLibrary:
       cls("is-hidden") <-- shown.map(!_),
       aria.label := "My library",
       shown.changes.filter(identity) --> (_ => refresh()),
-      MyItems.marks.signal.map(_.values.count(_.read.value)).changes --> (_ => if onList(Router.now()) then refresh()),
+      MyItems.marks.signal.map(_.values.count(_.read.read)).changes --> (_ => if onList(Router.now()) then refresh()),
       onMountCallback(_ => if onList(Router.now()) then refresh()),
       h2(cls := "my-library-title", "My library"),
       Shelf.values.toList.map { s =>

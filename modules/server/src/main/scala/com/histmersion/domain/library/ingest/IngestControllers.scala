@@ -344,7 +344,7 @@ final class IngestControllers(
   )
   private def duplicate(sha: Sha256, citekey: Citekey, force: Ingest.Params.Force): Either[Api.Error, Unit] =
     sources.holderOf(sha) match
-      case Some(other) if other != citekey && !force.value =>
+      case Some(other) if other != citekey && !force.force =>
         Left(
           error(
             Problem.Conflict.Held(

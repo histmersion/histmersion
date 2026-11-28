@@ -32,9 +32,9 @@ object GapOriginal:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def row(g: CalibreGap): CollectionGapRow =
     val original = g.storedOriginal match
-      case Some(stored) if stored.value => Stored
-      case Some(_)                      => Missing
-      case None                         => Unknown
+      case Some(stored) if stored.storedOriginal => Stored
+      case Some(_)                               => Missing
+      case None                                  => Unknown
     val inCalibre = g.calibreId.exists(_.value.trim.nonEmpty) ||
       g.provenance.exists(_.value.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
     CollectionGapRow(
@@ -49,7 +49,10 @@ object GapOriginal:
       g.provenance.map(p => CollectionGapRow.Provenance(p.value)),
       g.calibreId,
       g.isbn.map(i => CollectionGapRow.Isbn(i.value)),
-      g.storedOriginal.map(s => CollectionGapRow.StoredOriginal(s.value)),
+      g.storedOriginal.map(s =>
+        (if s.storedOriginal then CollectionGapRow.StoredOriginal.Stored else CollectionGapRow.StoredOriginal.Missing)
+      ),
       CollectionGapRow.Original(original.label.value),
-      counted = CollectionGapRow.Counted(original != Missing && !inCalibre)
+      counted = (if original != Missing && !inCalibre then CollectionGapRow.Counted.Counted
+                 else CollectionGapRow.Counted.Uncounted)
     )

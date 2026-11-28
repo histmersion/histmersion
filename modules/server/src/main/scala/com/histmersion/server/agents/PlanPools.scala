@@ -130,7 +130,7 @@ final class PlanPools(
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
-      PoolStatus.Held(pool.held.value),
+      (if pool.held.value then PoolStatus.Held.Held else PoolStatus.Held.Released),
       pool.refusal.map(r =>
         PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
       ),
@@ -156,7 +156,7 @@ final class PlanPools(
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
-      PoolStatus.Held(pool.held.value),
+      (if pool.held.value then PoolStatus.Held.Held else PoolStatus.Held.Released),
       pool.refusal.map(r =>
         PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
       ),
@@ -473,10 +473,10 @@ final class PlanPools(
       .getOrElse(Source.Mod)
     record(PoolId.ClaudePlan, PlanPools.modReadings(report.rateLimits, src, now))
     verdict(PoolId.ClaudePlan, None, now)._1 match
-      case Verdict.Usable(_)           => GuardAnswer(allow = GuardAnswer.Allow(true))
+      case Verdict.Usable(_)           => GuardAnswer(allow = GuardAnswer.Allow.Allow)
       case Verdict.Blocked(why, until) =>
         GuardAnswer(
-          allow = GuardAnswer.Allow(false),
+          allow = GuardAnswer.Allow.Deny,
           Some(why),
           until.map(u => GuardAnswer.ResetsAt(java.time.Instant.ofEpochMilli(u.value).toString))
         )
@@ -506,8 +506,8 @@ final class PlanPools(
           s.reading.usedPct,
           s.leftPct,
           s.floor,
-          WindowStatus.Usable(s.usable.value),
-          WindowStatus.Stale(s.stale.value),
+          (if s.usable.usable then WindowStatus.Usable.Usable else WindowStatus.Usable.Unusable),
+          (if s.stale.stale then WindowStatus.Stale.Stale else WindowStatus.Stale.Fresh),
           s.reading.resetsAt.map(r => WindowStatus.ResetsAt(iso(r.value))),
           WindowStatus.ObservedAt(iso(s.reading.observedAt.value)),
           WindowStatus.AgeSeconds(math.max(0L, (now.value - s.reading.observedAt.value) / 1000)),
@@ -532,15 +532,15 @@ final class PlanPools(
         covers(p),
         PoolStatus.Floors(f.text.value),
         src,
-        PoolStatus.Held(pool.held.value),
-        PoolStatus.Usable(ok),
+        (if pool.held.value then PoolStatus.Held.Held else PoolStatus.Held.Released),
+        (if ok then PoolStatus.Usable.Usable else PoolStatus.Usable.Unusable),
         why.map(text => PlanQuota.Rationale(s"$text")),
         until.map(PoolStatus.Until(_)),
         PoolStatus.MaxCallsInFlight(math.max(1, poolCfg(p)._2)),
         ws,
         pool.planType.map(t => PoolStatus.PlanType(t.value)),
         (problem.toList ++ modeProblem).map(_.sentence).reduceOption[String](_ + "; " + _).map(PoolStatus.Note(_)),
-        available = PoolStatus.Available(missing.isEmpty),
+        available = (if missing.isEmpty then PoolStatus.Available.Available else PoolStatus.Available.Unavailable),
         login = Some(
           PoolStatus.Login(
             lg match
@@ -721,7 +721,7 @@ object PlanPools:
                 Reading.Kind("usage_limit"),
                 Reading.UsedPct(100),
                 Some(Reading.ResetsAt(until)),
-                rejected = Reading.Rejected(true),
+                rejected = Reading.Rejected.Rejected,
                 Reading.ObservedAt(now.value),
                 Source.Probe
               )
@@ -758,7 +758,7 @@ object PlanPools:
                 .setScale(1, java.math.RoundingMode.HALF_UP)
                 .stripTrailingZeros
                 .toPlainString
-            s"$name $pct% used${if r.rejected.value then " (refused)" else ""}"
+            s"$name $pct% used${if r.rejected.rejected then " (refused)" else ""}"
           }
           .mkString(", ")
       )
@@ -784,7 +784,8 @@ object PlanPools:
           Reading.Kind(kind),
           Reading.UsedPct(u * 100),
           w.cursor.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
-          rejected = Reading.Rejected(status.contains("rejected") && repKind.contains(kind)),
+          rejected = (if status.contains("rejected") && repKind.contains(kind) then Reading.Rejected.Rejected
+                      else Reading.Rejected.Accepted),
           Reading.ObservedAt(now.value),
           source
         )
@@ -802,7 +803,7 @@ object PlanPools:
               Reading.Kind(kind),
               Reading.UsedPct(used.getOrElse(100.0)),
               repReset,
-              rejected = Reading.Rejected(true),
+              rejected = Reading.Rejected.Rejected,
               Reading.ObservedAt(now.value),
               source
             )
@@ -815,7 +816,7 @@ object PlanPools:
                 Reading.Kind(kind),
                 Reading.UsedPct(u),
                 repReset,
-                rejected = Reading.Rejected(false),
+                rejected = Reading.Rejected.Accepted,
                 Reading.ObservedAt(now.value),
                 source
               )
@@ -835,7 +836,7 @@ object PlanPools:
         Reading.Kind(w.kind.value),
         w.percentUsed,
         reset,
-        rejected = Reading.Rejected(false),
+        rejected = Reading.Rejected.Accepted,
         Reading.ObservedAt(now.value),
         source
       )
@@ -874,7 +875,7 @@ object PlanPools:
           Reading.Kind(s"${mins}m"),
           Reading.UsedPct(used),
           wc.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
-          rejected = Reading.Rejected(reached),
+          rejected = (if reached then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
           Reading.ObservedAt(now.value),
           Source.AppServer,
           model.map(Reading.Model(_))

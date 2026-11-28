@@ -227,7 +227,7 @@ class PlacesSuite extends munit.FunSuite:
     Some(Year(-930)),
     Some(Place.Source("Carta Bible Atlas")),
     Place.Summary.Names("Israel, Yisrael"),
-    contested = Place.Summary.Contested(true)
+    contested = Place.Summary.Contested.Contested
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hatti =
@@ -239,7 +239,7 @@ class PlacesSuite extends munit.FunSuite:
       Some(Year(-1180)),
       None,
       Place.Summary.Names("Hatti"),
-      contested = Place.Summary.Contested(true)
+      contested = Place.Summary.Contested.Contested
     )
 
   test("a disputed extent is marked wherever its label is drawn"):
@@ -276,7 +276,7 @@ class PlacesSuite extends munit.FunSuite:
           hatti.names,
           None,
           Place.Hit.Findings(44),
-          contested = Place.Hit.Contested(true)
+          contested = Place.Hit.Contested.Contested
         )
       )
     )
@@ -310,7 +310,7 @@ class PlacesSuite extends munit.FunSuite:
           Place.TreeRow.Kind(Place.Kind.Polity),
           Place.TreeRow.Depth(2),
           Place.TreeRow.Findings(44),
-          contested = Place.TreeRow.Contested(true)
+          contested = Place.TreeRow.Contested.Contested
         )
       )
     )
@@ -337,7 +337,7 @@ class PlacesSuite extends munit.FunSuite:
         List(turkey),
         Place.Counts.Findings(5),
         Some(Year(-1000)),
-        contested = Place.Entry.Contested(true)
+        contested = Place.Entry.Contested.Contested
       ),
       Vector(
         Place
@@ -347,7 +347,7 @@ class PlacesSuite extends munit.FunSuite:
             Place.TreeRow.Kind(Place.Kind.Polity),
             Place.TreeRow.Depth(0),
             Place.TreeRow.Findings(5),
-            Place.TreeRow.Contested(true)
+            Place.TreeRow.Contested.Contested
           )
       )
     )
@@ -367,7 +367,7 @@ class PlacesSuite extends munit.FunSuite:
         Nil,
         Place.Counts.Findings(44),
         None,
-        contested = Place.Entry.Contested(true),
+        contested = Place.Entry.Contested.Contested,
         footprints = List(
           Place.Footprint(
             Place.Footprint.Id(1),
@@ -398,7 +398,7 @@ class PlacesSuite extends munit.FunSuite:
         types = List(
           Place.Type(Place.Id("hatti_lba"), Place.Type.TypeLabel("polity"), Some(Period(Year(-1400), Year(-1180))))
         ),
-        hasBoundary = Place.Entry.HasBoundary(true)
+        hasBoundary = Place.Entry.HasBoundary.Bounded
       )
     )
     assert(md.contains("**Footprints (2)**"), md)

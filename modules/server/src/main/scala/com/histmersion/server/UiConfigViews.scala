@@ -41,7 +41,7 @@ object UiConfigViews:
       plugins: PluginsReport,
       baseMapSource: UiConfig.BaseMapSource,
       mapLanguage: UiConfig.MapLanguage,
-      setupDue: UiConfig.SetupDue = UiConfig.SetupDue(false),
+      setupDue: UiConfig.SetupDue = UiConfig.SetupDue.SetUp,
       buildId: BuildId = BuildId("")
   ): UiConfig =
     ui.into[UiConfig]

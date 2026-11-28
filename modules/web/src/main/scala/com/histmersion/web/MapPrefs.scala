@@ -17,6 +17,7 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 /** A viewer's options over the vector styles ([[BaseMaps]]): names on or off, their language, the contours (Physical),
   * the sea's depth in each style (`depthPhysical`, `depthReadable`). `None`: the default (names on, English — or
@@ -34,35 +35,50 @@ final case class MapPrefs(
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaDepth(style: VectorStyle): Boolean = style match
-    case VectorStyle.Physical => depthPhysical.fold(MapPrefs.depthByDefault(style))(_.value)
-    case VectorStyle.Readable => depthReadable.fold(MapPrefs.depthByDefault(style))(_.value)
+    case VectorStyle.Physical => depthPhysical.fold(MapPrefs.depthByDefault(style))(_.shown)
+    case VectorStyle.Readable => depthReadable.fold(MapPrefs.depthByDefault(style))(_.shown)
 
   /** The viewer's choice of the depth in `style`; the style's default is kept as no choice. Pure. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def withSeaDepth(style: VectorStyle, on: MapPrefs.SeaDepth): MapPrefs =
-    val v = Option.when(on.value != MapPrefs.depthByDefault(style))(on.value)
+    val v = Option.when(on.shown != MapPrefs.depthByDefault(style))(on.shown)
     style match
-      case VectorStyle.Physical => this.modify(_.depthPhysical).setTo(v.map(MapPrefs.DepthPhysical(_)))
-      case VectorStyle.Readable => this.modify(_.depthReadable).setTo(v.map(MapPrefs.DepthReadable(_)))
+      case VectorStyle.Physical =>
+        this
+          .modify(_.depthPhysical)
+          .setTo(v.map((if _ then MapPrefs.DepthPhysical.Shown else MapPrefs.DepthPhysical.Hidden)))
+      case VectorStyle.Readable =>
+        this
+          .modify(_.depthReadable)
+          .setTo(v.map((if _ then MapPrefs.DepthReadable.Shown else MapPrefs.DepthReadable.Hidden)))
 
 object MapPrefs:
-  type SeaDepth = SeaDepth.T
-  object SeaDepth extends Newtype[Boolean, Pure]
+  enum SeaDepth derives CanEqual:
+    case Shown, Hidden
+  object SeaDepth extends TwoStates[SeaDepth]:
+    extension (seaDepth: SeaDepth) def shown: Boolean = seaDepth == Shown
 
   /** Physical is the map of the land's form, its sea coloured by depth; Readable keeps OSM Carto's flat water unless
     * the viewer asks for the depth.
     */
-
-  type Names = Names.T
-  object Names extends Newtype[Boolean, Pure]
+  enum Names derives CanEqual:
+    case Shown, Hidden
+  object Names extends TwoStates[Names]:
+    extension (names: Names) def shown: Boolean = names == Shown
   type Language = Language.T
   object Language extends Newtype[String, Pure]
-  type Contours = Contours.T
-  object Contours extends Newtype[Boolean, Pure]
-  type DepthPhysical = DepthPhysical.T
-  object DepthPhysical extends Newtype[Boolean, Pure]
-  type DepthReadable = DepthReadable.T
-  object DepthReadable extends Newtype[Boolean, Pure]
+  enum Contours derives CanEqual:
+    case Shown, Hidden
+  object Contours extends TwoStates[Contours]:
+    extension (contours: Contours) def shown: Boolean = contours == Shown
+  enum DepthPhysical derives CanEqual:
+    case Shown, Hidden
+  object DepthPhysical extends TwoStates[DepthPhysical]:
+    extension (depthPhysical: DepthPhysical) def shown: Boolean = depthPhysical == Shown
+  enum DepthReadable derives CanEqual:
+    case Shown, Hidden
+  object DepthReadable extends TwoStates[DepthReadable]:
+    extension (depthReadable: DepthReadable) def shown: Boolean = depthReadable == Shown
 
   def depthByDefault(style: VectorStyle): Boolean = style == VectorStyle.Physical
 

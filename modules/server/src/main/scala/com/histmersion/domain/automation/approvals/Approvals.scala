@@ -147,9 +147,9 @@ final class Approvals(
         )
       )
       out <- a.approvalKind match
-        case Some(k) if k.blocking.value => decideBlocking(a, d, clean)
-        case Some(k) if k.aboutSubject   => decideSubject(a, k, d, clean)
-        case _                           => decideSource(id, d, clean)
+        case Some(k) if k.blocking.blocking => decideBlocking(a, d, clean)
+        case Some(k) if k.aboutSubject      => decideSubject(a, k, d, clean)
+        case _                              => decideSource(id, d, clean)
     yield out
 
   /** A proposal about an article or a goal that no run waits for (managers, phase 2): an inferred coverage filter is

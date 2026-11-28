@@ -69,7 +69,7 @@ class CandidatesSuite extends munit.FunSuite:
       CandidateDedupe.FoundBy("openalex citing 10.9999/z") -> w("10.1234/a"),
       CandidateDedupe.FoundBy("openalex query \"x\"") -> WorkRef(title = (Some("no doi")).map(Title.apply)),
       CandidateDedupe
-        .FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(WorkRef.IsRetracted(true)),
+        .FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(WorkRef.IsRetracted.Retracted),
       CandidateDedupe.FoundBy("europepmc query \"x\"") -> w("10.1234/known"),
       CandidateDedupe.FoundBy("arxiv query \"x\"") -> WorkRef(
         arxivId = Some(Source.Candidate.ArxivId("2401.00001")),
@@ -107,7 +107,7 @@ class CandidatesSuite extends munit.FunSuite:
         year = (Some(2026)).map(Year.apply),
         authors = (List("Doe J", "Roe K")).map(AuthorName.apply),
         venue = (Some("J Arch")).map(Source.Venue.apply),
-        isOa = WorkRef.IsOa(true),
+        isOa = WorkRef.IsOa.OpenAccess,
         abstractText = Some(Source.Candidate.AbstractText("Text"))
       )
     )
@@ -128,7 +128,7 @@ class CandidatesSuite extends munit.FunSuite:
           year = (Some(2026)).map(Year.apply),
           authors = (List("A B")).map(AuthorName.apply),
           venue = (Some("P")).map(Source.Venue.apply),
-          isOa = WorkRef.IsOa(true)
+          isOa = WorkRef.IsOa.OpenAccess
         )
       )
     )
@@ -150,7 +150,7 @@ class CandidatesSuite extends munit.FunSuite:
           year = (Some(2026)).map(Year.apply),
           authors = (List("Ann Lee", "Bo Ng")).map(AuthorName.apply),
           venue = (Some("arXiv")).map(Source.Venue.apply),
-          isOa = WorkRef.IsOa(true),
+          isOa = WorkRef.IsOa.OpenAccess,
           abstractText = Some(Source.Candidate.AbstractText("About it."))
         )
       )
@@ -175,7 +175,7 @@ class CandidatesSuite extends munit.FunSuite:
       (List("Ann", "Bo")).map(AuthorName.apply),
       (Some("J")).map(Source.Venue.apply),
       Some(Source.Candidate.AbstractText("abs")),
-      isOa = Source.Candidate.IsOa(true),
+      isOa = Source.Candidate.IsOa.OpenAccess,
       foundBy = List(Source.Candidate.FoundBy("openalex query \"x\"")),
       firstSeen = Source.Candidate.FirstSeen("2026-10-24T10:00:00Z")
     )

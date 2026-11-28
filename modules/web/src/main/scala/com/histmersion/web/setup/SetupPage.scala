@@ -54,11 +54,15 @@ object SetupPage:
       email = SetupChoices.Email(text("acquire.contact-email").getOrElse("")),
       finders = FindersSection
         .finders(ui)
-        .map(f => SetupChoices.FindersKey(f.id.value) -> SetupChoices.FindersValue(f.enabled.value))
+        .map(f =>
+          SetupChoices.FindersKey(f.id.value) -> (if f.enabled.enabled then SetupChoices.FindersValue.On
+                                                  else SetupChoices.FindersValue.Off)
+        )
         .toMap,
       area = text("basemap.bbox").orElse(Some("world")).map(SetupChoices.Area(_)),
       start = ui.mapStart,
-      agents = SetupChoices.Agents(text("agents.enabled").exists(a => Draft.isOn(Draft.Text(a)))),
+      agents = (if text("agents.enabled").exists(a => Draft.isOn(Draft.Text(a))) then SetupChoices.Agents.On
+                else SetupChoices.Agents.Off),
       calibre = SetupChoices.Calibre(text("cli.calibre.library-dir").getOrElse(""))
     )
 
@@ -265,7 +269,7 @@ object SetupPage:
   private def startDownload(d: SetupDownload): Future[String] = d match
     case SetupDownload.Map(area) =>
       ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(BBox.Text(area.value)))).map(_ => "started")
-    case SetupDownload.Boundaries => ApiClient.initData(fetch = Api.Overwrite(true)).map(_ => "started")
+    case SetupDownload.Boundaries => ApiClient.initData(fetch = Api.Fetching.Fetch).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient
         .eventCatalogues()
@@ -353,13 +357,17 @@ object SetupPage:
                   "",
                   choices.signal.map(
                     _.finders
-                      .getOrElse(SetupChoices.FindersKey(f.id.value), SetupChoices.FindersValue(f.enabled.value))
-                      .value
+                      .getOrElse(
+                        SetupChoices.FindersKey(f.id.value),
+                        (if f.enabled.enabled then SetupChoices.FindersValue.On else SetupChoices.FindersValue.Off)
+                      )
+                      .on
                   ),
                   b =>
                     choices.update(c =>
                       c.modify(_.finders)
-                        .using(_ + (SetupChoices.FindersKey(f.id.value) -> SetupChoices.FindersValue(b)))
+                        .using(_ + (SetupChoices.FindersKey(f.id.value) -> (if b then SetupChoices.FindersValue.On
+                                                                            else SetupChoices.FindersValue.Off)))
                     )
                 )
               )
@@ -416,26 +424,34 @@ object SetupPage:
             check(
               SetupDownload.Boundaries.label.value,
               "Borders of states through time, and the periods of the timeline.",
-              choices.signal.map(_.boundaries.value),
-              b => choices.update(_.modify(_.boundaries).setTo(SetupChoices.Boundaries(b)))
+              choices.signal.map(_.boundaries.on),
+              b =>
+                choices.update(_.modify(_.boundaries).setTo((if b then SetupChoices.Boundaries.On
+                                                             else SetupChoices.Boundaries.Off)))
             ),
             check(
               SetupDownload.Events.label.value,
               "From the Smithsonian's Global Volcanism Program and NOAA's catalogues.",
-              choices.signal.map(_.events.value),
-              b => choices.update(_.modify(_.events).setTo(SetupChoices.Events(b)))
+              choices.signal.map(_.events.on),
+              b =>
+                choices.update(_.modify(_.events).setTo((if b then SetupChoices.Events.On
+                                                         else SetupChoices.Events.Off)))
             ),
             check(
               SetupDownload.Pictures.label.value,
               "Pictures of the places on the map, each with its licence.",
-              choices.signal.map(_.pictures.value),
-              b => choices.update(_.modify(_.pictures).setTo(SetupChoices.Pictures(b)))
+              choices.signal.map(_.pictures.on),
+              b =>
+                choices.update(_.modify(_.pictures).setTo((if b then SetupChoices.Pictures.On
+                                                           else SetupChoices.Pictures.Off)))
             ),
             check(
               SetupDownload.MorePlaces.label.value,
               "Several gigabytes; more modern places to search for.",
-              choices.signal.map(_.morePlaces.value),
-              b => choices.update(_.modify(_.morePlaces).setTo(SetupChoices.MorePlaces(b)))
+              choices.signal.map(_.morePlaces.on),
+              b =>
+                choices.update(_.modify(_.morePlaces).setTo((if b then SetupChoices.MorePlaces.On
+                                                             else SetupChoices.MorePlaces.Off)))
             )
           )
         )
@@ -449,8 +465,9 @@ object SetupPage:
           check(
             "Run research agents on this server",
             "They start when the server is next restarted.",
-            choices.signal.map(_.agents.value),
-            b => choices.update(_.modify(_.agents).setTo(SetupChoices.Agents(b)))
+            choices.signal.map(_.agents.on),
+            b =>
+              choices.update(_.modify(_.agents).setTo((if b then SetupChoices.Agents.On else SetupChoices.Agents.Off)))
           )
         )
       case SetupStep.Calibre =>

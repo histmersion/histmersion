@@ -30,7 +30,7 @@ object PlacesMarkdown:
           h.matchedName.filter(!_.value.equalsIgnoreCase(h.label.value)).map(n => s" (matched “$n”)").getOrElse("")
         val src = h.source.map(s => s" · $s").getOrElse("")
         val meta = s"${kindWhen(h.toSummary)} · ${h.findings} finding(s)$src"
-        s"- **${h.label}**${contestedMark(h.contested.value, h.label.value)}$alt — `${h.id}`  \n  _${meta}_"
+        s"- **${h.label}**${contestedMark(h.contested.contested, h.label.value)}$alt — `${h.id}`  \n  _${meta}_"
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
@@ -42,7 +42,7 @@ object PlacesMarkdown:
     else
       rows
         .map { r =>
-          s"${"  " * r.depth.value}- **${r.label}**${contestedMark(r.contested.value, r.label.value)} `${r.id}`" +
+          s"${"  " * r.depth.value}- **${r.label}**${contestedMark(r.contested.contested, r.label.value)} `${r.id}`" +
             s" _(${r.kind}${if r.findings.value > 0 then s", ${r.findings} finding(s)" else ""})_"
         }
         .mkString("\n")
@@ -64,7 +64,7 @@ object PlacesMarkdown:
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
       val body = rows.map { r =>
         val file = r.file.fold("—")(f =>
-          s"`$f`" + (if (r.present) == Gazetteer.SourceInfo.Present(true) then "" else " (missing)")
+          s"`$f`" + (if (r.present) == Gazetteer.SourceInfo.Present.Present then "" else " (missing)")
         )
         val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.fold("")(_.value.take(10))})")
         val n = (x: Option[Int]) => x.fold("—")(_.toString)
@@ -78,10 +78,10 @@ object PlacesMarkdown:
   def placeNameChanged(r: Place.NameChanged): String =
     val lang = if r.lang.value.isEmpty then "" else s" (${r.lang})"
     val what =
-      if !((r.added) == Place.NameChanged.Added(true)) then s"removed the name **${r.name}**$lang from"
-      else if !((r.changed) == Place.NameChanged.Changed(true)) then
+      if !((r.added) == Place.NameChanged.Added.Added) then s"removed the name **${r.name}**$lang from"
+      else if !((r.changed) == Place.NameChanged.Changed.Changed) then
         s"**${r.name}**$lang was already a name added by hand to"
-      else if (r.wasImported) == Place.NameChanged.WasImported(true) then
+      else if (r.wasImported) == Place.NameChanged.WasImported.Imported then
         s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
       else s"added the name **${r.name}**$lang to"
     (s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed")
@@ -110,7 +110,7 @@ object PlacesMarkdown:
       case (_, _, Some(c), Some(d)) => s", point ${Place.Overrides.pointText(c, d)}"
       case _                        => ""
     val head =
-      if (r.reset) == Place.OverrideChanged.Reset(true) then
+      if (r.reset) == Place.OverrideChanged.Reset.Reset then
         s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
       else s"set **${r.label}** `${r.placeId}`: $kind, $period$point — kept by every re-seed and re-import"
     val lost = if r.unlocated == Place.OverrideChanged.Unlocated(0) then ""
@@ -137,7 +137,7 @@ object PlacesMarkdown:
           val pt = for la <- r.lat; lo <- r.lon yield s"point ${Place.Overrides.pointText(la, lo)}"
           val set =
             r.kind.toList ++ Option
-              .when(((r.periodSet) == Place.Override.PeriodSet(true)))(
+              .when(((r.periodSet) == Place.Override.PeriodSet.PeriodSet))(
                 Place.Overrides.periodText(r.periodStart, r.periodEnd)
               )
               .toList ++
@@ -173,7 +173,7 @@ object PlacesMarkdown:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
     val p = d.place
-    val header = s"# ${p.label}${contestedMark(d.contested.value || p.contested.value, p.label.value)}" +
+    val header = s"# ${p.label}${contestedMark(d.contested.contested || p.contested.contested, p.label.value)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
@@ -194,7 +194,7 @@ object PlacesMarkdown:
       if xs.isEmpty then ""
       else
         s"\n\n**$title**\n" +
-          xs.map(x => s"- ${x.label}${contestedMark(x.contested.value, x.label.value)} `${x.id}` _(${x.kind})_")
+          xs.map(x => s"- ${x.label}${contestedMark(x.contested.contested, x.label.value)} `${x.id}` _(${x.kind})_")
             .mkString("\n")
     val fps = if d.footprints.isEmpty then ""
     else

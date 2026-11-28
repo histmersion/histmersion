@@ -6,16 +6,19 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class MergeImportRequest(
     bundle: MergeImportRequest.Bundle,
     resolutions: MergeResolutions = MergeResolutions(),
-    dryRun: MergeImportRequest.DryRun = MergeImportRequest.DryRun(false)
+    dryRun: MergeImportRequest.DryRun = MergeImportRequest.DryRun.Apply
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
 
 object MergeImportRequest:
   export api.exchange.Bundle.Name as Bundle
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Apply
+  object DryRun extends TwoStates[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun

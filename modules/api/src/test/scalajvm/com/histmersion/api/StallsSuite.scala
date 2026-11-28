@@ -32,7 +32,7 @@ class StallsSuite extends munit.FunSuite:
       code(
         base
           .modify(_.draining)
-          .setTo(Facts.Draining(true))
+          .setTo(Facts.Draining.Draining)
           .modify(_.approvals)
           .setTo(List(Facts.ApprovalId(1L) -> Facts.ApprovalKind("goal-plan")))
       ),
@@ -123,9 +123,11 @@ class StallsSuite extends munit.FunSuite:
     )
     assertEquals(code(base.modify(_.running).setTo(Facts.Running(1))), Code.Running)
     assertEquals(code(base.modify(_.lastStop).setTo(Some(Facts.LastStop("stopped: 3 failed runs")))), Code.Failed)
-    assertEquals(code(base.modify(_.noCandidates).setTo(Facts.NoCandidates(true))), Code.NoCandidates)
+    assertEquals(code(base.modify(_.noCandidates).setTo(Facts.NoCandidates.NoCandidates)), Code.NoCandidates)
     assertEquals(
-      code(base.modify(_.noCandidates).setTo(Facts.NoCandidates(true)).modify(_.sources).setTo(Facts.Sources(2))),
+      code(
+        base.modify(_.noCandidates).setTo(Facts.NoCandidates.NoCandidates).modify(_.sources).setTo(Facts.Sources(2))
+      ),
       Code.Idle,
       "it has sources: not a candidates problem"
     )

@@ -11,6 +11,7 @@ import java.sql.{PreparedStatement, ResultSet, SQLException, Types}
 import util.problem.Problem
 import util.nonempty.NonEmptyVector
 import util.json.RawJson
+import com.histmersion.api.TwoStates
 import util.json.RawJson.*
 import com.histmersion.api.json.NewtypeCodecs.{problemCodec, vector}
 import com.histmersion.lint.{atBoundary, BoundaryKind}
@@ -27,6 +28,9 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
 @atBoundary(BoundaryKind.Sql, "reads and writes a newtype column from its base type's codec")
 object NewtypeColumns:
+  given twoStates: [E <: reflect.Enum] => (states: TwoStates[E]) => DbCodec[E] =
+    summon[DbCodec[Boolean]].biMap(b => states.values(if b then 0 else 1), _.ordinal == 0)
+
   given column: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[m.BaseType]) => DbCodec[T] = new DbCodec[T]:
     val cols: IArray[Int] = base.cols
     def queryRepr: String = base.queryRepr

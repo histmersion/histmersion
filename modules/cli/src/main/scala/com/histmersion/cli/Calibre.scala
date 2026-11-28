@@ -162,11 +162,11 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
       apply: CollectionSync.Request.Apply
   ): Either[Problem, List[UpdateEntry]] =
     for
-      _ <- Either.cond(!apply.value || !guiRunning, (), GuiRunning)
+      _ <- Either.cond(!apply.applies || !guiRunning, (), GuiRunning)
       books <- all()
     yield Calibre.planAll(linked, books.map(b => b.id -> b).toMap).map { e =>
       e.outcome match
-        case UpdateOutcome.Change(cs) if apply.value =>
+        case UpdateOutcome.Change(cs) if apply.applies =>
           e.modify(_.outcome)
             .setTo(
               write(e.calibreId, cs)
@@ -585,7 +585,7 @@ object Calibre:
     val head =
       if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
       else
-        val verb = if applied.value then "updated" else "would change"
+        val verb = if applied.applied then "updated" else "would change"
         (List(
           shown"### ${changing.size} Calibre ${Plural.noun(Plural.Count(changing.size.toLong), Plural.Noun.Singular("entry"), Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
           "",
@@ -594,7 +594,7 @@ object Calibre:
         ) ++ rows).mkString("\n")
     val tail = if left.isEmpty then "" else s"\n\n**Left alone (${left.size})**\n\n${left.mkString("\n")}"
     val hint =
-      if !applied.value && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
+      if !applied.applied && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
     head + tail + hint
 
   /** The fields `calibre set` may write. Formats, covers and the file itself are Calibre's business. */
@@ -836,9 +836,9 @@ object Calibre:
         if local(g.citekey).isDefined then GapOriginal.Local
         else
           g.storedOriginal match
-            case Some(stored) if stored.value => GapOriginal.Stored
-            case Some(_)                      => GapOriginal.Missing
-            case None                         => GapOriginal.Unknown
+            case Some(stored) if stored.storedOriginal => GapOriginal.Stored
+            case Some(_)                               => GapOriginal.Missing
+            case None                                  => GapOriginal.Unknown
       val inCalibre = g.calibreId.exists(_.value.trim.nonEmpty) ||
         g.provenance.exists(_.value.trim.toLowerCase(java.util.Locale.ROOT) == "calibre")
       GapEntry(
@@ -1347,9 +1347,9 @@ object Calibre:
           g.provenance.map(x => Provenance(x.value)),
           g.calibreId,
           g.isbn.map(x => Isbn(x.value)),
-          g.storedOriginal.map(x => StoredOriginal(x.value)),
+          g.storedOriginal.map(x => if x.storedOriginal then StoredOriginal.Stored else StoredOriginal.Missing),
           Original(e.original.label.value),
-          Counted(e.counted.counts)
+          if e.counted.counts then Counted.Counted else Counted.Uncounted
         )
       def of(r: CollectionGapRow): GapRow =
         GapRow(

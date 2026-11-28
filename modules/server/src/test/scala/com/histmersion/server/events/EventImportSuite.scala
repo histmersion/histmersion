@@ -141,8 +141,8 @@ class EventImportSuite extends DbSuite:
   private val Gvp = CatalogRecord.Provider("gvp")
   private val Noaa = CatalogRecord.Provider("noaa")
   private val Wikidata = CatalogRecord.Provider("wikidata")
-  private val Dry = EventImportRequest.DryRun(true)
-  private val Wet = EventImportRequest.DryRun(false)
+  private val Dry = EventImportRequest.DryRun.DryRun
+  private val Wet = EventImportRequest.DryRun.Apply
   private val Hekla = BEventRow.Id("gvp_12724")
   private val Thera = BEventRow.Id("gvp_13879")
 
@@ -314,7 +314,7 @@ class EventImportSuite extends DbSuite:
         .run()
     val h = CatalogueWiring(deps(cfg), http)
     assertEquals(
-      h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = SiteTypes.Request.DryRun(true)), _ => ()).pending,
+      h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = SiteTypes.Request.DryRun.DryRun), _ => ()).pending,
       2
     )
     val r = h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ())
@@ -352,8 +352,8 @@ class EventImportSuite extends DbSuite:
       CatalogRecord.Provider("gvp"),
       EventImportRequest(
         EventImportRequest.Provider("gvp"),
-        dryRun = EventImportRequest.DryRun(false),
-        refresh = EventImportRequest.Refresh(true)
+        dryRun = EventImportRequest.DryRun.Apply,
+        refresh = EventImportRequest.Refresh.Refresh
       ),
       None,
       _ => ()
@@ -373,8 +373,8 @@ class EventImportSuite extends DbSuite:
         CatalogRecord.Provider("gvp"),
         EventImportRequest(
           EventImportRequest.Provider("gvp"),
-          dryRun = EventImportRequest.DryRun(false),
-          refresh = EventImportRequest.Refresh(true)
+          dryRun = EventImportRequest.DryRun.Apply,
+          refresh = EventImportRequest.Refresh.Refresh
         ),
         None,
         _ => ()

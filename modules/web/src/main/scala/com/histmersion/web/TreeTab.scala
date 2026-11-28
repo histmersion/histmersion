@@ -187,7 +187,7 @@ object TreeTab:
 
     val perStr = if b.kind.value == "time" then "" else Fmt.periodStr(b.start, b.end).value
 
-    val contestedStr = if b.contested.value && !b.label.value.toLowerCase.contains("contested") then " (contested)"
+    val contestedStr = if b.contested.contested && !b.label.value.toLowerCase.contains("contested") then " (contested)"
     else ""
 
     val alsoStr = if b.alsoUnder.nonEmpty then s" (also under ${b.alsoUnder.mkString(", ")})"

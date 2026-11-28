@@ -64,7 +64,7 @@ object LibraryRoutes:
           sources
             .markdown(
               ck,
-              SourcesControllers.MarkdownFullText(q.fullText.value),
+              SourcesControllers.MarkdownFullText(q.fullText.fullText),
               q.section,
               q.heading.map(h => SourceService.Heading(h.value)),
               q.offset.map(o => Offset.option(o.value).getOrElse(Offset.Start)),
@@ -78,7 +78,7 @@ object LibraryRoutes:
       Api.passages.serverLogic[Identity](q => sources.passages(q)),
       resolveId,
       Api.getSource.serverLogic[Identity]((ck, body) =>
-        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.value)).left.map(Api.Error(_)))
+        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.fullText)).left.map(Api.Error(_)))
       ),
       Api.findingsPage.serverLogicSuccess[Identity](q => findings.page(q)),
       Api.findings.serverLogicSuccess[Identity](q => findings.feed(q)),
@@ -95,11 +95,13 @@ object LibraryRoutes:
       seed,
       exportSource,
       Api.putSource.serverLogic[Identity]((ck, in, strict) =>
-        CreatorControllers.rest(in)(citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.value))))
+        CreatorControllers.rest(in)(
+          citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.strict)))
+        )
       ),
       Api.patchSource.serverLogic[Identity]((ck, p, strict) =>
         CreatorControllers.rest(p) {
-          citekey(ck).flatMap(sources.patch(_, p.patch, SourcesControllers.PatchStrict(strict.value)))
+          citekey(ck).flatMap(sources.patch(_, p.patch, SourcesControllers.PatchStrict(strict.strict)))
         }
       ),
       Api.renameSource.serverLogic[Identity]((ck, req) =>

@@ -259,7 +259,7 @@ class PluginMediaImportSuite extends DbSuite:
     val cfg = allowing("cc0,public-domain,cc-by,cc-by-nc,all-rights-reserved")
     val http = fake
     val r = handlers(cfg, http)
-      .importMedia(MediaImportRequest(Collection, dryRun = MediaImportRequest.DryRun(false), place = Some(PlaceId)))
+      .importMedia(MediaImportRequest(Collection, dryRun = MediaImportRequest.DryRun.Apply, place = Some(PlaceId)))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
     assert(
@@ -303,7 +303,7 @@ class PluginMediaImportSuite extends DbSuite:
         MediaProvider.Info.Over("places"),
         MediaProvider.Info.Description("A test fixture's collection"),
         PluginDescription.Id("zq-plugin"),
-        builtin = MediaProvider.Info.Builtin(false),
+        builtin = MediaProvider.Info.Builtin.Plugin,
         MediaProvider.Info.Licences(base.media.collections.licences.value)
       )
     )
@@ -351,7 +351,7 @@ class PluginMediaImportSuite extends DbSuite:
         assertEquals(ps.map(_.name).last, Collection)
         assert(
           ps.find(_.name == MediaItem.Provider("met"))
-            .exists(p => p.builtin.value && p.plugin == PluginDescription.Id("media-met")),
+            .exists(p => p.builtin.builtin && p.plugin == PluginDescription.Id("media-met")),
           ps.toString
         )
         assert(

@@ -736,7 +736,7 @@ object PluginHost:
       PluginStatus.Id(p.info.id.value),
       PluginStatus.Version(p.info.version.value),
       PluginStatus.SpiVersion(p.info.spiVersion.value),
-      PluginStatus.Enabled(enabled),
+      (if enabled then PluginStatus.Enabled.Enabled else PluginStatus.Enabled.Disabled),
       state.wire,
       provides,
       block.map(settings).getOrElse(Nil),

@@ -125,7 +125,7 @@ object CalibreCmd:
   private def linkedIds(c: Client): Either[Cli.Error, Set[Calibre.Book.Id]] =
     c.query(Query.Statement("SELECT DISTINCT calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$'")).flatMap { q =>
       Either.cond(
-        !q.truncated.value,
+        !q.truncated.truncated,
         q.rows.flatMap(_.headOption.flatten).flatMap(_.value.toIntOption).map(Calibre.Book.Id(_)).toSet,
         truncated
       )
@@ -154,8 +154,8 @@ object CalibreCmd:
         CollectionImportRequest.Id(id.value.toString),
         citekey,
         format,
-        CollectionImportRequest.Convert(!noConvert),
-        CollectionImportRequest.Cover(!json.asJson),
+        (if !noConvert then CollectionImportRequest.Convert.Convert else CollectionImportRequest.Convert.AsIs),
+        (if !json.asJson then CollectionImportRequest.Cover.Cover else CollectionImportRequest.Cover.NoCover),
         item.map(i => CollectionImportRequest.AcquireItem(i.value))
       )
     ).flatMap { res =>
@@ -166,7 +166,7 @@ object CalibreCmd:
           .foreach(prev => Cli.out.println(shown"Re-linked `${res.citekey}` from Calibre id $prev to $id"))
         Cli.out.println(shown"File (left in place, never modified): ${res.file}")
         res.cover.foreach(cv =>
-          if cv.warning.value then Cli.err.println(shown"warning: cover not stored — ${cv.line}")
+          if cv.warning.warning then Cli.err.println(shown"warning: cover not stored — ${cv.line}")
           else Cli.out.println(cv.line)
         )
       if noConvert then Right(())
@@ -255,8 +255,8 @@ object CalibreCmd:
             c,
             Path.of(file.value),
             ck,
-            quality = Ingest.Params.Quality(false),
-            force = Ingest.Params.Force(false),
+            quality = Ingest.Params.Quality.Fast,
+            force = Ingest.Params.Force.Safe,
             title = None,
             authors = Nil,
             year = None,
@@ -271,14 +271,14 @@ object CalibreCmd:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def importCover(c: Client, ck: Citekey, book: Calibre.Book)(using console: Console): Unit =
-    MediaCovers.one(c, ck, book, dryRun = RepairAcquire.RepairRequest.DryRun(false)) match
+    MediaCovers.one(c, ck, book, dryRun = RepairAcquire.RepairRequest.DryRun.Apply) match
       case MediaCovers.Outcome.Uploaded(_)             => Cli.out.println(s"Cover: from the Calibre library")
       case MediaCovers.Outcome.AskOpenLibrary(_, isbn) =>
         c.mediaCovers(
           MediaCoversRequest(
-            dryRun = RepairAcquire.RepairRequest.DryRun(false),
+            dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
             citekey = Some(ck),
-            illustrations = MediaCoversRequest.Illustrations(false),
+            illustrations = MediaCoversRequest.Illustrations.Skipped,
             isbn = Some(isbn)
           )
         ) match
@@ -303,7 +303,7 @@ object CalibreCmd:
     target match
       case ImportTarget.Update(_) =>
         for
-          current <- c.call(Api.getSource)((ck, Api.SourceViewQuery.FullText(false)))
+          current <- c.call(Api.getSource)((ck, Api.SourceViewQuery.FullText.SummaryOnly))
           res <- c.patchSource(
             ck,
             Source.Patch(
@@ -462,7 +462,7 @@ object CalibreCmd:
       q <- c.query(
         Query.Statement("SELECT citekey, calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey")
       )
-      _ <- Either.cond(!q.truncated.value, (), truncated)
+      _ <- Either.cond(!q.truncated.truncated, (), truncated)
       keys = q.rows.collect { case List(Some(ck), Some(id)) => Citekey(ck.value) -> id.value.toInt }
       recs <- keys.traverse((ck, id) =>
         AcquireClient(c)
@@ -496,7 +496,7 @@ object CalibreCmd:
             "FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey"
         )
       )
-      _ <- Either.cond(!q.truncated.value, (), truncated)
+      _ <- Either.cond(!q.truncated.truncated, (), truncated)
       recs = q.rows.flatMap {
         case List(Some(ck), Some(id), title, authors, year) =>
           Some(
@@ -547,14 +547,14 @@ object CalibreCmd:
       originals: Option[CalibreCliConfig.OriginalsDir] = Settings.app.cli.calibre.originals
   ): Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
-      if json.asJson && !apply.value then
+      if json.asJson && !apply.applies then
         Right(Output.emit(json, Calibre.Json.Gaps.of(entries))(_ => Calibre.markdownGaps(entries)))
       else
         val ready = entries.filter(_.counted.counts)
         val missing = entries.count(_.original == Calibre.GapOriginal.Missing)
         val note = if missing == 0 then "" else " · " + Calibre.uncountedLine(missing)
         if ready.nonEmpty then Cli.out.println(Calibre.markdownGaps(ready) + "\n")
-        if !apply.value then
+        if !apply.applies then
           Cli.out.println(
             s"Dry run: ${ready.size} source(s) would be pushed$note" +
               (if ready.nonEmpty then " Re-run with --apply." else "")
@@ -590,19 +590,22 @@ object CalibreCmd:
   )(using console: Console): Either[Cli.Error, Unit] =
     s.sync(
       CollectionSync
-        .Request(CollectionSync.Request.Apply(apply.value), limit.map(l => CollectionSync.Request.Limit(l.value)))
+        .Request(
+          (if apply.applies then CollectionSync.Request.Apply.Apply else CollectionSync.Request.Apply.DryRun),
+          limit.map(l => CollectionSync.Request.Limit(l.value))
+        )
     ).flatMap { r =>
-      if json.asJson && !apply.value then
+      if json.asJson && !apply.applies then
         Right(
           Output.emit(json, Calibre.Json.Gaps.of(r.gaps))(_ => CollectionsMarkdown.gaps(r.gaps.gaps))
         )
       else
-        val ready = r.gaps.gaps.filter(_.counted.value)
+        val ready = r.gaps.gaps.filter(_.counted.counted)
         val missing = r.gaps.gaps.count(_.original.value == "none")
         val note =
           if missing == 0 then "" else " · " + CollectionsMarkdown.uncountedLine(CollectionsMarkdown.Missing(missing))
         if ready.nonEmpty then Cli.out.println(CollectionsMarkdown.gaps(ready) + "\n")
-        if !apply.value then
+        if !apply.applies then
           Cli.out.println(
             s"Dry run: ${ready.size} source(s) would be pushed$note" +
               (if ready.nonEmpty then " Re-run with --apply." else "")
@@ -632,7 +635,7 @@ object CalibreCmd:
       json: Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     s.gaps(limit).flatMap { g =>
-      val counted = g.gaps.filter(_.counted.value)
+      val counted = g.gaps.filter(_.counted.counted)
       if json.asJson then Right(Output.emit(json, Calibre.Json.Gaps.of(g))(_ => CollectionsMarkdown.gaps(g.gaps)))
       else if !quiet.quiet then Right(Cli.out.println(CollectionsMarkdown.gaps(g.gaps)))
       else if counted.isEmpty then Right(())
@@ -705,9 +708,18 @@ object CalibreCmd:
   private def hostUpdateAll(c: Client, apply: Api.Apply, json: Cli.JsonOutput)(using console: Console) =
     for
       linked <- linkedRecords(c)
-      entries <- calibre(c).updateAll(linked, CollectionSync.Request.Apply(apply.value)).left.map(failProblem)
+      entries <- calibre(c)
+        .updateAll(
+          linked,
+          (if apply.applies then CollectionSync.Request.Apply.Apply else CollectionSync.Request.Apply.DryRun)
+        )
+        .left
+        .map(failProblem)
       _ = Output.emit(json, entries.map(Calibre.Json.UpdateRow.of))(_ =>
-        Calibre.markdownUpdateAll(entries, CollectionUpdateAll.Applied(apply.value))
+        Calibre.markdownUpdateAll(
+          entries,
+          (if apply.applies then CollectionUpdateAll.Applied.Applied else CollectionUpdateAll.Applied.Previewed)
+        )
       )
       failed = entries.count(_.outcome match { case UpdateOutcome.Failed(_, _) => true; case _ => false })
       _ <- Either.cond(failed == 0, (), fail(s"$failed Calibre update(s) failed"))
@@ -778,7 +790,12 @@ object CalibreCmd:
             file.isDefined || (!replace && Calibre.originalFor(Settings.app.cli.calibre.originals, ck).isDefined)
           server(c).filter(_ => !onHost) match
             case Some(s) =>
-              s.push(CollectionPushRequest(ck, CollectionPushRequest.Replace(replace))).map { p =>
+              s.push(
+                CollectionPushRequest(
+                  ck,
+                  (if replace then CollectionPushRequest.Replace.Replace else CollectionPushRequest.Replace.Keep)
+                )
+              ).map { p =>
                 p.replaced match
                   case Some(fmt) =>
                     Output.emit(
@@ -819,7 +836,7 @@ object CalibreCmd:
               )
             case None => hostAudit(c, json)
         case Command.Sync(writes, limit, json) =>
-          val applying = Api.Apply(writes.applies)
+          val applying = (if writes.applies then Api.Apply.Apply else Api.Apply.DryRun)
           val max = limit.map(Paging.Limit(_))
           onServerUnlessLocalOriginals(c).fold(syncGaps(c, applying, max, json))(serverSync(_, applying, max, json))
         case Command.Gaps(quiet, limit, json) =>
@@ -889,7 +906,7 @@ object CalibreCmd:
               for
                 u <- srv.updateAll(apply)
                 _ = Output.emit(json, u.rows.map(Calibre.Json.UpdateRow.of(_)))(_ =>
-                  CollectionsMarkdown.updateAll(u.rows, apply.value)
+                  CollectionsMarkdown.updateAll(u.rows, apply.applies)
                 )
                 failed = u.rows.count(_.state.value == "failed")
                 _ <- Either.cond(failed == 0, (), fail(s"$failed Calibre update(s) failed"))

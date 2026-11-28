@@ -345,7 +345,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
       ("skeptic", "rejected", "the record says otherwise", Some("fixer"), Some(2), Some(1))
     )
     val m1 = h.last.findings.head
-    assert(m1.deferred.value && m1.outcome.value == "open" && m1.reopened.value == 1, m1.toString)
+    assert(m1.deferred.deferred && m1.outcome.value == "open" && m1.reopened.value == 1, m1.toString)
 
   test("runs order by their start; a run with no record left goes first; otherwise ledger order"):
     assertEquals(

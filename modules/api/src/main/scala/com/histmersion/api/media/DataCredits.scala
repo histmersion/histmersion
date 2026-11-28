@@ -150,7 +150,7 @@ object DataCredits:
       None,
       MediaItem.Credit("Global Volcanism Program, Smithsonian Institution"),
       DataCredit.Url("https://volcano.si.edu"),
-      onMap = DataCredit.OnMap(true)
+      onMap = DataCredit.OnMap.OnMap
     ),
     DataCredit(
       DataCredit.Name("PeriodO"),
@@ -159,6 +159,6 @@ object DataCredits:
       (cc0).map(refactorValue10 => DataCredit.LicenceUrl(refactorValue10)),
       MediaItem.Credit("PeriodO"),
       DataCredit.Url("https://perio.do"),
-      onMap = DataCredit.OnMap(false)
+      onMap = DataCredit.OnMap.OffMap
     )
   )

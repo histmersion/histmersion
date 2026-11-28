@@ -46,7 +46,7 @@ object BundleMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def verify(r: Bundle.VerifyResult): String =
-    val head = if (r.ok) == Bundle.VerifyResult.Ok(true) then
+    val head = if (r.ok) == Bundle.VerifyResult.Ok.Ok then
       s"**OK** — every checksum, record and ${Plural.count(Plural.CountN(r.blobsChecked.value.toLong), Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(Plural.CountN((r.problems.size).toLong), Plural.CountSingular("problem"))}"
     (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems.map(_.sentence))).mkString("\n\n")
@@ -56,7 +56,7 @@ object BundleMarkdown:
   def importResult(r: Bundle.ImportResult): String =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
-      else if (r.dryRun) == Bundle.ImportResult.DryRun(true) then
+      else if (r.dryRun) == Bundle.ImportResult.DryRun.DryRun then
         "**Dry run** — nothing was written; this is what an import would do"
       else if r.changed == Bundle.ChangedCount(0) then
         "**Nothing to change** — this instance already has everything in the bundle"

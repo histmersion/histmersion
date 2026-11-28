@@ -134,15 +134,15 @@ class BasemapFetchSuite extends munit.FunSuite:
       Basemap.parseDrop(Basemap.DropRule.Spec("roads; water swimming_pool fountain; pois +peak +volcano")),
       Right(
         List(
-          Basemap.DropRule(Basemap.DropRule.Layer("roads"), Basemap.DropRule.Whole(true)),
+          Basemap.DropRule(Basemap.DropRule.Layer("roads"), Basemap.DropRule.Whole.Whole),
           Basemap.DropRule(
             Basemap.DropRule.Layer("water"),
-            Basemap.DropRule.Whole(false),
+            Basemap.DropRule.Whole.Partial,
             drop = Set(Basemap.DropRule.Drop("swimming_pool"), Basemap.DropRule.Drop("fountain"))
           ),
           Basemap.DropRule(
             Basemap.DropRule.Layer("pois"),
-            Basemap.DropRule.Whole(false),
+            Basemap.DropRule.Whole.Partial,
             spare = Set(Basemap.DropRule.Spare("peak"), Basemap.DropRule.Spare("volcano"))
           )
         )
@@ -152,14 +152,14 @@ class BasemapFetchSuite extends munit.FunSuite:
     assert(Basemap.parseDrop(Basemap.DropRule.Spec("roads; roads")).isLeft)
     assert(Basemap.parseDrop(Basemap.DropRule.Spec("pois peak +volcano")).isLeft)
     assertEquals(
-      Basemap.keptLine(keepAll = Basemap.FetchQuery.KeepAll(true), Some(Basemap.DropRule.Spec("roads"))),
+      Basemap.keptLine(keepAll = Basemap.FetchQuery.KeepAll.KeepAll, Some(Basemap.DropRule.Spec("roads"))),
       "everything (unfiltered)"
     )
     assertEquals(
-      Basemap.keptLine(keepAll = Basemap.FetchQuery.KeepAll(false), Some(Basemap.DropRule.Spec("roads; places"))),
+      Basemap.keptLine(keepAll = Basemap.FetchQuery.KeepAll.Trim, Some(Basemap.DropRule.Spec("roads; places"))),
       "all but: roads; places"
     )
-    assert(Basemap.keptLine(keepAll = Basemap.FetchQuery.KeepAll(false), None).value.contains("before the drop list"))
+    assert(Basemap.keptLine(keepAll = Basemap.FetchQuery.KeepAll.Trim, None).value.contains("before the drop list"))
     assert(Basemap.validBBox(Basemap.Focus.Bbox("29,35,22,41")).isLeft)
     assert(Basemap.validBBox(Basemap.Focus.Bbox("-200,0,10,10")).isLeft)
     assertEquals(Basemap.validBBox(Basemap.Focus.Bbox("22,35,29,41")), Right(aegean))
@@ -341,7 +341,7 @@ class BasemapFetchSuite extends munit.FunSuite:
         BasemapFetch.localHeader(plan),
         BasemapFetch.localMetadata(
           plan,
-          dropRules.filter(_.whole.value).map(_.layer).toSet,
+          dropRules.filter(_.whole.whole).map(_.layer).toSet,
           BasemapFetch.Attribution("© OSM"),
           BasemapFetch.FetchedAt("2026-10-19T00:00:00Z"),
           Basemap.Layer.Vector,

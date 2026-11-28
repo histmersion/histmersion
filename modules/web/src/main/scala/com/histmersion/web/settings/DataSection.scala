@@ -125,7 +125,7 @@ object DataSection:
                         else "data-state data-state--off"),
                 a.flatMap(_.counts).fold("")(c => if c.places.value > 0 then "Installed" else "Not loaded yet")
               ),
-              act(ActionLabel("Update now"), ActionWhat("boundaries"), ApiClient.initData(fetch = Api.Overwrite(true)))
+              act(ActionLabel("Update now"), ActionWhat("boundaries"), ApiClient.initData(fetch = Api.Fetching.Fetch))
             )
           ),
           children <-- sources.map(
@@ -263,7 +263,7 @@ object DataSection:
       )
     val sea = b.layers.filter(_.layer == Basemap.Layer.Bathymetry.wire)
     def size(ls: List[Basemap.LayerInfo]) =
-      Backup.humanBytes(ByteCount(ls.filter(_.present.value).map(_.bytes.value).sum))
+      Backup.humanBytes(ByteCount(ls.filter(_.present.present).map(_.bytes.value).sum))
     def when(ls: List[Basemap.LayerInfo]) =
       ls.flatMap(_.fetchedAt).map(_.value).maxOption.map(t => s" · ${t.take(10)}").getOrElse("")
     val area = if b.bbox.value.trim.equalsIgnoreCase("world") then "the whole world" else b.bbox.value
@@ -272,25 +272,25 @@ object DataSection:
       row(
         s"Background map — $area",
         "Terrain, coastlines, rivers and physical names, for use offline" +
-          (if main.exists(_.present.value) then s" · ${size(main)}" else ""),
+          (if main.exists(_.present.present) then s" · ${size(main)}" else ""),
         span(
-          cls := (if main.exists(_.present.value) then "data-state" else "data-state data-state--off"),
-          if main.exists(_.present.value) then s"Installed${when(main)}" else "Not downloaded"
+          cls := (if main.exists(_.present.present) then "data-state" else "data-state data-state--off"),
+          if main.exists(_.present.present) then s"Installed${when(main)}" else "Not downloaded"
         ),
         act(
           ActionLabel("Check for update"),
           ActionWhat("basemap-check"),
-          ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun(true))),
+          ApiClient.basemapFetch(Basemap.FetchQuery(dryRun = Basemap.FetchQuery.DryRun.DryRun)),
           false
         ),
         act(
-          if main.exists(_.present.value) then ActionLabel("Update") else ActionLabel("Download"),
+          if main.exists(_.present.present) then ActionLabel("Update") else ActionLabel("Download"),
           ActionWhat("basemap"),
           ApiClient.basemapFetch(Basemap.FetchQuery()),
-          !main.exists(_.present.value)
+          !main.exists(_.present.present)
         ),
         Option
-          .when(main.exists(_.present.value))(
+          .when(main.exists(_.present.present))(
             button(
               typ := "button",
               cls := "btn btn--ghost data-remove",
@@ -309,14 +309,15 @@ object DataSection:
       ),
       row(
         "Sea depth",
-        "The sea floor's depth, coloured on the Physical map" + (if sea.exists(_.present.value) then s" · ${size(sea)}"
+        "The sea floor's depth, coloured on the Physical map" + (if sea.exists(_.present.present) then
+                                                                   s" · ${size(sea)}"
                                                                  else ""),
         span(
-          cls := (if sea.exists(_.present.value) then "data-state" else "data-state data-state--off"),
-          if sea.exists(_.present.value) then s"Installed${when(sea)}" else "Not downloaded"
+          cls := (if sea.exists(_.present.present) then "data-state" else "data-state data-state--off"),
+          if sea.exists(_.present.present) then s"Installed${when(sea)}" else "Not downloaded"
         ),
         act(
-          if sea.exists(_.present.value) then ActionLabel("Update") else ActionLabel("Download"),
+          if sea.exists(_.present.present) then ActionLabel("Update") else ActionLabel("Download"),
           ActionWhat("bathymetry"),
           ApiClient.basemapFetch(Basemap.FetchQuery(layer = Basemap.Layer.Bathymetry.wire)),
           false
@@ -335,7 +336,7 @@ object DataSection:
       div(
         cls := "data-disk-line",
         span("Disk used by Histmersion"),
-        strong(if r.entries.isEmpty then (if r.measuring.value then "measuring…" else "unknown")
+        strong(if r.entries.isEmpty then (if r.measuring.measuring then "measuring…" else "unknown")
         else Backup.humanBytes(used))
       ),
       div(cls := "meter", styleAttr := s"--share:$pct%", div(cls := "meter-fill")),

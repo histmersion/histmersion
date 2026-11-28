@@ -146,7 +146,7 @@ object BundleReader:
     val problems = compat ++ l.problems ++ dangling
     Bundle
       .VerifyResult(
-        Bundle.VerifyResult.Ok(l.manifest.isDefined && problems.isEmpty),
+        (if l.manifest.isDefined && problems.isEmpty then Bundle.VerifyResult.Ok.Ok else Bundle.VerifyResult.Ok.Failed),
         l.manifest,
         Bundle.VerifyResult.BlobsChecked(l.blobs.size),
         problems

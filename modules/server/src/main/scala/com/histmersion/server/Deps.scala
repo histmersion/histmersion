@@ -168,7 +168,7 @@ final class Deps(
       cfg,
       UserConfigFile(
         configFile.path.map(p => java.nio.file.Path.of(p.value)),
-        UserConfigFile.Loaded(configFile.loaded.value),
+        UserConfigFile.Loaded(configFile.loaded.loaded),
         configFile.unknownKeys.map(k => UserConfigFile.UnknownKeys(k.value))
       )
     )
@@ -264,7 +264,7 @@ object Deps:
   /** The reload of a server that was started without a config file to read again. */
   val NoReload: () => ReloadReport = () =>
     ReloadReport(
-      published = ReloadReport.Published(false),
+      published = ReloadReport.Published.Unpublished,
       generation = ReloadReport.Generation(0),
       errors = List(ReloadReport.Errors("this server was started without a config file to reload"))
     )

@@ -9,10 +9,11 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 final case class ConfigFileInfo(
     path: Option[ConfigFileInfo.Path] = None,
-    loaded: ConfigFileInfo.Loaded = ConfigFileInfo.Loaded(false),
+    loaded: ConfigFileInfo.Loaded = ConfigFileInfo.Loaded.Absent,
     unknownKeys: List[ConfigFileInfo.UnknownKeys] = Nil
 ) derives JsonCodec,
       KindlingsSchema,
@@ -22,8 +23,10 @@ object ConfigFileInfo:
   type Path = Path.T
   object Path extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type Loaded = Loaded.T
-  object Loaded extends Newtype[Boolean, Pure]
+  enum Loaded derives CanEqual:
+    case Loaded, Absent
+  object Loaded extends TwoStates[Loaded]:
+    extension (loaded: Loaded) def loaded: Boolean = loaded == Loaded
   type UnknownKeys = UnknownKeys.T
   object UnknownKeys extends Newtype[String, Pure]
 
@@ -32,7 +35,7 @@ object ConfigFileInfo:
     c.path match
       case None    => ("none (no location: HOME is unset)")
       case Some(p) =>
-        val state = if (c.loaded).value then "read" else "not found: defaults and environment only"
+        val state = if (c.loaded).loaded then "read" else "not found: defaults and environment only"
         val keys = if c.unknownKeys.isEmpty then ""
         else
           s"; ignored unknown ${Plural.noun(Plural.Count((c.unknownKeys.size).toLong), Plural.Noun.Singular("key"))}: ${c.unknownKeys.mkString(", ")}"

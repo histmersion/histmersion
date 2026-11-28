@@ -8,11 +8,12 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class EventCandidatesRequest(
-    all: EventCandidatesRequest.All = EventCandidatesRequest.All(false),
+    all: EventCandidatesRequest.All = EventCandidatesRequest.All.Due,
     event: Option[Event.Id] = None,
     limit: Option[EventCandidatesRequest.Limit] = None,
     createdBy: Option[Creation.By] = None,
@@ -20,7 +21,9 @@ final case class EventCandidatesRequest(
 ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
 object EventCandidatesRequest:
-  type All = All.T
-  object All extends Newtype[Boolean, Pure]
+  enum All derives CanEqual:
+    case All, Due
+  object All extends TwoStates[All]:
+    extension (all: All) def all: Boolean = all == All
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]

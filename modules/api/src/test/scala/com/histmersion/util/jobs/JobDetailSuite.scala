@@ -32,7 +32,7 @@ class JobDetailSuite extends munit.FunSuite:
     val d = RawJson.decode[JobDetail](stored).fold(e => fail(e), identity)
     assertEquals(
       d,
-      VacuumPlan.Detail(Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), List(Vacuum.Request.Tables("sources")))))
+      VacuumPlan.Detail(Some(VacuumPlan(analyze = VacuumPlan.Analyze.Analyze, List(Vacuum.Request.Tables("sources")))))
     )
     assert(d.asJson.noSpaces.contains(""""vacuum":{"analyze":true,"tables":["sources"]}"""), d.asJson.noSpaces)
 
@@ -42,9 +42,9 @@ class JobDetailSuite extends munit.FunSuite:
 
   test("a field set, changed and read; a value of the wrong shape fails the whole detail"):
     val d = InitPlan
-      .Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer(true))))
+      .Detail(Some(InitPlan(gazetteer = InitPlan.Gazetteer.Included)))
       .change(SkippedPeriod.SkippedCount)(c => Period.ImportResult.SkippedCount(c.value + 2))
     assertEquals(SkippedPeriod.SkippedCount.of(d), 2)
-    assertEquals(InitPlan.Detail.of(d).map(_.gazetteer), Some(true))
+    assertEquals(InitPlan.Detail.of(d).map(_.gazetteer.included), Some(true))
     assertEquals(SkippedPeriod.Skipped.of(d), Nil)
     assert(RawJson.decode[JobDetail]("""{"skippedPeriodCount": "two"}""").isLeft)

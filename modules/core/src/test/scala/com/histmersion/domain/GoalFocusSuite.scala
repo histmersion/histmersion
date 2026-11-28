@@ -675,7 +675,7 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("Markdown: the active goals with why, now and pace; the queue; who cannot use a slot"):
     val f = FocusInfo(
-      on = FocusInfo.On(true),
+      on = FocusInfo.On.On,
       max = FocusInfo.Max(2),
       active = List(
         FocusGoal(
@@ -693,7 +693,7 @@ class GoalFocusSuite extends munit.FunSuite:
           status = FocusGoal.Status("seeding"),
           stage = FocusGoal.Stage("gathering"),
           why = Autopilot.Rationale("pinned by a person"),
-          pinned = FocusGoal.Pinned(true)
+          pinned = FocusGoal.Pinned.Pinned
         )
       ),
       queue = List(
@@ -733,7 +733,7 @@ class GoalFocusSuite extends munit.FunSuite:
       AutopilotMarkdown
         .focus(
           f.modify(_.on)
-            .setTo(FocusInfo.On(false))
+            .setTo(FocusInfo.On.Off)
             .modify(_.maxFrom)
             .setTo(FocusInfo.MaxFrom("person"))
             .modify(_.note)
@@ -747,9 +747,9 @@ class GoalFocusSuite extends munit.FunSuite:
       "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
     val st =
       Autopilot.EngineStatus(
-        on = Autopilot.EngineStatus.On(true),
-        agentsEnabled = Autopilot.EngineStatus.AgentsEnabled(true),
-        managersEnabled = Autopilot.EngineStatus.ManagersEnabled(true),
+        on = Autopilot.EngineStatus.On.On,
+        agentsEnabled = Autopilot.EngineStatus.AgentsEnabled.Enabled,
+        managersEnabled = Autopilot.EngineStatus.ManagersEnabled.Enabled,
         goalPlansWait = Some(Autopilot.EngineStatus.GoalPlansWait(why))
       )
     assert(

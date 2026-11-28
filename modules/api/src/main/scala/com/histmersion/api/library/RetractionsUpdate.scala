@@ -9,6 +9,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 /** The refresh downloads ~30 MB and rewrites ~60 000 rows, far longer than one HTTP request may take, so `POST` starts
   * it and `GET` is polled until `running` is false.
@@ -16,7 +17,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class RetractionsUpdate(
     rows: RetractionsUpdate.Rows,
     source: RetractionsUpdate.Source,
-    running: RetractionsUpdate.Running = RetractionsUpdate.Running(false),
+    running: RetractionsUpdate.Running = RetractionsUpdate.Running.Idle,
     error: Option[Problem] = None
 ) derives JsonCodec,
       KindlingsSchema,
@@ -27,5 +28,7 @@ object RetractionsUpdate:
   object Rows extends Newtype[Int, Pure]
   type Source = Source.T
   object Source extends Newtype[String, Pure]
-  type Running = Running.T
-  object Running extends Newtype[Boolean, Pure]
+  enum Running derives CanEqual:
+    case Running, Idle
+  object Running extends TwoStates[Running]:
+    extension (running: Running) def running: Boolean = running == Running

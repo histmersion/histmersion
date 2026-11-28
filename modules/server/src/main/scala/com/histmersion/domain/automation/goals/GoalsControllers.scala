@@ -70,7 +70,7 @@ final class GoalsControllers(
   def delete(slug: domain.automation.Goal.Slug): Either[Api.Error, Goal.Deleted] =
     maintenance.guard(WriteGate.OperationName("delete_goal")):
       val now = current(slug)
-      if goals.delete(now) then Right(Goal.Deleted(Goal.Slug(now.value), Goal.Deleted.Value(true)))
+      if goals.delete(now) then Right(Goal.Deleted(Goal.Slug(now.value), Goal.Deleted.Value.Deleted))
       else Left(notFound(slug))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */

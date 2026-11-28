@@ -142,7 +142,7 @@ private[sources] object SourceBundleRepo:
       Bundle.Assessment(
         r.sourceUid,
         Bundle.Assessment.CheckedAt(r.checkedAt.value),
-        Bundle.Assessment.Retracted(r.retracted.value),
+        (if r.retracted.value then Bundle.Assessment.Retracted.Retracted else Bundle.Assessment.Retracted.Standing),
         Jsonb.read[Json](Jsonb.JsonText(r.notices.value)).getOrElse(Json.arr()),
         r.citedBy.map(x => Bundle.Assessment.CitedBy(x.value)),
         r.influential.map(x => Bundle.Assessment.Influential(x.value)),
@@ -369,7 +369,9 @@ private[sources] object SourceBundleRepo:
     w.es.assessments.foreach { a =>
       Unused(
         sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict, creator)
-            SELECT citekey, ${a.checkedAt}::timestamptz, ${a.retracted}, ${BundleFormat.print(a.notices)}::jsonb,
+            SELECT citekey, ${a.checkedAt}::timestamptz, ${{
+            a.retracted
+          }.retracted}, ${BundleFormat.print(a.notices)}::jsonb,
                    ${a.citedBy}, ${a.influential}, ${a.verdict}, ${StoredCreator.write(Creator.unrecorded)}::jsonb
             FROM sources WHERE uid = ${a.sourceUid}
             ON CONFLICT (citekey) DO UPDATE SET checked_at = EXCLUDED.checked_at,

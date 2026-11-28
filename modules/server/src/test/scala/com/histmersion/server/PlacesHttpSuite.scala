@@ -305,7 +305,7 @@ class PlacesHttpSuite extends DbSuite:
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
       val st = RawJson.decode[About](ab).fold(e => fail(s"$e: $ab"), identity).storage
-      assert(!st.measuring.value, ab)
+      assert(!st.measuring.measuring, ab)
       val db = st.entries.find(_.key.value == "database").getOrElse(fail(s"no database entry: $ab"))
       assert(db.bytes.exists(_.value > 0) && db.detail.exists(_.value.endsWith("_test")), db)
       assert(st.tables.nonEmpty && st.tables.size <= cfg.storage.topTables.value, st.tables)

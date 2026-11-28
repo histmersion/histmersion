@@ -91,7 +91,11 @@ object OpsTools:
                   )
               case (_, _, Some(text)) =>
                 val r = h.formats.check(
-                  FormatCheck(FormatCheck.Text(text), in.field.getOrElse(FormatField.Body), FormatCheck.Fix(in.fix))
+                  FormatCheck(
+                    FormatCheck.Text(text),
+                    in.field.getOrElse(FormatField.Body),
+                    (if in.fix then FormatCheck.Fix.Fix else FormatCheck.Fix.Report)
+                  )
                 )
                 ToolResult.text(
                   FormatMarkdown.report(r) + r.text.fold("")(t => s"\n\n### Repaired text\n\n````markdown\n$t\n````")
@@ -205,11 +209,12 @@ object OpsTools:
                 .acquireRecheck
                 .run(
                   Acquire.Checks.RecheckRequest(
-                    Acquire.Checks.RecheckRequest.DryRun(in.dryRun),
+                    (if in.dryRun then Acquire.Checks.RecheckRequest.DryRun.DryRun
+                     else Acquire.Checks.RecheckRequest.DryRun.Apply),
                     in.limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
                     in.id.map(Acquire.Checks.RecheckRequest.Id(_)),
                     Some(Acquire.Checks.RecheckRequest.By("mcp")),
-                    Acquire.Checks.RecheckRequest.All(in.all)
+                    (if in.all then Acquire.Checks.RecheckRequest.All.All else Acquire.Checks.RecheckRequest.All.Due)
                   )
                 )
             )

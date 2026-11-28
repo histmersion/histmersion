@@ -46,10 +46,10 @@ object CandidateDedupe:
     val skipped = scala.collection.mutable.Map.empty[LeftOut, Int].withDefaultValue(0)
     found.foreach { (by, w) =>
       keyOf(w) match
-        case None                           => skipped(LeftOut.NoDoi) += 1
-        case Some(_) if w.isRetracted.value => skipped(LeftOut.Retracted) += 1
-        case Some(k) if known.contains(k)   => skipped(LeftOut.Known) += 1
-        case Some(k)                        =>
+        case None                                 => skipped(LeftOut.NoDoi) += 1
+        case Some(_) if w.isRetracted.isRetracted => skipped(LeftOut.Retracted) += 1
+        case Some(k) if known.contains(k)         => skipped(LeftOut.Known) += 1
+        case Some(k)                              =>
           kept.get(k) match
             case Some((first, bys)) =>
               kept(k) = (Candidates.richer(first, w), if bys.contains(by) then bys else bys :+ by)

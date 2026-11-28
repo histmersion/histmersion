@@ -43,7 +43,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     authors = (List("Wolfgang Haak", "Iosif Lazaridis", "Nick Patterson")).map(AuthorName.apply),
     venue = (Some("Nature")).map(Source.Venue.apply),
     citedByCount = Some(Source.CitedByCount(2065)),
-    isOa = WorkRef.IsOa(true),
+    isOa = WorkRef.IsOa.OpenAccess,
     oaStatus = Some(WorkRef.OaStatus("green")),
     citekey = (Some("haak2015_massive")).map(Citekey.apply)
   )
@@ -53,7 +53,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       DiscoverResult(
         DiscoverResult.Query("steppe"),
         DiscoverResult.Count(2),
-        List(work, work.modify(_.inDb).setTo(WorkRef.InDb(true)))
+        List(work, work.modify(_.inDb).setTo(WorkRef.InDb.InDb))
       )
     )
     assert(md.contains("| citekey | title | year | authors | cited | doi | notes |"))
@@ -121,8 +121,8 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       CalibreGaps(
         CalibreGaps.Count(2),
         List(
-          gap(Citekey("a"), Some(CalibreGap.StoredOriginal(true))),
-          gap(Citekey("b"), Some(CalibreGap.StoredOriginal(false)))
+          gap(Citekey("a"), Some(CalibreGap.StoredOriginal.Stored)),
+          gap(Citekey("b"), Some(CalibreGap.StoredOriginal.Missing))
         )
       )
     )
@@ -132,18 +132,18 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(!old.contains("| original |"), old)
 
   test("a retracted work is marked in the single-work view"):
-    val md = AcquireMarkdown.work(work.modify(_.isRetracted).setTo(WorkRef.IsRetracted(true)))
+    val md = AcquireMarkdown.work(work.modify(_.isRetracted).setTo(WorkRef.IsRetracted.Retracted))
     assert(md.contains("RETRACTED"))
     assert(md.contains("**Citekey (proposed):** `haak2015_massive`"))
 
   test("the single-work view tells 'no free copy' from 'nobody said' (#599)"):
     assert(AcquireMarkdown.work(work).contains("**Access:** open access (green)"))
     val closed = AcquireMarkdown.work(
-      work.modify(_.isOa).setTo(WorkRef.IsOa(false)).modify(_.oaStatus).setTo(Some(WorkRef.OaStatus("closed")))
+      work.modify(_.isOa).setTo(WorkRef.IsOa.Closed).modify(_.oaStatus).setTo(Some(WorkRef.OaStatus("closed")))
     )
     assert(closed.contains("**Access:** no OA copy known"), closed)
     // a Crossref-only record carries no access information at all
-    val unknown = AcquireMarkdown.work(work.modify(_.isOa).setTo(WorkRef.IsOa(false)).modify(_.oaStatus).setTo(None))
+    val unknown = AcquireMarkdown.work(work.modify(_.isOa).setTo(WorkRef.IsOa.Closed).modify(_.oaStatus).setTo(None))
     assert(unknown.contains("OA status unknown"), unknown)
     assert(!unknown.contains("no OA copy known"), unknown)
 
@@ -177,7 +177,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       Some(Year(2015)),
       Some(Acquire.CitedByCount(3)),
       None,
-      isRetracted = Assessment.IsRetracted(true),
+      isRetracted = Assessment.IsRetracted.Retracted,
       retractionWatch = List(
         RetractionNotice(
           Some(RetractionNotice.Nature("Retraction")),
@@ -192,7 +192,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
           Some(Doi("10.1038/y"))
         )
       ),
-      flagged = Assessment.Flagged(true),
+      flagged = Assessment.Flagged.Flagged,
       verdict = Acquire.Verdicts.Retracted,
       recommendation = Assessment.Recommendation(
         Acquire.recommendation(Acquire.Verdicts.Retracted, Some(Acquire.CitedByCount(3))).value
@@ -214,7 +214,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       title = Some(Title("A critique")),
       year = Some(Year(2021)),
       doi = Some(Doi("10.1/x")),
-      isInfluential = FollowupRow.IsInfluential(true),
+      isInfluential = FollowupRow.IsInfluential.Influential,
       intents = List(FollowupRow.Intents("result")),
       contexts = List(FollowupRow.Contexts("these data contradict it")),
       proposedKind = FollowupRow.ProposedKind(Acquire.EdgeKinds.Refutes),
@@ -240,7 +240,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       ArchiveItem(
         ArchiveItem.Identifier("x"),
         title = Some(ArchiveItem.Title("Black Athena")),
-        lendingOnly = ArchiveItem.LendingOnly(true)
+        lendingOnly = ArchiveItem.LendingOnly.LendingOnly
       )
     )
     assert(md.contains("Lending-only item"))
@@ -251,13 +251,13 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       Citekey("haak2015_massive"),
       Some(Doi("10.1038/x")),
       Some(Title("T")),
-      created = Ingest.Report.Created(true),
+      created = Ingest.Report.Created.Created,
       pdf = None,
       edgesAdded = Ingest.Report.EdgesAdded(0),
       assessment = None,
       steps = List(
-        Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok(true), Ingest.Step.Detail("ok")),
-        Ingest.Step(Ingest.Step.Value("fetch"), Ingest.Step.Ok(false), Ingest.Step.Detail("no OA copy"))
+        Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok.Ok, Ingest.Step.Detail("ok")),
+        Ingest.Step(Ingest.Step.Value("fetch"), Ingest.Step.Ok.Failed, Ingest.Step.Detail("no OA copy"))
       ),
       dropIn = Some(Ingest.DropInPath("Drop it at …"))
     )
@@ -284,7 +284,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
         Citekey("k"),
         None,
         Some(Title("T")),
-        Ingest.Report.Created(true),
+        Ingest.Report.Created.Created,
         None,
         Ingest.Report.EdgesAdded(0),
         Some(
@@ -295,15 +295,15 @@ class AcquireMarkdownSuite extends munit.FunSuite:
             None,
             Some(Acquire.CitedByCount(9)),
             None,
-            Assessment.IsRetracted(false),
+            Assessment.IsRetracted.Standing,
             Nil,
             Nil,
-            Assessment.Flagged(false),
+            Assessment.Flagged.Clear,
             Acquire.Verdicts.Current,
             Assessment.Recommendation("KEEP")
           )
         ),
-        List(Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok(true), Ingest.Step.Detail("ok")))
+        List(Ingest.Step(Ingest.Step.Value("metadata"), Ingest.Step.Ok.Ok, Ingest.Step.Detail("ok")))
       )
     )
     assert(ing.contains("✓ **metadata**"))

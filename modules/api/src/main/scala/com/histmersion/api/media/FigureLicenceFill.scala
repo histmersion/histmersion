@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class FigureLicenceFill(
     candidates: FigureLicenceFill.Candidates,
@@ -21,5 +22,7 @@ object FigureLicenceFill:
   object Candidates extends Newtype[Int, Pure]
   type Updated = Updated.T
   object Updated extends Newtype[Int, Pure]
-  type Applied = Applied.T
-  object Applied extends Newtype[Boolean, Pure]
+  enum Applied derives CanEqual:
+    case Applied, Previewed
+  object Applied extends TwoStates[Applied]:
+    extension (applied: Applied) def applied: Boolean = applied == Applied

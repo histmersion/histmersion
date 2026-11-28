@@ -57,7 +57,7 @@ class TreeSuite extends munit.FunSuite:
       RegionNode.Label("Mitanni"),
       RegionNode.Kind(Place.Kind.Polity),
       Some(Period(Year(-1500), Year(-1300))),
-      contested = RegionNode.Contested(true)
+      contested = RegionNode.Contested.Contested
     )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val hattusa =
@@ -321,7 +321,7 @@ class TreeSuite extends munit.FunSuite:
       Some((Some(-1500L), Some(-1300L)))
     )
     assertEquals(
-      path(t, Bucket.Key("asia"), Bucket.Key("near_east"), Bucket.Key("mitanni")).map(_.contested),
+      path(t, Bucket.Key("asia"), Bucket.Key("near_east"), Bucket.Key("mitanni")).map(_.contested.contested),
       Some(true)
     )
     assertEquals(path(t, Bucket.Key("asia")).map(b => (b.start, b.end)), Some((None, None)))
@@ -530,9 +530,9 @@ class TreeRootsSuite extends munit.FunSuite:
       id: RegionNode.Id,
       label: RegionNode.Label,
       kind: RegionNode.Kind,
-      withdrawn: RegionNode.Withdrawn = RegionNode.Withdrawn(false)
+      withdrawn: RegionNode.Withdrawn = RegionNode.Withdrawn.Current
   ) =
-    RegionNode(id, label, kind, None, RegionNode.Contested(false), withdrawn)
+    RegionNode(id, label, kind, None, RegionNode.Contested.Settled, withdrawn)
 
   test("only a region, polity or continent may head the tree"):
     assert(
@@ -558,7 +558,7 @@ class TreeRootsSuite extends munit.FunSuite:
           RegionNode.Id("f"),
           RegionNode.Label("Mount Juktas"),
           RegionNode.Kind(Place.Kind.Region),
-          withdrawn = RegionNode.Withdrawn(true)
+          withdrawn = RegionNode.Withdrawn.Withdrawn
         )
       )
     )

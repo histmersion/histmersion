@@ -439,10 +439,10 @@ object MergePlanner:
       case Some(b) =>
         Diff3.merge(Diff3.Text(b.value), Diff3.Text(left.value), Diff3.Text(right.value)).hunks.map {
           case Diff3.Hunk.Agreed(ls) =>
-            IssueHunk(conflict = IssueHunk.Conflict(false), left = ls.toList.map(l => IssueHunk.Left(l.value)))
+            IssueHunk(conflict = IssueHunk.Conflict.Clean, left = ls.toList.map(l => IssueHunk.Left(l.value)))
           case Diff3.Hunk.Conflict(o, a, c) =>
             IssueHunk(
-              conflict = IssueHunk.Conflict(true),
+              conflict = IssueHunk.Conflict.Conflict,
               o.toList.map(x => IssueHunk.Base(x.value)),
               a.toList.map(x => IssueHunk.Left(x.value)),
               c.toList.map(x => IssueHunk.Right(x.value))
@@ -451,7 +451,7 @@ object MergePlanner:
       case None =>
         List(
           IssueHunk(
-            conflict = IssueHunk.Conflict(true),
+            conflict = IssueHunk.Conflict.Conflict,
             Nil,
             left.value.split("\n", -1).toList.map(IssueHunk.Left(_)),
             right.value.split("\n", -1).toList.map(IssueHunk.Right(_))
@@ -1150,9 +1150,9 @@ object MergePlanner:
       here.flatMap(localGoal.get).foreach { l =>
         MergeFold.scheduleDifferences(l, r).foreach { (k, a, b) =>
           info += s"goal ${l.slug}: its $k schedule differs (here ${a.cron}${
-              if a.enabled.value then "" else " off"
+              if a.enabled.enabled then "" else " off"
             }, " +
-            s"the bundle's ${b.cron}${if b.enabled.value then "" else " off"}) — this collection's is kept"
+            s"the bundle's ${b.cron}${if b.enabled.enabled then "" else " off"}) — this collection's is kept"
         }
       }
     }

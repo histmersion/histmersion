@@ -3,16 +3,34 @@ package testsupport
 
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
+
+import api.TwoStates
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same
   * shape — the same type constructor, or one a subtype of the other (`Option` and `Some`, `Seq` and `List`, `Either`
   * and `Right`, tuples of the same arity, an option and `Some[…] | None.type`) — and every pair of types inside it is
-  * one type, a subtype and its supertype, or a newtype and its own base type (a newtype erases to its value). Anything
-  * else does not compile: two newtypes, a newtype and another base type, a `Vector` and a `List`.
+  * one type, a subtype and its supertype, a newtype and its own base type (a newtype erases to its value), or a
+  * two-state enum and the Boolean it replaced (its first case is `true`). Anything else does not compile: two newtypes,
+  * a newtype and another base type, a `Vector` and a `List`.
   */
 object ComparedByValue:
-  given comparedByValue: [A, B] => (byValue: ByValue[A, B]) => Compare[A, B] = Compare.defaultCompare[A, B]
+  given comparedByValue: [A, B] => (byValue: ByValue[A, B]) => Compare[A, B] = new Compare[A, B]:
+    override def isEqual(obtained: A, expected: B): Boolean = sameValue(obtained, expected)
+
+  def sameValue(obtained: Any, expected: Any): Boolean =
+    (obtained.asInstanceOf[Matchable], expected.asInstanceOf[Matchable]) match
+      case (state: reflect.Enum, b: Boolean) => (state.ordinal == 0) == b
+      case (b: Boolean, state: reflect.Enum) => (state.ordinal == 0) == b
+      case (o: Tuple, e: Tuple)              => o.size == e.size && o.toList.zip(e.toList).forall(sameValue)
+      case (o: Option[?], e: Option[?])      => o.size == e.size && o.zip(e).forall(sameValue)
+      case (Left(o), Left(e))                => sameValue(o, e)
+      case (Right(o), Right(e))              => sameValue(o, e)
+      case (o: Map[?, ?], e: Map[?, ?])      =>
+        val byKey = e.toMap[Any, Any]
+        o.size == e.size && o.forall((k, v) => byKey.get(k).exists(sameValue(v, _)))
+      case (o: Seq[?], e: Seq[?]) => o.size == e.size && o.zip(e).forall(sameValue)
+      case (o, e)                 => o.equals(e)
 
   /** `A` and `B` compare by value. */
   final class ByValue[A, B]
@@ -27,7 +45,11 @@ object ComparedByValue:
     given newtypeWithBase: [N, B] => (RefinedType.Mirror[N] { type BaseType = B }) => ByValue[N, B] = ByValue()
     given baseWithNewtype: [B, N] => (RefinedType.Mirror[N] { type BaseType = B }) => ByValue[B, N] = ByValue()
 
-  trait Same extends NewtypeWithBase:
+  trait StateWithBoolean extends NewtypeWithBase:
+    given stateWithBoolean: [E <: reflect.Enum] => TwoStates[E] => ByValue[E, Boolean] = ByValue()
+    given booleanWithState: [E <: reflect.Enum] => TwoStates[E] => ByValue[Boolean, E] = ByValue()
+
+  trait Same extends StateWithBoolean:
     given same: [A] => ByValue[A, A] = ByValue()
 
   trait OneParameter extends Same:

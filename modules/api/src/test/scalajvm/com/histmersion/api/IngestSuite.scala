@@ -375,7 +375,7 @@ class IngestSuite extends munit.FunSuite:
 
   // #770 / #771: an init job names what it imports; the periods it skipped are counted and listed
   test("an init job's Markdown says what it imports and which period definitions it skipped"):
-    val plan = InitPlan(gazetteer = InitPlan.Gazetteer(true), fetch = List(InitPlan.Fetch("periodo")))
+    val plan = InitPlan(gazetteer = InitPlan.Gazetteer.Included, fetch = List(InitPlan.Fetch("periodo")))
     val j = JobInfo(
       SpatialHierarchyResult.Job.Id("j1"),
       JobKinds.Wire(InitPlan.JobKind),

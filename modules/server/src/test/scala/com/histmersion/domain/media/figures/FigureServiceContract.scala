@@ -19,7 +19,7 @@ abstract class FigureServiceContract extends MediaStoreSuite:
       FigureLicenceFill(
         FigureLicenceFill.Candidates(0),
         FigureLicenceFill.Updated(0),
-        FigureLicenceFill.Applied(false),
+        FigureLicenceFill.Applied.Previewed,
         Nil
       )
     )
@@ -28,7 +28,7 @@ abstract class FigureServiceContract extends MediaStoreSuite:
       FigureLicenceFill(
         FigureLicenceFill.Candidates(0),
         FigureLicenceFill.Updated(0),
-        FigureLicenceFill.Applied(true),
+        FigureLicenceFill.Applied.Applied,
         Nil
       )
     )

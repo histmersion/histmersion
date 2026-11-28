@@ -3,6 +3,7 @@ package api.media
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 final case class DataCredit(
     name: DataCredit.Name,
     usedFor: DataCredit.UsedFor,
@@ -10,7 +11,7 @@ final case class DataCredit(
     licenceUrl: Option[DataCredit.LicenceUrl],
     credit: MediaItem.Credit,
     url: DataCredit.Url,
-    onMap: DataCredit.OnMap = DataCredit.OnMap(true)
+    onMap: DataCredit.OnMap = DataCredit.OnMap.OnMap
 )
 
 object DataCredit:
@@ -30,5 +31,7 @@ object DataCredit:
   type Url = Url.T
   object Url extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type OnMap = OnMap.T
-  object OnMap extends Newtype[Boolean, Pure]
+  enum OnMap derives CanEqual:
+    case OnMap, OffMap
+  object OnMap extends TwoStates[OnMap]:
+    extension (onMap: OnMap) def onMap: Boolean = onMap == OnMap

@@ -32,7 +32,7 @@ private[figures] object FigureRepo:
       .map(MediaCount(_, _))
     val candidates = FigureLicenceFill.Candidates(by.map(_.n.value).sum)
     val updated = FigureLicenceFill.Updated(
-      if !apply.value then 0
+      if !apply.applied then 0
       else sql"""UPDATE assets a SET license = btrim(s.license) FROM sources s
             WHERE s.citekey = a.citekey AND a.provider IS NULL AND (a.license IS NULL OR btrim(a.license) = '')
               AND s.license IS NOT NULL AND btrim(s.license) <> ''""".update.run()

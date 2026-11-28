@@ -239,7 +239,7 @@ class EventScaleSuite extends munit.FunSuite:
       TimeSpan(),
       EventSummary.Historicity("attested"),
       scale = EventSummary.Scale("local"),
-      scaleStated = EventSummary.ScaleStated(true)
+      scaleStated = EventSummary.ScaleStated.Stated
     )
     assertEquals(RawJson.decode[EventSummary](s.asJson.noSpaces), Right(s))
     // an older client's summary without the fields still reads
@@ -258,7 +258,7 @@ class EventScaleSuite extends munit.FunSuite:
       TimeSpan(Some(Year(-1274)), None, None, Some(Year(-1274))),
       EventSummary.Historicity("attested"),
       scale = EventSummary.Scale("local"),
-      scaleStated = EventSummary.ScaleStated(false)
+      scaleStated = EventSummary.ScaleStated.Inferred
     )
     assert(EventsMarkdown.eventList(EventList(RowCount(1), List(e))).contains("_(battle · local · attested ·"))
     assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
@@ -269,7 +269,7 @@ class EventScaleSuite extends munit.FunSuite:
             e.modify(_.scale)
               .setTo(EventSummary.Scale("regional"))
               .modify(_.scaleStated)
-              .setTo(EventSummary.ScaleStated(true))
+              .setTo(EventSummary.ScaleStated.Stated)
           )
         )
         .contains("**Scale:** regional (stated)")

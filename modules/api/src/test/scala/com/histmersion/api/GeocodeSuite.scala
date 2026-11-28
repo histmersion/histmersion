@@ -97,7 +97,7 @@ class GeocodeSuite extends munit.FunSuite:
       id: Place.Id,
       label: Place.Label,
       kind: Candidate.Kind,
-      byLabel: Candidate.ByLabel = Candidate.ByLabel(true),
+      byLabel: Candidate.ByLabel = Candidate.ByLabel.ByLabel,
       from: Option[Year] = None,
       to: Option[Year] = None,
       dim: Candidate.Dimension = Candidate.Dimension(2),
@@ -114,7 +114,7 @@ class GeocodeSuite extends munit.FunSuite:
     Place.Id("pleiades_903043"),
     Place.Label("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania"),
     Candidate.Kind(Place.Kind.Site),
-    byLabel = Candidate.ByLabel(false),
+    byLabel = Candidate.ByLabel.ByPosition,
     from = Some(Year(-750)),
     to = Some(Year(1599)),
     dim = Candidate.Dimension(0),
@@ -235,7 +235,7 @@ class GeocodeSuite extends munit.FunSuite:
       lat = Latitude(37.5)
     )
       .modify(_.gridCell)
-      .setTo(Candidate.GridCell(true))
+      .setTo(Candidate.GridCell.GridCell)
     val region = c(
       Place.Id("pleiades_1332"),
       Place.Label("Thessalia"),
@@ -251,7 +251,7 @@ class GeocodeSuite extends munit.FunSuite:
       Place.Id("pleiades_x"),
       Place.Label("Thessalia"),
       Candidate.Kind(Place.Kind.Site),
-      byLabel = Candidate.ByLabel(false),
+      byLabel = Candidate.ByLabel.ByPosition,
       dim = Candidate.Dimension(0),
       area = Candidate.Area(0),
       lon = Longitude(22.4),
@@ -518,7 +518,7 @@ class GeocodeSuite extends munit.FunSuite:
       Place.Id("geonames_174710"),
       Place.Label("Yeghegnadzor"),
       Candidate.Kind(Place.Kind.Site),
-      byLabel = Candidate.ByLabel(false),
+      byLabel = Candidate.ByLabel.ByPosition,
       from = Some(Year(1935)),
       to = Some(Year(1956)),
       dim = Candidate.Dimension(0),
@@ -528,7 +528,7 @@ class GeocodeSuite extends munit.FunSuite:
       Place.Id("geonames_100"),
       Place.Label("Mikoyan farm"),
       Candidate.Kind(Place.Kind.Site),
-      byLabel = Candidate.ByLabel(false),
+      byLabel = Candidate.ByLabel.ByPosition,
       dim = Candidate.Dimension(0),
       area = Candidate.Area(0)
     )

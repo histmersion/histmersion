@@ -95,7 +95,7 @@ class ManagerCmdSuite extends munit.FunSuite:
   ):
     val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
     val answer = RepairAcquire.RepairResult(
-      dryRun = RepairAcquire.RepairResult.DryRun(true),
+      dryRun = RepairAcquire.RepairResult.DryRun.DryRun,
       moved = RepairAcquire.RepairResult.Moved(1),
       untouched = RepairAcquire.RepairResult.Untouched(3),
       rows = List(

@@ -18,7 +18,7 @@ object EventsJobKinds:
     JobInfo.Kind("events-import"),
     JobKinds.Wire("Import events"),
     JobKindMeaning("Imports the events of an external event catalogue."),
-    stoppable = JobKindEntry.OfStoppable(true),
+    stoppable = JobKindEntry.OfStoppable.Stoppable,
     subject = Catalogue.of
   )
 

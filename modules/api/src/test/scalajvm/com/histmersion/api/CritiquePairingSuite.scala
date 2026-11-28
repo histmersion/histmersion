@@ -79,7 +79,7 @@ class CritiquePairingSuite extends munit.FunSuite:
   test("the live excerpt: two paragraphs name the work they answer without citing it; both are mechanical"):
     val hs = hits(excerpt, resolve, edges, work)
     assertEquals(
-      hs.map(h => (h.cited, h.missing, h.named, h.mechanical)),
+      hs.map(h => (h.cited, h.missing, h.named, h.mechanical.mechanical)),
       List(
         ("bachvarova2016_hittite", "latacz2004_troy", "Latacz", true),
         ("kelly2021_gods", "bachvarova2016_hittite", "Bachvarova", true),
@@ -125,16 +125,16 @@ class CritiquePairingSuite extends munit.FunSuite:
     // both Wests are partners: without a year the name means neither for sure
     val shared = hits(Article.Body("Alpha answers West's reading [[a2000_x]]." + cited), r, es, w)
     assertEquals(
-      shared.map(h => (h.missing, h.mechanical)),
+      shared.map(h => (h.missing, h.mechanical.mechanical)),
       List(("west1997_helicon", false), ("west2011_making", false))
     )
     assertEquals(repair(Article.Body("Alpha answers West's reading [[a2000_x]]." + cited), shared)._2, Nil)
     // with the year beside the name it means that one
     val dated = hits(Article.Body("Alpha answers West (2011) on the date [[a2000_x]]." + cited), r, es, w)
-    assertEquals(dated.filter(_.mechanical.value).map(_.missing), List("west2011_making"))
+    assertEquals(dated.filter(_.mechanical.mechanical).map(_.missing), List("west2011_making"))
     // …but code never brings in a source the article cites nowhere: that is a writer's call
     val fresh = hits(Article.Body("Alpha answers West (2011) on the date [[a2000_x]]."), r, es, w)
-    assertEquals(fresh.map(h => (h.missing, h.mechanical)), List(("west2011_making", false)))
+    assertEquals(fresh.map(h => (h.missing, h.mechanical.mechanical)), List(("west2011_making", false)))
     assert(fresh.head.line.contains("the article cites it nowhere else"), fresh.head.line)
     // only another year beside every mention: another work of the author — no hit at all
     assertEquals(hits(Article.Body("Alpha answers West's 1988 article [[a2000_x]]."), r, es.take(1), w), Nil)
@@ -144,7 +144,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     assertEquals(
       hits(Article.Body("West revised his view [[west1997_helicon]]." + cited), r, self, w)
         .filter(_.unit.value == 0)
-        .map(_.mechanical),
+        .map(_.mechanical.mechanical),
       List(false)
     )
 

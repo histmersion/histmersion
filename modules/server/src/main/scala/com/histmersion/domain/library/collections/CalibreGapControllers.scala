@@ -47,7 +47,9 @@ final class CalibreGapControllers(
     val hashes = sources.originals(gaps.map(g => held(g.citekey)))
     val stored = if hashes.isEmpty then Set.empty[Sha256] else originals.hashes
     val marked = gaps.map(g =>
-      g.modify(_.storedOriginal).setTo(Some(CalibreGap.StoredOriginal(hashes.get(held(g.citekey)).exists(stored))))
+      g.modify(_.storedOriginal)
+        .setTo(Some((if hashes.get(held(g.citekey)).exists(stored) then CalibreGap.StoredOriginal.Stored
+                     else CalibreGap.StoredOriginal.Missing)))
     )
     CalibreGaps(CalibreGaps.Count(marked.size), marked)
 
@@ -73,7 +75,7 @@ final class CalibreGapControllers(
         .flatMap(ck =>
           sources
             .setCalibreId(ck, FullSourceRow.CalibreId(req.calibreId.value), Caller.Local)
-            .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok(true)))
+            .map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = CalibrePushResult.Ok.Ok))
         )
 
 object CalibreGapControllers:

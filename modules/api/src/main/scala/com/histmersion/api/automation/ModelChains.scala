@@ -15,6 +15,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.TwoStates
 
 object ModelChains:
   object Chain:
@@ -356,8 +357,10 @@ object ModelChains:
   object LimitState:
     type Now = Now.T
     object Now extends Newtype[Long, Pure]
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
     type FreesAt = FreesAt.T
     object FreesAt extends Newtype[Long, Pure]
 
@@ -389,7 +392,7 @@ object ModelChains:
       used,
       (limit.amount - used).max(0),
       reserve,
-      LimitState.Usable(usable),
+      (if usable then LimitState.Usable.Usable else LimitState.Usable.Unusable),
       (freesAt).map(refactorValue16 => LimitState.FreesAt(refactorValue16))
     )
 
@@ -398,7 +401,7 @@ object ModelChains:
     a.limits.map(limitState(_, a.reservePct, spends, now))
 
   def verdict(ss: List[LimitState]): (Boolean, Option[LimitState.FreesAt]) =
-    val blocked = ss.filterNot((refactorCallback => ((refactorCallback.usable) == LimitState.Usable(true))))
+    val blocked = ss.filterNot((refactorCallback => ((refactorCallback.usable) == LimitState.Usable.Usable)))
     if blocked.isEmpty then ((true), None)
     else ((false), if blocked.exists(_.freesAt.isEmpty) then None else Some(blocked.flatMap(_.freesAt).max))
 
@@ -478,8 +481,10 @@ object ModelChains:
     object Remaining extends Newtype[Double, Pure]
     type Reserve = Reserve.T
     object Reserve extends Newtype[Double, Pure]
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
     type FreesAt = FreesAt.T
     object FreesAt extends Newtype[String, Pure]
 
@@ -501,8 +506,10 @@ object ModelChains:
     object Target extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
     export Allowance.ReservePct
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
     export LimitStatus.FreesAt
     type Note = Note.T
     object Note extends Newtype[String, Pure]:
@@ -516,7 +523,7 @@ object ModelChains:
       problems: List[Problem] = Nil,
       freesAt: Option[ChainEntry.FreesAt] = None,
       billing: Option[ChainEntry.Billing] = None,
-      cooling: ChainEntry.Cooling = ChainEntry.Cooling(false)
+      cooling: ChainEntry.Cooling = ChainEntry.Cooling.Warm
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -525,15 +532,21 @@ object ModelChains:
     type Model = Model.T
     object Model extends Newtype[String, Pure]:
       given Display[T] = Display(_.value)
-    type Ready = Ready.T
-    object Ready extends Newtype[Boolean, Pure]
-    type Usable = Usable.T
-    object Usable extends Newtype[Boolean, Pure]
+    enum Ready derives CanEqual:
+      case Ready, Unready
+    object Ready extends TwoStates[Ready]:
+      extension (ready: Ready) def ready: Boolean = ready == Ready
+    enum Usable derives CanEqual:
+      case Usable, Unusable
+    object Usable extends TwoStates[Usable]:
+      extension (usable: Usable) def usable: Boolean = usable == Usable
     export LimitStatus.FreesAt
     type Billing = Billing.T
     object Billing extends Newtype[String, Pure]
-    type Cooling = Cooling.T
-    object Cooling extends Newtype[Boolean, Pure]
+    enum Cooling derives CanEqual:
+      case Cooling, Warm
+    object Cooling extends TwoStates[Cooling]:
+      extension (cooling: Cooling) def cooling: Boolean = cooling == Cooling
 
   final case class RoleChain(
       role: RoleChain.Role,

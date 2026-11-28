@@ -292,7 +292,7 @@ class MergeSuite extends DbSuite with Bounded:
       )
     )
     val first = importInto(home, exportOf(work, sw), sh)
-    assert(first.applied.value, first.problems.mkString("\n"))
+    assert(first.applied.applied, first.problems.mkString("\n"))
     // …then both sides go on
     val _ =
       SourceFixtures.patch(
@@ -732,7 +732,7 @@ class MergeSuite extends DbSuite with Bounded:
     val bundle = exportOf(work, sw)
     val before = Files.readAllBytes(exportOf(home, sh))
     val r = importInto(home, bundle, sh)
-    assert(!r.applied.value)
+    assert(!r.applied.applied)
     val p = planIn(home, bundle, sh)
     assertEquals(r.planHash, Some(p.planHash))
     p.open.foreach(i =>
@@ -752,7 +752,7 @@ class MergeSuite extends DbSuite with Bounded:
         .map(i => MergeResolution(MergeResolution.Issue(i.id.value), MergeResolution.Decision("keep-left")))
     )
     val r2 = importInto(home, bundle, sh, res)
-    assert(!r2.applied.value)
+    assert(!r2.applied.applied)
     assert(
       r2.problems.forall(x => x.sentence.contains("merge apply") || x.sentence.contains("open")),
       r2.problems.mkString("\n")
@@ -800,7 +800,7 @@ class MergeSuite extends DbSuite with Bounded:
     assertEquals(p.issues, Nil)
     assertEquals(p.matches.byLedger, 1)
     val r = importInto(b, bundle, sb)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(r.counts.find(_.kind == Bundle.Kind.Source).map(_.updated), Some(1), r.toString)
     assertEquals(count(b, "SELECT count(*)::int FROM sources"), 1)
     assertEquals(
@@ -851,7 +851,7 @@ class MergeSuite extends DbSuite with Bounded:
         List(MergeResolution(MergeResolution.Issue(taken.id.value), MergeResolution.Decision("keep-left")))
       )
     )
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(count(b, "SELECT count(*)::int FROM sources WHERE citekey = 'zzy2001_new'"), 1)
     assertEquals(connect(b)(sql"SELECT label FROM events WHERE id = 'zz_both'".query[String].run().head), "Event at b")
 
@@ -947,7 +947,7 @@ class MergeSuite extends DbSuite with Bounded:
     // a stale plan is refused, and nothing is written — not even a backup
     val before = Files.readAllBytes(exportOf(home, sh))
     val stale = applyIn(home, bundle, sh, res, MergePlan.PlanHash("0badc0de"))
-    assert(!stale.applied.value)
+    assert(!stale.applied.applied)
     assert(stale.problems.exists(_.sentence.contains("not 0badc0de")), stale.problems.mkString("\n"))
     assertEquals(backupsTaken.get, 0)
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), before), "a refused apply wrote something")
@@ -955,7 +955,7 @@ class MergeSuite extends DbSuite with Bounded:
     val uidW = uidOf(work, "sources", "citekey", "guterbock1997_perspectives")
     val uidH = uidOf(home, "sources", "citekey", "guterbock1997_hittite")
     val r = applyIn(home, bundle, sh, res, p.planHash)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(r.backup, Some("stub.dump"))
     assertEquals(backupsTaken.get, 1)
     assertEquals(r.replanChanges, Some(0), "planning the same bundle again after the apply")
@@ -1114,7 +1114,7 @@ class MergeSuite extends DbSuite with Bounded:
     assertEquals(again.changes, 0, again.issues.filter(_.decision.isDefined).mkString("\n"))
     val snapshot = Files.readAllBytes(exportOf(home, sh))
     val noop = applyIn(home, bundle, sh, res, again.planHash)
-    assert(noop.applied.value, noop.problems.mkString("\n"))
+    assert(noop.applied.applied, noop.problems.mkString("\n"))
     assertEquals(noop.mergeId, None)
     assertEquals(backupsTaken.get, 1)
     assert(java.util.Arrays.equals(Files.readAllBytes(exportOf(home, sh)), snapshot), "a second apply wrote something")
@@ -1129,7 +1129,7 @@ class MergeSuite extends DbSuite with Bounded:
     val p = planIn(home, bundle, sh)
     val taken = backupsTaken.get
     val r = applyIn(home, bundle, sh, MergeResolutions(), p.planHash)
-    assert(!r.applied.value)
+    assert(!r.applied.applied)
     p.open.foreach(i => assert(r.problems.exists(_.sentence.startsWith(i.id.value)), s"${i.id} not reported"))
     assertEquals(backupsTaken.get, taken)
 
@@ -1188,7 +1188,7 @@ class MergeSuite extends DbSuite with Bounded:
       val (res, p) = loop(MergeResolutions(), 5)
       assertEquals(p.open, Nil, s"round $round")
       val r = applyIn(b, bundle, sb, res, p.planHash)
-      assert(r.applied.value, s"round $round: ${r.problems.mkString("\n")}")
+      assert(r.applied.applied, s"round $round: ${r.problems.mkString("\n")}")
       assertEquals(r.replanChanges, Some(0), s"round $round")
       assertEquals(
         count(
@@ -1216,7 +1216,7 @@ class MergeSuite extends DbSuite with Bounded:
       assertEquals(again.changes, 0, s"round $round")
       val snapshot = Files.readAllBytes(exportOf(b, sb))
       val noop = applyIn(b, bundle, sb, res, again.planHash)
-      assert(noop.applied.value && noop.mergeId.isEmpty, s"round $round: ${noop.problems.mkString("\n")}")
+      assert(noop.applied.applied && noop.mergeId.isEmpty, s"round $round: ${noop.problems.mkString("\n")}")
       assert(
         java.util.Arrays.equals(Files.readAllBytes(exportOf(b, sb)), snapshot),
         s"round $round: a second apply wrote something"
@@ -1252,7 +1252,7 @@ class MergeSuite extends DbSuite with Bounded:
       GoalRepo.put(domain.automation.Goal.Slug("zz_old_goal"), Goal.Put(Goal.Title("A goal")))
     )
     val first = importInto(b, exportOf(a, sa), sb)
-    assert(first.applied.value, first.problems.mkString("\n"))
+    assert(first.applied.applied, first.problems.mkString("\n"))
     transact(a) {
       ArticleFixtures
         .renameIn(Slug("zz_old_slug"), Slug("zz_new_slug"))
@@ -1270,7 +1270,7 @@ class MergeSuite extends DbSuite with Bounded:
     // the rename rewrote the link in the other article over there
     assertEquals(ArticleFixtures.load(a, Slug("zz_linker")).map(_.body), Some("See [[zz_new_slug]]."))
     val r = importInto(b, exportOf(a, sa), sb)
-    assert(r.applied.value, r.problems.mkString("\n"))
+    assert(r.applied.applied, r.problems.mkString("\n"))
     assertEquals(ArticleFixtures.load(b, Slug("zz_new_slug")).map(_.body), Some("Text."))
     assertEquals(ArticleFixtures.view(b, Slug("zz_old_slug")).map(_.article.slug), Some("zz_new_slug"))
     assertEquals(ArticleFixtures.load(b, Slug("zz_linker")).map(_.body), Some("See [[zz_new_slug]]."))

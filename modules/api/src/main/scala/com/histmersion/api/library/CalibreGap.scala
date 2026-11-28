@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.TwoStates
 
 final case class CalibreGap(
     citekey: Citekey,
@@ -40,5 +41,7 @@ object CalibreGap:
   type Isbn = Isbn.T
   object Isbn extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  type StoredOriginal = StoredOriginal.T
-  object StoredOriginal extends Newtype[Boolean, Pure]
+  enum StoredOriginal derives CanEqual:
+    case Stored, Missing
+  object StoredOriginal extends TwoStates[StoredOriginal]:
+    extension (storedOriginal: StoredOriginal) def storedOriginal: Boolean = storedOriginal == Stored

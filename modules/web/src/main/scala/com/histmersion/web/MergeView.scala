@@ -242,7 +242,7 @@ object MergeView:
     MarkedText(
       t.hunks
         .flatMap { h =>
-          if !h.conflict.value then h.left.map(_.value)
+          if !h.conflict.conflict then h.left.map(_.value)
           else
             (("<<<<<<< here" :: h.left.map(_.value)) ++ (if h.base.nonEmpty then
                                                            "||||||| common version" :: h.base.map(_.value)
@@ -448,7 +448,7 @@ object MergeView:
     job.set(Some(j))
     if j.state == MergeJobState.Running then
       dom.window.setTimeout(() => ApiClient.mergeApplyStatus(j.job).onComplete(_.fold(fail("the merge"), follow)), 2000)
-    else if j.result.exists(r => r.applied.value && r.mergeId.isDefined) then
+    else if j.result.exists(r => r.applied.applied && r.mergeId.isDefined) then
       res.set(MergeResolutions())
       replan()
     // a restart cut it short: it committed or rolled back as a whole — planning again shows which
@@ -760,7 +760,7 @@ object MergeView:
       h5(if t.base.isDefined then "the two versions against their common version"
       else "the two versions (no common version)"),
       t.hunks.map { h =>
-        if !h.conflict.value then
+        if !h.conflict.conflict then
           htmlTag("details")(
             cls := "merge-agreed",
             htmlTag("summary")(
@@ -1063,7 +1063,7 @@ object MergeView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def appliedReport(r: MergeApplyResult): HtmlElement =
     val t = r.tally
-    if !r.applied.value then
+    if !r.applied.applied then
       div(
         cls := "form-error",
         role := "alert",

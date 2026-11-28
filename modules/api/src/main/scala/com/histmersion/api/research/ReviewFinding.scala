@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 final case class ReviewFinding(
     id: ReviewFinding.Id,
@@ -23,7 +24,7 @@ final case class ReviewFinding(
     closedRound: Option[ReviewFinding.ClosedRound] = None,
     closedRunNumber: Option[ReviewFinding.ClosedRunNumber] = None,
     reopened: ReviewFinding.Reopened = ReviewFinding.Reopened(0),
-    deferred: ReviewFinding.Deferred = ReviewFinding.Deferred(false)
+    deferred: ReviewFinding.Deferred = ReviewFinding.Deferred.Open
 ) derives JsonCodec,
       KindlingsSchema,
       api.json.Schema
@@ -56,5 +57,7 @@ object ReviewFinding:
   export ReviewRound.{Round as ClosedRound, RunNumber as ClosedRunNumber}
   type Reopened = Reopened.T
   object Reopened extends Newtype[Int, Pure]
-  type Deferred = Deferred.T
-  object Deferred extends Newtype[Boolean, Pure]
+  enum Deferred derives CanEqual:
+    case Deferred, Open
+  object Deferred extends TwoStates[Deferred]:
+    extension (deferred: Deferred) def deferred: Boolean = deferred == Deferred

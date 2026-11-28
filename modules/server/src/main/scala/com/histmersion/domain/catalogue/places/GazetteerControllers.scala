@@ -70,11 +70,11 @@ final class GazetteerControllers(
   def fetch(
       caller: Caller,
       source: Api.ExternalPlaces.Source,
-      dryRun: Api.Apply
+      apply: Api.Apply
   )(using Creator.New): Either[Api.Error, Place.ImportResult] =
     maintenance.guard(WriteGate.OperationName("places/fetch")):
       val name = source.value.trim.toLowerCase
-      if name == NaturalEarthLand.name then land(GazetteerControllers.DryRun(dryRun.value))
+      if name == NaturalEarthLand.name then land(GazetteerControllers.DryRun(!apply.applies))
       else
         imports
           .source(
@@ -89,7 +89,7 @@ final class GazetteerControllers(
           .map(refused)
           .flatMap { src =>
             given Creator.New = imports.importerOf(src)
-            if dryRun.value then imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
+            if !apply.applies then imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
             else
               job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
                 imports

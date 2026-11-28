@@ -129,7 +129,11 @@ final class AcquisitionControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   private def step(name: String, ok: Boolean, detail: String): Ingest.Step =
-    Ingest.Step(Ingest.Step.Value(name), Ingest.Step.Ok(ok), Ingest.Step.Detail(detail))
+    Ingest.Step(
+      Ingest.Step.Value(name),
+      (if ok then Ingest.Step.Ok.Ok else Ingest.Step.Ok.Failed),
+      Ingest.Step.Detail(detail)
+    )
 
   @tolerated(
     LintRule.G44Conversion,
@@ -218,7 +222,7 @@ final class AcquisitionControllers(
     goalSlug(r.goal.value.trim).flatMap { g =>
       // a dry run runs the same sweep (it stores nothing): under the gate too
       maintenance.guard(WriteGate.OperationName("candidates/sweep"))(
-        if r.dryRun.value then search.sweep(g, dryRun = CandidateSearch.SweepDryRun(true))
+        if r.dryRun.dryRun then search.sweep(g, dryRun = CandidateSearch.SweepDryRun(true))
         else search.sweep(g, dryRun = CandidateSearch.SweepDryRun(false))
       )
     }
@@ -282,7 +286,7 @@ final class AcquisitionControllers(
           // corpus once per RESULT ROW, i.e. 25 full-table scans for one search.
           val index = sources.doiIndex
           val marked = works.map(mark(_, index))
-          val kept = if notInDb then marked.filterNot(_.inDb.value) else marked
+          val kept = if notInDb then marked.filterNot(_.inDb.inDb) else marked
           DiscoverResult(DiscoverResult.Query(query), DiscoverResult.Count(kept.size), kept)
         }
 
@@ -341,7 +345,10 @@ final class AcquisitionControllers(
       Option.when(w.citekey.isDefined)(Acquire.legacyCitekey(w.authors, w.year, w.title)).toList
     val byKey = keys.distinct.find(held)
     val resolved = byDoi.orElse(byKey)
-    w.modify(_.inDb).setTo(WorkRef.InDb(resolved.isDefined)).modify(_.citekey).setTo(resolved.orElse(w.citekey))
+    w.modify(_.inDb)
+      .setTo((if resolved.isDefined then WorkRef.InDb.InDb else WorkRef.InDb.Missing))
+      .modify(_.citekey)
+      .setTo(resolved.orElse(w.citekey))
 
   /** The generated key `generated`, unless no record has it and one has the pre-#878 key of the same metadata — then
     * that one, so a re-import lands on the existing record, not a duplicate.
@@ -376,7 +383,7 @@ final class AcquisitionControllers(
           discovery.references(doi).left.map(e => err(e)).map { (backend, rows) =>
             val resolved = resolveRefs(rows)
             val added: RowCount =
-              if !req.apply.value then RowCount(0)
+              if !req.apply.applies then RowCount(0)
               else
                 t.citekey match
                   case None      => RowCount(0)
@@ -462,7 +469,7 @@ final class AcquisitionControllers(
         val verdict = Acquire.verdict(
           rw,
           updates,
-          work.exists(_.isRetracted.value),
+          work.exists(_.isRetracted.isRetracted),
           citedCount,
           year,
           Acquire.CitationThreshold(d.wellCitedAt.value),
@@ -483,9 +490,9 @@ final class AcquisitionControllers(
           )
         }
         val decision = for
-          ck <- t.citekey if req.apply.value
+          ck <- t.citekey if req.apply.applies
           cur <- stored
-          d <- Acquire.statusDecision(verdict, cur.status, req.forceStatus.value)
+          d <- Acquire.statusDecision(verdict, cur.status, req.forceStatus.forceStatus)
         yield ck -> d
         val applied = decision.flatMap {
           case (ck, Right(status)) =>
@@ -502,10 +509,11 @@ final class AcquisitionControllers(
           year = year,
           citedByCount = citedCount,
           influentialCitations = influential.map(i => i),
-          isRetracted = Assessment.IsRetracted(verdict == Acquire.Verdicts.Retracted),
+          isRetracted = (if verdict == Acquire.Verdicts.Retracted then Assessment.IsRetracted.Retracted
+                         else Assessment.IsRetracted.Standing),
           retractionWatch = rw,
           crossrefUpdates = updates,
-          flagged = Assessment.Flagged(Acquire.flagged(verdict)),
+          flagged = (if Acquire.flagged(verdict) then Assessment.Flagged.Flagged else Assessment.Flagged.Clear),
           verdict = verdict,
           recommendation = Assessment.Recommendation(Acquire.recommendation(verdict, citedCount).value),
           applied = applied.map(w => Assessment.Applied(w.value)),
@@ -557,7 +565,7 @@ final class AcquisitionControllers(
         finally rwRunning.set(false)
       })
       maintenance.workers.detached(Quiescent.Name("retraction-watch-refresh"))(() => work.run())
-      Right(retractionsStatus.modify(_.running).setTo(RetractionsUpdate.Running(true)))
+      Right(retractionsStatus.modify(_.running).setTo(RetractionsUpdate.Running.Running))
 
   /** How the mirror is doing: how many rows it holds, whether a refresh is in flight, and the last failure if there was
     * one.
@@ -570,7 +578,7 @@ final class AcquisitionControllers(
     RetractionsUpdate(
       RetractionsUpdate.Rows(assessments.retractionCount.value),
       RetractionsUpdate.Source(acq.retractionWatch.csvUrl.value),
-      running = RetractionsUpdate.Running(rwRunning.get),
+      running = (if rwRunning.get then RetractionsUpdate.Running.Running else RetractionsUpdate.Running.Idle),
       error = rwError.get
     )
 
@@ -615,7 +623,7 @@ final class AcquisitionControllers(
                         .classify(
                           r.intents.map(i => Acquire.Intent.Wire(i.value)),
                           r.contexts.map(c => Acquire.CitationContext(c.value)),
-                          r.isInfluential.value,
+                          r.isInfluential.isInfluential,
                           r.year,
                           work.year
                         )
@@ -632,7 +640,7 @@ final class AcquisitionControllers(
               }
               // an edge can only start at a source we actually hold: the citing paper must be in the
               // corpus, and so must the target
-              val added: RowCount = (req.apply.value, t.citekey) match
+              val added: RowCount = (req.apply.applies, t.citekey) match
                 case (true, Some(dst)) =>
                   sources.addEdges(
                     enriched.flatMap(r =>
@@ -721,7 +729,7 @@ final class AcquisitionControllers(
           .parse(citekey.get)
           .left
           .map(p => Write.invalid(p))
-          .flatMap(ck => ingestWith(doi, arxiv, work, ck, steps, req.refetch.value, path, by))
+          .flatMap(ck => ingestWith(doi, arxiv, work, ck, steps, req.refetch.refetch, path, by))
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
@@ -953,7 +961,7 @@ final class AcquisitionControllers(
         // written for a source we JUST created, and for a retraction whatever the source's age — a
         // retracted paper must never keep a curated "current".
         val assessment = doi.flatMap { _ =>
-          assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply(false))).toOption.map { a =>
+          assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply.DryRun)).toOption.map { a =>
             val shouldApply = outcome.created.value || a.verdict == Acquire.Verdicts.Retracted
             val applied = for
               status <- Acquire.statusFor(a.verdict) if shouldApply
@@ -968,7 +976,7 @@ final class AcquisitionControllers(
           citekey = com.histmersion.api.library.Citekey(citekey.value),
           doi = doi.map(d => com.histmersion.api.library.Doi(d.value)),
           title = work.flatMap(_.title),
-          created = Ingest.Report.Created(outcome.created.value),
+          created = (if outcome.created.value then Ingest.Report.Created.Created else Ingest.Report.Created.Existing),
           pdf = fetched.toOption.map(f =>
             PdfInfo(
               PdfInfo.Source(f.source.value),
@@ -1101,7 +1109,7 @@ final class AcquisitionControllers(
                 com.histmersion.api.library.Citekey(citekey.value),
                 None,
                 title,
-                Ingest.Report.Created(outcome.created.value),
+                (if outcome.created.value then Ingest.Report.Created.Created else Ingest.Report.Created.Existing),
                 Some(
                   PdfInfo(
                     PdfInfo.Source("archive_org"),
@@ -1168,7 +1176,7 @@ final class AcquisitionControllers(
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
       ingestNow(
         req,
-        if req.legalOnly.value then IngestPath.PersonLegal else IngestPath.Person,
+        if req.legalOnly.legalOnly then IngestPath.PersonLegal else IngestPath.Person,
         by
       )
     )
@@ -1191,7 +1199,7 @@ final class AcquisitionControllers(
     */
   def ingestLegal(req: Ingest.Request, by: Creator.New): Either[Api.Error, Ingest.Report] =
     maintenance.guard(WriteGate.OperationName("acquire/ingest"))(
-      ingestNow(req.modify(_.refetch).setTo(Ingest.Request.Refetch(false)), IngestPath.Watcher, by)
+      ingestNow(req.modify(_.refetch).setTo(Ingest.Request.Refetch.Reuse), IngestPath.Watcher, by)
     )
 
   /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's
@@ -1244,7 +1252,7 @@ object AcquisitionControllers:
       agentsMay: AcquireConfig.AgentsMayUseUnauthorised
   ): Either[Problem, Ingest.Request.LegalOnly] =
     Either.cond(
-      legalOnly == Ingest.Request.LegalOnly(true) || agentsMay == AcquireConfig.AgentsMayUseUnauthorised(true),
+      legalOnly == Ingest.Request.LegalOnly.LegalOnly || agentsMay == AcquireConfig.AgentsMayUseUnauthorised(true),
       legalOnly,
       Problem.Refused.Policy(Problem.Refused.Rule.LegalOnly)
     )

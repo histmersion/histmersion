@@ -6,6 +6,7 @@ import com.histmersion.api.automation.RunCompare
 import com.histmersion.domain.CompareRuns
 import io.scalaland.chimney.Transformer
 import io.scalaland.chimney.dsl.*
+import com.histmersion.domain.TwoStateTransformers.given
 import com.histmersion.api.automation.AgentRole
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.automation.Step

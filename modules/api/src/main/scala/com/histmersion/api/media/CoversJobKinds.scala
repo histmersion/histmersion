@@ -13,6 +13,6 @@ object CoversJobKinds:
     JobKindMeaning(
       "Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures."
     ),
-    stoppable = JobKindEntry.OfStoppable(true),
+    stoppable = JobKindEntry.OfStoppable.Stoppable,
     subject = ImportJobKinds.Media.of
   )

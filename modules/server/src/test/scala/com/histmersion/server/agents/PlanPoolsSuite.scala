@@ -50,7 +50,13 @@ class PlanPoolsSuite extends munit.FunSuite:
 
   test("codex: windows keyed by LENGTH and bucket; a reached limit refused; ordinaryUsageAllowed false is a refusal"):
     val (rs, refusal, plan) = PlanPools.codexReadings(RawJson.parse(Captured).toOption.get, Now(1000L))
-    val got = rs.map(r => s"${r.limit} ${r.kind} ${r.usedPct} ${r.rejected} ${r.model.getOrElse("-")}").toSet
+    val got = rs
+      .map(r =>
+        s"${r.limit} ${r.kind} ${r.usedPct} ${{
+            r.rejected
+          }.rejected} ${r.model.getOrElse("-")}"
+      )
+      .toSet
     assertEquals(got, Set("codex 10080m 100.0 true -", "gpt-reserve 10080m 0.0 false gpt-5.6-luna"))
     assertEquals(rs.find(_.limit.value == "codex").flatMap(_.resetsAt), Some(1791625500000L))
     assert(refusal.exists(_._1.sentence.contains("ordinaryUsageAllowed")))

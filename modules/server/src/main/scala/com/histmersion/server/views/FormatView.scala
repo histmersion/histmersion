@@ -18,7 +18,7 @@ final class FormatView(articles: => ArticlesControllers, sources: => SourcesCont
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def check(in: FormatCheck): FormatReport =
     val (text, done) =
-      if in.fix.value then
+      if in.fix.fix then
         MarkdownLint.fix(
           MarkdownLint.Scan.Text(in.text.value),
           in.field,
@@ -38,5 +38,5 @@ final class FormatView(articles: => ArticlesControllers, sources: => SourcesCont
       FormatReport.Subject("text"),
       issues,
       done.map(r => FormatReport.Fixed(r.value)),
-      Option.when(in.fix.value)(FormatReport.Text(text.value))
+      Option.when(in.fix.fix)(FormatReport.Text(text.value))
     )

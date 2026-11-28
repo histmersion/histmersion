@@ -108,7 +108,7 @@ final class ServerGraph private (
       case Some(_) if maintenance.active =>
         // a reload may swap the pools or the database a restore is replacing: it waits for the next one
         ReloadReport(
-          published = ReloadReport.Published(false),
+          published = ReloadReport.Published.Unpublished,
           generation,
           errors = List(
             ReloadReport.Errors(Problem.Conflict.Busy(Problem.Conflict.Activity.Restore).sentence)
@@ -122,7 +122,7 @@ final class ServerGraph private (
         ) match
           case Left(e) =>
             ReloadReport(
-              published = ReloadReport.Published(false),
+              published = ReloadReport.Published.Unpublished,
               generation,
               errors = e.sentences.toList.map(ReloadReport.Errors(_)),
               file = file
@@ -132,7 +132,7 @@ final class ServerGraph private (
             val (applied, restart) = ConfigReload.split(changed)
             val warnings = next.file.warnings.map(w => ReloadReport.Warnings(w.sentence))
             val base = ReloadReport(
-              published = ReloadReport.Published(false),
+              published = ReloadReport.Published.Unpublished,
               generation,
               restartOnly = restart.map(k => ReloadReport.RestartOnly(k.value)),
               warnings = warnings,
@@ -157,7 +157,7 @@ final class ServerGraph private (
                     case Right(o) =>
                       base
                         .modify(_.published)
-                        .setTo(ReloadReport.Published(true))
+                        .setTo(ReloadReport.Published.Published)
                         .modify(_.generation)
                         .setTo(ReloadReport.Generation(o.generation.value))
                         .modify(_.applied)
@@ -371,7 +371,7 @@ object ServerGraph:
   private def log(r: ReloadReport): Unit =
     if r.errors.nonEmpty then
       scribe.warn(s"config reload failed, generation ${r.generation} stays: ${r.errors.mkString("; ")}")
-    else if r.published.value then
+    else if r.published.published then
       scribe.info(
         s"config reloaded: generation ${r.generation}; applied ${r.applied.mkString(", ")}" +
           (if r.rebuilt.isEmpty then "" else s"; rebuilt ${r.rebuilt.mkString(", ")}") +

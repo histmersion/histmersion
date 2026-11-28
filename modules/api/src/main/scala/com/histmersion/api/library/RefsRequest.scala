@@ -14,7 +14,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class RefsRequest(
     id: RefsRequest.Id,
-    apply: RefsRequest.Apply = Api.Apply(false),
+    apply: RefsRequest.Apply = Api.Apply.DryRun,
     createdBy: Option[Creation.By] = None,
     via: Option[Creation.Via] = None
 ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema

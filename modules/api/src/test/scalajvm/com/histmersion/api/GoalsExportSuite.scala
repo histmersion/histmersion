@@ -107,7 +107,7 @@ class GoalsExportSuite extends munit.FunSuite:
           Goal.Slug("bronze-age-collapse"),
           ScheduleKind.Currency,
           Goal.Plans.GoalSchedule.Cron("0 6 * * 1"),
-          enabled = Goal.Plans.GoalSchedule.Enabled(true),
+          enabled = Goal.Plans.GoalSchedule.Enabled.Enabled,
           budgetUsd = Some(GoalSchedule.BudgetUsd(0.5)),
           nextRunAt = Some(Goal.Plans.GoalSchedule.NextRunAt("2026-10-12T06:00:00Z")),
           lastNote = Some(GoalSchedule.LastNote("started run abc"))

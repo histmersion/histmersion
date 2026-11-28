@@ -22,8 +22,8 @@ class SetupPlanSuite extends munit.FunSuite:
     SetupChoices(
       email = SetupChoices.Email(""),
       finders = Map(
-        SetupChoices.FindersKey("oa-unpaywall") -> SetupChoices.FindersValue(true),
-        SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(true)
+        SetupChoices.FindersKey("oa-unpaywall") -> SetupChoices.FindersValue.On,
+        SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue.On
       ),
       area = Some(SetupChoices.Area("world"))
     )
@@ -48,11 +48,11 @@ class SetupPlanSuite extends munit.FunSuite:
       .modify(_.email)
       .setTo(SetupChoices.Email("someone@example.org"))
       .modify(_.finders)
-      .setTo(before.finders + (SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue(false)))
+      .setTo(before.finders + (SetupChoices.FindersKey("arxiv") -> SetupChoices.FindersValue.Off))
       .modify(_.area)
       .setTo(Some(SetupChoices.Area("-12,20,90,62")))
       .modify(_.agents)
-      .setTo(SetupChoices.Agents(true))
+      .setTo(SetupChoices.Agents.On)
       .modify(_.calibre)
       .setTo(SetupChoices.Calibre("~/Books"))
       .modify(_.start)
@@ -86,9 +86,9 @@ class SetupPlanSuite extends munit.FunSuite:
           .modify(_.area)
           .setTo(None)
           .modify(_.boundaries)
-          .setTo(SetupChoices.Boundaries(false))
+          .setTo(SetupChoices.Boundaries.Off)
           .modify(_.events)
-          .setTo(SetupChoices.Events(false))
+          .setTo(SetupChoices.Events.Off)
       ),
       Nil
     )
@@ -97,9 +97,9 @@ class SetupPlanSuite extends munit.FunSuite:
         .downloads(
           before
             .modify(_.pictures)
-            .setTo(SetupChoices.Pictures(true))
+            .setTo(SetupChoices.Pictures.On)
             .modify(_.morePlaces)
-            .setTo(SetupChoices.MorePlaces(true))
+            .setTo(SetupChoices.MorePlaces.On)
         )
         .contains(SetupDownload.MorePlaces)
     )
@@ -173,6 +173,6 @@ class SetupPlanSuite extends munit.FunSuite:
     val c = SetupPage.choicesOf(page, ui)
     assertEquals(c.email, "someone@example.org")
     assertEquals(c.area, Some("-12,20,90,62"))
-    assert(!c.agents.value)
+    assert(!c.agents.on)
     assertEquals(MapArea.size(MapArea.ApproxGb(8.8)), "8.8 GB")
     assertEquals(MapArea.parse("x|world|nope"), None)

@@ -12,6 +12,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.{Api, Paging}
+import com.histmersion.api.TwoStates
 
 /** A sync: the gaps it considered, and with `apply` each push made. */
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
@@ -27,8 +28,10 @@ final case class CollectionSync(
 object CollectionSync:
 
   /** One push of a sync: the item it became, or why it failed. */
-  type Applied = Applied.T
-  object Applied extends Newtype[Boolean, Pure]
+  enum Applied derives CanEqual:
+    case Applied, Previewed
+  object Applied extends TwoStates[Applied]:
+    extension (applied: Applied) def applied: Boolean = applied == Applied
 
   final case class Push(
       citekey: Citekey,
@@ -45,7 +48,7 @@ object CollectionSync:
 
   /** Push every counted gap into a collection (a dry run unless `apply`), considering at most `limit` gaps. */
   final case class Request(
-      apply: Request.Apply = Request.Apply(false),
+      apply: Request.Apply = Request.Apply.DryRun,
       limit: Option[Request.Limit] = None
   ) derives JsonCodec,
         KindlingsSchema,

@@ -7,11 +7,12 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
+import com.histmersion.api.TwoStates
 
 final case class AssessRequest(
     id: AssessRequest.Id,
-    apply: AssessRequest.Apply = AssessRequest.Apply(false),
-    forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus(false),
+    apply: AssessRequest.Apply = AssessRequest.Apply.DryRun,
+    forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus.KeepStatus,
     createdBy: Option[Creation.By] = None,
     via: Option[Creation.Via] = None
 ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
@@ -19,7 +20,11 @@ final case class AssessRequest(
 object AssessRequest:
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type Apply = Apply.T
-  object Apply extends Newtype[Boolean, Pure]
-  type ForceStatus = ForceStatus.T
-  object ForceStatus extends Newtype[Boolean, Pure]
+  enum Apply derives CanEqual:
+    case Apply, DryRun
+  object Apply extends TwoStates[Apply]:
+    extension (apply: Apply) def applies: Boolean = apply == Apply
+  enum ForceStatus derives CanEqual:
+    case ForceStatus, KeepStatus
+  object ForceStatus extends TwoStates[ForceStatus]:
+    extension (forceStatus: ForceStatus) def forceStatus: Boolean = forceStatus == ForceStatus

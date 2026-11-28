@@ -8,11 +8,11 @@ object PassagesMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def render(r: PassageResult): String =
-    val what = if (r.regex) == PassageResult.Regex(true) then s"/${r.query}/" else s"\"${r.query}\""
+    val what = if (r.regex) == PassageResult.Regex.Regex then s"/${r.query}/" else s"\"${r.query}\""
     if r.passages.isEmpty then (s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
     else
       val counted =
-        if (r.capped) == PassageResult.Capped(true) then s"${r.matches}+ matches (counting stopped)"
+        if (r.capped) == PassageResult.Capped.Capped then s"${r.matches}+ matches (counting stopped)"
         else
           Plural.count(
             Plural.Count(r.matches.value.toLong),

@@ -764,7 +764,7 @@ object SourceService:
           val d = Source.Deletion(
             citekey = apiKey(ck),
             title = x.source.title,
-            applied = Source.Deletion.Applied(false),
+            applied = Source.Deletion.Applied.Previewed,
             counts = counts,
             aliases = aliases.map(a => Source.Deletion.Aliases(a.value)),
             edgesIn = edgesIn,
@@ -798,7 +798,7 @@ object SourceService:
               .modify(_.deletion.files)
               .setTo(files(p0))
               .modify(_.deletion.applied)
-              .setTo(Source.Deletion.Applied(true))
+              .setTo(Source.Deletion.Applied.Applied)
             answer = Right(p)
             val ck = p.deletion.citekey
             val incoming = st.edges.filter(e => e.dst == ck && e.src != ck)

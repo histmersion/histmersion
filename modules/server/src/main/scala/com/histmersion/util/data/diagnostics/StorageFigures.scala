@@ -132,8 +132,9 @@ final class StorageFigures(registry: DataContributions):
         files = (Option
           .when(exists)(results.map(_.files.value).sum))
           .map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-        exists = StorageReports.Entry.Exists(exists),
-        partial = StorageReports.Entry.Partial(results.exists(_.partial.value)),
+        exists = (if exists then StorageReports.Entry.Exists.Exists else StorageReports.Entry.Exists.Missing),
+        partial = (if results.exists(_.partial.value) then StorageReports.Entry.Partial.Partial
+                   else StorageReports.Entry.Partial.Whole),
         detail = (spot.detail.toList ++ extra.toList)
           .map[String](_.value)
           .reduceOption(_ + " · " + _)
@@ -176,9 +177,10 @@ final class StorageFigures(registry: DataContributions):
               StorageReports.Entry.Label("database (Postgres)"),
               StorageReports.Entry.Group("database"),
               bytes = (size.toOption.map(_._2.value)).map(ByteCount.apply),
-              exists = StorageReports.Entry.Exists(size.isRight),
+              exists =
+                (if size.isRight then StorageReports.Entry.Exists.Exists else StorageReports.Entry.Exists.Missing),
               within = Option.when(
-                measured.exists(e => e.key.value == ShownStore.DatabaseCluster.key.value && e.exists.value)
+                measured.exists(e => e.key.value == ShownStore.DatabaseCluster.key.value && e.exists.exists)
               )(
                 StorageReports.Entry.Key(ShownStore.DatabaseCluster.key.value)
               ),

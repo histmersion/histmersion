@@ -581,7 +581,7 @@ object GoalService:
         Goal.Slug(r.goal.value),
         r.kind.transformInto[Goal.Plans.ScheduleKind],
         GoalSchedule.Cron(r.cron.value),
-        GoalSchedule.Enabled(r.enabled.value),
+        (if r.enabled.value then GoalSchedule.Enabled.Enabled else GoalSchedule.Enabled.Disabled),
         r.budgetUsd.map(b => GoalSchedule.BudgetUsd(b.toDouble)),
         r.nextRunAt.map(t => GoalSchedule.NextRunAt(AutomationState.text(t).value)),
         None,
@@ -608,7 +608,7 @@ object GoalService:
         GoalScheduleRecord.Goal(goal.value),
         kind,
         GoalScheduleRecord.Cron(cron.value),
-        GoalScheduleRecord.Enabled(enabled.value),
+        GoalScheduleRecord.Enabled(enabled.enabled),
         budgetUsd,
         next
       )

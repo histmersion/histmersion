@@ -29,7 +29,7 @@ object SetupPlan:
   def changes(c: SetupChoices, before: SetupChoices): List[(ConfigEdit.Change.Key, Option[ConfigEdit.Change.Value])] =
     val finders = c.finders.toList.sortBy(_._1.value).collect {
       case (id, on) if !before.finders.get(id).contains(on) =>
-        ConfigEdit.Change.Key(s"plugins.$id.enabled") -> Some(ConfigEdit.Change.Value(on.value.toString))
+        ConfigEdit.Change.Key(s"plugins.$id.enabled") -> Some(ConfigEdit.Change.Value(on.on.toString))
     }
     val start = if c.start == before.start then Nil
     else StartPlace.changes(c.start).map((k, v) => k -> Some(v))
@@ -41,7 +41,7 @@ object SetupPlan:
         .filter(a => !before.area.contains(a))
         .map(a => ConfigEdit.Change.Key("basemap.bbox") -> Some(ConfigEdit.Change.Value(a.value))),
       Option.when(c.agents != before.agents)(
-        ConfigEdit.Change.Key("agents.enabled") -> Some(ConfigEdit.Change.Value(c.agents.value.toString))
+        ConfigEdit.Change.Key("agents.enabled") -> Some(ConfigEdit.Change.Value(c.agents.on.toString))
       ),
       Option.when(c.calibre.value.trim != before.calibre.value.trim && c.calibre.value.trim.nonEmpty)(
         ConfigEdit.Change.Key("cli.calibre.library-dir") -> Some(ConfigEdit.Change.Value(c.calibre.value.trim))
@@ -52,10 +52,10 @@ object SetupPlan:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def downloads(c: SetupChoices): List[SetupDownload] =
     c.area.map(SetupDownload.Map(_)).toList ++
-      Option.when(c.boundaries.value)(SetupDownload.Boundaries) ++
-      Option.when(c.events.value)(SetupDownload.Events) ++
-      Option.when(c.pictures.value)(SetupDownload.Pictures) ++
-      Option.when(c.morePlaces.value)(SetupDownload.MorePlaces)
+      Option.when(c.boundaries.on)(SetupDownload.Boundaries) ++
+      Option.when(c.events.on)(SetupDownload.Events) ++
+      Option.when(c.pictures.on)(SetupDownload.Pictures) ++
+      Option.when(c.morePlaces.on)(SetupDownload.MorePlaces)
 
   /** About how much the chosen map area downloads, in GB. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

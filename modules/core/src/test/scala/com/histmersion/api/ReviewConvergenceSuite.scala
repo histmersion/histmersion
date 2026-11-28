@@ -134,9 +134,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
 
   test("finalRegression: a pair the run had answered and broke; a factual error in the text the run wrote"):
     def p(state: CritiqueState) = CritiquePair(
-      CritiqueSide(Citekey("chang2015"), cited = CritiqueSide.Cited(true)),
+      CritiqueSide(Citekey("chang2015"), cited = CritiqueSide.Cited.Cited),
       List(CritiquePair.Kinds("challenges")),
-      CritiqueSide(Citekey("gray2003_language"), cited = CritiqueSide.Cited(true)),
+      CritiqueSide(Citekey("gray2003_language"), cited = CritiqueSide.Cited.Cited),
       state
     )
     val f = Finding(
@@ -199,9 +199,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   test("holdPairChecks: the live S6 checked fixed while its pair is still open is recorded NOT fixed, with why"):
     val a = live("achilles_origins")
     val open = CritiquePair(
-      CritiqueSide(Citekey("kelly2021_gods"), cited = CritiqueSide.Cited(true)),
+      CritiqueSide(Citekey("kelly2021_gods"), cited = CritiqueSide.Cited.Cited),
       List(CritiquePair.Kinds("challenges")),
-      CritiqueSide(Citekey("bachvarova2016_hittite"), cited = CritiqueSide.Cited(true)),
+      CritiqueSide(Citekey("bachvarova2016_hittite"), cited = CritiqueSide.Cited.Cited),
       CritiqueState.Open
     )
     val checks = List(

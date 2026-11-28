@@ -100,7 +100,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
     val compileOpts =
       req.title.isDefined || req.kind.isDefined || req.query.isDefined || req.topics.nonEmpty || req.tags.nonEmpty
     p match
-      case _ if p != Pipeline.ReviewArticle && req.fix.contains(RunRequest.Fix(true)) =>
+      case _ if p != Pipeline.ReviewArticle && req.fix.contains(RunRequest.Fix.Fix) =>
         wrong("fix", Pipeline.ReviewArticle)
       case _ if p != Pipeline.ReviewArticle && req.rounds.isDefined     => wrong("rounds", Pipeline.ReviewArticle)
       case _ if p != Pipeline.EnrichSource && req.acquireItem.isDefined =>
@@ -181,9 +181,9 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           w.year.map(y => Year(y.value.toInt)),
           w.authors.map(a => PlanGoal.Work.Authors(a.value)),
           w.citekey.flatMap(c => Citekey.option(c.value)),
-          PlanGoal.Work.InDb(w.inDb.value),
-          PlanGoal.Work.IsOa(w.isOa.value),
-          PlanGoal.Work.IsRetracted(w.isRetracted.value)
+          PlanGoal.Work.InDb(w.inDb.inDb),
+          PlanGoal.Work.IsOa(w.isOa.isOa),
+          PlanGoal.Work.IsRetracted(w.isRetracted.isRetracted)
         )
       )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

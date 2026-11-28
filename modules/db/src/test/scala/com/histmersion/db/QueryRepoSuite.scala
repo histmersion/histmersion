@@ -112,7 +112,7 @@ class QueryRepoSuite extends DbSuite:
     assertEquals(r.columns, List("citekey", "year"))
     assertEquals(r.rows, List(List(Some(ck), Some("2020"))))
     assertEquals(r.rowCount, 1)
-    assertEquals(r.truncated, false)
+    assertEquals(r.truncated.truncated, false)
 
   test("count(*) over the whole corpus works — the acceptance query"):
     val r = run("select count(*) from sources").toOption.get
@@ -175,11 +175,11 @@ class QueryRepoSuite extends DbSuite:
   test("the row cap truncates and says so"):
     val r = run("select generate_series(1, 50) as n", maxRows = 5).toOption.get
     assertEquals(r.rowCount, 5)
-    assertEquals(r.truncated, true)
+    assertEquals(r.truncated.truncated, true)
 
   test("under the cap, nothing is marked truncated"):
     val r = run("select generate_series(1, 3) as n", maxRows = 5).toOption.get
-    assertEquals((r.rowCount, r.truncated), (3, false))
+    assertEquals((r.rowCount, r.truncated.truncated), (3, false))
 
   test("a huge cell is cut with a visible marker rather than shipped whole"):
     val r = run("select repeat('x', 5000) as big", maxCell = 100).toOption.get
@@ -207,7 +207,7 @@ class QueryRepoSuite extends DbSuite:
     val sources = ts.find(_.name.value == "sources").get
     assertEquals(sources.kind, "table")
     assert(sources.columns.map(_.name).contains("citekey"))
-    assert(sources.columns.find(_.name.value == "citekey").exists(!_.nullable.value))
+    assert(sources.columns.find(_.name.value == "citekey").exists(!_.nullable.nullable))
     // the flat findings VIEW is reported as a view
     assert(ts.find(_.name.value == "findings_flat").forall(_.kind.value == "view"))
 

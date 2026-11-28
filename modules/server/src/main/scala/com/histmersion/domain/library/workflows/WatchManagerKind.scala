@@ -139,7 +139,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
           s"; picked: ${found
               .map(p =>
                 s"${p.candidate.title} (https://doi.org/${p.candidate.doi}${
-                    if p.candidate.isOa.value then ", open access" else ""
+                    if p.candidate.isOa.isOa then ", open access" else ""
                   })"
               )
               .mkString("; ")}"
@@ -255,7 +255,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                 )
               case None =>
                 val sweep = item.kind.value == AcquisitionSweep
-                val autoOn = sweep && m.config.autoIngest.contains(ManagerConfig.AutoIngest(true))
+                val autoOn = sweep && m.config.autoIngest.contains(ManagerConfig.AutoIngest.Auto)
                 val managerId = ManagerLight.Id(m.id.value)
                 val own = IngestBacklog.OwnAllowance(
                   if sweep then
@@ -301,7 +301,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                       p.modify(_.autoIngest)
                         .setTo(Option.when(allowed > 0)(RunParams.AutoIngest(allowed)))
                         .modify(_.oaBacklog)
-                        .setTo(Some(RunParams.OaBacklog(true)))
+                        .setTo(Some(RunParams.OaBacklog.Backlog))
                     else p,
                   item.state,
                   ManagerContext.StartWhat(s"${item.kind}$auto"),

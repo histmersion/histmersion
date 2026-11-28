@@ -198,7 +198,7 @@ object ManagerCmd:
               subject.map(ApprovalDigest.BulkDecide.Subject(_)),
               ids.map(ApprovalDigest.Open.Id(_)),
               note.map(ApprovalDigest.BulkDecide.Note(_)),
-              ApprovalDigest.BulkDecide.DryRun(writes.dry),
+              (if writes.dry then ApprovalDigest.BulkDecide.DryRun.DryRun else ApprovalDigest.BulkDecide.DryRun.Apply),
               limit.map(ApprovalDigest.BulkDecide.Limit(_)),
               Some(ApprovalDigest.BulkDecide.By("cli"))
             )
@@ -212,7 +212,7 @@ object ManagerCmd:
                   ManagerCreate.Kind(kind),
                   goal.map(Goal.Slug(_)),
                   cfg,
-                  Some(ManagerCreate.Paused(!active)),
+                  Some((if !active then ManagerCreate.Paused.Paused else ManagerCreate.Paused.Active)),
                   cron.map(ManagerCreate.Cron(_))
                 )
               )
@@ -226,30 +226,34 @@ object ManagerCmd:
             case AutopilotVerb.On     =>
               status(
                 c.call(AutopilotApi.setAutopilot)(
-                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(true), Some(Autopilot.AutopilotSet.By("cli")))
+                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On.On, Some(Autopilot.AutopilotSet.By("cli")))
                 )
               )
             case AutopilotVerb.Off =>
               status(
                 c.call(AutopilotApi.setAutopilot)(
-                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On(false), Some(Autopilot.AutopilotSet.By("cli")))
+                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On.Off, Some(Autopilot.AutopilotSet.By("cli")))
                 )
               )
             case AutopilotVerb.Drain =>
               status(
                 c.call(AutopilotApi.drain)(
-                  Autopilot.DrainSet(on = Autopilot.DrainSet.On(true), Some(Autopilot.DrainSet.By("cli")))
+                  Autopilot.DrainSet(on = Autopilot.DrainSet.On.On, Some(Autopilot.DrainSet.By("cli")))
                 )
               )
             case AutopilotVerb.Undrain =>
               status(
                 c.call(AutopilotApi.drain)(
-                  Autopilot.DrainSet(on = Autopilot.DrainSet.On(false), Some(Autopilot.DrainSet.By("cli")))
+                  Autopilot.DrainSet(on = Autopilot.DrainSet.On.Off, Some(Autopilot.DrainSet.By("cli")))
                 )
               )
             case AutopilotVerb.RepairAcquire(writes) =>
               c.call(AcquisitionWorkApi.repairAcquire)(
-                RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(writes.dry), Some(Activity.Actor("cli")))
+                RepairAcquire.RepairRequest(
+                  (if writes.dry then RepairAcquire.RepairRequest.DryRun.DryRun
+                   else RepairAcquire.RepairRequest.DryRun.Apply),
+                  Some(Activity.Actor("cli"))
+                )
               ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
             case AutopilotVerb.Focus(request) =>
               request
@@ -308,10 +312,10 @@ object ManagerCmd:
                   HintAdd(
                     HintAdd.Text(text),
                     item.map(HintAdd.Item(_)),
-                    Some(HintAdd.Once(once)),
+                    Some((if once then HintAdd.Once.Once else HintAdd.Once.Standing)),
                     None,
                     Some(HintAdd.Author("cli")),
-                    suggest = Some(HintAdd.Suggest(suggest))
+                    suggest = Some((if suggest then HintAdd.Suggest.Suggest else HintAdd.Suggest.Direct))
                   )
                 )
               ).map(h => Cli.out.println(ManagersMarkdown.hint(h)))

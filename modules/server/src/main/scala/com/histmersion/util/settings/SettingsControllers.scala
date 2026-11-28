@@ -89,11 +89,11 @@ final class SettingsControllers(
             .map(ps => Api.Error(ps.at(Problem.Field("version"))))
         )
       outcome <- settings
-        .write(edits, version, SettingPolicy.LiteralConsent(w.literalConsent.value))
+        .write(edits, version, SettingPolicy.LiteralConsent(w.literalConsent.consented))
         .left
         .map(SettingsViews.error)
     yield
-      val reloaded = Option.when(w.reload.value && outcome.wrote)(reload())
+      val reloaded = Option.when(w.reload.reload && outcome.wrote)(reload())
       SettingsViews.written(outcome, reloaded, restarts.available)
 
   @tolerated(
@@ -105,7 +105,7 @@ final class SettingsControllers(
       .restart()
       .fold(
         why => Left(Api.Error(why, Some(Api.Error.Code(ConfigEdit.CodeUnavailable)))),
-        msg => Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted(true), msg))
+        msg => Right(ConfigEdit.Restart(accepted = ConfigEdit.Restart.Accepted.Accepted, msg))
       )
 
   def setupDue: Boolean = settings.setupDue

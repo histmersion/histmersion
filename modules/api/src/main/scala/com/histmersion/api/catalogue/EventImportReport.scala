@@ -8,6 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
@@ -39,8 +40,10 @@ object EventImportReport:
 
   /** An events import job's report, in its detail. */
   export CatalogRecord.Provider
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Apply
+  object DryRun extends TwoStates[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type Records = Records.T
   object Records extends Newtype[Int, Pure]
   type Kept = Kept.T
@@ -96,7 +99,7 @@ object EventImportReport:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def summary(r: EventImportReport): String =
-    val verb = if (r.dryRun).value then "would create" else "created"
+    val verb = if (r.dryRun).dryRun then "would create" else "created"
     (List(
       Some(s"${r.provider}: ${r.records} record(s) read, ${r.kept} kept"),
       Some(
@@ -112,10 +115,10 @@ object EventImportReport:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def markdown(r: EventImportReport): Markdown =
     def counts(cs: List[EventCount]) = if cs.isEmpty then "none" else cs.map(c => s"${c.key} ${c.n}").mkString(" · ")
-    val head = s"## Event import — ${r.provider}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
+    val head = s"## Event import — ${r.provider}${if (r.dryRun).dryRun then " (dry run: nothing stored)" else ""}"
     val lines = List(
       s"- records read: ${r.records} (${r.parts} request part(s), ${r.requests} HTTP request(s))",
-      s"- kept: ${r.kept} — ${if (r.dryRun).value then "would create" else "created"} ${r.created} event(s), " +
+      s"- kept: ${r.kept} — ${if (r.dryRun).dryRun then "would create" else "created"} ${r.created} event(s), " +
         s"${r.merged} merged with another catalogue record, ${r.matched} matched to stored events" +
         (if (r.updated).value > 0 then s", ${r.updated} refreshed" else ""),
       s"- by kind: ${counts(r.byKind)}",

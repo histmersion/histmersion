@@ -100,10 +100,10 @@ final class StubUpstream extends AgentUpstream:
         None,
         None,
         None,
-        Assessment.IsRetracted(false),
+        Assessment.IsRetracted.Standing,
         Nil,
         Nil,
-        Assessment.Flagged(false),
+        Assessment.Flagged.Clear,
         Assessment.Verdict("current"),
         Assessment.Recommendation("fine")
       )
@@ -158,7 +158,7 @@ final class StubUpstream extends AgentUpstream:
           CandidateSweep.Again(0),
           Map.empty,
           CandidateSweep.Unseen(cs.count(c => !marked.containsKey(c.id))),
-          CandidateSweep.DryRun(dryRun.value)
+          (if dryRun.value then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply)
         )
       )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -375,7 +375,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         title = (Some("Bronze Age tin")).map(api.library.Title.apply),
         year = (Some(2019)).map(api.catalogue.Year.apply),
         citekey = Some(ApiCk),
-        inDb = WorkRef.InDb(true)
+        inDb = WorkRef.InDb.InDb
       ),
       "10.5555/zzagent.out" -> WorkRef(
         doi = (Some("10.5555/zzagent.out")).map(api.library.Doi.apply),
@@ -849,7 +849,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     c.scripts ++= List(Seq(text(planJson)))
     val (a, h, up) = handlers(c); seed(h); stubPlan(up)
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(PlanGoal, GoalTarget, dryRun = Some(RunRequest.DryRun(true))))
+    val run = start(a, RunRequest(PlanGoal, GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun)))
     assertEquals(run.status, "done", why(run))
     assertEquals(CorpusSnapshot.of(ds), before, "no approval, no sub-goal, no link, no queue item, no log line")
     val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), AgentRepo.OutputChars(100000)))
@@ -876,7 +876,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         title = Some(ZzTitle),
         topics = TinTopics,
         goal = Some(GoalSlug),
-        dryRun = Some(RunRequest.DryRun(true))
+        dryRun = Some(RunRequest.DryRun.DryRun)
       )
     )
     assertEquals(run.status, "done", why(run))

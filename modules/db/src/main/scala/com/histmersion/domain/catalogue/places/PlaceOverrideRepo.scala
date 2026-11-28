@@ -197,7 +197,8 @@ private[places] object PlaceOverrideRepo:
           Place.OverrideChanged(
             Place.Id(id.value),
             Place.OverrideChanged.Label(before.label.value),
-            Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
+            (if edit == Place.OverrideEdit.Reset then Place.OverrideChanged.Reset.Reset
+             else Place.OverrideChanged.Reset.Set),
             Place.KindValue(before.kind.value),
             Place.KindValue(after.kind.value),
             period(before.start, before.end),

@@ -27,9 +27,9 @@ object AcquireMarkdown:
     else
       val rows = r.works.map { w =>
         val flag = List(
-          if w.isRetracted.value then Some("⚠ retracted") else None,
-          if w.inDb.value then Some("in db") else None,
-          if w.isOa.value then Some(w.oaStatus.getOrElse("oa")) else None
+          if w.isRetracted.isRetracted then Some("⚠ retracted") else None,
+          if w.inDb.inDb then Some("in db") else None,
+          if w.isOa.isOa then Some(w.oaStatus.getOrElse("oa")) else None
         ).flatten.mkString(", ")
         List(
           w.citekey.map(_.value.toString).map(esc).getOrElse("—"),
@@ -57,7 +57,7 @@ object AcquireMarkdown:
     ).filter(_.nonEmpty).mkString(" · ")
     // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
     val oa =
-      if (w.isOa) == Source.Candidate.IsOa(true) then s"open access (${w.oaStatus.getOrElse("?")})"
+      if (w.isOa) == Source.Candidate.IsOa.OpenAccess then s"open access (${w.oaStatus.getOrElse("?")})"
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
       else "no OA copy known"
     val lines = List(
@@ -69,8 +69,8 @@ object AcquireMarkdown:
       s"**Citekey (proposed):** `${w.citekey.map(_.value.toString).getOrElse("—")}`  ",
       s"**Cited by:** ${num(w.citedByCount.map(_.value))}  ",
       s"**Access:** $oa" + w.oaUrl.map(u => s" — $u").getOrElse(""),
-      if (w.isRetracted) == WorkRef.IsRetracted(true) then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
-      if (w.inDb) == WorkRef.InDb(true) then
+      if (w.isRetracted) == WorkRef.IsRetracted.Retracted then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
+      if (w.inDb) == WorkRef.InDb.InDb then
         s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._"
       else "",
       w.abstractText.map(a => s"\n## Abstract\n\n$a").getOrElse("")
@@ -168,7 +168,7 @@ object AcquireMarkdown:
   def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
       case Some(e) => (s"Retraction Watch refresh FAILED: ${e.sentence} (the mirror still holds ${r.rows} row(s)).")
-      case None if ((r.running) == RetractionsUpdate.Running(true)) =>
+      case None if ((r.running) == RetractionsUpdate.Running.Running) =>
         (s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")
       case None => (s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
@@ -180,7 +180,7 @@ object AcquireMarkdown:
     else
       val rows = r.followups.map { f =>
         List(
-          if f.isInfluential.value then "★" else "",
+          if f.isInfluential.isInfluential then "★" else "",
           esc(f.title.map(_.value).getOrElse("(untitled)")).take(80),
           num(f.year.map(_.value.toInt)),
           f.intents.mkString(", "),
@@ -190,7 +190,7 @@ object AcquireMarkdown:
         )
       }
       val ctx = r.followups.filter(_.contexts.nonEmpty).take(5).map { f =>
-        val conf = if f.isInfluential.value then "influential" else "background"
+        val conf = if f.isInfluential.isInfluential then "influential" else "background"
         s"- **${esc(f.title.map(_.value).getOrElse("?"))}** (${f.proposedKind} · $conf)\n" +
           f.contexts.take(2).map(c => s"  > ${esc(c.value)}").mkString("\n")
       }
@@ -233,7 +233,7 @@ object AcquireMarkdown:
           i.files.map(f => List(esc(f.name.value), cell(f.format.map(_.value)), (f.megabytes.toString)))
         )
     val restriction =
-      if (i.lendingOnly) == ArchiveItem.LendingOnly(true) then
+      if (i.lendingOnly) == ArchiveItem.LendingOnly.LendingOnly then
         List(
           "",
           "> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never " +
@@ -255,16 +255,16 @@ object AcquireMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ingest(r: Ingest.Report): String =
     val steps =
-      r.steps.map(s => s"- ${if (s.ok) == Ingest.Step.Ok(true) then "✓" else "✗"} **${s.step}** — ${s.detail}")
+      r.steps.map(s => s"- ${if (s.ok) == Ingest.Step.Ok.Ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
         s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(Plural.CountN(p.bytes.value), Plural.CountSingular("byte"))})"
-      case None if r.steps.exists(s => s.step == Ingest.StepName("fetch") && ((s.ok) == Ingest.Step.Ok(true))) =>
+      case None if r.steps.exists(s => s.step == Ingest.StepName("fetch") && ((s.ok) == Ingest.Step.Ok.Ok)) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.
     (List(
-      s"### ${if (r.created) == Ingest.Report.Created(true) then "Ingested" else "Updated"} `${r.citekey}`",
+      s"### ${if (r.created) == Ingest.Report.Created.Created then "Ingested" else "Updated"} `${r.citekey}`",
       "",
       r.title.map(_.value).getOrElse("(untitled)") + "  ",
       s"**DOI:** ${doiLink(r.doi)}  ",
@@ -289,7 +289,7 @@ object AcquireMarkdown:
           esc((x.authors.take(2).mkString(", "))),
           cell(x.provenance.map(_.value))
         ) ++
-          Option.when(said)(x.storedOriginal.fold("?")(v => if v.value then "stored" else "none")).toList
+          Option.when(said)(x.storedOriginal.fold("?")(v => if v.storedOriginal then "stored" else "none")).toList
       )
       (s"### ${g.count} source(s) not in Calibre\n\n" +
         table(

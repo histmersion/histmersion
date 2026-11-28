@@ -105,7 +105,10 @@ object Ops:
           else
             c.queueImport(
               Queue.Wire(kind.label.value),
-              QueueImport(Queue.QueueItem.Text(Files.readString(f)), QueueImport.Replace(replace.value))
+              QueueImport(
+                Queue.QueueItem.Text(Files.readString(f)),
+                (if replace.overwrites then QueueImport.Replace.Replace else QueueImport.Replace.Merge)
+              )
             ).map(r => done :+ s"${kind.file}: ${r.items} item(s), ${r.notes} note block(s), ${r.replaced} replaced")
         }
       }
@@ -193,7 +196,13 @@ object Ops:
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(FileFormat.Text(raw))
-      c.lintMarkdown(FormatCheck(FormatCheck.Text(body.value), FormatField.Body, FormatCheck.Fix(fix))).map { r =>
+      c.lintMarkdown(
+        FormatCheck(
+          FormatCheck.Text(body.value),
+          FormatField.Body,
+          (if fix then FormatCheck.Fix.Fix else FormatCheck.Fix.Report)
+        )
+      ).map { r =>
         r.text
           .map(_.value)
           .filter(t => fix && t != body.value)
@@ -233,15 +242,16 @@ object Ops:
         case QueueCmd.Export(dir) =>
           writeMeta(c, Path.of(dir)).map(fs => Cli.out.println(s"wrote ${fs.mkString(", ")} to $dir"))
         case QueueCmd.Import(dir) =>
-          readMeta(c, Path.of(dir), replace = Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
+          readMeta(c, Path.of(dir), replace = Api.Overwrite.Overwrite).map(_.foreach(l => Cli.out.println(s"  $l")))
         case QueueCmd.Recheck(writes, limit, id, all, following, json) =>
           c.call(AcquisitionWorkApi.acquireRecheck)(
             Acquire.Checks.RecheckRequest(
-              Acquire.Checks.RecheckRequest.DryRun(writes.dry),
+              (if writes.dry then Acquire.Checks.RecheckRequest.DryRun.DryRun
+               else Acquire.Checks.RecheckRequest.DryRun.Apply),
               limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
               id.map(Acquire.Checks.RecheckRequest.Id(_)),
               Some(Acquire.Checks.RecheckRequest.By("cli")),
-              Acquire.Checks.RecheckRequest.All(all)
+              (if all then Acquire.Checks.RecheckRequest.All.All else Acquire.Checks.RecheckRequest.All.Due)
             )
           ).flatMap { r =>
             Output.emit(json, r)(AcquireChecksMarkdown.result)

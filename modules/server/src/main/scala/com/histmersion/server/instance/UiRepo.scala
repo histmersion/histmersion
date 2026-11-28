@@ -65,6 +65,6 @@ object UiRepo:
     UiNotices.AgentsGlance(
       UiNotices.AgentsGlance.Running(running),
       UiNotices.AgentsGlance.Queued(queued),
-      UiNotices.AgentsGlance.On(on),
-      UiNotices.AgentsGlance.Draining(draining)
+      (if on then UiNotices.AgentsGlance.On.On else UiNotices.AgentsGlance.On.Off),
+      (if draining then UiNotices.AgentsGlance.Draining.Draining else UiNotices.AgentsGlance.Draining.Running)
     )

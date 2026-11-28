@@ -100,11 +100,11 @@ object MediaCmd:
           val dry = writes.dry
           val req = MediaImportRequest(
             MediaItem.Provider(name),
-            MediaImportRequest.DryRun(dry),
+            (if dry then MediaImportRequest.DryRun.DryRun else MediaImportRequest.DryRun.Apply),
             limit.map(MediaImportRequest.Limit(_)),
             place.map(Place.Id(_)),
             event.map(Event.Id(_)),
-            MediaImportRequest.Refresh(refresh)
+            (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse)
           )
           if dry then c.mediaImport(req).map(r => Cli.out.println(MediaMarkdown.mediaImportReport(r)))
           else
@@ -122,14 +122,21 @@ object MediaCmd:
           for
             // 1. the Calibre library, here on the host (the server may not see it)
             cal <-
-              if noCalibre then Right((MediaCoversReport(RepairAcquire.RepairRequest.DryRun(dry)), Nil))
+              if noCalibre then
+                Right(
+                  (
+                    MediaCoversReport((if dry then RepairAcquire.RepairRequest.DryRun.DryRun
+                                       else RepairAcquire.RepairRequest.DryRun.Apply)),
+                    Nil
+                  )
+                )
               else
                 MediaCovers.calibreStep(
                   c,
                   Calibre(Settings.app.cli.calibre),
                   only.map(Citekey(_)),
-                  MediaImportRequest.Refresh(refresh),
-                  RepairAcquire.RepairRequest.DryRun(dry),
+                  (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse),
+                  (if dry then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
                   limit.map(Paging.Limit(_))
                 )
             (calReport, asks) = cal
@@ -140,10 +147,12 @@ object MediaCmd:
                 asks.traverse((k, isbn) =>
                   c.mediaCovers(
                     MediaCoversRequest(
-                      dryRun = RepairAcquire.RepairRequest.DryRun(dry),
+                      dryRun = (if dry then RepairAcquire.RepairRequest.DryRun.DryRun
+                                else RepairAcquire.RepairRequest.DryRun.Apply),
                       citekey = Some(k),
-                      refresh = MediaImportRequest.Refresh(refresh),
-                      illustrations = MediaCoversRequest.Illustrations(false),
+                      refresh =
+                        (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse),
+                      illustrations = MediaCoversRequest.Illustrations.Skipped,
                       isbn = Some(isbn)
                     )
                   )
@@ -152,15 +161,16 @@ object MediaCmd:
               Cli.out.println(MediaMarkdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
             // 3. the rest is the server's: Open Library by the records' ISBNs, and the illustrations
             req = MediaCoversRequest(
-              RepairAcquire.RepairRequest.DryRun(dry),
+              (if dry then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
               limit.map(MediaCoversRequest.Limit(_)),
               only.map(Citekey(_)),
-              MediaImportRequest.Refresh(refresh),
-              covers = MediaCoversRequest.Covers(!noOl),
-              illustrations = MediaCoversRequest.Illustrations(!noIll)
+              (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse),
+              covers = (if !noOl then MediaCoversRequest.Covers.Included else MediaCoversRequest.Covers.Skipped),
+              illustrations =
+                (if !noIll then MediaCoversRequest.Illustrations.Included else MediaCoversRequest.Illustrations.Skipped)
             )
             _ <-
-              if !req.covers.value && !req.illustrations.value then Right(())
+              if !req.covers.included && !req.illustrations.included then Right(())
               else if dry || only.isDefined then
                 c.mediaCovers(req).map(r => Cli.out.println(MediaMarkdown.mediaCoversReport(r)))
               else
@@ -188,7 +198,8 @@ object MediaCmd:
         case Command.Show(uid) =>
           c.mediaShow(Bundle.Asset.Uid(uid.stripPrefix("media:"))).map(m => Cli.out.println(MediaMarkdown.mediaItem(m)))
         case Command.FillLicences(writes) =>
-          c.fillFigureLicences(Api.Apply(writes.applies)).map(f => Cli.out.println(MediaMarkdown.figureLicenceFill(f)))
+          c.fillFigureLicences((if writes.applies then Api.Apply.Apply else Api.Apply.DryRun))
+            .map(f => Cli.out.println(MediaMarkdown.figureLicenceFill(f)))
         case Command.Detail(ck, name) =>
           c.assetDetail(Citekey(ck), Bundle.Asset.Variant(name))
             .map(d => Cli.out.println(MediaMarkdown.assetDetail(Citekey(ck), d)))

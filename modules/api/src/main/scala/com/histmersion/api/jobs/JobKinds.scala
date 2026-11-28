@@ -23,16 +23,16 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   /** May a person pause and cancel a job of the kind `wire` names? */
   def stoppable(wire: JobKinds.Wire): Boolean = (byWire
     .get(wire)
-    .exists((refactorCallback2 => ((refactorCallback2.stoppable) == JobKindEntry.Stoppable(true)))))
+    .exists((refactorCallback2 => ((refactorCallback2.stoppable) == JobKindEntry.Stoppable.Stoppable))))
 
   /** Do the pause, resume and cancel of a job of the kind `wire` names go to the kind's own runner? */
   def ownControl(wire: JobKinds.Wire): Boolean = (byWire
     .get(wire)
-    .exists((refactorCallback2 => ((refactorCallback2.ownControl) == JobKindEntry.OwnControl(true)))))
+    .exists((refactorCallback2 => ((refactorCallback2.ownControl) == JobKindEntry.OwnControl.OwnControl))))
 
   /** The identifiers of the kinds a person may pause and cancel. */
   def stoppableKinds: Set[JobKinds.Wire] = entries
-    .filter((refactorCallback => ((refactorCallback.stoppable) == JobKindEntry.Stoppable(true))))
+    .filter((refactorCallback => ((refactorCallback.stoppable) == JobKindEntry.Stoppable.Stoppable)))
     .map(_.kind)
     .toSet
 

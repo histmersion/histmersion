@@ -469,7 +469,8 @@ final class CompileArticlePipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def review(ctx: RunCtx, s: Snap, w: Written)(using WritePermit, Creator.New): Option[String] =
-    if !w.written.value || !ctx.run.params.chainReview.map(_.value).getOrElse(research.compile.review.value) then None
+    if !w.written.value || !ctx.run.params.chainReview.map(_.chainReview).getOrElse(research.compile.review.value) then
+      None
     else
       // the run's per-role models carry over to the roles the review uses
       val overrides =
@@ -479,7 +480,7 @@ final class CompileArticlePipeline(
           RunRequest.Pipeline(Pipeline.ReviewArticle.wire.value),
           RunRequest.Target(s.slug.value),
           model = ctx.run.model.map(m => RunRequest.Model(m.value)),
-          fix = Some(RunRequest.Fix(true)),
+          fix = Some(RunRequest.Fix.Fix),
           goal = ctx.run.goal,
           modelFor = overrides
         ),

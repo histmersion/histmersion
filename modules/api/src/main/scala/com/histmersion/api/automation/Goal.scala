@@ -22,6 +22,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Goal(
@@ -126,8 +127,10 @@ object Goal:
         api.json.Schema
 
   object Deleted:
-    type Value = Value.T
-    object Value extends Newtype[Boolean, Pure]
+    enum Value derives CanEqual:
+      case Deleted, Kept
+    object Value extends TwoStates[Value]:
+      extension (value: Value) def deleted: Boolean = value == Deleted
 
   final case class List(
       total: RowCount,
@@ -177,18 +180,22 @@ object Goal:
   final case class AreaCreate(
       slug: Slug,
       goal: Put,
-      plan: AreaCreate.Plan = AreaCreate.Plan(false),
-      seed: AreaCreate.Seed = AreaCreate.Seed(false),
+      plan: AreaCreate.Plan = AreaCreate.Plan.NoPlan,
+      seed: AreaCreate.Seed = AreaCreate.Seed.NoSeed,
       watch: Option[Managers.ManagerConfig] = None,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
 
   object AreaCreate:
-    type Plan = Plan.T
-    object Plan extends Newtype[Boolean, Pure]
-    type Seed = Seed.T
-    object Seed extends Newtype[Boolean, Pure]
+    enum Plan derives CanEqual:
+      case Plan, NoPlan
+    object Plan extends TwoStates[Plan]:
+      extension (plan: Plan) def plan: Boolean = plan == Plan
+    enum Seed derives CanEqual:
+      case Seed, NoSeed
+    object Seed extends TwoStates[Seed]:
+      extension (seed: Seed) def seed: Boolean = seed == Seed
 
   /** What [[AreaCreate]] made: the goal, its plan-goal run (handed to the engine), its seeding manager and its watcher.
     */
@@ -218,18 +225,22 @@ object Goal:
         year: Option[Year] = None,
         authors: scala.List[AuthorName] = Nil,
         citekey: Option[Citekey] = None,
-        inCorpus: PlannedWork.InCorpus = PlannedWork.InCorpus(false),
-        isOa: PlannedWork.IsOa = PlannedWork.IsOa(false),
+        inCorpus: PlannedWork.InCorpus = PlannedWork.InCorpus.Missing,
+        isOa: PlannedWork.IsOa = PlannedWork.IsOa.Closed,
         why: Rationale = Rationale("")
     ) derives JsonCodec,
           KindlingsSchema,
           api.json.Schema
 
     object PlannedWork:
-      type InCorpus = InCorpus.T
-      object InCorpus extends Newtype[Boolean, Pure]
-      type IsOa = IsOa.T
-      object IsOa extends Newtype[Boolean, Pure]
+      enum InCorpus derives CanEqual:
+        case InCorpus, Missing
+      object InCorpus extends TwoStates[InCorpus]:
+        extension (inCorpus: InCorpus) def inCorpus: Boolean = inCorpus == InCorpus
+      enum IsOa derives CanEqual:
+        case OpenAccess, Closed
+      object IsOa extends TwoStates[IsOa]:
+        extension (isOa: IsOa) def isOa: Boolean = isOa == OpenAccess
 
     final case class Plan(
         goal: Slug,
@@ -352,8 +363,10 @@ object Goal:
       type Cron = Cron.T
       object Cron extends Newtype[String, Pure]:
         given Display[T] = Display(_.value)
-      type Enabled = Enabled.T
-      object Enabled extends Newtype[Boolean, Pure]
+      enum Enabled derives CanEqual:
+        case Enabled, Disabled
+      object Enabled extends TwoStates[Enabled]:
+        extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
       export Managers.ManagerConfig.BudgetUsd
       type NextRunAt = NextRunAt.T
       object NextRunAt extends Newtype[String, Pure]
@@ -368,7 +381,7 @@ object Goal:
 
     final case class ScheduleSet(
         cron: ScheduleSet.Cron,
-        enabled: ScheduleSet.Enabled = ScheduleSet.Enabled(true),
+        enabled: ScheduleSet.Enabled = ScheduleSet.Enabled.Enabled,
         budgetUsd: Option[ScheduleSet.BudgetUsd] = None,
         createdBy: Option[Creation.By] = None,
         via: Option[Creation.Via] = None
@@ -377,15 +390,19 @@ object Goal:
 
       type Cron = Cron.T
       object Cron extends Newtype[String, Pure]
-      type Enabled = Enabled.T
-      object Enabled extends Newtype[Boolean, Pure]
+      enum Enabled derives CanEqual:
+        case Enabled, Disabled
+      object Enabled extends TwoStates[Enabled]:
+        extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
       export Managers.ManagerConfig.BudgetUsd
 
     final case class Removed(removed: Removed.Value) derives JsonCodec, KindlingsSchema, api.json.Schema
 
     object Removed:
-      type Value = Value.T
-      object Value extends Newtype[Boolean, Pure]
+      enum Value derives CanEqual:
+        case Removed, Kept
+      object Value extends TwoStates[Value]:
+        extension (value: Value) def removed: Boolean = value == Removed
 
     @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
     final case class GoalView(

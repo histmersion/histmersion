@@ -725,7 +725,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         Some(Year(2020)),
         Nil,
         None,
-        WorkRef.IsOa(false),
+        WorkRef.IsOa.Closed,
         Candidate.Query("q"),
         None
       )

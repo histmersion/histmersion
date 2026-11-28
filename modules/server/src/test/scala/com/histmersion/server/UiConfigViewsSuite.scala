@@ -39,12 +39,12 @@ class UiConfigViewsSuite extends munit.FunSuite:
     val ui = AppConfig.load().ui
     val page = UiConfigViews.page(
       ui,
-      keyRequired = UiConfig.KeyRequired(true),
-      agentsEnabled = UiConfig.AgentsEnabled(true),
+      keyRequired = UiConfig.KeyRequired.KeyRequired,
+      agentsEnabled = UiConfig.AgentsEnabled.Enabled,
       plugins = PluginsReport(),
       baseMapSource = UiConfig.BaseMapSource("local"),
       mapLanguage = UiConfig.MapLanguage("de"),
-      setupDue = UiConfig.SetupDue(true)
+      setupDue = UiConfig.SetupDue.SetupDue
     )
     assertEquals(
       page,
@@ -85,8 +85,8 @@ class UiConfigViewsSuite extends munit.FunSuite:
         ),
         UiConfig.CountersPollSeconds(ui.countersPollSeconds.value),
         UiConfig.JobPollMs(ui.jobPollMs.value),
-        keyRequired = UiConfig.KeyRequired(true),
-        agentsEnabled = UiConfig.AgentsEnabled(true),
+        keyRequired = UiConfig.KeyRequired.KeyRequired,
+        agentsEnabled = UiConfig.AgentsEnabled.Enabled,
         UiConfig.TilesTone(ui.tilesTone.value),
         PluginsReport(),
         UiConfig.DocsUrl(ui.docsUrl.value),
@@ -99,6 +99,6 @@ class UiConfigViewsSuite extends munit.FunSuite:
           MapStartConfig.Zoom(ui.mapStart.zoom.value),
           MapStartConfig.Label(ui.mapStart.label.value)
         ),
-        setupDue = UiConfig.SetupDue(true)
+        setupDue = UiConfig.SetupDue.SetupDue
       )
     )

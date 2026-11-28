@@ -408,7 +408,7 @@ object PlaceService:
           kidsOf(apiId(id), asOf).toList.map(_.summary),
           Place.Counts.Findings(0),
           asOf.map(y => Year(y.value)),
-          Place.Entry.Contested(p.contested),
+          (if p.contested then Place.Entry.Contested.Contested else Place.Entry.Contested.Settled),
           links = p.links.sortBy(l => (l.scheme.value, l.externalId.value)).toList
         )
       }
@@ -446,7 +446,7 @@ object PlaceService:
         Place.TreeRow.Kind(p.place.kind.value),
         Place.TreeRow.Depth(d),
         Place.TreeRow.Findings(0),
-        Place.TreeRow.Contested(p.contested)
+        (if p.contested then Place.TreeRow.Contested.Contested else Place.TreeRow.Contested.Settled)
       )
       def walk(p: HeldPlace, d: Int, seen: Set[Place.Id]): List[Place.TreeRow] =
         row(p, d) :: (if d >= depth then Nil
@@ -511,8 +511,8 @@ object PlaceService:
             RegionNode.Label(p.place.label.value),
             RegionNode.Kind(p.place.kind.value),
             p.place.period,
-            RegionNode.Contested(p.contested),
-            withdrawn = RegionNode.Withdrawn(false)
+            (if p.contested then RegionNode.Contested.Contested else RegionNode.Contested.Settled),
+            withdrawn = RegionNode.Withdrawn.Current
           )
         )
       val edges = ids.flatMap(find).flatMap(_.parents).filter(r => ids.exists(_.value == r.parentId.value)).toList
@@ -577,9 +577,10 @@ object PlaceService:
           p.place.label,
           Place.NameChanged.Name(name.value),
           lang,
-          Place.NameChanged.Added(true),
-          Place.NameChanged.Changed(!before.contains(true)),
-          Place.NameChanged.WasImported(before.contains(false))
+          Place.NameChanged.Added.Added,
+          (if !before.contains(true) then Place.NameChanged.Changed.Changed else Place.NameChanged.Changed.Unchanged),
+          (if before.contains(false) then Place.NameChanged.WasImported.Imported
+           else Place.NameChanged.WasImported.Local)
         )
       }
 
@@ -621,8 +622,8 @@ object PlaceService:
               p.place.label,
               Place.NameChanged.Name(name.value),
               lang,
-              added = Place.NameChanged.Added(false),
-              changed = Place.NameChanged.Changed(true)
+              added = Place.NameChanged.Added.Kept,
+              changed = Place.NameChanged.Changed.Changed
             )
           )
       }
@@ -681,7 +682,7 @@ object PlaceService:
               o.kind.map(k => Place.Override.Kind(k.value)),
               period.map(_.start),
               period.map(_.end),
-              Place.Override.PeriodSet(o.period.isDefined),
+              (if o.period.isDefined then Place.Override.PeriodSet.PeriodSet else Place.Override.PeriodSet.NoPeriod),
               o.reason,
               Place.Override.SourceKind(o.sourceKind.value),
               o.sourcePeriod.map(_.start),
@@ -782,7 +783,8 @@ object PlaceService:
           Place.OverrideChanged(
             apiId(id),
             before.place.label,
-            Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
+            (if edit == Place.OverrideEdit.Reset then Place.OverrideChanged.Reset.Reset
+             else Place.OverrideChanged.Reset.Set),
             before.place.kind,
             after.place.kind,
             Place.Overrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)),

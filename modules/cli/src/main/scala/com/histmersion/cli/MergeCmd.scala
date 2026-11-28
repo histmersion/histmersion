@@ -277,7 +277,7 @@ object MergeCmd:
             r <- follow(c, job)
             _ = Cli.out.println(MergeMarkdown.applied(r))
             _ <- Either.cond(
-              r.applied.value,
+              r.applied.applied,
               (),
               Cli.Error.answered(Problem.Unclassified(Legacy.Text("the merge was not applied (see above)")))
             )
