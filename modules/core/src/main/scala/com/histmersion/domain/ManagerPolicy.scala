@@ -20,6 +20,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The pure half of the process managers (docs/research-process-managers.md §3.4): what to do with an item after its
   * run settled, the order items are dispatched in, how many runs a manager may start, the backoff, and the hold
@@ -115,7 +116,7 @@ object ManagerPolicy:
       backoffMinutes: ReviewSettings.BackoffMinutes,
       maxBackoffMinutes: ReviewSettings.MaxBackoffMinutes,
       staleAfterDays: ReviewSettings.StaleAfterDays = ReviewSettings.StaleAfterDays(0),
-      inferFilter: ReviewSettings.InferFilter = ReviewSettings.InferFilter(false)
+      inferFilter: ReviewSettings.InferFilter = ReviewSettings.InferFilter.AsGiven
   )
 
   object ReviewSettings:
@@ -147,8 +148,10 @@ object ManagerPolicy:
     object MaxBackoffMinutes extends Newtype[Int, Pure]
     type StaleAfterDays = StaleAfterDays.T
     object StaleAfterDays extends Newtype[Int, Pure]
-    type InferFilter = InferFilter.T
-    object InferFilter extends Newtype[Boolean, Pure]
+    enum InferFilter derives CanEqual:
+      case Infer, AsGiven
+    object InferFilter extends TwoCases[InferFilter]:
+      extension (inferFilter: InferFilter) def inferFilter: Boolean = inferFilter == Infer
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =

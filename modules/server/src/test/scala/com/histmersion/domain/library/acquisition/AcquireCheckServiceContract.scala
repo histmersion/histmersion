@@ -154,10 +154,10 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       ),
       Map(
         "10.5555/zq.a" -> AcquireRecheck
-          .Held(domain.library.Citekey("zqa_one"), AcquireRecheck.Held.HasOriginal(true)),
+          .Held(domain.library.Citekey("zqa_one"), AcquireRecheck.Held.HasOriginal.WithOriginal),
         "10.5555/zq.b" -> AcquireRecheck.Held(
           domain.library.Citekey("zqa_two"),
-          AcquireRecheck.Held.HasOriginal(false)
+          AcquireRecheck.Held.HasOriginal.WithoutOriginal
         )
       )
     )

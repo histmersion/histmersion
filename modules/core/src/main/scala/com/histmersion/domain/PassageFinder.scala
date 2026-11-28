@@ -16,6 +16,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.time.Timer
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Finds passages inside ONE source's converted body (#954) — pure, no I/O.
   *
@@ -50,8 +51,10 @@ object PassageFinder:
   object Passage extends Newtype[String, Pure]
   type Query = Query.T
   object Query extends Newtype[String, Pure]
-  type Regex = Regex.T
-  object Regex extends Newtype[Boolean, Pure]
+  enum Regex derives CanEqual:
+    case Regex, Literal
+  object Regex extends TwoCases[Regex]:
+    extension (regex: Regex) def regex: Boolean = regex == Regex
   type TimeoutMs = TimeoutMs.T
   object TimeoutMs extends Newtype[Long, Pure]
 
@@ -99,7 +102,7 @@ object PassageFinder:
             PassageResult(
               com.histmersion.api.library.Citekey(citekey.value),
               PassageResult.Query(q),
-              (if regex.value then PassageResult.Regex.Regex else PassageResult.Regex.Literal),
+              (if regex.regex then PassageResult.Regex.Regex else PassageResult.Regex.Literal),
               PassageResult.Matches(spans.size),
               (if capped then PassageResult.Capped.Capped else PassageResult.Capped.Complete),
               PassageResult.Total(ranges.size),
@@ -117,7 +120,7 @@ object PassageFinder:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[domain] def compile(q: Query, regex: Regex): Either[Problem, Pattern] =
     val flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.MULTILINE
-    if regex.value then
+    if regex.regex then
       try Right(Pattern.compile(fold(q.value), flags))
       catch
         case e: PatternSyntaxException =>

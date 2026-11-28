@@ -12,6 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The autopilot's FOCUS (docs/research-process-managers.md "As built: the focus"), pure: which research goals are
   * ACTIVE for model work — at most `max` at a time — which wait and why, which of their items are held, and in which
@@ -39,8 +40,10 @@ object GoalFocus:
   object Description extends Newtype[String, Pure]
   type Ratio = Ratio.T
   object Ratio extends Newtype[Int, Pure]
-  type Recent = Recent.T
-  object Recent extends Newtype[Boolean, Pure]
+  enum Recent derives CanEqual:
+    case Focused, Other
+  object Recent extends TwoCases[Recent]:
+    extension (recent: Recent) def focused: Boolean = recent == Focused
   type WaitCode = WaitCode.T
   object WaitCode extends Newtype[String, Pure]
 
@@ -87,18 +90,16 @@ object GoalFocus:
       kind: ManagerItem.Kind,
       status: ItemStatus.Wire,
       target: Work.Target = Work.Target(""),
-      person: Work.Person = Work.Person(false),
-      focusHeld: Work.FocusHeld = Work.FocusHeld(false),
-      personHeld: Work.PersonHeld = Work.PersonHeld(false),
+      person: Work.Person = Work.Person.ForModel,
+      focusHeld: Work.FocusHeld = Work.FocusHeld.Free,
+      personHeld: Work.HeldByPerson = Work.HeldByPerson.Free,
       approval: Option[Work.Approval] = None,
-      approvalByPerson: Work.ApprovalByPerson = Work.ApprovalByPerson(false)
+      approvalByPerson: Work.ApprovedBy = Work.ApprovedBy.Model
   ):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def waitsForPerson: Boolean = approval.isDefined && approvalByPerson.value
+    def waitsForPerson: Boolean = approval.isDefined && approvalByPerson.approvalByPerson
 
     /** It can still use a model without a person: not waiting for a person's approval, not held by one. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def runnable: Boolean = !waitsForPerson && !personHeld.value
+    def runnable: Boolean = !waitsForPerson && !personHeld.personHeld
 
   object Work:
 
@@ -106,18 +107,24 @@ object GoalFocus:
     object ItemId extends Newtype[Long, Pure]
     type Target = Target.T
     object Target extends Newtype[String, Pure]
-    type Person = Person.T
-    object Person extends Newtype[Boolean, Pure]
-    type FocusHeld = FocusHeld.T
-    object FocusHeld extends Newtype[Boolean, Pure]
-    type PersonHeld = PersonHeld.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object PersonHeld extends Newtype[Boolean, Pure]
+    enum Person derives CanEqual:
+      case ForPerson, ForModel
+    object Person extends TwoCases[Person]:
+      extension (person: Person) def person: Boolean = person == ForPerson
+    enum FocusHeld derives CanEqual:
+      case Held, Free
+    object FocusHeld extends TwoCases[FocusHeld]:
+      extension (focusHeld: FocusHeld) def focusHeld: Boolean = focusHeld == Held
+    enum HeldByPerson derives CanEqual:
+      case Held, Free
+    object HeldByPerson extends TwoCases[HeldByPerson]:
+      extension (personHeld: HeldByPerson) def personHeld: Boolean = personHeld == Held
     type Approval = Approval.T
     object Approval extends Newtype[Long, Pure]
-    type ApprovalByPerson = ApprovalByPerson.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object ApprovalByPerson extends Newtype[Boolean, Pure]
+    enum ApprovedBy derives CanEqual:
+      case Person, Model
+    object ApprovedBy extends TwoCases[ApprovedBy]:
+      extension (approvalByPerson: ApprovedBy) def approvalByPerson: Boolean = approvalByPerson == Person
 
   /** A goal as the focus sees it. `articles` = its linked articles that exist, `unreviewed` = those not passed their
     * review; `compileOpen` = its approved articles not compiled yet; `work` = its open model-using items; `lastStop` =
@@ -136,9 +143,9 @@ object GoalFocus:
       compileOpen: Facts.CompileOpen = Facts.CompileOpen(0),
       work: List[Work] = Nil,
       lastStop: Option[Facts.LastStop] = None,
-      pinned: Facts.Pinned = Facts.Pinned(false),
+      pinned: Facts.Pinned = Facts.Pinned.Unpinned,
       priority: Facts.Priority = Facts.Priority(0),
-      active: Facts.Active = Facts.Active(false),
+      active: Facts.Active = Facts.Active.Inactive,
       since: Option[Facts.Since] = None
   )
 
@@ -152,12 +159,16 @@ object GoalFocus:
     export AutopilotPolicy.NextFacts.CompileOpen
     type LastStop = LastStop.T
     object LastStop extends Newtype[String, Pure]
-    type Pinned = Pinned.T
-    object Pinned extends Newtype[Boolean, Pure]
+    enum Pinned derives CanEqual:
+      case Pinned, Unpinned
+    object Pinned extends TwoCases[Pinned]:
+      extension (pinned: Pinned) def pinned: Boolean = pinned == Pinned
     type Priority = Priority.T
     object Priority extends Newtype[Int, Pure]
-    type Active = Active.T
-    object Active extends Newtype[Boolean, Pure]
+    enum Active derives CanEqual:
+      case Active, Inactive
+    object Active extends TwoCases[Active]:
+      extension (active: Active) def active: Boolean = active == Active
     type Since = Since.T
     object Since extends Newtype[String, Pure]
 
@@ -168,7 +179,7 @@ object GoalFocus:
   final case class Settings(
       max: Settings.Max,
       minSources: Settings.MinSources,
-      plansByPerson: Settings.PlansByPerson = Settings.PlansByPerson(false),
+      plansByPerson: Settings.PlansByPerson = Settings.PlansByPerson.ByModel,
       openPersonPlans: Settings.OpenPersonPlans = Settings.OpenPersonPlans(0)
   )
 
@@ -177,8 +188,10 @@ object GoalFocus:
     object Max extends Newtype[Int, Pure]
     type MinSources = MinSources.T
     object MinSources extends Newtype[Int, Pure]
-    type PlansByPerson = PlansByPerson.T
-    object PlansByPerson extends Newtype[Boolean, Pure]
+    enum PlansByPerson derives CanEqual:
+      case ByPerson, ByModel
+    object PlansByPerson extends TwoCases[PlansByPerson]:
+      extension (plansByPerson: PlansByPerson) def plansByPerson: Boolean = plansByPerson == ByPerson
     type OpenPersonPlans = OpenPersonPlans.T
     object OpenPersonPlans extends Newtype[Int, Pure]
 
@@ -210,7 +223,7 @@ object GoalFocus:
       slug: Goal.Slug,
       stage: Stage,
       why: Rationale,
-      pinned: Facts.Pinned = Facts.Pinned(false),
+      pinned: Facts.Pinned = Facts.Pinned.Unpinned,
       since: Option[Facts.Since] = None
   )
 
@@ -268,7 +281,7 @@ object GoalFocus:
     def name(w: Work) = s"${w.kind} ${w.target}".trim
     val running = work.filter(w => w.status == ItemStatus.Active.wire && w.approval.isEmpty)
     val waiting = work.filter(_.approval.isDefined)
-    val next = work.filter(w => w.status == ItemStatus.Pending.wire || w.focusHeld.value)
+    val next = work.filter(w => w.status == ItemStatus.Pending.wire || w.focusHeld.focusHeld)
     val parts = List(
       Option.when(running.nonEmpty)(
         s"running ${running.take(3).map(name).mkString(", ")}" +
@@ -279,7 +292,8 @@ object GoalFocus:
           .take(3)
           .map(w =>
             s"approval #${w.approval.get} (" +
-              (if w.approvalByPerson.value then "a person decides" else "the autopilot's checks decide") + ")"
+              (if w.approvalByPerson.approvalByPerson then "a person decides"
+               else "the autopilot's checks decide") + ")"
           )
           .mkString(", ")
       ),
@@ -345,14 +359,17 @@ object GoalFocus:
             )
       else if runnable.isEmpty then
         val ids = (allowed ++ allowed
-          .flatMap(blockers(_, f.work))).flatMap(w => w.approval.filter(_ => w.approvalByPerson.value)).distinct.sorted
+          .flatMap(blockers(_, f.work)))
+          .flatMap(w => w.approval.filter(_ => w.approvalByPerson.approvalByPerson))
+          .distinct
+          .sorted
         if ids.nonEmpty then
           Fit.Waits(
             Code.Person,
             Rationale(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}")
           )
         else Fit.Waits(Code.Held, Rationale("its items are held by a person"))
-      else if !f.active.value && !f.pinned.value && s.plansByPerson.value && s.max.value > 0 && s.openPersonPlans.value >= s.max.value &&
+      else if !f.active.active && !f.pinned.pinned && s.plansByPerson.plansByPerson && s.max.value > 0 && s.openPersonPlans.value >= s.max.value &&
         runnable.forall(w => w.kind.value == PlanGoalItem && w.status == ItemStatus.Pending.wire)
       then
         Fit.Waits(
@@ -433,8 +450,8 @@ object GoalFocus:
     val stageOf = cands.map((g, st) => g.slug -> st).toMap
     val cap = if s.max.value <= 0 then Int.MaxValue else s.max.value
     def staticKey(g: Facts) = key(g, stageOf(g.slug), 2)
-    val pinned = cands.filter(_._1.pinned.value).map(_._1).sortBy(staticKey)
-    val kept0 = cands.filter((g, _) => g.active.value && !g.pinned.value).map(_._1).sortBy(staticKey)
+    val pinned = cands.filter(_._1.pinned.pinned).map(_._1).sortBy(staticKey)
+    val kept0 = cands.filter((g, _) => g.active.active && !g.pinned.pinned).map(_._1).sortBy(staticKey)
     val room0 = math.max(0, cap - pinned.size)
     val (kept, displaced) = (kept0.take(room0), kept0.drop(room0))
     // free slots, greedily: each pick changes who is near
@@ -454,7 +471,7 @@ object GoalFocus:
         )
     val pool0 = cands
       .map(_._1)
-      .filterNot(g => g.pinned.value || kept.exists(_.slug == g.slug))
+      .filterNot(g => g.pinned.pinned || kept.exists(_.slug == g.slug))
       .filterNot(g => displaced.exists(_.slug == g.slug))
     val (chosen1, fresh1) = fill(pinned ++ kept, pool0, Nil)
     // a goal with articles to review or compile takes the slot of one still gathering (never a pinned one)
@@ -466,7 +483,7 @@ object GoalFocus:
     ): (List[Facts], List[(Facts, Rationale)], List[(Goal.Slug, Rationale)]) =
       val pool = cands.map(_._1).filterNot(g => chosen.exists(_.slug == g.slug))
       val urgent = pool.filter(g => stageOf(g.slug).rank <= Stage.Compiling.rank)
-      val victims = chosen.filter(g => !g.pinned.value && stageOf(g.slug) == Stage.Gathering)
+      val victims = chosen.filter(g => !g.pinned.pinned && stageOf(g.slug) == Stage.Gathering)
       if urgent.isEmpty || victims.isEmpty then (chosen, fresh, swaps)
       else
         val rest = chosen.filterNot(g => victims.exists(_.slug == g.slug))
@@ -491,7 +508,7 @@ object GoalFocus:
     val active = chosen.map { g =>
       val st = stageOf(g.slug)
       val why =
-        if g.pinned.value then Rationale(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
+        if g.pinned.pinned then Rationale(s"pinned by a person; ${st.wire}: ${stageWhy(g, st, s.minSources)}")
         else
           freshWhy.getOrElse(
             g.slug,
@@ -499,7 +516,7 @@ object GoalFocus:
               s"active${g.since.fold("")(t => s" since $t")}, kept until it is reviewed; ${st.wire}: ${stageWhy(g, st, s.minSources)}"
             )
           )
-      Pick(g.slug, st, why, g.pinned, if g.active.value then g.since else None)
+      Pick(g.slug, st, why, g.pinned, if g.active.active then g.since else None)
     }
     // the queue, in the order the next free slots would take them
     @annotation.tailrec
@@ -520,7 +537,7 @@ object GoalFocus:
     val queue = order(chosen, cands.map(_._1).filterNot(g => chosen.exists(_.slug == g.slug)), Nil)
     val waiting = fits.collect { case (g, Fit.Waits(c, w)) => (g.slug, c, w) }
     val swapped = swaps.toMap
-    val left = goals.filter(g => g.active.value && !chosen.exists(_.slug == g.slug)).map { g =>
+    val left = goals.filter(g => g.active.active && !chosen.exists(_.slug == g.slug)).map { g =>
       val why = fits.find(_._1.slug == g.slug).map(_._2) match
         case Some(Fit.Finished)    => Rationale(s"it is ${g.status}")
         case Some(Fit.Waits(_, w)) => w
@@ -533,7 +550,7 @@ object GoalFocus:
           )
       g.slug -> why
     }
-    Plan(active, queue, chosen.filterNot(_.active.value).map(_.slug), left, waiting)
+    Plan(active, queue, chosen.filterNot(_.active.active).map(_.slug), left, waiting)
 
   // ── the items' holds ───────────────────────────────────────────────────────────────────────────
 
@@ -545,8 +562,8 @@ object GoalFocus:
       kind: ManagerItem.Kind,
       status: ItemStatus.Wire,
       goals: List[Goal.Slug],
-      person: Work.Person = Work.Person(false),
-      focusHeld: Work.FocusHeld = Work.FocusHeld(false)
+      person: Work.Person = Work.Person.ForModel,
+      focusHeld: Work.FocusHeld = Work.FocusHeld.Free
   )
 
   /** What the holds change: items to hold (id, goal, reason) and focus holds to release. */
@@ -568,7 +585,7 @@ object GoalFocus:
       val unfinished = i.goals.filter(g => bySlug.get(g).exists(f => !finished(f.status)))
       val actives = unfinished.filter(plan.activeSet)
       val wait: Option[(Goal.Slug, Rationale)] =
-        if !usesModel(i.kind) || unfinished.isEmpty || i.person.value then None
+        if !usesModel(i.kind) || unfinished.isEmpty || i.person.person then None
         else if actives.nonEmpty then
           if actives.exists(g => !openKids.contains(g) || i.kind.value == PlanGoalItem) then None
           else
@@ -587,9 +604,9 @@ object GoalFocus:
     }
     Holds(
       decided.collect {
-        case (i, Some((g, why))) if i.status == ItemStatus.Pending.wire && !i.focusHeld.value => (i.id, g, why)
+        case (i, Some((g, why))) if i.status == ItemStatus.Pending.wire && !i.focusHeld.focusHeld => (i.id, g, why)
       },
-      decided.collect { case (i, None) if i.focusHeld.value && i.status == ItemStatus.Held.wire => i.id }
+      decided.collect { case (i, None) if i.focusHeld.focusHeld && i.status == ItemStatus.Held.wire => i.id }
     )
 
   // ── the library-wide managers ──────────────────────────────────────────────────────────────────
@@ -610,7 +627,7 @@ object GoalFocus:
           case (_, Nil)           => acc ++ f
           case (x :: xs, y :: ys) =>
             if run >= ratio.value then go(f, ys, 0, acc :+ y) else go(xs, o, run + 1, acc :+ x)
-      go(fs, os, recent.takeWhile(_.value).size, Nil)
+      go(fs, os, recent.takeWhile(_.focused).size, Nil)
 
   /** Days until a goal's open items are done at its pace of the last week (None: nothing open or nothing done to
     * measure by).

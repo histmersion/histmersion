@@ -22,6 +22,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The review ledger of one article (docs/research-review-convergence.md §6): every finding the `review-article` panel
   * ever raised on it, under an id that never changes, with what became of it — open, fixed (verified by the reviewer
@@ -133,7 +134,7 @@ object ReviewLedger:
       run: Entry.Run,
       round: Entry.Round,
       status: Status = Status.Open,
-      claimed: Entry.Claimed = Entry.Claimed(false),
+      claimed: Entry.Claimed = Entry.Claimed.Open,
       notFixed: Option[Entry.NotFixed] = None,
       reopened: Entry.Reopened = Entry.Reopened(0),
       closed: Option[Closure] = None,
@@ -152,8 +153,10 @@ object ReviewLedger:
 
     export automation.Run.Id as Run
     export ReviewArticle.Merged.Round
-    type Claimed = Claimed.T
-    object Claimed extends Newtype[Boolean, Pure]
+    enum Claimed derives CanEqual:
+      case Claimed, Open
+    object Claimed extends TwoCases[Claimed]:
+      extension (claimed: Claimed) def claimed: Boolean = claimed == Claimed
     type NotFixed = NotFixed.T
     object NotFixed extends Newtype[String, Pure]
     type Reopened = Reopened.T
@@ -183,8 +186,7 @@ object ReviewLedger:
     def entry(id: Finding.Id): Option[Entry] = entries.find(_.id == id)
 
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed.value && e.reviewer == r)
+    def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed.claimed && e.reviewer == r)
     def verdict: Verdict = Verdict.of(open.map(_.finding))
 
   object Ledger:
@@ -282,15 +284,19 @@ object ReviewLedger:
               val next: Entry = e.status match
                 case Status.Open =>
                   e.copy(
-                    finding =
-                      f.copy(id = id, escalated = Finding.Escalated(f.escalated.value || e.finding.escalated.value)),
-                    claimed = Entry.Claimed(false)
+                    finding = f.copy(
+                      id = id,
+                      escalated =
+                        (if f.escalated.escalated || e.finding.escalated.escalated then Finding.Escalated.Escalated
+                         else Finding.Escalated.Regular)
+                    ),
+                    claimed = Entry.Claimed.Open
                   )
                 case Status.Fixed =>
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
-                    claimed = Entry.Claimed(false),
+                    claimed = Entry.Claimed.Open,
                     notFixed = Some(
                       Entry.NotFixed(s"fixed in pass ${e.closed.fold(0)(_.round.value)}, raised again in pass $round")
                     ),
@@ -299,9 +305,9 @@ object ReviewLedger:
                   )
                 case Status.Rejected =>
                   e.copy(
-                    finding = f.copy(id = id, escalated = Finding.Escalated(true)),
+                    finding = f.copy(id = id, escalated = Finding.Escalated.Escalated),
                     status = Status.Open,
-                    claimed = Entry.Claimed(false),
+                    claimed = Entry.Claimed.Open,
                     notFixed = e.closed.map(c =>
                       Entry.NotFixed(s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300))
                     ),
@@ -311,7 +317,7 @@ object ReviewLedger:
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
-                    claimed = Entry.Claimed(false),
+                    claimed = Entry.Claimed.Open,
                     notFixed = e.closed
                       .filter(_ => e.status == Status.SetAside)
                       .map(c => Entry.NotFixed(s"set aside before: ${c.note}".take(300))),
@@ -343,16 +349,16 @@ object ReviewLedger:
     checks.foldLeft(l) { (led, c) =>
       led.entry(c.id).filter(e => e.open && e.reviewer == r).fold(led) { _ =>
         update(led, c.id) { e =>
-          if c.fixed.value then
+          if c.fixed.fixed then
             e.copy(
               status = Status.Fixed,
-              claimed = Entry.Claimed(false),
+              claimed = Entry.Claimed.Open,
               notFixed = None,
               closed = Some(Closure(r.wire, round, run, Closure.Note(c.note.value), c.quote))
             )
           else
             e.copy(
-              claimed = Entry.Claimed(false),
+              claimed = Entry.Claimed.Open,
               notFixed = Some(Entry.NotFixed(Option(c.note.value).filter(_.nonEmpty).getOrElse("not fixed"))),
               notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1)
             )
@@ -377,7 +383,7 @@ object ReviewLedger:
       update(led, e.id)(
         _.copy(
           status = Status.Fixed,
-          claimed = Entry.Claimed(false),
+          claimed = Entry.Claimed.Open,
           notFixed = None,
           closed = Some(Closure(Reviewer.Mechanical.wire, round, run, Closure.Note("no longer found by the checks")))
         )
@@ -406,7 +412,7 @@ object ReviewLedger:
           update(led, e.id)(
             _.copy(
               status = Status.Fixed,
-              claimed = Entry.Claimed(false),
+              claimed = Entry.Claimed.Open,
               notFixed = None,
               closed = Some(
                 Closure(
@@ -430,13 +436,13 @@ object ReviewLedger:
   def applyFix(l: Ledger, f: Fix, run: ReviewLedger.ApplyFixRun, round: ReviewLedger.ApplyFixRound): Ledger =
     // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
     val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) =>
-      led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = Entry.Claimed(true))))
+      led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = Entry.Claimed.Claimed)))
     )
     // what the fixer neither applied nor rejected, or claimed without the change: not fixed, with why
     val unanswered = f.notFixed.foldLeft(claimed)((led, w) =>
       led
         .entry(w.id)
-        .filter(e => e.open && !e.claimed.value)
+        .filter(e => e.open && !e.claimed.claimed)
         .fold(led)(_ =>
           update(led, w.id)(e =>
             e.copy(
@@ -454,7 +460,7 @@ object ReviewLedger:
           update(led, r.id)(
             _.copy(
               status = Status.Rejected,
-              claimed = Entry.Claimed(false),
+              claimed = Entry.Claimed.Open,
               closed = Some(
                 Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(s"${r.reason}"), r.quote, Some(r.citekey))
               )
@@ -470,7 +476,7 @@ object ReviewLedger:
           update(led, w.id)(
             _.copy(
               status = Status.WontFix,
-              claimed = Entry.Claimed(false),
+              claimed = Entry.Claimed.Open,
               closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(s"${w.reason}")))
             )
           )
@@ -486,7 +492,7 @@ object ReviewLedger:
             e.copy(
               finding = e.finding.copy(pair = Some(a.pair)),
               status = Status.SetAside,
-              claimed = Entry.Claimed(false),
+              claimed = Entry.Claimed.Open,
               closed = Some(
                 Closure(
                   Reviewer.Wire("fixer"),
@@ -619,8 +625,8 @@ object ReviewLedger:
           merged(l.modify(_.entries).setTo(open), Closure.Round(0)),
           notes(l).map((id, n) => id.value -> n)
         ) +
-          (if open.exists(_.claimed.value) then
-             "\n(The fixer claims to have fixed: " + open.filter(_.claimed.value).map(_.id).mkString(", ") + ".)"
+          (if open.exists(_.claimed.claimed) then
+             "\n(The fixer claims to have fixed: " + open.filter(_.claimed.claimed).map(_.id).mkString(", ") + ".)"
            else "")
     val closedPart =
       if closed.isEmpty then ""
@@ -835,7 +841,7 @@ object ReviewLedger:
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
-        val esc = (if e.finding.escalated.value then " [raised again after a rejection]" else "") +
+        val esc = (if e.finding.escalated.escalated then " [raised again after a rejection]" else "") +
           (if e.deferredIn(runId) then " [new in the final pass: deferred to the next run]" else "")
         val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.value.trim.take(160)}$esc"

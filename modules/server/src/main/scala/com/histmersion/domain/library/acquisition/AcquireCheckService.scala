@@ -77,5 +77,9 @@ object AcquireCheckService:
             .filter(c => sources.load(c).exists(_.doi.exists(_.value.toLowerCase == d.value)))
             .minBy[String](_.value)
           val has = sources.load(ck).exists(_.ocrMarkdown.exists(_.value.nonEmpty)) || sources.original(ck).isDefined
-          d -> AcquireRecheck.Held(ck, AcquireRecheck.Held.HasOriginal(has))
+          d -> AcquireRecheck.Held(
+            ck,
+            (if has then AcquireRecheck.Held.HasOriginal.WithOriginal
+             else AcquireRecheck.Held.HasOriginal.WithoutOriginal)
+          )
         }

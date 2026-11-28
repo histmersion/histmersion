@@ -499,7 +499,7 @@ final class SourcesControllers(
             ck,
             sources.bodyChunks(ck),
             PassageFinder.Query(q.q.value),
-            PassageFinder.Regex(q.regex.regex),
+            (if q.regex.regex then PassageFinder.Regex.Regex else PassageFinder.Regex.Literal),
             PassageFinder.Limit(lim.limitOf(q.limit.map(l => PassageLimits.Limit(l.value))).value),
             PassageFinder.ContextChars(lim.contextOf(q.context.map(c => PassageLimits.Context(c.value))).value),
             PassageFinder.MaxMatches(lim.maxMatches.value),

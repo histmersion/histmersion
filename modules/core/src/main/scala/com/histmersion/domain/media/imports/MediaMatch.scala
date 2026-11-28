@@ -9,6 +9,7 @@ import com.histmersion.Period
 import java.util.Locale
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** How a collection record is tied to a place on the map — conservatively, and with the reason recorded (#1446). Pure.
   *
@@ -42,8 +43,10 @@ object MediaMatch:
   /** One signed year as a person reads it (`1500 CE`). */
   type YearText = YearText.T
   object YearText extends Newtype[String, Pure]
-  type GeographySpecific = GeographySpecific.T
-  object GeographySpecific extends Newtype[Boolean, Pure]
+  enum GeographySpecific derives CanEqual:
+    case Specific, General
+  object GeographySpecific extends TwoCases[GeographySpecific]:
+    extension (geographySpecific: GeographySpecific) def geographySpecific: Boolean = geographySpecific == Specific
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
   final case class PlaceInfo(
@@ -118,7 +121,7 @@ object MediaMatch:
     val named =
       rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.value.nonEmpty).map(k => (f, v.value.trim, k)))
     if named.isEmpty then Left(Unmatched("no place on the record"))
-    else if specific.value then
+    else if specific.geographySpecific then
       named.iterator.map((f, v, k) => (f, v, resolve(k))).find(_._3.nonEmpty) match
         case None                                         => Left(Unmatched("its place is not on the map"))
         case Some((f, v, ids)) if ids == Set(target.id)   => Right(Basis(s"$f = $v"))
@@ -140,7 +143,7 @@ object MediaMatch:
       resolve: Resolve,
       latest: Option[Year] = None
   ): Either[Unmatched, Basis] =
-    geography(rec, target, resolve, specific = GeographySpecific(true)).flatMap(dated(_, rec, target, latest))
+    geography(rec, target, resolve, specific = GeographySpecific.Specific).flatMap(dated(_, rec, target, latest))
 
   /** Pure: the dates half of a match, after the place half (`basis`): the record must be dated; with a `latest` year (a
     * collection's `max-year`: the last year the research is about), made by then — a record made later is refused
@@ -209,7 +212,7 @@ object MediaMatch:
             Left(Unmatched("its place id is ambiguous on the map"))
           case None if byId.nonEmpty =>
             Left(Unmatched("its place id names another place on the map"))
-          case None => geography(rec, target, resolve, specific = GeographySpecific(true))
+          case None => geography(rec, target, resolve, specific = GeographySpecific.Specific)
     geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
@@ -220,6 +223,6 @@ object MediaMatch:
       case None                       => Left(Unmatched("no date on the map"))
       case Some(p) if p.end > maxYear => Left(Unmatched(s"made after $maxYear"))
       case Some(p)                    =>
-        geography(rec, target, resolve, specific = GeographySpecific(false)).map(geo =>
+        geography(rec, target, resolve, specific = GeographySpecific.General).map(geo =>
           Basis(s"$geo; map of ${years(p)}")
         )

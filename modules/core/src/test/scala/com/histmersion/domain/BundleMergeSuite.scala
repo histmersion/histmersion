@@ -16,12 +16,10 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
-import com.histmersion.lint.{tolerated, LintRule}
 
 /** The merge's side of the `.hmx` bundle: localizing the event-catalogue sets, folding two events, and the import
   * decisions.
   */
-@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class BundleMergeSuite extends munit.FunSuite:
   private val U1 = UUID.fromString("01920000-0000-7000-8000-000000000001")
   private val U2 = UUID.fromString("01920000-0000-7000-8000-000000000002")
@@ -153,8 +151,8 @@ class BundleMergeSuite extends munit.FunSuite:
     def d(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None, own: Boolean = false) =
       BundlePlan.entity(
         Ledger.ForeignRev("F"),
-        Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger),
-        BundlePlan.EntityOwnBundle(own)
+        Local(local.map(Local.Rev(_)), (if tomb then Local.Tombstoned.Tombstoned else Local.Tombstoned.Live), ledger),
+        (if own then BundlePlan.EntityOwnBundle.OwnBundle else BundlePlan.EntityOwnBundle.SharedBundle)
       )
     assertEquals(d(None), Decision.Insert)
     assertEquals(d(None, tomb = true), Decision.SkipDeleted)
@@ -177,8 +175,8 @@ class BundleMergeSuite extends munit.FunSuite:
   test("tombstones: delete only what is still as the last merge left it; record the rest"):
     def t(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None) =
       BundlePlan.tombstone(
-        Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger),
-        ownBundle = BundlePlan.TombstoneOwnBundle(false)
+        Local(local.map(Local.Rev(_)), (if tomb then Local.Tombstoned.Tombstoned else Local.Tombstoned.Live), ledger),
+        ownBundle = BundlePlan.TombstoneOwnBundle.SharedBundle
       )
     assertEquals(
       t(Some("L"), ledger = Some(Ledger(Ledger.ForeignRev("E"), Some(BundlePlan.Rev("L"))))),
@@ -194,19 +192,19 @@ class BundleMergeSuite extends munit.FunSuite:
 
   test("the ledger keeps the old ancestor for a kept row, so a later change over there is a conflict"):
     assertEquals(
-      BundlePlan.ledgerAfter(Decision.KeepLocal, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned(false)),
+      BundlePlan.ledgerAfter(Decision.KeepLocal, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned.Live),
       None
     )
     assertEquals(
-      BundlePlan.ledgerAfter(Decision.Insert, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned(false)),
+      BundlePlan.ledgerAfter(Decision.Insert, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned.Live),
       Some(Ledger(Ledger.ForeignRev("F"), Some(BundlePlan.Rev("F"))))
     )
     assertEquals(
-      BundlePlan.ledgerAfter(Decision.Unchanged, Ledger.ForeignRev("deleted"), tombstone = Local.Tombstoned(true)),
+      BundlePlan.ledgerAfter(Decision.Unchanged, Ledger.ForeignRev("deleted"), tombstone = Local.Tombstoned.Tombstoned),
       Some(Ledger(Ledger.ForeignRev("deleted"), None))
     )
     assertEquals(
-      BundlePlan.ledgerAfter(Decision.Conflict, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned(false)),
+      BundlePlan.ledgerAfter(Decision.Conflict, Ledger.ForeignRev("F"), tombstone = Local.Tombstoned.Live),
       None
     )
 

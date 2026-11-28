@@ -61,6 +61,7 @@ import com.histmersion.api.exchange.PlanMatches
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** `merge plan` as a pure function (docs/research-merge-import.md §5–§6, milestones M3–M5): of the bundle's entities,
   * what this collection knows (its rows, labels, ledger, redirects, tombstones, article histories and remembered
@@ -211,8 +212,10 @@ object MergePlanner:
   object Row:
     type Label = Label.T
     object Label extends Newtype[String, Pure]
-    type Tombstone = Tombstone.T
-    object Tombstone extends Newtype[Boolean, Pure]
+    enum Tombstone derives CanEqual:
+      case Tombstone, Live
+    object Tombstone extends TwoCases[Tombstone]:
+      extension (tombstone: Tombstone) def tombstone: Boolean = tombstone == Tombstone
 
   /** A record of the bundle folded into one here: its uid becomes a redirect (`uid_aliases`). */
   final case class Fold(kind: Bundle.Kind, foreignUid: UUID, localUid: UUID)
@@ -228,8 +231,10 @@ object MergePlanner:
   )
 
   object AttestationFix:
-    type Drop = Drop.T
-    object Drop extends Newtype[Boolean, Pure]
+    enum Drop derives CanEqual:
+      case Drop, Keep
+    object Drop extends TwoCases[Drop]:
+      extension (drop: Drop) def drop: Boolean = drop == Drop
 
   /** A version to record for an article here: the bundle's text, so the next merge finds it in this collection's
     * history (a common base).
@@ -571,7 +576,11 @@ object MergePlanner:
     val fates: Map[UUID, SourceFate] = fes.sources.map { s =>
       val l = idOf(s.uid)
       s.uid -> (if in.tombstoned(l) && !localRevs.contains(l) then SourceFate.Deleted
-                else if localRevs.contains(l) then SourceFate.Same(l, SourceFate.Same.ByLedger(l != s.uid))
+                else if localRevs.contains(l) then
+                  SourceFate.Same(
+                    l,
+                    (if l != s.uid then SourceFate.Same.ByLedger.ByLedger else SourceFate.Same.ByLedger.ByMatch)
+                  )
                 else
                   matched.find(_.right.uid == s.uid) match
                     case Some(p) =>
@@ -679,7 +688,11 @@ object MergePlanner:
       if own then None else in.ledger.get(f).map(e => Ledger(e.foreignRev, e.localRevAfter))
     def localOf(f: UUID): Local =
       val l = toLocal(f)
-      Local(localRevs.get(l).map(x => Local.Rev(x.rev)), Local.Tombstoned(in.tombstoned(l)), ledgerOf(f))
+      Local(
+        localRevs.get(l).map(x => Local.Rev(x.rev)),
+        (if in.tombstoned(l) then Local.Tombstoned.Tombstoned else Local.Tombstoned.Live),
+        ledgerOf(f)
+      )
     // the source a line belongs to (its fate decides whether the line is held, or folded with it)
     def ownerSource(f: UUID, kind: Bundle.Kind): Option[UUID] = kind match
       case Bundle.Kind.Source => Some(f)
@@ -697,7 +710,13 @@ object MergePlanner:
         val lab = locRevs.get(l).map(_.label).getOrElse(r.label)
         val d =
           if heldBy(f, r.kind) && !localRevs.contains(l) then Decision.Held
-          else BundlePlan.entity(Ledger.ForeignRev(r.rev), Local.Rev(loc), localOf(f), BundlePlan.EntityOwnBundle(own))
+          else
+            BundlePlan.entity(
+              Ledger.ForeignRev(r.rev),
+              Local.Rev(loc),
+              localOf(f),
+              (if own then BundlePlan.EntityOwnBundle.OwnBundle else BundlePlan.EntityOwnBundle.SharedBundle)
+            )
         Row(
           r.kind,
           f,
@@ -707,7 +726,7 @@ object MergePlanner:
           Local.Rev(loc),
           localRevs.get(l).map(x => Local.Rev(x.rev)),
           d,
-          tombstone = Row.Tombstone(false)
+          tombstone = Row.Tombstone.Live
         )
       } ++ fes.tombstones.map { t =>
         val l = toLocal(t.uid)
@@ -719,11 +738,14 @@ object MergePlanner:
           Ledger.ForeignRev(BundlePlan.DeletedRev),
           Local.Rev(BundlePlan.DeletedRev),
           localRevs.get(l).map(x => Local.Rev(x.rev)),
-          BundlePlan.tombstone(localOf(t.uid), BundlePlan.TombstoneOwnBundle(own)),
-          tombstone = Row.Tombstone(true)
+          BundlePlan.tombstone(
+            localOf(t.uid),
+            (if own then BundlePlan.TombstoneOwnBundle.OwnBundle else BundlePlan.TombstoneOwnBundle.SharedBundle)
+          ),
+          tombstone = Row.Tombstone.Tombstone
         )
       }
-    val initialOf: Map[UUID, Row] = initialRows.filterNot(_.tombstone.value).map(r => r.foreignUid -> r).toMap
+    val initialOf: Map[UUID, Row] = initialRows.filterNot(_.tombstone.tombstone).map(r => r.foreignUid -> r).toMap
 
     // records here, by uid; the bundle's (localized) events by uid; the bundle's raw articles
     val localArticle = in.local.articles.map(a => a.uid -> a).toMap
@@ -758,7 +780,7 @@ object MergePlanner:
     initialRows.filter(_.decision == Decision.Conflict).foreach { r =>
       val left = Some(IssueSide(IssueSide.Label(r.label.value), r.uid))
       val right =
-        Option.when(!r.tombstone.value)(
+        Option.when(!r.tombstone.tombstone)(
           IssueSide(IssueSide.Label(rawRevs.get(r.foreignUid).map(_.label).getOrElse(r.label.value)), r.foreignUid)
         )
       def conflictIssue(
@@ -768,7 +790,7 @@ object MergePlanner:
           detail: Option[IssueDetail] = None
       ): Unit =
         val kind =
-          if r.tombstone.value then MergeIssue.Kind.DeletedThereChangedHere else MergeIssue.Kind.ChangedBothSides
+          if r.tombstone.tombstone then MergeIssue.Kind.DeletedThereChangedHere else MergeIssue.Kind.ChangedBothSides
         add(
           Draft(
             MergeIssue(
@@ -787,7 +809,7 @@ object MergePlanner:
           )
         )
       val article = List(km.KeepLeft, km.KeepRight, km.Both, km.File)
-      if r.tombstone.value then
+      if r.tombstone.tombstone then
         conflictIssue(
           MergeIssue.Title("deleted in the bundle, changed here since the last import"),
           lr,
@@ -838,7 +860,7 @@ object MergePlanner:
 
     // labels a different record has here — for the lines that would be written
     val deleting: Set[UUID] =
-      initialRows.filter(r => r.tombstone.value && r.decision == Decision.Delete).map(_.uid).toSet
+      initialRows.filter(r => r.tombstone.tombstone && r.decision == Decision.Delete).map(_.uid).toSet
     val writesInitially: Set[UUID] =
       initialRows.filter(r => r.decision == Decision.Insert || r.decision == Decision.FastForward).map(_.uid).toSet
     def taken(owner: Option[UUID], self: UUID): Option[UUID] = owner.filter(o => o != self && !deleting(o))
@@ -1656,8 +1678,8 @@ object MergePlanner:
     val folding: Set[UUID] = foldedSources.keySet.toSet
     val resolvedRows = initialRows.map { r0 =>
       val owner = ownerSource(r0.foreignUid, r0.kind)
-      val uid = if r0.tombstone.value then r0.uid else foldUids.getOrElse(r0.foreignUid, r0.uid)
-      val loc = if r0.tombstone.value then r0.localizedRev
+      val uid = if r0.tombstone.tombstone then r0.uid else foldUids.getOrElse(r0.foreignUid, r0.uid)
+      val loc = if r0.tombstone.tombstone then r0.localizedRev
       else finalRevs.get(uid).map(x => Local.Rev(x.rev)).getOrElse(r0.localizedRev)
       val r = r0
         .modify(_.uid)
@@ -1667,11 +1689,11 @@ object MergePlanner:
         .modify(_.localRev)
         .setTo(localRevs.get(uid).map(x => Local.Rev(x.rev)))
         .modify(_.label)
-        .setTo(if r0.tombstone.value then r0.label
+        .setTo(if r0.tombstone.tombstone then r0.label
         else finalRevs.get(uid).map(x => Row.Label(x.label)).getOrElse(r0.label))
       def foldDecision =
         if r.localRev.contains(loc) && !edgesGrow(uid) then Decision.Unchanged else Decision.FastForward
-      if r0.tombstone.value then
+      if r0.tombstone.tombstone then
         issueOfRow.get(r0.uid).flatMap(_.decision).map(_.kind) match
           case Some(km.KeepLeft)  => r.modify(_.decision).setTo(Decision.Kept)
           case Some(km.KeepRight) => r.modify(_.decision).setTo(Decision.Delete)
@@ -1702,7 +1724,7 @@ object MergePlanner:
     val rows = resolvedRows.map(r => r.modify(_.decision).setTo(cascaded.getOrElse(r.uid, r.decision)))
     val decisionOfRow = rows.map(r => r.uid -> r.decision).toMap
     def writes(u: UUID): Boolean = decisionOfRow.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
-    val deletingNow = rows.filter(r => r.tombstone.value && r.decision == Decision.Delete).map(_.uid).toSet
+    val deletingNow = rows.filter(r => r.tombstone.tombstone && r.decision == Decision.Delete).map(_.uid).toSet
 
     // references a written line makes
     val inBundleLive: UUID => Boolean = u =>
@@ -1817,13 +1839,13 @@ object MergePlanner:
           )
         case s :: tail =>
           fates(s.uid) match
-            case SourceFate.Same(_, viaLedger) if !viaLedger.value =>
+            case SourceFate.Same(_, viaLedger) if !viaLedger.byLedger =>
               countMatches(tail, byUid + 1, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere)
             case SourceFate.Same(_, _) =>
               countMatches(tail, byUid, byLedger + 1, byStrongKey, byScore, undecided, unmatched, deletedHere)
             case SourceFate.Deleted =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched, deletedHere + 1)
-            case SourceFate.Auto(p) if p.byKey.value =>
+            case SourceFate.Auto(p) if p.byKey.byKey =>
               countMatches(tail, byUid, byLedger, byStrongKey + 1, byScore, undecided, unmatched, deletedHere)
             case SourceFate.Auto(_) =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore + 1, undecided, unmatched, deletedHere)

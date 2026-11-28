@@ -97,7 +97,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         p.right.source,
         p.left.source,
         gate.map(g => SourcePair.Gate(g.value)),
-        SourcePair.ByKey(p.evidence.strongKey),
+        (if p.evidence.strongKey then SourcePair.ByKey.ByKey else SourcePair.ByKey.ByMatch),
         SourcePair.Basis(basis)
       )
     }
@@ -221,7 +221,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           lr
         )
       ),
-      Option.when(p.evidence.titleDiffers.value)(
+      Option.when(p.evidence.titleDiffers.titleDiffers)(
         mk(
           MergeIssue.Kind.TitleDiffers,
           MergeIssue.Title("title differs"),

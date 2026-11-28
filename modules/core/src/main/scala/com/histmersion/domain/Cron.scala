@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A five-field cron expression, in UTC — the schedule of a goal's currency check or acquisition sweep
   * (docs/research-embedded-agents.md §14). `minute hour day-of-month month day-of-week`, each `*`, a number, a range
@@ -32,9 +33,9 @@ final case class Cron(
     val dom = days.contains(Cron.Days(d.getDayOfMonth))
     val dow = weekdays.contains(Cron.Weekdays(d.getDayOfWeek.getValue % 7)) // java: Monday = 1 … Sunday = 7 → 0
     months.contains(Cron.Months(d.getMonthValue)) && {
-      if anyDay.value && anyWeekday.value then true
-      else if anyDay.value then dow
-      else if anyWeekday.value then dom
+      if anyDay.anyDay && anyWeekday.anyWeekday then true
+      else if anyDay.anyDay then dow
+      else if anyWeekday.anyWeekday then dom
       else dom || dow
     }
 
@@ -86,10 +87,14 @@ object Cron:
   object Months extends Newtype[Int, Pure]
   type Weekdays = Weekdays.T
   object Weekdays extends Newtype[Int, Pure]
-  type AnyDay = AnyDay.T
-  object AnyDay extends Newtype[Boolean, Pure]
-  type AnyWeekday = AnyWeekday.T
-  object AnyWeekday extends Newtype[Boolean, Pure]
+  enum AnyDay derives CanEqual:
+    case AnyDay, SomeDays
+  object AnyDay extends TwoCases[AnyDay]:
+    extension (anyDay: AnyDay) def anyDay: Boolean = anyDay == AnyDay
+  enum AnyWeekday derives CanEqual:
+    case AnyWeekday, SomeWeekdays
+  object AnyWeekday extends TwoCases[AnyWeekday]:
+    extension (anyWeekday: AnyWeekday) def anyWeekday: Boolean = anyWeekday == AnyWeekday
 
   /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
   val HorizonDays = 4 * 366 + 1
@@ -164,8 +169,8 @@ object Cron:
             v(2).map(Days(_)),
             v(3).map(Months(_)),
             v(4).map(x => Weekdays(x % 7)),
-            anyDay = AnyDay(parts(2) == "*"),
-            anyWeekday = AnyWeekday(parts(4) == "*")
+            anyDay = (if parts(2) == "*" then AnyDay.AnyDay else AnyDay.SomeDays),
+            anyWeekday = (if parts(4) == "*" then AnyWeekday.AnyWeekday else AnyWeekday.SomeWeekdays)
           )
           if c.next(Instant.parse("2000-01-01T00:00:00Z")).isEmpty then
             Left(Invalid.Broken.here(Invalid.Rule.CronNeverFires(Raw.of(text))))

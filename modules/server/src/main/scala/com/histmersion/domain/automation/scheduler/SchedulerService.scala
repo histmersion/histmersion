@@ -106,7 +106,7 @@ final class SchedulerService(
       .facts()
       .map(f =>
         f.slug -> GoalInfo(
-          f.priority.value + (if f.pinned.value then PinBoost else 0),
+          f.priority.value + (if f.pinned.pinned then PinBoost else 0),
           instantOf(f.createdAt.value),
           !GoalFocus.finished(f.status) && GoalFocus
             .stage(f, GoalFocus.Settings.MinSources(agents.sourcesToPlan.value)) == GoalFocus.Stage.Gathering,
@@ -267,12 +267,12 @@ final class SchedulerService(
           goal.map(g => Candidate.Goal(g.value)),
           Candidate.GoalPriority(info.fold(0)(_.priority)),
           info.flatMap(_.created),
-          Candidate.Gathering(info.exists(_.gathering)),
+          (if info.exists(_.gathering) then Candidate.Gathering.Gathering else Candidate.Gathering.Working),
           Candidate.ItemPriority(i.priority.value),
           since.getOrElse(now),
           pools.toOption.getOrElse(Nil).map(p => Candidate.Pools(p.wire.value)),
           block,
-          Candidate.Person(i.origin == ItemOrigin.Person.wire)
+          (if i.origin == ItemOrigin.Person.wire then Candidate.Person.ForPerson else Candidate.Person.ForModel)
         )
       }
     }
@@ -347,8 +347,9 @@ final class SchedulerService(
       agents.pools
         .refreshOnSchedule(
           p,
-          PlanReadSchedule.AutopilotOn(autopilotOn),
-          PlanReadSchedule.Wanted(wanted.contains(Candidate.Pools(p.wire.value))),
+          (if autopilotOn then PlanReadSchedule.AutopilotOn.On else PlanReadSchedule.AutopilotOn.Off),
+          (if wanted.contains(Candidate.Pools(p.wire.value)) then PlanReadSchedule.Wanted.Wanted
+           else PlanReadSchedule.Wanted.Unwanted),
           now
         )
         .toOption

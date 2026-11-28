@@ -56,7 +56,7 @@ class PlanGoalSuite extends munit.FunSuite:
         WorkAnswer(WorkAnswer.Doi("doi:10.1000/abc"), Rationale("again"))
       )
     )
-    val (p, warns) = check(a, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).toOption.get
+    val (p, warns) = check(a, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound.More).toOption.get
     assertEquals(
       p.subGoals,
       List(
@@ -81,18 +81,18 @@ class PlanGoalSuite extends munit.FunSuite:
       List(PlanAnswer.Queries("x" * 41)),
       List(WorkAnswer(WorkAnswer.Doi("not-a-doi"), Rationale("?")))
     )
-    val ps = check(bad, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound(false)).left.toOption.get
+    val ps = check(bad, Goal.Slug("bronze-age"), taken, Set.empty, caps, last = LastRound.More).left.toOption.get
     assert(ps.exists(_.sentence.contains("is not a slug")), ps)
     assert(ps.exists(_.sentence.contains("has no title")), ps)
     assert(ps.exists(_.sentence.contains("longer than 40")), ps)
     assert(ps.exists(_.sentence.contains("is not a DOI")), ps)
     val tooMany = answer(queries = List(PlanAnswer.Queries("a"), PlanAnswer.Queries("b"), PlanAnswer.Queries("c")))
     assert(
-      check(tooMany, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(false)).left
+      check(tooMany, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound.More).left
         .exists(_.exists(_.sentence.contains("at most 2 queries")))
     )
     assert(
-      check(answer(), Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(false)).left
+      check(answer(), Goal.Slug("g"), taken, Set.empty, caps, last = LastRound.More).left
         .exists(_.exists(_.sentence.contains("proposes nothing")))
     )
 
@@ -106,7 +106,7 @@ class PlanGoalSuite extends munit.FunSuite:
       List(PlanAnswer.Queries("Known query"), PlanAnswer.Queries("fresh"))
     )
     val (p, _) =
-      check(a, Goal.Slug("bronze-age"), taken, Set(Query("known query")), caps, last = LastRound(false)).toOption.get
+      check(a, Goal.Slug("bronze-age"), taken, Set(Query("known query")), caps, last = LastRound.More).toOption.get
     assertEquals(p.subGoals.map(_.slug), List("new-one"))
     assertEquals(p.queries, List("fresh"))
     assertEquals(p.dropped.size, 3, p.dropped)
@@ -120,7 +120,7 @@ class PlanGoalSuite extends munit.FunSuite:
         ),
         works = List(WorkAnswer(WorkAnswer.Doi("nope"), Rationale("")))
       )
-    val (p, warns) = check(a, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound(true)).toOption.get
+    val (p, warns) = check(a, Goal.Slug("g"), taken, Set.empty, caps, last = LastRound.Last).toOption.get
     assertEquals(p.subGoals.map(_.slug), List("good"))
     assertEquals(p.works, Nil)
     assert(
@@ -149,9 +149,9 @@ class PlanGoalSuite extends munit.FunSuite:
               Some(Year(2020)),
               Nil,
               Some(Citekey("a2020_x")),
-              inDb = Work.InDb(true),
-              isOa = Work.IsOa(false),
-              isRetracted = Work.IsRetracted(false)
+              inDb = Work.InDb.InCorpus,
+              isOa = Work.IsOa.Closed,
+              isRetracted = Work.IsRetracted.Standing
             )
           )
         case "10.1000/b" =>
@@ -161,9 +161,9 @@ class PlanGoalSuite extends munit.FunSuite:
               None,
               Nil,
               None,
-              inDb = Work.InDb(false),
-              isOa = Work.IsOa(false),
-              isRetracted = Work.IsRetracted(true)
+              inDb = Work.InDb.Outside,
+              isOa = Work.IsOa.Closed,
+              isRetracted = Work.IsRetracted.Retracted
             )
           )
         case _ => Left(Problem.Unclassified(Legacy.Text("404 from Crossref")))

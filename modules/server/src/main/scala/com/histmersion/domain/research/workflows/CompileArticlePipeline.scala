@@ -270,7 +270,7 @@ final class CompileArticlePipeline(
                   AgentVerify.SourceBody(text),
                   AgentVerify.MinRatio(lib.verify.quoteMinRatio.value),
                   MaxClaims(research.compile.maxClaims.value),
-                  CompileArticle.Last(last.value)
+                  (if last.value then CompileArticle.Last.Last else CompileArticle.Last.More)
                 )
                 .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
             }
@@ -356,7 +356,7 @@ final class CompileArticlePipeline(
             ev,
             found.filter,
             corpus,
-            CompileArticle.Last(last.value)
+            (if last.value then CompileArticle.Last.Last else CompileArticle.Last.More)
           )
           .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
       }
@@ -516,7 +516,7 @@ final class CompileArticlePipeline(
       CompileArticle
         .logLine(
           d,
-          CompileArticle.Written(w.written.value),
+          (if w.written.value then CompileArticle.Written.Written else CompileArticle.Written.Unwritten),
           w.why,
           review.map(Run.Id.assume(_)),
           ctx.runId

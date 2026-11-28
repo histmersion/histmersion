@@ -6,6 +6,7 @@ import com.histmersion.api.given
 import com.histmersion.api.exchange.Bundle
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What an import does with each line of a bundle — milestone M2, WITHOUT matching (docs/research-merge-import.md
   * §7.3): a foreign row is the local row with the same uid, or no row. Pure; the importer gathers the local state and
@@ -24,11 +25,14 @@ import com.histmersion.lint.{tolerated, LintRule}
   * row is still what the last merge left, and is recorded either way, so the deletion travels on.
   */
 object BundlePlan:
-
-  type EntityOwnBundle = EntityOwnBundle.T
-  object EntityOwnBundle extends Newtype[Boolean, Pure]
-  type TombstoneOwnBundle = TombstoneOwnBundle.T
-  object TombstoneOwnBundle extends Newtype[Boolean, Pure]
+  enum EntityOwnBundle derives CanEqual:
+    case OwnBundle, SharedBundle
+  object EntityOwnBundle extends TwoCases[EntityOwnBundle]:
+    extension (entityOwnBundle: EntityOwnBundle) def entityOwnBundle: Boolean = entityOwnBundle == OwnBundle
+  enum TombstoneOwnBundle derives CanEqual:
+    case OwnBundle, SharedBundle
+  object TombstoneOwnBundle extends TwoCases[TombstoneOwnBundle]:
+    extension (tombstoneOwnBundle: TombstoneOwnBundle) def tombstoneOwnBundle: Boolean = tombstoneOwnBundle == OwnBundle
 
   /** The stamp of a row's content that the ledger and the local row are compared by. */
   type Rev = Rev.T
@@ -71,10 +75,12 @@ object BundlePlan:
 
   object Local:
     export BundlePlan.Rev
-    type Tombstoned = Tombstoned.T
-    object Tombstoned extends Newtype[Boolean, Pure]
+    enum Tombstoned derives CanEqual:
+      case Tombstoned, Live
+    object Tombstoned extends TwoCases[Tombstoned]:
+      extension (tombstoned: Tombstoned) def tombstoned: Boolean = tombstoned == Tombstoned
 
-    val absent: Local = Local(None, tombstoned = Tombstoned(false), None)
+    val absent: Local = Local(None, tombstoned = Tombstoned.Live, None)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def entity(foreignRev: Ledger.ForeignRev, local: Local, ownBundle: EntityOwnBundle): Decision =
@@ -85,7 +91,6 @@ object BundlePlan:
     * comparable with the local row's. Without a mapping they are equal.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entity(
       foreignRev: Ledger.ForeignRev,
       localizedRev: Local.Rev,
@@ -94,24 +99,24 @@ object BundlePlan:
   ): Decision =
     local.rev match
       case Some(r) if r == localizedRev                                => Decision.Unchanged
-      case Some(_) if ownBundle.value                                  => Decision.KeepLocal
+      case Some(_) if ownBundle.entityOwnBundle                        => Decision.KeepLocal
       case Some(_) if local.ledger.exists(_.foreignRev == foreignRev)  => Decision.KeepLocal
       case Some(r) if local.ledger.exists(_.localRevAfter.contains(r)) => Decision.FastForward
       case Some(_)                                                     => Decision.Conflict
-      case None if local.tombstoned.value                              => Decision.SkipDeleted
+      case None if local.tombstoned.tombstoned                         => Decision.SkipDeleted
       case None                                                        => Decision.Insert
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tombstone(local: Local, ownBundle: TombstoneOwnBundle): Decision =
     local.rev match
-      case Some(_) if ownBundle.value => Decision.KeepLocal
+      case Some(_) if ownBundle.tombstoneOwnBundle => Decision.KeepLocal
       // the deletion was seen before and the row kept by decision (`keep-left`)
       case Some(_) if local.ledger.exists(l => l.foreignRev.value == DeletedRev && l.localRevAfter.isEmpty) =>
         Decision.KeepLocal
       case Some(r) if local.ledger.exists(_.localRevAfter.contains(r)) => Decision.Delete
       case Some(_)                                                     => Decision.Conflict
-      case None if local.tombstoned.value                              => Decision.Unchanged
+      case None if local.tombstoned.tombstoned                         => Decision.Unchanged
       case None                                                        => Decision.RecordTombstone
 
   /** The per-kind tally of the report. A recorded tombstone of a row that never existed here changes nothing visible,
@@ -178,7 +183,6 @@ object BundlePlan:
     * ledger row records both.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ledgerAfter(
       d: Decision,
       foreignRev: Ledger.ForeignRev,
@@ -188,7 +192,7 @@ object BundlePlan:
   ): Option[Ledger] =
     d match
       case Decision.Conflict | Decision.SkipDeleted | Decision.KeepLocal | Decision.Skip | Decision.Held => None
-      case _ if tombstone.value                                        => Some(Ledger(foreignRev, None))
+      case _ if tombstone.tombstoned                                   => Some(Ledger(foreignRev, None))
       case Decision.Kept                                               => Some(Ledger(foreignRev, localRev))
       case Decision.Insert | Decision.FastForward | Decision.Unchanged => Some(Ledger(foreignRev, Some(localizedRev)))
       case Decision.Delete | Decision.RecordTombstone                  => Some(Ledger(foreignRev, None))

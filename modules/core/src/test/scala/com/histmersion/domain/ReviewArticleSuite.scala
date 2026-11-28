@@ -123,9 +123,9 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil
     )
     assert(
-      checkRules(a, last = ReviewArticle.CheckRulesLast(false)).left.exists(_.exists(_.sentence.contains("'severe'")))
+      checkRules(a, last = ReviewArticle.CheckRulesLast.More).left.exists(_.exists(_.sentence.contains("'severe'")))
     )
-    val (r, ws) = checkRules(a, last = ReviewArticle.CheckRulesLast(true)).toOption.get
+    val (r, ws) = checkRules(a, last = ReviewArticle.CheckRulesLast.Last).toOption.get
     assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", Severity.Major)))
     assertEquals(r.verdict, Verdict.Major)
     assert(ws.exists(_.contains("dropped")), ws)
@@ -139,10 +139,10 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil
     )
     assert(
-      checkRules(tooBad, last = ReviewArticle.CheckRulesLast(false)).left
+      checkRules(tooBad, last = ReviewArticle.CheckRulesLast.More).left
         .exists(_.exists(_.sentence.contains("no finding is major")))
     )
-    assertEquals(checkRules(tooBad, last = ReviewArticle.CheckRulesLast(true)).map(_._1.verdict), Right(Verdict.Minor))
+    assertEquals(checkRules(tooBad, last = ReviewArticle.CheckRulesLast.Last).map(_._1.verdict), Right(Verdict.Minor))
     val tooMild = RulesAnswer(
       ReviewArticle.RulesAnswer.Verdict("PASS"),
       List(fa(FindingAnswer.Severity("major"), FindingAnswer.Where("x"), FindingAnswer.Problem("y"))),
@@ -151,7 +151,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil
     )
     assertEquals(
-      checkRules(tooMild, last = ReviewArticle.CheckRulesLast(false)).map(_._1.verdict),
+      checkRules(tooMild, last = ReviewArticle.CheckRulesLast.More).map(_._1.verdict),
       Right(Verdict.Major)
     )
 
@@ -173,7 +173,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ReviewArticle.ColdReaderAnswer.TermsUndefined(9),
       ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
     )
-    val (r, _) = checkColdReader(a, last = ReviewArticle.CheckColdReaderLast(false)).toOption.get
+    val (r, _) = checkColdReader(a, last = ReviewArticle.CheckColdReaderLast.More).toOption.get
     assertEquals(r.verdict, Verdict.Major)
     assertEquals(r.findings.map(_.id), List("C1", "C2", "C3"))
     assert(r.findings.exists(f => f.major && f.problem.value.contains("'disagreement'")))
@@ -185,13 +185,13 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(
       checkColdReader(
         a.modify(_.explainBack).setTo(ColdReaderAnswer.ExplainBack(" ")),
-        last = ReviewArticle.CheckColdReaderLast(false)
+        last = ReviewArticle.CheckColdReaderLast.More
       ).isLeft
     )
     assert(
       checkColdReader(
         a.modify(_.emptySlots).setTo(List(ExplainSlotsValue("why"))),
-        last = ReviewArticle.CheckColdReaderLast(false)
+        last = ReviewArticle.CheckColdReaderLast.More
       ).isLeft
     )
 
@@ -232,7 +232,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
     )
     val (r, warnings) =
-      checkColdReader(a, last = ReviewArticle.CheckColdReaderLast(false)).fold(ps => fail(ps.mkString("; ")), identity)
+      checkColdReader(a, last = ReviewArticle.CheckColdReaderLast.More).fold(ps => fail(ps.mkString("; ")), identity)
     assertEquals((r.verdict, r.emptySlots, r.findings), (Verdict.Pass, Nil, Nil))
     assertEquals(warnings, Nil)
 
@@ -247,7 +247,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           n,
           ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
         ),
-        last = ReviewArticle.CheckColdReaderLast(false)
+        last = ReviewArticle.CheckColdReaderLast.More
       ).toOption.get._1.findings
     assertEquals(countOf(ColdReaderAnswer.TermsUndefined(8)), Nil)
     for n <- List(9, 27, 500).map(ColdReaderAnswer.TermsUndefined(_)) do
@@ -279,7 +279,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           ReviewArticle.ColdReaderAnswer.TermsUndefined(27),
           ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
         ),
-        last = ReviewArticle.CheckColdReaderLast(false)
+        last = ReviewArticle.CheckColdReaderLast.More
       ).toOption.get
     assertEquals(r.verdict, Verdict.Minor)
     assertEquals(ws, Nil)
@@ -295,7 +295,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           ReviewArticle.ColdReaderAnswer.TermsUndefined(3),
           ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
         ),
-        last = ReviewArticle.CheckColdReaderLast(false)
+        last = ReviewArticle.CheckColdReaderLast.More
       ).map(_._1.verdict),
       Right(Verdict.Pass)
     )
@@ -309,7 +309,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         ReviewArticle.ColdReaderAnswer.TermsUndefined(27),
         ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
       ),
-      last = ReviewArticle.CheckColdReaderLast(false)
+      last = ReviewArticle.CheckColdReaderLast.More
     ).toOption.get._1
     assertEquals(major.verdict, Verdict.Major)
     assertEquals(
@@ -327,7 +327,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           ReviewArticle.ColdReaderAnswer.TermsUndefined(3),
           ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
         ),
-        last = ReviewArticle.CheckColdReaderLast(false)
+        last = ReviewArticle.CheckColdReaderLast.More
       ).isLeft
     )
 
@@ -384,7 +384,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           List(ok, bad),
           ReviewArticle.SkepticAnswer.ClaimsChecked(3)
         ),
-        last = ReviewArticle.CheckSkepticLast(false),
+        last = ReviewArticle.CheckSkepticLast.More,
         isCk,
         record.get,
         minRatio
@@ -516,12 +516,12 @@ class ReviewArticleSuite extends munit.FunSuite:
       .setTo(Verdict.Minor)
       .modify(_.findings)
       .setTo(major.findings.map(_.modify(_.severity).setTo(Severity.Minor)))
-    assert(done(minor, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
-    assert(!done(major, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
-    assert(done(major, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(false)))
-    assert(done(major, ReviewArticle.Merged.Round(3), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
+    assert(done(minor, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.Pass.Fix))
+    assert(!done(major, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.Pass.Fix))
+    assert(done(major, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.Pass.ReviewOnly))
+    assert(done(major, ReviewArticle.Merged.Round(3), ReviewArticle.RoundCount(3), fix = ReviewArticle.Pass.Fix))
     assertEquals(
-      rounds(None, ReviewArticle.DefaultRounds(3), ReviewArticle.RoundCap(5), fix = ReviewArticle.FixRun(true)),
+      rounds(None, ReviewArticle.DefaultRounds(3), ReviewArticle.RoundCap(5), fix = ReviewArticle.Pass.Fix),
       3
     )
     assertEquals(
@@ -529,7 +529,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         Some(ReviewArticle.RequestedRounds(9)),
         ReviewArticle.DefaultRounds(3),
         ReviewArticle.RoundCap(5),
-        fix = ReviewArticle.FixRun(false)
+        fix = ReviewArticle.Pass.ReviewOnly
       ),
       5
     )
@@ -538,7 +538,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         Some(ReviewArticle.RequestedRounds(1)),
         ReviewArticle.DefaultRounds(3),
         ReviewArticle.RoundCap(5),
-        fix = ReviewArticle.FixRun(true)
+        fix = ReviewArticle.Pass.Fix
       ),
       2,
       "a fix needs a round to check it"
@@ -548,7 +548,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         Some(ReviewArticle.RequestedRounds(0)),
         ReviewArticle.DefaultRounds(3),
         ReviewArticle.RoundCap(5),
-        fix = ReviewArticle.FixRun(false)
+        fix = ReviewArticle.Pass.ReviewOnly
       ),
       1
     )
@@ -647,7 +647,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    val (f, ws) = fix(a, last = LastRound(false)).toOption.get
+    val (f, ws) = fix(a, last = LastRound.More).toOption.get
     assertEquals(f.body, Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
     assertEquals(
       f.edits.map(e => (e.index, e.op, e.applied)),
@@ -681,7 +681,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    val ps = fix(a, last = LastRound(false)).left.toOption.get
+    val ps = fix(a, last = LastRound.More).left.toOption.get
     assert(ps.exists(_.contains("rejection of S1: the quote is not in the record")), ps)
     assert(ps.exists(_.contains("C1 is a reader's confusion")), ps)
     val bad = FixerAnswer(
@@ -699,7 +699,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    val ps2 = fix(bad, last = LastRound(false)).left.toOption.get
+    val ps2 = fix(bad, last = LastRound.More).left.toOption.get
     assert(ps2.exists(p => p.startsWith("edit 1 (insertAfter") && p.contains("ghost2020_x")), ps2)
     assert(ps2.exists(_.contains("Sources cited")), ps2)
     assert(
@@ -710,10 +710,10 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val undecided = FixerAnswer(List(gloss), List(Finding.Id("C1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
     assert(
-      fix(undecided, last = LastRound(false)).left.exists(_.exists(_.contains("S1 is neither applied nor rejected")))
+      fix(undecided, last = LastRound.More).left.exists(_.exists(_.contains("S1 is neither applied nor rejected")))
     )
     val idle = FixerAnswer(Nil, List(Finding.Id("C1"), Finding.Id("S1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
-    assert(fix(idle, last = LastRound(false)).left.exists(_.exists(_.contains("no edit changed the article"))))
+    assert(fix(idle, last = LastRound.More).left.exists(_.exists(_.contains("no edit changed the article"))))
 
   test("fixer: an uncited paragraph and a formatting error the edits introduce are sent back"):
     val a = FixerAnswer(
@@ -729,7 +729,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    val ps = fix(a, last = LastRound(false)).left.toOption.get
+    val ps = fix(a, last = LastRound.More).left.toOption.get
     assert(ps.exists(_.contains("no [[citekey]]")), ps)
     assert(ps.exists(_ == "formatting: table-not-rendered — a table"), ps)
     // a formatting error the body already had is not the edits' doing
@@ -743,7 +743,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           Nil,
           ReviewArticle.FixerAnswer.Notes("")
         ),
-        last = LastRound(false),
+        last = LastRound.More,
         Article.Body(had)
       ).left
         .exists(_.exists(_.contains("formatting")))
@@ -764,8 +764,8 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    assert(fix(a, last = LastRound(false)).isLeft)
-    val (f, ws) = fix(a, last = LastRound(true)).toOption.get
+    assert(fix(a, last = LastRound.More).isLeft)
+    val (f, ws) = fix(a, last = LastRound.Last).toOption.get
     assertEquals(f.body, Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
     assertEquals(f.edits.map(_.applied), List(false, true))
     assertEquals(f.unverified, List("S1"))
@@ -783,7 +783,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    val (f, ws) = fix(a, last = LastRound(true)).toOption.get
+    val (f, ws) = fix(a, last = LastRound.Last).toOption.get
     assert(!f.body.value.contains("ghost2020_x"), f.body)
     assert(f.body.value.contains("the scarce half of bronze"))
     assert(ws.exists(_.contains("ghost2020_x")), ws)
@@ -797,11 +797,11 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    assert(fix(empty, last = LastRound(true)).isLeft)
+    assert(fix(empty, last = LastRound.Last).isLeft)
     val withGhost = Good + "\nOld [[ghost2020_x]] link [[knapp2016_tin]].\n"
     val (f, ws) = fix(
       FixerAnswer(List(gloss), List(Finding.Id("C1"), Finding.Id("S1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes("")),
-      last = LastRound(true),
+      last = LastRound.Last,
       Article.Body(withGhost)
     ).toOption.get
     assert(f.body.value.contains("the scarce half of bronze"))
@@ -890,7 +890,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         ReviewArticle.Snapshot.Kind("concept"),
         Article.Body(Generated),
         isTarget,
-        generated = ReviewArticle.MechanicalGenerated(true)
+        generated = ReviewArticle.MechanicalGenerated.Generated
       ),
       Nil
     )
@@ -905,7 +905,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         ReviewArticle.Snapshot.Kind("concept"),
         Article.Body(Good + "\n_Method: search {topics:[tin]} → 3._\n"),
         isTarget,
-        generated = ReviewArticle.MechanicalGenerated(true)
+        generated = ReviewArticle.MechanicalGenerated.Generated
       )
     assertEquals(written.map(f => (f.kind, f.major)), List((CoverageKind, true), (CoverageKind, true)))
     assert(
@@ -937,7 +937,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           )
         )
       ),
-      corpus.modify(_.generated).setTo(BodyCorpus.Generated(true))
+      corpus.modify(_.generated).setTo(BodyCorpus.Generated.Generated)
     )
     assert(c.problems.exists(_.sentence.startsWith("a hand-written Not used section")), c.problems)
 
@@ -949,14 +949,14 @@ class ReviewArticleSuite extends munit.FunSuite:
     Nil,
     Nil
   )
-  private def fixCov(a: FixerAnswer, last: LastRound = LastRound(false), c: Option[Coverage] = Some(cov)) =
+  private def fixCov(a: FixerAnswer, last: LastRound = LastRound.More, c: Option[Coverage] = Some(cov)) =
     checkFix(
       a,
       unplaced,
       Slug("tin"),
       Article.Body(Generated),
       ReviewArticle.Snapshot.Kind("concept"),
-      corpus.modify(_.isCitekey).setTo(ckCov).modify(_.generated).setTo(BodyCorpus.Generated(true)),
+      corpus.modify(_.isCitekey).setTo(ckCov).modify(_.generated).setTo(BodyCorpus.Generated.Generated),
       ckCov,
       record.get,
       minRatio,
@@ -1074,7 +1074,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           Nil,
           ReviewArticle.SkepticAnswer.ClaimsChecked(1)
         ),
-        last = ReviewArticle.CheckSkepticLast(false),
+        last = ReviewArticle.CheckSkepticLast.More,
         isCk,
         record.get,
         minRatio
@@ -1093,7 +1093,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     // the rules reviewer's evidence is checked the same way; a missing check drops it
     val (rr, _) = checkRules(
       RulesAnswer(ReviewArticle.RulesAnswer.Verdict("MAJOR"), List(f), ReviewArticle.RulesAnswer.Filter("f"), Nil, Nil),
-      last = ReviewArticle.CheckRulesLast(false),
+      last = ReviewArticle.CheckRulesLast.More,
       ev
     ).toOption.get
     assertEquals(rr.findings.head.evidence.size, 1)
@@ -1106,7 +1106,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           Nil,
           Nil
         ),
-        last = ReviewArticle.CheckRulesLast(false)
+        last = ReviewArticle.CheckRulesLast.More
       ).toOption.get._1.findings.head.evidence,
       Nil
     )
@@ -1167,7 +1167,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         Finding.Quote(""),
         Finding.Problem("the date is wrong"),
         Finding.Fix(""),
-        escalated = Finding.Escalated(true)
+        escalated = Finding.Escalated.Escalated
       )
     )
     val m = Merged(ReviewArticle.Merged.Round(2), Verdict.Major, open, None, Nil, Nil)
@@ -1178,7 +1178,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       open,
       ReviewArticle.Outcome.Applied(3),
       ReviewArticle.Outcome.Rejected(1),
-      fixed = ReviewArticle.Outcome.Fixed(true),
+      fixed = ReviewArticle.Outcome.Fixed.Fixed,
       ReviewArticle.Outcome.Approvals(0)
     )
     assertEquals(
@@ -1221,30 +1221,30 @@ class ReviewArticleSuite extends munit.FunSuite:
     val ok = List(
       CheckAnswer(
         ReviewArticle.CheckAnswer.Id("R1"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(true),
+        fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
         ReviewArticle.CheckAnswer.Quote("Tin, the scarce half of bronze"),
         ReviewArticle.CheckAnswer.Note("glossed")
       ),
       CheckAnswer(
         ReviewArticle.CheckAnswer.Id("R4"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(false),
+        fixed = ReviewArticle.CheckAnswer.Fixed.Unfixed,
         ReviewArticle.CheckAnswer.Quote("Two dates are argued"),
         ReviewArticle.CheckAnswer.Note("still undated")
       )
     )
     assertEquals(
-      checkChecks(Reviewer.Rules, prior, ok, last = ReviewArticle.LastRound(false)),
+      checkChecks(Reviewer.Rules, prior, ok, last = ReviewArticle.LastRound.More),
       (
         List(
           Check(
             ReviewArticle.Check.Id("R1"),
-            ReviewArticle.Check.Fixed(true),
+            ReviewArticle.Check.Fixed.Fixed,
             ReviewArticle.Check.Quote("Tin, the scarce half of bronze"),
             ReviewArticle.Check.Note("glossed")
           ),
           Check(
             ReviewArticle.Check.Id("R4"),
-            ReviewArticle.Check.Fixed(false),
+            ReviewArticle.Check.Fixed.Unfixed,
             ReviewArticle.Check.Quote("Two dates are argued"),
             ReviewArticle.Check.Note("still undated")
           )
@@ -1256,24 +1256,24 @@ class ReviewArticleSuite extends munit.FunSuite:
     val bad = List(
       CheckAnswer(
         ReviewArticle.CheckAnswer.Id("R1"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(true),
+        fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
         ReviewArticle.CheckAnswer.Quote("Tin, the precious half of bronze"),
         ReviewArticle.CheckAnswer.Note("")
       ),
       CheckAnswer(
         ReviewArticle.CheckAnswer.Id("S2"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(true),
+        fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
         ReviewArticle.CheckAnswer.Quote("x"),
         ReviewArticle.CheckAnswer.Note("")
       ),
       CheckAnswer(
         ReviewArticle.CheckAnswer.Id("R4"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(false),
+        fixed = ReviewArticle.CheckAnswer.Fixed.Unfixed,
         ReviewArticle.CheckAnswer.Quote(""),
         ReviewArticle.CheckAnswer.Note("")
       )
     )
-    val (cs, problems, ws) = checkChecks(Reviewer.Rules, prior, bad, last = ReviewArticle.LastRound(false))
+    val (cs, problems, ws) = checkChecks(Reviewer.Rules, prior, bad, last = ReviewArticle.LastRound.More)
     val ps = problems.map(_.sentence)
     assertEquals((cs, ws), (Nil, Nil))
     assert(ps.exists(_.startsWith("check of R1: the quote is not in the current article")), ps)
@@ -1284,7 +1284,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ps
     )
     // the last attempt keeps what passed; the rest stays open, with a warning
-    val (cs2, ps2, ws2) = checkChecks(Reviewer.Rules, prior, ok.take(1), last = ReviewArticle.LastRound(true))
+    val (cs2, ps2, ws2) = checkChecks(Reviewer.Rules, prior, ok.take(1), last = ReviewArticle.LastRound.Last)
     assertEquals((cs2.map(_.id), ps2), (List("R1"), Nil))
     assertEquals(ws2, List("rules: R4: no check — say whether it is fixed (left open)"))
 
@@ -1303,12 +1303,12 @@ class ReviewArticleSuite extends munit.FunSuite:
         List(
           CheckAnswer(
             ReviewArticle.CheckAnswer.Id("R4"),
-            fixed = ReviewArticle.CheckAnswer.Fixed(true),
+            fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
             ReviewArticle.CheckAnswer.Quote(""),
             ReviewArticle.CheckAnswer.Note("deleted")
           )
         ),
-        last = ReviewArticle.LastRound(false)
+        last = ReviewArticle.LastRound.More
       )._1
         .map(_.id),
       List("R4")
@@ -1330,12 +1330,12 @@ class ReviewArticleSuite extends munit.FunSuite:
         List(
           CheckAnswer(
             ReviewArticle.CheckAnswer.Id("C3"),
-            fixed = ReviewArticle.CheckAnswer.Fixed(false),
+            fixed = ReviewArticle.CheckAnswer.Fixed.Unfixed,
             ReviewArticle.CheckAnswer.Quote(""),
             ReviewArticle.CheckAnswer.Note("still 12")
           )
         ),
-        last = ReviewArticle.LastRound(false)
+        last = ReviewArticle.LastRound.More
       )._2,
       Nil
     )
@@ -1348,7 +1348,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       checks = List(
         CheckAnswer(
           ReviewArticle.CheckAnswer.Id("R1"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(true),
+          fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
           ReviewArticle.CheckAnswer.Quote("Tin, the scarce half of bronze"),
           ReviewArticle.CheckAnswer.Note("")
         )
@@ -1357,7 +1357,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(
       checkRules(
         withChecks,
-        last = ReviewArticle.CheckRulesLast(false),
+        last = ReviewArticle.CheckRulesLast.More,
         prior = Some(Prior(List(askedTin), revised, minRatio))
       )
         .map(_._1.checks.map(_.id)),
@@ -1366,13 +1366,13 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(
       checkRules(
         withChecks.modify(_.checks).setTo(Nil),
-        last = ReviewArticle.CheckRulesLast(false),
+        last = ReviewArticle.CheckRulesLast.More,
         prior = Some(Prior(List(askedTin), revised, minRatio))
       ).isLeft,
       "an open finding of its own must be checked"
     )
     assertEquals(
-      checkRules(withChecks, last = ReviewArticle.CheckRulesLast(false), prior = None).map(_._1.checks),
+      checkRules(withChecks, last = ReviewArticle.CheckRulesLast.More, prior = None).map(_._1.checks),
       Right(Nil),
       "no ledger: no checks"
     )
@@ -1387,7 +1387,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         CheckAnswer(
           ReviewArticle.CheckAnswer.Id("C1"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(true),
+          fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
           ReviewArticle.CheckAnswer.Quote("the scarce half of bronze"),
           ReviewArticle.CheckAnswer.Note("")
         )
@@ -1412,7 +1412,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      checkColdReader(reader, last = ReviewArticle.CheckColdReaderLast(false), readerPrior)
+      checkColdReader(reader, last = ReviewArticle.CheckColdReaderLast.More, readerPrior)
         .map(_._1.checks.map(_.fixed)),
       Right(List(true))
     )
@@ -1457,13 +1457,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(
         CheckAnswer(
           ReviewArticle.CheckAnswer.Id("R1"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(true),
+          fixed = ReviewArticle.CheckAnswer.Fixed.Fixed,
           ReviewArticle.CheckAnswer.Quote("Tin, the scarce half of bronze"),
           ReviewArticle.CheckAnswer.Note("")
         ),
         CheckAnswer(
           ReviewArticle.CheckAnswer.Id("R4"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(false),
+          fixed = ReviewArticle.CheckAnswer.Fixed.Unfixed,
           ReviewArticle.CheckAnswer.Quote("Two dates are argued"),
           ReviewArticle.CheckAnswer.Note("still undated")
         )
@@ -1507,7 +1507,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         prior,
         ReviewArticle.CheckRecheckEdited("Tin, the scarce half of bronze"),
         ev,
-        last = ReviewArticle.CheckRecheckLast(false)
+        last = ReviewArticle.CheckRecheckLast.More
       ).toOption.get
     assertEquals(rc.checks.map(c => (c.id, c.fixed)), List(("R1", true), ("R4", false)))
     assertEquals(
@@ -1523,7 +1523,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         prior,
         ReviewArticle.CheckRecheckEdited(""),
         ev,
-        last = ReviewArticle.CheckRecheckLast(false)
+        last = ReviewArticle.CheckRecheckLast.More
       ).isLeft
     )
     assert(
@@ -1533,7 +1533,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         prior,
         ReviewArticle.CheckRecheckEdited(""),
         ev,
-        last = ReviewArticle.CheckRecheckLast(true)
+        last = ReviewArticle.CheckRecheckLast.Last
       ).isRight,
       "the last attempt keeps what passed"
     )
@@ -1557,7 +1557,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      fix(ok, last = LastRound(false)).map(_._1.wontFix),
+      fix(ok, last = LastRound.More).map(_._1.wontFix),
       Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))))
     )
     val bad = ok
@@ -1569,7 +1569,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.Rationale(" "))
         )
       )
-    val ps = fix(bad, last = LastRound(false)).left.toOption.get
+    val ps = fix(bad, last = LastRound.More).left.toOption.get
     assert(ps.contains("S1 is MAJOR: apply it or reject it — only a minor finding can be declined"), ps)
     assert(ps.contains("won't fix 'R9': there is no such finding") && ps.contains("won't fix R1: give the reason"), ps)
 
@@ -1598,7 +1598,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         isCk,
         record.get,
         minRatio,
-        ReviewArticle.LastRound(false),
+        ReviewArticle.LastRound.More,
         c
       ).left.map(_.map(_.sentence))
     val base = FixerAnswer(
@@ -1652,7 +1652,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyFixRound(1)
     )
-    assert(after.entry(Finding.Id("R8")).exists(e => e.open && !e.claimed.value), after.entries)
+    assert(after.entry(Finding.Id("R8")).exists(e => e.open && !e.claimed.claimed), after.entries)
     // with a recorded filter the article's Not used list is generated: the finding is answered in `reasons`
     val withFilter = run(declined, Some(cov)).left.toOption.get
     assert(withFilter.exists(_.startsWith("R8 is MAJOR: apply it or reject it")), withFilter)
@@ -1738,7 +1738,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(spotTin, spotIso),
       rule(List(read("knapp2016_tin"), read("tin2024_iso", ToolUse.Tool("passages")))),
       spotEv,
-      last = ReviewArticle.CheckSpotChecksLast(false)
+      last = ReviewArticle.CheckSpotChecksLast.More
     )
     assertEquals((ps, ws), (Nil, Nil))
     assertEquals(
@@ -1750,33 +1750,33 @@ class ReviewArticleSuite extends munit.FunSuite:
     "spot-checks: an answer from the brief alone (no tool call) is sent back, and kept with a warning on the last attempt"
   ):
     val (ok, problems, ws) =
-      checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))
+      checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast.More)
     val ps = problems.map(_.sentence)
     assertEquals((ok, ws), (Nil, Nil))
     assert(ps.head.startsWith("spot-checks: 0 of the 2 required are verified"), ps)
     assert(ps.head.contains("0 get_source/passages call(s)"), ps)
     assert(ps.exists(_.contains("[[knapp2016_tin]]): no get_source or passages call for it")), ps)
     val (ok2, ps2, ws2) =
-      checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast(true))
+      checkSpotChecks(List(spotTin, spotIso), rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast.Last)
     assertEquals((ok2, ps2), (Nil, Nil))
     assert(ws2.nonEmpty && ws2.forall(_.startsWith("rules: unverified — ")), ws2)
     // no spot-check at all is the same
     assert(
-      checkSpotChecks(Nil, rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))._2.head.sentence
+      checkSpotChecks(Nil, rule(Nil), spotEv, last = ReviewArticle.CheckSpotChecksLast.More)._2.head.sentence
         .startsWith("spot-checks: 0 of the 2")
     )
 
   test("spot-checks: the required ones must be on different sources; a check of one source twice counts once"):
     val twice = List(spotTin, spotTin.modify(_.claim).setTo(SpotCheckAnswer.Claim("Two dates are argued")))
     val (_, ps, _) =
-      checkSpotChecks(twice, rule(List(read("knapp2016_tin"))), spotEv, last = ReviewArticle.CheckSpotChecksLast(false))
+      checkSpotChecks(twice, rule(List(read("knapp2016_tin"))), spotEv, last = ReviewArticle.CheckSpotChecksLast.More)
     assert(ps.head.sentence.startsWith("spot-checks: 1 of the 2 required"), ps)
     assertEquals(
       checkSpotChecks(
         twice,
         rule(List(read("knapp2016_tin")), required = SpotRule.Required(1)),
         spotEv,
-        last = ReviewArticle.CheckSpotChecksLast(false)
+        last = ReviewArticle.CheckSpotChecksLast.More
       )._1.size,
       2
     )
@@ -1788,7 +1788,7 @@ class ReviewArticleSuite extends munit.FunSuite:
         List(a),
         rule(calls, required = ReviewArticle.SpotRule.Required(1)),
         spotEv,
-        last = ReviewArticle.CheckSpotChecksLast(false)
+        last = ReviewArticle.CheckSpotChecksLast.More
       )._2.drop(1).head.sentence
     assert(
       problem(spotTin.modify(_.citekey).setTo(SpotCheckAnswer.Citekey("atlantis")))
@@ -1817,7 +1817,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(spotTin, bad),
       rule(List(read("knapp2016_tin"), read("tin2024_iso")), required = SpotRule.Required(1)),
       spotEv,
-      last = ReviewArticle.CheckSpotChecksLast(false)
+      last = ReviewArticle.CheckSpotChecksLast.More
     )
     assertEquals((ok.map(_.citekey), ps), (List("knapp2016_tin"), Nil))
     assert(ws.head.startsWith("rules: dropped — spot-check 2 ([[tin2024_iso]])"), ws)
@@ -1830,20 +1830,20 @@ class ReviewArticleSuite extends munit.FunSuite:
       spotChecks = List(spotTin, spotIso)
     )
     assert(
-      checkRules(a.modify(_.spotChecks).setTo(Nil), last = ReviewArticle.CheckRulesLast(false)).isRight,
+      checkRules(a.modify(_.spotChecks).setTo(Nil), last = ReviewArticle.CheckRulesLast.More).isRight,
       "no rule: nothing required (a verification pass, a test)"
     )
-    val missing = checkRules(a, last = ReviewArticle.CheckRulesLast(false), spotEv, spots = Some(rule(Nil)))
+    val missing = checkRules(a, last = ReviewArticle.CheckRulesLast.More, spotEv, spots = Some(rule(Nil)))
     assert(missing.left.exists(_.head.sentence.startsWith("spot-checks: 0 of the 2")), missing)
     val done = checkRules(
       a,
-      last = ReviewArticle.CheckRulesLast(false),
+      last = ReviewArticle.CheckRulesLast.More,
       spotEv,
       spots = Some(rule(List(read("knapp2016_tin"), read("tin2024_iso"))))
     )
     assertEquals(done.map(_._1.spotChecks.map(_.citekey)), Right(List("knapp2016_tin", "tin2024_iso")))
     // the last attempt keeps the answer, the shortfall a warning
-    val kept = checkRules(a, last = ReviewArticle.CheckRulesLast(true), spotEv, spots = Some(rule(Nil)))
+    val kept = checkRules(a, last = ReviewArticle.CheckRulesLast.Last, spotEv, spots = Some(rule(Nil)))
     assert(kept.exists(_._2.exists(_.startsWith("rules: unverified — spot-checks: 0 of the 2"))), kept)
 
   test("a Report checkpointed before spot-checks existed still decodes"):

@@ -59,7 +59,7 @@ class CompileArticleSuite extends munit.FunSuite:
     val sent =
       checkExtract(
         ExtractAnswer(
-          ExtractAnswer.Relevant(true),
+          ExtractAnswer.Relevant.Relevant,
           Coverage.Rationale("tin trade"),
           List(good, made, conf)
         ),
@@ -67,7 +67,7 @@ class CompileArticleSuite extends munit.FunSuite:
         record,
         minRatio,
         MaxClaims(10),
-        last = Last(false)
+        last = Last.More
       )
     assert(
       sent.left.exists(ps =>
@@ -77,7 +77,7 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     val (kept, warns) = checkExtract(
       ExtractAnswer(
-        ExtractAnswer.Relevant(true),
+        ExtractAnswer.Relevant.Relevant,
         Coverage.Rationale("tin trade"),
         List(good, made, conf)
       ),
@@ -85,7 +85,7 @@ class CompileArticleSuite extends munit.FunSuite:
       record,
       minRatio,
       MaxClaims(10),
-      last = Last(true)
+      last = Last.Last
     ).toOption.get
     assertEquals(kept.claims.map(_.claim), List("The ship carried tin."))
     assertEquals(kept.claims.head.confidence, Confidence.High)
@@ -94,17 +94,17 @@ class CompileArticleSuite extends munit.FunSuite:
   test("extraction: an irrelevant source must say why, and lands in Not used"):
     assert(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(" "), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant.Irrelevant, Coverage.Rationale(" "), Nil),
         Citekey("ck"),
         record,
         minRatio,
         MaxClaims(10),
-        last = Last(false)
+        last = Last.More
       ).isLeft
     )
     val (e, _) = checkExtract(
       ExtractAnswer(
-        ExtractAnswer.Relevant(false),
+        ExtractAnswer.Relevant.Irrelevant,
         Coverage.Rationale("about Egypt, not the Aegean"),
         Nil
       ),
@@ -112,7 +112,7 @@ class CompileArticleSuite extends munit.FunSuite:
       record,
       minRatio,
       MaxClaims(10),
-      last = Last(false)
+      last = Last.More
     ).toOption.get
     assertEquals(e.notUsed.map(r => s"$r"), Some("about Egypt, not the Aegean"))
 
@@ -194,7 +194,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(false)
+        last = Last.More
       )
     val (d, warns) = checked.fold(ps => fail(ps.map(_.sentence).mkString("; ")), identity)
     assertEquals(warns, Nil)
@@ -224,7 +224,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).left.toOption.get
     assert(ps.exists(_.sentence.startsWith("a Not used section: code generates it")), ps)
     assert(ps.exists(_.sentence.startsWith("a _Method_ note: code generates it")), ps)
@@ -240,7 +240,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(true)
+        last = Last.Last
       ).toOption.get
     assertEquals(d.cited.toSet, Set("a2019_tin", "b2024_iso"))
 
@@ -259,7 +259,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).left.toOption.get
     assertEquals(
       ps.map(_.sentence),
@@ -279,7 +279,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).fold(ps => fail(ps.map(_.sentence).mkString("; ")), identity)
     assertEquals(
       d.reasons,
@@ -315,7 +315,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).left.toOption.get
     assertEquals(
       ps2.map(_.sentence),
@@ -334,7 +334,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(true)
+      last = Last.Last
     ).toOption.get
     assertEquals(
       d2.reasons,
@@ -359,7 +359,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(true)
+        last = Last.Last
       ).isLeft
     )
     val sourcesCited = goodBody + "\n\n## Sources cited\n\n- [[a2019_tin]]"
@@ -374,7 +374,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(true)
+        last = Last.Last
       ).left
         .exists(_.exists(_.sentence.contains("Sources cited")))
     )
@@ -389,7 +389,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(true)
+        last = Last.Last
       ).isLeft
     )
 
@@ -408,7 +408,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).left.toOption.get
     assert(ps.exists(_.sentence.contains("does not say it is contested")), ps)
     assert(ps.exists(_.sentence.contains("no [[citekey]]")), ps)
@@ -424,7 +424,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(true)
+        last = Last.Last
       ).toOption.get
     assertEquals(d.problems.size, ps.size)
     assertEquals(warns.size, ps.size)
@@ -444,7 +444,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).left.toOption.get
     assert(ps.exists(_.sentence.contains("[[c2001_old]] is cited but no claim")), ps)
 
@@ -463,7 +463,7 @@ class CompileArticleSuite extends munit.FunSuite:
       ev,
       Goal.Plans.ArticleDraft.Filter("f"),
       corpus,
-      last = Last(false)
+      last = Last.More
     ).toOption.get
     assertEquals((d.mode, d.section, d.title), (DraftMode.Extend, Some("## Disagreements"), "Tin"))
     val whole = combined(DraftMode.Extend, current, add, Some(Article.Section("## Disagreements"))).toOption.get
@@ -480,7 +480,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(true)
+        last = Last.Last
       ).left.exists(_.exists(_.sentence.contains("no article section '## Nope'")))
     )
     // the required sections are not demanded of an extension
@@ -495,7 +495,7 @@ class CompileArticleSuite extends munit.FunSuite:
         ev,
         Goal.Plans.ArticleDraft.Filter("f"),
         corpus,
-        last = Last(false)
+        last = Last.More
       ).isRight
     )
 
@@ -535,7 +535,7 @@ class CompileArticleSuite extends munit.FunSuite:
     assert(
       logLine(
         d,
-        written = Written(true),
+        written = Written.Written,
         Rationale("created"),
         Some(Run.Id("abcdef12-fc74-0955-ef4d-fad670250ff4")),
         Run.Id("bc1cc32f-a9bb-9592-ac46-36b5b5c5da01")
@@ -546,7 +546,7 @@ class CompileArticleSuite extends munit.FunSuite:
     assert(
       logLine(
         d,
-        written = Written(false),
+        written = Written.Unwritten,
         Rationale("the draft was rejected"),
         None,
         Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231")

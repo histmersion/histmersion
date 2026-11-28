@@ -93,7 +93,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     val (v, ws) = checkClassification(
       c,
       EnrichSource.CheckClassificationMaxAbsYear(3000000),
-      last = EnrichSource.Last(false)
+      last = EnrichSource.Last.More
     ).toOption.get
     assertEquals(v.period, Some(Period(Year(-1600), Year(-1200))))
     assertEquals(v.status, Source.Status.Current)
@@ -114,7 +114,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       checkClassification(
         bad,
         EnrichSource.CheckClassificationMaxAbsYear(3000000),
-        last = EnrichSource.Last(true)
+        last = EnrichSource.Last.Last
       ).isLeft
     )
     val bp = Classification(
@@ -132,7 +132,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       EnrichSource.Classification.StatusEvidence("")
     )
     assert(
-      checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last(false)).left
+      checkClassification(bp, EnrichSource.CheckClassificationMaxAbsYear(3000000), last = EnrichSource.Last.More).left
         .exists(
           _.exists(
             _.sentence == "period: 3270 BP is an uncalibrated radiocarbon age; it cannot be stored as a calendar year"
@@ -150,7 +150,7 @@ class EnrichSourceSuite extends munit.FunSuite:
     val (v, ws) = checkClassification(
       bp,
       EnrichSource.CheckClassificationMaxAbsYear(3000000),
-      last = EnrichSource.Last(true)
+      last = EnrichSource.Last.Last
     ).toOption.get
     assertEquals(v.period, None)
     assert(ws.exists(_.value.contains("period dropped")))
@@ -170,7 +170,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       None,
       Set.empty,
       open,
-      last = EnrichSource.Last(false)
+      last = EnrichSource.Last.More
     )
     assert(first.left.exists(ps => ps.size == 1 && ps.head.sentence.contains("quote is not in the text")), first)
     val (kept, warnings) = checkFindings(
@@ -181,7 +181,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       None,
       Set.empty,
       open,
-      last = EnrichSource.Last(true)
+      last = EnrichSource.Last.Last
     ).toOption.get
     assertEquals(kept.findings.size, 1)
     assertEquals(kept.findings.head.ratio, 1.0)
@@ -207,7 +207,7 @@ class EnrichSourceSuite extends munit.FunSuite:
         None,
         Set.empty,
         open,
-        last = EnrichSource.Last(false)
+        last = EnrichSource.Last.More
       ).left
         .exists(_.exists(_.sentence.contains("confidence")))
     )
@@ -219,7 +219,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       None,
       Set.empty,
       open,
-      last = EnrichSource.Last(true)
+      last = EnrichSource.Last.Last
     ).toOption.get
     assertEquals(kept.findings.map(_.start), List(Some(-1320L))) // the repeat is gone, the bad one dropped
     assertEquals(kept.findings.head.tags, List("bronze_age"))
@@ -231,7 +231,7 @@ class EnrichSourceSuite extends munit.FunSuite:
       None,
       Set(EnrichSource.Loaded.ExistingClaims("the ship carried copper and tin.")),
       open,
-      last = EnrichSource.Last(true)
+      last = EnrichSource.Last.Last
     ).toOption.get
     assertEquals(none.findings, Nil)
 
@@ -253,7 +253,7 @@ class EnrichSourceSuite extends munit.FunSuite:
         Some(Period(Year(-3000), Year(-2000))),
         Set.empty,
         open,
-        last = EnrichSource.Last(false)
+        last = EnrichSource.Last.More
       ).toOption.get
     assertEquals(kept.findings.size, 1)
     assert(ws.exists(_.value.contains("outside")), ws)
@@ -269,7 +269,7 @@ class EnrichSourceSuite extends munit.FunSuite:
         None,
         Set.empty,
         open,
-        last = EnrichSource.Last(false)
+        last = EnrichSource.Last.More
       ).toOption.get._1.findings.head.placeKind
     assertEquals(kind(Some(Geocode.KindHint.Wire("site"))), Some(Geocode.KindHint.Site))
     assertEquals(kind(Some(Geocode.KindHint.Wire("Water"))), Some(Geocode.KindHint.Water))
@@ -298,9 +298,9 @@ class EnrichSourceSuite extends munit.FunSuite:
     Some(com.histmersion.Year(2020)),
     None,
     Source.Status.Wire("unassessed"),
-    hasSummary = EnrichSource.Loaded.HasSummary(false),
-    hasNotes = EnrichSource.Loaded.HasNotes(true),
-    hasPeriod = EnrichSource.Loaded.HasPeriod(false),
+    hasSummary = EnrichSource.Loaded.HasSummary.Unsummarised,
+    hasNotes = EnrichSource.Loaded.HasNotes.Noted,
+    hasPeriod = EnrichSource.Loaded.HasPeriod.Undated,
     None,
     List(EnrichSource.Topic("trade")),
     Nil,
@@ -403,12 +403,12 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(
       closeLint(
         EnrichSource.FindingCount(0),
-        hasPeriod = EnrichSource.Loaded.HasPeriod(false),
+        hasPeriod = EnrichSource.Loaded.HasPeriod.Undated,
         Source.Status.Unassessed
       ).map(_.value.takeWhile(_ != ':')),
       List(Lint.NoFindings, Lint.NoPeriod, Lint.UnassessedStatus)
     )
     assertEquals(
-      closeLint(EnrichSource.FindingCount(3), hasPeriod = EnrichSource.Loaded.HasPeriod(true), Source.Status.Current),
+      closeLint(EnrichSource.FindingCount(3), hasPeriod = EnrichSource.Loaded.HasPeriod.Dated, Source.Status.Current),
       Nil
     )

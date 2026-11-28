@@ -18,6 +18,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The `infer-filter` pipeline's typed answer and its pure checks (docs/research-process-managers.md §4 (a), phase 2):
   * an article that records no coverage filter (#958) gets one proposed by a model — free text, topics, tags and the
@@ -29,8 +30,10 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @movesTo(FeaturePlace.ResearchWorkflows)
 object FilterInference:
-  type Last = Last.T
-  object Last extends Newtype[Boolean, Pure]
+  enum Last derives CanEqual:
+    case Last, More
+  object Last extends TwoCases[Last]:
+    extension (last: Last) def last: Boolean = last == Last
   type LogLine = LogLine.T
   object LogLine extends Newtype[String, Pure]
   type Outcome = Outcome.T
@@ -150,7 +153,7 @@ object FilterInference:
           )
         )
       )
-    else if last.value then Right(Inferred(None, problems))
+    else if last.last then Right(Inferred(None, problems))
     else Left(problems)
 
   /** The worklog line of a run. */

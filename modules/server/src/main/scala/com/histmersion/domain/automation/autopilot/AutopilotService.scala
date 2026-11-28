@@ -190,8 +190,9 @@ final class AutopilotService(
           m.goal.flatMap(g => DomainGoal.Slug.option(g.value)),
           DomainManager.State.Wire(m.state.value),
           m.cron.map(c => AutopilotPolicy.Cron(c.value)),
-          m.config.autoIngest.map(a => ManagerRow.AutoIngest(a.autoIngest)),
-          ManagerRow.PlanItem(m.planItem.value),
+          m.config.autoIngest
+            .map(a => (if a.autoIngest then ManagerRow.AutoIngest.AutoIngest else ManagerRow.AutoIngest.ManualIngest)),
+          (if m.planItem.value then ManagerRow.PlanItem.PlanItem else ManagerRow.PlanItem.Standalone),
           m.config.extendMinNew.map(n => AutopilotPolicy.Settings.ExtendMinNew(n.value))
         )
       )
@@ -216,11 +217,12 @@ final class AutopilotService(
       GoalRow(
         slug,
         DomainGoal.Status.Wire(g.status.value),
-        needsPlan = GoalRow.NeedsPlan(
-          !planned(slug) && links
-            .getOrElse((slug, DomainGoal.LinkKind.Wire(LinkKind.SearchQuery.wire.value)), RowCount(0))
-            .value == 0
-        )
+        needsPlan =
+          (if !planned(slug) && links
+               .getOrElse((slug, DomainGoal.LinkKind.Wire(LinkKind.SearchQuery.wire.value)), RowCount(0))
+               .value == 0
+           then GoalRow.NeedsPlan.NeedsPlan
+           else GoalRow.NeedsPlan.Planned)
       )
     )
     val steps = AutopilotPolicy.ensure(
@@ -266,7 +268,7 @@ final class AutopilotService(
               next(cron, now)
             )
         ) {
-          if planFirst.value then
+          if planFirst.needsPlan then
             val _ = agents.managerStore.upsert(
               id,
               ManagerItem.Kind(PlanGoalItem),
@@ -286,7 +288,7 @@ final class AutopilotService(
           event(
             id,
             s"created active by the autopilot, cron `$cron` (UTC)" +
-              (if planFirst.value then ": the goal has no plan — plan-goal first, then propose-articles"
+              (if planFirst.needsPlan then ": the goal has no plan — plan-goal first, then propose-articles"
                else ": propose-articles")
           )
           s"$id created"
@@ -450,10 +452,10 @@ final class AutopilotService(
       val facts = GoalFacts(
         GoalFacts.Slug(slug),
         DomainGoal.Status.Wire(status(slug).value),
-        GoalFacts.Managed(managed),
+        (if managed then GoalFacts.Managed.Managed else GoalFacts.Managed.Unmanaged),
         GoalFacts.Articles(arts.size),
-        GoalFacts.CompileOpen(compileOpen),
-        GoalFacts.Reviewed(arts.forall(passed)),
+        (if compileOpen then GoalFacts.CompileOpen.Open else GoalFacts.CompileOpen.Done),
+        (if arts.forall(passed) then GoalFacts.Reviewed.Reviewed else GoalFacts.Reviewed.Unreviewed),
         kids
       )
       AutopilotPolicy.advance(facts).flatMap { (to, why) =>

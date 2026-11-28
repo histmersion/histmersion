@@ -2,6 +2,7 @@ package com.histmersion
 package domain.catalogue.maptiles
 
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** A tile feature's property value, as the vector tile format types it. */
 enum TileValue derives CanEqual:
@@ -21,5 +22,7 @@ object TileValue:
     type Value = Value.T
     object Value extends Newtype[Double, Pure]
   object Flag:
-    type Value = Value.T
-    object Value extends Newtype[Boolean, Pure]
+    enum Value derives CanEqual:
+      case On, Off
+    object Value extends TwoCases[Value]:
+      extension (value: Value) def on: Boolean = value == On

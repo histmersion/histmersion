@@ -3,6 +3,7 @@ package util.data.exchange
 
 import java.util.UUID
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** What became of one of the bundle's sources in a plan: the same record as one here (by its uid, or by the ledger),
   * deleted here, one with a source here by itself, one with a source here if a person says so, or new.
@@ -16,8 +17,10 @@ enum SourceFate:
 
 object SourceFate:
   object Same:
-    type ByLedger = ByLedger.T
-    object ByLedger extends Newtype[Boolean, Pure]
+    enum ByLedger derives CanEqual:
+      case ByLedger, ByMatch
+    object ByLedger extends TwoCases[ByLedger]:
+      extension (byLedger: ByLedger) def byLedger: Boolean = byLedger == ByLedger
   object Gate:
     type Issue = Issue.T
     object Issue extends Newtype[String, Pure]

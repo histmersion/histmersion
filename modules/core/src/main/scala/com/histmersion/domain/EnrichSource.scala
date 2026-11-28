@@ -24,6 +24,7 @@ import com.histmersion.domain.library.Doi
 import com.histmersion.domain.research.Slug
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The `enrich-source` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.2): what each
   * LLM step must return, how the body is cut into windows, how an answer is verified, and how the verified result
@@ -40,8 +41,10 @@ object EnrichSource:
   object Description extends Newtype[String, Pure]
   type FindingCount = FindingCount.T
   object FindingCount extends Newtype[Int, Pure]
-  type Last = Last.T
-  object Last extends Newtype[Boolean, Pure]
+  enum Last derives CanEqual:
+    case Last, More
+  object Last extends TwoCases[Last]:
+    extension (last: Last) def last: Boolean = last == Last
   type MaxWindows = MaxWindows.T
   object MaxWindows extends Newtype[Int, Pure]
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
@@ -226,12 +229,18 @@ object EnrichSource:
     object Title extends Newtype[String, Pure]
     type Venue = Venue.T
     object Venue extends Newtype[String, Pure]
-    type HasSummary = HasSummary.T
-    object HasSummary extends Newtype[Boolean, Pure]
-    type HasNotes = HasNotes.T
-    object HasNotes extends Newtype[Boolean, Pure]
-    type HasPeriod = HasPeriod.T
-    object HasPeriod extends Newtype[Boolean, Pure]
+    enum HasSummary derives CanEqual:
+      case Summarised, Unsummarised
+    object HasSummary extends TwoCases[HasSummary]:
+      extension (hasSummary: HasSummary) def hasSummary: Boolean = hasSummary == Summarised
+    enum HasNotes derives CanEqual:
+      case Noted, Unnoted
+    object HasNotes extends TwoCases[HasNotes]:
+      extension (hasNotes: HasNotes) def hasNotes: Boolean = hasNotes == Noted
+    enum HasPeriod derives CanEqual:
+      case Dated, Undated
+    object HasPeriod extends TwoCases[HasPeriod]:
+      extension (hasPeriod: HasPeriod) def hasPeriod: Boolean = hasPeriod == Dated
     type ExistingClaims = ExistingClaims.T
     object ExistingClaims extends Newtype[String, Pure]
     type Head = Head.T
@@ -354,8 +363,10 @@ object EnrichSource:
   ) derives JsonCodec
 
   object MetaChecked:
-    type Checked = Checked.T
-    object Checked extends Newtype[Boolean, Pure]
+    enum Checked derives CanEqual:
+      case Checked, Unchecked
+    object Checked extends TwoCases[Checked]:
+      extension (checked: Checked) def checked: Boolean = checked == Checked
     type Differences = Differences.T
     object Differences extends Newtype[String, Pure]
     type Note = Note.T
@@ -365,16 +376,20 @@ object EnrichSource:
   final case class Upstreamed(
       ran: Upstreamed.Ran,
       summary: Upstreamed.Summary,
-      retracted: Upstreamed.Retracted = Upstreamed.Retracted(false)
+      retracted: Upstreamed.Retracted = Upstreamed.Retracted.Standing
   ) derives JsonCodec
 
   object Upstreamed:
-    type Ran = Ran.T
-    object Ran extends Newtype[Boolean, Pure]
+    enum Ran derives CanEqual:
+      case Ran, Skipped
+    object Ran extends TwoCases[Ran]:
+      extension (ran: Ran) def ran: Boolean = ran == Ran
     type Summary = Summary.T
     object Summary extends Newtype[String, Pure]
-    type Retracted = Retracted.T
-    object Retracted extends Newtype[Boolean, Pure]
+    enum Retracted derives CanEqual:
+      case Retracted, Standing
+    object Retracted extends TwoCases[Retracted]:
+      extension (retracted: Retracted) def retracted: Boolean = retracted == Retracted
 
   /** The `status` step: whether the classify step's status proposal was applied, recorded for a person (`approval` id),
     * or needed nothing.
@@ -493,7 +508,7 @@ object EnrichSource:
       summary.fold(List(Content.Answer(Content.Requirement.SummaryGiven)))(_ => Nil) ++
       period.flatMap(_.left.toOption).toList.flatMap(_.toVector) ++ noEvidence.toList
     val fatal = status.isLeft || summary.isEmpty
-    if problems.isEmpty || (last.value && !fatal) then
+    if problems.isEmpty || (last.last && !fatal) then
       val clean = (l: List[String]) => l.map(_.trim).filter(_.nonEmpty).distinct
       Right(
         (
@@ -747,7 +762,7 @@ object EnrichSource:
       }
     }
     val soft = checked.flatMap(_._2) ++ placementProblem(named, guards.minPlacedShare).toList
-    if (rejected.nonEmpty || soft.nonEmpty) && !last.value then Left(rejected ++ soft)
+    if (rejected.nonEmpty || soft.nonEmpty) && !last.last then Left(rejected ++ soft)
     else
       val norm = existingClaims.map(c => normalised(c.value))
       val kept = results
@@ -805,11 +820,11 @@ object EnrichSource:
     )
     val p = Source.Patch(
       metadata = setStatus.map(s => MetadataPatch(status = Some(s))),
-      summary = Option.when(!l.hasSummary.value)(Source.Summary(c.summary.value)),
-      notes = notes.filter(_ => !l.hasNotes.value).map(n => Source.Notes(n.value)),
+      summary = Option.when(!l.hasSummary.hasSummary)(Source.Summary(c.summary.value)),
+      notes = notes.filter(_ => !l.hasNotes.hasNotes).map(n => Source.Notes(n.value)),
       topics = merge(l.topics, c.topics).map(_.map(t => Source.Topics(t.value))),
       regions = merge(l.regions, c.regions).map(_.map(r => Source.Regions(r.value))),
-      period = c.period.filter(_ => !l.hasPeriod.value).map(p => Period.Input(p.start, p.end)),
+      period = c.period.filter(_ => !l.hasPeriod.hasPeriod).map(p => Period.Input(p.start, p.end)),
       tags = Some(c.tags.filterNot(l.tags.contains))
         .filter(_.nonEmpty)
         .map(t => ListPatch(add = t.map(x => ListPatch.Add(x.value)))),
@@ -869,6 +884,6 @@ object EnrichSource:
   def closeLint(findings: FindingCount, hasPeriod: Loaded.HasPeriod, status: Source.Status): List[Description] =
     List(
       Option.when(findings.value == 0)(s"${Lint.NoFindings}: the source has no findings"),
-      Option.when(!hasPeriod.value)(s"${Lint.NoPeriod}: the source has no period"),
+      Option.when(!hasPeriod.hasPeriod)(s"${Lint.NoPeriod}: the source has no period"),
       Option.when(status == Source.Status.Unassessed)(s"${Lint.UnassessedStatus}: the status is still unassessed")
     ).flatten.map(Description(_))

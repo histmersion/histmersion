@@ -42,12 +42,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
     val ok = List(
       PlannedFacts(
         AutopilotPolicy.PlannedFacts.Slug("a"),
-        slugFree = AutopilotPolicy.PlannedFacts.SlugFree(true),
+        slugFree = AutopilotPolicy.PlannedFacts.Availability.Free,
         AutopilotPolicy.PlannedFacts.Hits(9)
       ),
       PlannedFacts(
         AutopilotPolicy.PlannedFacts.Slug("b"),
-        slugFree = AutopilotPolicy.PlannedFacts.SlugFree(true),
+        slugFree = AutopilotPolicy.PlannedFacts.Availability.Free,
         AutopilotPolicy.PlannedFacts.Hits(5)
       )
     )
@@ -76,12 +76,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
       List(
         PlannedFacts(
           AutopilotPolicy.PlannedFacts.Slug("a"),
-          slugFree = AutopilotPolicy.PlannedFacts.SlugFree(false),
+          slugFree = AutopilotPolicy.PlannedFacts.Availability.Taken,
           AutopilotPolicy.PlannedFacts.Hits(9)
         ),
         PlannedFacts(
           AutopilotPolicy.PlannedFacts.Slug("b"),
-          slugFree = AutopilotPolicy.PlannedFacts.SlugFree(true),
+          slugFree = AutopilotPolicy.PlannedFacts.Availability.Free,
           AutopilotPolicy.PlannedFacts.Hits(2)
         )
       ),
@@ -100,12 +100,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
   private val draft =
     DraftFacts(
       AutopilotPolicy.DraftFacts.Slug("x"),
-      create = AutopilotPolicy.DraftFacts.Create(true),
-      filterRecorded = AutopilotPolicy.DraftFacts.FilterRecorded(true),
+      create = AutopilotPolicy.DraftFacts.Create.Create,
+      filterRecorded = AutopilotPolicy.DraftFacts.FilterRecorded.Recorded,
       hits = Some(AutopilotPolicy.DraftFacts.Hits(8)),
       problems = Nil,
       cited = AutopilotPolicy.DraftFacts.Cited(4),
-      slugFree = AutopilotPolicy.DraftFacts.SlugFree(true)
+      slugFree = AutopilotPolicy.DraftFacts.Availability.Free
     )
 
   test(
@@ -123,9 +123,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
       articlePublish(
         draft
           .modify(_.create)
-          .setTo(AutopilotPolicy.DraftFacts.Create(false))
+          .setTo(AutopilotPolicy.DraftFacts.Create.Update)
           .modify(_.slugFree)
-          .setTo(AutopilotPolicy.DraftFacts.SlugFree(false)),
+          .setTo(AutopilotPolicy.DraftFacts.Availability.Taken),
         AutopilotPolicy.MinSources(3),
         AutopilotPolicy.ApprovedToday(0),
         AutopilotPolicy.Cap(10)
@@ -139,7 +139,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         case Verdict.Reject(r) => s"$r"
         case v                 => fail(v.toString)
     assert(
-      why(draft.modify(_.filterRecorded).setTo(AutopilotPolicy.DraftFacts.FilterRecorded(false)))
+      why(draft.modify(_.filterRecorded).setTo(AutopilotPolicy.DraftFacts.FilterRecorded.Unrecorded))
         .contains("no coverage filter")
     )
     assert(
@@ -155,7 +155,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
       ).contains("2 problems: p1; p2")
     )
     assert(why(draft.modify(_.cited).setTo(AutopilotPolicy.DraftFacts.Cited(0))).contains("cites no source"))
-    assert(why(draft.modify(_.slugFree).setTo(AutopilotPolicy.DraftFacts.SlugFree(false))).contains("slug x is taken"))
+    assert(
+      why(draft.modify(_.slugFree).setTo(AutopilotPolicy.DraftFacts.Availability.Taken)).contains("slug x is taken")
+    )
 
   test(
     "goal-plan: something proposed → approved; sub-goals at the depth limit rejected; nothing rejected; the cap leaves it"
@@ -228,10 +230,10 @@ class AutopilotPolicySuite extends munit.FunSuite:
     GoalFacts(
       AutopilotPolicy.GoalFacts.Slug("g"),
       Goal.Status.Wire(Goal.Status.Planned),
-      managed = AutopilotPolicy.GoalFacts.Managed(false),
+      managed = AutopilotPolicy.GoalFacts.Managed.Unmanaged,
       articles = AutopilotPolicy.GoalFacts.Articles(0),
-      compileOpen = AutopilotPolicy.GoalFacts.CompileOpen(false),
-      reviewed = AutopilotPolicy.GoalFacts.Reviewed(false),
+      compileOpen = AutopilotPolicy.GoalFacts.CompileOpen.Done,
+      reviewed = AutopilotPolicy.GoalFacts.Reviewed.Unreviewed,
       Nil
     )
 
@@ -240,24 +242,24 @@ class AutopilotPolicySuite extends munit.FunSuite:
   ):
     assertEquals(advance(g), None)
     assertEquals(
-      advance(g.modify(_.managed).setTo(AutopilotPolicy.GoalFacts.Managed(true))).map(_._1),
+      advance(g.modify(_.managed).setTo(AutopilotPolicy.GoalFacts.Managed.Managed)).map(_._1),
       Some(Goal.Status.Seeding)
     )
     assertEquals(
       advance(
         g.modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
           .modify(_.articles)
           .setTo(AutopilotPolicy.GoalFacts.Articles(2))
           .modify(_.compileOpen)
-          .setTo(AutopilotPolicy.GoalFacts.CompileOpen(true))
+          .setTo(AutopilotPolicy.GoalFacts.CompileOpen.Open)
       ).map(_._1),
       Some(Goal.Status.Seeding)
     )
     assertEquals(
       advance(
         g.modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
           .modify(_.articles)
           .setTo(AutopilotPolicy.GoalFacts.Articles(2))
       ).map(_._1),
@@ -268,11 +270,11 @@ class AutopilotPolicySuite extends munit.FunSuite:
         g.modify(_.status)
           .setTo(Goal.Status.Wire(Goal.Status.Compiled))
           .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
           .modify(_.articles)
           .setTo(AutopilotPolicy.GoalFacts.Articles(2))
           .modify(_.reviewed)
-          .setTo(AutopilotPolicy.GoalFacts.Reviewed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Reviewed.Reviewed)
       ).map((a, p) => (a, s"$p")),
       Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
@@ -283,7 +285,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         g.modify(_.status)
           .setTo(Goal.Status.Wire(Goal.Status.Reviewed))
           .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
       ),
       None
     )
@@ -292,11 +294,11 @@ class AutopilotPolicySuite extends munit.FunSuite:
         g.modify(_.status)
           .setTo(Goal.Status.Wire(Goal.Status.Done))
           .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
           .modify(_.articles)
           .setTo(AutopilotPolicy.GoalFacts.Articles(3))
           .modify(_.reviewed)
-          .setTo(AutopilotPolicy.GoalFacts.Reviewed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Reviewed.Reviewed)
       ),
       None
     )
@@ -305,7 +307,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         g.modify(_.status)
           .setTo(Goal.Status.Wire("frozen"))
           .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
       ),
       None
     )
@@ -314,11 +316,11 @@ class AutopilotPolicySuite extends munit.FunSuite:
         g.modify(_.status)
           .setTo(Goal.Status.Wire(Goal.Status.Compiled))
           .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+          .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
           .modify(_.articles)
           .setTo(AutopilotPolicy.GoalFacts.Articles(1))
           .modify(_.compileOpen)
-          .setTo(AutopilotPolicy.GoalFacts.CompileOpen(true))
+          .setTo(AutopilotPolicy.GoalFacts.CompileOpen.Open)
       ),
       None
     )
@@ -328,7 +330,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       g.modify(_.status)
         .setTo(Goal.Status.Wire(Goal.Status.Seeding))
         .modify(_.managed)
-        .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+        .setTo(AutopilotPolicy.GoalFacts.Managed.Managed)
         .modify(_.children)
         .setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Seeding)))
     assertEquals(advance(p), None)
@@ -374,12 +376,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
         GoalRow(
           Goal.Slug("a"),
           Goal.Status.Wire(Goal.Status.Planned),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(true)
+          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan.NeedsPlan
         ),
         GoalRow(
           Goal.Slug("r"),
           Goal.Status.Wire(Goal.Status.Reviewed),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(false)
+          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan.Planned
         )
       ),
       Nil,
@@ -392,7 +394,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       Step.CreateSeed(
         AutopilotPolicy.Step.CreateSeed.Goal("a"),
         stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.seed(Goal.Slug("a"))),
-        planFirst = AutopilotPolicy.Step.CreateSeed.PlanFirst(true)
+        planFirst = AutopilotPolicy.Step.CreateSeed.PlanFirst.NeedsPlan
       )
     )
     assertEquals(
@@ -415,7 +417,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         Manager.State.Wire("paused"),
         Some(AutopilotPolicy.Cron("0 3 * * 1")),
         None,
-        planItem = AutopilotPolicy.ManagerRow.PlanItem(true)
+        planItem = AutopilotPolicy.ManagerRow.PlanItem.PlanItem
       ),
       ManagerRow(
         ManagerRow.Id.watch(Goal.Slug("a")),
@@ -423,7 +425,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         Some(Goal.Slug("a")),
         Manager.State.Wire("paused"),
         None,
-        Some(AutopilotPolicy.ManagerRow.AutoIngest(false))
+        Some(AutopilotPolicy.ManagerRow.AutoIngest.ManualIngest)
       ),
       ManagerRow(
         ManagerRow.Id.seed(Goal.Slug("b")),
@@ -447,12 +449,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
         GoalRow(
           Goal.Slug("a"),
           Goal.Status.Wire(Goal.Status.Seeding),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(true)
+          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan.NeedsPlan
         ),
         GoalRow(
           Goal.Slug("b"),
           Goal.Status.Wire(Goal.Status.Planned),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(true)
+          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan.NeedsPlan
         )
       ),
       ms,
@@ -484,17 +486,17 @@ class AutopilotPolicySuite extends munit.FunSuite:
         .modify(_.cron)
         .setTo(m.cron.orElse(Some(AutopilotPolicy.Cron("x"))))
         .modify(_.autoIngest)
-        .setTo(m.autoIngest.orElse(Some(AutopilotPolicy.ManagerRow.AutoIngest(true))))
+        .setTo(m.autoIngest.orElse(Some(AutopilotPolicy.ManagerRow.AutoIngest.AutoIngest)))
         .modify(_.planItem)
-        .setTo(AutopilotPolicy.ManagerRow.PlanItem(true))
+        .setTo(AutopilotPolicy.ManagerRow.PlanItem.PlanItem)
         .modify(_.extendMinNew)
         .setTo(Some(AutopilotPolicy.Settings.ExtendMinNew(3)))
     )
     assertEquals(
       ensure(
         List(
-          GoalRow(Goal.Slug("a"), Goal.Status.Wire(Goal.Status.Seeding), AutopilotPolicy.GoalRow.NeedsPlan(true)),
-          GoalRow(Goal.Slug("b"), Goal.Status.Wire(Goal.Status.Planned), AutopilotPolicy.GoalRow.NeedsPlan(true))
+          GoalRow(Goal.Slug("a"), Goal.Status.Wire(Goal.Status.Seeding), AutopilotPolicy.GoalRow.NeedsPlan.NeedsPlan),
+          GoalRow(Goal.Slug("b"), Goal.Status.Wire(Goal.Status.Planned), AutopilotPolicy.GoalRow.NeedsPlan.NeedsPlan)
         ),
         done,
         Set.empty,

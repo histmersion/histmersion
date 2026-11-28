@@ -534,14 +534,14 @@ final class OaBacklog(
       val facts = RepairFacts(
         RepairFacts.Item(item.value),
         first.doi,
-        RepairFacts.IsOa(rs.exists(_.isOa.value)),
+        (if rs.exists(_.isOa.value) then RepairFacts.IsOa.Open else RepairFacts.IsOa.Closed),
         RepairFacts.Watcher(first.managerId.value),
-        RepairFacts.WatcherExists(w.isDefined),
-        RepairFacts.WatcherAutoIngest(
-          w.exists(m =>
-            m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest.Auto)
-          )
-        ),
+        (if w.isDefined then RepairFacts.Watching.Watched else RepairFacts.Watching.Unwatched),
+        (if w.exists(m =>
+             m.state.value != State.Stopped.wire.value && m.config.autoIngest.contains(ManagerConfig.AutoIngest.Auto)
+           )
+         then RepairFacts.Ingesting.AutoIngest
+         else RepairFacts.Ingesting.ManualIngest),
         site.sourceStore.citekeyOfDoi(first.doi)
       )
       def row(action: String, detail: String, backlogItem: Option[ManagerItem.Id] = None) =

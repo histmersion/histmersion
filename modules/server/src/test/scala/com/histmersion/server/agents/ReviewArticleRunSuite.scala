@@ -935,9 +935,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       patched,
       Some(
         ReviewArticle.Patched(
-          written = ReviewArticle.Patched.Written(false),
+          written = ReviewArticle.Patched.Written.Unwritten,
           None,
-          conflict = ReviewArticle.Patched.Conflict(true)
+          conflict = ReviewArticle.Patched.Conflict.Conflict
         )
       )
     )
@@ -1618,9 +1618,9 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       patch.output.flatMap(o => RawJson.decode[ReviewArticle.Patched](o.value).toOption),
       Some(
         ReviewArticle.Patched(
-          written = ReviewArticle.Patched.Written(false),
+          written = ReviewArticle.Patched.Written.Unwritten,
           None,
-          conflict = ReviewArticle.Patched.Conflict(false)
+          conflict = ReviewArticle.Patched.Conflict.Clean
         )
       )
     )

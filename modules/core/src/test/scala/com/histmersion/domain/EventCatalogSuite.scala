@@ -263,7 +263,7 @@ class EventCatalogSuite extends munit.FunSuite:
       Some(com.histmersion.Longitude(25.4)),
       None,
       Set.empty,
-      catalogue = StoredEvent.Catalogue(false)
+      catalogue = StoredEvent.Catalogue.Corpus
     )
     val battle = StoredEvent(
       Event.Id("alesia"),
@@ -273,7 +273,7 @@ class EventCatalogSuite extends munit.FunSuite:
       Some(com.histmersion.Longitude(4.5)),
       Some(EventEntry.Wikidata("Q131386")),
       Set.empty,
-      catalogue = StoredEvent.Catalogue(false)
+      catalogue = StoredEvent.Catalogue.Corpus
     )
     val known = StoredEvent(
       Event.Id("gvp_9"),
@@ -283,7 +283,7 @@ class EventCatalogSuite extends munit.FunSuite:
       Some(com.histmersion.Longitude(14.4)),
       None,
       Set(CatalogRecord.Provider("gvp") -> CatalogRecord.ProviderId("9")),
-      catalogue = StoredEvent.Catalogue(true)
+      catalogue = StoredEvent.Catalogue.Catalogue
     )
     val stored = List(compiled, battle, known)
     val placed = CatalogMerge.place(
@@ -337,7 +337,7 @@ class EventCatalogSuite extends munit.FunSuite:
       Some(com.histmersion.Longitude(25.4)),
       None,
       Set(CatalogRecord.Provider("gvp") -> CatalogRecord.ProviderId("1")),
-      catalogue = StoredEvent.Catalogue(true)
+      catalogue = StoredEvent.Catalogue.Catalogue
     )
     val placed = CatalogMerge.place(
       List(

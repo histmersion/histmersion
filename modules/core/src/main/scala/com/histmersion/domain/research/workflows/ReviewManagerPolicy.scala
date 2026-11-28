@@ -18,6 +18,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.api.automation.Agents
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The review manager's pure rules (docs/research-process-managers.md §3.4): its settings over research's defaults,
   * what to do with a review item after its run settled — the stop rules over the article's review ledger —, the
@@ -52,7 +53,8 @@ object ReviewManagerPolicy:
       ReviewSettings.BackoffMinutes(math.max(1, m.backoffMinutes.value)),
       ReviewSettings.MaxBackoffMinutes(math.max(1, m.maxBackoffMinutes.value)),
       ReviewSettings.StaleAfterDays(math.max(0, c.staleAfterDays.fold(d.staleAfterDays.value)(_.value))),
-      ReviewSettings.InferFilter(c.inferFilter.fold(d.inferFilter.value)(_.inferFilter))
+      (if c.inferFilter.fold(d.inferFilter.inferFilter)(_.inferFilter) then ReviewSettings.InferFilter.Infer
+       else ReviewSettings.InferFilter.AsGiven)
     )
 
   /** The defaults as a config (what `effective` shows for an unset key). */
@@ -71,8 +73,9 @@ object ReviewManagerPolicy:
       refillBatch = Some(ManagerConfig.RefillBatch(d.refillBatch.value)),
       maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
       staleAfterDays = Some(ManagerConfig.StaleAfterDays(d.staleAfterDays.value)),
-      inferFilter =
-        Some((if d.inferFilter.value then ManagerConfig.InferFilter.Infer else ManagerConfig.InferFilter.Explicit)),
+      inferFilter = Some(
+        (if d.inferFilter.inferFilter then ManagerConfig.InferFilter.Infer else ManagerConfig.InferFilter.Explicit)
+      ),
       dailyUsd = ManagerPolicy.dailyCap(ManagerConfig(), m),
       extendMinNew = Some(ManagerConfig.ExtendMinNew(d.extendMinNew.value))
     )
@@ -96,8 +99,11 @@ object ReviewManagerPolicy:
     object MaxReopened extends Newtype[Int, Pure]
     type Escalated = Escalated.T
     object Escalated extends Newtype[Int, Pure]
-    type OnlyMissingCritiques = OnlyMissingCritiques.T
-    object OnlyMissingCritiques extends Newtype[Boolean, Pure]
+    enum OnlyMissingCritiques derives CanEqual:
+      case MissingOnly, Every
+    object OnlyMissingCritiques extends TwoCases[OnlyMissingCritiques]:
+      extension (onlyMissingCritiques: OnlyMissingCritiques)
+        def onlyMissingCritiques: Boolean = onlyMissingCritiques == MissingOnly
     type OpenPairs = OpenPairs.T
     object OpenPairs extends Newtype[Int, Pure]
 
@@ -108,8 +114,10 @@ object ReviewManagerPolicy:
       ReviewFacts(
         OpenMajors(majors.size),
         MaxReopened(majors.map(_.reopened.value).maxOption.getOrElse(0)),
-        Escalated(majors.count(_.finding.escalated.value)),
-        OnlyMissingCritiques(majors.nonEmpty && majors.forall(e => ReviewArticle.isMissingCritique(e.finding))),
+        Escalated(majors.count(_.finding.escalated.escalated)),
+        (if majors.nonEmpty && majors.forall(e => ReviewArticle.isMissingCritique(e.finding)) then
+           OnlyMissingCritiques.MissingOnly
+         else OnlyMissingCritiques.Every),
         openPairs
       )
 
@@ -167,7 +175,7 @@ object ReviewManagerPolicy:
             ReviewFacts.OpenMajors(0),
             ReviewFacts.MaxReopened(0),
             ReviewFacts.Escalated(0),
-            onlyMissingCritiques = ReviewFacts.OnlyMissingCritiques(false)
+            onlyMissingCritiques = ReviewFacts.OnlyMissingCritiques.Every
           )
         )
         val mark = RunMark(
@@ -176,7 +184,7 @@ object ReviewManagerPolicy:
           RunMark.After(f.openMajors.value),
           RunMark.MaxReopened(f.maxReopened.value),
           RunMark.Escalated(f.escalated.value),
-          (if f.onlyMissingCritiques.value then RunMark.Churn.Churn else RunMark.Churn.Progress),
+          (if f.onlyMissingCritiques.onlyMissingCritiques then RunMark.Churn.Churn else RunMark.Churn.Progress),
           state.pairsBefore.map(b => RunMark.PairsBefore(b.value)),
           f.openPairs.map(p => RunMark.PairsAfter(p.value))
         )
@@ -187,7 +195,7 @@ object ReviewManagerPolicy:
           .setTo(None)
           .modify(_.pairsBefore)
           .setTo(None)
-        val churn = f.onlyMissingCritiques.value && pairsStalled(st.history, s.noProgressRuns)
+        val churn = f.onlyMissingCritiques.onlyMissingCritiques && pairsStalled(st.history, s.noProgressRuns)
         val pairs = f.openPairs.fold("")(n => s", ${counted(n.value, "open critique pair")}")
         def stop(why: String) =
           val task = taskText.fold(s"review manager stopped [[$slug]]: $why (agent run ${run.value.take(8)})")(t =>
@@ -209,7 +217,7 @@ object ReviewManagerPolicy:
           stop(
             s"${counted(f.openMajors.value, "open MAJOR")} after ${counted(attempts.value, "run")} (max-runs-per-article ${s.maxRunsPerArticle})"
           )
-        else if !f.onlyMissingCritiques.value && noProgress(st.history, s.noProgressRuns) then
+        else if !f.onlyMissingCritiques.onlyMissingCritiques && noProgress(st.history, s.noProgressRuns) then
           stop(s"the open MAJORs did not go down over ${counted(s.noProgressRuns.value, "run")} (now ${f.openMajors})")
         else
           Next.Again(
@@ -345,7 +353,7 @@ object ReviewManagerPolicy:
         .take(math.max(0, batch.value))
         .toList
     reviews.flatMap { p =>
-      val infer = Option.when(inferFilter.value && !hasFilter(p.target) && !inferredBefore(p.target))(
+      val infer = Option.when(inferFilter.inferFilter && !hasFilter(p.target) && !inferredBefore(p.target))(
         Pick(
           Item.Kind.InferFilter,
           p.target,

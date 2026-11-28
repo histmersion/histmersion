@@ -21,7 +21,7 @@ class HintProposalsSuite extends munit.FunSuite:
   private val items = Set(HintProposals.Item("tin"), HintProposals.Item("copper"), HintProposals.Item("zz-goal"))
   private def chk(
       a: HintAnswer,
-      last: HintProposals.Last = HintProposals.Last(false),
+      last: HintProposals.Last = HintProposals.Last.More,
       item: Option[HintProposals.Item] = None
   ) =
     check(a, items.contains, item, last)
@@ -34,7 +34,7 @@ class HintProposalsSuite extends munit.FunSuite:
         .exists(_.head.sentence.contains("unknown hint answer action 'delete'"))
     )
     assert(
-      chk(HintAnswer(HintAnswer.Action("delete")), last = HintProposals.Last(true)).exists((e, ws) =>
+      chk(HintAnswer(HintAnswer.Action("delete")), last = HintProposals.Last.Last).exists((e, ws) =>
         e.isEmpty && ws.head.value.startsWith("nothing proposed")
       )
     )
@@ -91,7 +91,7 @@ class HintProposalsSuite extends munit.FunSuite:
           targets = List(HintAnswer.Targets("tin"), HintAnswer.Targets("lead")),
           untilSource = Some(HintAnswer.UntilSource("10.1/x"))
         ),
-        last = HintProposals.Last(true)
+        last = HintProposals.Last.Last
       ),
       Right(
         (
@@ -113,7 +113,7 @@ class HintProposalsSuite extends munit.FunSuite:
           targets = List(HintAnswer.Targets("lead")),
           until = Some(HintAnswer.Until("2026-12-01"))
         ),
-        last = HintProposals.Last(true)
+        last = HintProposals.Last.Last
       ).exists(_._1.isEmpty)
     )
 

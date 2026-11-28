@@ -72,7 +72,11 @@ final class EnrichSourcePipeline(
         StepAgent.EnrichClassify,
         Prompt.UserText(classifyInput(loaded)),
         LibraryAnswers.classification
-      )((c, last) => accepted(checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), Last(last.value))))
+      )((c, last) =>
+        accepted(
+          checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), (if last.value then Last.Last else Last.More))
+        )
+      )
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[Geocoded](AgentRepo.StepRecord.Name("geocode"))(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String](
@@ -124,9 +128,11 @@ final class EnrichSourcePipeline(
               year = s.year.map(y => Year(y.value.toInt)),
               venue = s.venue.map(v => Loaded.Venue(v.value)),
               status = s.status.wire,
-              hasSummary = Loaded.HasSummary(s.summary.exists(_.value.trim.nonEmpty)),
-              hasNotes = Loaded.HasNotes(s.notes.exists(_.value.trim.nonEmpty)),
-              hasPeriod = Loaded.HasPeriod(s.periodStart.isDefined),
+              hasSummary = (if s.summary.exists(_.value.trim.nonEmpty) then Loaded.HasSummary.Summarised
+                            else Loaded.HasSummary.Unsummarised),
+              hasNotes =
+                (if s.notes.exists(_.value.trim.nonEmpty) then Loaded.HasNotes.Noted else Loaded.HasNotes.Unnoted),
+              hasPeriod = (if s.periodStart.isDefined then Loaded.HasPeriod.Dated else Loaded.HasPeriod.Undated),
               period = for a <- s.periodStart; b <- s.periodEnd yield Period(a, b),
               topics = s.topics.map(t => Topic(t.value)),
               regions = s.regions.map(r => Region(r.value)),
@@ -186,7 +192,7 @@ final class EnrichSourcePipeline(
                 l.period.orElse(c.period),
                 existing ++ sofar.map(v => Loaded.ExistingClaims(v.claim.value)),
                 guards,
-                Last(last.value)
+                (if last.value then Last.Last else Last.More)
               )
             )
           }
@@ -308,16 +314,16 @@ final class EnrichSourcePipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def metadata(ctx: RunCtx, l: Loaded)(using WritePermit): MetaChecked =
     upstreamBlocked(l) match
-      case Some(why) => MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(why))
+      case Some(why) => MetaChecked(checked = MetaChecked.Checked.Unchecked, Nil, MetaChecked.Note(why))
       case None      =>
         upstream().meta(l.doi.get) match
           case Left(m) =>
             ctx.warn(s"metadata: not checked — ${m.sentences.mkString("; ")}")
-            MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(m.sentences.mkString("; ")))
+            MetaChecked(checked = MetaChecked.Checked.Unchecked, Nil, MetaChecked.Note(m.sentences.mkString("; ")))
           case Right(w) =>
             val diffs = compareMetadata(l.citekey, Title(l.title.value), l.authors, l.year, w)
             diffs.foreach(d => ctx.warn(s"metadata: $d"))
-            MetaChecked(checked = MetaChecked.Checked(true), diffs.map(d => MetaChecked.Differences(d.value)))
+            MetaChecked(checked = MetaChecked.Checked.Checked, diffs.map(d => MetaChecked.Differences(d.value)))
 
   /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a warning, never a
     * failed run — the enrichment is already written).
@@ -325,12 +331,12 @@ final class EnrichSourcePipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def refs(ctx: RunCtx, l: Loaded)(using WritePermit)(using Creator.New): Upstreamed =
     upstreamBlocked(l) match
-      case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
+      case Some(why) => Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(why))
       case None      =>
         upstream().refs(l.citekey, apply = AgentUpstream.RefsApply(!ctx.dryRun)) match
           case Left(m) =>
             ctx.warn(s"refs: ${m.sentences.mkString("; ")}")
-            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentences.mkString("; ")))
+            Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(m.sentences.mkString("; ")))
           case Right(r) =>
             if ctx.dryRun then
               ctx.write(
@@ -338,7 +344,7 @@ final class EnrichSourcePipeline(
                 r.asJson
               )(())(())
             Upstreamed(
-              ran = Upstreamed.Ran(true),
+              ran = Upstreamed.Ran.Ran,
               Upstreamed.Summary(s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added")
             )
 
@@ -346,19 +352,19 @@ final class EnrichSourcePipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def assess(ctx: RunCtx, l: Loaded)(using WritePermit)(using Creator.New): Upstreamed =
     upstreamBlocked(l) match
-      case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
+      case Some(why) => Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(why))
       case None      =>
         upstream().assess(l.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
           case Left(m) =>
             ctx.warn(s"assess: ${m.sentences.mkString("; ")}")
-            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.sentences.mkString("; ")))
+            Upstreamed(ran = Upstreamed.Ran.Skipped, Upstreamed.Summary(m.sentences.mkString("; ")))
           case Right(a) =>
             if a.isRetracted.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
             Upstreamed(
-              ran = Upstreamed.Ran(true),
+              ran = Upstreamed.Ran.Ran,
               Upstreamed.Summary(s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}"),
-              Upstreamed.Retracted(a.isRetracted.isRetracted)
+              (if a.isRetracted.isRetracted then Upstreamed.Retracted.Retracted else Upstreamed.Retracted.Standing)
             )
 
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
@@ -372,7 +378,7 @@ final class EnrichSourcePipeline(
       StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
     else if c.status == ApiSource.Status.Unassessed then
       StatusRouted(None, None, StatusRouted.Note("no status proposed"))
-    else if a.retracted.value then
+    else if a.retracted.retracted then
       StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
     else
       val proposal = AgentProposals.Proposal(
@@ -408,7 +414,11 @@ final class EnrichSourcePipeline(
     val lint = if ctx.dryRun then Nil
     else
       site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption.toList.flatMap { s =>
-        closeLint(FindingCount(s.findings.size), Loaded.HasPeriod(s.source.periodStart.isDefined), s.source.status)
+        closeLint(
+          FindingCount(s.findings.size),
+          (if s.source.periodStart.isDefined then Loaded.HasPeriod.Dated else Loaded.HasPeriod.Undated),
+          s.source.status
+        )
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))
     val acquire = ctx.run.acquireItem.map(id =>

@@ -88,21 +88,21 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val noSummary = checkClassification(
       classification(summary = Classification.Summary(" ")),
       CheckClassificationMaxAbsYear(50000),
-      last = Last(false)
+      last = Last.More
     )
     assertEquals(noSummary.left.toOption.map(_.map(_.sentence)), Some(List("the summary is empty")))
     assert(
       checkClassification(
         classification(status = domain.library.Source.Status.Wire("")),
         CheckClassificationMaxAbsYear(50000),
-        last = Last(true)
+        last = Last.Last
       ).left
         .exists(_.exists(_.sentence.contains("unknown source status")))
     )
     val noEvidence = checkClassification(
       classification(evidence = Classification.StatusEvidence("")),
       CheckClassificationMaxAbsYear(50000),
-      last = Last(false)
+      last = Last.More
     )
     assertEquals(
       noEvidence.left.toOption.map(_.map(_.sentence)),
@@ -116,14 +116,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
           evidence = Classification.StatusEvidence("")
         ),
         CheckClassificationMaxAbsYear(50000),
-        last = Last(false)
+        last = Last.More
       ).isRight
     )
     // the last attempt keeps the classification, with a warning
     val (c, ws) = checkClassification(
       classification(evidence = Classification.StatusEvidence("")),
       CheckClassificationMaxAbsYear(50000),
-      last = Last(true)
+      last = Last.Last
     ).toOption.get
     assertEquals(c.status, Source.Status.Current)
     assert(ws.exists(_.value.contains("status evidence is empty")), ws)
@@ -149,7 +149,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         None,
         Set.empty,
         open,
-        last = Last(false)
+        last = Last.More
       ).left.toOption.get
     assert(problems(proposal(FindingProposal.Claim(""))).head.sentence.contains("the claim is empty"))
     assert(
@@ -178,12 +178,12 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("extract: an empty claim, quote or confidence fails; an unused record must say why"):
     def problems(c: ClaimAnswer) =
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), Coverage.Rationale("tin"), List(c)),
+        ExtractAnswer(ExtractAnswer.Relevant.Relevant, Coverage.Rationale("tin"), List(c)),
         domain.library.Citekey("ck"),
         record,
         minRatio,
         MaxClaims(10),
-        last = CompileArticle.Last(false)
+        last = CompileArticle.Last.More
       ).left.toOption.get
     val quote = AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
     assertEquals(
@@ -210,12 +210,12 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assertEquals(
       checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(""), Nil),
+        ExtractAnswer(ExtractAnswer.Relevant.Irrelevant, Coverage.Rationale(""), Nil),
         domain.library.Citekey("ck"),
         record,
         minRatio,
         MaxClaims(10),
-        last = CompileArticle.Last(false)
+        last = CompileArticle.Last.More
       ).left.toOption.map(_.map(_.sentence)),
       Some(List("say why the record is not used"))
     )
@@ -274,7 +274,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         a: DraftAnswer,
         mode: DraftMode = DraftMode.Create,
         current: Option[Title] = None,
-        last: CompileArticle.Last = CompileArticle.Last(false)
+        last: CompileArticle.Last = CompileArticle.Last.More
     ) =
       checkDraft(
         a,
@@ -325,7 +325,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
 
   test("rules reviewer: an empty verdict, or a finding with no where or no problem, fails"):
-    def problems(a: RulesAnswer) = checkRules(a, last = CheckRulesLast(false)).left.toOption.get.map(_.sentence)
+    def problems(a: RulesAnswer) = checkRules(a, last = CheckRulesLast.More).left.toOption.get.map(_.sentence)
     assertEquals(
       problems(RulesAnswer(RulesAnswer.Verdict(""), Nil, RulesAnswer.Filter("f"), Nil, Nil)),
       List("no verdict given — PASS, MINOR or MAJOR")
@@ -370,13 +370,13 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(
       checkRules(
         RulesAnswer(RulesAnswer.Verdict("MINOR"), List(finding()), RulesAnswer.Filter("f"), Nil, Nil),
-        last = CheckRulesLast(false)
+        last = CheckRulesLast.More
       ).isRight
     )
 
   test("cold reader: an empty verdict, explain-back or finding where fails"):
     def problems(a: ColdReaderAnswer) =
-      checkColdReader(a, last = CheckColdReaderLast(false)).left.toOption.get.map(_.sentence)
+      checkColdReader(a, last = CheckColdReaderLast.More).left.toOption.get.map(_.sentence)
     val reader = ReaderFindingAnswer(
       ReaderFindingAnswer.Severity("minor"),
       ReaderFindingAnswer.Kind("term"),
@@ -419,7 +419,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     val ps = checkSkeptic(
       a,
-      last = CheckSkepticLast(false),
+      last = CheckSkepticLast.More,
       _.value == "a2019_tin",
       _ => Some(record),
       minRatio
@@ -427,7 +427,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(ps.contains("no verdict given — PASS, MINOR or MAJOR") && ps.exists(_.contains("no where stated")), ps)
     val (_, ws) = checkSkeptic(
       a.modify(_.verdict).setTo(SkepticAnswer.Verdict("MINOR")).modify(_.findings).setTo(List(finding())),
-      last = CheckSkepticLast(false),
+      last = CheckSkepticLast.More,
       _.value == "a2019_tin",
       _ => Some(record),
       minRatio
@@ -462,7 +462,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         _.value == "a2019_tin",
         _ => Some(record),
         minRatio,
-        last = LastRound(false)
+        last = LastRound.More
       ).left.toOption.get.map(_.sentence)
     val nullText = problems(
       FixerAnswer(
@@ -527,12 +527,12 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("check: an empty or null id, and a not-fixed check with no note, fail; a fixed check's note stays optional"):
     def problems(c: CheckAnswer) =
-      checkChecks(Reviewer.Rules, ledgerPrior, List(c), last = LastRound(false))._2.map(_.sentence)
+      checkChecks(Reviewer.Rules, ledgerPrior, List(c), last = LastRound.More)._2.map(_.sentence)
     assert(
       problems(
         CheckAnswer(
           CheckAnswer.Id(""),
-          fixed = CheckAnswer.Fixed(true),
+          fixed = CheckAnswer.Fixed.Fixed,
           CheckAnswer.Quote("Tin reached the Aegean"),
           CheckAnswer.Note("glossed")
         )
@@ -542,7 +542,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       problems(
         CheckAnswer(
           noCheckId,
-          fixed = CheckAnswer.Fixed(true),
+          fixed = CheckAnswer.Fixed.Fixed,
           CheckAnswer.Quote("Tin reached the Aegean"),
           CheckAnswer.Note("glossed")
         )
@@ -553,7 +553,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       problems(
         CheckAnswer(
           CheckAnswer.Id("R1"),
-          fixed = CheckAnswer.Fixed(false),
+          fixed = CheckAnswer.Fixed.Unfixed,
           CheckAnswer.Quote("Tin reached the Aegean"),
           CheckAnswer.Note(" ")
         )
@@ -567,7 +567,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       problems(
         CheckAnswer(
           CheckAnswer.Id("R1"),
-          fixed = CheckAnswer.Fixed(false),
+          fixed = CheckAnswer.Fixed.Unfixed,
           CheckAnswer.Quote("Tin reached the Aegean"),
           noCheckNote
         )
@@ -578,7 +578,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       problems(
         CheckAnswer(
           CheckAnswer.Id("R1"),
-          fixed = CheckAnswer.Fixed(true),
+          fixed = CheckAnswer.Fixed.Fixed,
           CheckAnswer.Quote("Tin reached the Aegean"),
           CheckAnswer.Note("")
         )
@@ -590,14 +590,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("recheck: a not-fixed check with no note, or a finding with no where, fails; empty lessons are dropped"):
     def recheck(a: RecheckAnswer) =
-      checkRecheck(Reviewer.Rules, a, ledgerPrior, CheckRecheckEdited(""), NoEvidence, last = CheckRecheckLast(false))
+      checkRecheck(Reviewer.Rules, a, ledgerPrior, CheckRecheckEdited(""), NoEvidence, last = CheckRecheckLast.More)
     val noNote =
       recheck(
         RecheckAnswer(
           List(
             CheckAnswer(
               CheckAnswer.Id("R1"),
-              fixed = CheckAnswer.Fixed(false),
+              fixed = CheckAnswer.Fixed.Unfixed,
               CheckAnswer.Quote("Tin reached the Aegean"),
               CheckAnswer.Note("")
             )
@@ -607,7 +607,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     assert(noNote.contains("check of R1: no note — say why it is not fixed (the fixer reads it)"), noNote)
     val ok = CheckAnswer(
       CheckAnswer.Id("R1"),
-      fixed = CheckAnswer.Fixed(true),
+      fixed = CheckAnswer.Fixed.Fixed,
       CheckAnswer.Quote("Tin reached the Aegean"),
       CheckAnswer.Note("")
     )
@@ -652,7 +652,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         _.value == "a2019_tin",
         _ => Some(record),
         minRatio,
-        last = LastRound(false)
+        last = LastRound.More
       ).left.toOption.get.map(_.sentence)
     assert(
       problems(WontFixAnswer(WontFixAnswer.Id(""), ReviewArticle.Rationale("wordy, but exact"))).contains(
@@ -681,7 +681,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       _ => false,
       Set.empty,
       caps,
-      last = LastRound(false)
+      last = LastRound.More
     ).left.toOption.get
     assertEquals(
       problems(PlanAnswer(PlanAnswer.Rationale(""), Nil, List(PlanAnswer.Queries("bronze age tin")), Nil))
@@ -734,7 +734,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       checkRanking(
         Ranking(List(Pick(Pick.DoiText(""), PickRationale("fits")))),
         offered,
-        last = LastAttempt(false)
+        last = LastAttempt.More
       ).left
         .exists(_.head.sentence.contains("is not one of the listed candidates"))
     )
@@ -742,6 +742,6 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       checkRanking(
         Ranking(List(Pick(Pick.DoiText("10.1000/a"), PickRationale("")))),
         offered,
-        last = LastAttempt(false)
+        last = LastAttempt.More
       ).isRight
     )

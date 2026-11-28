@@ -99,9 +99,9 @@ class ReviewCritiqueSuite extends munit.FunSuite:
   )
 
   private val pass1 =
-    CritiqueRule(pairs, List(open1, open2), full = ReviewArticle.CritiqueRule.Full(true), body, minRatio)
-  private val confirm = CritiqueRule(pairs, Nil, full = ReviewArticle.CritiqueRule.Full(true), body, minRatio)
-  private val recheck = CritiqueRule(pairs, Nil, full = ReviewArticle.CritiqueRule.Full(false), body, minRatio)
+    CritiqueRule(pairs, List(open1, open2), full = ReviewArticle.CritiqueRule.Full.Full, body, minRatio)
+  private val confirm = CritiqueRule(pairs, Nil, full = ReviewArticle.CritiqueRule.Full.Full, body, minRatio)
+  private val recheck = CritiqueRule(pairs, Nil, full = ReviewArticle.CritiqueRule.Full.Short, body, minRatio)
 
   test("a missing-critique MAJOR naming an open pair stands, in the checklist's own direction"):
     val (fs, ps, ws) = checkCritiques(
@@ -109,7 +109,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       List(mc(Finding.Id("S1"), Some(CritiqueRef.Wire("frazer1922_golden>smith1987_dying")))),
       pass1,
       Nil,
-      last = ReviewArticle.CheckCritiquesLast(false)
+      last = ReviewArticle.CheckCritiquesLast.More
     )
     assertEquals(
       (fs.map(f => (f.severity, f.pair)), ps, ws),
@@ -126,7 +126,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         ),
         rule,
         Nil,
-        last = ReviewArticle.CheckCritiquesLast(false)
+        last = ReviewArticle.CheckCritiquesLast.More
       )
       assertEquals(fs.map(_.severity), List(Severity.Minor, Severity.Minor))
       assert(
@@ -154,7 +154,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     ) // either direction
     List(pass1, confirm, recheck).foreach { rule =>
       val (fs, ps, ws) =
-        checkCritiques(Reviewer.Skeptic, List(f), rule, proposed, last = ReviewArticle.CheckCritiquesLast(false))
+        checkCritiques(Reviewer.Skeptic, List(f), rule, proposed, last = ReviewArticle.CheckCritiquesLast.More)
       assertEquals((fs.map(_.severity), ps), (List(Severity.Minor), Nil))
       assert(
         fs.head.problem.value.contains(
@@ -170,7 +170,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         List(f),
         pass1,
         Nil,
-        last = ReviewArticle.CheckCritiquesLast(false)
+        last = ReviewArticle.CheckCritiquesLast.More
       )._1.head.problem.value.contains("proposed edge")
     )
     // an empty pair: back on a full panel (it may name a recorded pair); minor on the last attempt, and in a re-check
@@ -179,7 +179,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       List(mc(Finding.Id("S1"), None)),
       pass1,
       Nil,
-      last = ReviewArticle.CheckCritiquesLast(false)
+      last = ReviewArticle.CheckCritiquesLast.More
     )
     assert(
       ps.size == 1 && ps.head.sentence.contains(
@@ -193,7 +193,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         List(mc(Finding.Id("S1"), None)),
         pass1,
         Nil,
-        last = ReviewArticle.CheckCritiquesLast(true)
+        last = ReviewArticle.CheckCritiquesLast.Last
       )._1.map(_.severity),
       List(Severity.Minor)
     )
@@ -203,7 +203,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         List(mc(Finding.Id("S1"), None)),
         recheck,
         Nil,
-        last = ReviewArticle.CheckCritiquesLast(false)
+        last = ReviewArticle.CheckCritiquesLast.More
       )._1.map(_.severity),
       List(Severity.Minor)
     )
@@ -215,13 +215,13 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         List(other, mc(Finding.Id("S3"), None, Severity.Minor)),
         pass1,
         Nil,
-        last = ReviewArticle.CheckCritiquesLast(false)
+        last = ReviewArticle.CheckCritiquesLast.More
       )._1,
       List(other, mc(Finding.Id("S3"), None, Severity.Minor))
     )
 
   test("calibration (§6.9): MAJOR only when the article cites the criticised work and states the claim unqualified"):
-    def one(f: Finding, rule: CritiqueRule = pass1, last: CheckCritiquesLast = CheckCritiquesLast(false)) =
+    def one(f: Finding, rule: CritiqueRule = pass1, last: CheckCritiquesLast = CheckCritiquesLast.More) =
       checkCritiques(Reviewer.Skeptic, List(f), rule, Nil, last)
     // stands: open pair, frazer cited, the quoted sentence carries no hedge
     assertEquals(
@@ -243,7 +243,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assertEquals(
       one(
         mc(Finding.Id("S9"), Some(CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))),
-        last = CheckCritiquesLast(true)
+        last = CheckCritiquesLast.Last
       )._1.map(_.severity),
       List(Severity.Minor)
     )
@@ -424,7 +424,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         ReviewArticle.Rationale("  It is cited for the\nseasons only. ")
       )
     )
-    val (rs, ps, ws) = checkNotMaterial(ok, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(false))
+    val (rs, ps, ws) = checkNotMaterial(ok, fs, pass1, last = ReviewArticle.CheckNotMaterialLast.More)
     assertEquals(
       (rs, ps, ws),
       (
@@ -440,14 +440,14 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       )
     )
     // one pair left without a ruling: sent back, a warning on the last attempt
-    val (_, ps2, _) = checkNotMaterial(Nil, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(false))
+    val (_, ps2, _) = checkNotMaterial(Nil, fs, pass1, last = ReviewArticle.CheckNotMaterialLast.More)
     assert(
       ps2.size == 1 && ps2.head.sentence.startsWith(
         "open pairs of the critique checklist without a ruling: brown1999_rites>frazer1922_golden — "
       ),
       ps2
     )
-    val (_, ps3, ws3) = checkNotMaterial(Nil, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(true))
+    val (_, ps3, ws3) = checkNotMaterial(Nil, fs, pass1, last = ReviewArticle.CheckNotMaterialLast.Last)
     assertEquals(ps3, Nil); assert(ws3.exists(_.contains("(left open)")), ws3)
     // dropped with a warning: a pair already addressed, one the MAJOR names too, one not on the checklist, no reason
     val bad = List(
@@ -468,7 +468,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         ReviewArticle.Rationale(" ")
       )
     )
-    val (rs4, _, ws4) = checkNotMaterial(bad, fs, pass1, last = ReviewArticle.CheckNotMaterialLast(true))
+    val (rs4, _, ws4) = checkNotMaterial(bad, fs, pass1, last = ReviewArticle.CheckNotMaterialLast.Last)
     assertEquals(rs4, Nil)
     assertEquals(ws4.count(_.startsWith("skeptic: dropped — not material")), 4, ws4)
 
@@ -498,7 +498,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     val (rep, _) = checkSkeptic(
       a,
-      last = ReviewArticle.CheckSkepticLast(false),
+      last = ReviewArticle.CheckSkepticLast.More,
       _ => true,
       _ => None,
       minRatio,
@@ -522,7 +522,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assertEquals(
       checkSkeptic(
         onDone,
-        last = ReviewArticle.CheckSkepticLast(false),
+        last = ReviewArticle.CheckSkepticLast.More,
         _ => true,
         _ => None,
         minRatio,
@@ -535,7 +535,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     assert(
       checkSkeptic(
         a.modify(_.notMaterial).setTo(Nil),
-        last = ReviewArticle.CheckSkepticLast(false),
+        last = ReviewArticle.CheckSkepticLast.More,
         _ => true,
         _ => None,
         minRatio,
@@ -565,7 +565,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         Prior(Nil, ReviewArticle.Prior.Body("body"), minRatio),
         ReviewArticle.CheckRecheckEdited(""),
         NoEvidence,
-        last = ReviewArticle.CheckRecheckLast(false),
+        last = ReviewArticle.CheckRecheckLast.More,
         pairs
       ).toOption.get
     assertEquals(r.findings.map(_.severity), List(Severity.Minor))
@@ -711,7 +711,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         _ => true,
         _ => None,
         minRatio,
-        last = ReviewArticle.LastRound(false),
+        last = ReviewArticle.LastRound.More,
         None,
         pairs
       ).toOption.get
@@ -728,7 +728,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         _ => true,
         _ => None,
         minRatio,
-        last = ReviewArticle.LastRound(false),
+        last = ReviewArticle.LastRound.More,
         None,
         pairs
       ).isLeft

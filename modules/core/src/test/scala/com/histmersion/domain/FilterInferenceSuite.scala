@@ -55,7 +55,7 @@ class FilterInferenceSuite extends munit.FunSuite:
       Set(Citekey.assume("a"), Citekey.assume("b")),
       List(Citekey.assume("x")),
       lim,
-      last = Last(false)
+      last = Last.More
     ) match
       case Right(Inferred(Some(p), Nil)) =>
         assertEquals((p.total, p.cited, p.citedIn, p.missed, p.sample), (10, 3, 2, List("c"), List("x")))
@@ -73,7 +73,7 @@ class FilterInferenceSuite extends munit.FunSuite:
         Set.empty,
         Nil,
         lim,
-        last = Last(false)
+        last = Last.More
       ).left.exists(_.head.sentence.contains("at least 3"))
     )
     assert(
@@ -86,7 +86,7 @@ class FilterInferenceSuite extends munit.FunSuite:
         Set.empty,
         Nil,
         lim,
-        last = Last(false)
+        last = Last.More
       ).left.exists(_.head.sentence.contains("at most 50"))
     )
     val missing = judge(
@@ -98,7 +98,7 @@ class FilterInferenceSuite extends munit.FunSuite:
       Set(Citekey.assume("a")),
       Nil,
       lim,
-      last = Last(false)
+      last = Last.More
     )
     assert(
       missing.left.exists(ps => ps.head.sentence.contains("1 of the 3") && ps.head.sentence.contains("b, c")),
@@ -113,7 +113,7 @@ class FilterInferenceSuite extends munit.FunSuite:
       Set.empty,
       Nil,
       lim,
-      last = Last(true)
+      last = Last.Last
     ) match
       case Right(Inferred(None, ps)) => assert(ps.nonEmpty)
       case other                     => fail(other.toString)
@@ -129,6 +129,6 @@ class FilterInferenceSuite extends munit.FunSuite:
         Set.empty,
         Nil,
         lim,
-        last = Last(false)
+        last = Last.More
       ).exists(_.proposal.isDefined)
     )

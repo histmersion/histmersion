@@ -416,17 +416,17 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads)
     val at = java.time.Instant.now()
     def onSchedule(
-        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn(true),
-        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted(true),
+        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn.On,
+        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted.Wanted,
         when: java.time.Instant = at
     ) =
       a.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn, wanted, when)
     assertEquals(
-      onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn(false)).left.map(w => s"$w"),
+      onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn.Off).left.map(w => s"$w"),
       Left("the autopilot is off")
     )
     assertEquals(
-      onSchedule(wanted = PlanReadSchedule.Wanted(false)).left.map(w => s"$w"),
+      onSchedule(wanted = PlanReadSchedule.Wanted.Unwanted).left.map(w => s"$w"),
       Left("no queued work wants the pool")
     )
     assertEquals(reads.probes.get(), 0)
@@ -472,8 +472,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       a.pools
         .refreshOnSchedule(
           PoolId.ClaudePlan,
-          autopilotOn = PlanReadSchedule.AutopilotOn(true),
-          wanted = PlanReadSchedule.Wanted(true),
+          autopilotOn = PlanReadSchedule.AutopilotOn.On,
+          wanted = PlanReadSchedule.Wanted.Wanted,
           java.time.Instant.now()
         )
         .left
@@ -495,8 +495,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       b.pools
         .refreshOnSchedule(
           PoolId.ClaudePlan,
-          autopilotOn = PlanReadSchedule.AutopilotOn(true),
-          wanted = PlanReadSchedule.Wanted(true),
+          autopilotOn = PlanReadSchedule.AutopilotOn.On,
+          wanted = PlanReadSchedule.Wanted.Wanted,
           java.time.Instant.now()
         )
         .left

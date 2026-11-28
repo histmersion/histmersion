@@ -205,7 +205,7 @@ final class EventImports(
                 rs.head._2.lon.flatMap(l => Longitude.option(l.value)),
                 rs.head._2.wikidata,
                 rs.map(_._2.key).toSet,
-                StoredEvent.Catalogue(true),
+                StoredEvent.Catalogue.Catalogue,
                 StoredEvent.Label(rs.head._2.label.value)
               )
             )

@@ -68,7 +68,7 @@ object VectorTileWriter:
         val bits = java.lang.Double.doubleToLongBits(d.value)
         (0 until 8).foreach(i => out.write(((bits >>> (8 * i)) & 0xff).toInt))
       case TileValue.Whole(n) => varintField(out, 6, zigzag(n.value))
-      case TileValue.Flag(b)  => varintField(out, 7, if b.value then 1L else 0L)
+      case TileValue.Flag(b)  => varintField(out, 7, if b.on then 1L else 0L)
     out.toByteArray
 
   /** Protobuf's zig-zag encoding of a signed number. Pure. */

@@ -7,6 +7,7 @@ import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.api.catalogue.EventCatalogueRef
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 // ── merging: one event per thing, whichever catalogues know it ──────────────────────────────────
 
@@ -29,7 +30,9 @@ final case class StoredEvent(
 object StoredEvent:
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
-  type Catalogue = Catalogue.T
-  object Catalogue extends Newtype[Boolean, Pure]
+  enum Catalogue derives CanEqual:
+    case Catalogue, Corpus
+  object Catalogue extends TwoCases[Catalogue]:
+    extension (catalogue: Catalogue) def catalogue: Boolean = catalogue == Catalogue
   type Label = Label.T
   object Label extends Newtype[String, Pure]

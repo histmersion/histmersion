@@ -22,6 +22,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The `plan-goal` pipeline's typed answer and its pure checks (docs/research-embedded-agents.md §14): the planner
   * proposes sub-goals, search queries and candidate works (DOIs) for one goal; code validates the vocabulary (slugs,
@@ -34,12 +35,16 @@ import com.histmersion.lint.{tolerated, LintRule}
 object PlanGoal:
   type AcquireText = AcquireText.T
   object AcquireText extends Newtype[String, Pure]
-  type Approved = Approved.T
-  object Approved extends Newtype[Boolean, Pure]
+  enum Approved derives CanEqual:
+    case Approved, Unapproved
+  object Approved extends TwoCases[Approved]:
+    extension (approved: Approved) def approved: Boolean = approved == Approved
   type CreatedCount = CreatedCount.T
   object CreatedCount extends Newtype[Int, Pure]
-  type LastRound = LastRound.T
-  object LastRound extends Newtype[Boolean, Pure]
+  enum LastRound derives CanEqual:
+    case Last, More
+  object LastRound extends TwoCases[LastRound]:
+    extension (lastRound: LastRound) def lastRound: Boolean = lastRound == Last
   type LinkedCount = LinkedCount.T
   object LinkedCount extends Newtype[Int, Pure]
   type LogLine = LogLine.T
@@ -227,7 +232,7 @@ object PlanGoal:
       problems += Content.Answer(Content.Requirement.GoalPlanRationale)
 
     val ps = problems.result()
-    if ps.nonEmpty && !last.value then Left(ps)
+    if ps.nonEmpty && !last.lastRound then Left(ps)
     else
       val kept = Proposed(
         Proposed.Rationale(Option(a.rationale).fold("")(_.value.trim)),
@@ -261,12 +266,18 @@ object PlanGoal:
     object Title extends Newtype[String, Pure]
     type Authors = Authors.T
     object Authors extends Newtype[String, Pure]
-    type InDb = InDb.T
-    object InDb extends Newtype[Boolean, Pure]
-    type IsOa = IsOa.T
-    object IsOa extends Newtype[Boolean, Pure]
-    type IsRetracted = IsRetracted.T
-    object IsRetracted extends Newtype[Boolean, Pure]
+    enum InDb derives CanEqual:
+      case InCorpus, Outside
+    object InDb extends TwoCases[InDb]:
+      extension (inDb: InDb) def inDb: Boolean = inDb == InCorpus
+    enum IsOa derives CanEqual:
+      case Open, Closed
+    object IsOa extends TwoCases[IsOa]:
+      extension (isOa: IsOa) def isOa: Boolean = isOa == Open
+    enum IsRetracted derives CanEqual:
+      case Retracted, Standing
+    object IsRetracted extends TwoCases[IsRetracted]:
+      extension (isRetracted: IsRetracted) def isRetracted: Boolean = isRetracted == Retracted
 
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
   type Lookup = Doi => Either[Problems, Work]
@@ -277,21 +288,21 @@ object PlanGoal:
   def verify(p: Proposed, goal: Goal.Slug, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
     val works = looked.collect {
-      case (w, Right(r)) if !r.isRetracted.value =>
+      case (w, Right(r)) if !r.isRetracted.isRetracted =>
         PlannedWork(
           com.histmersion.api.library.Doi(w.doi.value),
           r.title.map(t => com.histmersion.api.library.Title(t.value)),
           r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
           r.authors.take(6).map(a => com.histmersion.api.library.AuthorName(a.value)),
           r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
-          (if r.inDb.value then PlannedWork.InCorpus.InCorpus else PlannedWork.InCorpus.Missing),
-          (if r.isOa.value then PlannedWork.IsOa.OpenAccess else PlannedWork.IsOa.Closed),
+          (if r.inDb.inDb then PlannedWork.InCorpus.InCorpus else PlannedWork.InCorpus.Missing),
+          (if r.isOa.isOa then PlannedWork.IsOa.OpenAccess else PlannedWork.IsOa.Closed),
           w.why
         )
     }
     val dropped = looked.collect {
       case (w, Left(m)) => Plan.Dropped(s"${w.doi}: not verified upstream — ${m.sentences.mkString("; ")}")
-      case (w, Right(r)) if r.isRetracted.value => Plan.Dropped(s"${w.doi}: retracted upstream")
+      case (w, Right(r)) if r.isRetracted.isRetracted => Plan.Dropped(s"${w.doi}: retracted upstream")
     }
     Plan(
       com.histmersion.api.automation.Goal.Slug(goal.value),
@@ -328,7 +339,7 @@ object PlanGoal:
       queued: QueuedCount,
       runId: Run.Id
   ): LogLine =
-    if !approved.value then
+    if !approved.approved then
       LogLine(s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.value.take(8)})")
     else
       LogLine(

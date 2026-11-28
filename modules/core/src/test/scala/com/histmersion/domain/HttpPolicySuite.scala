@@ -146,17 +146,17 @@ class HttpPolicySuite extends munit.FunSuite:
 
   test("trust: the JDK's roots always; the system's and a file's only when configured (#1568)"):
     import HttpPolicy.Trust
-    assertEquals(HttpPolicy.trust(HttpPolicy.SystemTrust(false), None, HttpPolicy.OsName("Mac OS X")), List(Trust.Jdk))
+    assertEquals(HttpPolicy.trust(HttpPolicy.SystemTrust.Bundled, None, HttpPolicy.OsName("Mac OS X")), List(Trust.Jdk))
     assertEquals(
-      HttpPolicy.trust(HttpPolicy.SystemTrust(true), None, HttpPolicy.OsName("Mac OS X")),
+      HttpPolicy.trust(HttpPolicy.SystemTrust.System, None, HttpPolicy.OsName("Mac OS X")),
       List(Trust.Jdk, Trust.Keychains(HttpPolicy.MacKeychains))
     )
     assertEquals(
-      HttpPolicy.trust(HttpPolicy.SystemTrust(true), Some(Trust.PemFile.Path("/x.pem")), HttpPolicy.OsName("Linux")),
+      HttpPolicy.trust(HttpPolicy.SystemTrust.System, Some(Trust.PemFile.Path("/x.pem")), HttpPolicy.OsName("Linux")),
       List(Trust.Jdk, Trust.Bundle(HttpPolicy.LinuxBundles), Trust.PemFile(Trust.PemFile.Path("/x.pem")))
     )
     assertEquals(
-      HttpPolicy.trust(HttpPolicy.SystemTrust(false), Some(Trust.PemFile.Path("/x.pem")), HttpPolicy.OsName("Linux")),
+      HttpPolicy.trust(HttpPolicy.SystemTrust.Bundled, Some(Trust.PemFile.Path("/x.pem")), HttpPolicy.OsName("Linux")),
       List(Trust.Jdk, Trust.PemFile(Trust.PemFile.Path("/x.pem")))
     )
 

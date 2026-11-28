@@ -80,7 +80,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
               Prompt.UserText(input(loaded)),
               ResearchAnswers.filter
             )((a, last) =>
-              check(slug, loaded, a, FilterInference.Last(last.value))
+              check(slug, loaded, a, (if last.value then FilterInference.Last.Last else FilterInference.Last.More))
                 .map(Checked(_))
             )
             recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(
@@ -158,7 +158,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       last: FilterInference.Last
   ): Either[List[Problem], Inferred] =
     FilterInference.filterOf(a) match
-      case Left(ps) => if last.value then Right(Inferred(None, ps)) else Left(ps)
+      case Left(ps) => if last.last then Right(Inferred(None, ps)) else Left(ps)
       case Right(f) =>
         val cap = ArticlesControllers.FilterReachCap(research.inferFilter.sample.value + l.cited.size)
         val (total, in, rows) = site.articles.filterReach(f, l.cited, cap)

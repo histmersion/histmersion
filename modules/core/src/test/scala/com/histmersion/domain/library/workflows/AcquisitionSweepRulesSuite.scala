@@ -67,21 +67,21 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
         )
       ),
       List(c),
-      last = LastAttempt(false)
+      last = LastAttempt.More
     )
     assertEquals(ok.map(_._1.map((c, p) => (c, s"$p"))), Right(List((c, "fits"))))
     assert(
       checkRanking(
         Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
         List(c),
-        last = LastAttempt(false)
+        last = LastAttempt.More
       ).isLeft
     )
     assertEquals(
       checkRanking(
         Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
         List(c),
-        last = LastAttempt(true)
+        last = LastAttempt.Last
       ).map(_._1),
       Right(Nil)
     )

@@ -148,7 +148,7 @@ object BundleImport:
     def tombstones(): Unit =
       val tombs = es.tombstones.map(t => t.uid -> t).toMap
       decided
-        .filter(d => d.tombstone.value && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone))
+        .filter(d => d.tombstone.tombstone && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone))
         .foreach { d =>
           val t = tombs(d.uid)
           if d.decision == Decision.Delete then

@@ -96,7 +96,7 @@ object EventImportService:
             pt.map(_._2),
             e.wikidata.map(w => EventEntry.Wikidata(w.value)),
             s.catalogueRecords.filter(_._1 == e.id).map(_._2.key).toSet,
-            StoredEvent.Catalogue(e.catalogue.isDefined),
+            (if e.catalogue.isDefined then StoredEvent.Catalogue.Catalogue else StoredEvent.Catalogue.Corpus),
             StoredEvent.Label(e.label.value)
           )
         }

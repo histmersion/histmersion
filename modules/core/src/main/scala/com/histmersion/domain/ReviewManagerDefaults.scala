@@ -4,6 +4,7 @@ package domain
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 @movesTo(FeaturePlace.ResearchWorkflows)
 final case class ReviewManagerDefaults(
@@ -40,7 +41,9 @@ object ReviewManagerDefaults:
   object RefillBatch extends Newtype[Int, Pure]
   type StaleAfterDays = StaleAfterDays.T
   object StaleAfterDays extends Newtype[Int, Pure]
-  type InferFilter = InferFilter.T
-  object InferFilter extends Newtype[Boolean, Pure]
+  enum InferFilter derives CanEqual:
+    case Infer, AsGiven
+  object InferFilter extends TwoCases[InferFilter]:
+    extension (inferFilter: InferFilter) def inferFilter: Boolean = inferFilter == Infer
   type ExtendMinNew = ExtendMinNew.T
   object ExtendMinNew extends Newtype[Int, Pure]

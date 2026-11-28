@@ -229,7 +229,7 @@ final class ArticlesControllers(
   )
   def bodyCorpus(
       texts: List[domain.research.Article.Body],
-      generated: ReviewArticle.BodyCorpus.Generated = ReviewArticle.BodyCorpus.Generated(false)
+      generated: ReviewArticle.BodyCorpus.Generated = ReviewArticle.BodyCorpus.Generated.Given
   ): ReviewArticle.BodyCorpus =
     val links = pageLinks(
       MarkdownLint
@@ -283,7 +283,8 @@ final class ArticlesControllers(
               draft,
               bodyCorpus(
                 texts.map(domain.research.Article.Body(_)),
-                ReviewArticle.BodyCorpus.Generated(generated)
+                (if generated then ReviewArticle.BodyCorpus.Generated.Generated
+                 else ReviewArticle.BodyCorpus.Generated.Given)
               )
             )
           )

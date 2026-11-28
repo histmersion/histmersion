@@ -51,7 +51,7 @@ class PlanArticlesSuite extends munit.FunSuite:
         art(slug("untitled"), topics("x"), title = ArticleAnswer.Title(" "))
       )
     )
-    val back = check(a, maxArticles = Limits.MaxArticles(6), last = LastRound(false))
+    val back = check(a, maxArticles = Limits.MaxArticles(6), last = LastRound.More)
     assert(
       back.left.exists(ps =>
         ps.exists(_.sentence.contains("Bad Slug")) && ps.exists(_.sentence.contains("no filter")) &&
@@ -59,7 +59,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       ),
       back.toString
     )
-    check(a, maxArticles = Limits.MaxArticles(6), last = LastRound(true)) match
+    check(a, maxArticles = Limits.MaxArticles(6), last = LastRound.Last) match
       case Right((cs, dropped)) =>
         assertEquals(cs.map(c => (c.slug, c.kind)), List(("good", "concept")))
         // the sentences the dropped entries had as text before they were typed (G60 step 5)
@@ -72,13 +72,13 @@ class PlanArticlesSuite extends munit.FunSuite:
         assert(said.contains("not proposed: article 'untitled': it has no title"), said)
       case other => fail(other.toString)
     assert(
-      check(ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil), Limits.MaxArticles(6), last = LastRound(false)).isLeft
+      check(ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil), Limits.MaxArticles(6), last = LastRound.More).isLeft
     )
     assert(
       check(
         ArticlesAnswer(ArticlesAnswer.Rationale("r"), List(art(slug("a"), topics("x")), art(slug("b"), topics("y")))),
         Limits.MaxArticles(1),
-        last = LastRound(false)
+        last = LastRound.More
       ).left
         .exists(_.exists(_.sentence.contains("at most 1")))
     )
