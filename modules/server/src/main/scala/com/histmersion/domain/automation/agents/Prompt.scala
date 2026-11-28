@@ -18,17 +18,13 @@ final case class Prompt(system: Prompt.System, user: Prompt.User):
 
 object Prompt:
   type UserText = UserText.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object UserText extends Newtype[String, Pure]
 
   /** Untrusted text (an OCR'd body, an article under review) as DATA: fenced in tags the system prompt names, with any
     * copy of the closing tag inside it defused so the text cannot end its own fence.
     */
-
-  type System = System.T
-  object System extends Newtype[String, Pure]
-  type User = User.T
-  object User extends Newtype[String, Pure]
+  export LlmCall.System
+  export LlmCall.User
 
   def data(tag: String, text: String): String =
     val safe = text.replace(s"</$tag>", s"</ $tag>")

@@ -96,13 +96,13 @@ object Lpf:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def bound(j: Json, wide: Bound.Wire, narrow: Bound.Wire): Option[Year] =
     j.asObject match
-      case None      => (yearOf(j)).map(refactorValue22 => Year((refactorValue22).value))
+      case None      => (yearOf(j)).map(refactorValue22 => refactorValue22)
       case Some(obj) =>
         (obj("in")
           .flatMap(yearOf)
           .orElse(obj((wide).value).flatMap(yearOf))
           .orElse(obj((narrow).value).flatMap(yearOf)))
-          .map(refactorValue => Year((refactorValue).value))
+          .map(refactorValue => refactorValue)
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def parseWhen(j: Json): Option[Span] =

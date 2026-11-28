@@ -111,7 +111,7 @@ object RunsView:
     val n = f.normalized
     runs.filter(r =>
       (n.status.isEmpty || n.status.exists(_.value == r.status.value)) &&
-        (n.pipeline.isEmpty || n.pipeline.exists(_.value == r.pipeline.value)) &&
+        (n.pipeline.isEmpty || n.pipeline.exists(_ == r.pipeline)) &&
         (n.origin.isEmpty || n.origin.contains(r.origin.getOrElse(Agents.Origin.Person.wire))) &&
         (n.manager.isEmpty || r.managerId.exists(m => n.manager.exists(_.value == m.value)))
     )
@@ -440,7 +440,7 @@ object RunsView:
               filter.map(_.wire.value),
               _.status.value,
               filter.map(f => stateLabel(f).value).toList ++
-                currentFilter().normalized.pipeline.map(p => pipelineLabel(RunInfo.Pipeline(p.value)).value)
+                currentFilter().normalized.pipeline.map(p => pipelineLabel(p).value)
             )
           )
         )

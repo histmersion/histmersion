@@ -146,7 +146,7 @@ private[events] object EventImportRepo:
     def text(f: String): Option[Option[String]] = keep.get(Correction.Field(f)).map(_.asString)
     val label: String = text(EventFields.Label).flatten.getOrElse(r.label.value)
     val kind: String =
-      text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value)
+      text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind).value)
     val hist: String = text(EventFields.Historicity).flatten.getOrElse(r.historicity.value)
     val desc: Option[String] = text(EventFields.Description).getOrElse(r.description.map(_.value))
     val spanKept = keep.contains(Correction.Field(EventFields.Span))
@@ -174,7 +174,6 @@ private[events] object EventImportRepo:
     for la <- r.lat; lo <- r.lon yield s"SRID=4326;POINT($lo $la)"
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def insertEvent(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using
       DbCon
   )(using creator: Creator.New, at: CreatedAt): Unit =
@@ -183,7 +182,7 @@ private[events] object EventImportRepo:
                               description, wikidata, names, catalogue, central, plus_minus, dating_method, creator,
                               created_at)
           VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(
-        EventSummary.Kind(r.kind.value)
+        r.kind
       )}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
@@ -257,13 +256,12 @@ private[events] object EventImportRepo:
       .toMap
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def upsertRecord(eventId: Event.Id, r: CatalogRecord)(using DbCon): Unit =
     val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
           VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(
-        EventSummary.Kind(r.kind.value)
+        r.kind
       )},
                   ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy}, ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter},
                   ${r.lat}, ${r.lon}, ${r.vei}, ${r.magnitude}, ${r.deaths}, ${r.historicity}, $json::jsonb)

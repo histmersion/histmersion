@@ -121,7 +121,6 @@ class EventTrafficSuite extends DbSuite:
       "events:\n" + steady(events.toList) + "event_catalogue:\n" + steady(records.toList) + "event_import_parts:\n" +
         steady(parts.toList) + "event_datings:\n" + steady(datings.toList)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def transcript: String =
     val sb = StringBuilder()
     val plugins =
@@ -130,7 +129,7 @@ class EventTrafficSuite extends DbSuite:
       CatalogueWiring(Deps(cfg, ds, ds, plugins = plugins), f, () => DeepTime.SignedYear(2026L))
     def run(name: String, req: EventImportRequest): Unit =
       val f = FakeMediaHttp(route)
-      val r = handlers(f).eventImporter.runImport(CatalogRecord.Provider(req.provider.value), req, None, _ => ())
+      val r = handlers(f).eventImporter.runImport(req.provider, req, None, _ => ())
       sb ++= s"## import $name\n" + requests(f) + s"report: ${r.asJson.noSpaces}\n"
     sb ++= s"catalogues: ${handlers(FakeMediaHttp(route)).eventImporter.catalogues.asJson.noSpaces}\n"
     run(

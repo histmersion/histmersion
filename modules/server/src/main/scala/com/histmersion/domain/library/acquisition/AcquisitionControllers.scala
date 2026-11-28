@@ -455,7 +455,7 @@ final class AcquisitionControllers(
         val work = discovery.meta(doi).toOption
         val stored = t.citekey.flatMap(sources.load)
         val cited = work.flatMap(_.citedByCount).orElse(stored.flatMap(_.citedByCount))
-        val citedCount = cited.map(c => Acquire.CitedByCount(c.value))
+        val citedCount = cited.map(c => c)
         val influential = stored.flatMap(_.influentialCitations)
         val year = work.flatMap(_.year).orElse(stored.flatMap(_.year))
         val d = acq.defaults
@@ -501,7 +501,7 @@ final class AcquisitionControllers(
           citekey = t.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
           year = year,
           citedByCount = citedCount,
-          influentialCitations = influential.map(i => Assessment.InfluentialCitations(i.value)),
+          influentialCitations = influential.map(i => i),
           isRetracted = Assessment.IsRetracted(verdict == Acquire.Verdicts.Retracted),
           retractionWatch = rw,
           crossrefUpdates = updates,
@@ -795,7 +795,7 @@ final class AcquisitionControllers(
     val original =
       AcquisitionControllers.originalOf(
         sources.load(citekey).map(_.ocrMarkdown),
-        sources.original(citekey).map(o => Sha256.applyUnsafe(o.value))
+        sources.original(citekey).map(o => o)
       )
     val skip = original.filter(_ => !refetch)
 
@@ -913,7 +913,7 @@ final class AcquisitionControllers(
         }
         steps ++= acquireSteps(
           doi,
-          Title(meta.title.value),
+          meta.title,
           meta.authors.map(a => AcquireMatch.DecideAuthors(a.value)),
           outcome.jobId
         )

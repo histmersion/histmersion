@@ -233,9 +233,8 @@ final class SourcePictures(
     * and the OCR jobs' covers alike (calls are serialised on it).
     */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val openLibraryClient: Polite =
-    Polite(http, cfg.copy(requestIntervalMs = MediaConfig.RequestIntervalMs(cfg.covers.requestIntervalMs.value)))
+    Polite(http, cfg.copy(requestIntervalMs = cfg.covers.requestIntervalMs))
 
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

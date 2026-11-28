@@ -22,16 +22,11 @@ final case class LeadFacts(
 object LeadFacts:
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  type Kind = Kind.T
-  object Kind extends Newtype[String, Pure]
-  type Tier = Tier.T
-  object Tier extends Newtype[String, Pure]
-  type Vei = Vei.T
-  object Vei extends Newtype[Int, Pure]
-  type Magnitude = Magnitude.T
-  object Magnitude extends Newtype[Double, Pure]
-  type FindingsNear = FindingsNear.T
-  object FindingsNear extends Newtype[Int, Pure]
+  export EventSummary.Kind
+  export EventLead.Tier
+  export EventCatalogueRef.Vei
+  export EventCatalogueRef.Magnitude
+  export EventLead.FindingsNear
   type Km = Km.T
   object Km extends Newtype[Double, Pure]
   type Years = Years.T

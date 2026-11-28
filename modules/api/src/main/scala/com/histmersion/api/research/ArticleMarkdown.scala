@@ -14,12 +14,9 @@ object ArticleMarkdown:
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def article(v: Article.View, parts: List[Article.Part] = Nil): String =
     if parts.isEmpty then ((articleFull(v)))
-    else
-      ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => Article.Part((refactorValue).value))))
-    )
+    else ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => refactorValue))))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

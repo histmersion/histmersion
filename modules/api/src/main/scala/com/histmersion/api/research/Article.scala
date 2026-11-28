@@ -38,6 +38,7 @@ import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.automation.Goal
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Article(
@@ -69,8 +70,7 @@ object Article:
   object Period extends Newtype[String, Pure]
   type Prose = Prose.T
   object Prose extends Newtype[String, Pure]
-  type Section = Section.T
-  object Section extends Newtype[String, Pure]
+  export Goal.Plans.ArticleDraft.Section
   type VersionId = VersionId.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object VersionId extends Newtype[Long, Pure]
@@ -81,8 +81,7 @@ object Article:
   object Title extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
   export Kind.Wire as KindValue
-  type Body = Body.T
-  object Body extends Newtype[String, Pure]
+  export ArticleEventLead.Body
   type SummaryText = SummaryText.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object SummaryText extends Newtype[String, Pure]
@@ -155,7 +154,7 @@ object Article:
         .map(s => api.research.Coverage.Entry(s, reasons.get(s.citekey)))
       val capped = read.size < total.value
       val outside =
-        cited.distinct.filterNot(ck => citedInFilter(Citekey((ck).value)) || readSet(ck))
+        cited.distinct.filterNot(ck => citedInFilter(ck) || readSet(ck))
       val statuses =
         Source.Status.values.toList.flatMap(st =>
           Option(read.count(_.status == st)).filter(_ > 0).map(n => StatusCount(st, StatusCount.Count(n)))
@@ -1137,8 +1136,7 @@ object Article:
 
     type Append = Append.T
     object Append extends Newtype[String, Pure]
-    type Section = Section.T
-    object Section extends Newtype[String, Pure]
+    export Goal.Plans.ArticleDraft.Section
     export Article.{Regions, UpdatedAt as IfUpdatedAt}
 
   object Plans:

@@ -639,7 +639,7 @@ object PlaceService:
                 p.id,
                 ManualPlaceName.Label(p.place.label.value),
                 ManualPlaceName.Name(n.name.value),
-                ManualPlaceName.Lang(n.lang.value)
+                n.lang
               )
             )
         )
@@ -783,8 +783,8 @@ object PlaceService:
             apiId(id),
             before.place.label,
             Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
-            Place.KindValue(before.place.kind.value),
-            Place.KindValue(after.place.kind.value),
+            before.place.kind,
+            after.place.kind,
             Place.Overrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)),
             Place.Overrides.periodText(after.place.period.map(_.start), after.place.period.map(_.end)),
             Place.OverrideChanged.FindingsBefore(0),

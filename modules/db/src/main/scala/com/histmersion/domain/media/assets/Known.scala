@@ -7,7 +7,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class Known(uid: Known.Uid, license: Option[Known.License])
 
 object Known:
-  type Uid = Uid.T
-  object Uid extends Newtype[String, Pure]
+  export MediaItemRow.Uid
   type License = License.T
   object License extends Newtype[String, Pure]

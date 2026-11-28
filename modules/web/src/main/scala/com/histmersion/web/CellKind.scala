@@ -42,7 +42,7 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   def member(c: TileCellPoint): Member =
     Member(
       dot,
-      Member.N(c.n.value),
+      c.n,
       (c.midLo.toList.map(m => Member.Mids(m.value)) ++ c.midHi.map(m => Member.Mids(m.value))).distinct,
       Certainty.NoSay,
       cell = Some(c.box),

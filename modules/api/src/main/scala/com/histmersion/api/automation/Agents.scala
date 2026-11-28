@@ -25,6 +25,7 @@ import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
 import com.histmersion.api.time.IsoLocal
+import com.histmersion.api.library.Filter
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -394,28 +395,23 @@ object Agents:
   object RunRequest:
     type Pipeline = Pipeline.T
     object Pipeline extends Newtype[String, Pure]
-    type Target = Target.T
-    object Target extends Newtype[String, Pure]
+    export Managers.ManagerItem.Target
     type Model = Model.T
     object Model extends Newtype[String, Pure]
-    type BudgetUsd = BudgetUsd.T
-    object BudgetUsd extends Newtype[Double, Pure]
+    export Managers.ManagerConfig.BudgetUsd
     type BudgetTokens = BudgetTokens.T
     object BudgetTokens extends Newtype[Long, Pure]
     type Fix = Fix.T
     object Fix extends Newtype[Boolean, Pure]
     type Rounds = Rounds.T
     object Rounds extends Newtype[Int, Pure]
-    type Title = Title.T
-    object Title extends Newtype[String, Pure]
+    export Article.Title
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
     type Query = Query.T
     object Query extends Newtype[String, Pure]
-    type Topics = Topics.T
-    object Topics extends Newtype[String, Pure]
-    type Tags = Tags.T
-    object Tags extends Newtype[String, Pure]
+    export Filter.Topics
+    export Filter.Tags
     type DryRun = DryRun.T
     object DryRun extends Newtype[Boolean, Pure]
 

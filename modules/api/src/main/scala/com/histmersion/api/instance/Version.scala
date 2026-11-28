@@ -7,8 +7,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 object Version:
-  type Licence = Licence.T
-  object Licence extends Newtype[String, Pure]
+  export BuildStamp.Licence
 
   val name: Info.Name = Info.Name("histmersion")
   val version: Info.Version = Info.Version("0.1.0-SNAPSHOT")

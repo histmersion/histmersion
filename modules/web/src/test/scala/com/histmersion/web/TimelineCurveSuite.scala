@@ -80,7 +80,7 @@ class TimelineCurveSuite extends munit.FunSuite:
       assert(s.c2y.value >= lo && s.c2y.value <= hi, s"control 2 of ${p0.x}→${p1.x} at ${s.c2y} outside [$lo, $hi]")
       assert(s.c1y.value <= base.value + 1e-9 && s.c2y.value <= base.value + 1e-9, "the curve dips under the baseline")
       // and the controls stay between the two x's (the curve never turns back)
-      assert(s.c1x.value >= p0.x.value && s.c2x.value <= p1.x.value)
+      assert(s.c1x >= p0.x && s.c2x <= p1.x)
     }
   }
 

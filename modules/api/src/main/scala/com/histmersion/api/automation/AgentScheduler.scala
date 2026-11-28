@@ -208,8 +208,7 @@ object AgentScheduler:
     object Manager extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Target = Target.T
-    object Target extends Newtype[String, Pure]
+    export Managers.ManagerItem.Target
     type Status = Status.T
     object Status extends Newtype[String, Pure]
     type Code = Code.T

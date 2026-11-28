@@ -332,7 +332,7 @@ final class ManagerSupervisor(
             s"${item.target}: its run disappeared; pending again"
           )
       case (item, Some((status, error))) =>
-        val st = RunState.parse(Run.State.Wire(status.value)).getOrElse(RunState.Failed)
+        val st = RunState.parse(status).getOrElse(RunState.Failed)
         val problem = error
         byItem.get(itemKindOf(item)) match
           case Some(k) => k.evaluate(this, m, s, item, st, problem, now, out)

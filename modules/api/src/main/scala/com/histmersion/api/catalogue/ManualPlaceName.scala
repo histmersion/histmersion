@@ -17,8 +17,7 @@ final case class ManualPlaceName(
       api.json.Schema
 
 object ManualPlaceName:
-  type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  export Place.Label
   type Name = Name.T
   object Name extends Newtype[String, Pure]
   type Lang = Lang.T

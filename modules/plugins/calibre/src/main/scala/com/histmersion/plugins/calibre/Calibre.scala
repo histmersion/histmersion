@@ -744,7 +744,7 @@ object Calibre:
           case None =>
             List(
               AuditFinding(
-                AuditFinding.CalibreId(id.value),
+                id,
                 keys,
                 List(AuditIssue.Missing),
                 None,
@@ -754,7 +754,7 @@ object Calibre:
           case Some(b) =>
             val (best, found) = rs.map(r => r -> issues(r, b)).minBy((r, is) => (is.size, r.citekey.value))
             if found.isEmpty then Nil
-            else List(AuditFinding(AuditFinding.CalibreId(id.value), keys, found, Some(b), best))
+            else List(AuditFinding(id, keys, found, Some(b), best))
       }
 
   /** One book as Calibre holds it — the shape both readers below produce (`calibredb list --for-machine` and the
@@ -956,8 +956,7 @@ object Calibre:
     object Calibredb extends Newtype[String, Pure]
     type Sqlite = Sqlite.T
     object Sqlite extends Newtype[String, Pure]
-    type WriteBack = WriteBack.T
-    object WriteBack extends Newtype[Boolean, Pure]
+    export CalibreCollection.WriteBack
     export Shell.ProcessMatch as GuiProcess
 
     val InstallDirs: List[InstallDir] = List(

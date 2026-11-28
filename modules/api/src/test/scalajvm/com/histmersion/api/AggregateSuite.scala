@@ -196,14 +196,14 @@ class AggregateSuite extends munit.FunSuite:
     // again, and the iterator never ends. The last bucket is clamped instead.
     val bs = Aggregate.buckets(Year(Long.MaxValue - 25), Year(Long.MaxValue), Aggregate.Width(10))
     assert(bs.size < 10, bs.toString)
-    assert(bs.forall((s, e) => s.value <= e.value), bs.toString)
+    assert(bs.forall((s, e) => s <= e), bs.toString)
     assertEquals(bs.last._2, Long.MaxValue)
 
   test("a bucket's end never precedes its start, anywhere near the boundaries"):
     List(Long.MinValue + 1, -1L, 0L, 1L, Long.MaxValue - 1).foreach { v =>
       Aggregate
         .buckets(Year(v), Year(v), Aggregate.Width(5000))
-        .foreach((s, e) => assert(s.value <= e.value, s"($v): ($s, $e)"))
+        .foreach((s, e) => assert(s <= e, s"($v): ($s, $e)"))
     }
 
 /** `unit=starts` — one bar per source, at the bucket its period begins in (UX item 11). Pure. */

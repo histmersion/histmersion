@@ -1403,7 +1403,7 @@ final class ManagersControllers(
   )(using WritePermit)(using Creator.New): Either[Api.Error, Goal.Plans.GoalSchedule] =
     val id = watchId(Goal.Ref(goal.value))
     val sw = WatchSchedules.sweepOf(kind)
-    val budget = in.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))
+    val budget = in.budgetUsd.map(b => b)
     for
       cron <- ManagerPolicy
         .checkCron(
@@ -1609,7 +1609,7 @@ final class ManagersControllers(
         val now = agents.autopilot.status()
         val by = in.by.map(_.value.trim).filter(_.nonEmpty).orElse(Some("person"))
         AgentMode
-          .steps(AgentMode.Step.Autopilot.On(now.on.value), AgentMode.Step.Drain.On(now.drain.isDefined), to)
+          .steps(now.on, AgentMode.Step.Drain.On(now.drain.isDefined), to)
           .foldLeft(now) { (_, step) =>
             step match
               case AgentMode.Step.Autopilot(on) =>

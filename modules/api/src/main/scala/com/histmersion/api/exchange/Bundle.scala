@@ -26,6 +26,8 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.aliases.InstanceInfo
+import com.histmersion.api.catalogue.EventSummary
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Bundle:
 
@@ -503,8 +505,7 @@ object Bundle:
     object UpdatedAt extends Newtype[String, Pure]
     type Rev = Rev.T
     object Rev extends Newtype[String, Pure]
-    type Scale = Scale.T
-    object Scale extends Newtype[String, Pure]
+    export EventSummary.Scale
     type Catalogue = Catalogue.T
     object Catalogue extends Newtype[String, Pure]
     type Names = Names.T
@@ -908,8 +909,7 @@ object Bundle:
         api.json.Schema
 
   object Instance:
-    type Label = Label.T
-    object Label extends Newtype[String, Pure]
+    export InstanceInfo.Label
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class KindCounts(
@@ -965,16 +965,11 @@ object Bundle:
   object Manifest:
     type Format = Format.T
     object Format extends Newtype[String, Pure]
-    type FormatVersion = FormatVersion.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object FormatVersion extends Newtype[Int, Pure]
-    type SchemaVersion = SchemaVersion.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object SchemaVersion extends Newtype[String, Pure]
+    export MergePlan.FormatVersion
+    export MergePlan.SchemaVersion
     type Since = Since.T
     object Since extends Newtype[String, Pure]
-    type AsOf = AsOf.T
-    object AsOf extends Newtype[String, Pure]
+    export MergePlan.AsOf
 
   final case class Period(
       uid: UUID,

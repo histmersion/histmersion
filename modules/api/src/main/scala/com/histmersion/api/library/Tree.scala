@@ -9,8 +9,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.lint.{tolerated, LintRule}
 
 object Tree:
-  type Depth = Depth.T
-  object Depth extends Newtype[Int, Pure]
+  export TimeHistogram.Depth
   type MaxSamplesCount = MaxSamplesCount.T
   object MaxSamplesCount extends Newtype[Int, Pure]
   type SplitRatioAmount = SplitRatioAmount.T
@@ -225,7 +224,6 @@ object Tree:
         regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def regionTimeTree(
       rows: List[TreeRow],
@@ -238,7 +236,7 @@ object Tree:
       samples: RegionTimeTreeSamples = RegionTimeTreeSamples(0),
       root: Option[Tree.RegionTimeTreeRoot] = None
   ): List[Bucket] =
-    val (lo, hi) = order(Year((from).value), Year((to).value))
+    val (lo, hi) = order(from, to)
     regions(
       rows,
       nodes,
@@ -246,7 +244,7 @@ object Tree:
       asOf,
       clamp(depth),
       samples,
-      (mine, _) => timeTime(mine, Year((lo).value), Year((hi).value), Depth(1), samples),
+      (mine, _) => timeTime(mine, lo, hi, Depth(1), samples),
       root
     )._1
 

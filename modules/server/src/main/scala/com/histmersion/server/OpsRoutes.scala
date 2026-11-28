@@ -51,10 +51,8 @@ object OpsRoutes:
     OpsApi.lintFix.serverLogicSuccess[Identity](rules => w.checks.heldLintFix(rules.map(r => CheckRule.Name(r.value)))),
     OpsApi.queuePatch.serverLogic[Identity]((id, p) => w.workLists.patch(QueueItemId(id.value), p)),
     OpsApi.queueDelete.serverLogic[Identity](id => w.workLists.delete(QueueItemId(id.value))),
-    OpsApi.queueExport.serverLogic[Identity](list =>
-      w.workLists.exportText(Queue.Kind.Label(list.value)).map(r => Queue.Export(r.value))
-    ),
-    OpsApi.queueImport.serverLogic[Identity]((list, req) => w.workLists.importText(Queue.Kind.Label(list.value), req)),
+    OpsApi.queueExport.serverLogic[Identity](list => w.workLists.exportText(list).map(r => Queue.Export(r.value))),
+    OpsApi.queueImport.serverLogic[Identity]((list, req) => w.workLists.importText(list, req)),
     OpsApi.queueList.serverLogic[Identity]((list, all, goal, job) =>
       for
         g <- scoped(goal, "goal slug")(Goal.Slug.either(_))

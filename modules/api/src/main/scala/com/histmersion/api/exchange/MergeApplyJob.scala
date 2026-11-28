@@ -56,7 +56,6 @@ object MergeApplyJob:
   /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
   val InterruptedText: Problem = Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def of(
       id: SpatialHierarchyResult.Job.Id,
@@ -69,11 +68,11 @@ object MergeApplyJob:
   ): MergeApplyJob =
     status match
       case JobState.Queued | JobState.Running =>
-        MergeApplyJob(SpatialHierarchyResult.Job.Id((id).value), MergeJobState.Running, bundle, planHash, elapsedMs)
+        MergeApplyJob(id, MergeJobState.Running, bundle, planHash, elapsedMs)
       case JobState.Done =>
         result.fold(
           MergeApplyJob(
-            SpatialHierarchyResult.Job.Id((id).value),
+            id,
             MergeJobState.Failed,
             bundle,
             planHash,
@@ -84,7 +83,7 @@ object MergeApplyJob:
           )
         )(r =>
           MergeApplyJob(
-            SpatialHierarchyResult.Job.Id((id).value),
+            id,
             MergeJobState.Done,
             bundle,
             planHash,
@@ -94,7 +93,7 @@ object MergeApplyJob:
         )
       case JobState.Failed if error.contains(Failure.Interrupted) =>
         MergeApplyJob(
-          SpatialHierarchyResult.Job.Id((id).value),
+          id,
           MergeJobState.Interrupted,
           bundle,
           planHash,
@@ -103,7 +102,7 @@ object MergeApplyJob:
         )
       case JobState.Failed | JobState.Paused | JobState.Cancelled =>
         MergeApplyJob(
-          SpatialHierarchyResult.Job.Id((id).value),
+          id,
           MergeJobState.Failed,
           bundle,
           planHash,

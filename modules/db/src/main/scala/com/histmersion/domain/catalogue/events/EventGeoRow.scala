@@ -31,7 +31,7 @@ final private[events] case class EventGeoRow(
       EventGeo.Label(e.label.value),
       EventGeo.Kind(e.kind.value),
       EventGeo.Scale(e.scale.value),
-      EventGeo.Historicity(e.historicity.value),
+      e.historicity,
       e.timeSpan,
       com.histmersion.api.catalogue.Latitude(lat.value),
       com.histmersion.api.catalogue.Longitude(lon.value),
@@ -47,7 +47,7 @@ final private[events] case class EventGeoRow(
           magnitude.map(m => LeadFacts.Magnitude(m.value))
         )
         .map(s => EventGeo.Size(s)),
-      EventGeo.Precision(e.precision.value),
+      e.precision,
       e.datingNote.map(EventGeo.Dating(_))
     )
 

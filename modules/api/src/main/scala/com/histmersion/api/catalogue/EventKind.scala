@@ -15,7 +15,6 @@ object EventKind:
   val Treaty = "treaty"
   val Reign = "reign"
   val EventPeriod = "period"
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[CatalogRecord.Kind] =
     List(
       CatalogRecord.Kind(Event),

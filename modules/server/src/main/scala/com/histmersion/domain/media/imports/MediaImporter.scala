@@ -53,8 +53,7 @@ trait MediaImporter:
 object MediaImporter:
   type CheckName = CheckName.T
   object CheckName extends Newtype[String, Pure]
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  export CollectionImport.DryRun
   type ImporterName = ImporterName.T
   object ImporterName extends Newtype[String, Pure]
   type OverText = OverText.T
@@ -94,7 +93,7 @@ object MediaImporter:
     val events = !asks(MediaTarget.Places)
     val pleiades = PluginMedia.guard(Right(col.placesCarrying)).toOption.flatten.isDefined
     val own = PluginMedia.guard(Right(col.matchRule)).toOption.contains(MediaMatchRule.Own)
-    val checkName = CheckName(BuiltinMedia.checkOf(BuiltinMedia.CheckOfName(name.value)).value)
+    val checkName = BuiltinMedia.checkOf(BuiltinMedia.CheckOfName(name.value))
     val what = title
     new MediaImporter:
       val check = checkName
@@ -167,8 +166,8 @@ object MediaImporter:
             (ts, dryRun, refresh) =>
               collection.run(
                 ts,
-                CollectionImport.DryRun(dryRun.value),
-                CollectionImport.Refresh(refresh.value),
+                dryRun,
+                refresh,
                 store
               )
         new Run:

@@ -14,5 +14,4 @@ final case class ShapeHit(set: ShapeHit.Set, id: ShapeHit.Id) derives CanEqual
 object ShapeHit:
   type Set = Set.T
   object Set extends Newtype[String, Pure]
-  type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  export ShapeFeature.Id

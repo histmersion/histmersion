@@ -443,13 +443,12 @@ object ApiClient:
 
   /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def agentControl(
       id: Agents.RunInfo.Id,
       action: Api.JobControl.Action,
       budgetUsd: Option[Agents.RunRequest.BudgetUsd] = None
   ): Future[Agents.RunInfo] =
-    call(AgentsApi.control)((id, Agents.Action(action.value), budgetUsd, None))
+    call(AgentsApi.control)((id, action, budgetUsd, None))
   def agentModels: Future[Agents.ModelsInfo] = call(AgentsApi.models)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")

@@ -25,9 +25,7 @@ final case class HttpAnswer(
 object HttpAnswer:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
-
-  type Body = Body.T
-  object Body extends Newtype[Array[Byte], Pure]
+  export Challenge.Body
 
   type Code = Code.T
   object Code extends Newtype[Int, Pure]:

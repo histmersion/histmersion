@@ -171,7 +171,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     assert(!resolvesTo("southern Levant", Set(SLevant)).isApproximate)
     val lev = resolvesTo("northern Levant", Set(Levant))
     assertEquals(lev.approximate, List(Approximation.Qualifier(Approximation.Qualifier.Dropped("northern"))))
-    assert(lev.lat.value > resolvesTo("Levant", Set(Levant)).lat.value, "the point moves into the northern half")
+    assert(lev.lat > resolvesTo("Levant", Set(Levant)).lat, "the point moves into the northern half")
     val east = resolvesTo("Eastern Mediterranean", Set(Med))
     assertEquals(east.approximate, List(Approximation.Qualifier(Approximation.Qualifier.Dropped("Eastern"))))
     // the eastern half of the sea, not its point on the surface off Algeria

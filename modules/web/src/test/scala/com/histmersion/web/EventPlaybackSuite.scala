@@ -20,7 +20,6 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class EventPlaybackSuite extends munit.FunSuite:
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val kadesh = EventGeo(
     Event.Id("kadesh"),
     EventGeo.Label("Battle <of> Kadesh"),
@@ -34,7 +33,6 @@ class EventPlaybackSuite extends munit.FunSuite:
     (Some("p")).map(Place.Id.apply),
     Some(EventGeo.PlaceLabel("Kadesh"))
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val migration = kadesh
     .modify(_.id)
     .setTo(Event.Id("m"))
@@ -116,11 +114,11 @@ class EventPlaybackSuite extends munit.FunSuite:
     val era = EventPlayback.rank(migration, Year(-3300)).value
     assert(era > world && era > -1.0, s"$era")
     assert(battle > era)
-    assert(EventPlayback.rank(migration, Year(-1000)).value > EventPlayback.rank(migration, Year(-3300)).value)
+    assert(EventPlayback.rank(migration, Year(-1000)) > EventPlayback.rank(migration, Year(-3300)))
     assert(EventPlayback.rank(kadesh, Year(-1177)).value > battle, "the later of two local events wins")
-    assert(EventPlayback.rank(kadesh, Year(2000)).value < EventPlayback.rank(kadesh, Year(2001)).value)
+    assert(EventPlayback.rank(kadesh, Year(2000)) < EventPlayback.rank(kadesh, Year(2001)))
     assert(
-      EventPlayback.rank(migration, Year(3000)).value < EventPlayback.rank(kadesh, Year(-4000)).value,
+      EventPlayback.rank(migration, Year(3000)) < EventPlayback.rank(kadesh, Year(-4000)),
       "local over regional at any year"
     )
 

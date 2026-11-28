@@ -172,8 +172,7 @@ object ListFilters:
 
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-    type Pipeline = Pipeline.T
-    object Pipeline extends Newtype[String, Pure]
+    export Agents.RunInfo.Pipeline
     type Manager = Manager.T
     object Manager extends Newtype[String, Pure]
     type Model = Model.T
@@ -346,7 +345,7 @@ object ListFilters:
         Left(
           Invalid.Unknown(TypeName.of(Term), Raw(s"$v"), known.toVector.map(k => Raw(s"$k")), Vector(Field(s"$what")))
         )
-      case None => Right((vs).map(refactorValue34 => Term((refactorValue34).value)))
+      case None => Right((vs).map(refactorValue34 => refactorValue34))
 
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

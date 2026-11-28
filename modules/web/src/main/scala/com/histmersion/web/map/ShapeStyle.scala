@@ -30,8 +30,7 @@ object ShapeStyle:
   object LineWidth extends Newtype[Double, Pure]
   type LineOpacity = LineOpacity.T
   object LineOpacity extends Newtype[Double, Pure]
-  type Colour = Colour.T
-  object Colour extends Newtype[String, Pure]
+  export ShapeFeature.Colour
   type Dash = Dash.T
   object Dash extends Newtype[Double, Pure]
   type DashedLineOpacity = DashedLineOpacity.T

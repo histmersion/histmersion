@@ -90,13 +90,12 @@ object Gazetteer:
     case Some(Kind.Tgn)      => Rank(3)
     case Some(Kind.Geonames) => Rank(4)
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val ImportedSources: List[ImportedSources] =
     List(
       Kind.Wikidata,
       Kind.Geonames,
       Kind.Tgn
-    ).map(k => SourceInfo.Key((sourceKey(k)).value))
+    ).map(k => sourceKey(k))
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[Place.Id] =
@@ -142,9 +141,8 @@ object Gazetteer:
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val PointAreaSources: List[PointAreaSources] =
-    (ImportedSources).map(refactorValue16 => SourceInfo.Key((refactorValue16).value))
+    (ImportedSources).map(refactorValue16 => refactorValue16)
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
@@ -321,9 +319,9 @@ object Gazetteer:
             names = mergeNames(all),
             links = readLinks(f).filterNot(l => own.contains(l.id)),
             source = in.place.source
-              .map(s => GazRecord.Source(s.value))
+              .map(s => s)
               .orElse(defaultSource.map(k => GazRecord.Source(k.value))),
-            properties = in.place.properties.map(p => GazRecord.Properties(p.value)),
+            properties = in.place.properties.map(p => p),
             descriptions = readDescriptions(f),
             itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")).map(c => GazRecord.ItemClass(c))
           )

@@ -24,6 +24,7 @@ import com.histmersion.api.ItemKind
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
+import com.histmersion.api.Paging
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Managers:
@@ -36,8 +37,7 @@ object Managers:
     type Amount = Amount.T
     object Amount extends Newtype[Double, Pure]
   object Scheduler:
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
 
   type Actions = ActionsValue
   type ActionsValue = ActionsValue.T
@@ -104,7 +104,6 @@ object Managers:
   val OaIngest = "oa-ingest"
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def itemKinds(k: Kind): List[ManagerItem.Kind] = k match
     case Kind.Review =>
       List(ManagerItem.Kind(ArticleReview), ManagerItem.Kind(InferFilter), ManagerItem.Kind(ArticleExtend))
@@ -148,9 +147,7 @@ object Managers:
   def watchId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"watch:${(goal).value.trim}")
 
   enum Sweep(val wire: Sweep.Wire, val itemKind: ManagerItem.Kind) derives CanEqual:
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     case Acquisition extends Sweep(Sweep.Wire("acquisition"), ManagerItem.Kind(AcquisitionSweep))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     case Currency extends Sweep(Sweep.Wire("currency"), ManagerItem.Kind(CurrencyCheck))
 
   object Sweep:
@@ -285,10 +282,8 @@ object Managers:
     object StaleAfterDays extends Newtype[Int, Pure]
     type InferFilter = InferFilter.T
     object InferFilter extends Newtype[Boolean, Pure]
-    type MinSources = MinSources.T
-    object MinSources extends Newtype[Int, Pure]
-    type MaxArticles = MaxArticles.T
-    object MaxArticles extends Newtype[Int, Pure]
+    export Agents.RunParams.MinSources
+    export Agents.RunParams.MaxArticles
     type AutoIngest = AutoIngest.T
     object AutoIngest extends Newtype[Boolean, Pure]
     type AutoIngestPerDay = AutoIngestPerDay.T
@@ -727,8 +722,7 @@ object Managers:
     object Ref extends Newtype[String, Pure]
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
+    export AgentScheduler.WhyInfo.Kind
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     export api.automation.ItemStatus.Wire as Status
@@ -908,8 +902,7 @@ object Managers:
         api.json.Schema
 
   object EventPage:
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
     type Before = Before.T
     object Before extends Newtype[Long, Pure]
 

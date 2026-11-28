@@ -16,9 +16,7 @@ final case class AuditRecord(
 object AuditRecord:
   type Citekey = Citekey.T
   object Citekey extends Newtype[String, Pure]
-  type CalibreId = CalibreId.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object CalibreId extends Newtype[Int, Pure]
+  export AuditFinding.CalibreId
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type Authors = Authors.T

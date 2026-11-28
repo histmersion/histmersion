@@ -11,6 +11,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.catalogue.events.CatalogMerge
 
 /** The matcher. Pure: the database gives it the findings near an event and the passages naming it. */
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
@@ -32,10 +33,8 @@ object EventMatcher:
   )
 
   object Weights:
-    type Km = Km.T
-    object Km extends Newtype[Double, Pure]
-    type Years = Years.T
-    object Years extends Newtype[Long, Pure]
+    export CatalogMerge.Tolerance.Km
+    export CatalogMerge.Tolerance.Years
     type Name = Name.T
     object Name extends Newtype[Double, Pure]
     type Finding = Finding.T
@@ -161,7 +160,7 @@ object EventMatcher:
       com.histmersion.api.library.Citekey(citekey.value),
       Attestation.TargetType(AttestationTarget.Event),
       Attestation.TargetId(eventId.value),
-      quote = Some(Attestation.Quote(p.quote.value)),
+      quote = Some(p.quote),
       charStart = Some(Attestation.CharStart(p.start.value)),
       charEnd = Some(Attestation.CharEnd(p.end.value)),
       note = Some(Attestation.Note(s"names the event as \"${p.name}\" (confirmed from `events links`)"))

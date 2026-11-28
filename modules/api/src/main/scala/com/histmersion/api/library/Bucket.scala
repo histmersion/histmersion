@@ -7,6 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.api.catalogue.RegionNode
 
 final case class Bucket(
     label: Bucket.Label,
@@ -40,8 +41,7 @@ object Bucket:
   object Count extends Newtype[Int, Pure]
   type Overlap = Overlap.T
   object Overlap extends Newtype[Int, Pure]
-  type Contested = Contested.T
-  object Contested extends Newtype[Boolean, Pure]
+  export RegionNode.Contested
   type AlsoUnder = AlsoUnder.T
   object AlsoUnder extends Newtype[String, Pure]
 

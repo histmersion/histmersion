@@ -42,6 +42,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.library.collections.CollectionLibrary
 
 /** The pictures (`assets`) and where they are shown (`media_links`): a source's figures stored, read, described and
   * patched; a provider's pictures stored, re-read and given thumbnails; the places, events and sources they are shown
@@ -162,8 +163,7 @@ object AssetService:
   export MediaItemRow.{Provider, ProviderKey, Uid as AssetUid}
   export Target.TargetType
   export Target.Id as TargetId
-  type Bytes = Bytes.T
-  object Bytes extends Newtype[Array[Byte], Pure]
+  export CollectionLibrary.Bytes
   type Mime = Mime.T
   object Mime extends Newtype[String, Pure]
 

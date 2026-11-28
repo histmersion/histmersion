@@ -128,6 +128,8 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Doi
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.automation.Agents
+import com.histmersion.api.library.Histogram
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -137,13 +139,11 @@ import com.histmersion.lint.{tolerated, LintRule}
 @movesTo(FeaturePlace.Api)
 object Api:
   object Search:
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
     type Text = Text.T
     object Text extends Newtype[String, Pure]
   object Reindex:
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
     type Scope = Scope.T
     object Scope extends Newtype[String, Pure]
   object PlacesGeo:
@@ -152,21 +152,17 @@ object Api:
   object Merge:
     type Entity = Entity.T
     object Entity extends Newtype[String, Pure]
-    type Id = Id.T
-    object Id extends Newtype[String, Pure]
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export SpatialHierarchyResult.Job.Id
+    export Paging.Limit
   object Lookup:
     type Text = Text.T
     object Text extends Newtype[String, Pure]
   object Jobs:
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
     type Status = Status.T
     object Status extends Newtype[String, Pure]
   object JobControl:
-    type Action = Action.T
-    object Action extends Newtype[String, Pure]
+    export Agents.Action
   object HttpMethod:
 
     /** Two sttp methods compare with `==` and `!=`, also under `-language:strictEquality`: both clients (the CLI's and
@@ -542,8 +538,7 @@ object Api:
 
     type By = By.T
     object By extends Newtype[String, Pure]
-    type Unit = Unit.T
-    object Unit extends Newtype[String, Pure]
+    export Histogram.Unit
     type Depth = Depth.T
     object Depth extends Newtype[Int, Pure]
     type AsOf = AsOf.T
@@ -1398,8 +1393,7 @@ object Api:
   object PlacesGeoQuery:
     export Place.Kind.Wire as Kind
     export AggregateQuery.AsOf
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
     type From = From.T
     object From extends Newtype[Long, Pure]
     type To = To.T
@@ -2064,8 +2058,7 @@ object Api:
 
   object GoalQuery:
     export Goal.StatusValue as Status
-    type Limit = Limit.T
-    object Limit extends Newtype[Int, Pure]
+    export Paging.Limit
     type Offset = Offset.T
     object Offset extends Newtype[Int, Pure]
 

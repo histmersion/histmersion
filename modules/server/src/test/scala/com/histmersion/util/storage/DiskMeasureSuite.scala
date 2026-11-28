@@ -84,7 +84,7 @@ class DiskMeasureSuite extends munit.FunSuite:
     val v = at(d.resolve("not/made/yet")).volume
     assert(v.isDefined)
     assertEquals(v.map(_.id), at(d).volume.map(_.id))
-    assert(v.forall(x => x.total.value > 0 && x.usable.value >= 0 && x.usable.value <= x.total.value), v)
+    assert(v.forall(x => x.total.value > 0 && x.usable.value >= 0 && x.usable <= x.total), v)
 
   tmp.test("an executable is a file this process may run"): d =>
     val f = file(d.resolve("pg_dump"), 1)

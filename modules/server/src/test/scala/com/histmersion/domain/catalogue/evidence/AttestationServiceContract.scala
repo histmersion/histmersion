@@ -52,7 +52,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     val third = a.create(
       Attestation.Put(Citekey("zzat2021_two"), Attestation.TargetType("place"), Attestation.TargetId("zz_hill"))
     )
-    assert(first.id.value < second.id.value && second.id.value < third.id.value)
+    assert(first.id < second.id && second.id < third.id)
     assertEquals(a.get(first.id), Some(first))
     assertEquals(
       (first.quote, first.charEnd, first.ctsUrn, first.note),

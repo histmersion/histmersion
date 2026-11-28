@@ -21,15 +21,13 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def parse(wire: JobKinds.Wire): Option[JobKindEntry] = byWire.get(JobKinds.Wire((wire).value.trim.toLowerCase))
 
   /** May a person pause and cancel a job of the kind `wire` names? */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stoppable(wire: JobKinds.Wire): Boolean = (byWire
-    .get(JobKinds.Wire((wire).value))
+    .get(wire)
     .exists((refactorCallback2 => ((refactorCallback2.stoppable) == JobKindEntry.Stoppable(true)))))
 
   /** Do the pause, resume and cancel of a job of the kind `wire` names go to the kind's own runner? */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def ownControl(wire: JobKinds.Wire): Boolean = (byWire
-    .get(JobKinds.Wire((wire).value))
+    .get(wire)
     .exists((refactorCallback2 => ((refactorCallback2.ownControl) == JobKindEntry.OwnControl(true)))))
 
   /** The identifiers of the kinds a person may pause and cancel. */

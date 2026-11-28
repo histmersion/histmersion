@@ -318,9 +318,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 budgetUsd = budget
               ),
               _.modify(_.minSources)
-                .setTo(m.config.minSources.map(v => RunParams.MinSources(v.value)))
+                .setTo(m.config.minSources.map(v => v))
                 .modify(_.maxArticles)
-                .setTo(m.config.maxArticles.map(v => RunParams.MaxArticles(v.value))),
+                .setTo(m.config.maxArticles.map(v => v)),
               item.state,
               ManagerContext.StartWhat("propose-articles"),
               out
