@@ -50,14 +50,16 @@ are written to the report but not emitted as lints, and the report is the fixtur
 ### What a Boolean becomes
 
 - A Boolean that means a state becomes an enum whose cases name the states (`enabled: Boolean` becomes
-  `Switch.{On, Off}`), with its operations on the companion. On the wire it is a string (ADR 0026); in the database the
-  column may stay `boolean` with the enum's `DbCodec` mapping it (no migration, the data untouched), or become text
-  with a Flyway migration that keeps the data.
+  `Switch.{On, Off}`), with its operations on the companion. In JSON a two-state enum stays the Boolean it replaced (next
+  point); in the database the column may stay `boolean` with the enum's `DbCodec` mapping it (no migration, the data
+  untouched), or become text with a Flyway migration that keeps the data.
 - An enum that was a Boolean in JSON (a wire record, a stored record or setting, a bundle, a checkpoint) has a
-  companion that extends `TwoStates` (`modules/api`, `api/json/TwoStates.scala`; the api layer owns the wire's codecs,
-  owner 2026-11-28; the codec itself is `NewtypeCodecs.twoStates`, at the JSON boundary): its codec writes the case's
-  name, and reads the Boolean an earlier version wrote as the state it meant,
-  `true` the first case and `false` the second, so stored JSON and older clients still read. A query parameter that
+  companion that extends `TwoStates` (`modules/api`, `api/json/TwoStates.scala`; the api layer owns the JSON codecs,
+  owner 2026-11-28; the codec itself is `NewtypeCodecs.twoStates`, at the JSON boundary). Owner 2026-11-28: `true`/
+  `false` in all JSON — the codec writes and reads a JSON Boolean everywhere (wire, storage, bundles, checkpoints, MCP),
+  `true` the first case and `false` the second, and its schema (OpenAPI, MCP tool schemas) is `boolean`; the enum lives
+  in the code only (no bare Boolean in a signature), so no stored document, SQL cast or client changes. A case's name
+  is never written, so none is read. A query parameter that
   was a Boolean stays `true`/`false` on the wire and is mapped to the enum where the endpoint is declared. A `boolean`
   column keeps its data: `NewtypeColumns.twoStates` maps it (db layer), and `domain/TwoStateTransformers` gives Chimney
   the conversion between such an enum and a domain Boolean newtype (domain layer, no codec). The lint rule `derives`

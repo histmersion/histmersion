@@ -1009,7 +1009,8 @@ class AcquisitionOracleSuite extends DbSuite:
     s("the datasets' credits")(
       DataCredits.all
         .map(c =>
-          List(c.name, c.usedFor, c.licence, c.licenceUrl.getOrElse("-"), c.credit, c.url, c.onMap).mkString(" | ")
+          List(c.name, c.usedFor, c.licence, c.licenceUrl.getOrElse("-"), c.credit, c.url, c.onMap.onMap)
+            .mkString(" | ")
         )
         .mkString("\n")
     )
