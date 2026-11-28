@@ -1,0 +1,2 @@
+{"filter":"tin AND trade","total":2,"sources":[{"citekey":"smith1987_tin","title":"Tin and trade","year":1987,"status":"current"},{"citekey":"doe2001_tin","title":"Against","year":null,"status":"contested"}],"claims":{"smith1987_tin":2,"doe2001_tin":0},"edges":[{"from":"doe2001_tin","kind":"challenges","to":"smith1987_tin"}],"disputed":["doe2001_tin"],"notUsed":[{"citekey":"roe1990_tin","reason":"Wrong region."}]}
+{"filter":"","total":0,"sources":[],"claims":{},"edges":[],"disputed":[],"notUsed":[]}
