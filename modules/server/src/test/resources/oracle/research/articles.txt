@@ -5842,7 +5842,7 @@ _Method: search {tags: ["zr-oracle"]} → 4; statuses: 2 current, 1 contested, 1
           "sea_peoples"
         ],
         "raw" : "Bad Slug",
-        "typeName" : "LabelRenames.Label"
+        "typeName" : "LabelRename.Label"
       },
       "group" : "Invalid",
       "text" : "article slug: 'Bad Slug' is not a label (e.g. sea_peoples)"

@@ -1002,7 +1002,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
       "data" : {
         "is" : "done",
         "key" : "2",
-        "typeName" : "Queue.QueueItem.Id",
+        "typeName" : "QueueItem.Id",
         "wanted" : [
           "open"
         ]
@@ -1020,7 +1020,7 @@ job: 200 {"id":"UUID","kind":"ingest","status":"done","citekey":"zqa_ledger","pr
       "case" : "Entity",
       "data" : {
         "key" : "99999",
-        "typeName" : "Queue.QueueItem.Id"
+        "typeName" : "QueueItem.Id"
       },
       "group" : "NotFound",
       "text" : "no queue item id '99999'"
