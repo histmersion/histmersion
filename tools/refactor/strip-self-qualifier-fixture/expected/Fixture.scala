@@ -30,3 +30,12 @@ object Tools:
   def apply(): () => String =
     val checkEdits = () => Tools.checkEdits(1)
     checkEdits
+
+abstract class Decoder:
+  def decode(s: String): Int = 0
+
+object Rows:
+  def decode(s: String): Int = s.length
+  def plain(s: String): Int = decode(s)
+  val twice: Decoder = new Decoder:
+    def both(s: String): Int = Rows.decode(s) + this.decode(s)

@@ -34,6 +34,19 @@ class StripSelfQualifier extends SemanticRule("StripSelfQualifier") {
     case _ => false
   }
 
+  private def inherits(tpl: Template, name: String)(implicit doc: SemanticDocument): Boolean =
+    tpl.inits.exists(i => hasMember(i.tpe.symbol, name, 8))
+
+  private def hasMember(sym: Symbol, name: String, depth: Int)(implicit doc: SemanticDocument): Boolean =
+    depth > 0 && !sym.isNone && sym.info.exists(_.signature match {
+      case ClassSignature(_, parents, _, decls) =>
+        decls.exists(_.displayName == name) || parents.exists {
+          case TypeRef(_, parent, _) => hasMember(parent, name, depth - 1)
+          case _ => false
+        }
+      case _ => false
+    })
+
   private def inImport(t: Tree): Boolean = t.parent match {
     case Some(_: Importer) | Some(_: Import) | Some(_: Export) => true
     case Some(p) => inImport(p)
@@ -70,7 +83,7 @@ class StripSelfQualifier extends SemanticRule("StripSelfQualifier") {
     member != "T" && !q.symbol.isNone && {
       val owner = objectsAround(sel).find(o => o.name.symbol == q.symbol)
       owner.exists { o =>
-        !templatesBetween(sel, o).exists(defines(_, member)) && !params(sel, member) &&
+        !templatesBetween(sel, o).exists(t => defines(t, member) || inherits(t, member)) && !params(sel, member) &&
           defines(o.templ, member) && !imported(member)
       }
     }
