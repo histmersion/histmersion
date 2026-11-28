@@ -2,7 +2,9 @@ package com.histmersion
 package domain.library.workflows
 
 import com.histmersion.domain.Proposal
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -36,7 +38,8 @@ final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
     status: Citekey => Option[Source.Status],
-    apply: Proposal => Creator.New ?=> Either[Problems, SourceProposals.Outcome.Applied.What]
+    apply: Proposal => Creator.New ?=> Either[Problems, SourceProposals.Outcome.Applied.What],
+    proposals: Checkpointed[Proposal]
 ):
   def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(
     p.kind,
@@ -53,7 +56,10 @@ final class SourceProposals(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def propose(ctx: RunCtx, p: Proposal)(using WritePermit)(using Creator.New): Outcome =
-    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(Run.Id.assume(ctx.run.id.value)), p))(
+    ctx.write(
+      s"${p.kind.wire} proposal: ${p.describe}",
+      RawJson.parse(proposals.write(p).text).getOrElse(Json.Null)
+    )(propose(Some(Run.Id.assume(ctx.run.id.value)), p))(
       Outcome.NotProposed(Outcome.NotProposed.What(p.describe.value))
     )
 
@@ -73,7 +79,7 @@ final class SourceProposals(
       now.transformInto[Option[domain.library.Source.Status]],
       p.edgeKind.transformInto[Option[Edge.Kind]],
       p.target,
-      Jsonb.write(p),
+      Jsonb.JsonText(proposals.write(p).text),
       state,
       result
     )

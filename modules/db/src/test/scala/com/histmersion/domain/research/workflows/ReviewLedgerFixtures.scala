@@ -14,7 +14,8 @@ import com.histmersion.util.database.TestCreators.given
   * connection of its own, a write in a transaction of its own.
   */
 object ReviewLedgerFixtures:
-  def get(ds: DataSource, slug: Slug): Either[Problem, Option[Ledger]] = connect(ds)(ReviewLedgerRepo.get(slug))
-  def put(ds: DataSource, l: Ledger): Unit = transact(ds)(ReviewLedgerRepo.put(l))
+  def get(ds: DataSource, slug: Slug): Either[Problem, Option[Ledger]] =
+    connect(ds)(ReviewLedgerRepo.get(slug, ResearchTransformers.ledger))
+  def put(ds: DataSource, l: Ledger): Unit = transact(ds)(ReviewLedgerRepo.put(l, ResearchTransformers.ledger))
   def passedReview(ds: DataSource, reviewId: ReviewLedgerRepo.ReviewId): Set[Slug] =
     connect(ds)(ReviewLedgerRepo.passedReview(reviewId))

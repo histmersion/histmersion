@@ -1,11 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.research.workflows.Finding
@@ -52,7 +48,7 @@ final case class Ledger(
     entries: List[Entry] = Nil,
     lessons: List[Lesson] = Nil,
     task: Option[Ledger.Task] = None
-) derives JsonCodec:
+):
   def open: List[Entry] = entries.filter(_.open)
   def openMajors: List[Entry] = open.filter(_.major)
   def entry(id: Finding.Id): Option[Entry] = entries.find(_.id == id)

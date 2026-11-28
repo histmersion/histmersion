@@ -56,6 +56,33 @@ object Notes:
 
   given Schema[Notes] = KindlingsSchema.derived[Notes].schema.modify(_.text)(_.description("Markdown"))
 
+object Limits:
+  val Max = 3
+  def Hint: String = "pick one"
+  type Ratio = Ratio.T
+  object Ratio extends Newtype[Double, Pure]
+  type Note = Note.T
+  object Note extends Newtype[String, Pure]
+
+final case class Verdict(ratio: Verdict.Ratio, label: Verdict.Label, note: Verdict.Remark, reasons: List[Verdict.Reason])
+    derives JsonCodec
+
+object Verdict:
+  final case class Reason(text: String) derives JsonCodec
+
+  type Ratio = Limits.Ratio
+  export Limits.Note as Remark
+  type Label = Label.T
+  object Label extends Newtype[String, Pure]:
+    extension (l: Label) def clean: String = l.value.trim
+
+  given Schema[Verdict] = KindlingsSchema
+    .derived[Verdict]
+    .schema
+    .modify(_.ratio)(_.description("a " + "ratio"))
+    .modify(_.label)(_.description(s"at most ${Limits.Max} labels"))
+    .modify(_.note)(_.description(Limits.Hint))
+
 enum Status derives JsonCodec:
   case Open, Closed
 

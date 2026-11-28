@@ -1,18 +1,12 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.research.Coverage
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.research.Article
 import com.histmersion.domain.research.workflows.RejectionAnswer
 import com.histmersion.domain.research.workflows.WontFixAnswer
 import com.histmersion.domain.research.workflows.SetAsideAnswer
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.research.workflows.Finding
@@ -56,42 +50,11 @@ final case class FixerAnswer(
     reasons: List[Coverage.Reason] = Nil,
     wontFix: List[WontFixAnswer] = Nil,
     setAside: List[SetAsideAnswer] = Nil
-) derives JsonCodec
+)
 
 object FixerAnswer:
   export Finding.Id as Applied
   export Fix.{Notes, UnresolvedMoved}
-
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-  given Schema[FixerAnswer] = KindlingsSchema
-    .derived[FixerAnswer]
-    .schema
-    .modify(_.edits)(
-      _.description(
-        "The changes to the article, in order, each anchored on text copied EXACTLY from the body — small and " +
-          "local, never the whole article; code applies them"
-      )
-    )
-    .modify(_.applied)(_.description("Ids of the findings you applied"))
-    .modify(_.rejected)(_.description("Findings you reject, each with the record's contradicting sentence"))
-    .modify(_.unresolvedMoved)(_.description("Claims you moved to the unresolved section"))
-    .modify(_.notes)(_.description("What the next review round should know"))
-    .modify(_.reasons)(
-      _.description(
-        "Why the article leaves out a source its filter returns, one per source (the generated Not used list shows them); " +
-          "an empty reason removes one. Only for sources of the filter the article does not cite"
-      )
-    )
-    .modify(_.wontFix)(
-      _.description("Findings you decline, with the reason: a MINOR, or a coverage MAJOR when no filter is recorded")
-    )
-    .modify(_.setAside)(
-      _.description(
-        "missing-critique findings you answer by setting the critique aside as not material — the reason is stored " +
-          "with the article and closes the finding (instead of an edit); with no id, a checklist pair your edits brought in"
-      )
-    )
 
   final private case class Revision(
       check: Article.Edits.ArticleCheck,

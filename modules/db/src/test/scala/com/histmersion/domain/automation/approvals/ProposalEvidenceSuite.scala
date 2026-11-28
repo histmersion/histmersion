@@ -3,6 +3,8 @@ package domain.automation.approvals
 
 import com.histmersion.domain.Proposal
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 
 import com.histmersion.testsupport.ComparedByValue.given
 

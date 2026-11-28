@@ -4,8 +4,7 @@ package domain.research.workflows
 import com.histmersion.domain.research.workflows.Ledger
 
 import com.histmersion.util.problem.{External, Problem}
-import com.histmersion.util.json.RawJson
-import com.histmersion.util.database.Jsonb
+import com.histmersion.domain.automation.agents.Checkpointed
 import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
@@ -29,26 +28,26 @@ private[workflows] object ReviewLedgerRepo:
     */
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def get(slug: Slug)(using DbCon): Either[Problem, Option[Ledger]] =
+  def get(slug: Slug, ledgers: Checkpointed[Ledger])(using DbCon): Either[Problem, Option[Ledger]] =
     sql"SELECT ledger::text FROM review_ledgers WHERE slug = $slug".query[String].run().headOption match
       case None       => Right(None)
       case Some(json) =>
-        RawJson
-          .decode[Ledger](json)
+        ledgers
+          .read(Checkpointed.Json.of(json))
           .left
           .map(e =>
             Problem.Io.Corrupt(
               Problem.Io.Format.Json,
               Problem.Where(s"the review ledger of '$slug'"),
-              Problem.Io.Damage.Unreadable(External.Reported.of(e))
+              Problem.Io.Damage.Unreadable(External.Reported.of(e.reason))
             )
           )
           .map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def put(l: Ledger)(using DbCon)(using creator: Creator.New): Unit =
-    val json = Jsonb.write(l)
+  def put(l: Ledger, ledgers: Checkpointed[Ledger])(using DbCon)(using creator: Creator.New): Unit =
+    val json = ledgers.write(l).text
     sql"""INSERT INTO review_ledgers (slug, ledger, updated_at, creator) VALUES (${l.slug}, $json::jsonb, now(), ${StoredCreator
         .column(creator)}::jsonb)
           ON CONFLICT (slug) DO UPDATE SET ledger = EXCLUDED.ledger, updated_at = now()""".update.run()

@@ -1,11 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.domain.library
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.agents.ToolUse
@@ -21,7 +17,7 @@ final case class SpotCheck(
     recordQuote: SpotCheck.RecordQuote,
     ratio: SpotCheck.Ratio,
     tool: SpotCheck.Tool
-) derives JsonCodec
+)
 
 object SpotCheck:
   type Claim = Claim.T

@@ -28,7 +28,9 @@ import com.histmersion.domain.research.workflows.FixerAnswer
 import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
+import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -117,8 +119,10 @@ final class ReviewArticlePipeline(
     cfg: => ResearchAgentsConfig,
     lib: => LibraryAgentsConfig,
     approvals: SourceProposals,
-    definitions: AgentDefinitions
+    definitions: AgentDefinitions,
+    stepRecords: ResearchRecords
 ) extends PipelineDef:
+  import stepRecords.given
   val pipeline: Pipeline = Pipeline.ReviewArticle
 
   /** The running totals; `fixed` = the fixer has run at least once; `reasons` = the critique reasons this run stored (a
@@ -355,7 +359,7 @@ final class ReviewArticlePipeline(
     ctx.write(
       s"review ledger of [[${l.slug}]]: ${l.open.size} open (${l.openMajors.size} major), " +
         s"${l.entries.size - l.open.size} closed, ${l.lessons.size} lesson(s)",
-      l.asJson
+      RawJson.parse(stepRecords.ledger.write(l).text).getOrElse(Json.Null)
     )(ledgers.put(l))(())
     l
 

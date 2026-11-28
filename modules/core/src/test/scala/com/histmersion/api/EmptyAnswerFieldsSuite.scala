@@ -594,7 +594,13 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Nil
     )
     // a null `fixed` is not read as false: the answer does not decode, so the step asks again
-    assert(RawJson.decode[CheckAnswer]("""{"id":"R1","fixed":null,"quote":"Tin reached","note":"x"}""").isLeft)
+    assert(
+      RawJson
+        .decode[com.histmersion.api.research.workflows.CheckAnswer](
+          """{"id":"R1","fixed":null,"quote":"Tin reached","note":"x"}"""
+        )
+        .isLeft
+    )
 
   test("recheck: a not-fixed check with no note, or a finding with no where, fails; empty lessons are dropped"):
     def recheck(a: RecheckAnswer) =

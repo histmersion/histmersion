@@ -34,9 +34,10 @@ import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.library.workflows.EnrichmentTransformers
 import com.histmersion.domain.library.workflows.EnrichmentTransformers.given
 import com.histmersion.testsupport.CheckpointCodecs.given
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
 import com.histmersion.api.library.workflows as wire
 import io.scalaland.chimney.dsl.*
-import com.histmersion.domain.research.workflows.ReviewComparison
+import com.histmersion.domain.research.workflows.{ResearchTransformers, ReviewComparison}
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Confidence
@@ -93,7 +94,7 @@ class CompareRunsSuite extends munit.FunSuite:
       billing,
       runs.headOption.map(_.run.pipeline.value) match
         case Some("enrich-source")  => EnrichComparison(EnrichmentTransformers)
-        case Some("review-article") => ReviewComparison
+        case Some("review-article") => ReviewComparison(ResearchTransformers)
         case _                      => OutputComparison.none
     )
 

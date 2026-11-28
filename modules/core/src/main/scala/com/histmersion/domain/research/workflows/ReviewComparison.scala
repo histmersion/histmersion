@@ -17,28 +17,22 @@ import com.histmersion.lint.{tolerated, LintRule}
 /** review-article's runs compared by their outputs (`agent compare`, #992): the last round's verdict, the rounds, round
   * 1 per reviewer and by kind, its major findings, and the ones two runs share.
   */
-object ReviewComparison extends OutputComparison:
+final class ReviewComparison(records: ResearchRecords) extends OutputComparison:
+  import records.given
+  import ReviewComparison.overlap
 
-  /** Two major findings are the same one when they sit at the same `where` and their problems share at least this much
-    * of their words (Jaccard over the normalised words), or quote the same passage.
-    */
-  val ProblemSimilarity = 0.5
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def round(name: CompareRuns.OutputName, prefix: String): Option[Int] =
     Option.when(name.value.startsWith(prefix))(name.value.stripPrefix(prefix).toIntOption).flatten
 
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def reviewSide(d: Run): ReviewSide =
     val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
-    val last = merges.lastOption.flatMap((_, n) => CompareRuns.output[Merged](d, n))
-    val first = CompareRuns.output[Merged](d, CompareRuns.OutputName("merge-1"))
-    val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n =>
-      CompareRuns.output[Report](d, CompareRuns.OutputName(n))
-    )
-    val mech = CompareRuns.output[List[Finding]](d, CompareRuns.OutputName("mechanical-1"))
+    val last = merges.lastOption.flatMap((_, n) => d.stored[Merged](n))
+    val first = d.stored[Merged](CompareRuns.OutputName("merge-1"))
+    val reports =
+      List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n => d.stored[Report](CompareRuns.OutputName(n)))
+    val mech = d.stored[List[Finding]](CompareRuns.OutputName("mechanical-1"))
     val reviewers = reports.map(r =>
       ReviewerSide(
         ReviewerSide.Reviewer(r.reviewer.wire.value),
@@ -70,10 +64,34 @@ object ReviewComparison extends OutputComparison:
 
   override def review(runs: List[Run]): List[ReviewSide] = runs.map(reviewSide)
 
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  override def overlaps(runs: List[Run]): List[MajorOverlap] =
+    val majors = runs.map(d => d.run.id -> d.stored[Merged](CompareRuns.OutputName("merge-1")).toList.flatMap(_.majors))
+    for
+      (i, j) <- majors.indices.toList.combinations(2).toList.map(p => (p(0), p(1)))
+      (ra, ma) = majors(i)
+      (rb, mb) = majors(j)
+    yield
+      val pairs = overlap(ma, mb)
+      MajorOverlap(
+        MajorOverlap.A(ra.value),
+        MajorOverlap.B(rb.value),
+        MajorOverlap.AMajors(ma.size),
+        MajorOverlap.BMajors(mb.size),
+        MajorOverlap.Shared(pairs.size),
+        pairs.map((x, y) => MajorOverlap.Pairs(s"${x.id} ↔ ${y.id}"))
+      )
+
+object ReviewComparison:
+
+  /** Two major findings are the same one when they sit at the same `where` and their problems share at least this much
+    * of their words (Jaccard over the normalised words), or quote the same passage.
+    */
+  val ProblemSimilarity = 0.5
+
   /** The same major finding, as two runs' reviewers worded it: the same `where` (normalised) and a similar problem, or
     * the same quoted passage.
     */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sameMajor(a: Finding, b: Finding): Boolean =
     val (qa, qb) =
@@ -103,23 +121,3 @@ object ReviewComparison extends OutputComparison:
             case Some(g) => loop(tail, (f -> g) :: acc, left.filterNot(_ eq g))
             case None    => loop(tail, acc, left)
     loop(a, Nil, b)
-
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  override def overlaps(runs: List[Run]): List[MajorOverlap] =
-    val majors = runs.map(d =>
-      d.run.id -> CompareRuns.output[Merged](d, CompareRuns.OutputName("merge-1")).toList.flatMap(_.majors)
-    )
-    for
-      (i, j) <- majors.indices.toList.combinations(2).toList.map(p => (p(0), p(1)))
-      (ra, ma) = majors(i)
-      (rb, mb) = majors(j)
-    yield
-      val pairs = overlap(ma, mb)
-      MajorOverlap(
-        MajorOverlap.A(ra.value),
-        MajorOverlap.B(rb.value),
-        MajorOverlap.AMajors(ma.size),
-        MajorOverlap.BMajors(mb.size),
-        MajorOverlap.Shared(pairs.size),
-        pairs.map((x, y) => MajorOverlap.Pairs(s"${x.id} ↔ ${y.id}"))
-      )

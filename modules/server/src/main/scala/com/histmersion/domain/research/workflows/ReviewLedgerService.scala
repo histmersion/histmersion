@@ -3,6 +3,7 @@ package domain.research.workflows
 
 import com.histmersion.domain.research.workflows.Ledger
 import com.histmersion.util.problem.Problem
+import com.histmersion.domain.automation.agents.Checkpointed
 
 import com.histmersion.domain.research.ResearchState
 import com.histmersion.domain.research.Slug
@@ -33,11 +34,12 @@ object ReviewLedgerService:
   type ReviewId = ReviewId.T
   object ReviewId extends Newtype[String, Pure]
 
-  def apply(db: Transactor): ReviewLedgerService = Implementation(db)
+  def apply(db: Transactor, ledgers: Checkpointed[Ledger]): ReviewLedgerService = Implementation(db, ledgers)
 
-  final private class Implementation(db: Transactor) extends ReviewLedgerService:
-    def get(slug: Slug): Either[Problem, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
-    def put(ledger: Ledger)(using WritePermit)(using Creator.New): Unit = db.write(ReviewLedgerRepo.put(ledger))
+  final private class Implementation(db: Transactor, ledgers: Checkpointed[Ledger]) extends ReviewLedgerService:
+    def get(slug: Slug): Either[Problem, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug, ledgers))
+    def put(ledger: Ledger)(using WritePermit)(using Creator.New): Unit =
+      db.write(ReviewLedgerRepo.put(ledger, ledgers))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def passedReview(reviewId: ReviewId): Set[Slug] =
       db.read(ReviewLedgerRepo.passedReview(ReviewLedgerRepo.ReviewId(reviewId.value)))

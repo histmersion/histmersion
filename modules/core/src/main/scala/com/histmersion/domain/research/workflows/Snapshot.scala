@@ -1,14 +1,10 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.research.CitedSource
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.research.CritiquePair
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.research.Article
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
@@ -28,7 +24,7 @@ final case class Snapshot(
     coverage: Option[Coverage] = None,
     cited: List[CitedSource] = Nil,
     critiques: List[CritiquePair] = Nil
-) derives JsonCodec:
+):
   def generated: Option[Article.Coverage.Sections] = coverage.map(Article.Coverage.sections)
 
 object Snapshot:

@@ -24,10 +24,18 @@ final class ResearchWorkflows(
 ):
 
   val reviewArticle: WorkflowDefinition = ResearchWorkflow(
-    ReviewArticlePipeline(site, site.ledgers, cfg().researchAgents, cfg().libraryAgents, proposals, a.definitions),
+    ReviewArticlePipeline(
+      site,
+      site.ledgers,
+      cfg().researchAgents,
+      cfg().libraryAgents,
+      proposals,
+      a.definitions,
+      ResearchTransformers
+    ),
     List(StepAgent.RulesReviewer, StepAgent.ColdReader, StepAgent.Skeptic, StepAgent.Fixer),
     a.definitions,
-    ReviewComparison
+    ReviewComparison(ResearchTransformers)
   )
 
   val compileArticle: WorkflowDefinition = ResearchWorkflow(
@@ -37,7 +45,9 @@ final class ResearchWorkflows(
       cfg().agents,
       cfg().researchAgents,
       cfg().libraryAgents,
-      (req, parent) => a.startRunAs(req, Origin.Run, Some(parent))
+      (req, parent) => a.startRunAs(req, Origin.Run, Some(parent)),
+      ResearchTransformers,
+      CompileStepTransformers
     ),
     List(StepAgent.CompileExtractor, StepAgent.CompileWriter),
     a.definitions
@@ -56,7 +66,7 @@ final class ResearchWorkflows(
   )
 
   /** A goal's seeding manager: its articles proposed, then compiled once a person approved them. */
-  val seedKind: SeedManagerKind = SeedManagerKind(site, cfg().libraryAgents)
+  val seedKind: SeedManagerKind = SeedManagerKind(site, cfg().libraryAgents, CompileStepTransformers)
 
   /** The library-wide review manager. */
   val reviewKind: ReviewManagerKind = ReviewManagerKind(site, site.ledgers, cfg().researchAgents)

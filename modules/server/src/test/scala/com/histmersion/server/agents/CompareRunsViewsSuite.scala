@@ -14,6 +14,8 @@ import com.histmersion.domain.research.workflows.Merged
 import com.histmersion.domain.research.workflows.Report
 import com.histmersion.domain.research.workflows.Verdict
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -21,7 +23,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.domain.research.workflows.ReviewComparison
+import com.histmersion.domain.research.workflows.{ResearchTransformers, ReviewComparison}
 
 import com.histmersion.domain.automation.agents.{CompareRunsViews, OutputComparison}
 import com.histmersion.domain.library.workflows.EnrichComparison
@@ -106,7 +108,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
         _ => None,
         runs.headOption.map(_.run.pipeline) match
           case Some(EnrichSource)          => EnrichComparison(EnrichmentTransformers)
-          case Some(ReviewArticlePipeline) => ReviewComparison
+          case Some(ReviewArticlePipeline) => ReviewComparison(ResearchTransformers)
           case _                           => OutputComparison.none
       )
       .map(CompareRunsViews.comparison)

@@ -30,6 +30,8 @@ import com.histmersion.domain.research.workflows.SpotRule
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence

@@ -27,6 +27,7 @@ import com.histmersion.domain.automation.managers.ManagerKindDefinition
 import com.histmersion.domain.automation.managers.ManagerLight
 import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.automation.agents.Checkpointed
 import com.histmersion.domain.research.Slug
 
 import com.histmersion.api.automation.Agents.*
@@ -58,7 +59,8 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
-final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) extends ManagerKindDefinition:
+final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig, compileRecords: CompileRecords)
+    extends ManagerKindDefinition:
   val kind: Kind = Kind.Seed
   val creator: domain.Creator.New =
     domain.Creator.code(InTreeWorkflow.Research, domain.Creator.Workflow.Name("seed-manager"))
@@ -278,7 +280,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 .flatMap(o => RawJson.decode[CompileArticlePipeline.Snap](o).toOption)
               val found = c
                 .checkpoint(Run.Id.assume(r.id.value), AgentRepo.StepRecord.Name("filter"))
-                .flatMap(o => RawJson.decode[CompileArticlePipeline.Found](o).toOption)
+                .flatMap(o => compileRecords.found.read(Checkpointed.Json.of(o)).toOption)
               val facts = DraftFacts(
                 DraftFacts.Slug(d.slug.value),
                 DraftFacts.Create(d.mode == DraftMode.Create),

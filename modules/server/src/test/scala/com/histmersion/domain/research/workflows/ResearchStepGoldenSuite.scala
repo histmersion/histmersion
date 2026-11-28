@@ -5,12 +5,23 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Paths}
 import com.histmersion.api.automation.Goal.Plans.ArticleDraft
 import com.histmersion.api.library.{Confidence, Source}
-import com.histmersion.api.research.{Article, CitedSource, CritiquePair, CritiqueRef, CritiqueReason, CritiqueSide, CritiqueState}
+import com.histmersion.api.research.{
+  Article,
+  CitedSource,
+  CritiquePair,
+  CritiqueReason,
+  CritiqueRef,
+  CritiqueSide,
+  CritiqueState
+}
 import com.histmersion.api.research.Coverage
 import com.histmersion.domain.{AgentVerify, CheckpointGolden, Proposal, ReviewArticle, Title}
 import com.histmersion.domain.CheckpointGolden.Golden
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.testsupport.CheckpointCodecs.given
+import ResearchTransformers.given
+import CompileStepTransformers.given
 
 class ResearchStepGoldenSuite extends munit.FunSuite:
 
@@ -49,8 +60,22 @@ class ResearchStepGoldenSuite extends munit.FunSuite:
           Some(Snapshot.UpdatedAt("2026-10-25T10:00:00Z")),
           Snapshot.Truncated(true),
           None,
-          List(CitedSource(apiCk, Some(api.library.Title("Tin and trade")), Some(api.catalogue.Year(1987)), Some(Source.Status.Current))),
-          List(CritiquePair(CritiqueSide(critic), List(CritiquePair.Kinds("challenges")), CritiqueSide(apiCk), CritiqueState.Open))
+          List(
+            CitedSource(
+              apiCk,
+              Some(api.library.Title("Tin and trade")),
+              Some(api.catalogue.Year(1987)),
+              Some(Source.Status.Current)
+            )
+          ),
+          List(
+            CritiquePair(
+              CritiqueSide(critic),
+              List(CritiquePair.Kinds("challenges")),
+              CritiqueSide(apiCk),
+              CritiqueState.Open
+            )
+          )
         ),
         Snapshot(
           Snapshot.Slug("empty"),

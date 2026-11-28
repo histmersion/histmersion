@@ -7,6 +7,7 @@ import hearth.kindlings.tapiropenapijsoniter.OpenApiJsoniter
 import io.circe
 import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.apispec.Schema
+import sttp.tapir.docs.apispec.schema.TapirSchemaToJsonSchema
 
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{External, Problem}
@@ -56,6 +57,11 @@ object SttpAiJson:
 
   /** A step's answer schema. */
   def answerSchema(s: ResponseSchema[?]): Json = schema(s.schema)
+
+  def answerOf[D, W](answers: JsonValueCodec[D])(using wire: sttp.tapir.Schema[W]): ResponseSchema[D] =
+    ResponseSchema
+      .fromProduct((TapirSchemaToJsonSchema(wire, markOptionsAsNullable = true), codec(using answers), None))
+      .asInstanceOf[ResponseSchema[D]]
 
   /** A tool's arguments, read by the tool's own codec. */
   def arguments[T](t: AgentTool[?, T], json: Json): Either[String, T] =

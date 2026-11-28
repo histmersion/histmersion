@@ -1,16 +1,10 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.domain.research.workflows.CheckAnswer
 import com.histmersion.domain.research.workflows.SpotCheckAnswer
 import com.histmersion.domain.research.workflows.FindingAnswer
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
@@ -40,7 +34,7 @@ final case class RulesAnswer(
     statusesSilent: List[RulesAnswer.StatusesSilent] = Nil,
     spotChecks: List[SpotCheckAnswer] = Nil,
     checks: List[CheckAnswer] = Nil
-) derives JsonCodec
+)
 
 object RulesAnswer:
   export Verdict.Wire as Verdict
@@ -50,26 +44,6 @@ object RulesAnswer:
   object UncitedRelevant extends Newtype[String, Pure]
   type StatusesSilent = StatusesSilent.T
   object StatusesSilent extends Newtype[String, Pure]
-
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-  given Schema[RulesAnswer] = KindlingsSchema
-    .derived[RulesAnswer]
-    .schema
-    .modify(_.verdict)(_.description("PASS | MINOR | MAJOR — the worst of your findings"))
-    .modify(_.filter)(_.description("The filter you reconstructed and how many sources it returned"))
-    .modify(_.uncitedRelevant)(
-      _.description("Citekeys the filter returns that clearly belong and are neither cited nor under Not used")
-    )
-    .modify(_.statusesSilent)(
-      _.description("Cited non-current, non-foundational citekeys whose status the article does not state")
-    )
-    .modify(_.spotChecks)(
-      _.description(
-        "Checks 5–6: cited claims whose records you read in this step — at least three, on different sources (all when fewer are cited)"
-      )
-    )
-    .modify(_.checks)(_.description(ChecksDescription))
 
   extension (a: RulesAnswer)
     @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")

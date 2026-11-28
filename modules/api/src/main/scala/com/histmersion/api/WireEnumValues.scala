@@ -23,3 +23,6 @@ object WireEnumValues:
   object Wire extends Newtype[String, Pure]:
     /** The spelling a value of any newtype holds (`Wire.of(verb.word)`): unwrapped here, like `Problem.Raw.of`. */
     def of[T](value: T)(using RefinedType.Mirror[T]): Wire = Wire(s"$value")
+    extension (w: Wire)
+      def lowered: Wire = Wire(w.value.trim.toLowerCase)
+      def uppered: Wire = Wire(w.value.trim.toUpperCase)

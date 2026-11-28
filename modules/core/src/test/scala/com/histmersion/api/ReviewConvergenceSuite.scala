@@ -21,6 +21,8 @@ import com.histmersion.domain.research.workflows.WontFix
 import com.histmersion.domain.research.workflows.SetAsideAnswer
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 

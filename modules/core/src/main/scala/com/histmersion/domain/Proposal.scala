@@ -1,20 +1,14 @@
 package com.histmersion
 package domain
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.library.EdgesPatch
 import com.histmersion.api.library.MetadataPatch
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import io.github.iltotore.iron.constraint.any.Pure
-import sttp.tapir.Schema
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.Content
 import com.histmersion.util.problem.Problem.Field
@@ -31,9 +25,7 @@ final case class Proposal(
     target: Option[library.Citekey] = None,
     evidence: Proposal.Evidence = Proposal.Evidence(""),
     quote: Option[Proposal.Quote] = None
-) derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema:
+):
   /** One line for a person: what would change. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def describe: Proposal.Description = kind match
@@ -110,7 +102,7 @@ object Proposal:
       target: Option[ProposalAnswer.Target] = None,
       evidence: ProposalAnswer.Evidence,
       quote: ProposalAnswer.Quote
-  ) derives JsonCodec
+  )
 
   object ProposalAnswer:
     type Kind = Kind.T
@@ -125,27 +117,6 @@ object Proposal:
     object Evidence extends Newtype[String, Pure]
     type Quote = Quote.T
     object Quote extends Newtype[String, Pure]
-
-    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-    given Schema[ProposalAnswer] = KindlingsSchema
-      .derived[ProposalAnswer]
-      .schema
-      .modify(_.kind)(
-        _.description("status (change citekey's status) | edge (a disagreement edge from citekey to target)")
-      )
-      .modify(_.citekey)(_.description("The source the change is ON (an edge starts here)"))
-      .modify(_.status)(
-        _.description("For kind=status: foundational | current | contested | superseded | debunked | retracted")
-      )
-      .modify(_.edgeKind)(
-        _.description(
-          "For kind=edge: challenges | refutes | updates | superseded_by (from the older source to the newer)"
-        )
-      )
-      .modify(_.target)(_.description("For kind=edge: the citekey the edge points to"))
-      .modify(_.evidence)(_.description("Why, in one or two sentences"))
-      .modify(_.quote)(_.description("The sentence of citekey's (or target's) record that shows it, copied EXACTLY"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def check(

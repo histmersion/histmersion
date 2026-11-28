@@ -31,6 +31,7 @@ import sttp.ai.core.agent.{AgentTool, ResponseSchema}
 import sttp.tapir.Schema
 import com.histmersion.domain.EnrichSource
 import com.histmersion.domain.research.workflows.ResearchAgentTools
+import com.histmersion.domain.research.workflows.ResearchAnswers
 import com.histmersion.domain.ReviewArticle
 import com.histmersion.domain.CompileArticle
 import com.histmersion.api.library.Filter
@@ -59,9 +60,9 @@ class AgentSchemaSuite extends munit.FunSuite:
   test("the review panel's answers render as response schemas, with the field descriptions the prompts rely on"):
     import com.histmersion.domain.ReviewArticle.*
     def js[A](s: ResponseSchema[A]) = SttpAiJson.schema(s.schema).noSpaces
-    val skeptic = js(ResponseSchema.derived[SkepticAnswer]())
+    val skeptic = js(ResearchAnswers.skeptic)
     assert(skeptic.contains("\"proposals\"") && skeptic.contains("superseded_by"), skeptic)
-    val fixer = js(ResponseSchema.derived[FixerAnswer]())
+    val fixer = js(ResearchAnswers.fixer)
     // the fixer answers with edits, never a whole body
     assert(
       fixer.contains("\"edits\"") && fixer.contains("\"anchor\"") && fixer.contains("insertAfter") && fixer.contains(
@@ -70,12 +71,12 @@ class AgentSchemaSuite extends munit.FunSuite:
       fixer
     )
     assert(!fixer.contains("\"body\""), fixer)
-    val cold = js(ResponseSchema.derived[ColdReaderAnswer]())
+    val cold = js(ResearchAnswers.coldReader)
     assert(
       cold.contains("\"explainBack\"") && !cold.contains("\"evidence\""),
       "the cold reader cites no records: " + cold
     )
-    val rules = js(ResponseSchema.derived[RulesAnswer]())
+    val rules = js(ResearchAnswers.rules)
     assert(rules.contains("\"spotChecks\"") && rules.contains("\"recordQuote\""))
     // a rules or skeptic finding carries its records: citekey, offset, quote
     for s <- List(rules, skeptic) do
@@ -98,12 +99,12 @@ class AgentSchemaSuite extends munit.FunSuite:
 
   test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
     def js[A](s: ResponseSchema[A]) = SttpAiJson.schema(s.schema).noSpaces
-    val fixer = js(ResponseSchema.derived[FixerAnswer]())
+    val fixer = js(ResearchAnswers.fixer)
     assert(
       fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"),
       fixer
     )
-    val draft = js(ResponseSchema.derived[DraftAnswer]())
+    val draft = js(ResearchAnswers.draft)
     assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
     val t = TestToolbox(null).tool(ResearchAgentTools.ArticleCoverage).get
     assertEquals(t.name, "article_coverage")

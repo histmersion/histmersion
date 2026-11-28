@@ -4,6 +4,8 @@ package domain.automation.agents
 import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.domain.Proposal
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}

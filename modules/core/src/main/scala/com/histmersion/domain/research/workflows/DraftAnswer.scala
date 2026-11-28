@@ -2,15 +2,9 @@ package com.histmersion
 package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.domain.Title
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.util.problem.Problem
@@ -37,28 +31,9 @@ final case class DraftAnswer(
     body: Article.Body,
     section: Option[Article.Section] = None,
     reasons: List[Coverage.Reason] = Nil
-) derives JsonCodec
+)
 
 object DraftAnswer:
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-  given Schema[DraftAnswer] = KindlingsSchema
-    .derived[DraftAnswer]
-    .schema
-    .modify(_.title)(_.description("The article's title (a new article); repeat the current title when extending"))
-    .modify(_.summary)(_.description("One or two plain sentences: what the article answers"))
-    .modify(_.body)(_.description("New article: the WHOLE body in Markdown. Extending: ONLY the new text to add"))
-    .modify(_.section)(
-      _.description(
-        "Extending: the existing heading to add the text under (e.g. '## Disagreements'); null = at the end"
-      )
-    )
-    .modify(_.reasons)(
-      _.description(
-        "For each source of the claim table you do NOT cite: one plain sentence saying why it is left out " +
-          "(code lists it under the generated Not used section)"
-      )
-    )
 
   extension (a: DraftAnswer)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

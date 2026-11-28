@@ -10,7 +10,7 @@ import com.histmersion.domain.research.articles.{
   PageBuilder
 }
 import com.histmersion.domain.research.articles.review.ReviewStateService
-import com.histmersion.domain.research.workflows.ReviewLedgerService
+import com.histmersion.domain.research.workflows.{ResearchTransformers, ReviewLedgerService}
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
@@ -32,7 +32,7 @@ final class ResearchWiring(
   val articleStore: ArticleService = ArticleService(deps.transactor, deps.clock)
 
   /** The articles' review ledgers. */
-  val ledgers: ReviewLedgerService = ReviewLedgerService(deps.transactor)
+  val ledgers: ReviewLedgerService = ReviewLedgerService(deps.transactor, ResearchTransformers.ledger)
 
   val articles: ArticlesControllers = ArticlesControllers(
     articleStore,

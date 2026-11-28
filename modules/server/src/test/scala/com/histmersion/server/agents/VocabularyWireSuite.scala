@@ -3,6 +3,8 @@ package server.agents
 
 import com.histmersion.domain.research.workflows.SourceFact
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.domain.research.workflows.CompileStepTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 
 import com.histmersion.domain.research.workflows.*
 

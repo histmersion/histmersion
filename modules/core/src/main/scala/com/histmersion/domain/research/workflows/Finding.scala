@@ -1,13 +1,8 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.research.CritiqueRef
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.research.workflows.Severity
@@ -32,7 +27,6 @@ import com.histmersion.domain.ReviewArticle.key
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.Citekey as ApiCitekey
 
-@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Finding(
     id: Finding.Id,
     reviewer: Reviewer,
@@ -45,9 +39,7 @@ final case class Finding(
     evidence: List[Quotation] = Nil,
     escalated: Finding.Escalated = Finding.Escalated(false),
     pair: Option[CritiqueRef] = None
-) derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema:
+):
   def major: Boolean = severity == Severity.Major
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

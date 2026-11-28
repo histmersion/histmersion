@@ -2,14 +2,8 @@ package com.histmersion
 package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.research.Coverage
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.domain.research.workflows.ClaimAnswer
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
@@ -32,22 +26,11 @@ final case class ExtractAnswer(
     relevant: ExtractAnswer.Relevant,
     reason: Coverage.Rationale,
     claims: List[ClaimAnswer] = Nil
-) derives JsonCodec
+)
 
 object ExtractAnswer:
   type Relevant = Relevant.T
   object Relevant extends Newtype[Boolean, Pure]
-
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-  given Schema[ExtractAnswer] = KindlingsSchema
-    .derived[ExtractAnswer]
-    .schema
-    .modify(_.relevant)(_.description("Does the record bear on the article's question at all?"))
-    .modify(_.reason)(
-      _.description("If not relevant: why (wrong region, period or sub-problem). Otherwise what it contributes")
-    )
-    .modify(_.claims)(_.description("Every claim of the record that bears on the question; empty if not relevant"))
 
   extension (a: ExtractAnswer)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

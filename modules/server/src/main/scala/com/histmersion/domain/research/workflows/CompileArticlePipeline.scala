@@ -90,10 +90,14 @@ final class CompileArticlePipeline(
     cfg: => AgentsConfig,
     research: => ResearchAgentsConfig,
     lib: => LibraryAgentsConfig,
-    startChild: (RunRequest, RunInfo) => Creator.New ?=> Either[Api.Error, RunInfo]
+    startChild: (RunRequest, RunInfo) => Creator.New ?=> Either[Api.Error, RunInfo],
+    records: ResearchRecords,
+    compileRecords: CompileRecords
 ) extends PipelineDef:
   val pipeline: Pipeline = Pipeline.CompileArticle
   import CompileArticlePipeline.*
+  import records.given
+  import compileRecords.given
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
@@ -555,7 +559,7 @@ object CompileArticlePipeline:
       total: RowCount,
       sources: List[SourceFact],
       toExtract: List[Citekey]
-  ) derives JsonCodec
+  )
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */
   final case class Written(written: Written.Value, why: Rationale, previousVersion: Option[Written.PreviousVersion])

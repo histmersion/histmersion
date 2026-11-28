@@ -43,6 +43,25 @@ object Notes:
   type Text = Text.T
   object Text extends Newtype[String, Pure]
 
+object Limits:
+  val Max = 3
+  def Hint: String = "pick one"
+  type Ratio = Ratio.T
+  object Ratio extends Newtype[Double, Pure]
+  type Note = Note.T
+  object Note extends Newtype[String, Pure]
+
+final case class Verdict(ratio: Verdict.Ratio, label: Verdict.Label, note: Verdict.Remark, reasons: List[Verdict.Reason])
+
+object Verdict:
+  final case class Reason(text: String)
+
+  type Ratio = Limits.Ratio
+  export Limits.Note as Remark
+  type Label = Label.T
+  object Label extends Newtype[String, Pure]:
+    extension (l: Label) def clean: String = l.value.trim
+
 enum Status:
   case Open, Closed
 

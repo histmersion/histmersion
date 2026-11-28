@@ -1,13 +1,9 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.research.CritiqueReason
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.research.Article
 import com.histmersion.domain.research.workflows.Rejection
 import com.histmersion.domain.research.workflows.SetAside
@@ -40,7 +36,7 @@ final case class Fix(
     repairs: List[Fix.Repairs] = Nil,
     notFixed: List[WontFix] = Nil,
     pairsAside: List[CritiqueReason] = Nil
-) derives JsonCodec
+)
 
 object Fix:
   export Article.Body

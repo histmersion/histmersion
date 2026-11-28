@@ -21,6 +21,8 @@ import com.histmersion.domain.research.workflows.Snapshot
 import com.histmersion.domain.research.workflows.Report
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
+import com.histmersion.domain.research.workflows.ResearchTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Text.{sentence, sentences}

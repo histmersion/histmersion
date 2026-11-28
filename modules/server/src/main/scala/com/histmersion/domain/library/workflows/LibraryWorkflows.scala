@@ -49,7 +49,8 @@ final class LibraryWorkflows(
         .patch(p.citekey, p.patch)
         .left
         .map(e => e.problems)
-        .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
+        .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value)),
+    domain.research.workflows.ResearchTransformers.proposal
   )
 
   val enrichSource: WorkflowDefinition = LibraryWorkflow(

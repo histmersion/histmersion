@@ -28,6 +28,7 @@ object SplitWireTwin {
       twinImports: List[String] = Nil,
       codecGivens: List[String] = List("Schema", "JsonValueCodec", "JsonCodec", "Codec", "KindlingsSchema"),
       stripImports: List[String] = Nil,
+      constants: Map[String, String] = Map.empty,
       strip: Boolean = true
   )
   object Config {
@@ -79,7 +80,8 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
   private def report(kind: String, from: String, rest: String*): Unit =
     reported.add((kind +: from +: rest).mkString("\t"))
 
-  private def twinOf(f: String): Option[Twin] = config.twins.find(t => f == t.from || f.startsWith(t.from + "."))
+  private def twinOf(f: String): Option[Twin] =
+    config.twins.filter(t => f == t.from || f.startsWith(t.from + ".")).sortBy(-_.from.length).headOption
 
   private def target(f: String, own: Twin): Option[String] =
     config.types
@@ -132,14 +134,19 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
               val first = ss.indexWhere(s => !s.value.endsWith("/"))
               val typed = if (first < 0) None else (first until ns.size).find(i => config.types.contains(fqn(ss(i))))
               def ownLocal(s: Symbol) = { val g = fqn(s); g == own.from || g.startsWith(own.from + ".") }
+              val nestedTwin =
+                if (first < 0) None
+                else (first until ns.size).reverseIterator.find(i => fqn(ss(i)) != own.from && config.twins.exists(_.from == fqn(ss(i))))
               def ownText(i: Int) = (ns.drop(i).zipWithIndex.map { case (n, k) =>
                 if (k == 0 && fqn(ss(i)) == own.from) simple(own.to) else n.value
               }).mkString(".")
-              if (typed.isEmpty && first >= 0 && ownLocal(ss(first))) {
+              if (typed.isEmpty && first >= 0 && ownLocal(ss(first)) && nestedTwin.isEmpty) {
                 if (ownText(first) != t.syntax) edits ::= Edit(t.pos.start, t.pos.end, ownText(first))
               } else {
                 val resolved = if (first < 0) None
                 else typed.map(i => i -> config.types(fqn(ss(i)))).orElse(
+                  nestedTwin.filter(_ > first).map(i => i -> twinOf(fqn(ss(i))).get.to)
+                ).orElse(
                   (first until ns.size).iterator.flatMap(i => target(fqn(ss(i)), own).map(i -> _)).nextOption()
                 )
                 resolved match {
@@ -191,7 +198,28 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
     case _ => false
   }
 
-  private def descriptions(body: Term): Either[String, (Map[String, String], Option[String])] = {
+  private def constValue(t: Term)(implicit doc: SemanticDocument): Option[String] = t match {
+    case Lit.String(v) => Some(v)
+    case Lit.Int(v) => Some(v.toString)
+    case Term.Block(List(inner: Term)) => constValue(inner)
+    case Term.ApplyInfix.After_4_6_0(l, Term.Name("+"), _, Term.ArgClause(List(r), _)) =>
+      for (a <- constValue(l); b <- constValue(r)) yield a + b
+    case Term.Interpolate(Term.Name("s"), parts, args) if parts.forall(p => !p.syntax.contains('\\')) =>
+      val values = args.map(constValue)
+      if (values.exists(_.isEmpty)) None
+      else Some(parts.map(_.value).zipAll(values.flatten, "", "").map { case (p, a) => p + a }.mkString)
+    case n @ (_: Term.Name | _: Term.Select) => config.constants.get(fqn(n.symbol).stripSuffix("()"))
+    case _ => None
+  }
+
+  private def constText(t: Term)(implicit doc: SemanticDocument): Option[String] = t match {
+    case lit: Lit.String => Some(lit.syntax)
+    case other => constValue(other).map(v => Lit.String(v).syntax)
+  }
+
+  private def descriptions(body: Term)(implicit
+      doc: SemanticDocument
+  ): Either[String, (Map[String, String], Option[String])] = {
     def loop(t: Term, acc: Map[String, String], top: Option[String]): Either[String, (Map[String, String], Option[String])] =
       t match {
         case Term.Apply.After_4_6_0(
@@ -204,15 +232,16 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
                   Term.AnonymousFunction(
                     Term.Apply.After_4_6_0(
                       Term.Select(Term.Placeholder(), Term.Name("description")),
-                      Term.ArgClause(List(lit: Lit.String), _)
+                      Term.ArgClause(List(arg), _)
                     )
                   )
-                ) =>
-              loop(inner, acc + (field -> lit.syntax), top)
+                ) if constText(arg).nonEmpty =>
+              loop(inner, acc + (field -> constText(arg).get), top)
             case _ => Left(s"modify(${path.syntax})(${fn.syntax})")
           }
-        case Term.Apply.After_4_6_0(Term.Select(inner, Term.Name("description")), Term.ArgClause(List(lit: Lit.String), _)) =>
-          loop(inner, acc, Some(lit.syntax))
+        case Term.Apply.After_4_6_0(Term.Select(inner, Term.Name("description")), Term.ArgClause(List(arg), _))
+            if constText(arg).nonEmpty =>
+          loop(inner, acc, constText(arg))
         case Term.Select(Term.ApplyType.After_4_6_0(Term.Select(Term.Name("KindlingsSchema"), Term.Name("derived")), _), Term.Name("schema")) =>
           Right((acc, top))
         case Term.Select(
@@ -345,7 +374,30 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
       val recordText = (top.map(t => s"@description($t)\n").getOrElse("")) + nameText + header + derivesText +
         (if (cases.isEmpty) "" else cases.mkString(":\n", "\n", ""))
 
-      val companionStats = companion.toList.flatMap(_.templ.body.stats).flatMap {
+      def redeclaredRef(n: Tree): Option[String] = Some(fqn(n.symbol)).filter(config.redeclare.contains)
+      def aliasesOf(s: Stat): Option[List[(String, String)]] = s match {
+        case e: Export =>
+          val pairs = e.importers.flatMap { im =>
+            val owner = fqn(im.ref.symbol)
+            def member(n: Name) = Some(owner + "." + n.value).filter(config.redeclare.contains)
+            im.importees.map {
+              case Importee.Name(n) => member(n).map(_ -> n.value)
+              case Importee.Rename(n, as) => member(n).map(_ -> as.value)
+              case _ => None
+            }
+          }
+          if (pairs.nonEmpty && pairs.forall(_.nonEmpty)) Some(pairs.flatten) else None
+        case t: Defn.Type =>
+          (t.body match {
+            case n: Type.Name => redeclaredRef(n)
+            case Type.Select(_, n) => redeclaredRef(n)
+            case _ => None
+          }).map(f => List(f -> t.name.value))
+        case _ => None
+      }
+      val ownStats = companion.toList.flatMap(_.templ.body.stats)
+      val aliases = ownStats.flatMap(s => aliasesOf(s).toList.flatten).distinct
+      val companionStats = ownStats.filter(s => aliasesOf(s).isEmpty).flatMap {
         case t: Defn.Type if !config.types.contains(tw.from + "." + t.name.value) => Some(t)
         case o: Defn.Object
             if o.templ.inits.exists(_.tpe.syntax.startsWith("Newtype")) && !config.types.contains(tw.from + "." + o.name.value) =>
@@ -353,7 +405,13 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
         case e: Export => Some(e)
         case _ => None
       }
-      val compRefs = companionStats.map(s => references(s, tw, s.collect { case a: Mod.Annot => a: Tree }.toSet))
+      val compRefs = companionStats.map { s =>
+        val body: Set[Tree] = s match {
+          case o: Defn.Object => Set(o.templ.body)
+          case _ => Set.empty
+        }
+        references(s, tw, s.collect { case a: Mod.Annot => a: Tree }.toSet ++ body)
+      }
       val compTexts = companionStats.zip(compRefs).map { case (s, (edits, _, _, _)) =>
         val end = s match {
           case o: Defn.Object => o.templ.inits.map(_.pos.end).max
@@ -367,11 +425,16 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
         "  " + render(code, startAfterAnnotations(s, mods0), end, edits)
       }
       val redeclared = (recRedeclared ++ compRefs.flatMap(_._4)).toList.sorted
+        .filterNot(f => aliases.contains(f -> simple(f)))
       val redeclTexts = redeclared.flatMap { f =>
         val n = simple(f)
         List(s"  type $n = $n.T", s"  object $n extends ${config.redeclare(f)}")
+      } ++ aliases.flatMap { case (f, n) =>
+        val s = simple(f)
+        if (n == s) List(s"  type $n = $n.T", s"  object $n extends ${config.redeclare(f)}")
+        else List(s"  type $n = $n.$s", s"  object $n:", s"    type $s = $s.T", s"    object $s extends ${config.redeclare(f)}")
       }
-      val redeclImports = if (redeclared.isEmpty) Nil else config.redeclareImports
+      val redeclImports = if (redeclared.isEmpty && aliases.isEmpty) Nil else config.redeclareImports
 
       val missing = (recMissing ++ compRefs.flatMap(_._3)).distinct
       missing.foreach { case (text, sym) =>

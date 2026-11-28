@@ -51,5 +51,5 @@ object ResearchStoreSuite:
         val db = Transactor(scratch(made.incrementAndGet().toString))
         new ResearchStores:
           val articles = ArticleService(db, TestCreators.clock)
-          val ledgers = ReviewLedgerService(db)
+          val ledgers = ReviewLedgerService(db, workflows.ResearchTransformers.ledger)
       }

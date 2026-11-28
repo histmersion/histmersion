@@ -1,27 +1,19 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.library
 import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.Proposal
 
-@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Quotation(
     citekey: library.Citekey,
     offset: Option[Quotation.Offset],
     quote: Quotation.Quote,
     ratio: Quotation.Ratio
-) derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema
+)
 
 object Quotation:
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")

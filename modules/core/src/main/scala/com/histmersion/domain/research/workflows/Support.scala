@@ -3,11 +3,7 @@ package domain.research.workflows
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.library.Citekey
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.automation.Goal.Plans.ArticleDraft
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.domain.research.workflows.NotUsed
 import com.histmersion.RowCount
 import com.histmersion.domain.research.workflows.SourceFact
@@ -27,7 +23,7 @@ final case class Support(
     edges: List[EdgeFact],
     disputed: List[Citekey],
     notUsed: List[NotUsed]
-) derives JsonCodec:
+):
   def used: List[Citekey] =
     sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Support.ClaimCount(0)).hasClaims)
 

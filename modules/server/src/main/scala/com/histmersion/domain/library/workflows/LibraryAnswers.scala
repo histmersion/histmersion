@@ -27,12 +27,12 @@ object LibraryAnswers:
   object Name extends Newtype[String, Pure]
 
   val classification: ResponseSchema[Classification] =
-    answer[Classification, wire.Classification](EnrichmentTransformers.classificationAnswer)
+    SttpAiJson.answerOf[Classification, wire.Classification](EnrichmentTransformers.classificationAnswer)
   val findings: ResponseSchema[Findings] =
-    answer[Findings, wire.ProposedFindings](EnrichmentTransformers.findingsAnswer)
-  val notes: ResponseSchema[Notes] = answer[Notes, wire.Notes](EnrichmentTransformers.notesAnswer)
+    SttpAiJson.answerOf[Findings, wire.ProposedFindings](EnrichmentTransformers.findingsAnswer)
+  val notes: ResponseSchema[Notes] = SttpAiJson.answerOf[Notes, wire.Notes](EnrichmentTransformers.notesAnswer)
   val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] =
-    answer[AcquisitionSweepRules.Ranking, wire.Ranking](AcquisitionTransformers.rankingAnswer)
+    SttpAiJson.answerOf[AcquisitionSweepRules.Ranking, wire.Ranking](AcquisitionTransformers.rankingAnswer)
 
   /** Its step schemas, by name. */
   val all: List[(Name, ResponseSchema[?])] = List(
@@ -41,8 +41,3 @@ object LibraryAnswers:
     Name("notes") -> notes,
     Name("ranking") -> ranking
   )
-
-  private def answer[D, W](codec: JsonValueCodec[D])(using schema: Schema[W]): ResponseSchema[D] =
-    ResponseSchema
-      .fromProduct((TapirSchemaToJsonSchema(schema, markOptionsAsNullable = true), SttpAiJson.codec(using codec), None))
-      .asInstanceOf[ResponseSchema[D]]

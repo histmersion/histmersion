@@ -1,11 +1,7 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Run
 import com.histmersion.domain.ReviewArticle
@@ -22,7 +18,7 @@ final case class Closure(
     note: Closure.Note = Closure.Note(""),
     quote: Closure.Quote = Closure.Quote(""),
     citekey: Option[Citekey] = None
-) derives JsonCodec
+)
 
 object Closure:
   export Reviewer.Wire as By

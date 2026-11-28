@@ -69,6 +69,7 @@ object CheckpointGolden:
   private given JsonValueCodec[AcquisitionSweepRules.Ranking] = library.workflows.AcquisitionTransformers.rankingAnswer
 
   import com.histmersion.testsupport.CheckpointCodecs.given
+  import com.histmersion.domain.research.workflows.ResearchTransformers.given
 
   private val findingInputs = List(
     Finding.Input(

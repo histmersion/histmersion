@@ -1,17 +1,11 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import hearth.kindlings.optics.syntax.*
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.domain.research.workflows.CheckAnswer
 import com.histmersion.domain.research.workflows.NotMaterialAnswer
 import com.histmersion.domain.Proposal
 import com.histmersion.domain.research.workflows.FindingAnswer
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
-import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
@@ -41,32 +35,12 @@ final case class SkepticAnswer(
     claimsChecked: SkepticAnswer.ClaimsChecked,
     checks: List[CheckAnswer] = Nil,
     notMaterial: List[NotMaterialAnswer] = Nil
-) derives JsonCodec
+)
 
 object SkepticAnswer:
   export Verdict.Wire as Verdict
   type ClaimsChecked = ClaimsChecked.T
   object ClaimsChecked extends Newtype[Int, Pure]
-
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-  given Schema[SkepticAnswer] = KindlingsSchema
-    .derived[SkepticAnswer]
-    .schema
-    .modify(_.verdict)(_.description("PASS | MINOR | MAJOR — the worst of your findings"))
-    .modify(_.proposals)(
-      _.description(
-        "Database errors you noticed, as changes for a person to approve: a status, or a disagreement edge — each with a quote from the record"
-      )
-    )
-    .modify(_.claimsChecked)(_.description("How many load-bearing claims you checked"))
-    .modify(_.checks)(_.description(ChecksDescription))
-    .modify(_.notMaterial)(
-      _.description(
-        "Each open pair of the critique checklist that does NOT bear on a claim the article makes, with why " +
-          "(every open pair shown is either here or named by a missing-critique MAJOR finding)"
-      )
-    )
 
   extension (a: SkepticAnswer)
     def checkSkeptic(

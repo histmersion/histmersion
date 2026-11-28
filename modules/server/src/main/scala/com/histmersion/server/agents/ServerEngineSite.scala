@@ -52,7 +52,7 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def roster: AgentRoster = EngineContributions.roster
   def contributions(a: AgentsControllers): Contributions = EngineContributions.of(deps, w, a)
   def approvalEffects: ApprovalEffects = ApprovalEffects.of(
-    SourceProposalEffect(w.library.sources),
+    SourceProposalEffect(w.library.sources, domain.research.workflows.ResearchTransformers.proposal),
     List(ArticleFilterApproval(w.research.articles, w.research.articleStore))
   )
   def host(a: AgentsControllers): AutomationHost =
