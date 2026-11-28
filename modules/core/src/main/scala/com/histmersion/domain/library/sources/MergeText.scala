@@ -10,6 +10,7 @@ import com.histmersion.domain.AuthorName
 import com.histmersion.domain.library.Isbn
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.util.text.Fingerprint
+import com.histmersion.TwoCases
 
 /** The normalisers the source matcher compares with (docs/research-merge-import.md §5.2): folding, OpenRefine
   * fingerprints, title keys, personal names, Jaro-Winkler, token Jaccard and MinHash. All pure; JVM-only because of
@@ -159,8 +160,10 @@ object MergeText:
     def all: List[Token] = forenames ++ surname
 
   object Person:
-    type SurnameKnown = SurnameKnown.T
-    object SurnameKnown extends Newtype[Boolean, Pure]
+    enum SurnameKnown derives CanEqual:
+      case Known, Unknown
+    object SurnameKnown extends TwoCases[SurnameKnown]:
+      extension (surnameKnown: SurnameKnown) def surnameKnown: Boolean = surnameKnown == Known
 
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
   private val particles: Set[String] =
@@ -210,19 +213,19 @@ object MergeText:
       case first :: rest if rest.exists(p => nameTokens(p).nonEmpty) =>
         val surname = nameTokens(first)
         val forenames = rest.flatMap(nameTokens)
-        Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = Person.SurnameKnown(true)))
+        Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = Person.SurnameKnown.Known))
       case _ =>
         val ts = nameTokens(raw)
         ts match
           case Nil       => None
-          case List(one) => Some(Person(List(one), Nil, surnameKnown = Person.SurnameKnown(true)))
+          case List(one) => Some(Person(List(one), Nil, surnameKnown = Person.SurnameKnown.Known))
           case _         =>
             // the best guess: the last word, with any particles right before it — a guess still
             // (`Carolina Lopez Ruiz`), so `samePerson` tries every trailing run
             val (front, last) = (ts.init, ts.last)
             val parts = front.reverse.takeWhile(t => particles(t.value)).reverse
             val forenames = front.dropRight(parts.length)
-            Some(Person(parts :+ last, forenames, surnameKnown = Person.SurnameKnown(false)))
+            Some(Person(parts :+ last, forenames, surnameKnown = Person.SurnameKnown.Unknown))
 
   /** Given names compatible: pairwise, the same initial, and where both are written out, the same name (or one a prefix
     * of the other). Missing forenames are compatible with anything.
@@ -243,7 +246,7 @@ object MergeText:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def samePerson(a: Person, b: Person): Boolean =
     def splits(p: Person): List[(List[Token], List[Token])] =
-      if p.surnameKnown.value then List(p.surname -> p.forenames)
+      if p.surnameKnown.surnameKnown then List(p.surname -> p.forenames)
       else
         val all = p.all
         (1 to all.length).toList.map(n => all.takeRight(n) -> all.dropRight(n))

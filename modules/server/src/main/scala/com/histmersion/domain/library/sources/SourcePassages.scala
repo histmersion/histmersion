@@ -38,7 +38,7 @@ object SourcePassages:
           citekey,
           chunks,
           PassageFinder.Query(query.value),
-          PassageFinder.Regex(regex.value),
+          (if regex.value then PassageFinder.Regex.Regex else PassageFinder.Regex.Literal),
           PassageFinder.Limit(limit.value),
           PassageFinder.ContextChars(context.value),
           PassageFinder.MaxMatches(maxMatches.value),

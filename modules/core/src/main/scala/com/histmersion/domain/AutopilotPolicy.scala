@@ -13,6 +13,7 @@ import com.histmersion.domain.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The pure half of the autopilot (docs/research-process-managers.md "As built: the autopilot"): the code checks that
   * decide an approval without a person, the rule that moves a research goal's status on from the facts, the managers
@@ -101,14 +102,15 @@ object AutopilotPolicy:
     case Leave(why: Rationale)
 
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
-  final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
+  final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.Availability, hits: PlannedFacts.Hits)
 
   object PlannedFacts:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
-    type SlugFree = SlugFree.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object SlugFree extends Newtype[Boolean, Pure]
+    enum Availability derives CanEqual:
+      case Free, Taken
+    object Availability extends TwoCases[Availability]:
+      extension (slugFree: Availability) def slugFree: Boolean = slugFree == Free
     type Hits = Hits.T
     object Hits extends Newtype[Int, Pure]
 
@@ -125,7 +127,7 @@ object AutopilotPolicy:
   ): Verdict =
     val n = articles.size
     val bad = articles.flatMap { a =>
-      if !a.slugFree.value then Some(s"${a.slug}: the slug is taken now")
+      if !a.slugFree.slugFree then Some(s"${a.slug}: the slug is taken now")
       else if a.hits.value < minSources.value then
         Some(s"${a.slug}: its filter returns ${a.hits} source(s), fewer than $minSources")
       else None
@@ -159,24 +161,30 @@ object AutopilotPolicy:
       hits: Option[DraftFacts.Hits],
       problems: List[DraftFacts.Problems],
       cited: DraftFacts.Cited,
-      slugFree: DraftFacts.SlugFree
+      slugFree: DraftFacts.Availability
   )
 
   object DraftFacts:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
-    type Create = Create.T
-    object Create extends Newtype[Boolean, Pure]
-    type FilterRecorded = FilterRecorded.T
-    object FilterRecorded extends Newtype[Boolean, Pure]
+    enum Create derives CanEqual:
+      case Create, Update
+    object Create extends TwoCases[Create]:
+      extension (create: Create) def create: Boolean = create == Create
+    enum FilterRecorded derives CanEqual:
+      case Recorded, Unrecorded
+    object FilterRecorded extends TwoCases[FilterRecorded]:
+      extension (filterRecorded: FilterRecorded) def filterRecorded: Boolean = filterRecorded == Recorded
     type Hits = Hits.T
     object Hits extends Newtype[Int, Pure]
     type Problems = Problems.T
     object Problems extends Newtype[String, Pure]
     type Cited = Cited.T
     object Cited extends Newtype[Int, Pure]
-    type SlugFree = SlugFree.T
-    object SlugFree extends Newtype[Boolean, Pure]
+    enum Availability derives CanEqual:
+      case Free, Taken
+    object Availability extends TwoCases[Availability]:
+      extension (slugFree: Availability) def slugFree: Boolean = slugFree == Free
 
   /** An `article-publish`: approved when the run recorded a filter that returns at least `minSources` sources, the code
     * self-check left no problem, the text cites a source and (a new article) the slug is still free — within `cap`
@@ -186,7 +194,7 @@ object AutopilotPolicy:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articlePublish(d: DraftFacts, minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if !d.filterRecorded.value then Verdict.Reject(Rationale("the run records no coverage filter"))
+    if !d.filterRecorded.filterRecorded then Verdict.Reject(Rationale("the run records no coverage filter"))
     else if d.hits.forall(_.value < minSources.value) then
       Verdict.Reject(
         Rationale(
@@ -200,7 +208,7 @@ object AutopilotPolicy:
         )
       )
     else if d.cited.value == 0 then Verdict.Reject(Rationale("the text cites no source"))
-    else if d.create.value && !d.slugFree.value then Verdict.Reject(Rationale(s"the slug ${d.slug} is taken now"))
+    else if d.create.create && !d.slugFree.slugFree then Verdict.Reject(Rationale(s"the slug ${d.slug} is taken now"))
     else if approvedToday.value >= cap.value then
       Verdict.Leave(Rationale(s"the daily cap of $cap drafts is reached; decided tomorrow"))
     else
@@ -467,14 +475,20 @@ object AutopilotPolicy:
   object GoalFacts:
     type Slug = Slug.T
     object Slug extends Newtype[String, Pure]
-    type Managed = Managed.T
-    object Managed extends Newtype[Boolean, Pure]
+    enum Managed derives CanEqual:
+      case Managed, Unmanaged
+    object Managed extends TwoCases[Managed]:
+      extension (managed: Managed) def managed: Boolean = managed == Managed
     type Articles = Articles.T
     object Articles extends Newtype[Int, Pure]
-    type CompileOpen = CompileOpen.T
-    object CompileOpen extends Newtype[Boolean, Pure]
-    type Reviewed = Reviewed.T
-    object Reviewed extends Newtype[Boolean, Pure]
+    enum CompileOpen derives CanEqual:
+      case Open, Done
+    object CompileOpen extends TwoCases[CompileOpen]:
+      extension (compileOpen: CompileOpen) def compileOpen: Boolean = compileOpen == Open
+    enum Reviewed derives CanEqual:
+      case Reviewed, Unreviewed
+    object Reviewed extends TwoCases[Reviewed]:
+      extension (reviewed: Reviewed) def reviewed: Boolean = reviewed == Reviewed
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def rank(s: Goal.Status.Wire): Int = Goal.Status.all.indexOf(s)
@@ -492,11 +506,11 @@ object AutopilotPolicy:
     else
       val kids = f.children.map(rank)
       val hasOwn = f.articles.value > 0
-      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen.value && kids.forall(
+      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen.compileOpen && kids.forall(
         _ >= rank(Goal.Status.Wire(Goal.Status.Compiled))
       )
       val reviewed =
-        compiled && (!hasOwn || f.reviewed.value) && kids.forall(_ >= rank(Goal.Status.Wire(Goal.Status.Reviewed)))
+        compiled && (!hasOwn || f.reviewed.reviewed) && kids.forall(_ >= rank(Goal.Status.Wire(Goal.Status.Reviewed)))
       val (target, why) =
         if reviewed then
           (
@@ -512,7 +526,7 @@ object AutopilotPolicy:
              else "nothing left to compile") +
               (if kids.nonEmpty then s", its ${counted(kids.size, "sub-goal")} are compiled" else "")
           )
-        else if f.managed.value then
+        else if f.managed.managed then
           (Goal.Status.Wire(Goal.Status.Seeding), "its seeding manager and watcher are active")
         else (f.status, "")
       Option.when(rank(target) > cur)((target, Rationale(why)))
@@ -525,8 +539,10 @@ object AutopilotPolicy:
   final case class GoalRow(slug: Goal.Slug, status: Goal.Status.Wire, needsPlan: GoalRow.NeedsPlan)
 
   object GoalRow:
-    type NeedsPlan = NeedsPlan.T
-    object NeedsPlan extends Newtype[Boolean, Pure]
+    enum NeedsPlan derives CanEqual:
+      case NeedsPlan, Planned
+    object NeedsPlan extends TwoCases[NeedsPlan]:
+      extension (needsPlan: NeedsPlan) def needsPlan: Boolean = needsPlan == NeedsPlan
 
   /** A manager as the autopilot sees it. `planItem` = it has a plan-goal item (any status). */
   final case class ManagerRow(
@@ -536,7 +552,7 @@ object AutopilotPolicy:
       state: Manager.State.Wire,
       cron: Option[Cron],
       autoIngest: Option[ManagerRow.AutoIngest],
-      planItem: ManagerRow.PlanItem = ManagerRow.PlanItem(false),
+      planItem: ManagerRow.PlanItem = ManagerRow.PlanItem.Standalone,
       extendMinNew: Option[Settings.ExtendMinNew] = None
   )
 
@@ -547,10 +563,14 @@ object AutopilotPolicy:
       def seed(goal: Goal.Slug): Id = Id(s"seed:${goal.value}")
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def watch(goal: Goal.Slug): Id = Id(s"watch:${goal.value}")
-    type AutoIngest = AutoIngest.T
-    object AutoIngest extends Newtype[Boolean, Pure]
-    type PlanItem = PlanItem.T
-    object PlanItem extends Newtype[Boolean, Pure]
+    enum AutoIngest derives CanEqual:
+      case AutoIngest, ManualIngest
+    object AutoIngest extends TwoCases[AutoIngest]:
+      extension (autoIngest: AutoIngest) def autoIngest: Boolean = autoIngest == AutoIngest
+    enum PlanItem derives CanEqual:
+      case PlanItem, Standalone
+    object PlanItem extends TwoCases[PlanItem]:
+      extension (planItem: PlanItem) def planItem: Boolean = planItem == PlanItem
 
   /** The settings `ensure` works with. */
   final case class Settings(
@@ -657,7 +677,7 @@ object AutopilotPolicy:
           Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
             Option.when(!done && m.cron.isEmpty)(Step.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
             Option
-              .when(!done && g.needsPlan.value && !m.planItem.value && m.state != Manager.State.Stopped.wire)(
+              .when(!done && g.needsPlan.needsPlan && !m.planItem.planItem && m.state != Manager.State.Stopped.wire)(
                 Step.AddPlanItem(m.id, g.slug)
               )
               .toList

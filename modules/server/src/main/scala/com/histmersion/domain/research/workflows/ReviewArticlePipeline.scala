@@ -151,7 +151,7 @@ final class ReviewArticlePipeline(
       ctx.run.params.rounds.map(r => RequestedRounds(r.value)),
       DefaultRounds(cfg.review.maxRounds.value),
       RoundCap(cfg.review.roundsCap.value),
-      FixRun(fix)
+      (if fix then Pass.Fix else Pass.ReviewOnly)
     )
     for
       ledger <- ctx.code[Ledger](AgentRepo.StepRecord.Name("ledger"))(load(slug))
@@ -190,8 +190,9 @@ final class ReviewArticlePipeline(
       st: State,
       start: Snapshot
   )(using WritePermit)(using Creator.New): Either[Halt, End] =
-    if done(st.merged, Merged.Round(r), rounds, FixRun(fix)) then finish(ctx, slug, r, st, start)
-    else if st.snap.truncated.value then
+    if done(st.merged, Merged.Round(r), rounds, (if fix then Pass.Fix else Pass.ReviewOnly)) then
+      finish(ctx, slug, r, st, start)
+    else if st.snap.truncated.truncated then
       ctx.warn(
         s"round $r: the article is longer than agents.review.article-chars; it was reviewed cut and is not revised"
       )
@@ -205,17 +206,17 @@ final class ReviewArticlePipeline(
           ctx.byAnswer(fixerStep(r))(write(ctx, st.snap, fixed, r, after))
         )
         carry = Carry(
-          if patched.conflict.value then c.ledger else after,
+          if patched.conflict.conflict then c.ledger else after,
           c.applied + fixed.applied.size,
           c.rejectedCount + fixed.rejected.size,
           fixed = true,
-          if patched.conflict.value then c.reasons else c.reasons ++ setAsideReasons(ctx, fixed)
+          if patched.conflict.conflict then c.reasons else c.reasons ++ setAsideReasons(ctx, fixed)
         )
-        unwritten = if patched.conflict.value then None else Option.when(ctx.dryRun)(fixed.body)
+        unwritten = if patched.conflict.conflict then None else Option.when(ctx.dryRun)(fixed.body)
         next <-
-          if patched.conflict.value then full(ctx, slug, r + 1, carry, None, fixable = r + 1 < rounds.value)
+          if patched.conflict.conflict then full(ctx, slug, r + 1, carry, None, fixable = r + 1 < rounds.value)
           else targeted(ctx, slug, r + 1, st.snap, carry, unwritten)
-        end <- loop(ctx, slug, r + 1, rounds, fix, next, if patched.conflict.value then next.snap else start)
+        end <- loop(ctx, slug, r + 1, rounds, fix, next, if patched.conflict.conflict then next.snap else start)
       yield end
 
   /** The passes are over: a run whose last pass verified a fix ends with a full panel when `agents.review.final-panel`
@@ -528,7 +529,7 @@ final class ReviewArticlePipeline(
             Snapshot.Kind(a.kind.value),
             text,
             a.updatedAt.map(u => Snapshot.UpdatedAt(u.value)),
-            Snapshot.Truncated(cut),
+            (if cut then Snapshot.Truncated.Truncated else Snapshot.Truncated.Whole),
             v.coverage,
             cited,
             critiques
@@ -550,7 +551,7 @@ final class ReviewArticlePipeline(
       s.kind,
       s.body,
       isTarget(s.body),
-      generated = MechanicalGenerated(s.coverage.isDefined)
+      generated = if s.coverage.isDefined then MechanicalGenerated.Generated else MechanicalGenerated.Given
     )
     if s.coverage.isEmpty && r == 1 && !s.kind.value.trim.equalsIgnoreCase("index") then
       ctx.warn(
@@ -562,7 +563,8 @@ final class ReviewArticlePipeline(
       .flatMap { b =>
         val corpus = site.articles.bodyCorpus(
           List(domainBody(b), domainBody(s.body)),
-          generated = ReviewArticle.BodyCorpus.Generated(s.coverage.isDefined)
+          generated = (if s.coverage.isDefined then ReviewArticle.BodyCorpus.Generated.Generated
+                       else ReviewArticle.BodyCorpus.Generated.Given)
         )
         val old = corpus.formatErrors(b).toSet
         corpus.formatErrors(s.body).filterNot(old)
@@ -616,7 +618,7 @@ final class ReviewArticlePipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def reviewInput(s: Snapshot): String =
-    val cut = if s.truncated.value then s"\n(The body is cut at ${cfg.review.articleChars} characters.)" else ""
+    val cut = if s.truncated.truncated then s"\n(The body is cut at ${cfg.review.articleChars} characters.)" else ""
     s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body.value)}" +
       generatedText(s)
 
@@ -665,7 +667,7 @@ final class ReviewArticlePipeline(
     val (checklist, shown) = checklistText(s, confirming)
     // the final pass owes no rulings: it verifies the checklist, it does not work through it (§6.9)
     val critique =
-      CritiqueRule(s.critiques, if confirming then Nil else shown, full = CritiqueRule.Full(true), s.body, minRatio)
+      CritiqueRule(s.critiques, if confirming then Nil else shown, full = CritiqueRule.Full.Full, s.body, minRatio)
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(
       Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, minRatio)
@@ -683,7 +685,7 @@ final class ReviewArticlePipeline(
             checked(
               checkRules(
                 a,
-                LastRound(last.value),
+                (if last.value then LastRound.Last else LastRound.More),
                 evidenceCheck(isCitekey, records(), minRatio),
                 prior(Reviewer.Rules),
                 spotRule(s, calls),
@@ -699,7 +701,11 @@ final class ReviewArticlePipeline(
             StepAgent.ColdReader,
             Prompt.UserText(user + ledger(false, Some(Reviewer.ColdReader))),
             ResearchAnswers.coldReader
-          )((a, last) => checked(checkColdReader(a, LastRound(last.value), prior(Reviewer.ColdReader)))),
+          )((a, last) =>
+            checked(
+              checkColdReader(a, (if last.value then LastRound.Last else LastRound.More), prior(Reviewer.ColdReader))
+            )
+          ),
         () =>
           ctx.llmAt[SkepticAnswer, Report](
             seqs(2),
@@ -711,7 +717,7 @@ final class ReviewArticlePipeline(
             checked(
               checkSkeptic(
                 a,
-                LastRound(last.value),
+                (if last.value then LastRound.Last else LastRound.More),
                 isCitekey,
                 records(),
                 minRatio,
@@ -784,7 +790,19 @@ final class ReviewArticlePipeline(
           ResearchAnswers.recheck,
           None,
           turns
-        )((a, last) => checked(checkRecheck(rv, a, prior, edited.text, ev, LastRound(last.value), s.critiques)))
+        )((a, last) =>
+          checked(
+            checkRecheck(
+              rv,
+              a,
+              prior,
+              edited.text,
+              ev,
+              (if last.value then LastRound.Last else LastRound.More),
+              s.critiques
+            )
+          )
+        )
     })
 
   /** What a re-check reads: the findings to verify (in full, with their evidence and the fixer's claim), the edited
@@ -916,7 +934,8 @@ final class ReviewArticlePipeline(
             .getOrElse(Nil)
             .flatMap(_.text)
             .map(t => domain.research.Article.Body(t.value)),
-          generated = ReviewArticle.BodyCorpus.Generated(s.coverage.isDefined)
+          generated = (if s.coverage.isDefined then ReviewArticle.BodyCorpus.Generated.Generated
+                       else ReviewArticle.BodyCorpus.Generated.Given)
         )
       checked(
         checkFix(
@@ -929,7 +948,7 @@ final class ReviewArticlePipeline(
           isCitekey,
           records(),
           minRatio,
-          LastRound(last.value),
+          (if last.value then LastRound.Last else LastRound.More),
           s.coverage,
           s.critiques,
           Some(guards)
@@ -1000,7 +1019,7 @@ final class ReviewArticlePipeline(
     val bodyChanged = f.body.value.trim != s.body.value.trim
     if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
-      Right(ReviewArticle.Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(false)))
+      Right(ReviewArticle.Patched(written = Patched.Written.Unwritten, None, conflict = Patched.Conflict.Clean))
     else
       val p = Article.Patch(
         body = Option.when(bodyChanged)(f.body),
@@ -1018,19 +1037,19 @@ final class ReviewArticlePipeline(
       )(site.articles.patch(s.slug, p).map(_ => true))(Right(false)) match
         case Right(false) =>
           persist(ctx, after)
-          Right(ReviewArticle.Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(false)))
+          Right(ReviewArticle.Patched(written = Patched.Written.Unwritten, None, conflict = Patched.Conflict.Clean))
         case Right(_) =>
           persist(ctx, after)
           Right(
             ReviewArticle.Patched(
-              written = Patched.Written(true),
+              written = Patched.Written.Written,
               site.articleStore.latestVersion(s.slug).map(v => Patched.PreviousVersion(v.value)),
-              conflict = Patched.Conflict(false)
+              conflict = Patched.Conflict.Clean
             )
           )
         case Left(e) if e.code.contains(Api.Error.Code(Write.CodePrecondition)) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
-          Right(ReviewArticle.Patched(written = Patched.Written(false), None, conflict = Patched.Conflict(true)))
+          Right(ReviewArticle.Patched(written = Patched.Written.Unwritten, None, conflict = Patched.Conflict.Conflict))
         case Left(e) => Left(e.problems)
 
   /** Bookkeeping: one `log` line, the article's ONE backlog item listing its open MAJORs (#934) — created, rewritten,
@@ -1053,7 +1072,7 @@ final class ReviewArticlePipeline(
         last.majors,
         ReviewArticle.Outcome.Applied(c.applied),
         ReviewArticle.Outcome.Rejected(c.rejectedCount),
-        ReviewArticle.Outcome.Fixed(c.fixed),
+        (if c.fixed then ReviewArticle.Outcome.Fixed.Fixed else ReviewArticle.Outcome.Fixed.Unfixed),
         ReviewArticle.Outcome.Approvals(last.proposals.size)
       )
     val ledger = persist(ctx, backlog(ctx, slug, c.ledger))

@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The ONE outbound-HTTP policy (#1946): how every request the server makes to a third party — the acquisition APIs,
   * the media and event catalogues, the gazetteer downloads — identifies itself and what it does with a "slow down"
@@ -41,8 +42,10 @@ object HttpPolicy:
   object SlowDown extends Newtype[String, Pure]
   type StatusCode = StatusCode.T
   object StatusCode extends Newtype[Int, Pure]
-  type SystemTrust = SystemTrust.T
-  object SystemTrust extends Newtype[Boolean, Pure]
+  enum SystemTrust derives CanEqual:
+    case System, Bundled
+  object SystemTrust extends TwoCases[SystemTrust]:
+    extension (systemTrust: SystemTrust) def systemTrust: Boolean = systemTrust == System
   type UserAgent = UserAgent.T
   object UserAgent extends Newtype[String, Pure]
 
@@ -209,7 +212,7 @@ object HttpPolicy:
   def trust(systemTrust: SystemTrust, extraCaFile: Option[Trust.PemFile.Path], osName: OsName): List[Trust] =
     val mac = osName.value.toLowerCase(java.util.Locale.ROOT).contains("mac")
     val system =
-      Option.when(systemTrust.value)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
+      Option.when(systemTrust.systemTrust)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
     Trust.Jdk :: system.toList ++ extraCaFile.map(Trust.PemFile(_)).toList
 
   private val PemCert =

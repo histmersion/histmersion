@@ -28,6 +28,7 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.automation.Run
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
@@ -41,14 +42,18 @@ import com.histmersion.lint.{tolerated, LintRule}
 object CompileArticle:
   type Description = Description.T
   object Description extends Newtype[String, Pure]
-  type Last = Last.T
-  object Last extends Newtype[Boolean, Pure]
+  enum Last derives CanEqual:
+    case Last, More
+  object Last extends TwoCases[Last]:
+    extension (last: Last) def last: Boolean = last == Last
   type LogLine = LogLine.T
   object LogLine extends Newtype[String, Pure]
   type MaxClaims = MaxClaims.T
   object MaxClaims extends Newtype[Int, Pure]
-  type Written = Written.T
-  object Written extends Newtype[Boolean, Pure]
+  enum Written derives CanEqual:
+    case Written, Unwritten
+  object Written extends TwoCases[Written]:
+    extension (written: Written) def written: Boolean = written == Written
 
   /** Why a compile run's write did what it did (`created`, `the draft was rejected`, the dry-run note): an outcome, not
     * a failure. Its JSON is the same string the checkpointed `write` step holds.
@@ -98,8 +103,10 @@ object CompileArticle:
       claims: List[ClaimAnswer] = Nil
   ) derives JsonCodec
   object ExtractAnswer:
-    type Relevant = Relevant.T
-    object Relevant extends Newtype[Boolean, Pure]
+    enum Relevant derives CanEqual:
+      case Relevant, Irrelevant
+    object Relevant extends TwoCases[Relevant]:
+      extension (relevant: Relevant) def relevant: Boolean = relevant == Relevant
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
@@ -174,13 +181,13 @@ object CompileArticle:
       )
     val reason = Option(a.reason).map(r => s"$r".trim).filter(_.nonEmpty)
     val noReason =
-      Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(
+      Option.when((!a.relevant.relevant || a.claims.isEmpty) && reason.isEmpty)(
         Content.Answer(Content.Requirement.ReasonGiven)
       )
     val problems = checked.collect { case Left(m) => m } ++ tooMany.toList ++ noReason.toList
-    if problems.nonEmpty && !last.value then Left(problems)
+    if problems.nonEmpty && !last.last then Left(problems)
     else
-      val kept = if a.relevant.value then claims.take(cap) else Nil
+      val kept = if a.relevant.relevant then claims.take(cap) else Nil
       val notUsed =
         Option.when(kept.isEmpty)(
           Coverage.Rationale(s"${reason.getOrElse("no claim could be verified in its record")}")
@@ -452,7 +459,7 @@ object CompileArticle:
       if mode == DraftMode.Create then kind else Article.Kind.Wire("index"),
       body,
       t => Slug.option(t.value).exists(corpus.isTarget),
-      generated = ReviewArticle.MechanicalGenerated(true)
+      generated = ReviewArticle.MechanicalGenerated.Generated
     )
     val citesHere = cited(text, corpus.isCitekey)
     val citesAll = cited(body, corpus.isCitekey).toSet
@@ -516,7 +523,7 @@ object CompileArticle:
         handWritten ++ reasonProblems ++
         unexplained.map(ck => Content.Answer(Content.Requirement.TabledAccounted(Raw.of(ck))))
     val problems = fatal ++ soft
-    if fatal.nonEmpty || (soft.nonEmpty && !last.value) then Left(problems)
+    if fatal.nonEmpty || (soft.nonEmpty && !last.last) then Left(problems)
     else
       val summary = Option(a.summary).map(s => Article.SummaryText(s.value.trim)).filter(_.value.nonEmpty)
       val notUsed = reasons.toList.sortBy(_._1.value).map((ck, r) => s"$ck: $r") ++
@@ -573,7 +580,7 @@ object CompileArticle:
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>
         s"appended a section${d.section.fold("")(s => s" under '$s'")} citing ${d.cited.size} source(s)"
-    val outcome = if written.value then what else s"nothing written — $why"
+    val outcome = if written.written then what else s"nothing written — $why"
     LogLine(
       s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.value.take(8)} started")} (agent run ${runId.value.take(8)})"
     )

@@ -11,8 +11,8 @@ class PlanReadScheduleSuite extends munit.FunSuite:
     val every3h = ReadSchedule.Every(java.time.Duration.ofMinutes(180))
     def read(
         schedule: ReadSchedule = every3h,
-        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn(true),
-        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted(true),
+        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn.On,
+        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted.Wanted,
         newest: Option[java.time.Instant] = minutesAgo(200),
         attempt: Option[java.time.Instant] = None
     ) =
@@ -34,10 +34,10 @@ class PlanReadScheduleSuite extends munit.FunSuite:
       ScheduledRead.NotDue(PlanReadSchedule.Rationale("the schedule is off"))
     )
     assertEquals(
-      read(autopilotOn = PlanReadSchedule.AutopilotOn(false)),
+      read(autopilotOn = PlanReadSchedule.AutopilotOn.Off),
       ScheduledRead.NotDue(PlanReadSchedule.Rationale("the autopilot is off"))
     )
     assertEquals(
-      read(wanted = PlanReadSchedule.Wanted(false)),
+      read(wanted = PlanReadSchedule.Wanted.Unwanted),
       ScheduledRead.NotDue(PlanReadSchedule.Rationale("no queued work wants the pool"))
     )

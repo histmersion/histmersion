@@ -10,6 +10,7 @@ import java.time.{Duration, Instant}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The central agent scheduler, pure (docs/research-goal-advancement.md "As built"): ONE decision per managers' tick
   * about which pending manager items start a run now, across every job type — goal plans, article proposals, candidate
@@ -123,12 +124,12 @@ object SchedulerPolicy:
       goal: Option[Candidate.Goal] = None,
       goalPriority: Candidate.GoalPriority = Candidate.GoalPriority(0),
       goalCreated: Option[Instant] = None,
-      gathering: Candidate.Gathering = Candidate.Gathering(false),
+      gathering: Candidate.Gathering = Candidate.Gathering.Working,
       itemPriority: Candidate.ItemPriority = Candidate.ItemPriority(0),
       waitingSince: Instant = Instant.EPOCH,
       pools: List[Candidate.Pools] = Nil,
       block: Option[Block] = None,
-      person: Candidate.Person = Candidate.Person(false)
+      person: Candidate.Person = Candidate.Person.ForModel
   ):
     def jobType: JobType = JobType.of(kind)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -149,14 +150,18 @@ object SchedulerPolicy:
     type GoalPriority = GoalPriority.T
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     object GoalPriority extends Newtype[Int, Pure]
-    type Gathering = Gathering.T
-    object Gathering extends Newtype[Boolean, Pure]
+    enum Gathering derives CanEqual:
+      case Gathering, Working
+    object Gathering extends TwoCases[Gathering]:
+      extension (gathering: Gathering) def gathering: Boolean = gathering == Gathering
     type ItemPriority = ItemPriority.T
     object ItemPriority extends Newtype[Int, Pure]
     type Pools = Pools.T
     object Pools extends Newtype[String, Pure]
-    type Person = Person.T
-    object Person extends Newtype[Boolean, Pure]
+    enum Person derives CanEqual:
+      case ForPerson, ForModel
+    object Person extends TwoCases[Person]:
+      extension (person: Person) def person: Boolean = person == ForPerson
 
   /** Why an item cannot start now whatever the order. */
   final case class Block(why: Block.Why):
@@ -382,8 +387,10 @@ object SchedulerPolicy:
     object Aging extends Newtype[Int, Pure]
     type Effective = Effective.T
     object Effective extends Newtype[Int, Pure]
-    type Overdue = Overdue.T
-    object Overdue extends Newtype[Boolean, Pure]
+    enum Overdue derives CanEqual:
+      case Overdue, OnTime
+    object Overdue extends TwoCases[Overdue]:
+      extension (overdue: Overdue) def overdue: Boolean = overdue == Overdue
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -395,7 +402,8 @@ object SchedulerPolicy:
       Scored.WaitedMinutes(mins),
       Scored.Aging(aging),
       Scored.Effective(c.goalPriority.value + aging),
-      Scored.Overdue(s.maxWaitHours.value > 0 && mins >= s.maxWaitHours.value.toLong * 60L)
+      (if s.maxWaitHours.value > 0 && mins >= s.maxWaitHours.value.toLong * 60L then Scored.Overdue.Overdue
+       else Scored.Overdue.OnTime)
     )
 
   /** The order inside one class of work: effective goal priority (highest first), the goal's age (oldest first; library
@@ -643,7 +651,7 @@ object SchedulerPolicy:
                         a.room - 1,
                         x.c.pools.foldLeft(a.poolUsed)((m, p) => m.updated(p, m.getOrElse(p, 0) + 1)),
                         a.mgrUsed.updated(x.c.managerId, a.mgrUsed.getOrElse(x.c.managerId, 0) + 1),
-                        a.gathering + (if x.c.gathering.value then 1 else 0),
+                        a.gathering + (if x.c.gathering.gathering then 1 else 0),
                         x.c.jobType :: a.recent,
                         a.started :+ (x -> why),
                         a.waits
@@ -703,13 +711,13 @@ object SchedulerPolicy:
       gathering: Int,
       s: Settings
   ): (Scored, String) =
-    val overdue = pool.filter(_.overdue.value)
+    val overdue = pool.filter(_.overdue.overdue)
     lazy val starved = pool
       .map(_.c.jobType)
       .distinct
       .filter(shareDue(_, recent, s.minShare))
       .sortBy(t => (-s.priorityOf(t).value, t.ordinal))
-    lazy val gatherers = pool.filter(_.c.gathering.value)
+    lazy val gatherers = pool.filter(_.c.gathering.gathering)
     if overdue.nonEmpty then
       val x = overdue.maxBy(x => (x.waitedMinutes.value: Long, -x.c.id.value))
       x -> s"waited ${hours(x.waitedMinutes)} — past agents.scheduler.max-wait-hours (${s.maxWaitHours} h): admitted next"
@@ -741,7 +749,7 @@ object SchedulerPolicy:
         go(
           pool.filterNot(_.c.id == x.c.id),
           x.c.jobType :: recent,
-          gathering + (if x.c.gathering.value then 1 else 0),
+          gathering + (if x.c.gathering.gathering then 1 else 0),
           acc :+ (x -> why)
         )
     go(cands, res.recent, res.gatheringUsed.value, Vector.empty).toList

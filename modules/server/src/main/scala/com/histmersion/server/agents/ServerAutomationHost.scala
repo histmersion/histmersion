@@ -181,9 +181,10 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
           w.year.map(y => Year(y.value.toInt)),
           w.authors.map(a => PlanGoal.Work.Authors(a.value)),
           w.citekey.flatMap(c => Citekey.option(c.value)),
-          PlanGoal.Work.InDb(w.inDb.inDb),
-          PlanGoal.Work.IsOa(w.isOa.isOa),
-          PlanGoal.Work.IsRetracted(w.isRetracted.isRetracted)
+          (if w.inDb.inDb then PlanGoal.Work.InDb.InCorpus else PlanGoal.Work.InDb.Outside),
+          (if w.isOa.isOa then PlanGoal.Work.IsOa.Open else PlanGoal.Work.IsOa.Closed),
+          (if w.isRetracted.isRetracted then PlanGoal.Work.IsRetracted.Retracted
+           else PlanGoal.Work.IsRetracted.Standing)
         )
       )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

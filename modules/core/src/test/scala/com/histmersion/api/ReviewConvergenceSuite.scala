@@ -207,13 +207,13 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     val checks = List(
       Check(
         ReviewArticle.Check.Id("S6"),
-        fixed = ReviewArticle.Check.Fixed(true),
+        fixed = ReviewArticle.Check.Fixed.Fixed,
         ReviewArticle.Check.Quote("Gilan nevertheless identifies"),
         ReviewArticle.Check.Note("Gilan's criticism is now described")
       ),
       Check(
         ReviewArticle.Check.Id("S4"),
-        fixed = ReviewArticle.Check.Fixed(true),
+        fixed = ReviewArticle.Check.Fixed.Fixed,
         ReviewArticle.Check.Quote("q"),
         ReviewArticle.Check.Note("n")
       )
@@ -457,7 +457,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    val back = fix(m, apart, last = LastRound(false))
+    val back = fix(m, apart, last = LastRound.More)
     assert(
       back.left.exists(
         _.exists(
@@ -468,7 +468,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       ),
       back
     )
-    val (kept, ws) = fix(m, apart, last = LastRound(true)).toOption.get
+    val (kept, ws) = fix(m, apart, last = LastRound.Last).toOption.get
     assertEquals(
       (kept.applied, kept.notFixed),
       (
@@ -514,7 +514,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil,
       ReviewArticle.FixerAnswer.Notes("")
     )
-    assertEquals(fix(m, beside, last = LastRound(false)).map(_._1.applied), Right(List("S1")))
+    assertEquals(fix(m, beside, last = LastRound.More).map(_._1.applied), Right(List("S1")))
 
   test(
     "fixer: the pairing repair answers a named partner itself — the finding is 'repaired' and claimed for its re-check"
@@ -535,7 +535,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     // the fixer leaves it alone (it set nothing aside, applied nothing): the repair cites West where the paragraph names him
     val nothing = FixerAnswer(Nil, Nil, Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
-    val (f, _) = fix(m, nothing, last = LastRound(false)).toOption.get
+    val (f, _) = fix(m, nothing, last = LastRound.More).toOption.get
     assert(
       f.body.value.contains("Kullmann answers West's reading of the cargo [[zz2015_kull]] [[zz2011_west]]."),
       f.body
@@ -585,7 +585,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       )
     )
     val bare = FixerAnswer(adds, List(ReviewArticle.Finding.Id("R1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
-    val back = fix(m, bare, last = LastRound(false))
+    val back = fix(m, bare, last = LastRound.More)
     assert(
       back.left.exists(
         _.exists(
@@ -607,11 +607,11 @@ class ReviewConvergenceSuite extends munit.FunSuite:
           )
         )
       )
-    val (f, ws) = fix(m, aside, last = LastRound(false)).toOption.get
+    val (f, ws) = fix(m, aside, last = LastRound.More).toOption.get
     assertEquals((f.pairsAside.map(_.ref.wire), ws), (List("zz2021_crit>zz2020_new"), Nil))
     // on the last attempt it is kept, with the warning
     assert(
-      fix(m, bare, last = LastRound(true)).toOption.get._2
+      fix(m, bare, last = LastRound.Last).toOption.get._2
         .exists(_.contains("whose recorded critiques no paragraph discusses"))
     )
 
@@ -679,7 +679,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       isKey,
       _ => None,
       minRatio,
-      last = ReviewArticle.LastRound(false),
+      last = ReviewArticle.LastRound.More,
       None,
       pairsOf(body),
       Some(guards(l))
@@ -700,7 +700,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       isKey,
       _ => None,
       minRatio,
-      last = ReviewArticle.LastRound(true),
+      last = ReviewArticle.LastRound.Last,
       None,
       pairsOf(body),
       Some(guards(l))
@@ -762,10 +762,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       ReviewArticle.FixerAnswer.Notes("")
     )
     assert(
-      fix(m, a, last = LastRound(false)).left
+      fix(m, a, last = LastRound.More).left
         .exists(_.map(_.sentence).contains("major finding R1 is neither applied nor rejected"))
     )
-    val (f, _) = fix(m, a, last = LastRound(true)).toOption.get
+    val (f, _) = fix(m, a, last = LastRound.Last).toOption.get
     assertEquals(
       f.notFixed,
       List(

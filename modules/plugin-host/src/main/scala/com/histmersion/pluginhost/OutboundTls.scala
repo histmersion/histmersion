@@ -171,7 +171,7 @@ object OutboundTls:
     Option.when(cfg.custom) {
       val sources = HttpPolicy
         .trust(
-          HttpPolicy.SystemTrust(cfg.systemTrust.value),
+          (if cfg.systemTrust.value then HttpPolicy.SystemTrust.System else HttpPolicy.SystemTrust.Bundled),
           cfg.extraCa.map(f => HttpPolicy.Trust.PemFile.Path(f.value)),
           osName
         )

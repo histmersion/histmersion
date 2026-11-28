@@ -26,6 +26,7 @@ import com.histmersion.config.{AgentsConfig, ResearchAgentsConfig, ReviewManager
 import com.histmersion.domain.ManagerDefaults
 import com.histmersion.domain.ReviewManagerDefaults
 import io.scalaland.chimney.dsl.*
+import com.histmersion.domain.TwoStateTransformers.given
 
 import java.time.Instant
 import scala.collection.mutable.Builder
@@ -125,7 +126,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
             ReviewFacts.OpenMajors(0),
             ReviewFacts.MaxReopened(0),
             ReviewFacts.Escalated(0),
-            onlyMissingCritiques = ReviewFacts.OnlyMissingCritiques(false),
+            onlyMissingCritiques = ReviewFacts.OnlyMissingCritiques.Every,
             pairs
           )
         )

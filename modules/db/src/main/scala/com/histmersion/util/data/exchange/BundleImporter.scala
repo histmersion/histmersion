@@ -184,7 +184,7 @@ object BundleImporter:
       val mergeId = MergeRepo.record(
         m,
         bundleSha,
-        BundlePlan.EntityOwnBundle(ownBundle),
+        (if ownBundle then BundlePlan.EntityOwnBundle.OwnBundle else BundlePlan.EntityOwnBundle.SharedBundle),
         decided,
         result(applied = Bundle.ImportResult.Applied.Applied, None).asJson,
         RowCount(result(applied = Bundle.ImportResult.Applied.Applied, None).changed.value)
@@ -441,7 +441,8 @@ object BundleImporter:
             .record(
               m,
               bundleSha,
-              BundlePlan.EntityOwnBundle(input.ownBundle),
+              (if input.ownBundle then BundlePlan.EntityOwnBundle.OwnBundle
+               else BundlePlan.EntityOwnBundle.SharedBundle),
               planned.rows,
               report.asJson,
               RowCount(report.changed.value + plan.changes.value),

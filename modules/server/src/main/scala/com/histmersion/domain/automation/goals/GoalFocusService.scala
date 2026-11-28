@@ -139,11 +139,12 @@ final class GoalFocusService(
         ManagerItem.Kind(r.kind.value),
         domain.automation.ItemStatus.Wire(r.status.value),
         Work.Target(r.target.value),
-        Work.Person(r.person.value),
-        Work.FocusHeld(r.focusHeld.value),
-        Work.PersonHeld(r.personHeld.value),
+        (if r.person.value then Work.Person.ForPerson else Work.Person.ForModel),
+        (if r.focusHeld.value then Work.FocusHeld.Held else Work.FocusHeld.Free),
+        (if r.personHeld.value then Work.HeldByPerson.Held else Work.HeldByPerson.Free),
         r.approval.map(a => Work.Approval(a.value)),
-        Work.ApprovalByPerson(r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove))
+        (if r.approval.isDefined && byPerson(r.approvalKind, r.autoApprove) then Work.ApprovedBy.Person
+         else Work.ApprovedBy.Model)
       )
     )
     val base = goals.map(g =>
@@ -152,9 +153,9 @@ final class GoalFocusService(
         g.parent.map(p => Goal.Slug.assume(p.value)),
         Goal.Status.Wire(g.status.value),
         Facts.CreatedAt(g.createdAt.value),
-        pinned = Facts.Pinned(g.pinned.value),
+        pinned = (if g.pinned.value then Facts.Pinned.Pinned else Facts.Pinned.Unpinned),
         priority = Facts.Priority(g.priority.value),
-        active = Facts.Active(g.active.value),
+        active = (if g.active.value then Facts.Active.Active else Facts.Active.Inactive),
         since = g.since.map(s => Facts.Since(s.value))
       )
     )
@@ -180,9 +181,9 @@ final class GoalFocusService(
     GoalFocus.Settings(
       max,
       GoalFocus.Settings.MinSources(agents.sourcesToPlan.value),
-      plansByPerson = GoalFocus.Settings.PlansByPerson(
-        !cfg.approvals.checked(domain.automation.Approval.Kind.GoalPlan)
-      ),
+      plansByPerson = (if !cfg.approvals.checked(domain.automation.Approval.Kind.GoalPlan) then
+                         GoalFocus.Settings.PlansByPerson.ByPerson
+                       else GoalFocus.Settings.PlansByPerson.ByModel),
       GoalFocus.Settings.OpenPersonPlans(r.openPlans.value)
     )
 
@@ -250,8 +251,8 @@ final class GoalFocusService(
         ManagerItem.Kind(w.kind.value),
         domain.automation.ItemStatus.Wire(w.status.value),
         w.goals.map(g => Goal.Slug.assume(g.value)),
-        Work.Person(w.person.value),
-        Work.FocusHeld(w.focusHeld.value)
+        (if w.person.value then Work.Person.ForPerson else Work.Person.ForModel),
+        (if w.focusHeld.value then Work.FocusHeld.Held else Work.FocusHeld.Free)
       )
     )
     val hs = GoalFocus.holds(items, plan, r.facts)
@@ -309,7 +310,7 @@ final class GoalFocusService(
         GoalFocus.fairOrder(
           due,
           c => person(c.id.value) || mine(c.target.value),
-          recent.map(t => GoalFocus.Recent(mine(t.value))),
+          recent.map(t => (if mine(t.value) then GoalFocus.Recent.Focused else GoalFocus.Recent.Other)),
           GoalFocus.Ratio(ratio.value)
         )
       case _ => due
@@ -383,7 +384,7 @@ final class GoalFocusService(
         FocusGoal.Status(f.fold("")(_.status.value)),
         FocusGoal.Stage(p.stage.wire.value),
         Autopilot.Rationale(s"${p.why}"),
-        (if p.pinned.value then FocusGoal.Pinned.Pinned else FocusGoal.Pinned.Unpinned),
+        (if p.pinned.pinned then FocusGoal.Pinned.Pinned else FocusGoal.Pinned.Unpinned),
         FocusGoal.Priority(f.fold(0)(_.priority.value)),
         p.since.map(s => FocusGoal.Since(s.value)),
         if active then f.flatMap(x => GoalFocus.doing(x.work)).map(d => FocusGoal.Doing(d.value)) else None,
@@ -419,7 +420,7 @@ final class GoalFocusService(
           FocusWaiting.Slug(s.value),
           FocusWaiting.Code(c.value),
           Autopilot.Rationale(s"$w"),
-          (if byGoal.get(s).exists(_.pinned.value) then FocusWaiting.Pinned.Pinned else FocusWaiting.Pinned.Unpinned)
+          (if byGoal.get(s).exists(_.pinned.pinned) then FocusWaiting.Pinned.Pinned else FocusWaiting.Pinned.Unpinned)
         )
       ),
       FocusInfo.Held(agents.managerStore.focusHeldCount().value),

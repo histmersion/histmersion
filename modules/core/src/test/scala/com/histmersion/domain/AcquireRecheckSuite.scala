@@ -27,7 +27,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
   private val Gen = LastCheck.Generation("g1")
   private def daysAgo(d: Int) = now.minusSeconds(d.toLong * 86400L)
   private val settings = Settings(
-    enabled = AcquireRecheck.Settings.Enabled(true),
+    enabled = AcquireRecheck.Settings.Enabled.Enabled,
     everyDays = AcquireRecheck.Settings.EveryDays(7),
     perDay = AcquireRecheck.Settings.PerDay(40),
     perPass = AcquireRecheck.Settings.PerPass(3),
@@ -141,8 +141,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
     "closing rules: in the corpus with its original → closed; metadata only → fetched into that source; else a new one"
   ):
     val held = Map(
-      Doi("10.1/a") -> Held(Citekey("a2020_x"), hasOriginal = AcquireRecheck.Held.HasOriginal(true)),
-      Doi("10.1/b") -> Held(Citekey("b2021_y"), hasOriginal = AcquireRecheck.Held.HasOriginal(false))
+      Doi("10.1/a") -> Held(Citekey("a2020_x"), hasOriginal = AcquireRecheck.Held.HasOriginal.WithOriginal),
+      Doi("10.1/b") -> Held(Citekey("b2021_y"), hasOriginal = AcquireRecheck.Held.HasOriginal.WithoutOriginal)
     )
     assertEquals(action(List(Doi("10.1/a")), held.get), Action.Close(Citekey("a2020_x")))
     assertEquals(action(List(Doi("10.1/b")), held.get), Action.Fetch(Doi("10.1/b"), Some(Citekey("b2021_y"))))
@@ -370,7 +370,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     assert(passDue(Some(now.minusSeconds(600)), AcquireRecheck.Settings.PassMinutes(10), now))
 
   test("a check that got no answer (a rate limit) is due again after retry-hours, not every-days"):
-    val failed = LastCheck(now.minusSeconds(2L * 3600L), Gen, failed = AcquireRecheck.LastCheck.Failed(true))
+    val failed = LastCheck(now.minusSeconds(2L * 3600L), Gen, failed = AcquireRecheck.LastCheck.Failed.Failed)
     assert(
       !isDue(Some(failed), Gen, AcquireRecheck.IsDueEveryDays(7), AcquireRecheck.IsDueRetryHours(6), now),
       "two hours ago: not yet"
@@ -422,14 +422,14 @@ class AcquireRecheckSuite extends munit.FunSuite:
       Candidate(AcquireRecheck.Candidate.Item(3), Some(LastCheck(now.minusSeconds(60), Gen))),
       Candidate(
         AcquireRecheck.Candidate.Item(4),
-        Some(LastCheck(since, Gen, failed = AcquireRecheck.LastCheck.Failed(true)))
+        Some(LastCheck(since, Gen, failed = AcquireRecheck.LastCheck.Failed.Failed))
       ),
       Candidate(AcquireRecheck.Candidate.Item(5), Some(LastCheck(daysAgo(30), Gen)))
     )
     val notDue = (c: Candidate) => false
     assertEquals(
       jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(true), AcquireRecheck.JobPlan.UpTo(0), now),
+        JobPlan(all = AcquireRecheck.JobPlan.All.All, AcquireRecheck.JobPlan.UpTo(0), now),
         cs,
         AcquireRecheck.Tally.Tried(0),
         notDue
@@ -439,7 +439,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
     assertEquals(
       jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(true), AcquireRecheck.JobPlan.UpTo(0), since),
+        JobPlan(all = AcquireRecheck.JobPlan.All.All, AcquireRecheck.JobPlan.UpTo(0), since),
         cs,
         AcquireRecheck.Tally.Tried(2),
         notDue
@@ -461,7 +461,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     val due = (c: Candidate) => c.item.value != 2
     assertEquals(
       jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(false), AcquireRecheck.JobPlan.UpTo(4), since),
+        JobPlan(all = AcquireRecheck.JobPlan.All.Due, AcquireRecheck.JobPlan.UpTo(4), since),
         cs,
         AcquireRecheck.Tally.Tried(0),
         due
@@ -470,7 +470,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
     assertEquals(
       jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(false), AcquireRecheck.JobPlan.UpTo(4), since),
+        JobPlan(all = AcquireRecheck.JobPlan.All.Due, AcquireRecheck.JobPlan.UpTo(4), since),
         cs,
         AcquireRecheck.Tally.Tried(3),
         due
@@ -480,7 +480,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
     assertEquals(
       jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(false), AcquireRecheck.JobPlan.UpTo(4), since),
+        JobPlan(all = AcquireRecheck.JobPlan.All.Due, AcquireRecheck.JobPlan.UpTo(4), since),
         cs,
         AcquireRecheck.Tally.Tried(9),
         due

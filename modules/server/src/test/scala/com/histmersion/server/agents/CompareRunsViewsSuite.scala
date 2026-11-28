@@ -133,7 +133,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
         CompareRuns.RunHead.Pipeline("enrich-source"),
         CompareRuns.RunHead.Target("x2020"),
         CompareRuns.RunHead.Status("done"),
-        CompareRuns.RunHead.DryRun(true),
+        CompareRuns.RunHead.DryRun.DryRun,
         Some(CompareRuns.RunHead.Model("anthropic:x")),
         List(
           CompareRuns.ModelChoice(CompareRuns.ModelChoice.Role("writer"), CompareRuns.ModelChoice.Model("anthropic:y"))

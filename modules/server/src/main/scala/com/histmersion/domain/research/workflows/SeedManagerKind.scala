@@ -244,7 +244,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                   Slug.parse(p.slug.value).fold(_ => true, s => site.articles.get(s).isLeft)
                 PlannedFacts(
                   PlannedFacts.Slug(p.slug.value),
-                  PlannedFacts.SlugFree(free),
+                  (if free then PlannedFacts.Availability.Free else PlannedFacts.Availability.Taken),
                   PlannedFacts.Hits(
                     site.articles.filterReach(p.filter, Nil, ArticlesControllers.FilterReachCap(0))._1.value
                   )
@@ -272,12 +272,14 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 .flatMap(o => RawJson.decode[CompileArticlePipeline.Found](o).toOption)
               val facts = DraftFacts(
                 DraftFacts.Slug(d.slug.value),
-                DraftFacts.Create(d.mode == DraftMode.Create),
-                DraftFacts.FilterRecorded(snap.exists(_.filter.isDefined)),
+                (if d.mode == DraftMode.Create then DraftFacts.Create.Create else DraftFacts.Create.Update),
+                (if snap.exists(_.filter.isDefined) then DraftFacts.FilterRecorded.Recorded
+                 else DraftFacts.FilterRecorded.Unrecorded),
                 found.map(f => DraftFacts.Hits(f.total.value)),
                 d.problems.map(p => DraftFacts.Problems(p.value)),
                 DraftFacts.Cited(d.cited.distinct.size),
-                DraftFacts.SlugFree(!c.slugExists(ApprovalChecks.Slug(d.slug.value)))
+                (if !c.slugExists(ApprovalChecks.Slug(d.slug.value)) then DraftFacts.Availability.Free
+                 else DraftFacts.Availability.Taken)
               )
               AutopilotPolicy.articlePublish(
                 facts,

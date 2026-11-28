@@ -43,8 +43,8 @@ class GoalFocusSuite extends munit.FunSuite:
       compile: Facts.CompileOpen = Facts.CompileOpen(0),
       created: Facts.CreatedAt = Facts.CreatedAt("2026-10-20T00:00:00Z"),
       work: List[Work] = List(w(Work.ItemId(1))),
-      active: Facts.Active = Facts.Active(false),
-      pinned: Facts.Pinned = Facts.Pinned(false),
+      active: Facts.Active = Facts.Active.Inactive,
+      pinned: Facts.Pinned = Facts.Pinned.Unpinned,
       priority: Facts.Priority = Facts.Priority(0),
       status: Goal.Status.Wire = Goal.Status.Wire(Goal.Status.Seeding),
       stop: Option[Facts.LastStop] = None
@@ -100,7 +100,7 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("siblings of an active goal before an older goal of another tree"):
     val goals = List(
-      g(Goal.Slug("x1"), Some(Goal.Slug("x")), active = Facts.Active(true)),
+      g(Goal.Slug("x1"), Some(Goal.Slug("x")), active = Facts.Active.Active),
       g(Goal.Slug("x2"), Some(Goal.Slug("x")), created = Facts.CreatedAt("2026-10-21T00:00:00Z")),
       g(Goal.Slug("y1"), Some(Goal.Slug("y")), created = Facts.CreatedAt("2026-01-01T00:00:00Z"))
     )
@@ -110,7 +110,7 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("a sub-goal of an active parent (planning) before a goal elsewhere"):
     val goals = List(
-      g(Goal.Slug("p"), work = List(w(Work.ItemId(1), ManagerItem.Kind(PlanGoalItem))), active = Facts.Active(true)),
+      g(Goal.Slug("p"), work = List(w(Work.ItemId(1), ManagerItem.Kind(PlanGoalItem))), active = Facts.Active.Active),
       g(Goal.Slug("k"), Some(Goal.Slug("p")), created = Facts.CreatedAt("2026-10-22T00:00:00Z")),
       g(Goal.Slug("other"), created = Facts.CreatedAt("2026-01-01T00:00:00Z"))
     )
@@ -144,12 +144,12 @@ class GoalFocusSuite extends munit.FunSuite:
   test("pins are always active, even past the cap; then the cap is full"):
     val goals = List(
       g(Goal.Slug("review"), articles = Facts.Articles(1), unreviewed = Facts.Unreviewed(1)),
-      g(Goal.Slug("p1"), pinned = Facts.Pinned(true)),
-      g(Goal.Slug("p2"), pinned = Facts.Pinned(true))
+      g(Goal.Slug("p1"), pinned = Facts.Pinned.Pinned),
+      g(Goal.Slug("p2"), pinned = Facts.Pinned.Pinned)
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("p1", "p2"))
-    assert(p.active.forall(_.pinned.value) && s"${p.active.head.why}".startsWith("pinned by a person"), p.active)
+    assert(p.active.forall(_.pinned.pinned) && s"${p.active.head.why}".startsWith("pinned by a person"), p.active)
     assertEquals(p.queue.map(_.slug), List("review"))
     assertEquals(active(select(goals, s3.modify(_.max).setTo(Settings.Max(1)))), List("p1", "p2"), "pins past the cap")
 
@@ -167,8 +167,8 @@ class GoalFocusSuite extends munit.FunSuite:
   test("an active goal keeps its slot while it has work, even when a better candidate appears"):
     val goals =
       List(
-        g(Goal.Slug("kept1"), sources = Facts.Sources(5), active = Facts.Active(true)),
-        g(Goal.Slug("kept2"), sources = Facts.Sources(4), active = Facts.Active(true)),
+        g(Goal.Slug("kept1"), sources = Facts.Sources(5), active = Facts.Active.Active),
+        g(Goal.Slug("kept2"), sources = Facts.Sources(4), active = Facts.Active.Active),
         g(Goal.Slug("better"), sources = Facts.Sources(9))
       )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
@@ -178,8 +178,8 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("a goal with articles to review or compile takes the slot of one still gathering (never a pinned one)"):
     val goals = List(
-      g(Goal.Slug("gathering"), sources = Facts.Sources(1), active = Facts.Active(true)),
-      g(Goal.Slug("pin"), sources = Facts.Sources(0), pinned = Facts.Pinned(true), active = Facts.Active(true)),
+      g(Goal.Slug("gathering"), sources = Facts.Sources(1), active = Facts.Active.Active),
+      g(Goal.Slug("pin"), sources = Facts.Sources(0), pinned = Facts.Pinned.Pinned, active = Facts.Active.Active),
       g(Goal.Slug("toreview"), articles = Facts.Articles(2), unreviewed = Facts.Unreviewed(2))
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
@@ -194,7 +194,7 @@ class GoalFocusSuite extends munit.FunSuite:
       active(
         select(
           List(
-            g(Goal.Slug("gathering"), active = Facts.Active(true)),
+            g(Goal.Slug("gathering"), active = Facts.Active.Active),
             g(Goal.Slug("ready"), sources = Facts.Sources(5))
           ),
           s3.modify(_.max).setTo(Settings.Max(1))
@@ -205,8 +205,8 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("reviewed frees the slot and the next takes it at once"):
     val goals = List(
-      g(Goal.Slug("done"), status = Goal.Status.Wire(Goal.Status.Reviewed), active = Facts.Active(true), work = Nil),
-      g(Goal.Slug("a"), active = Facts.Active(true)),
+      g(Goal.Slug("done"), status = Goal.Status.Wire(Goal.Status.Reviewed), active = Facts.Active.Active, work = Nil),
+      g(Goal.Slug("a"), active = Facts.Active.Active),
       g(Goal.Slug("next"), sources = Facts.Sources(4))
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
@@ -218,11 +218,11 @@ class GoalFocusSuite extends munit.FunSuite:
     val goals = List(
       g(
         Goal.Slug("stuck"),
-        active = Facts.Active(true),
+        active = Facts.Active.Active,
         work = Nil,
         stop = Some(Facts.LastStop("stopped: too many runs (task #12)"))
       ),
-      g(Goal.Slug("idle"), active = Facts.Active(true), work = Nil),
+      g(Goal.Slug("idle"), active = Facts.Active.Active, work = Nil),
       g(Goal.Slug("next"))
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(1)))
@@ -241,7 +241,7 @@ class GoalFocusSuite extends munit.FunSuite:
       ItemStatus.Wire("active"),
       GoalFocus.Work.Target("x"),
       approval = Some(Work.Approval(41)),
-      approvalByPerson = Work.ApprovalByPerson(true)
+      approvalByPerson = Work.ApprovedBy.Person
     )
     val auto = Work(
       GoalFocus.Work.ItemId(6),
@@ -252,8 +252,8 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val goals =
       List(
-        g(Goal.Slug("byperson"), active = Facts.Active(true), work = List(person)),
-        g(Goal.Slug("byauto"), active = Facts.Active(true), work = List(auto)),
+        g(Goal.Slug("byperson"), active = Facts.Active.Active, work = List(person)),
+        g(Goal.Slug("byauto"), active = Facts.Active.Active, work = List(auto)),
         g(Goal.Slug("next"))
       )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
@@ -293,7 +293,7 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     // a person's hold, or a paused manager
     val held = select(
-      List(g(Goal.Slug("h"), work = List(w(Work.ItemId(1)).modify(_.personHeld).setTo(Work.PersonHeld(true))))),
+      List(g(Goal.Slug("h"), work = List(w(Work.ItemId(1)).modify(_.personHeld).setTo(Work.HeldByPerson.Held)))),
       s3
     )
     assertEquals(held.waiting.map(_._2), List(Code.Held))
@@ -338,7 +338,7 @@ class GoalFocusSuite extends munit.FunSuite:
     val plan = g(Goal.Slug("needsplan"), work = List(w(Work.ItemId(1), ManagerItem.Kind(PlanGoalItem))))
     val s = s3
       .modify(_.plansByPerson)
-      .setTo(Settings.PlansByPerson(true))
+      .setTo(Settings.PlansByPerson.ByPerson)
       .modify(_.openPersonPlans)
       .setTo(Settings.OpenPersonPlans(3))
     assertEquals(select(List(plan), s).waiting.map(_._2), List(Code.Plans))
@@ -347,21 +347,21 @@ class GoalFocusSuite extends munit.FunSuite:
       List("needsplan")
     )
     assertEquals(
-      active(select(List(plan.modify(_.active).setTo(Facts.Active(true))), s)),
+      active(select(List(plan.modify(_.active).setTo(Facts.Active.Active)), s)),
       List("needsplan"),
       "an active one keeps its slot"
     )
     assertEquals(
-      active(select(List(plan), s.modify(_.plansByPerson).setTo(Settings.PlansByPerson(false)))),
+      active(select(List(plan), s.modify(_.plansByPerson).setTo(Settings.PlansByPerson.ByModel))),
       List("needsplan"),
       "plans decided by code"
     )
 
   test("the cap lowered: the worst active goals go back to the queue first"):
     val goals = List(
-      g(Goal.Slug("r"), articles = Facts.Articles(1), unreviewed = Facts.Unreviewed(1), active = Facts.Active(true)),
-      g(Goal.Slug("c"), compile = Facts.CompileOpen(1), active = Facts.Active(true)),
-      g(Goal.Slug("x"), sources = Facts.Sources(1), active = Facts.Active(true))
+      g(Goal.Slug("r"), articles = Facts.Articles(1), unreviewed = Facts.Unreviewed(1), active = Facts.Active.Active),
+      g(Goal.Slug("c"), compile = Facts.CompileOpen(1), active = Facts.Active.Active),
+      g(Goal.Slug("x"), sources = Facts.Sources(1), active = Facts.Active.Active)
     )
     val p = select(goals, s3.modify(_.max).setTo(Settings.Max(2)))
     assertEquals(active(p), List("r", "c"))
@@ -372,7 +372,7 @@ class GoalFocusSuite extends munit.FunSuite:
   // ── holds ──────────────────────────────────────────────────────────────────────────────────────
 
   test("holds: a queued goal's pending model items are held; an active goal's focus holds released; in flight never"):
-    val goals = List(g(Goal.Slug("on"), active = Facts.Active(true)), g(Goal.Slug("off")))
+    val goals = List(g(Goal.Slug("on"), active = Facts.Active.Active), g(Goal.Slug("off")))
     val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, GoalFocus.Rationale(""))))
     val items = List(
       Item(
@@ -392,7 +392,7 @@ class GoalFocusSuite extends munit.FunSuite:
         ManagerItem.Kind(ArticleCompile),
         ItemStatus.Wire("held"),
         List(Goal.Slug("on")),
-        focusHeld = Work.FocusHeld(true)
+        focusHeld = Work.FocusHeld.Held
       ),
       Item(
         GoalFocus.Work.ItemId(4),
@@ -405,7 +405,7 @@ class GoalFocusSuite extends munit.FunSuite:
         ManagerItem.Kind(PlanGoalItem),
         ItemStatus.Wire("pending"),
         List(Goal.Slug("off")),
-        person = GoalFocus.Work.Person(true)
+        person = GoalFocus.Work.Person.ForPerson
       ),
       Item(
         GoalFocus.Work.ItemId(6),
@@ -419,7 +419,7 @@ class GoalFocusSuite extends munit.FunSuite:
         ManagerItem.Kind(ArticleReview),
         ItemStatus.Wire("held"),
         List(Goal.Slug("off")),
-        focusHeld = Work.FocusHeld(true)
+        focusHeld = Work.FocusHeld.Held
       ),
       Item(GoalFocus.Work.ItemId(9), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("held"), List(Goal.Slug("on")))
     )
@@ -437,7 +437,7 @@ class GoalFocusSuite extends munit.FunSuite:
   ):
     val goals = List(
       g(Goal.Slug("fin"), status = Goal.Status.Wire(Goal.Status.Reviewed)),
-      g(Goal.Slug("p"), active = Facts.Active(true)),
+      g(Goal.Slug("p"), active = Facts.Active.Active),
       g(Goal.Slug("k"), Some(Goal.Slug("p")))
     )
     val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, GoalFocus.Rationale(""))))
@@ -447,15 +447,15 @@ class GoalFocusSuite extends munit.FunSuite:
         ManagerItem.Kind(AcquisitionSweep),
         ItemStatus.Wire("held"),
         List(Goal.Slug("fin")),
-        focusHeld = Work.FocusHeld(true)
+        focusHeld = Work.FocusHeld.Held
       ),
       Item(
         GoalFocus.Work.ItemId(2),
         ManagerItem.Kind(ArticleReview),
         ItemStatus.Wire("held"),
         List(Goal.Slug("k")),
-        person = GoalFocus.Work.Person(true),
-        focusHeld = GoalFocus.Work.FocusHeld(true)
+        person = GoalFocus.Work.Person.ForPerson,
+        focusHeld = GoalFocus.Work.FocusHeld.Held
       ),
       Item(
         GoalFocus.Work.ItemId(3),
@@ -469,7 +469,7 @@ class GoalFocusSuite extends munit.FunSuite:
         ManagerItem.Kind(OaIngest),
         ItemStatus.Wire("held"),
         List(Goal.Slug("k")),
-        focusHeld = Work.FocusHeld(true)
+        focusHeld = Work.FocusHeld.Held
       )
     )
     val hs = holds(items, plan, goals)
@@ -487,7 +487,7 @@ class GoalFocusSuite extends munit.FunSuite:
       fairOrder(
         cs,
         f,
-        List(GoalFocus.Recent(true), GoalFocus.Recent(true), GoalFocus.Recent(true)),
+        List(GoalFocus.Recent.Focused, GoalFocus.Recent.Focused, GoalFocus.Recent.Focused),
         GoalFocus.Ratio(3)
       ),
       List("o1", "f1", "f2", "f3", "o2", "f4", "f5")
@@ -496,7 +496,7 @@ class GoalFocusSuite extends munit.FunSuite:
       fairOrder(
         cs,
         f,
-        List(GoalFocus.Recent(true), GoalFocus.Recent(false), GoalFocus.Recent(true)),
+        List(GoalFocus.Recent.Focused, GoalFocus.Recent.Other, GoalFocus.Recent.Focused),
         GoalFocus.Ratio(3)
       ),
       List("f1", "f2", "o1", "f3", "f4", "f5", "o2")
@@ -507,7 +507,7 @@ class GoalFocusSuite extends munit.FunSuite:
       "0: active goals first"
     )
     assertEquals(
-      fairOrder(List("o1", "o2"), f, List(GoalFocus.Recent(true)), GoalFocus.Ratio(3)),
+      fairOrder(List("o1", "o2"), f, List(GoalFocus.Recent.Focused), GoalFocus.Ratio(3)),
       List("o1", "o2"),
       "no starvation without focus items"
     )
@@ -549,7 +549,7 @@ class GoalFocusSuite extends munit.FunSuite:
         ItemStatus.Wire("active"),
         GoalFocus.Work.Target("g"),
         approval = Some(Work.Approval(7)),
-        approvalByPerson = Work.ApprovalByPerson(true)
+        approvalByPerson = Work.ApprovedBy.Person
       ),
       Work(
         GoalFocus.Work.ItemId(3),
@@ -562,7 +562,7 @@ class GoalFocusSuite extends munit.FunSuite:
         ManagerItem.Kind(ProposeArticles),
         ItemStatus.Wire("held"),
         GoalFocus.Work.Target("g"),
-        focusHeld = Work.FocusHeld(true)
+        focusHeld = Work.FocusHeld.Held
       )
     )
     assertEquals(

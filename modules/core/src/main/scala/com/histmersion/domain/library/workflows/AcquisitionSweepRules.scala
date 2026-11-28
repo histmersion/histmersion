@@ -20,6 +20,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Source
 import com.histmersion.domain.automation.Goal
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The pure rules of an acquisition sweep (docs/research-embedded-agents.md §14): what a sweep may offer the ranking
   * model (never a work already in the corpus or the queue), the model's answer and its check, which open-access picks
@@ -36,8 +37,10 @@ object AcquisitionSweepRules:
   object Limit extends Newtype[Int, Pure]
   type Allowance = Allowance.T
   object Allowance extends Newtype[Int, Pure]
-  type LastAttempt = LastAttempt.T
-  object LastAttempt extends Newtype[Boolean, Pure]
+  enum LastAttempt derives CanEqual:
+    case Last, More
+  object LastAttempt extends TwoCases[LastAttempt]:
+    extension (lastAttempt: LastAttempt) def lastAttempt: Boolean = lastAttempt == Last
   type SkipCount = SkipCount.T
   object SkipCount extends Newtype[Int, Pure]
 
@@ -154,7 +157,7 @@ object AcquisitionSweepRules:
         (c, Rationale(Option(p.why).fold("")(w => s"$w".trim)))
       }
       .distinctBy(_._1.doi)
-    if problems.nonEmpty && !last.value then Left(problems)
+    if problems.nonEmpty && !last.lastAttempt then Left(problems)
     else Right((kept, problems.map(p => Dropped(s"rank: dropped — ${p.sentence}"))))
 
   /** A watcher's sweep with auto-ingest on: the open-access picks (`isOa`) are offered to `ingest` in the model's order

@@ -97,7 +97,12 @@ final class AcquisitionSweepPipeline(
               LibraryAnswers.ranking
             )((r, last) =>
               AcquisitionSweepRules
-                .checkRanking(r, found.candidates, AcquisitionSweepRules.LastAttempt(last.value))
+                .checkRanking(
+                  r,
+                  found.candidates,
+                  (if last.value then AcquisitionSweepRules.LastAttempt.Last
+                   else AcquisitionSweepRules.LastAttempt.More)
+                )
                 .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws.map(d => Checked.Warnings(d.value))))
             )
             // the stored candidates the ranking saw are SEEN, its picks QUEUED: a later sweep shows neither again

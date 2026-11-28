@@ -57,7 +57,7 @@ class CompareRunsSuite extends munit.FunSuite:
       target: RunHead.Target,
       steps: List[Step],
       status: RunHead.Status = RunHead.Status("done"),
-      dry: RunHead.DryRun = RunHead.DryRun(false),
+      dry: RunHead.DryRun = RunHead.DryRun.Applied,
       overrides: List[ModelChoice] = Nil
   ): Run =
     Run(RunHead(id, pipeline, target, status, dry, None, overrides), steps)

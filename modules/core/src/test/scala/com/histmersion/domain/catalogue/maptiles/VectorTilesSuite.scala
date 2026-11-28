@@ -84,7 +84,7 @@ class VectorTilesSuite extends munit.FunSuite:
         TilePoint.Y(0),
         Seq(
           TilePoint.PropKey("k") -> TileValue.Text(TileValue.Text.Value("b")),
-          TilePoint.PropKey("f") -> TileValue.Flag(TileValue.Flag.Value(true)),
+          TilePoint.PropKey("f") -> TileValue.Flag(TileValue.Flag.Value.On),
           TilePoint.PropKey("n") -> TileValue.Whole(TileValue.Whole.Value(-3))
         )
       )
@@ -101,7 +101,7 @@ class VectorTilesSuite extends munit.FunSuite:
     assertEquals(l.features(0).text("k"), Some("a"))
     assertEquals(l.features(0).whole("n"), Some(-3L))
     assertEquals(l.features(0).real("lo"), Some(-1500.5))
-    assertEquals(l.features(1).props.get("f"), Some(TileValue.Flag(TileValue.Flag.Value(true))))
+    assertEquals(l.features(1).props.get("f"), Some(TileValue.Flag(TileValue.Flag.Value.On)))
     assertEquals(l.features(1).whole("n"), Some(-3L))
 
   test("a key and a value are stored once per layer"):

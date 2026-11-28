@@ -44,8 +44,8 @@ object VectorTileReader:
       case Some((1, _, s, e))    => TileValue.Text(TileValue.Text.Value(String(b, s, e - s, StandardCharsets.UTF_8)))
       case Some((3, bits, _, _)) => TileValue.Real(TileValue.Real.Value(java.lang.Double.longBitsToDouble(bits)))
       case Some((6, v, _, _))    => TileValue.Whole(TileValue.Whole.Value(unzig(v)))
-      case Some((7, v, _, _))    => TileValue.Flag(TileValue.Flag.Value(v != 0))
-      case other                 => throw IllegalArgumentException(s"unexpected value $other")
+      case Some((7, v, _, _)) => TileValue.Flag((if v != 0 then TileValue.Flag.Value.On else TileValue.Flag.Value.Off))
+      case other              => throw IllegalArgumentException(s"unexpected value $other")
 
   private def unzig(n: Long): Long = (n >>> 1) ^ -(n & 1)
 

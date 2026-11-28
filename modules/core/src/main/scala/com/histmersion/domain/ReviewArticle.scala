@@ -40,6 +40,7 @@ import com.histmersion.domain.automation.agents.ToolUse
 import com.histmersion.domain.automation.Run
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The `review-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.3): the
   * mechanical checks, the validation of each reviewer's answer, the merge of the panel (worst verdict wins,
@@ -68,11 +69,14 @@ object ReviewArticle:
   type FindingCount = FindingCount.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object FindingCount extends Newtype[Int, Pure]
-  type FixRun = FixRun.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object FixRun extends Newtype[Boolean, Pure]
-  type LastRound = LastRound.T
-  object LastRound extends Newtype[Boolean, Pure]
+  enum Pass derives CanEqual:
+    case Fix, ReviewOnly
+  object Pass extends TwoCases[Pass]:
+    extension (fixRun: Pass) def fixRun: Boolean = fixRun == Fix
+  enum LastRound derives CanEqual:
+    case Last, More
+  object LastRound extends TwoCases[LastRound]:
+    extension (lastRound: LastRound) def lastRound: Boolean = lastRound == Last
   type RequestedRounds = RequestedRounds.T
   object RequestedRounds extends Newtype[Int, Pure]
   type RoundCap = RoundCap.T
@@ -686,7 +690,7 @@ object ReviewArticle:
       /** The records it rests on, each quote found in its record by code. */
       evidence: List[Evidence] = Nil,
       /** A reviewer raised it again after the fixer rejected it in an earlier round. */
-      escalated: Finding.Escalated = Finding.Escalated(false),
+      escalated: Finding.Escalated = Finding.Escalated.Regular,
       /** A missing-critique finding's pair of the critique checklist (§6.8). */
       pair: Option[CritiqueRef] = None
   ) derives JsonCodec,
@@ -857,8 +861,10 @@ object ReviewArticle:
 
     type Fix = Fix.T
     object Fix extends Newtype[String, Pure]
-    type Escalated = Escalated.T
-    object Escalated extends Newtype[Boolean, Pure]
+    enum Escalated derives CanEqual:
+      case Escalated, Regular
+    object Escalated extends TwoCases[Escalated]:
+      extension (escalated: Escalated) def escalated: Boolean = escalated == Escalated
 
   /** A verified [[EvidenceAnswer]]: `ratio` is how well the quote matched its record (1.0 = verbatim). */
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
@@ -925,8 +931,10 @@ object ReviewArticle:
 
   object Check:
     export Finding.Id
-    type Fixed = Fixed.T
-    object Fixed extends Newtype[Boolean, Pure]
+    enum Fixed derives CanEqual:
+      case Fixed, Unfixed
+    object Fixed extends TwoCases[Fixed]:
+      extension (fixed: Fixed) def fixed: Boolean = fixed == Fixed
     export Evidence.Quote
     type Note = Note.T
     object Note extends Newtype[String, Pure]
@@ -973,8 +981,10 @@ object ReviewArticle:
     export Article.Body
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends Newtype[String, Pure]
-    type Truncated = Truncated.T
-    object Truncated extends Newtype[Boolean, Pure]
+    enum Truncated derives CanEqual:
+      case Truncated, Whole
+    object Truncated extends TwoCases[Truncated]:
+      extension (truncated: Truncated) def truncated: Boolean = truncated == Truncated
 
   /** One line per source the article cites — `[[citekey]] · year · status · title` — so a reviewer reads every cited
     * status from the brief instead of querying for it (a Codex rules step selected the whole `sources` table for it,
@@ -1004,8 +1014,7 @@ object ReviewArticle:
       deferred: List[Merged.Deferred] = Nil
   ) derives JsonCodec:
     def majors: List[Finding] = findings.filter(f => f.major && !deferred.contains(f.id))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def escalated: List[Finding] = findings.filter(_.escalated.value)
+    def escalated: List[Finding] = findings.filter(_.escalated.escalated)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def count(r: Reviewer): FindingCount = FindingCount(findings.count(_.reviewer == r))
 
@@ -1095,12 +1104,16 @@ object ReviewArticle:
   ) derives JsonCodec
 
   object Patched:
-    type Written = Written.T
-    object Written extends Newtype[Boolean, Pure]
+    enum Written derives CanEqual:
+      case Written, Unwritten
+    object Written extends TwoCases[Written]:
+      extension (written: Written) def written: Boolean = written == Written
     type PreviousVersion = PreviousVersion.T
     object PreviousVersion extends Newtype[Long, Pure]
-    type Conflict = Conflict.T
-    object Conflict extends Newtype[Boolean, Pure]
+    enum Conflict derives CanEqual:
+      case Conflict, Clean
+    object Conflict extends TwoCases[Conflict]:
+      extension (conflict: Conflict) def conflict: Boolean = conflict == Conflict
 
   /** The run's result, for its log line and its queue items. */
   final case class Outcome(
@@ -1124,8 +1137,10 @@ object ReviewArticle:
     object Applied extends Newtype[Int, Pure]
     type Rejected = Rejected.T
     object Rejected extends Newtype[Int, Pure]
-    type Fixed = Fixed.T
-    object Fixed extends Newtype[Boolean, Pure]
+    enum Fixed derives CanEqual:
+      case Fixed, Unfixed
+    object Fixed extends TwoCases[Fixed]:
+      extension (fixed: Fixed) def fixed: Boolean = fixed == Fixed
     type Approvals = Approvals.T
     object Approvals extends Newtype[Int, Pure]
 
@@ -1149,12 +1164,12 @@ object ReviewArticle:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def requiredSections(
       kind: Snapshot.Kind,
-      generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
+      generated: BodyCorpus.Generated = BodyCorpus.Generated.Given
   ): List[List[String]] =
     if kind.value.trim.equalsIgnoreCase("index") then Nil
     else
       List(List("disagreements"), List("unresolved", "open questions")) ++
-        Option.when(!generated.value)(List("not used")).toList
+        Option.when(!generated.generated)(List("not used")).toList
 
   /** The finding kind of the coverage checks (#958): hand-written generated sections, and drift. */
   val CoverageKind: Finding.Kind = Finding.Kind("coverage")
@@ -1182,7 +1197,7 @@ object ReviewArticle:
       kind: Snapshot.Kind,
       body: ReviewArticle.MechanicalBody,
       isTarget: research.Slug => Boolean,
-      generated: ReviewArticle.MechanicalGenerated = ReviewArticle.MechanicalGenerated(false)
+      generated: ReviewArticle.MechanicalGenerated = ReviewArticle.MechanicalGenerated.Given
   ): List[Finding] =
     val hs = headings(body)
     def f(
@@ -1245,7 +1260,7 @@ object ReviewArticle:
         )
       )
     val handWritten =
-      if !generated.value then Nil
+      if !generated.generated then Nil
       else
         hs.filter(h => norm(h).startsWith("not used"))
           .take(1)
@@ -1449,11 +1464,11 @@ object ReviewArticle:
   private def verdictOf(stated: Verdict.Wire, fs: List[Finding], last: VerdictOfLast): Either[Problem, Verdict] =
     val derived = Verdict.of(fs)
     Verdict.parse(Option(stated).getOrElse(Verdict.Wire(""))) match
-      case None if !last.value && Option(stated).forall(_.value.trim.isEmpty) =>
+      case None if !last.lastRound && Option(stated).forall(_.value.trim.isEmpty) =>
         Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictGiven)))
-      case None if !last.value =>
+      case None if !last.lastRound =>
         Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictKnown(Raw.of(stated)))))
-      case Some(v) if v.rank > derived.rank && !last.value =>
+      case Some(v) if v.rank > derived.rank && !last.lastRound =>
         Left(Content.Answer(Content.Requirement.Panel(PanelRule.VerdictShown(Raw.of(v.wire)))))
       case _ => Right(derived)
 
@@ -1468,7 +1483,7 @@ object ReviewArticle:
       last: LastRound
   )(build: Verdict => Report): Either[List[Problem], (Report, List[String])] =
     val all = problems ++ verdict.left.toOption.toList
-    if all.nonEmpty && !last.value then Left(all)
+    if all.nonEmpty && !last.lastRound then Left(all)
     else
       Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — ${p.sentence}") ++ dropped))
 
@@ -1487,7 +1502,7 @@ object ReviewArticle:
   ): Either[List[Problem], (Report, List[String])] =
     val (stated, ps, ds) = checkFindings(Reviewer.Rules, a.findings, ev)
     val (fs, _, kws) = critique.fold((stated, Nil, Nil))(c =>
-      checkCritiques(Reviewer.Rules, stated, c.copy(shown = Nil, full = CritiqueRule.Full(false)), Nil, last)
+      checkCritiques(Reviewer.Rules, stated, c.copy(shown = Nil, full = CritiqueRule.Full.Short), Nil, last)
     )
     val (cs, cps, cws) = checksOf(Reviewer.Rules, prior, a.checks, last)
     val (ss, sps, sws) = spots.fold((Nil, Nil, Nil))(checkSpotChecks(Option(a.spotChecks).getOrElse(Nil), _, ev, last))
@@ -1615,7 +1630,7 @@ object ReviewArticle:
         )
       )
       val problems: List[Problem] = short :: failed
-      if last.value then (verified, Nil, problems.map(p => s"rules: unverified — ${p.sentence}"))
+      if last.lastRound then (verified, Nil, problems.map(p => s"rules: unverified — ${p.sentence}"))
       else (verified, problems, Nil)
 
   /** The finding code adds from the cold reader's `termsUndefined` count: above [[TermCountThreshold]] terms, MINOR at
@@ -1718,7 +1733,7 @@ object ReviewArticle:
         .contains(Verdict.Major)
     settle(
       Reviewer.ColdReader,
-      verdictOf(a.verdict, fs, VerdictOfLast(last.value || countOnly)),
+      verdictOf(a.verdict, fs, (if last.lastRound || countOnly then VerdictOfLast.Last else VerdictOfLast.More)),
       fs,
       problems,
       cws,
@@ -1777,8 +1792,10 @@ object ReviewArticle:
   )
 
   object CritiqueRule:
-    type Full = Full.T
-    object Full extends Newtype[Boolean, Pure]
+    enum Full derives CanEqual:
+      case Full, Short
+    object Full extends TwoCases[Full]:
+      extension (full: Full) def full: Boolean = full == Full
     export Article.Body
     export AgentVerify.MinRatio
 
@@ -1966,7 +1983,7 @@ object ReviewArticle:
             else if rule.body.value.isEmpty then Right((g, None))
             else
               claimSentence(rule.body, f.quote, rule.minRatio) match
-                case None if rule.full.value && !last.value =>
+                case None if rule.full.full && !last.lastRound =>
                   Left(
                     Content.Proposal(Content.Requirement.Panel(PanelRule.CriticisedClaimQuoted), Problem.Where(label))
                   )
@@ -1981,7 +1998,7 @@ object ReviewArticle:
               else
                 s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(w => s"$w").getOrElse("").take(160)}\""
             minor(f.modify(_.pair).setTo(Some(p.ref)), why)
-          case None if f.pair.isEmpty && rule.full.value && !last.value =>
+          case None if f.pair.isEmpty && rule.full.full && !last.lastRound =>
             Left(Content.Answer(Content.Requirement.Panel(PanelRule.PairNamed(Raw.of(f.id)))))
           case None =>
             val proposed = f.pair.exists(ref =>
@@ -2072,7 +2089,7 @@ object ReviewArticle:
       )
       .toList
     val dropped = results.collect { case Left(m) => s"skeptic: dropped — ${m.sentence}" }
-    if last.value then (ok, Nil, dropped ++ missing.map(m => s"skeptic: ${m.sentence} (left open)"))
+    if last.lastRound then (ok, Nil, dropped ++ missing.map(m => s"skeptic: ${m.sentence} (left open)"))
     else (ok, missing, dropped)
 
   // ── checks of earlier findings, and the verification pass (the review ledger) ──────────────────
@@ -2134,10 +2151,10 @@ object ReviewArticle:
         case Some(f) if gone(f) => Right(Check(id, c.fixed, Check.Quote(""), Check.Note(note)))
         case Some(_)            =>
           refused(
-            PanelRule.CheckQuoted(if c.fixed.value then Content.Shows.Fixed else Content.Shows.StillThere)
+            PanelRule.CheckQuoted(if c.fixed.fixed then Content.Shows.Fixed else Content.Shows.StillThere)
           )
       checked match
-        case Right(k) if !k.fixed.value && k.note.value.isEmpty => refused(PanelRule.CheckNoted)
+        case Right(k) if !k.fixed.fixed && k.note.value.isEmpty => refused(PanelRule.CheckNoted)
         case other                                              => other
     }
     val checks = results
@@ -2150,7 +2167,7 @@ object ReviewArticle:
         .filterNot(checks.map(_.id).toSet)
         .map(id => Content.Proposal(Content.Requirement.Panel(PanelRule.CheckGiven), Problem.Where.of(id)))
     val problems = results.collect { case Left(p) => p } ++ missing
-    if last.value then (checks, Nil, problems.map(p => s"${r.wire}: ${p.sentence} (left open)"))
+    if last.lastRound then (checks, Nil, problems.map(p => s"${r.wire}: ${p.sentence} (left open)"))
     else (checks, problems, Nil)
 
   /** A reviewer's word that a missing-critique finding is fixed, held to what code can see (§6.9): while its pair still
@@ -2167,12 +2184,12 @@ object ReviewArticle:
   ): (List[Check], List[String]) =
     val held = checks.map { c =>
       asked.find(_.id == c.id).flatMap(_.pair).flatMap(Critiques.find(pairs, _)) match
-        case Some(p) if c.fixed.value && p.bearing =>
+        case Some(p) if c.fixed.fixed && p.bearing =>
           val why =
             s"[[${p.src.citekey}]] and [[${p.dst.citekey}]] are still not cited in one paragraph, and no reason is stored"
           (
             c.modify(_.fixed)
-              .setTo(Check.Fixed(false))
+              .setTo(Check.Fixed.Unfixed)
               .modify(_.note)
               .setTo(
                 Check.Note(
@@ -2270,7 +2287,7 @@ object ReviewArticle:
       checkCritiques(
         r,
         raw,
-        CritiqueRule(critiques, Nil, full = CritiqueRule.Full(false), prior.body, prior.minRatio),
+        CritiqueRule(critiques, Nil, full = CritiqueRule.Full.Short, prior.body, prior.minRatio),
         Nil,
         last
       )
@@ -2284,7 +2301,7 @@ object ReviewArticle:
       .take(MaxLessonsPerAnswer)
       .map(l => Recheck.Lessons(l.take(LessonChars)))
     val problems = cps ++ ps
-    if problems.nonEmpty && !last.value then Left(problems)
+    if problems.nonEmpty && !last.lastRound then Left(problems)
     else
       Right(
         (
@@ -2335,7 +2352,7 @@ object ReviewArticle:
       }
       .toList
       .map(f =>
-        if rejectedBefore.exists(sameFinding(_, f)) then f.modify(_.escalated).setTo(Finding.Escalated(true)) else f
+        if rejectedBefore.exists(sameFinding(_, f)) then f.modify(_.escalated).setTo(Finding.Escalated.Escalated) else f
       )
     val verdict = Verdict.worst(reports.map(_.verdict) :+ Verdict.of(kept))
     val cold = reports.find(_.reviewer == Reviewer.ColdReader)
@@ -2363,15 +2380,15 @@ object ReviewArticle:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def done(m: Merged, round: Merged.Round, rounds: RoundCount, fix: FixRun): Boolean =
-    m.majors.isEmpty || !fix.value || round.value >= rounds.value
+  def done(m: Merged, round: Merged.Round, rounds: RoundCount, fix: Pass): Boolean =
+    m.majors.isEmpty || !fix.fixRun || round.value >= rounds.value
 
   /** The panel rounds a run gets: what it asked for, else the configured default, never more than the cap. The fixer
     * works BETWEEN rounds, so a run that fixes gets at least two (one to find, one to check the fix).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def rounds(requested: Option[RequestedRounds], default: DefaultRounds, cap: RoundCap, fix: FixRun): RoundCount =
-    val floor = if fix.value then 2 else 1
+  def rounds(requested: Option[RequestedRounds], default: DefaultRounds, cap: RoundCap, fix: Pass): RoundCount =
+    val floor = if fix.fixRun then 2 else 1
     RoundCount(math.max(floor, math.min(math.max(floor, cap.value), requested.map(_.value).getOrElse(default.value))))
 
   // ── the fixer (§4.3 step 6) ─────────────────────────────────────────────────────────────────────
@@ -2396,13 +2413,14 @@ object ReviewArticle:
       isCitekey: library.Citekey => Boolean,
       isTarget: research.Slug => Boolean,
       formatErrors: Fix.Body => List[Problem],
-      generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
+      generated: BodyCorpus.Generated = BodyCorpus.Generated.Given
   )
 
   object BodyCorpus:
-
-    type Generated = Generated.T
-    object Generated extends Newtype[Boolean, Pure]
+    enum Generated derives CanEqual:
+      case Generated, Given
+    object Generated extends TwoCases[Generated]:
+      extension (generated: Generated) def generated: Boolean = generated == Generated
 
   /** THE check of a draft — the fixer's edits against the body the round reviewed, or a whole body — shared by the
     * pipeline's validation of the fixer's answer and the `check_edits` tool, so the two can never disagree. Edits apply
@@ -2604,7 +2622,7 @@ object ReviewArticle:
 
     // on the last attempt, the edits that reopen a closed finding are dropped, one at a time from the last
     val rev =
-      if !last.value || first.regressions.isEmpty || guards.isEmpty then first
+      if !last.lastRound || first.regressions.isEmpty || guards.isEmpty then first
       else
         first.check.edits.filter(_.applied).map(_.index).reverse.foldLeft(first) { (cur, i) =>
           if cur.regressions.isEmpty then cur
@@ -2628,7 +2646,7 @@ object ReviewArticle:
     val pairProblems: List[Problem] = pairUnanswered.map((id, r) =>
       Content.Answer(Content.Requirement.Panel(PanelRule.PairAnswered(Raw.of(id), Raw.of(r.src), Raw.of(r.dst))))
     )
-    val applied = if last.value then applied0.filterNot(id => pairUnanswered.exists(_._1 == id)) else applied0
+    val applied = if last.lastRound then applied0.filterNot(id => pairUnanswered.exists(_._1 == id)) else applied0
     // pairs the revision brought in: a work it now cites whose recorded critique it discusses nowhere
     val brought = rev.pairs
       .filter(p => p.bearing && !critiques.exists(_.ref.same(p.ref)) && !aside.exists(_.same(p.ref)))
@@ -2672,7 +2690,7 @@ object ReviewArticle:
       check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
         wont.collect { case Left(p) => p } ++ asideProblems ++ pairProblems ++ broughtProblem.toList ++
         regressionProblems
-    if problems.isEmpty || (last.value && !check.fatal.fatal) then
+    if problems.isEmpty || (last.lastRound && !check.fatal.fatal) then
       val wontOk = wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id)
       val setAside = asides.filterNot(s => applied.contains(s.id) || rejectedOk.exists(_.id == s.id))
       // every open finding left unanswered, with why — the ledger records it as not fixed
@@ -2864,7 +2882,7 @@ object ReviewArticle:
   def findingsText(m: Merged, notes: Map[String, String] = Map.empty): String =
     m.findings
       .map { f =>
-        val esc = if f.escalated.value then " [raised again after a rejection]" else ""
+        val esc = if f.escalated.escalated then " [raised again after a rejection]" else ""
         s"- ${f.id} [${f.reviewer.wire}, ${f.severity.wire}${
             if f.kind.value.nonEmpty then s", ${f.kind}" else ""
           }]$esc " +
@@ -2884,5 +2902,5 @@ object ReviewArticle:
     val counts = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic, Reviewer.Mechanical)
       .map(r => s"${r.prefix}:${last.count(r)}")
       .mkString(" ")
-    val fixer = if o.fixed.value then s", fixer applied ${o.applied} / rejected ${o.rejected}" else ""
+    val fixer = if o.fixed.fixed then s", fixer applied ${o.applied} / rejected ${o.rejected}" else ""
     s"review-article [[${o.slug}]]: round ${o.rounds} → ${o.verdict.wire} ($counts)$fixer (agent run ${runId.value.take(8)})"

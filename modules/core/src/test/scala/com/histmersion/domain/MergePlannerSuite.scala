@@ -566,7 +566,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     )
     assertEquals(
       r3.apply.attestations,
-      List(MergePlanner.AttestationFix(uid("t-home"), None, None, drop = MergePlanner.AttestationFix.Drop(false)))
+      List(MergePlanner.AttestationFix(uid("t-home"), None, None, drop = MergePlanner.AttestationFix.Drop.Keep))
     )
 
   test("edges: a merge that would make a source cite itself drops that edge and says so (an incremental bundle)"):

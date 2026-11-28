@@ -4,7 +4,6 @@ package testsupport
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
 
-import api.json.TwoStates
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same
@@ -46,8 +45,8 @@ object ComparedByValue:
     given baseWithNewtype: [B, N] => (RefinedType.Mirror[N] { type BaseType = B }) => ByValue[B, N] = ByValue()
 
   trait StateWithBoolean extends NewtypeWithBase:
-    given stateWithBoolean: [E <: reflect.Enum] => TwoStates[E] => ByValue[E, Boolean] = ByValue()
-    given booleanWithState: [E <: reflect.Enum] => TwoStates[E] => ByValue[Boolean, E] = ByValue()
+    given stateWithBoolean: [E <: reflect.Enum] => TwoCases[E] => ByValue[E, Boolean] = ByValue()
+    given booleanWithState: [E <: reflect.Enum] => TwoCases[E] => ByValue[Boolean, E] = ByValue()
 
   trait Same extends StateWithBoolean:
     given same: [A] => ByValue[A, A] = ByValue()

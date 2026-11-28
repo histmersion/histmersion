@@ -187,7 +187,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
         List(
           Check(
             ReviewArticle.Check.Id("R1"),
-            fixed = ReviewArticle.Check.Fixed(true),
+            fixed = ReviewArticle.Check.Fixed.Fixed,
             ReviewArticle.Check.Quote("Tin, a metal"),
             ReviewArticle.Check.Note("defined now")
           )
@@ -219,7 +219,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Check(
           ReviewArticle.Check.Id("S1"),
-          fixed = ReviewArticle.Check.Fixed(false),
+          fixed = ReviewArticle.Check.Fixed.Unfixed,
           ReviewArticle.Check.Quote("The date is argued"),
           ReviewArticle.Check.Note("still no year")
         )
@@ -239,7 +239,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Check(
           ReviewArticle.Check.Id("S1"),
-          fixed = ReviewArticle.Check.Fixed(true),
+          fixed = ReviewArticle.Check.Fixed.Fixed,
           ReviewArticle.Check.Quote("x"),
           ReviewArticle.Check.Note("")
         )
@@ -344,7 +344,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Check(
           ReviewArticle.Check.Id("R1"),
-          fixed = ReviewArticle.Check.Fixed(true),
+          fixed = ReviewArticle.Check.Fixed.Fixed,
           ReviewArticle.Check.Quote("q"),
           ReviewArticle.Check.Note("")
         )
@@ -616,7 +616,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Check(
           ReviewArticle.Check.Id("S1"),
-          fixed = ReviewArticle.Check.Fixed(true),
+          fixed = ReviewArticle.Check.Fixed.Fixed,
           ReviewArticle.Check.Quote("1320 BCE"),
           ReviewArticle.Check.Note("")
         )
@@ -667,7 +667,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       List(
         Check(
           ReviewArticle.Check.Id("R1"),
-          fixed = ReviewArticle.Check.Fixed(true),
+          fixed = ReviewArticle.Check.Fixed.Fixed,
           ReviewArticle.Check.Quote("q"),
           ReviewArticle.Check.Note("")
         )
@@ -703,7 +703,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
         List(
           Check(
             ReviewArticle.Check.Id("R1"),
-            fixed = ReviewArticle.Check.Fixed(true),
+            fixed = ReviewArticle.Check.Fixed.Fixed,
             ReviewArticle.Check.Quote("q"),
             ReviewArticle.Check.Note("")
           )

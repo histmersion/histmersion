@@ -73,7 +73,7 @@ private[events] object EventImportRepo:
                 case _           => None
             )
             .toSet,
-          StoredEvent.Catalogue(r.catalogue.isDefined),
+          (if r.catalogue.isDefined then StoredEvent.Catalogue.Catalogue else StoredEvent.Catalogue.Corpus),
           StoredEvent.Label(r.label.value)
         )
       }

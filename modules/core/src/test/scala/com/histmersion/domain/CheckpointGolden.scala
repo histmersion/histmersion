@@ -276,7 +276,7 @@ object CheckpointGolden:
       ReviewArticle.Finding.Problem("The critique is not cited."),
       ReviewArticle.Finding.Fix("Cite it."),
       evidence,
-      escalated = ReviewArticle.Finding.Escalated(true),
+      escalated = ReviewArticle.Finding.Escalated.Escalated,
       pair = Some(CritiqueRef(Citekey("doe2001_tin"), Citekey("smith1987_tin")))
     ) ::
       (for r <- Reviewer.values.toList; s <- Severity.values.toList
@@ -301,7 +301,7 @@ object CheckpointGolden:
       Some(ReviewArticle.ColdReaderAnswer.ExplainBack("It says the route is later.")),
       List(ReviewArticle.ExplainSlotsValue("disagreement")),
       proposals.values.take(2),
-      List(Check(Check.Id("R1"), fixed = Check.Fixed(true), Check.Quote("a quote"), Check.Note("fixed in ## Origins"))),
+      List(Check(Check.Id("R1"), fixed = Check.Fixed.Fixed, Check.Quote("a quote"), Check.Note("fixed in ## Origins"))),
       List(
         SpotCheck(
           library.Citekey("smith1987_tin"),
@@ -396,9 +396,9 @@ private object EnrichSourceSamples:
     Some(com.histmersion.Year(1987)),
     None,
     Source.Status.Wire("unassessed"),
-    hasSummary = EnrichSource.Loaded.HasSummary(false),
-    hasNotes = EnrichSource.Loaded.HasNotes(false),
-    hasPeriod = EnrichSource.Loaded.HasPeriod(false),
+    hasSummary = EnrichSource.Loaded.HasSummary.Unsummarised,
+    hasNotes = EnrichSource.Loaded.HasNotes.Unnoted,
+    hasPeriod = EnrichSource.Loaded.HasPeriod.Undated,
     None,
     List(EnrichSource.Topic("trade")),
     Nil,
@@ -434,11 +434,11 @@ private object EnrichSourceSamples:
           .modify(_.status)
           .setTo(Source.Status.Wire("current"))
           .modify(_.hasSummary)
-          .setTo(EnrichSource.Loaded.HasSummary(true))
+          .setTo(EnrichSource.Loaded.HasSummary.Summarised)
           .modify(_.hasNotes)
-          .setTo(EnrichSource.Loaded.HasNotes(true))
+          .setTo(EnrichSource.Loaded.HasNotes.Noted)
           .modify(_.hasPeriod)
-          .setTo(EnrichSource.Loaded.HasPeriod(true))
+          .setTo(EnrichSource.Loaded.HasPeriod.Dated)
           .modify(_.topics)
           .setTo(List(EnrichSource.Topic("bronze_age")))
           .modify(_.regions)

@@ -230,7 +230,7 @@ final class ProposeArticlesPipeline(
   ): Either[List[Problem], ArticlePlan] =
     val lim = limits(ctx)
     PlanArticles
-      .check(a, lim.maxArticles, PlanArticles.LastRound(last))
+      .check(a, lim.maxArticles, (if last then PlanArticles.LastRound.Last else PlanArticles.LastRound.More))
       .flatMap { (cs, dropped) =>
         val taken = l.articles.map(_.slug).toSet
         val existing = l.articles.map(e => (Article.Slug(e.slug.value), sourcesOf(e)))

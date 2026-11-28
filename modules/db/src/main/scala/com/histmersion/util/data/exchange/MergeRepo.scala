@@ -290,7 +290,7 @@ object MergeRepo:
       .run()
       .map((u, f, l) => u -> Ledger(f, l))
       .toMap
-    val rows = if ownBundle.value then Nil
+    val rows = if ownBundle.entityOwnBundle then Nil
     else
       decided.flatMap { d =>
         BundlePlan
@@ -299,7 +299,7 @@ object MergeRepo:
             d.foreignRev,
             d.localizedRev,
             d.localRev,
-            BundlePlan.Local.Tombstoned(d.tombstone.value)
+            (if d.tombstone.tombstone then BundlePlan.Local.Tombstoned.Tombstoned else BundlePlan.Local.Tombstoned.Live)
           )
           .filterNot(l => existing.get(d.foreignUid).contains(l))
           .map(d -> _)

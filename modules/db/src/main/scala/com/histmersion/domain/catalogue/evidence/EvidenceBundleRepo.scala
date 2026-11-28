@@ -186,13 +186,12 @@ private[evidence] object EvidenceBundleRepo:
     * own rows, so their clocks move and a drop leaves a tombstone.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def attestationFixes(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     if w.merged.attestations.nonEmpty then
       w.asLocal {
         w.merged.attestations.foreach { f =>
-          if f.drop.value then
+          if f.drop.drop then
             Unused(sql"DELETE FROM attestations WHERE uid = ${f.uid}".update.run(), Unused.Why.Idempotent)
           else
             Unused(

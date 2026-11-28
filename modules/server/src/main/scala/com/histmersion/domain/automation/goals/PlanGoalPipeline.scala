@@ -92,7 +92,14 @@ final class PlanGoalPipeline(
         AnswerSchemas.plan
       )((a, last) =>
         PlanGoal
-          .check(a, slug, taken, loaded.queries.toSet, caps(ctx), PlanGoal.LastRound(last.value))
+          .check(
+            a,
+            slug,
+            taken,
+            loaded.queries.toSet,
+            caps(ctx),
+            (if last.value then PlanGoal.LastRound.Last else PlanGoal.LastRound.More)
+          )
           .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.sentence))))
       )
       plan <- ctx.code[Plan](AgentRepo.StepRecord.Name("verify"))(Right(verify(ctx, proposed, slug)))
@@ -207,7 +214,7 @@ final class PlanGoalPipeline(
           .logLine(
             slug,
             plan,
-            approved = PlanGoal.Approved(false),
+            approved = PlanGoal.Approved.Unapproved,
             PlanGoal.CreatedCount(0),
             PlanGoal.LinkedCount(0),
             PlanGoal.QueuedCount(0),
@@ -332,7 +339,7 @@ final class PlanGoalPipeline(
         .logLine(
           slug,
           plan,
-          approved = PlanGoal.Approved(true),
+          approved = PlanGoal.Approved.Approved,
           PlanGoal.CreatedCount(created.size),
           PlanGoal.LinkedCount(inCorpus.size),
           PlanGoal.QueuedCount(items.size),

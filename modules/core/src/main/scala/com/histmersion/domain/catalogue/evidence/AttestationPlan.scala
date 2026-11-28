@@ -214,14 +214,14 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
     }
     tries.filterNot(_.foreign).foreach {
       case AnchorTry(t, _, Some(a), co, _) =>
-        attFixes += AttestationFix(t.uid, Some(a), co, drop = AttestationFix.Drop(false))
+        attFixes += AttestationFix(t.uid, Some(a), co, drop = AttestationFix.Drop.Keep)
         f.count(_.modify(_.attestationsReanchored).using(n => MergeTally.AttestationsReanchored(n.value + 1)))
       case AnchorTry(t, _, None, _, issue) =>
         issue.flatMap(f.decisionIn).map(_.kind) match
           case Some(km.KeepUnanchored) =>
-            attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop(false))
+            attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop.Keep)
           case _ =>
-            attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop(true))
+            attFixes += AttestationFix(t.uid, None, None, drop = AttestationFix.Drop.Drop)
             f.count(_.modify(_.attestationsDropped).using(n => MergeTally.AttestationsDropped(n.value + 1)))
     }
 

@@ -80,7 +80,7 @@ final class HintEffectPipeline(
             a,
             t => loaded.known.contains(t),
             loaded.itemTarget.map(t => HintProposals.Item(t.value)),
-            HintProposals.Last(last.value)
+            (if last.value then HintProposals.Last.Last else HintProposals.Last.More)
           )
           .map((e, ws) =>
             Checked(

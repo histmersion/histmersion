@@ -73,7 +73,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       open: ReviewFacts.OpenMajors,
       reopened: ReviewFacts.MaxReopened = ReviewFacts.MaxReopened(0),
       escalated: ReviewFacts.Escalated = ReviewFacts.Escalated(0),
-      onlyMissing: ReviewFacts.OnlyMissingCritiques = ReviewFacts.OnlyMissingCritiques(false),
+      onlyMissing: ReviewFacts.OnlyMissingCritiques = ReviewFacts.OnlyMissingCritiques.Every,
       pairs: Option[ReviewFacts.OpenPairs] = None
   ) =
     Some(ReviewFacts(open, reopened, escalated, onlyMissing, pairs))
@@ -146,7 +146,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       attempts = ManagerPolicy.Attempts(2),
       fs = facts(
         ReviewFacts.OpenMajors(2),
-        onlyMissing = ReviewFacts.OnlyMissingCritiques(true),
+        onlyMissing = ReviewFacts.OnlyMissingCritiques.MissingOnly,
         pairs = Some(ReviewFacts.OpenPairs(5))
       )
     ) match
@@ -187,7 +187,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       attempts = ManagerPolicy.Attempts(2),
       fs = facts(
         ReviewFacts.OpenMajors(2),
-        onlyMissing = ReviewFacts.OnlyMissingCritiques(true),
+        onlyMissing = ReviewFacts.OnlyMissingCritiques.MissingOnly,
         pairs = Some(ReviewFacts.OpenPairs(3))
       )
     ) match
@@ -202,7 +202,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
           ItemState(before = Some(Managers.ItemState.Before(2)), pairsBefore = Some(Managers.ItemState.PairsBefore(4))),
         fs = facts(
           ReviewFacts.OpenMajors(2),
-          onlyMissing = ReviewFacts.OnlyMissingCritiques(true),
+          onlyMissing = ReviewFacts.OnlyMissingCritiques.MissingOnly,
           pairs = Some(ReviewFacts.OpenPairs(4))
         )
       )
@@ -243,7 +243,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         attempts = ManagerPolicy.Attempts(3),
         fs = facts(
           ReviewFacts.OpenMajors(2),
-          onlyMissing = ReviewFacts.OnlyMissingCritiques(true),
+          onlyMissing = ReviewFacts.OnlyMissingCritiques.MissingOnly,
           pairs = Some(ReviewFacts.OpenPairs(3))
         )
       ).isInstanceOf[Next.Stop]
@@ -348,7 +348,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       List(
         Check(
           ReviewArticle.Check.Id("S1"),
-          fixed = ReviewArticle.Check.Fixed(true),
+          fixed = ReviewArticle.Check.Fixed.Fixed,
           ReviewArticle.Check.Quote("q"),
           ReviewArticle.Check.Note("")
         )
@@ -374,11 +374,11 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     assertEquals((fx.openMajors, fx.onlyMissingCritiques, fx.openPairs), (1, true, Some(4)))
     // a rules MAJOR among them: not only missing critiques
     val mixed = absorb(l3, List(f(Finding.Id("R1"), Reviewer.Rules)), run, ReviewLedger.Closure.Round(3))._1
-    assert(!ReviewFacts.of(mixed).onlyMissingCritiques.value)
+    assert(!ReviewFacts.of(mixed).onlyMissingCritiques.onlyMissingCritiques)
     // nothing open: not "only missing critiques" either
-    assert(!ReviewFacts.of(l2).onlyMissingCritiques.value)
+    assert(!ReviewFacts.of(l2).onlyMissingCritiques.onlyMissingCritiques)
     // a missing-critique of any pass or run counts (the pairs decide whether it is churn)
-    assert(ReviewFacts.of(l1).onlyMissingCritiques.value)
+    assert(ReviewFacts.of(l1).onlyMissingCritiques.onlyMissingCritiques)
 
   test("selection order: open MAJORs, never reviewed, stale; an article without a filter gets infer-filter first"):
     val picks = select(
@@ -386,7 +386,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       unreviewed = List(Slug("c"), Slug("a")),
       stale = List(Slug("d") -> Staleness.Old(ReviewSettings.StaleAfterDays(90))),
       batch = ReviewSettings.RefillBatch(10),
-      inferFilter = ReviewSettings.InferFilter(true),
+      inferFilter = ReviewSettings.InferFilter.Infer,
       hasFilter = Set(Slug("a"), Slug("d")),
       inferredBefore = Set(Slug("c"))
     )
@@ -409,7 +409,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         List(Slug("c")),
         Nil,
         ReviewSettings.RefillBatch(2),
-        inferFilter = ReviewSettings.InferFilter(false),
+        inferFilter = ReviewSettings.InferFilter.AsGiven,
         _ => false,
         _ => false
       ).map(_.target),
@@ -464,7 +464,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       ReviewManagerDefaults.LowWater(2),
       ReviewManagerDefaults.RefillBatch(10),
       ReviewManagerDefaults.StaleAfterDays(90),
-      inferFilter = ReviewManagerDefaults.InferFilter(true),
+      inferFilter = ReviewManagerDefaults.InferFilter.Infer,
       extendMinNew = ReviewManagerDefaults.ExtendMinNew(0)
     )
     val m = ManagerDefaults(

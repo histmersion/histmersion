@@ -72,7 +72,6 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
   private val rain = "Rainfall rose sharply in the next period."
   private val hoard = "The hoard was buried in the 15th c. by its owners."
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def check(
       fs: List[FindingProposal],
       g: FindingGuards = guards(),
@@ -87,7 +86,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       within,
       Set.empty,
       g,
-      EnrichSource.Last(last)
+      (if last then EnrichSource.Last.Last else EnrichSource.Last.More)
     )
 
   // ── 1. places the gazetteer knows ─────────────────────────────────────────────────────────────

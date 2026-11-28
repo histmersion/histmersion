@@ -21,6 +21,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Is a bundle's source the same work as one here? (docs/research-merge-import.md §5.2, stages B–D.) Pure.
   *
@@ -93,12 +94,18 @@ object SourceMatcher:
     /** The name of a strong key (`DOI`, `ISBN`). */
     type Strong = Strong.T
     object Strong extends Newtype[String, Pure]
-    type DoiConflict = DoiConflict.T
-    object DoiConflict extends Newtype[Boolean, Pure]
-    type YearGap = YearGap.T
-    object YearGap extends Newtype[Boolean, Pure]
-    type TitleDiffers = TitleDiffers.T
-    object TitleDiffers extends Newtype[Boolean, Pure]
+    enum DoiConflict derives CanEqual:
+      case Conflicting, Consistent
+    object DoiConflict extends TwoCases[DoiConflict]:
+      extension (doiConflict: DoiConflict) def doiConflict: Boolean = doiConflict == Conflicting
+    enum YearGap derives CanEqual:
+      case Gap, Close
+    object YearGap extends TwoCases[YearGap]:
+      extension (yearGap: YearGap) def yearGap: Boolean = yearGap == Gap
+    enum TitleDiffers derives CanEqual:
+      case Differs, Same
+    object TitleDiffers extends TwoCases[TitleDiffers]:
+      extension (titleDiffers: TitleDiffers) def titleDiffers: Boolean = titleDiffers == Differs
 
     /** What a comparison adds to the score. */
     type Weight = Weight.T
@@ -345,9 +352,9 @@ object SourceMatcher:
 
     Evidence(
       strong,
-      Evidence.DoiConflict(doiConflict),
-      Evidence.YearGap(gap.exists(_ > 1)),
-      Evidence.TitleDiffers(title._2.value < 0),
+      (if doiConflict then Evidence.DoiConflict.Conflicting else Evidence.DoiConflict.Consistent),
+      (if gap.exists(_ > 1) then Evidence.YearGap.Gap else Evidence.YearGap.Close),
+      (if title._2.value < 0 then Evidence.TitleDiffers.Differs else Evidence.TitleDiffers.Same),
       ag,
       List(Some(title), authors, year, venue, body, alias).flatten
     )
@@ -392,9 +399,9 @@ object SourceMatcher:
       val candidates = blockingKeys(r).toList.flatMap(k => byKey.getOrElse(k, Nil)).distinctBy(_.uid)
       candidates.flatMap { l =>
         val ev = evidence(r, l, sketches, cfg.weights)
-        val yearFlag = ev.yearGap.value && !ev.strongKey && editions.isEmpty
+        val yearFlag = ev.yearGap.yearGap && !ev.strongKey && editions.isEmpty
         val flags =
-          (if ev.doiConflict.value && !ev.strongKey then
+          (if ev.doiConflict.doiConflict && !ev.strongKey then
              List(
                Pair.Flags(
                  s"two different DOIs: ${l.source.doi.getOrElse("")} here, ${r.source.doi.getOrElse("")} in the bundle"
@@ -408,7 +415,7 @@ object SourceMatcher:
                  )
                )
              else Nil)
-        val separate = ev.yearGap.value && !ev.strongKey && editions.contains(EditionsPolicy.Separate)
+        val separate = ev.yearGap.yearGap && !ev.strongKey && editions.contains(EditionsPolicy.Separate)
         val rank =
           if ev.strongKey then 0
           else if separate || ev.score.value <= cfg.newAtMost.value then 3

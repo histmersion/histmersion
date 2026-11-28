@@ -223,7 +223,7 @@ class EventDatingSuite extends munit.FunSuite:
       Some(lon),
       wd,
       Set.empty,
-      catalogue = StoredEvent.Catalogue(false)
+      catalogue = StoredEvent.Catalogue.Corpus
     )
 
   test(

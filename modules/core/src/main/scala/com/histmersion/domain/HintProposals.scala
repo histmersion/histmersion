@@ -16,6 +16,7 @@ import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** LLM-proposed hint effects (docs/research-process-managers.md §3.6, phase 3): a person writes a hint in words; a
   * model reads it and proposes the structured action it asks for — hold, prioritise or skip some of the manager's
@@ -30,8 +31,10 @@ object HintProposals:
   object Description extends Newtype[String, Pure]
   type Item = Item.T
   object Item extends Newtype[String, Pure]
-  type Last = Last.T
-  object Last extends Newtype[Boolean, Pure]
+  enum Last derives CanEqual:
+    case Last, More
+  object Last extends TwoCases[Last]:
+    extension (last: Last) def last: Boolean = last == Last
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
 
@@ -102,7 +105,7 @@ object HintProposals:
     val (good, unknown) = targets.partition(known)
     val tag = a.tag.map(_.value.trim).filter(_.nonEmpty)
     def fail(ps: List[Problem]): Either[List[Problem], (Option[HintEffect], List[Description])] =
-      if last.value then Right((None, ps.map(p => Description(s"nothing proposed: ${p.sentence}")))) else Left(ps)
+      if last.last then Right((None, ps.map(p => Description(s"nothing proposed: ${p.sentence}")))) else Left(ps)
     if HintEffect.Action.none(a.action) then Right((None, Nil))
     else
       HintEffect.Action.verb(a.action).filter(HintEffect.Verb.Proposable.contains) match
@@ -125,7 +128,7 @@ object HintProposals:
               case Right(c) => Right((Some(HintEffect(HintEffect.Verb.Config.word, config = Some(c))), Nil))
         case Some(verb) =>
           val problems = List(
-            Option.when(unknown.nonEmpty && !last.value)(
+            Option.when(unknown.nonEmpty && !last.last)(
               Content.Proposal(Content.Requirement.KnownItems(unknown.toVector.map(Raw.of(_))), Where("targets"))
             ),
             Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(

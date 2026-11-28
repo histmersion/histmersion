@@ -349,29 +349,29 @@ class IngestBacklogSuite extends munit.FunSuite:
     val f = RepairFacts(
       IngestBacklog.RepairFacts.Item(7),
       Doi("10.1/x"),
-      isOa = IngestBacklog.RepairFacts.IsOa(true),
+      isOa = IngestBacklog.RepairFacts.IsOa.Open,
       IngestBacklog.RepairFacts.Watcher("watch:g"),
-      watcherExists = IngestBacklog.RepairFacts.WatcherExists(true),
-      watcherAutoIngest = IngestBacklog.RepairFacts.WatcherAutoIngest(true),
+      watcherExists = IngestBacklog.RepairFacts.Watching.Watched,
+      watcherAutoIngest = IngestBacklog.RepairFacts.Ingesting.AutoIngest,
       None
     )
     assertEquals(repairAction(f), RepairAction.Move)
     assertEquals(repairAction(f.modify(_.inCorpus).setTo(Some(Citekey("ck")))), RepairAction.Remove(Citekey("ck")))
     assert(
-      repairAction(f.modify(_.isOa).setTo(IngestBacklog.RepairFacts.IsOa(false))).isInstanceOf[RepairAction.Keep],
+      repairAction(f.modify(_.isOa).setTo(IngestBacklog.RepairFacts.IsOa.Closed)).isInstanceOf[RepairAction.Keep],
       "a closed work stays on the list"
     )
     assert(
       repairAction(
-        f.modify(_.isOa).setTo(IngestBacklog.RepairFacts.IsOa(false)).modify(_.inCorpus).setTo(Some(Citekey("ck")))
+        f.modify(_.isOa).setTo(IngestBacklog.RepairFacts.IsOa.Closed).modify(_.inCorpus).setTo(Some(Citekey("ck")))
       ).isInstanceOf[RepairAction.Keep],
       "closed: never touched"
     )
-    assert(repairAction(f.modify(_.watcherAutoIngest).setTo(IngestBacklog.RepairFacts.WatcherAutoIngest(false))) match
+    assert(repairAction(f.modify(_.watcherAutoIngest).setTo(IngestBacklog.RepairFacts.Ingesting.ManualIngest)) match
       case RepairAction.Keep(why) => why.said.contains("does not auto-ingest")
       case _                      => false)
     assert(
-      repairAction(f.modify(_.watcherExists).setTo(IngestBacklog.RepairFacts.WatcherExists(false)))
+      repairAction(f.modify(_.watcherExists).setTo(IngestBacklog.RepairFacts.Watching.Unwatched))
         .isInstanceOf[RepairAction.Keep]
     )
 

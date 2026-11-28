@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The watchers' INGEST BACKLOG (docs/research-process-managers.md "As built: the ingest backlog"): the legal
   * open-access works a sweep picked past the day's ingest allowance wait as `oa-ingest` items of the watcher that found
@@ -258,24 +259,28 @@ object IngestBacklog:
       doi: Doi,
       isOa: RepairFacts.IsOa,
       watcher: RepairFacts.Watcher,
-      watcherExists: RepairFacts.WatcherExists,
-      watcherAutoIngest: RepairFacts.WatcherAutoIngest,
+      watcherExists: RepairFacts.Watching,
+      watcherAutoIngest: RepairFacts.Ingesting,
       inCorpus: Option[Citekey]
   )
 
   object RepairFacts:
     type Item = Item.T
     object Item extends Newtype[Int, Pure]
-    type IsOa = IsOa.T
-    object IsOa extends Newtype[Boolean, Pure]
+    enum IsOa derives CanEqual:
+      case Open, Closed
+    object IsOa extends TwoCases[IsOa]:
+      extension (isOa: IsOa) def isOa: Boolean = isOa == Open
     type Watcher = Watcher.T
     object Watcher extends Newtype[String, Pure]
-    type WatcherExists = WatcherExists.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object WatcherExists extends Newtype[Boolean, Pure]
-    type WatcherAutoIngest = WatcherAutoIngest.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object WatcherAutoIngest extends Newtype[Boolean, Pure]
+    enum Watching derives CanEqual:
+      case Watched, Unwatched
+    object Watching extends TwoCases[Watching]:
+      extension (watcherExists: Watching) def watcherExists: Boolean = watcherExists == Watched
+    enum Ingesting derives CanEqual:
+      case AutoIngest, ManualIngest
+    object Ingesting extends TwoCases[Ingesting]:
+      extension (watcherAutoIngest: Ingesting) def watcherAutoIngest: Boolean = watcherAutoIngest == AutoIngest
 
   enum RepairAction:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */
@@ -306,14 +311,13 @@ object IngestBacklog:
       case WatcherManual(watcher) => s"its watcher $watcher does not auto-ingest"
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def repairAction(f: RepairFacts): RepairAction =
-    if !f.isOa.value then RepairAction.Keep(RepairRationale.NoLegalCopyKnown)
+    if !f.isOa.isOa then RepairAction.Keep(RepairRationale.NoLegalCopyKnown)
     else
       f.inCorpus match
-        case Some(ck)                       => RepairAction.Remove(ck)
-        case None if !f.watcherExists.value =>
+        case Some(ck)                               => RepairAction.Remove(ck)
+        case None if !f.watcherExists.watcherExists =>
           RepairAction.Keep(RepairRationale.WatcherGone(f.watcher))
-        case None if !f.watcherAutoIngest.value =>
+        case None if !f.watcherAutoIngest.watcherAutoIngest =>
           RepairAction.Keep(RepairRationale.WatcherManual(f.watcher))
         case None => RepairAction.Move

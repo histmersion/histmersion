@@ -43,7 +43,7 @@ class PassageFinderSuite extends munit.FunSuite:
 
   private def find(
       q: PassageFinder.Query,
-      regex: PassageFinder.Regex = PassageFinder.Regex(false),
+      regex: PassageFinder.Regex = PassageFinder.Regex.Literal,
       limit: PassageFinder.Limit = PassageFinder.Limit(10),
       context: PassageFinder.ContextChars = PassageFinder.ContextChars(600),
       segs: List[Chunk] = Segs,
@@ -123,16 +123,16 @@ class PassageFinderSuite extends munit.FunSuite:
     assertEquals(find(PassageFinder.Query("Age hero"), segs = segs).matches, 1)
 
   test("regex: case-insensitive, MULTILINE anchors, and an empty match is not a hit"):
-    assertEquals(find(PassageFinder.Query("^cimon"), regex = PassageFinder.Regex(true)).matches, 1)
+    assertEquals(find(PassageFinder.Query("^cimon"), regex = PassageFinder.Regex.Regex).matches, 1)
     assertEquals(
-      find(PassageFinder.Query("^the"), regex = PassageFinder.Regex(true)).matches,
+      find(PassageFinder.Query("^the"), regex = PassageFinder.Regex.Regex).matches,
       2
     ) // "Theseus …" and "The Theseia" start lines; "the bones" does not
-    assertEquals(find(PassageFinder.Query("these(us|ia)|cimon"), regex = PassageFinder.Regex(true)).matches, 3)
-    assertEquals(find(PassageFinder.Query("x*"), regex = PassageFinder.Regex(true)).matches, 0)
+    assertEquals(find(PassageFinder.Query("these(us|ia)|cimon"), regex = PassageFinder.Regex.Regex).matches, 3)
+    assertEquals(find(PassageFinder.Query("x*"), regex = PassageFinder.Regex.Regex).matches, 0)
 
   test("a bad regex is a clear message, never an exception"):
-    val m = err(PassageFinder.Query("(unclosed"), regex = PassageFinder.Regex(true))
+    val m = err(PassageFinder.Query("(unclosed"), regex = PassageFinder.Regex.Regex)
     assert(m.startsWith("not a valid regex: Unclosed group"), m)
     assert(m.contains("leave regex off"), m)
     assertEquals(
@@ -141,7 +141,7 @@ class PassageFinderSuite extends munit.FunSuite:
           Ck,
           Segs,
           PassageFinder.Query("(unclosed"),
-          PassageFinder.Regex(false),
+          PassageFinder.Regex.Literal,
           PassageFinder.Limit(10),
           PassageFinder.ContextChars(600),
           PassageFinder.MaxMatches(100),
@@ -152,7 +152,7 @@ class PassageFinderSuite extends munit.FunSuite:
     )
 
   test("an empty or blank query is refused"):
-    assert(err(PassageFinder.Query("   "), regex = PassageFinder.Regex(false)).contains("empty"))
+    assert(err(PassageFinder.Query("   "), regex = PassageFinder.Regex.Literal).contains("empty"))
 
   test("a pathological regex is refused when it runs past the timeout"):
     // Java memoises the textbook (a+)+b; nested greedy .* still backtracks for seconds on 28 chars
@@ -161,7 +161,7 @@ class PassageFinderSuite extends munit.FunSuite:
       Ck,
       segs,
       PassageFinder.Query("(.*a){12}x"),
-      PassageFinder.Regex(true),
+      PassageFinder.Regex.Regex,
       PassageFinder.Limit(10),
       PassageFinder.ContextChars(600),
       PassageFinder.MaxMatches(10000),
@@ -256,7 +256,7 @@ class PassageFinderSuite extends munit.FunSuite:
     val both = PassagesMarkdown.render(
       find(
         PassageFinder.Query("these(us|ia)"),
-        regex = PassageFinder.Regex(true),
+        regex = PassageFinder.Regex.Regex,
         context = PassageFinder.ContextChars(3000)
       )
     )

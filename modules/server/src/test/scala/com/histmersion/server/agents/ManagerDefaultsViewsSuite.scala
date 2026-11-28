@@ -89,7 +89,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
         lowWater = ReviewManagerDefaults.LowWater(7),
         refillBatch = ReviewManagerDefaults.RefillBatch(10),
         staleAfterDays = ReviewManagerDefaults.StaleAfterDays(90),
-        inferFilter = ReviewManagerDefaults.InferFilter(false),
+        inferFilter = ReviewManagerDefaults.InferFilter.AsGiven,
         extendMinNew = ReviewManagerDefaults.ExtendMinNew(8)
       )
     )

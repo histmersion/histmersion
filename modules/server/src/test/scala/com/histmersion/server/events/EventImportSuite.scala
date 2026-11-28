@@ -164,7 +164,7 @@ class EventImportSuite extends DbSuite:
     val r = run(CatalogueWiring(deps(cfg), f), Gvp, dry = Dry)
     assertEquals((r.records, r.kept, r.created), (3, 3, 3))
     assertEquals(r.byKind, List(EventCount(EventCount.Key("eruption"), EventCount.N(3))))
-    assertEquals(EventFixtures.stored(ds).count(_.catalogue.value), 0)
+    assertEquals(EventFixtures.stored(ds).count(_.catalogue.catalogue), 0)
     assert(f.requests.forall(_._2.get("User-Agent").exists(ua => !ua.contains("@"))), "no e-mail in the User-Agent")
 
   test("GVP then NOAA: the same eruption is one event with both catalogue records; a rerun reads nothing again"):

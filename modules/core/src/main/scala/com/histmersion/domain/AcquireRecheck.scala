@@ -14,6 +14,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The acquisition list's LEGAL RE-CHECK (docs/research-process-managers.md "As built: the acquisition list's
   * re-check"). An item on the acquisition list — the person's buy/borrow list — was put there because no legal copy was
@@ -56,8 +57,10 @@ object AcquireRecheck:
   )
 
   object Settings:
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
+    enum Enabled derives CanEqual:
+      case Enabled, Disabled
+    object Enabled extends TwoCases[Enabled]:
+      extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
     type EveryDays = EveryDays.T
     object EveryDays extends Newtype[Int, Pure]:
       extension (d: EveryDays) def after(at: Instant): Instant = at.plusSeconds(math.max(1, d.value).toLong * 86400L)
@@ -79,15 +82,17 @@ object AcquireRecheck:
   final case class LastCheck(
       at: Instant,
       generation: LastCheck.Generation,
-      failed: LastCheck.Failed = LastCheck.Failed(false)
+      failed: LastCheck.Failed = LastCheck.Failed.Succeeded
   )
 
   object LastCheck:
     type Generation = Generation.T
     object Generation extends Newtype[String, Pure]
-    type Failed = Failed.T
-    object Failed extends Newtype[Boolean, Pure]:
-      def of(attempt: library.acquisition.AcquireAttempt): Failed = Failed(attempt.failed)
+    enum Failed derives CanEqual:
+      case Failed, Succeeded
+    object Failed extends TwoCases[Failed]:
+      extension (failed: Failed) def failed: Boolean = failed == Failed
+      def of(attempt: library.acquisition.AcquireAttempt): Failed = (if attempt.failed then Failed else Succeeded)
 
     def of(attempt: library.acquisition.AcquireAttempt): LastCheck =
       LastCheck(attempt.at, attempt.generation, Failed.of(attempt))
@@ -105,7 +110,7 @@ object AcquireRecheck:
     last
       .filter(_.generation == generation)
       .map(l =>
-        if l.failed.value then l.at.plusSeconds(math.max(1, retryHours.value).toLong * 3600L)
+        if l.failed.failed then l.at.plusSeconds(math.max(1, retryHours.value).toLong * 3600L)
         else l.at.plusSeconds(math.max(1, everyDays.value).toLong * 86400L)
       )
 
@@ -125,8 +130,10 @@ object AcquireRecheck:
   final case class Held(citekey: Citekey, hasOriginal: Held.HasOriginal)
 
   object Held:
-    type HasOriginal = HasOriginal.T
-    object HasOriginal extends Newtype[Boolean, Pure]
+    enum HasOriginal derives CanEqual:
+      case WithOriginal, WithoutOriginal
+    object HasOriginal extends TwoCases[HasOriginal]:
+      extension (hasOriginal: HasOriginal) def hasOriginal: Boolean = hasOriginal == WithOriginal
 
   /** What a pass does with one open item. */
   enum Action derives CanEqual:
@@ -140,14 +147,13 @@ object AcquireRecheck:
     case Fetch(doi: Doi, into: Option[Citekey])
 
   /** The first DOI an item names decides (an item is one work). */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def action(dois: List[Doi], held: Doi => Option[Held]): Action =
     dois.headOption match
       case None      => Action.NoDoi
       case Some(doi) =>
         held(doi) match
-          case Some(h) if h.hasOriginal.value => Action.Close(h.citekey)
-          case other                          => Action.Fetch(doi, other.map(_.citekey))
+          case Some(h) if h.hasOriginal.hasOriginal => Action.Close(h.citekey)
+          case other                                => Action.Fetch(doi, other.map(_.citekey))
 
   /** What a check found, as stored (`acquire_attempts.outcome`). */
   enum Outcome(val wire: Outcome.Wire) derives CanEqual:
@@ -307,8 +313,10 @@ object AcquireRecheck:
   final case class JobPlan(all: JobPlan.All, upTo: JobPlan.UpTo, since: Instant)
 
   object JobPlan:
-    type All = All.T
-    object All extends Newtype[Boolean, Pure]
+    enum All derives CanEqual:
+      case All, Due
+    object All extends TwoCases[All]:
+      extension (all: All) def all: Boolean = all == All
     type UpTo = UpTo.T
     object UpTo extends Newtype[Int, Pure]
 
@@ -327,7 +335,7 @@ object AcquireRecheck:
       due: Candidate => Boolean
   ): List[Candidate] =
     val left = order(candidates.filterNot(c => checkedSince(c.last, plan.since)))
-    if plan.all.value then left else left.filter(due).take(math.max(0, plan.upTo.value - math.max(0, triedByJob.value)))
+    if plan.all.all then left else left.filter(due).take(math.max(0, plan.upTo.value - math.max(0, triedByJob.value)))
 
   /** What a job did so far: of the `total` items it tries, how many it `tried`, and what they found; the last item that
     * got no answer, why (the job goes on with the next).

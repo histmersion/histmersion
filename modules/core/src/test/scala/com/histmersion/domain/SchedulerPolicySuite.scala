@@ -36,7 +36,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       waited: Int = 0,
       pools: List[Candidate.Pools] = Nil,
       block: Option[Block] = None,
-      gathering: Candidate.Gathering = Candidate.Gathering(false),
+      gathering: Candidate.Gathering = Candidate.Gathering.Working,
       manager: Candidate.ManagerId = Candidate.ManagerId("m")
   ) =
     Candidate(
@@ -231,7 +231,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
         Candidate.Id(2),
         Candidate.Kind(AcquisitionSweep),
         Some(Candidate.Goal("new")),
-        gathering = Candidate.Gathering(true)
+        gathering = Candidate.Gathering.Gathering
       ),
       c(Candidate.Id(3), Candidate.Kind(ArticleReview), Some(Candidate.Goal("done2")), prio = Candidate.GoalPriority(9))
     )

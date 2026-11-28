@@ -79,7 +79,7 @@ final class AcquireRecheckService(
   private def settings: Settings =
     val c = rcfg
     Settings(
-      Settings.Enabled(c.enabled.value),
+      (if c.enabled.value then Settings.Enabled.Enabled else Settings.Enabled.Disabled),
       Settings.EveryDays(c.everyDays.value),
       Settings.PerDay(c.perDay.value),
       Settings.PerPass(c.perPass.value),
@@ -224,7 +224,7 @@ final class AcquireRecheckService(
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def scheduledPass(s: Settings, now: Instant)(using WritePermit): List[Line] =
-    if !s.enabled.value || !AcquireRecheck.passDue(
+    if !s.enabled.enabled || !AcquireRecheck.passDue(
         Option(lastPass.get).filter(_ > 0).map(Instant.ofEpochMilli),
         s.passMinutes,
         now
@@ -339,7 +339,7 @@ final class AcquireRecheckService(
               )
           )
         case None =>
-          startJob(JobPlan(all = JobPlan.All(true), JobPlan.UpTo(0), now), by, None).map(job =>
+          startJob(JobPlan(all = JobPlan.All.All, JobPlan.UpTo(0), now), by, None).map(job =>
             base
               .modify(_.due)
               .setTo(RecheckResult.Due(todo.size))
@@ -365,7 +365,7 @@ final class AcquireRecheckService(
       )
       if upTo <= 1 then pass(in, now).toRight(passBusy)
       else
-        startJob(JobPlan(all = JobPlan.All(false), JobPlan.UpTo(upTo), now), by, None).map(job =>
+        startJob(JobPlan(all = JobPlan.All.Due, JobPlan.UpTo(upTo), now), by, None).map(job =>
           base
             .modify(_.due)
             .setTo(RecheckResult.Due(dueNow.size))
@@ -386,7 +386,7 @@ final class AcquireRecheckService(
     scala.util
       .Try(Instant.parse(d.since.value))
       .toOption
-      .map(JobPlan(JobPlan.All(d.all.all), JobPlan.UpTo(d.upTo.value.toInt), _))
+      .map(JobPlan((if d.all.all then JobPlan.All.All else JobPlan.All.Due), JobPlan.UpTo(d.upTo.value.toInt), _))
 
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
@@ -411,7 +411,7 @@ final class AcquireRecheckService(
       WritePermit
   )(using Creator.New): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(
-      (if plan.all.value then RecheckJob.All.All else RecheckJob.All.Due),
+      (if plan.all.all then RecheckJob.All.All else RecheckJob.All.Due),
       RecheckJob.UpTo(plan.upTo.value.toLong),
       RecheckJob.Since(plan.since.toString),
       RecheckJob.By(by.value),
@@ -744,7 +744,7 @@ final class AcquireRecheckService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(now: Instant = Instant.now(agents.clock)): RecheckStatus =
     val s = settings
-    if !s.enabled.value then
+    if !s.enabled.enabled then
       RecheckStatus(enabled = RecheckStatus.Enabled.Disabled, job = jobLine().map(RecheckStatus.Job(_)))
     else
       val gen = upstream().fetcherGeneration
