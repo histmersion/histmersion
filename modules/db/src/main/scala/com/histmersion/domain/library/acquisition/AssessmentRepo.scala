@@ -15,6 +15,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The assessments' store: the local Retraction Watch mirror and the verdict recorded for each stored source. Every
   * method runs on the connection it is given.
@@ -41,8 +42,10 @@ private[acquisition] object AssessmentRepo:
   object AssessmentRow:
     type CheckedAt = CheckedAt.T
     object CheckedAt extends Newtype[String, Pure]
-    type Retracted = Retracted.T
-    object Retracted extends Newtype[Boolean, Pure]
+    enum Retracted derives CanEqual:
+      case Retracted, Standing
+    object Retracted extends TwoCases[Retracted]:
+      extension (retracted: Retracted) def retracted: Boolean = retracted == Retracted
     type CitedBy = CitedBy.T
     object CitedBy extends Newtype[Int, Pure]
     type Influential = Influential.T
@@ -82,7 +85,7 @@ private[acquisition] object AssessmentRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def putAssessment(a: AssessmentRecord)(using DbCon)(using creator: Creator.New): String =
     sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict, creator)
-          VALUES (${a.citekey}, now(), ${a.retracted}, ${a.noticesJson}::jsonb, ${a.citedBy}, ${a.influential},
+          VALUES (${a.citekey}, now(), ${a.retracted.retracted}, ${a.noticesJson}::jsonb, ${a.citedBy}, ${a.influential},
                   ${a.verdict}, ${StoredCreator.column(creator)}::jsonb)
           ON CONFLICT (citekey) DO UPDATE SET
             checked_at = now(), retracted = EXCLUDED.retracted, notices = EXCLUDED.notices,

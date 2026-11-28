@@ -65,7 +65,7 @@ final class SeedService(
       .filter((_, slug) => lastSweep(slug).forall(t => !t.plusSeconds(every).isAfter(now)))
       .sortBy((g, slug) =>
         (
-          -(g.priority.value + (if g.pinned.value then SchedulerPolicy.PinBoost else 0)),
+          -(g.priority.value + (if g.pinned.pinned then SchedulerPolicy.PinBoost else 0)),
           g.createdAt.value: String,
           slug.value: String
         )

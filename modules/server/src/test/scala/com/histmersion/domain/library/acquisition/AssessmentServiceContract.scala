@@ -85,7 +85,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       AssessmentRecord(
         domain.library.Citekey("zqa_one"),
         AssessmentRecord.Verdict("current"),
-        AssessmentRecord.Retracted(false),
+        AssessmentRecord.Retracted.Standing,
         AssessmentRecord.NoticesJson("{}"),
         Some(AssessmentRecord.CitedBy(3)),
         None
@@ -97,7 +97,7 @@ abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
       AssessmentRecord(
         domain.library.Citekey("zqa_one"),
         AssessmentRecord.Verdict("retracted"),
-        AssessmentRecord.Retracted(true),
+        AssessmentRecord.Retracted.Retracted,
         AssessmentRecord.NoticesJson("""{"n":1}"""),
         Some(AssessmentRecord.CitedBy(4)),
         Some(AssessmentRecord.Influential(1))

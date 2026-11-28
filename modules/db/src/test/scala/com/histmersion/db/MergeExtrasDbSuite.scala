@@ -152,7 +152,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         ds,
         ByteSource.file(bundle),
         sha256Of(bundle),
-        BundleImport.Options(ImportOptions.DryRun(false), importChunkChars, importToleranceKm),
+        BundleImport.Options(ImportOptions.DryRun.Applied, importChunkChars, importToleranceKm),
         ContentDirectory(originals),
         MergeResolutions(),
         merge,
@@ -176,7 +176,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         ByteSource.file(bundle),
         sha256Of(bundle),
         BundleImport
-          .Options(dryRun = ImportOptions.DryRun(false), importChunkChars, importToleranceKm),
+          .Options(dryRun = ImportOptions.DryRun.Applied, importChunkChars, importToleranceKm),
         ContentDirectory(originals),
         res,
         merge,

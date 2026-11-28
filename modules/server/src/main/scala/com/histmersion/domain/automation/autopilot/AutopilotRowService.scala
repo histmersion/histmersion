@@ -109,7 +109,7 @@ object AutopilotRowService:
     def row(): AutopilotRepo.Row =
       val r = current()
       AutopilotRepo.Row(
-        AutopilotRepo.Row.Enabled(r.enabled.value),
+        (if r.enabled.value then AutopilotRepo.Row.Enabled.Enabled else AutopilotRepo.Row.Enabled.Disabled),
         AutopilotRepo.Row.ChangedAt(text(r.changedAt)),
         AutopilotRepo.Row.ChangedBy(r.changedBy.value),
         r.paused.map(p => AutopilotRepo.Row.Paused(p.value)),
@@ -123,9 +123,9 @@ object AutopilotRowService:
         by: AutopilotRepo.Row.ChangedBy,
         paused: List[AutopilotRepo.Row.Paused]
     )(using WritePermit): Boolean =
-      change(_.enabled.value != enabled.value)(
+      change(_.enabled.value != enabled.enabled)(
         _.modify(_.enabled)
-          .setTo(AutopilotRowState.Enabled(enabled.value))
+          .setTo(AutopilotRowState.Enabled(enabled.enabled))
           .modify(_.changedAt)
           .setTo(now)
           .modify(_.changedBy)

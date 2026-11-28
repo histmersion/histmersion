@@ -10,23 +10,25 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The refined site types of the Wikidata sites (`places.site_type`, `site_type_checked_at`). Every method runs on the
   * connection it is given.
   */
 @atBoundary(BoundaryKind.Sql, "reads and writes the site type tables and their row codecs")
 private[places] object SiteTypeRepo:
-  type Refresh = Refresh.T
-  object Refresh extends Newtype[Boolean, Pure]
+  enum Refresh derives CanEqual:
+    case Refresh, Reuse
+  object Refresh extends TwoCases[Refresh]:
+    extension (refresh: Refresh) def refresh: Boolean = refresh == Refresh
 
   /** The Wikidata sites on the map (with a finding or a picture) whose type is still to be refined: never asked, or
     * (`refresh`) asked before `before` (epoch ms — the start of this run).
     */
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def toTypeWhere(refresh: Refresh, before: Option[DeepTime.SignedYear]): Frag =
-    val asked = (refresh.value, before) match
+    val asked = (refresh.refresh, before) match
       case (true, Some(ms)) =>
         sql"(p.site_type_checked_at IS NULL OR p.site_type_checked_at < to_timestamp($ms / 1000.0))"
       case (true, None) => sql"TRUE"

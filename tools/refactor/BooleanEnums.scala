@@ -205,7 +205,11 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
           val e = textOf(a).get
           log.add(s"$path:${a.pos.startLine + 1}\ttext\t${e.newtype}")
           val braced = i.tokens.takeWhile(_.end <= a.pos.start).lastOption.exists(_.is[Token.LeftBrace])
-          if (braced) Patch.addRight(a, s".${e.test}") else Patch.replaceTree(a, s"{${a.syntax}.${e.test}}")
+          a match {
+            case Term.Block(List(inner: Term)) => Patch.addRight(inner, s".${e.test}") // `${x}` parsed as a block
+            case _ if braced => Patch.addRight(a, s".${e.test}")
+            case _ => Patch.replaceTree(a, s"{${a.syntax}.${e.test}}")
+          }
         }.asPatch
       case o: Defn.Object if byType.contains(norm(o.symbol.value)) && o.templ.inits.exists(_.tpe.syntax.startsWith("Newtype[Boolean")) =>
         definition(o, byType(norm(o.symbol.value)))

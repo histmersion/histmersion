@@ -26,7 +26,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
     val o = originals()
     val s = spool()
     val stored = plan.sha256
-      .filterNot(_ => plan.shaShared.value)
+      .filterNot(_ => plan.shaShared.shaShared)
       .toList
       .flatMap(sha =>
         o.list()

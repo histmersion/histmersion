@@ -187,7 +187,7 @@ object EventService:
       def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
       val tier = e.summary(attested(s, e.id)).tier.value
       val bySources = related(s, e, sel.filter).forall { inSelection =>
-        inSelection || (sel.narrow.context.value && tier == EventTier.Catalogue &&
+        inSelection || (sel.narrow.context.context && tier == EventTier.Catalogue &&
           overlaps(e, sel.filter.period) &&
           sel.filter.title.map(_.value.trim).filter(_.nonEmpty).forall(t => containsText(Some(e.label.value), t)))
       }

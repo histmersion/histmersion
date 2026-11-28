@@ -774,7 +774,7 @@ object SourceService:
             SourceDeletePlan(
               d,
               None,
-              SourceDeletePlan.ShaShared(false),
+              SourceDeletePlan.ShaShared.Unique,
               (ck :: aliases).map(k => SourceDeletePlan.Keys(k.value)),
               DeleteReport(counts = counts)
             )

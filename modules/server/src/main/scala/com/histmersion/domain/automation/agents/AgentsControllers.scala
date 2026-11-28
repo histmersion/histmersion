@@ -389,7 +389,9 @@ final class AgentsControllers(
             .parse(PlanQuota.Floors.Wire(t))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
-      _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.hold)))
+      _ = in.hold.foreach(h =>
+        pools.hold(p, (if h.hold then PlanQuotaRepo.Pool.Held.Held else PlanQuotaRepo.Pool.Held.Free))
+      )
       _ = f.foreach(x => pools.setFloors(p, x.map(w => PlanQuotaRepo.Pool.Floors(w.value))))
       st <- pools
         .statuses(covers)

@@ -3,6 +3,7 @@ package domain.library.acquisition
 
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** A verdict as it is recorded against a stored source: `noticesJson` is the raw JSON of everything that was found, so
   * a later reader can see WHY without asking Crossref again.
@@ -19,8 +20,10 @@ final case class AssessmentRecord(
 object AssessmentRecord:
   type Verdict = Verdict.T
   object Verdict extends Newtype[String, Pure]
-  type Retracted = Retracted.T
-  object Retracted extends Newtype[Boolean, Pure]
+  enum Retracted derives CanEqual:
+    case Retracted, Standing
+  object Retracted extends TwoCases[Retracted]:
+    extension (retracted: Retracted) def retracted: Boolean = retracted == Retracted
   type NoticesJson = NoticesJson.T
   object NoticesJson extends Newtype[String, Pure]
   type CitedBy = CitedBy.T

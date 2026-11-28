@@ -5,6 +5,7 @@ import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** A source's assessment as the bundle reads it, with the source's uid. */
 final private[sources] case class BAssessmentRow(
@@ -20,8 +21,10 @@ final private[sources] case class BAssessmentRow(
 object BAssessmentRow:
   type CheckedAt = CheckedAt.T
   object CheckedAt extends Newtype[String, Pure]
-  type Retracted = Retracted.T
-  object Retracted extends Newtype[Boolean, Pure]
+  enum Retracted derives CanEqual:
+    case Retracted, Standing
+  object Retracted extends TwoCases[Retracted]:
+    extension (retracted: Retracted) def retracted: Boolean = retracted == Retracted
   type Notices = Notices.T
   object Notices extends Newtype[String, Pure]
   type CitedBy = CitedBy.T

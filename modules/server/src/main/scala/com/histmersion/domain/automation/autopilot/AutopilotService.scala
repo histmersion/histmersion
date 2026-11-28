@@ -73,8 +73,7 @@ final class AutopilotService(
   private def acfg = cfg.autopilot
 
   /** Whether it is on (one row read). */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def on: Boolean = agents.autopilotRow.row().enabled.value
+  def on: Boolean = agents.autopilotRow.row().enabled.enabled
 
   /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
@@ -127,13 +126,13 @@ final class AutopilotService(
     val row = agents.autopilotRow.row()
     val changes =
       if in.on.on then
-        val turned = agents.autopilotRow.set(enabled = AutopilotRepo.Row.Enabled(true), changedBy, row.paused)
+        val turned = agents.autopilotRow.set(enabled = AutopilotRepo.Row.Enabled.Enabled, changedBy, row.paused)
         // turning it on lifts a drain: the person wants it running
         val undrained = Option.when(agents.autopilotRow.setDrain(on = false, changedBy))(s"drain lifted by $by")
         (if turned then List(s"turned on by $by") else List("already on")) ++ undrained ++ ensureNow(now) ++ advance(
           now
         )
-      else if !row.enabled.value then List("already off")
+      else if !row.enabled.enabled then List("already off")
       else
         val ids = AutopilotPolicy.toPause(rows())
         ids.foreach { id =>
@@ -146,7 +145,7 @@ final class AutopilotService(
         }
         Unused(
           agents.autopilotRow.set(
-            enabled = AutopilotRepo.Row.Enabled(false),
+            enabled = AutopilotRepo.Row.Enabled.Disabled,
             changedBy,
             ids.map(id => AutopilotRepo.Row.Paused(id.value))
           ),
@@ -168,7 +167,7 @@ final class AutopilotService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def tick(now: Instant)(using WritePermit)(using Creator.New): List[String] =
     val row = agents.autopilotRow.row()
-    if !row.enabled.value then Nil
+    if !row.enabled.enabled then Nil
     else
       val last = row.lastEnsureAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value)))
       val ensured =
@@ -192,7 +191,7 @@ final class AutopilotService(
           m.cron.map(c => AutopilotPolicy.Cron(c.value)),
           m.config.autoIngest
             .map(a => (if a.autoIngest then ManagerRow.AutoIngest.AutoIngest else ManagerRow.AutoIngest.ManualIngest)),
-          (if m.planItem.value then ManagerRow.PlanItem.PlanItem else ManagerRow.PlanItem.Standalone),
+          (if m.planItem.planItem then ManagerRow.PlanItem.PlanItem else ManagerRow.PlanItem.Standalone),
           m.config.extendMinNew.map(n => AutopilotPolicy.Settings.ExtendMinNew(n.value))
         )
       )
@@ -658,7 +657,7 @@ final class AutopilotService(
           r.modify(_.mode).setTo(ApprovalRule.Mode("auto (in the run, unchecked)"))
         case r => r
     val st = EngineStatus(
-      (if row.enabled.value then EngineStatus.On.On else EngineStatus.On.Off),
+      (if row.enabled.enabled then EngineStatus.On.On else EngineStatus.On.Off),
       Some(EngineStatus.Since(row.changedAt.value)),
       Option(row.changedBy.value).filter(_.nonEmpty).map(by => EngineStatus.By(by)),
       (if cfg.enabled.value then EngineStatus.AgentSwitch.Enabled else EngineStatus.AgentSwitch.Disabled),
@@ -692,7 +691,7 @@ final class AutopilotService(
         )
       ),
       EngineStatus.IngestedToday(ingestedToday(now).value),
-      EngineStatus.IngestCap(if row.enabled.value then ingestCap.value else 0),
+      EngineStatus.IngestCap(if row.enabled.enabled then ingestCap.value else 0),
       EngineStatus.MaxConcurrentRuns(cfg.maxConcurrentRuns.value),
       row.lastBackupAt.map(t => EngineStatus.LastBackup(t.value)),
       row.lastLintAt.map(t => EngineStatus.LastLint(t.value)),

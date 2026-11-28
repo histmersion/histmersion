@@ -285,7 +285,7 @@ class BundleSuite extends DbSuite with Bounded:
         AssessmentRecord(
           A1,
           AssessmentRecord.Verdict("current"),
-          AssessmentRecord.Retracted(false),
+          AssessmentRecord.Retracted.Standing,
           AssessmentRecord.NoticesJson("""{"notices":[{"kind":"x","n":1}]}"""),
           Some(AssessmentRecord.CitedBy(12)),
           Some(AssessmentRecord.Influential(3))
@@ -549,7 +549,7 @@ class BundleSuite extends DbSuite with Bounded:
         ByteSource.file(f),
         Sha256.applyUnsafe(BundleFormat.sha256Hex(bundle).value),
         BundleImport.Options(
-          BundleImport.Options.DryRun(dryRun),
+          (if dryRun then BundleImport.Options.DryRun.DryRun else BundleImport.Options.DryRun.Applied),
           BundleImport.Options.ChunkChars(cfg.limits.chunkChars.value),
           BundleImport.Options.ToleranceKm(cfg.places.pointToleranceKm.value)
         ),

@@ -471,7 +471,9 @@ object ManagerService:
             m.cron.map(c => ManagerLight.Cron(c.value)),
             m.config,
             m.statusNote.map(n => ManagerLight.StatusNote(n.render)),
-            ManagerLight.PlanItem(items.exists(i => i.managerId.value == m.id.value && i.kind.value == PlanGoalItem))
+            (if items.exists(i => i.managerId.value == m.id.value && i.kind.value == PlanGoalItem) then
+               ManagerLight.PlanItem.PlanItem
+             else ManagerLight.PlanItem.Standalone)
           )
         )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

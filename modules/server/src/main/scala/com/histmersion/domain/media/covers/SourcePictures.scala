@@ -108,7 +108,7 @@ final class SourcePictures(
             MediaSourceLine.Detail(pick.name.value)
           )
           if !dryRun.value then
-            if !row.hasThumb.value then
+            if !row.hasThumb.hasThumb then
               assets
                 .file(uid)
                 .flatMap((_, b) => thumbnail(b, row.name.value))

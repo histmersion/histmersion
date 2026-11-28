@@ -288,12 +288,12 @@ class MediaPortalsJobSuite extends DbSuite:
       .collectionTargets(
         ds,
         MediaItemRow.Provider(MediaProvider.Pleiades),
-        places = ImportFixtures.Places(true),
+        places = ImportFixtures.Places.WithPlaces,
         None,
         None,
         ImportFixtures.Limit(100_000),
-        refresh = ImportFixtures.Refresh(false),
-        pleiadesOnly = ImportFixtures.PleiadesOnly(true)
+        refresh = ImportFixtures.Refresh.Reuse,
+        pleiadesOnly = ImportFixtures.PleiadesOnly.PleiadesOnly
       )
       .fold(p => fail(p.sentence), identity)
       .map(_.id)
@@ -303,12 +303,12 @@ class MediaPortalsJobSuite extends DbSuite:
     val none = ImportFixtures.collectionTargets(
       ds,
       MediaItemRow.Provider(MediaProvider.Pleiades),
-      places = ImportFixtures.Places(true),
+      places = ImportFixtures.Places.WithPlaces,
       Some(domain.catalogue.Place.Id("zqmp_region")),
       None,
       ImportFixtures.Limit(1),
-      ImportFixtures.Refresh(false),
-      pleiadesOnly = ImportFixtures.PleiadesOnly(true)
+      ImportFixtures.Refresh.Reuse,
+      pleiadesOnly = ImportFixtures.PleiadesOnly.PleiadesOnly
     )
     assert(none.left.exists(_.sentence.contains("no Pleiades id")), none.toString)
     assert(
@@ -316,8 +316,8 @@ class MediaPortalsJobSuite extends DbSuite:
         .collectionPending(
           ds,
           MediaItemRow.Provider(MediaProvider.Pleiades),
-          places = ImportFixtures.Places(true),
-          pleiadesOnly = ImportFixtures.PleiadesOnly(true)
+          places = ImportFixtures.Places.WithPlaces,
+          pleiadesOnly = ImportFixtures.PleiadesOnly.PleiadesOnly
         )
         .value >= 2
     )

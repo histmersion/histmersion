@@ -130,7 +130,7 @@ final class PlanPools(
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.verdict(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
-      (if pool.held.value then PoolStatus.Held.Held else PoolStatus.Held.Released),
+      (if pool.held.held then PoolStatus.Held.Held else PoolStatus.Held.Released),
       pool.refusal.map(r =>
         PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
       ),
@@ -156,7 +156,7 @@ final class PlanPools(
     val pool = Transactor(ds).read(PlanQuotaRepo.pool(p))
     PlanQuota.refreshNeed(
       Transactor(ds).read(PlanQuotaRepo.readings(p)),
-      (if pool.held.value then PoolStatus.Held.Held else PoolStatus.Held.Released),
+      (if pool.held.held then PoolStatus.Held.Held else PoolStatus.Held.Released),
       pool.refusal.map(r =>
         PlanQuota.Rationale(s"${r.sentence}") -> pool.refusalUntil.map(u => Verdict.Blocked.Until(u.value))
       ),
@@ -211,8 +211,7 @@ final class PlanPools(
     Transactor(ds).write(PlanQuotaRepo.setHold(p, on))
 
   /** Whether a person holds `p` (no run draws on it until it is released). */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held.value
+  def held(p: PoolId): Boolean = Transactor(ds).read(PlanQuotaRepo.pool(p)).held.held
   def setFloors(p: PoolId, f: Option[PlanQuotaRepo.Pool.Floors])(using WritePermit): Unit =
     Transactor(ds).write(PlanQuotaRepo.setFloors(p, f))
 
@@ -532,7 +531,7 @@ final class PlanPools(
         covers(p),
         PoolStatus.Floors(f.text.value),
         src,
-        (if pool.held.value then PoolStatus.Held.Held else PoolStatus.Held.Released),
+        (if pool.held.held then PoolStatus.Held.Held else PoolStatus.Held.Released),
         (if ok then PoolStatus.Usable.Usable else PoolStatus.Usable.Unusable),
         why.map(text => PlanQuota.Rationale(s"$text")),
         until.map(PoolStatus.Until(_)),

@@ -10,6 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** An article as a bundle reads it, its period in its three columns (Magnum maps a SELECT's columns positionally). */
 final private[articles] case class BArticleRow(
@@ -45,8 +46,10 @@ object BArticleRow:
   object Tags extends Newtype[String, Pure]
   type Regions = Regions.T
   object Regions extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]

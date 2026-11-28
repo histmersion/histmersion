@@ -145,7 +145,7 @@ private[sources] object SourceDeleteRepo:
           SourceDeletePlan(
             d,
             r.sha256.map(_.value.trim).filter(_.nonEmpty).map(SourceDeletePlan.Sha256(_)),
-            SourceDeletePlan.ShaShared(shared),
+            (if shared then SourceDeletePlan.ShaShared.Shared else SourceDeletePlan.ShaShared.Unique),
             keys.map(k => SourceDeletePlan.Keys(k.value)),
             report
           )

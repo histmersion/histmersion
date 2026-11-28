@@ -164,7 +164,8 @@ final class MapTileService(
           place,
           EventSql.Narrow(
             q.tier.map(t => EventSql.Narrow.Tier(t.value.trim)).filter(_.value.nonEmpty),
-            EventSql.Narrow.Context(q.context.fold(false)(_.context)),
+            (if q.context.fold(false)(_.context) then EventSql.Narrow.Context.Context
+             else EventSql.Narrow.Context.Alone),
             None
           )
         ).sql(related)

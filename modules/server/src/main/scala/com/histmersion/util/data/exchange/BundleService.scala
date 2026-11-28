@@ -328,7 +328,7 @@ object BundleService:
               w.ds,
               source,
               bundle,
-              options(dryRun = ImportOptions.DryRun(false)),
+              options(dryRun = ImportOptions.DryRun.Applied),
               originals,
               resolutions,
               MergeSettingsViews.settings(cfg.merge),

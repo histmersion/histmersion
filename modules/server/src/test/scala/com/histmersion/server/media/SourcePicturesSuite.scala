@@ -14,7 +14,7 @@ class SourcePicturesSuite extends munit.FunSuite:
       SourceFigure.Name("fig-0002-01.png"),
       Some(SourceFigure.Width(800)),
       None,
-      hasThumb = SourceFigure.HasThumb(true)
+      hasThumb = SourceFigure.HasThumb.WithThumb
     )
     assertEquals(
       SourcePictures.toFigure(row),

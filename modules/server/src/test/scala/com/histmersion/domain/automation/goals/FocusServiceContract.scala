@@ -45,9 +45,9 @@ abstract class FocusServiceContract extends EngineStoreSuite:
       List(("zz-a", false, false, 0, None), ("zz-b", false, false, 0, Some("zz-a")))
     )
     f(s).joined(Goal.Slug("zz-a"), GoalFocus.Rationale("pinned"), t)
-    assert(f(s).pin(Goal.Slug("zz-a"), pinned = FocusRepo.GoalRow.Pinned(true)))
+    assert(f(s).pin(Goal.Slug("zz-a"), pinned = FocusRepo.GoalRow.Pinned.Pinned))
     assert(f(s).priority(Goal.Slug("zz-b"), FocusRepo.GoalRow.Priority(5)))
-    assert(!f(s).pin(Goal.Slug("zz-none"), pinned = FocusRepo.GoalRow.Pinned(true)))
+    assert(!f(s).pin(Goal.Slug("zz-none"), pinned = FocusRepo.GoalRow.Pinned.Pinned))
     assert(!f(s).priority(Goal.Slug("zz-none"), FocusRepo.GoalRow.Priority(1)))
     val Some(a) = f(s).goals().find(_.slug.value == "zz-a"): @unchecked
     assertEquals(

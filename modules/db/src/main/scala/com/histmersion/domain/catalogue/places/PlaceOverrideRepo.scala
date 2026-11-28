@@ -23,6 +23,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A person's kind, period and point for a place (V080, V081): `histmersion places set`, MCP `place_override`.
   *
@@ -55,8 +56,10 @@ private[places] object PlaceOverrideRepo:
     object Start extends Newtype[Long, Pure]
     type End = End.T
     object End extends Newtype[Long, Pure]
-    type HasShape = HasShape.T
-    object HasShape extends Newtype[Boolean, Pure]
+    enum HasShape derives CanEqual:
+      case WithShape, WithoutShape
+    object HasShape extends TwoCases[HasShape]:
+      extension (hasShape: HasShape) def hasShape: Boolean = hasShape == WithShape
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Place.Override] = DbCodec.derived
 
@@ -123,7 +126,7 @@ private[places] object PlaceOverrideRepo:
                   Unused.Why.Held
                 )
                 Right(())
-          case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
+          case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.hasShape =>
             Left(
               Api.Error(
                 Problem.Invalid.Broken.here(

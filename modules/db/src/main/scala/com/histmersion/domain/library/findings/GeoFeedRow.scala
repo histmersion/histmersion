@@ -13,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -35,7 +36,6 @@ final private[findings] case class GeoFeedRow(
     hasCover: GeoFeedRow.HasCover
 ) derives DbCodec:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def toHit: GeoHit =
@@ -61,7 +61,7 @@ final private[findings] case class GeoFeedRow(
               provenance.map(p => Source.Provenance(p.value)),
               tags.map(t => Source.Tags(t.value)),
               topics.map(t => Source.Topics(t.value)),
-              hasCover.value
+              hasCover.hasCover
             )
             .value
         )
@@ -87,5 +87,7 @@ object GeoFeedRow:
   object Tags extends Newtype[String, Pure]
   type Topics = Topics.T
   object Topics extends Newtype[String, Pure]
-  type HasCover = HasCover.T
-  object HasCover extends Newtype[Boolean, Pure]
+  enum HasCover derives CanEqual:
+    case WithCover, WithoutCover
+  object HasCover extends TwoCases[HasCover]:
+    extension (hasCover: HasCover) def hasCover: Boolean = hasCover == WithCover

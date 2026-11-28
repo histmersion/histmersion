@@ -55,7 +55,7 @@ private[assets] object AssetBundleRepo:
       r.license.map(l => Bundle.Asset.License(l.value)),
       r.geom.map(g => Bundle.Asset.Geom(g.value)),
       range(
-        util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+        util.data.exchange.Bundle.RangeIsNull(r.pNull.pNull),
         r.pLo.map(lo => util.data.exchange.Bundle.RangeLower(lo.value)),
         r.pHi.map(hi => util.data.exchange.Bundle.RangeUpper(hi.value))
       ),

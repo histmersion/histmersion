@@ -268,7 +268,7 @@ class EventCatalogRepoSuite extends DbSuite:
     val bySource = Filter(tags = List(Filter.Tags("zqec")), period = Some(Period(Year(-2000), Year(-1000))))
     assertEquals(ids(bySource), Set("zqec_compiled"))
     assertEquals(
-      ids(bySource, more = EventSql.Narrow(context = EventSql.Narrow.Context(true))),
+      ids(bySource, more = EventSql.Narrow(context = EventSql.Narrow.Context.Context)),
       Set("zqec_compiled", "zztest_b")
     )
     assertEquals(ids(more = EventSql.Narrow(area = BBox.parse(BBox.Text("150.5,-41,151.5,-39")))), Set("zztest_b"))

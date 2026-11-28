@@ -8,6 +8,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** An open acquisition item a watcher's sweep created, found by structure: the sweep run that picked the DOI, the
   * watcher, the goal it linked the item to, and the pick as the ranking saw it (`isOa` = it marked the work open
@@ -46,8 +47,10 @@ object SweepAcquireItem:
   object ManagerId extends Newtype[String, Pure]
   type Job = Job.T
   object Job extends Newtype[String, Pure]
-  type IsOa = IsOa.T
-  object IsOa extends Newtype[Boolean, Pure]
+  enum IsOa derives CanEqual:
+    case Open, Closed
+  object IsOa extends TwoCases[IsOa]:
+    extension (isOa: IsOa) def isOa: Boolean = isOa == Open
   type Title = Title.T
   object Title extends Newtype[String, Pure]
   type Authors = Authors.T

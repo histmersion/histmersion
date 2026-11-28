@@ -9,6 +9,7 @@ object Uses:
   def both: List[Flags.Json] = List(asked, text).filter(j => !j.asked)
   def quiet(flag: Boolean): Boolean = Flags.Quiet(flag).value
   def described(json: Flags.Json): String = s"json ${json.asked}, ${json.asked.toString}"
+  def blocked(json: Flags.Json): String = s"json ${json.asked}!"
   val Asks: Flags.Json.type = Flags.Json
   def aliased: Flags.Json = Asks.Asked
   def mirrored(write: Flags.Write): Flags.Json = (if write.changes && !text.asked then Flags.Json.Asked else Flags.Json.Text)

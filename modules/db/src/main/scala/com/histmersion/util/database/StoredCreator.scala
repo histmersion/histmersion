@@ -64,7 +64,7 @@ object StoredCreator:
     case Creator.Part.Known(name) => Some(name)
     case Creator.Part.Unknown     => None
 
-  def write(creator: Creator): Jsonb.JsonText = Jsonb.write(of(creator), Jsonb.DropNulls(true))
+  def write(creator: Creator): Jsonb.JsonText = Jsonb.write(of(creator), Jsonb.DropNulls.DropNulls)
 
   def column(creator: Creator.New): Jsonb.JsonText = write(creator.stored)
 

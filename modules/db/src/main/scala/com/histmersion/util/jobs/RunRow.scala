@@ -3,6 +3,7 @@ package util.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A job that runs as checkpointed steps (an agent run): what its row records when it is created. Its `status`, `kind`
   * and `params` are the owner's words, stored as given; `citekey` is the source it works on, when it works on one.
@@ -57,8 +58,10 @@ object RunRow:
   object Parent extends Newtype[String, Pure]
   type Origin = Origin.T
   object Origin extends Newtype[String, Pure]
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Applied
+  object DryRun extends TwoCases[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type ManagerId = ManagerId.T
   object ManagerId extends Newtype[String, Pure]
   type ManagerItem = ManagerItem.T

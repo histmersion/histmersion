@@ -508,14 +508,14 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     try
       assert(
         transact(ds)(
-          AutopilotRepo.set(enabled = AutopilotRepo.Row.Enabled(true), AutopilotRepo.Row.ChangedBy("zzrefresh"), Nil)
-        ) || transact(ds)(AutopilotRepo.get()).enabled.value
+          AutopilotRepo.set(enabled = AutopilotRepo.Row.Enabled.Enabled, AutopilotRepo.Row.ChangedBy("zzrefresh"), Nil)
+        ) || transact(ds)(AutopilotRepo.get()).enabled.enabled
       )
       assertEquals(c.scheduler.refreshPlans(java.time.Instant.now()), Nil, "no pass yet: no work waits on a pool")
       assertEquals(reads.probes.get() + reads3.probes.get(), 0)
     finally {
       val _ = transact(ds)(
-        AutopilotRepo.set(enabled = AutopilotRepo.Row.Enabled(false), AutopilotRepo.Row.ChangedBy("zzrefresh"), Nil)
+        AutopilotRepo.set(enabled = AutopilotRepo.Row.Enabled.Disabled, AutopilotRepo.Row.ChangedBy("zzrefresh"), Nil)
       )
     }
 
@@ -739,7 +739,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val clients = Map[ModelRef, LlmClient](Codex -> ScriptedClient(Codex))
     // the sessions refuse a write: the check has teeth
     val refused = intercept[Exception](
-      Transactor(readOnlyDs).write(PlanQuotaRepo.setHold(PoolId.ChatgptPlan, PlanQuotaRepo.Pool.Held(true)))
+      Transactor(readOnlyDs).write(PlanQuotaRepo.setHold(PoolId.ChatgptPlan, PlanQuotaRepo.Pool.Held.Held))
     )
     assert(
       Iterator

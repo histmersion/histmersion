@@ -6,6 +6,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final private[assets] case class MediaItemRow(
@@ -67,5 +68,7 @@ object MediaItemRow:
   object OriginalUrl extends Newtype[String, Pure]
   type RetrievedAt = RetrievedAt.T
   object RetrievedAt extends Newtype[String, Pure]
-  type HasThumb = HasThumb.T
-  object HasThumb extends Newtype[Boolean, Pure]
+  enum HasThumb derives CanEqual:
+    case WithThumb, WithoutThumb
+  object HasThumb extends TwoCases[HasThumb]:
+    extension (hasThumb: HasThumb) def hasThumb: Boolean = hasThumb == WithThumb

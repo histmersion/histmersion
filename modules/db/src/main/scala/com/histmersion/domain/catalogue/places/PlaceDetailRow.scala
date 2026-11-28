@@ -9,6 +9,7 @@ import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.NewtypeColumns.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** One row of [[PlaceRepo.get]] — a [[PlaceSummary]] plus the geometry and the finding count. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -51,5 +52,7 @@ object PlaceDetailRow:
   object Geometry extends Newtype[String, Pure]
   type Findings = Findings.T
   object Findings extends Newtype[Int, Pure]
-  type HasBoundary = HasBoundary.T
-  object HasBoundary extends Newtype[Boolean, Pure]
+  enum HasBoundary derives CanEqual:
+    case WithBoundary, WithoutBoundary
+  object HasBoundary extends TwoCases[HasBoundary]:
+    extension (hasBoundary: HasBoundary) def hasBoundary: Boolean = hasBoundary == WithBoundary

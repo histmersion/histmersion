@@ -36,6 +36,7 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What a collection remembers of its merges (docs/research-merge-import.md §6.1, milestone M7):
   * `merge list | show | ledger` read `merges`, `merge_ledger`, `uid_aliases` and `merge_decisions`; the web review
@@ -49,8 +50,10 @@ object MergeRepo:
   object BundleName extends Newtype[String, Pure]
   type DecisionKey = DecisionKey.T
   object DecisionKey extends Newtype[String, Pure]
-  type Importing = Importing.T
-  object Importing extends Newtype[Boolean, Pure]
+  enum Importing derives CanEqual:
+    case Importing, Merging
+  object Importing extends TwoCases[Importing]:
+    extension (importing: Importing) def importing: Boolean = importing == Importing
   type MergeIdOrPrefix = MergeIdOrPrefix.T
   object MergeIdOrPrefix extends Newtype[String, Pure]
   type UidText = UidText.T
@@ -264,9 +267,8 @@ object MergeRepo:
 
   /** While on, rows keep the clocks the bundle gives them: the change-clock triggers stand aside. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def importing(on: Importing)(using DbCon): Unit =
-    val setting: String = if on.value then "on" else "off"
+    val setting: String = if on.importing then "on" else "off"
     val _ = sql"SELECT set_config('histmersion.importing', $setting, true)".query[String].run()
 
   /** Record what was merged — only what changed in the ledger, and a `merges` row only when the import changed anything

@@ -17,6 +17,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** `lint --rule place-imported-point-area` (2026-10-09): the GeoNames and Wikidata places of an area kind stored with
   * only a point — what the importer no longer creates ([[Gazetteer.dropsPointArea]]). The listing reads; [[remove]]
@@ -106,7 +107,7 @@ private[places] object PointAreaRepo:
         Listed.Label(label.value),
         Listed.Source(source.value),
         Listed.Kind(kind.value),
-        Dating.of(startUnknown.value, lowerInf.value, upperInf.value),
+        Dating.of(startUnknown.startUnknown, lowerInf.lowerInf, upperInf.upperInf),
         Listed.Findings(findings.value),
         Listed.Alone(alone.value),
         Listed.Pinned(pinned.value)
@@ -121,12 +122,18 @@ private[places] object PointAreaRepo:
     object Source extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type StartUnknown = StartUnknown.T
-    object StartUnknown extends Newtype[Boolean, Pure]
-    type LowerInf = LowerInf.T
-    object LowerInf extends Newtype[Boolean, Pure]
-    type UpperInf = UpperInf.T
-    object UpperInf extends Newtype[Boolean, Pure]
+    enum StartUnknown derives CanEqual:
+      case StartUnknown, StartKnown
+    object StartUnknown extends TwoCases[StartUnknown]:
+      extension (startUnknown: StartUnknown) def startUnknown: Boolean = startUnknown == StartUnknown
+    enum LowerInf derives CanEqual:
+      case Unbounded, Bounded
+    object LowerInf extends TwoCases[LowerInf]:
+      extension (lowerInf: LowerInf) def lowerInf: Boolean = lowerInf == Unbounded
+    enum UpperInf derives CanEqual:
+      case Unbounded, Bounded
+    object UpperInf extends TwoCases[UpperInf]:
+      extension (upperInf: UpperInf) def upperInf: Boolean = upperInf == Unbounded
     type Findings = Findings.T
     object Findings extends Newtype[Int, Pure]
     type Alone = Alone.T

@@ -119,7 +119,7 @@ class JsonbCodecSuite extends DbSuite:
 
   test("write: compact, nulls kept unless dropNulls"):
     assertEquals(Jsonb.write(Doc(2, None)), """{"a":2,"b":null}""")
-    assertEquals(Jsonb.write(Doc(2, None), dropNulls = Jsonb.DropNulls(true)), """{"a":2}""")
+    assertEquals(Jsonb.write(Doc(2, None), dropNulls = Jsonb.DropNulls.DropNulls), """{"a":2}""")
 
   test("read and decode: a document this build cannot read is absent, or says why"):
     assertEquals(Jsonb.read[Doc](Jsonb.JsonText("""{"a":3}""")), Some(Doc(3)))

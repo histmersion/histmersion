@@ -8,6 +8,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.Jsonb
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** An asset as a bundle reads it: its line's fields, the size of its bytes, its period's inclusive bounds. */
 final private[assets] case class AssetBundleRow(
@@ -54,8 +55,10 @@ object AssetBundleRow:
   object License extends Newtype[String, Pure]
   type Geom = Geom.T
   object Geom extends Newtype[String, Pure]
-  type PNull = PNull.T
-  object PNull extends Newtype[Boolean, Pure]
+  enum PNull derives CanEqual:
+    case Undated, Dated
+  object PNull extends TwoCases[PNull]:
+    extension (pNull: PNull) def pNull: Boolean = pNull == Undated
   export DeepTime.{SignedYear as PHi, SignedYear as PLo}
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends Newtype[String, Pure]

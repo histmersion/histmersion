@@ -11,6 +11,7 @@ import com.histmersion.util.database.Timestamps
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a
@@ -48,10 +49,14 @@ object FocusRepo:
     object Status extends Newtype[String, Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends Newtype[String, Pure]
-    type Active = Active.T
-    object Active extends Newtype[Boolean, Pure]
-    type Pinned = Pinned.T
-    object Pinned extends Newtype[Boolean, Pure]
+    enum Active derives CanEqual:
+      case Active, Inactive
+    object Active extends TwoCases[Active]:
+      extension (active: Active) def active: Boolean = active == Active
+    enum Pinned derives CanEqual:
+      case Pinned, Unpinned
+    object Pinned extends TwoCases[Pinned]:
+      extension (pinned: Pinned) def pinned: Boolean = pinned == Pinned
     type Priority = Priority.T
     object Priority extends Newtype[Int, Pure]
     type Since = Since.T
@@ -84,7 +89,7 @@ object FocusRepo:
       status: WorkRow.Status,
       person: WorkRow.Person,
       focusHeld: WorkRow.FocusHeld,
-      personHeld: WorkRow.PersonHeld,
+      personHeld: WorkRow.HeldByPerson,
       approval: Option[WorkRow.Approval],
       approvalKind: Option[WorkRow.ApprovalKind],
       autoApprove: Option[WorkRow.AutoApprove],
@@ -104,13 +109,18 @@ object FocusRepo:
     object Target extends Newtype[String, Pure]
     type Status = Status.T
     object Status extends Newtype[String, Pure]
-    type Person = Person.T
-    object Person extends Newtype[Boolean, Pure]
-    type FocusHeld = FocusHeld.T
-    object FocusHeld extends Newtype[Boolean, Pure]
-    type PersonHeld = PersonHeld.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object PersonHeld extends Newtype[Boolean, Pure]
+    enum Person derives CanEqual:
+      case ForPerson, ForModel
+    object Person extends TwoCases[Person]:
+      extension (person: Person) def person: Boolean = person == ForPerson
+    enum FocusHeld derives CanEqual:
+      case Held, Free
+    object FocusHeld extends TwoCases[FocusHeld]:
+      extension (focusHeld: FocusHeld) def focusHeld: Boolean = focusHeld == Held
+    enum HeldByPerson derives CanEqual:
+      case Held, Free
+    object HeldByPerson extends TwoCases[HeldByPerson]:
+      extension (personHeld: HeldByPerson) def personHeld: Boolean = personHeld == Held
     type Approval = Approval.T
     object Approval extends Newtype[Long, Pure]
     type ApprovalKind = ApprovalKind.T
@@ -239,8 +249,8 @@ object FocusRepo:
   /** A person's pin. False = no such goal. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pin(slug: Goal.Slug, pinned: GoalRow.Pinned)(using DbCon): Boolean =
-    sql"""INSERT INTO goal_focus (slug, pinned) SELECT slug, $pinned FROM goals WHERE slug = $slug
-          ON CONFLICT (slug) DO UPDATE SET pinned = $pinned, updated_at = now()""".update.run() > 0
+    sql"""INSERT INTO goal_focus (slug, pinned) SELECT slug, ${pinned.pinned} FROM goals WHERE slug = $slug
+          ON CONFLICT (slug) DO UPDATE SET pinned = ${pinned.pinned}, updated_at = now()""".update.run() > 0
 
   /** A person's priority (higher first). False = no such goal. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

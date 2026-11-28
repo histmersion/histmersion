@@ -124,7 +124,7 @@ object ImportService:
           place,
           event,
           ImportRepo.Limit(limit.value),
-          ImportRepo.Refresh(refresh.value),
+          (if refresh.value then ImportRepo.Refresh.Refresh else ImportRepo.Refresh.Reuse),
           since.map(s => ImportRepo.Since(s.value))
         )
       )
@@ -145,13 +145,13 @@ object ImportService:
       db.read(
         ImportRepo.collectionTargets(
           MediaItemRow.Provider(check.value),
-          ImportRepo.Places(places.value),
+          (if places.value then ImportRepo.Places.WithPlaces else ImportRepo.Places.WithoutPlaces),
           place,
           event,
           ImportRepo.Limit(limit.value),
-          ImportRepo.Refresh(refresh.value),
+          (if refresh.value then ImportRepo.Refresh.Refresh else ImportRepo.Refresh.Reuse),
           since.map(s => ImportRepo.Since(s.value)),
-          ImportRepo.PleiadesOnly(pleiadesOnly.value)
+          (if pleiadesOnly.value then ImportRepo.PleiadesOnly.PleiadesOnly else ImportRepo.PleiadesOnly.AnyGazetteer)
         )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -164,9 +164,9 @@ object ImportService:
       db.read(
         ImportRepo.collectionPending(
           MediaItemRow.Provider(check.value),
-          ImportRepo.Places(places.value),
+          (if places.value then ImportRepo.Places.WithPlaces else ImportRepo.Places.WithoutPlaces),
           since.map(s => ImportRepo.Since(s.value)),
-          ImportRepo.PleiadesOnly(pleiadesOnly.value)
+          (if pleiadesOnly.value then ImportRepo.PleiadesOnly.PleiadesOnly else ImportRepo.PleiadesOnly.AnyGazetteer)
         )
       )
     def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = db.read(ImportRepo.placeFacts(ids))
