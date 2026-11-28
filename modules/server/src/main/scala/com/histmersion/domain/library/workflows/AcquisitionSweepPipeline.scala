@@ -5,14 +5,13 @@ import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.api.automation.managers.OaWork
 import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.json.RawJson.*
-import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import hearth.kindlings.jsoniterjson.Json
-import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.automation.agents.Checked
+import com.histmersion.domain.automation.agents.Checkpointed
 import com.histmersion.domain.automation.agents.Halt
 import com.histmersion.domain.automation.agents.Prompt
 import com.histmersion.domain.automation.agents.RunCtx
@@ -27,7 +26,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.Pipeline
 import AcquisitionSweepRules.{Candidate, Ranking}
-import com.histmersion.util.json.JsonCodec
 
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -70,9 +68,11 @@ final class AcquisitionSweepPipeline(
     agents: AgentsControllers,
     cfg: => AgentsConfig,
     upstream: () => AgentUpstream,
-    backlog: OaBacklog
+    backlog: OaBacklog,
+    records: AcquisitionRecords
 ) extends PipelineDef
     with GoalSweep:
+  import records.given
   val pipeline: Pipeline = Pipeline.AcquisitionSweep
   protected def goals: GoalService = agents.goals
   import AcquisitionSweepPipeline.*
@@ -164,7 +164,7 @@ final class AcquisitionSweepPipeline(
       tried <-
         if allowed.value > 0 then ctx.code[Tried](StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed)))
         else Right(Tried())
-      noCopy = tried.failed.filter(_.noCopy).map(_.doi).toSet
+      noCopy = tried.failed.filter(_.noCopy == Failed.NoCopy.NoLegalCopy).map(_.doi).toSet
       waiting = picks.filter(p =>
         p.candidate.isOa.isOa && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
       )
@@ -367,7 +367,6 @@ final class AcquisitionSweepPipeline(
     * anything else → the backlog, tried again on a later day).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def ingestOa(
       ctx: RunCtx,
       goal: Goal.Slug,
@@ -383,7 +382,7 @@ final class AcquisitionSweepPipeline(
         Failed(
           p.candidate.doi,
           why.fold(identity)(Problem.Run.Failed(_)),
-          IngestBacklog.isNoLegalCopy(why)
+          if IngestBacklog.isNoLegalCopy(why) then Failed.NoCopy.NoLegalCopy else Failed.NoCopy.LegalCopyMaybe
         )
       )
     )
@@ -434,15 +433,11 @@ final class AcquisitionSweepPipeline(
     }
 
 object AcquisitionSweepPipeline:
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  given JsonKeyCodec[Doi] = JsonCodec.key[Doi](_.value, k => Right((Doi.assume(_))(k)))
-
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def picked(c: ManagerContext, run: Run.Id): List[Picked] =
+  def picked(c: ManagerContext, run: Run.Id, records: AcquisitionRecords): List[Picked] =
     c.stepOutput(run, StepRecord.Name("rank"))
-      .flatMap(o => RawJson.decode[List[Picked]](o.value).toOption)
+      .flatMap(o => records.picked.read(Checkpointed.Json(o.value)).toOption)
       .getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
@@ -454,24 +449,27 @@ object AcquisitionSweepPipeline:
       candidates: List[Candidate],
       skipped: Map[CandidateSweep.SkippedKey, AcquisitionSweepRules.SkipCount],
       stored: Map[Doi, Source.Candidate.Id] = Map.empty
-  ) derives JsonCodec
+  )
 
-  final case class Picked(candidate: Candidate, why: AcquisitionSweepRules.Rationale) derives JsonCodec
+  final case class Picked(candidate: Candidate, why: AcquisitionSweepRules.Rationale)
 
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
-  final case class Ingested(doi: Doi, citekey: Citekey) derives JsonCodec
+  final case class Ingested(doi: Doi, citekey: Citekey)
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
-  @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-  final case class Failed(doi: Doi, why: Problem, noCopy: Boolean) derives JsonCodec
+  final case class Failed(doi: Doi, why: Problem, noCopy: Failed.NoCopy)
+
+  object Failed:
+    enum NoCopy derives CanEqual:
+      case NoLegalCopy, LegalCopyMaybe
 
   /** What the ingest step of a run with a backlog did. */
-  final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives JsonCodec
+  final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil)
 
   /** What the backlog step did: picks waiting in a backlog (new entries and ones joined), and picks the corpus or the
     * acquisition list had already.
     */
-  final case class Parked(waiting: Parked.Waiting, known: Parked.Known) derives JsonCodec
+  final case class Parked(waiting: Parked.Waiting, known: Parked.Known)
 
   object Parked:
     type Waiting = Waiting.T

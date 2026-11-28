@@ -63,7 +63,7 @@ final class LibraryWorkflows(
     LibraryWorkflow(CurrencyCheckPipeline(site, a.goals, cfg().agents, upstream, proposals), Nil, a.definitions)
 
   val acquisitionSweep: WorkflowDefinition = LibraryWorkflow(
-    AcquisitionSweepPipeline(site, a, cfg().agents, upstream, work.oaBacklog),
+    AcquisitionSweepPipeline(site, a, cfg().agents, upstream, work.oaBacklog, AcquisitionStepTransformers),
     List(StepAgent.AcquisitionRanker),
     a.definitions
   )
@@ -72,7 +72,7 @@ final class LibraryWorkflows(
   val enrichKind: EnrichManagerKind = EnrichManagerKind(site, a)
 
   /** A research area's watcher. */
-  val watchKind: WatchManagerKind = WatchManagerKind(site, work, cfg().libraryAgents)
+  val watchKind: WatchManagerKind = WatchManagerKind(site, work, cfg().libraryAgents, AcquisitionStepTransformers)
 
   val managerKinds: List[ManagerKindDefinition] = List(enrichKind, watchKind)
 

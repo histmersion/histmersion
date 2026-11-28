@@ -8,11 +8,6 @@ import com.histmersion.domain.library.Doi
 
 import scala.annotation.tailrec
 import com.histmersion.api.library.{Acquire, WorkRef}
-import com.histmersion.api.given
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
-
-import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
@@ -67,7 +62,7 @@ object AcquisitionSweepRules:
       isOa: WorkRef.IsOa,
       query: Candidate.Query,
       abstractText: Option[WorkRef.AbstractText]
-  ) derives JsonCodec
+  )
 
   object Candidate:
     type Query = Query.T
@@ -110,28 +105,11 @@ object AcquisitionSweepRules:
     (all.take(max.value), skipped.toMap.map((reason, count) => reason -> SkipCount(count)))
 
   /** The ranking model's answer: which candidates belong to the goal. */
-  final case class Pick(doi: Pick.DoiText, why: Rationale) derives JsonCodec
+  final case class Pick(doi: Pick.ListedDoi, why: Rationale)
   object Pick:
-    type DoiText = DoiText.T
-    object DoiText extends Newtype[String, Pure]
-
-    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-    given sttp.tapir.Schema[Pick] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
-      .derived[Pick]
-      .schema
-      .modify(_.doi)(_.description("The DOI of a candidate, exactly as listed"))
-      .modify(_.why)(_.description("Why it belongs to the goal, in one sentence"))
-  final case class Ranking(picks: List[Pick] = Nil) derives JsonCodec
-  object Ranking:
-    @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-    @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
-    given sttp.tapir.Schema[Ranking] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
-      .derived[Ranking]
-      .schema
-      .modify(_.picks)(
-        _.description("The candidates that belong to the goal, most important first; leave out the rest")
-      )
+    type ListedDoi = ListedDoi.T
+    object ListedDoi extends Newtype[String, Pure]
+  final case class Ranking(picks: List[Pick] = Nil)
 
   /** A pick must name a listed candidate; a DOI that was not offered is a problem (a model inventing a work), a
     * repeated one is ignored. On the last attempt the valid picks are kept.

@@ -42,7 +42,7 @@ object Classification:
   type Summary = Summary.T
   object Summary extends Newtype[String, Pure]
 
-  given Schema[Classification] = KindlingsSchema
+  given sttp.tapir.Schema[Classification] = hearth.kindlings.tapirschemaderivation.KindlingsSchema
     .derived[Classification]
     .schema
     .modify(_.summary)(_.description("3-6 sentences"))

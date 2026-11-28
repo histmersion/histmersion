@@ -747,7 +747,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText(""), PickRationale("fits")))),
+        Ranking(List(Pick(Pick.ListedDoi(""), PickRationale("fits")))),
         offered,
         last = LastAttempt(false)
       ).left
@@ -755,7 +755,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.1000/a"), PickRationale("")))),
+        Ranking(List(Pick(Pick.ListedDoi("10.1000/a"), PickRationale("")))),
         offered,
         last = LastAttempt(false)
       ).isRight

@@ -215,6 +215,11 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
           loop(inner, acc, Some(lit.syntax))
         case Term.Select(Term.ApplyType.After_4_6_0(Term.Select(Term.Name("KindlingsSchema"), Term.Name("derived")), _), Term.Name("schema")) =>
           Right((acc, top))
+        case Term.Select(
+              Term.ApplyType.After_4_6_0(Term.Select(Term.Select(_, Term.Name("KindlingsSchema")), Term.Name("derived")), _),
+              Term.Name("schema")
+            ) =>
+          Right((acc, top))
         case Term.Select(Term.ApplyType.After_4_6_0(Term.Name("summon"), _), Term.Name("schema")) => Right((acc, top))
         case other => Left(other.syntax.take(80))
       }
@@ -304,7 +309,7 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
       val codec = derivesNames.filter(config.codecDerives.contains)
       val kept = derivesNames.filterNot(config.codecDerives.contains)
       val schemaGiven = codecGivens.exists {
-        case g: Defn.GivenAlias => g.decltpe.syntax.startsWith("Schema[")
+        case g: Defn.GivenAlias => g.decltpe.syntax.startsWith("Schema[") || g.decltpe.syntax.startsWith("sttp.tapir.Schema[")
         case _ => false
       }
       val twinDerives = (kept ++ codec.map(n => config.derivesAs.getOrElse(n, n)) ++ config.twinDerives ++

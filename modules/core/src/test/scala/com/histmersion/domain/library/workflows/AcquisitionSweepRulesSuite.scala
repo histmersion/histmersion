@@ -62,8 +62,8 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     val ok = checkRanking(
       Ranking(
         List(
-          Pick(Pick.DoiText("https://doi.org/10.1000/A"), AcquisitionSweepRules.Rationale("fits")),
-          Pick(Pick.DoiText("10.1000/a"), AcquisitionSweepRules.Rationale("twice"))
+          Pick(Pick.ListedDoi("https://doi.org/10.1000/A"), AcquisitionSweepRules.Rationale("fits")),
+          Pick(Pick.ListedDoi("10.1000/a"), AcquisitionSweepRules.Rationale("twice"))
         )
       ),
       List(c),
@@ -72,14 +72,14 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
     assertEquals(ok.map(_._1.map((c, p) => (c, s"$p"))), Right(List((c, "fits"))))
     assert(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
+        Ranking(List(Pick(Pick.ListedDoi("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
         List(c),
         last = LastAttempt(false)
       ).isLeft
     )
     assertEquals(
       checkRanking(
-        Ranking(List(Pick(Pick.DoiText("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
+        Ranking(List(Pick(Pick.ListedDoi("10.9999/zzz"), AcquisitionSweepRules.Rationale("invented")))),
         List(c),
         last = LastAttempt(true)
       ).map(_._1),

@@ -55,8 +55,12 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
-final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: => LibraryAgentsConfig)
-    extends ManagerKindDefinition:
+final class WatchManagerKind(
+    site: LibrarySite,
+    val work: AcquisitionWork,
+    lib: => LibraryAgentsConfig,
+    records: AcquisitionRecords
+) extends ManagerKindDefinition:
   val kind: Kind = Kind.Watch
   val creator: domain.Creator.New =
     domain.Creator.code(InTreeWorkflow.Library, domain.Creator.Workflow.Name("watch-manager"))
@@ -142,7 +146,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
   )(using WritePermit)(using Creator.New): Unit =
     if item.kind.value == AcquisitionSweep || item.kind.value == CurrencyCheck then
       run.foreach { r =>
-        val found = if item.kind.value == AcquisitionSweep then AcquisitionSweepPipeline.picked(c, r) else Nil
+        val found = if item.kind.value == AcquisitionSweep then AcquisitionSweepPipeline.picked(c, r, records) else Nil
         val works = if found.isEmpty then ""
         else
           s"; picked: ${found

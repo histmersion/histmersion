@@ -64,6 +64,9 @@ object CheckpointGolden:
 
   private given JsonValueCodec[Classification] = EnrichmentTransformers.classificationAnswer
   private given JsonValueCodec[Notes] = EnrichmentTransformers.notesAnswer
+  private given JsonValueCodec[AcquisitionSweepRules.Candidate] =
+    library.workflows.AcquisitionTransformers.candidateRecord
+  private given JsonValueCodec[AcquisitionSweepRules.Ranking] = library.workflows.AcquisitionTransformers.rankingAnswer
 
   import com.histmersion.testsupport.CheckpointCodecs.given
 
@@ -433,7 +436,7 @@ object CheckpointGolden:
       AcquisitionSweepRules.Ranking(
         List(
           AcquisitionSweepRules.Pick(
-            AcquisitionSweepRules.Pick.DoiText("10.1/x"),
+            AcquisitionSweepRules.Pick.ListedDoi("10.1/x"),
             AcquisitionSweepRules.Rationale("on the goal")
           )
         )

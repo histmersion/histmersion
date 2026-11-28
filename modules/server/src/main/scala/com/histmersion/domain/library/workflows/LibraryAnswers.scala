@@ -31,8 +31,8 @@ object LibraryAnswers:
   val findings: ResponseSchema[Findings] =
     answer[Findings, wire.ProposedFindings](EnrichmentTransformers.findingsAnswer)
   val notes: ResponseSchema[Notes] = answer[Notes, wire.Notes](EnrichmentTransformers.notesAnswer)
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] = ResponseSchema.derived[AcquisitionSweepRules.Ranking]()
+  val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] =
+    answer[AcquisitionSweepRules.Ranking, wire.Ranking](AcquisitionTransformers.rankingAnswer)
 
   /** Its step schemas, by name. */
   val all: List[(Name, ResponseSchema[?])] = List(

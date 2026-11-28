@@ -10,10 +10,11 @@ import com.histmersion.domain.CheckpointGolden
 import com.histmersion.domain.CheckpointGolden.Golden
 import com.histmersion.domain.library.{Citekey, Doi}
 import com.histmersion.domain.library.search.Search
-import com.histmersion.util.json.JsonCodec.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Problem
+import com.histmersion.testsupport.CheckpointCodecs.given
 import AcquisitionSweepPipeline.*
+import AcquisitionStepTransformers.given
 
 class AcquisitionSweepGoldenSuite extends munit.FunSuite:
 
@@ -43,15 +44,33 @@ class AcquisitionSweepGoldenSuite extends munit.FunSuite:
     Golden(
       "acquisition-tried.ndjson",
       List(
-        Tried(ingested, List(Failed(Doi("10.2/y"), Problem.Config.ProxyUndeclared(Problem.Raw("no legal copy")), noCopy = true))),
+        Tried(
+          ingested,
+          List(
+            Failed(
+              Doi("10.2/y"),
+              Problem.Config.ProxyUndeclared(Problem.Raw("no legal copy")),
+              Failed.NoCopy.NoLegalCopy
+            )
+          )
+        ),
         Tried(
           Nil,
-          List(Failed(Doi("10.3/z"), Problem.Config.WildcardOverlap(Problem.Raw("a"), Problem.Raw("b")), noCopy = false))
+          List(
+            Failed(
+              Doi("10.3/z"),
+              Problem.Config.WildcardOverlap(Problem.Raw("a"), Problem.Raw("b")),
+              Failed.NoCopy.LegalCopyMaybe
+            )
+          )
         ),
         Tried()
       )
     ),
-    Golden("acquisition-parked.ndjson", List(Parked(Parked.Waiting(2), Parked.Known(1)), Parked(Parked.Waiting(0), Parked.Known(0))))
+    Golden(
+      "acquisition-parked.ndjson",
+      List(Parked(Parked.Waiting(2), Parked.Known(1)), Parked(Parked.Waiting(0), Parked.Known(0)))
+    )
   )
 
   private val update = sys.env.get("HISTMERSION_UPDATE_GOLDEN").contains("1")
@@ -75,9 +94,12 @@ class AcquisitionSweepGoldenSuite extends munit.FunSuite:
     val stored = Files.readAllLines(path, UTF_8).toArray(Array.empty[String]).toList.filter(_.nonEmpty)
     assert(stored.nonEmpty)
     stored.foreach { line =>
-      val again = decode(line)(using g.decoder).fold(e => fail(s"${g.file}: $e\n$line"), _.asJson(using g.encoder).noSpaces)
+      val again =
+        decode(line)(using g.decoder).fold(e => fail(s"${g.file}: $e\n$line"), _.asJson(using g.encoder).noSpaces)
       assertEquals(again, line)
     }
     assertEquals(encoded(g), stored)
 
-  all.foreach(g => test(s"${g.file}: stored lines decode and re-encode byte for byte, the samples encode to them")(check(g)))
+  all.foreach(g =>
+    test(s"${g.file}: stored lines decode and re-encode byte for byte, the samples encode to them")(check(g))
+  )
