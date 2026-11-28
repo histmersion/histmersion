@@ -120,7 +120,7 @@ class PlanRefreshSuite extends munit.FunSuite:
       )
       .fold(e => fail(e.sentence), identity)
     assertEquals(
-      rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected)).toSet,
+      rs.map(r => (r.kind, r.usedPct, r.source, r.observedAt, r.rejected.rejected)).toSet,
       Set(("five_hour", 12.0, Source.Probe, 5000L, false), ("seven_day", 42.0, Source.Probe, 5000L, false))
     )
     assertEquals(rs.find(_.kind.value == "seven_day").flatMap(_.resetsAt), Some(1791522000000L))

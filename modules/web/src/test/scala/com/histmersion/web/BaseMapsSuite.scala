@@ -289,7 +289,7 @@ class BaseMapsSuite extends munit.FunSuite:
       )
     )
 
-  test("the options a viewer stored as Booleans read back as the same choices; they are written as words"):
+  test("the options a viewer stored as Booleans read back as the same choices, and are written as Booleans again"):
     val codec = summon[FieldCodec[MapPrefs]]
     val stored = MapPrefs(
       names = Some(MapPrefs.Names.Hidden),
@@ -302,7 +302,7 @@ class BaseMapsSuite extends munit.FunSuite:
     )
     assertEquals(
       codec.encode(stored).map(_.value).mkString,
-      """{"names":"Hidden","language":null,"contours":"Shown","depthPhysical":null,"depthReadable":"Shown"}"""
+      """{"names":false,"language":null,"contours":true,"depthPhysical":null,"depthReadable":true}"""
     )
     assertEquals(codec.decode(codec.encode(stored)), Some(stored))
 

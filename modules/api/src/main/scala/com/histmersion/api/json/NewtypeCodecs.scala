@@ -32,15 +32,10 @@ object NewtypeCodecs:
 
   def twoStates[E <: reflect.Enum](values: Array[E]): JsonValueCodec[E] = new JsonValueCodec[E]:
     def nullValue: E = null.asInstanceOf[E]
-    def decodeValue(in: JsonReader, default: E): E =
-      val quoted = in.isNextToken('"'.toByte)
-      in.rollbackToken()
-      if quoted then
-        val name = in.readString(null)
-        values.find(_.toString == name).getOrElse(in.decodeError(s"unknown value: $name"))
-      else if in.readBoolean() then values(0)
-      else values(1)
-    def encodeValue(x: E, out: JsonWriter): Unit = out.writeVal(x.toString)
+    def decodeValue(in: JsonReader, default: E): E = if in.readBoolean() then values(0) else values(1)
+    def encodeValue(x: E, out: JsonWriter): Unit = out.writeVal(x.ordinal == 0)
+
+  def twoStatesSchema[E]: Schema[E] = Schema.schemaForBoolean.as[E]
 
   given key: [T] => (m: RefinedType.Mirror[T]) => (base: JsonKeyCodec[m.BaseType]) => JsonKeyCodec[T] =
     base.asInstanceOf[JsonKeyCodec[T]]
