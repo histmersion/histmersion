@@ -47,7 +47,7 @@ jobs:
     permissions: { contents: write }   # the release upload on tags
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with: { persist-credentials: false }
+        with: { fetch-depth: 0, persist-credentials: false }
       # the PINNED GraalVM CE (scripts/bundle/graalvm-pins.txt: version, URL, SHA-256), provisioned by the
       # same script the installers use — setup-graalvm cannot name an innovation release (25.5's assets are
       # `graalvm-community-jdk-25i5-…` under the tag graal-25.5.5.0.3)
