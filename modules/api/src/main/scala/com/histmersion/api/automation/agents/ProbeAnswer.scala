@@ -16,7 +16,6 @@ import com.histmersion.lint.LintRule
 import com.histmersion.api
 import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Newtype
 
 final case class ProbeAnswer(citekey: Citekey, title: api.library.Title, year: Option[Year])
     derives JsonCodec,

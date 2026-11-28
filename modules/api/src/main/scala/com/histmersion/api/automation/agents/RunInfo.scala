@@ -26,8 +26,6 @@ import com.histmersion.api.Wording
 import com.histmersion.api.time.IsoLocal
 import com.histmersion.api.json.TwoStates
 import com.histmersion.api.automation.Agents
-import com.histmersion.Display
-import com.histmersion.Newtype
 import com.histmersion.api.automation.agents.Origin
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

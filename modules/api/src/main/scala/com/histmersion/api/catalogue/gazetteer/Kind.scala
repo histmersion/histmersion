@@ -12,7 +12,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.api.catalogue.gazetteer.SourceInfo
-import com.histmersion.Newtype
 import com.histmersion.api.catalogue.Gazetteer.DatasetName
 
 enum Kind derives CanEqual:

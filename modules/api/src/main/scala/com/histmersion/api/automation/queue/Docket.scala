@@ -8,8 +8,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.api.json.TwoStates
-import com.histmersion.Display
-import com.histmersion.Newtype
 import com.histmersion.api.automation.Queue.Note
 import com.histmersion.api.automation.Queue.topicOf
 import com.histmersion.api.automation.queue.QueueItem

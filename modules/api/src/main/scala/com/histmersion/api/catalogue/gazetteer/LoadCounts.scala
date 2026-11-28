@@ -11,7 +11,6 @@ import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.gazetteer.SourceInfo
-import com.histmersion.Newtype
 
 final case class LoadCounts(
     source: LoadCounts.Source,

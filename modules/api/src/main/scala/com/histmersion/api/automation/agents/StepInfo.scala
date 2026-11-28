@@ -12,8 +12,6 @@ import com.histmersion.lint.LintRule
 import com.histmersion.api.automation.agents.WouldWrite
 import com.histmersion.api.automation.agents.Usage
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Display
-import com.histmersion.Newtype
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class StepInfo(

@@ -16,7 +16,6 @@ import com.histmersion.api.automation.ListFilters.Qualifier
 import com.histmersion.api.automation.ListFilters.entry
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Agents
-import com.histmersion.Newtype
 import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.agents.Origin
 

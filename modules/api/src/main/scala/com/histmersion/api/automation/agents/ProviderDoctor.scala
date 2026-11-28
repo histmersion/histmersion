@@ -10,7 +10,6 @@ import com.histmersion.api.automation.agents.CheckLevel
 import com.histmersion.api.automation.agents.DoctorCheck
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
-import com.histmersion.Newtype
 
 final case class ProviderDoctor(
     provider: ProviderDoctor.Provider,

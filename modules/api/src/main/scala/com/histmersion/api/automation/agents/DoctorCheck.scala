@@ -8,8 +8,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.automation.agents.CheckLevel
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Display
-import com.histmersion.Newtype
 
 final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
     derives JsonCodec,

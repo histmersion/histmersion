@@ -14,7 +14,6 @@ import com.histmersion.util.problem.Problem.Raw
 import com.histmersion.util.problem.Problem.TypeName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api
-import com.histmersion.Newtype
 
 final case class ModelRef(provider: ProviderKind, model: ModelRef.Model) derives CanEqual:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

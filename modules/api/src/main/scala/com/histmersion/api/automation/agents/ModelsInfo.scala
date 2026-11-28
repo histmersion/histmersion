@@ -13,7 +13,6 @@ import com.histmersion.api.automation.modelchains.RoleChain
 import com.histmersion.api.automation.modelchains.AllowanceStatus
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
-import com.histmersion.Newtype
 
 final case class ModelsInfo(
     enabled: ModelsInfo.Enabled,

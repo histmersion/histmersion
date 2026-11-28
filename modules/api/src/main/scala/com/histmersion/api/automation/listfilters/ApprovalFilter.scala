@@ -17,7 +17,6 @@ import com.histmersion.api.automation.ListFilters.Qualifier
 import com.histmersion.api.automation.ListFilters.entry
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Approval
-import com.histmersion.Newtype
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class ApprovalFilter(

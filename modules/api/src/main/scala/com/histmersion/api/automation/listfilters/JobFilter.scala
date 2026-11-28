@@ -16,7 +16,6 @@ import com.histmersion.api.automation.ListFilters.entry
 import com.histmersion.api.jobs.JobState
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.jobs.JobKinds
-import com.histmersion.Newtype
 
 final case class JobFilter(
     status: List[JobFilter.Status] = Nil,

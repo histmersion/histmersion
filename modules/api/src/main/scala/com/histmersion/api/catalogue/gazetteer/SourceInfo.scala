@@ -12,7 +12,6 @@ import com.histmersion.api.catalogue.gazetteer.Kind
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
-import com.histmersion.Newtype
 import com.histmersion.api.catalogue.Gazetteer.slug
 import com.histmersion.api.catalogue.Gazetteer.DatasetName
 import com.histmersion.api.catalogue.Gazetteer.PointAreaSources

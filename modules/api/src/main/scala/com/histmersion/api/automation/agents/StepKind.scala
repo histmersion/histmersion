@@ -7,7 +7,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Newtype
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 enum StepKind(val wire: StepKind.Wire):

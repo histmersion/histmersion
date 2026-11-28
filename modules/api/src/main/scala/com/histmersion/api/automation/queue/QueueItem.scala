@@ -12,8 +12,6 @@ import com.histmersion.lint.LintRule
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Queue.Rationale
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Display
-import com.histmersion.Newtype
 import com.histmersion.api.automation.queue.Docket
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Queue.Done

@@ -8,7 +8,6 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Citekey
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Newtype
 
 final case class ProbeRequest(citekey: Citekey, model: Option[ProbeRequest.Model] = None)
     derives JsonCodec,

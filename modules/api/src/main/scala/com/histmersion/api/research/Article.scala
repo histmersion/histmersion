@@ -12,7 +12,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.Newtype
 import com.histmersion.api.research.Coverage.{FilterLine, Rationale}
 import hearth.kindlings.optics.syntax.*
 
@@ -48,7 +47,6 @@ import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.json.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
-@tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class Article(
     slug: Article.Slug,
     title: Article.Title,

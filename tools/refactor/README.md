@@ -705,6 +705,17 @@ definition, an enclosing def of that name, a parameter, a case or for binding. R
   tools/refactor/strip-self-qualifier-fixture/input tools/refactor/strip-self-qualifier-fixture/expected
 ```
 
+`DropRootImports` (Layer, client side) drops `import com.histmersion.X` of a root-package type (`Newtype`, `Display`)
+from a file whose outermost clause is `package com.histmersion`: the chained clause already brings it into scope, and
+the spelled root package counts as the client naming a package outside the api. Syntactic; run it with
+`bash tools/refactor/scalafix.sh --config tools/refactor/drop-root-imports.conf --sourceroot . --files modules/api/src
+--files modules/web/src`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/DropRootImports.scala \
+  tools/refactor/drop-root-imports-fixture/input tools/refactor/drop-root-imports-fixture/expected
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.

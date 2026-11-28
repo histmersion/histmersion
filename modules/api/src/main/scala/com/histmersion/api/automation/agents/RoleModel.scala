@@ -10,7 +10,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
 import com.histmersion.api.automation.AgentRole
-import com.histmersion.Newtype
 
 final case class RoleModel(
     role: RoleModel.Role,

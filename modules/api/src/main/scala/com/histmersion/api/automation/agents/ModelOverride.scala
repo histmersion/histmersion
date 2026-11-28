@@ -15,7 +15,6 @@ import com.histmersion.util.problem.Problem.Raw
 import com.histmersion.util.problem.Problem.TypeName
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.AgentRole
-import com.histmersion.Newtype
 
 final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model)
     derives JsonCodec,

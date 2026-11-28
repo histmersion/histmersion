@@ -7,7 +7,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Newtype
 
 final case class GenerateResult(
     dir: GenerateResult.Dir,

@@ -12,7 +12,6 @@ import com.histmersion.api.automation.agents.RunRequest
 import com.histmersion.api.automation.agents.ModelOverride
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
-import com.histmersion.Newtype
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 final case class RunParams(

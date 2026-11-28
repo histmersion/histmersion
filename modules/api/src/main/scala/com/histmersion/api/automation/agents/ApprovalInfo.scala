@@ -19,8 +19,6 @@ import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.automation.managers.HintProposal
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Display
-import com.histmersion.Newtype
 import com.histmersion.api
 
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")

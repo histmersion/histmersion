@@ -8,7 +8,6 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.gazetteer.SourceInfo
-import com.histmersion.Newtype
 
 final case class Extract(
     name: Extract.Name,

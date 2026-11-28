@@ -7,7 +7,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
-import com.histmersion.Newtype
 
 enum Decision(val wire: Decision.Wire) derives CanEqual:
   case Approve extends Decision(Decision.Wire("approve"))

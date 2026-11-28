@@ -10,7 +10,6 @@ import com.histmersion.api.automation.agents.Usage
 import com.histmersion.api.automation.agents.ProbeAnswer
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.json.TwoStates
-import com.histmersion.Newtype
 
 final case class ProbeResult(
     model: ProbeResult.Model,

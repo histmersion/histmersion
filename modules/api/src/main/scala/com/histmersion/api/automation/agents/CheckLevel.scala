@@ -12,8 +12,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.api.Wording
-import com.histmersion.Display
-import com.histmersion.Newtype
 
 enum CheckLevel(val wire: CheckLevel.Wire) derives CanEqual:
   case Ok extends CheckLevel(CheckLevel.Wire("ok"))

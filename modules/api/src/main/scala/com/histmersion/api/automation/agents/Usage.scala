@@ -9,7 +9,6 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.Newtype
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 final case class Usage(
