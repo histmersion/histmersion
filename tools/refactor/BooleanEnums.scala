@@ -9,7 +9,7 @@ import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters._
 
 object BooleanEnums {
-  case class Two(newtype: String = "", yes: String = "", no: String = "", test: String = "")
+  case class Two(newtype: String = "", yes: String = "", no: String = "", test: String = "", parent: String = "")
   object Two {
     implicit val surface: generic.Surface[Two] = generic.deriveSurface[Two]
     implicit val decoder: ConfDecoder[Two] = generic.deriveDecoder(Two()).noTypos
@@ -18,7 +18,10 @@ object BooleanEnums {
       semanticdbRoots: List[String] = List("target/out/jvm/scala-{scalaVersion}"),
       paths: List[String] = Nil,
       enums: List[Two] = Nil,
-      report: String = ""
+      report: String = "",
+      parent: String = "",
+      parentImport: String = "",
+      bridges: String = ""
   )
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
@@ -119,6 +122,8 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
     }
     def isIronValue(n: Name): Boolean = n.value == "value" && n.symbol.value.startsWith(ironValue)
     def objectOf(sym: String): Option[Two] = byType.get(norm(sym)).orElse(
+      Option.when(sym.endsWith("().") && !sym.endsWith(".apply()."))(norm(sym).stripSuffix("().") + ".").flatMap(byType.get)
+    ).orElse(
       resultOf(sym).collect { case st: s.SingleType => st.symbol }.flatMap(target => byType.get(norm(target))))
     def constructed(fun: Term): Option[Two] = fun match {
       case n: Term.Name => objectOf(n.symbol.value)
@@ -153,11 +158,16 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
       val ext = s"extension (${name.head.toLower}${name.tail}: $name) def ${e.test}: Boolean = ${name.head.toLower}${name.tail} == ${e.yes}"
       val enumText = s"enum $name derives CanEqual:\n$ind  case ${e.yes}, ${e.no}\n$ind"
       log.add(s"$path:${o.pos.startLine + 1}\tdefinition\t${e.newtype}")
-      def replaced(text: String): Patch = Patch.removeTokens(header) + Patch.addLeft(header.head, text)
-      if (o.templ.stats.isEmpty) replaced(s"${enumText}object $name:\n$ind  $ext")
+      val parent = if (e.parent.nonEmpty) e.parent else config.parent
+      val companion = if (parent.isEmpty) s"object $name" else s"object $name extends $parent[$name]"
+      val imported =
+        if (parent.isEmpty || config.parentImport.isEmpty) Patch.empty
+        else config.parentImport.parse[Importer].toOption.fold(Patch.empty)(i => Patch.addGlobalImport(i))
+      def replaced(text: String): Patch = Patch.removeTokens(header) + Patch.addLeft(header.head, text) + imported
+      if (o.templ.stats.isEmpty) replaced(s"$enumText$companion:\n$ind  $ext")
       else {
         val colon = tokens.find(tk => tk.start >= initEnd && tk.is[Token.Colon])
-        replaced(s"${enumText}object $name") + colon.fold(Patch.empty)(c => Patch.addRight(c, s"\n$ind  $ext"))
+        replaced(s"$enumText$companion") + colon.fold(Patch.empty)(c => Patch.addRight(c, s"\n$ind  $ext"))
       }
     }
 
@@ -168,7 +178,25 @@ class BooleanEnums(config: BooleanEnums.Config, index: ConcurrentHashMap[String,
       })
     }
 
+    val removing = config.bridges == "remove"
+    def bridgeOwner(sym: String, method: String): Option[Two] =
+      if (removing && sym.endsWith(s".$method().")) byType.get(norm(sym.stripSuffix(s"$method().")))
+      else None
+    def inBridged(t: Tree): Boolean =
+      removing && Iterator.iterate(t.parent)(_.flatMap(_.parent)).takeWhile(_.nonEmpty).flatten.collectFirst {
+        case o: Defn.Object => byType.contains(norm(o.symbol.value))
+        case _: Defn.Class | _: Defn.Trait | _: Defn.Enum | _: Defn.Def => false
+      }.getOrElse(false)
+
     doc.tree.collect {
+      case g: Defn.ExtensionGroup if inBridged(g) && g.body.syntax.contains("def value: Boolean") =>
+        lineRemoval(g)
+      case d: Defn.Def if inBridged(d) && d.name.value == "apply" && d.syntax.contains("(value: Boolean)") =>
+        lineRemoval(d)
+      case sel @ Term.Select(_, v) if v.value == "value" && bridgeOwner(v.symbol.value, "value").nonEmpty =>
+        val e = bridgeOwner(v.symbol.value, "value").get
+        log.add(s"$path:${sel.pos.startLine + 1}\tunwrap\t${e.newtype}")
+        Patch.replaceTree(v, e.test)
       case sel @ Term.Select(q, Term.Name("toString")) if textOf(q).nonEmpty =>
         log.add(s"$path:${sel.pos.startLine + 1}\ttext\t${textOf(q).get.newtype}")
         Patch.addRight(q, s".${textOf(q).get.test}")
