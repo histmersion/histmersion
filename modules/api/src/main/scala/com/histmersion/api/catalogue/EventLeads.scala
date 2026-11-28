@@ -1,7 +1,7 @@
 package com.histmersion
 package api.catalogue
 
-import com.histmersion.api.{Plural, TimeSpan, YearFmt}
+import com.histmersion.api.{Plural, TimeSpan}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
@@ -14,7 +14,7 @@ object EventLeads:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def years(ts: TimeSpan): EventLead.Years =
-    EventLead.Years(YearFmt.span(ts))
+    EventLead.Years(ts.show)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def size(vei: Option[LeadFacts.Vei], magnitude: Option[LeadFacts.Magnitude]): Option[String] =

@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.events
 
-import com.histmersion.api.{TimeSpan, Years}
+import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{CatalogRecord, EventGeo, EventTaxonomy, Geocode}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.catalogue.Event
@@ -61,10 +61,10 @@ object CatalogMerge:
   def overlaps(a: TimeSpan, b: TimeSpan, years: Tolerance.Years): Boolean =
     (outer(a), outer(b)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
-        val back = Years.Shift(-years.value)
-        val forth = Years.Shift(years.value)
-        Years.shift(a0, back) <= Years.shift(b1, forth) &&
-        Years.shift(b0, back) <= Years.shift(a1, forth)
+        val back = Year.Shift(-years.value)
+        val forth = Year.Shift(years.value)
+        a0.shift(back) <= b1.shift(forth) &&
+        b0.shift(back) <= a1.shift(forth)
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */

@@ -1,6 +1,5 @@
 package com.histmersion
 package api.library
-import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
@@ -170,7 +169,7 @@ object Tree:
               case (ks, o)  => (ks, o)
         Some(
           Bucket(
-            label = Bucket.Label(YearFmt.period(Some(bStart), Some(bEnd))),
+            label = Bucket.Label(Year.period(Some(bStart), Some(bEnd))),
             key = Bucket.Key(s"$KindTime:$bStart:$bEnd"),
             kind = Bucket.Kind(KindTime),
             start = Some(bStart),

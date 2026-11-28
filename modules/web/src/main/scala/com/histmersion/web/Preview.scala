@@ -3,7 +3,7 @@ package web
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.{Api, Href, YearFmt}
+import com.histmersion.api.{Api, Href}
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -22,7 +22,6 @@ import com.histmersion.api.views.{EventDetail, PlaceDetail}
 import com.histmersion.api.automation.Creation
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.LpfDataset
-import com.histmersion.api.Years
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.EventFindingRef
 import com.histmersion.api.Markdown
@@ -32,6 +31,7 @@ import com.histmersion.api.Paging
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.ImageSize
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** THE link preview. One delegated hover handler on the document answers for every element that carries `data-ck` (a
   * source) or `data-slug` (an article) — server-rendered anchors in a window or on a standalone page, and the web UI's
@@ -158,7 +158,7 @@ object Preview:
       export api.research.Article.Slug
     object Place:
       export Pages.PlaceId as Id
-      export Years.Astronomical as AsOf
+      export Year.Astronomical as AsOf
     object Event:
       export Pages.EventId as Id
 
@@ -294,7 +294,7 @@ object Preview:
       where = Card.Where(
         List(
           s.regions.map(r => Label.display(Label.Text(r.value)).value).mkString(", "),
-          YearFmt.period(s.periodStart, s.periodEnd)
+          Year.period(s.periodStart, s.periodEnd)
         )
           .filter(_.nonEmpty)
           .mkString(" · ")
@@ -325,7 +325,7 @@ object Preview:
       Card.Identifier(a.article.slug.value),
       None,
       Nil,
-      Card.Where(YearFmt.period(a.article.periodStart, a.article.periodEnd)),
+      Card.Where(Year.period(a.article.periodStart, a.article.periodEnd)),
       a.article.summary.map(_.value.trim).filter(_.nonEmpty).map(Card.Summary(_)),
       icon = Some(Glyphs.Name(CardIcons.Article))
     )
@@ -409,7 +409,7 @@ object Preview:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def card(d: EventDetail): Card =
     val e = d.event
-    val years = YearFmt.span(e.timeSpan) + EventGeo.missingEnd(e.timeSpan).fold("") {
+    val years = e.timeSpan.show + EventGeo.missingEnd(e.timeSpan).fold("") {
       case EventGeo.Side.Start => " (start not recorded)"
       case EventGeo.Side.End   => " (end not recorded)"
     }
@@ -439,7 +439,7 @@ object Preview:
             .map(u => Card.LinkLabel(s"Wikidata $q") -> Card.LinkHref(u.value))
         )
         .toList,
-      facts = eventFacts(d, Years.Text(years)).map(f => Card.Facts(f.value)),
+      facts = eventFacts(d, Year.Text(years)).map(f => Card.Facts(f.value)),
       media = d.media.headOption,
       icon = Some(Glyphs.Name(CardIcons.event(e.kind).value)),
       tier = Some(d.tier),
@@ -452,7 +452,7 @@ object Preview:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def eventFacts(d: EventDetail, years: Years.Text): List[UiLabels.Text] =
+  def eventFacts(d: EventDetail, years: Year.Text): List[UiLabels.Text] =
     val e = d.event
     (Option.when(e.datingNote.isDefined)(shown"window: $years").toList ++
       EventPrecision
@@ -637,7 +637,7 @@ object Preview:
 
   /** The year a place chip's card reads the gazetteer at — the map's; set by whoever owns the map. */
   // `var`: the app's map sets it once it exists; a page without a map reads places as of now
-  var placeAsOf: () => Option[Years.Astronomical] = () => None
+  var placeAsOf: () => Option[Year.Astronomical] = () => None
 
   /** Pure: what an element asks to preview, a place chip's id included (a source or an article first). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

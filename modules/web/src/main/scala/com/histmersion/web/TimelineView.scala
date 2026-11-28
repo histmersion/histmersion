@@ -4,7 +4,7 @@ package web
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, BBox, Plural, Years}
+import com.histmersion.api.{Api, BBox, Plural}
 import com.histmersion.web.ui.{AggregateBy, AggregateUnit, Layout}
 import org.scalajs.dom
 
@@ -39,14 +39,14 @@ object TimelineView:
     * on release.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def spanFrom: Years.Astronomical = Years.Astronomical(UiState.from.now().getOrElse(limits.defaultFrom.value))
+  private def spanFrom: Year.Astronomical = Year.Astronomical(UiState.from.now().getOrElse(limits.defaultFrom.value))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def spanTo: Years.Astronomical = Years.Astronomical(UiState.to.now().getOrElse(limits.defaultTo.value))
+  private def spanTo: Year.Astronomical = Year.Astronomical(UiState.to.now().getOrElse(limits.defaultTo.value))
 
   /** A span of the timeline as the filter and the labels read it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def period(from: Years.Astronomical, to: Years.Astronomical): Period =
+  private def period(from: Year.Astronomical, to: Year.Astronomical): Period =
     Period(Year(from.value), Year(to.value))
   private val detailBars = Var(List.empty[TimeBucket])
   private val overviewBars = Var(List.empty[TimeBucket])
@@ -97,12 +97,12 @@ object TimelineView:
   private var dtResizeRaf: Int = 0
 
   /** The span the current `detailBars` were fetched for — not the span on screen. */
-  private var dtBarsRange: (Years.Astronomical, Years.Astronomical) = (Years.Astronomical(0L), Years.Astronomical(0L))
+  private var dtBarsRange: (Year.Astronomical, Year.Astronomical) = (Year.Astronomical(0L), Year.Astronomical(0L))
   private var lastOvFilterKey: String = ""
 
   /** What the detail curve layer was drawn for: (from, to, width). */
-  private var dtDrawn: (Years.Astronomical, Years.Astronomical, Double) =
-    (Years.Astronomical(0L), Years.Astronomical(0L), 0.0)
+  private var dtDrawn: (Year.Astronomical, Year.Astronomical, Double) =
+    (Year.Astronomical(0L), Year.Astronomical(0L), 0.0)
 
   private enum DragKind derives CanEqual:
     case LeftHandle, RightHandle, PanRange, ZoomDetail
@@ -111,7 +111,7 @@ object TimelineView:
 
   private val dragState = Var(Option.empty[DragInfo])
 
-  def currentSpan: (Years.Astronomical, Years.Astronomical) = (spanFrom, spanTo)
+  def currentSpan: (Year.Astronomical, Year.Astronomical) = (spanFrom, spanTo)
 
   private val foldedKey = "histmersion.timelineFolded"
 
@@ -129,7 +129,7 @@ object TimelineView:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def clamp(a0: Years.Astronomical, b0: Years.Astronomical): (Years.Astronomical, Years.Astronomical) =
+  private def clamp(a0: Year.Astronomical, b0: Year.Astronomical): (Year.Astronomical, Year.Astronomical) =
     var a = Math.round(Math.min(a0.value.toDouble, b0.value.toDouble))
     var b = Math.round(Math.max(a0.value.toDouble, b0.value.toDouble))
     if b - a < MIN_SPAN then
@@ -139,7 +139,7 @@ object TimelineView:
     val width = Math.min(b - a, limits.max.value - limits.min.value)
     if a < limits.min.value then { a = limits.min.value; b = a + width }
     if b > limits.max.value then { b = limits.max.value; a = b - width }
-    (Years.Astronomical(a), Years.Astronomical(Math.max(a + MIN_SPAN, b)))
+    (Year.Astronomical(a), Year.Astronomical(Math.max(a + MIN_SPAN, b)))
 
   /** Locked, the timeline keeps its span: no drag, wheel, click or menu of its own changes it. */
   val locked: Var[Boolean] = Var(false)
@@ -155,7 +155,7 @@ object TimelineView:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def setSpan(from: Years.Astronomical, to: Years.Astronomical, push: Router.Push = Router.Push.Push): Unit =
+  private def setSpan(from: Year.Astronomical, to: Year.Astronomical, push: Router.Push = Router.Push.Push): Unit =
     val (nf, nt) = clamp(from, to)
     if locked.now() then bumpRender()
     else if nf == spanFrom && nt == spanTo then ()
@@ -188,7 +188,7 @@ object TimelineView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private[web] def bucketSizeFor(spanYears: Years.Shift, pixelWidth: Double): PlaybackBuckets.BucketYears =
+  private[web] def bucketSizeFor(spanYears: Year.Shift, pixelWidth: Double): PlaybackBuckets.BucketYears =
     val byPixels =
       Math.ceil(spanYears.value.toDouble / (Math.max(pixelWidth, 100) / TimelineCurve.PxPerBucket.value)).toLong
     val byLimit = Math.ceil(spanYears.value.toDouble / Layout.maxBuckets.value).toLong
@@ -206,7 +206,7 @@ object TimelineView:
   private val overview = LatestOnly[Double] { (pixelWidth, done) =>
     val ticket = overviewLatest.start()
     val f = UiState.toFilter().copy(period = Some(Period(limits.min, limits.max)))
-    val span = Years.Shift(limits.max.value - limits.min.value)
+    val span = Year.Shift(limits.max.value - limits.min.value)
     val sz = bucketSizeFor(span, pixelWidth)
     ApiClient
       .aggregate(
@@ -244,7 +244,7 @@ object TimelineView:
     val f = UiState.toFilter().copy(period = Some(period(sf, st)))
     lastDtKey = f.toString
     val pw = if detailSvg != null then elWidth(detailSvg) else 600.0
-    val sz = bucketSizeFor(Years.Shift(st.value - sf.value), pw)
+    val sz = bucketSizeFor(Year.Shift(st.value - sf.value), pw)
     val q = Api.AggregateQuery(
       Some(Api.AggregateQuery.By(AggregateBy.Time.param.value)),
       AggregateUnit.Sources.param.map(u => Api.AggregateQuery.Unit(u.value)),
@@ -308,8 +308,8 @@ object TimelineView:
   private def drawAreaCurve(
       svg: dom.Element,
       bs: List[TimeBucket],
-      from: Years.Astronomical,
-      to: Years.Astronomical,
+      from: Year.Astronomical,
+      to: Year.Astronomical,
       w: Double,
       baseY: Double,
       gradId: String
@@ -425,8 +425,8 @@ object TimelineView:
   /** Horizontal transform mapping a curve drawn for `drawn` onto `now`; identity when they match. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def realign(
-      drawn: (Years.Astronomical, Years.Astronomical, Double),
-      now: (Years.Astronomical, Years.Astronomical, Double)
+      drawn: (Year.Astronomical, Year.Astronomical, Double),
+      now: (Year.Astronomical, Year.Astronomical, Double)
   ): (Double, Double) =
     val (df, dt, dw) = drawn
     val (nf, nt, nw) = now
@@ -465,8 +465,8 @@ object TimelineView:
         ovPts = drawAreaCurve(
           ovCurveLayer,
           bs,
-          Years.Astronomical(limits.min.value),
-          Years.Astronomical(limits.max.value),
+          Year.Astronomical(limits.min.value),
+          Year.Astronomical(limits.max.value),
           w,
           ovBase(h) - 2,
           "ov-grad"
@@ -552,8 +552,8 @@ object TimelineView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def underlayBuckets(
       bs: List[TimeBucket],
-      from: Years.Astronomical,
-      to: Years.Astronomical
+      from: Year.Astronomical,
+      to: Year.Astronomical
   ): List[TimeBucket] =
     val idx = bs.indices.filter(i => bs(i).end.value >= from.value && bs(i).start.value <= to.value)
     if idx.isEmpty then Nil
@@ -740,7 +740,7 @@ object TimelineView:
           ),
           span(cls := "tl-preset-meta", s"$where · $who"),
           onClick --> { _ =>
-            setSpan(Years.Astronomical(p.period.start.value), Years.Astronomical(p.period.end.value))
+            setSpan(Year.Astronomical(p.period.start.value), Year.Astronomical(p.period.end.value))
             showPresets.set(false)
           }
         )
@@ -786,8 +786,8 @@ object TimelineView:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def init(config: UiConfig): HtmlElement =
     limits = config.time
-    val sf = Years.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))
-    val st = Years.Astronomical(UiState.to.now().getOrElse(config.time.defaultTo.value))
+    val sf = Year.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))
+    val st = Year.Astronomical(UiState.to.now().getOrElse(config.time.defaultTo.value))
     val (cf, ct) = clamp(sf, st)
     if cf != sf || ct != st then UiState.set(UiState.from := Some(cf.value), UiState.to := Some(ct.value))()
 
@@ -799,7 +799,7 @@ object TimelineView:
         .section(
           namingPeriod,
           () => (Year(spanFrom.value), Year(spanTo.value)),
-          (a, b) => { setSpan(Years.Astronomical(a.value), Years.Astronomical(b.value)); showPresets.set(false) }
+          (a, b) => { setSpan(Year.Astronomical(a.value), Year.Astronomical(b.value)); showPresets.set(false) }
         ),
       children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
         val groups = PresetMenu.groups(ps, view)
@@ -885,8 +885,8 @@ object TimelineView:
                     val clickYear = limits.min.value.toDouble + (x / w) * fullSpan
                     val half = (st.value - sf.value).toDouble / 2
                     setSpan(
-                      Years.Astronomical(Math.round(clickYear - half)),
-                      Years.Astronomical(Math.round(clickYear + half))
+                      Year.Astronomical(Math.round(clickYear - half)),
+                      Year.Astronomical(Math.round(clickYear + half))
                     )
                     DragKind.PanRange
 
@@ -923,11 +923,11 @@ object TimelineView:
                   case DragKind.LeftHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nf = Math.max(limits.min.value, Math.min(d.origTo - MIN_SPAN, d.origFrom + yearDelta))
-                    setSpan(Years.Astronomical(nf), Years.Astronomical(d.origTo), push = Router.Push.Replace)
+                    setSpan(Year.Astronomical(nf), Year.Astronomical(d.origTo), push = Router.Push.Replace)
                   case DragKind.RightHandle =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val nt = Math.min(limits.max.value, Math.max(d.origFrom + MIN_SPAN, d.origTo + yearDelta))
-                    setSpan(Years.Astronomical(d.origFrom), Years.Astronomical(nt), push = Router.Push.Replace)
+                    setSpan(Year.Astronomical(d.origFrom), Year.Astronomical(nt), push = Router.Push.Replace)
                   case DragKind.PanRange =>
                     val yearDelta = ((cur - d.startX) * pxToYear).toLong
                     val rangeWidth = d.origTo - d.origFrom
@@ -935,7 +935,7 @@ object TimelineView:
                     var nt = d.origTo + yearDelta
                     if nf < limits.min.value then { nf = limits.min.value; nt = nf + rangeWidth }
                     if nt > limits.max.value then { nt = limits.max.value; nf = nt - rangeWidth }
-                    setSpan(Years.Astronomical(nf), Years.Astronomical(nt), push = Router.Push.Replace)
+                    setSpan(Year.Astronomical(nf), Year.Astronomical(nt), push = Router.Push.Replace)
                   case _ => ()
               }
           )
@@ -1009,7 +1009,7 @@ object TimelineView:
                 val factor = if e.deltaY > 0 then ZOOM else 1.0 / ZOOM
                 val nf = Math.round(anchor - (anchor - spanFrom.value.toDouble) * factor)
                 val nt = Math.round(anchor + (spanTo.value.toDouble - anchor) * factor)
-                setSpan(Years.Astronomical(nf), Years.Astronomical(nt))
+                setSpan(Year.Astronomical(nf), Year.Astronomical(nt))
             },
             js.Dynamic.literal(passive = false).asInstanceOf[dom.EventListenerOptions]
           )
@@ -1050,7 +1050,7 @@ object TimelineView:
                     val spanYears = (d.origTo - d.origFrom).toDouble
                     val y0 = d.origFrom + (Math.min(d.startX, cur) / w * spanYears).toLong
                     val y1 = d.origFrom + (Math.max(d.startX, cur) / w * spanYears).toLong
-                    App.quickRenderIfCached(Years.Astronomical(y0), Years.Astronomical(y1))
+                    App.quickRenderIfCached(Year.Astronomical(y0), Year.Astronomical(y1))
               }
           )
 
@@ -1063,7 +1063,7 @@ object TimelineView:
                   val spanYears = (d.origTo - d.origFrom).toDouble
                   val y0 = d.origFrom + (Math.min(d.startX, d.curX) / w * spanYears).toLong
                   val y1 = d.origFrom + (Math.max(d.startX, d.curX) / w * spanYears).toLong
-                  setSpan(Years.Astronomical(y0), Years.Astronomical(y1))
+                  setSpan(Year.Astronomical(y0), Year.Astronomical(y1))
                 else bumpRender()
             }
           }
@@ -1171,7 +1171,7 @@ object TimelineView:
             idAttr := "tl-all-time",
             title := "Show every year the timeline holds",
             "Show all time",
-            onClick --> { _ => setSpan(Years.Astronomical(limits.min.value), Years.Astronomical(limits.max.value)) }
+            onClick --> { _ => setSpan(Year.Astronomical(limits.min.value), Year.Astronomical(limits.max.value)) }
           ),
           // shown in the narrow layout only, where the detail strip starts folded
           button(

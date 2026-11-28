@@ -5,7 +5,7 @@ import hearth.kindlings.optics.syntax.*
 
 import scala.annotation.tailrec
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, GeoPick, MapStack, Palette, Years}
+import com.histmersion.api.{Api, GeoPick, MapStack, Palette}
 import com.histmersion.web.map.*
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
@@ -69,7 +69,7 @@ object MapView:
   private var radius: Int = Layout.markerRadiusDefault.value
   private val pickerMax = Layout.pickerMax
   private val fitMaxZoom = Layout.fitMaxZoom
-  private var currentSpan: (Years.Astronomical, Years.Astronomical) = (Years.Astronomical(0L), Years.Astronomical(1L))
+  private var currentSpan: (Year.Astronomical, Year.Astronomical) = (Year.Astronomical(0L), Year.Astronomical(1L))
   private var legendEl: dom.HTMLElement = uninitialized
   private var overlayReqId: Int = 0
   // the four kinds of point (docs/map-layers.md): ONE layer implementation, four descriptors, one
@@ -142,7 +142,7 @@ object MapView:
   final private case class Slot(
       attach: () => Unit,
       detach: () => Unit,
-      load: ((Years.Astronomical, Years.Astronomical)) => Unit
+      load: ((Year.Astronomical, Year.Astronomical)) => Unit
   )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -218,7 +218,7 @@ object MapView:
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def playFrame(
       points: List[GeoHit],
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       ph: Year,
       yearsPerSecond: MapView.YearsPerSecond
   ): Unit =
@@ -230,7 +230,7 @@ object MapView:
     if TheMap.isUp && overlayOn then restylePlayAreas(span)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def restylePlayAreas(span: (Years.Astronomical, Years.Astronomical)): Unit =
+  private def restylePlayAreas(span: (Year.Astronomical, Year.Astronomical)): Unit =
     playAreas.foreach { (k, a) =>
       val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade)).value
       polities.restyle(
@@ -247,7 +247,7 @@ object MapView:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def addPlayAreas(
       features: js.Array[js.Dynamic],
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       keyOf: js.Dynamic => String
   ): Unit =
     def byFindings(f: js.Dynamic) =
@@ -319,7 +319,7 @@ object MapView:
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def colorFor(
       mid: Option[MapView.Mid],
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): Color =
     val lo = span._1.value.min(span._2.value).toDouble
@@ -354,7 +354,7 @@ object MapView:
     */
   private[web] def gradientBg(
       items: Iterable[GeoHit],
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): Color =
     gradientOf(items.flatMap(midOf), span, certainty)
@@ -366,7 +366,7 @@ object MapView:
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def gradientOf(
       mids: Iterable[MapView.Mid],
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): Color =
     rampEnds(mids, span, certainty) match
@@ -380,7 +380,7 @@ object MapView:
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def rampEnds(
       mids: Iterable[MapView.Mid],
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       certainty: Certainty
   ): (Color, Color) =
     rangeOf(mids) match
@@ -413,7 +413,7 @@ object MapView:
   /** Pure: the period-span ring width (0–4) of a single finding spanning `spanYears`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private[web] def ringOf(n: DotCluster.Total, spanYears: Option[Years.Astronomical]): Ring =
+  private[web] def ringOf(n: DotCluster.Total, spanYears: Option[Year.Astronomical]): Ring =
     if n.value == 1 && spanYears.exists(_.value > 0) then
       Ring(math.max(1, math.min(4, math.round(math.log10(spanYears.get.value.toDouble + 1) * 1.3).toInt)))
     else Ring(0)
@@ -563,8 +563,8 @@ object MapView:
     // from the browser's storage load at once, and loaded the placeholder span (0, 1) — a wasted request
     // and a wrong first drawing — until the first findings arrived
     currentSpan = (
-      Years.Astronomical(UiState.from.now().getOrElse(ui.time.defaultFrom.value)),
-      Years.Astronomical(UiState.to.now().getOrElse(ui.time.defaultTo.value))
+      Year.Astronomical(UiState.from.now().getOrElse(ui.time.defaultFrom.value)),
+      Year.Astronomical(UiState.to.now().getOrElse(ui.time.defaultTo.value))
     )
     div(
       idAttr := "map",
@@ -723,7 +723,7 @@ object MapView:
       Option(legendEl.querySelector(".hd-key-slot")).foreach(HtmlSink.replace(_, MapKey.html(events, sites, undated)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def loadEvents(span: (Years.Astronomical, Years.Astronomical)): Unit =
+  private def loadEvents(span: (Year.Astronomical, Year.Astronomical)): Unit =
     val tiles = tileSpan(span)
     EventMarkers.load((Year(tiles._1.value), Year(tiles._2.value)), span)
 
@@ -733,13 +733,13 @@ object MapView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[web] def tileSpanOf(
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       playback: Playback,
       yearsPerSecond: MapView.YearsPerSecond,
       bucketSeconds: MapTilesUiConfig.PlaybackBucketSeconds
-  ): (Years.Astronomical, Years.Astronomical) =
+  ): (Year.Astronomical, Year.Astronomical) =
     val ordered =
-      (Years.Astronomical(span._1.value.min(span._2.value)), Years.Astronomical(span._1.value.max(span._2.value)))
+      (Year.Astronomical(span._1.value.min(span._2.value)), Year.Astronomical(span._1.value.max(span._2.value)))
     if playback.playing then
       PlaybackBuckets.widen(
         ordered,
@@ -747,7 +747,7 @@ object MapView:
       )
     else ordered
 
-  private def tileSpan(span: (Years.Astronomical, Years.Astronomical)): (Years.Astronomical, Years.Astronomical) =
+  private def tileSpan(span: (Year.Astronomical, Year.Astronomical)): (Year.Astronomical, Year.Astronomical) =
     tileSpanOf(span, playbackMode, playYearsPerSecond, tilesConfig.playbackBucketSeconds)
 
   /** The tiled layers on the map (sites, pictures, events). */
@@ -756,7 +756,7 @@ object MapView:
       .collect { case (l, t) if layerSync.attached(l) => t }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def updateLegend(span: (Years.Astronomical, Years.Astronomical)): Unit =
+  private def updateLegend(span: (Year.Astronomical, Year.Astronomical)): Unit =
     if legendEl == null then ()
     else
       val lo = legendEl.querySelector(".lo")
@@ -789,7 +789,7 @@ object MapView:
     Label(if period.value.isEmpty then title else shown"$title ($period)")
 
   /** The findings of `span` (the filter's, a playback frame's): their points, as every kind's. */
-  def render(points: List[GeoHit], span: (Years.Astronomical, Years.Astronomical)): Unit =
+  def render(points: List[GeoHit], span: (Year.Astronomical, Year.Astronomical)): Unit =
     currentSpan = span
     heldPoints = Some(points)
     if TheMap.isUp then
@@ -810,7 +810,7 @@ object MapView:
     * ([[waitsForQuiet]]).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val reloadLayers = Throttle[(Years.Astronomical, Years.Astronomical)](
+  private val reloadLayers = Throttle[(Year.Astronomical, Year.Astronomical)](
     Throttle.IntervalMs(Layout.layerReloadMs.value),
     span =>
       layerSync.attached.foreach(l =>
@@ -820,7 +820,7 @@ object MapView:
 
   /** The layers that wait for the span to settle, once it has stopped moving for `Layout.rangeReloadMs`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val reloadQuiet = Debounce[(Years.Astronomical, Years.Astronomical)](
+  private val reloadQuiet = Debounce[(Year.Astronomical, Year.Astronomical)](
     Debounce.QuietMs(Layout.rangeReloadMs.value),
     span =>
       layerSync.attached.foreach(l => if waitsForQuiet(l, UiState.areaPick.now(), playbackMode) then slot(l).load(span))
@@ -875,7 +875,7 @@ object MapView:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def areaTime(
-      span: (Years.Astronomical, Years.Astronomical),
+      span: (Year.Astronomical, Year.Astronomical),
       pick: GeoPick,
       playback: Playback
   ): GeoTime =
@@ -930,13 +930,13 @@ object MapView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private[web] def viridisAt(mid: MapView.Mid, span: (Years.Astronomical, Years.Astronomical)): Color =
+  private[web] def viridisAt(mid: MapView.Mid, span: (Year.Astronomical, Year.Astronomical)): Color =
     val sLo = span._1.value.min(span._2.value).toDouble
     val sHi = span._1.value.max(span._2.value).toDouble
     Color(Fmt.color(Fmt.ColorT(if sHi == sLo then 0.5 else ((mid.value - sLo) / (sHi - sLo)).max(0).min(1))).value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def loadOverlay(span: (Years.Astronomical, Years.Astronomical)): Unit =
+  private def loadOverlay(span: (Year.Astronomical, Year.Astronomical)): Unit =
     val mid = (span._1.value + span._2.value) / 2
     overlayReqId += 1
     val myId = overlayReqId
@@ -1109,18 +1109,18 @@ object MapView:
 
   /** The year a place's card reads the gazetteer at: the middle of the span the map shows. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private[web] def spanMid(): Option[Years.Astronomical] = Some(
-    Years.Astronomical((currentSpan._1.value + currentSpan._2.value) / 2)
+  private[web] def spanMid(): Option[Year.Astronomical] = Some(
+    Year.Astronomical((currentSpan._1.value + currentSpan._2.value) / 2)
   )
 
   /** Pure: a tile query's span — `from`/`to` of the shared filter. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private[web] def tileFilter(span: (Years.Astronomical, Years.Astronomical)): Filter =
+  private[web] def tileFilter(span: (Year.Astronomical, Year.Astronomical)): Filter =
     Filter(period = Some(Period(Year(span._1.value), Year(span._2.value))))
 
   /** Every picture of the span, by provider and licence. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def loadMedia(span: (Years.Astronomical, Years.Astronomical)): Unit =
+  private def loadMedia(span: (Year.Astronomical, Year.Astronomical)): Unit =
     mediaLayer.load(
       ApiClient.tileTemplate(
         TilesApi.TileQuery(
@@ -1138,7 +1138,7 @@ object MapView:
 
   /** Every site of the span, of the type the site-type menu (#1449) keeps. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def loadSites(span: (Years.Astronomical, Years.Astronomical)): Unit =
+  private def loadSites(span: (Year.Astronomical, Year.Astronomical)): Unit =
     sitesLayer.load(
       ApiClient.tileTemplate(
         TilesApi.TileQuery(

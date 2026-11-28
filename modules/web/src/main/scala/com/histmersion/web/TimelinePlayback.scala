@@ -13,7 +13,6 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.instance.{EventsUiConfig, UiConfig}
 import com.histmersion.api.library.{Filter, GeoHit}
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.Years
 import com.histmersion.api.UiLabels
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Paging
@@ -25,14 +24,14 @@ object TimelinePlayback:
   object Speed extends Newtype[Double, Pure]
 
   private val playing = Var(false)
-  private val playhead = Var(Years.Astronomical(0L))
+  private val playhead = Var(Year.Astronomical(0L))
   private val speed = Var(Speed(1.0))
   private val windowHalf = Var(Layout.playbackWindowHalf)
 
   private var frameId: Int = 0
   private var lastTs: ResearchOverview.EpochMillis = ResearchOverview.EpochMillis(0.0)
-  private var spanFrom: Years.Astronomical = Years.Astronomical(0)
-  private var spanTo: Years.Astronomical = Years.Astronomical(0)
+  private var spanFrom: Year.Astronomical = Year.Astronomical(0)
+  private var spanTo: Year.Astronomical = Year.Astronomical(0)
   private var carry: Double = 0.0
 
   /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`, whatever its
@@ -73,10 +72,10 @@ object TimelinePlayback:
   private[web] def parseSpeed(label: UiLabels.Text): Option[Speed] =
     Speeds.find(speedLabel(_).value == label.value.trim)
 
-  private val playheadPos = Var(Option.empty[Years.Astronomical])
+  private val playheadPos = Var(Option.empty[Year.Astronomical])
 
-  def playheadSignal: Signal[Option[Years.Astronomical]] = playheadPos.signal
-  def playheadNow: Option[Years.Astronomical] = playheadPos.now()
+  def playheadSignal: Signal[Option[Year.Astronomical]] = playheadPos.signal
+  def playheadNow: Option[Year.Astronomical] = playheadPos.now()
 
   private val paused = Var(false)
 
@@ -200,7 +199,7 @@ object TimelinePlayback:
       val yearsPerSecond = totalYears / Layout.playbackDuration.value * speed.now().value
       val (advance, left) = wholeYears(carry, yearsPerSecond, dt)
       carry = left
-      val next = Years.Astronomical(playhead.now().value + advance)
+      val next = Year.Astronomical(playhead.now().value + advance)
 
       if next >= spanTo then
         playhead.set(spanTo)
@@ -231,7 +230,7 @@ object TimelinePlayback:
     // failure, not before when); the filter it was asked with; the generation (a stopped playback's
     // answers are dropped)
     private var held = Vector.empty[GeoHit]
-    private var coveredTo: Option[Years.Astronomical] = None
+    private var coveredTo: Option[Year.Astronomical] = None
     private var asking = false
     private var retryAt = 0.0
     private var filter: Option[Filter] = None
@@ -246,7 +245,7 @@ object TimelinePlayback:
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def frame(ph: Years.Astronomical, yearsPerSecond: PlaybackBuckets.YearsPerSecond): Unit =
+    def frame(ph: Year.Astronomical, yearsPerSecond: PlaybackBuckets.YearsPerSecond): Unit =
       val half = windowHalf.now()
       val wh = PlaybackFeed.WindowHalfYears(half.value)
       val f = UiState.toFilter()
@@ -262,10 +261,10 @@ object TimelinePlayback:
         MapView.playFrame(
           PlaybackFeed.inWindow(
             held,
-            Years.Astronomical(lo),
-            Years.Astronomical(hi)
+            Year.Astronomical(lo),
+            Year.Astronomical(hi)
           ),
-          (Years.Astronomical(lo), Years.Astronomical(hi)),
+          (Year.Astronomical(lo), Year.Astronomical(hi)),
           Year(ph.value),
           MapView.YearsPerSecond(yearsPerSecond.value)
         )
@@ -273,7 +272,7 @@ object TimelinePlayback:
     @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    private def ask(f: Filter, period: (Years.Astronomical, Years.Astronomical)): Unit =
+    private def ask(f: Filter, period: (Year.Astronomical, Year.Astronomical)): Unit =
       asking = true
       val mine = generation
       val q =
@@ -288,7 +287,7 @@ object TimelinePlayback:
           asking = false
           r match
             case scala.util.Success(points) =>
-              val lo = Years.Astronomical(playhead.now().value - windowHalf.now().value)
+              val lo = Year.Astronomical(playhead.now().value - windowHalf.now().value)
               val known = held.toSet
               held = PlaybackFeed.keep(held, lo).toVector ++ points.filterNot(known.contains)
               coveredTo = Some(PlaybackFeed.covered(period, points, Paging.Limit(Layout.playbackFetchLimit.value)))

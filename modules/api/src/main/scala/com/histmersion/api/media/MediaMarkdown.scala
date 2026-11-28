@@ -4,10 +4,10 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{OffsetPage, Plural}
 import com.histmersion.api.library.Citekey
-import com.histmersion.api.YearFmt
 import com.histmersion.api.library.RepairAcquire
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MediaMarkdown:
@@ -26,7 +26,7 @@ object MediaMarkdown:
       case (Some(lat), Some(lon)) => s"  \n**Location:** $lat, $lon"
       case _                      => ""
     val per = (a.periodStart, a.periodEnd) match
-      case (Some(s), Some(e)) => s"  \n**Period:** ${YearFmt.period(Some(s), Some(e))}"
+      case (Some(s), Some(e)) => s"  \n**Period:** ${Year.period(Some(s), Some(e))}"
       case _                  => ""
     val meta = List(
       a.kind.map(k => s"**Kind:** $k"),

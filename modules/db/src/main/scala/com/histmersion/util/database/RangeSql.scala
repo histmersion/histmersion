@@ -2,7 +2,7 @@ package com.histmersion
 package util.database
 import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.{Write, YearFmt}
+import com.histmersion.api.Write
 import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.Api

@@ -2,8 +2,8 @@ package com.histmersion
 package web
 
 import com.histmersion.testsupport.ComparedByValue.given
-import com.histmersion.api.Years
 import com.histmersion.api.library.Citekey
+import com.histmersion.api.catalogue.Year
 
 /** #1441 — a place's card follows the pointer to be read, and is PINNED by a click (or Enter) so its links can be
   * clicked; Escape, its ✕ or the empty map close it. #1442 — the names' colours follow the base map's tone. The pure
@@ -132,8 +132,8 @@ class PinnedCardSuite extends munit.FunSuite:
 
   test("#1441: a place chip previews its place at the map's year; a source or an article still wins"):
     assertEquals(
-      Preview.targetOf(None, None, Some(Pages.PlaceId("hatti")), Some(Years.Astronomical(-1300L))),
-      Some(Preview.Target.Place(Preview.Target.Place.Id("hatti"), Some(Years.Astronomical(-1300L))))
+      Preview.targetOf(None, None, Some(Pages.PlaceId("hatti")), Some(Year.Astronomical(-1300L))),
+      Some(Preview.Target.Place(Preview.Target.Place.Id("hatti"), Some(Year.Astronomical(-1300L))))
     )
     assertEquals(
       Preview.targetOf(Some(Citekey("a2020_b")), None, Some(Pages.PlaceId("hatti")), None),
@@ -158,8 +158,8 @@ class PinnedCardSuite extends munit.FunSuite:
     import Preview.Target.*
     assert(
       Preview.sameCard(
-        Place(Place.Id("hatti"), Some(Years.Astronomical(-1300L))),
-        Place(Place.Id("hatti"), Some(Years.Astronomical(-1301L)))
+        Place(Place.Id("hatti"), Some(Year.Astronomical(-1300L))),
+        Place(Place.Id("hatti"), Some(Year.Astronomical(-1301L)))
       )
     )
     assert(!Preview.sameCard(Place(Place.Id("hatti"), None), Place(Place.Id("mitanni"), None)))

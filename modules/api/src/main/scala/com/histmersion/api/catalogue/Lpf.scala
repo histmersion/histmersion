@@ -6,7 +6,7 @@ import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
 import com.histmersion.util.problem.{External, Problem}
 
-import com.histmersion.api.{OpenSide, Span, Years}
+import com.histmersion.api.{OpenSide, Span}
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
@@ -43,9 +43,9 @@ object Lpf:
     */
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def toIso(historicalYear: Year): Years.Astronomical = Years.toAstronomical(historicalYear)
+  def toIso(historicalYear: Year): Year.Astronomical = historicalYear.toAstronomical
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def fromIso(isoYear: Years.Astronomical): Year = Years.fromAstronomical(isoYear)
+  def fromIso(isoYear: Year.Astronomical): Year = Year.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
@@ -84,13 +84,13 @@ object Lpf:
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
         val y = if n < 0 then n else if era < 0 then -n else n
-        if isIso then fromIso(Years.Astronomical(y)) else Year(y)
+        if isIso then fromIso(Year.Astronomical(y)) else Year(y)
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def yearOf(j: Json): Option[Year] =
-    Years.fromJson(j, t => parseYear(t.value))
+    Year.fromJson(j, t => parseYear(t.value))
 
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")

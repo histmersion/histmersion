@@ -27,4 +27,17 @@ final case class TimeSpan(
     val end = notAfter.orElse(endFrom).orElse(beginBy).orElse(notBefore)
     for a <- start; b <- end yield (Year(a.value.min(b.value)), Year(a.value.max(b.value)))
 
-object TimeSpan
+object TimeSpan:
+  extension (ts: TimeSpan)
+    def show: String =
+      ts.outer.fold("undated")((a, b) => Year.period(Some(a), Some(b)))
+
+  extension (ts: TimeSpan)
+    def showLong: String =
+      val parts = List(
+        ts.notBefore.map(y => s"not before ${Year.show(y)}"),
+        ts.beginBy.map(y => s"by ${Year.show(y)}"),
+        ts.endFrom.map(y => s"until ${Year.show(y)}"),
+        ts.notAfter.map(y => s"not after ${Year.show(y)}")
+      ).flatten
+      if parts.isEmpty then ("undated") else (parts.mkString(", "))

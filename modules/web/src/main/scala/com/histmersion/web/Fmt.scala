@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.{ConfidenceStyle, YearFmt, Years}
+import com.histmersion.api.ConfidenceStyle
 import com.histmersion.api.library.Label
 import com.histmersion.web.ui.ThemeTokens
 import scala.math.*
@@ -20,7 +20,7 @@ object Fmt:
   type RampPosition = RampPosition.T
   object RampPosition extends Newtype[Double, Pure]
 
-  /** Aliases of the ONE year formatter ([[YearFmt]]), kept for the many views that call them. */
+  /** Aliases of the ONE year formatter ([[Year.show]]), kept for the many views that call them. */
 
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type ColorT = RampPosition
@@ -29,13 +29,13 @@ object Fmt:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def yr(y: Year): Years.Text = Years.Text(YearFmt(y))
+  def yr(y: Year): Year.Text = Year.Text(Year.show(y))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def yr(y: Option[Year]): Years.Text = Years.Text(YearFmt(y))
+  def yr(y: Option[Year]): Year.Text = Year.Text(Year.show(y))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def periodStr(a: Option[Year], b: Option[Year]): PeriodText = PeriodText(YearFmt.period(a, b))
+  def periodStr(a: Option[Year], b: Option[Year]): PeriodText = PeriodText(Year.period(a, b))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def periodStr(a: Year, b: Year): PeriodText = periodStr(Some(a), Some(b))
@@ -58,9 +58,9 @@ object Fmt:
       def lerp(av: Wcag.Channel, bv: Wcag.Channel) = (av.value + (bv.value - av.value) * g).round.toInt
       Wcag.Hex(s"rgb(${lerp(a._1, b._1)},${lerp(a._2, b._2)},${lerp(a._3, b._3)})")
 
-  /** A year a person typed ([[Years.parse]]); `None` when it is not one. */
+  /** A year a person typed ([[Year.parse]]); `None` when it is not one. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def parseYear(raw: Years.Text): Option[Year] = Years.parse(raw).toOption
+  def parseYear(raw: Year.Text): Option[Year] = Year.parse(raw).toOption
 
   /** Delegates to the shared [[ConfidenceStyle]], so map dots and page badges use one palette. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

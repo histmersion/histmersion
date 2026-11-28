@@ -11,7 +11,6 @@ import com.histmersion.api.Paging
 import com.histmersion.api.Plural
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
-import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Year
 
 /** The sidebar tabs' one pagination form: the count line and the "show more" label every tab uses, and what each tab
@@ -80,15 +79,15 @@ class ResultsPagingSuite extends munit.FunSuite:
       total = TimeHistogram.Total(285)
     )
     assertEquals(
-      TreeTab.countLine(time, RowCount(12), Years.Astronomical(-1475), Years.Astronomical(-1465)),
+      TreeTab.countLine(time, RowCount(12), Year.Astronomical(-1475), Year.Astronomical(-1465)),
       "285 sources · 12 periods · 1475 BCE → 1465 BCE"
     )
     assertEquals(
       TreeTab.countLine(
         time.modify(_.by).setTo(TimeHistogram.By("region")).modify(_.asOf).setTo(Some(Year(-1470))),
         RowCount(1),
-        Years.Astronomical(-1475),
-        Years.Astronomical(-1465)
+        Year.Astronomical(-1475),
+        Year.Astronomical(-1465)
       ),
       "285 sources · 1 region · 1475 BCE → 1465 BCE · as of 1470 BCE"
     )

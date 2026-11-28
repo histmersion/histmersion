@@ -8,11 +8,11 @@ import org.scalajs.dom
 import scala.scalajs.js
 import com.histmersion.api.catalogue.TileLayer
 import com.histmersion.api.catalogue.MapTilesUiConfig
-import com.histmersion.api.Years
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.Geo
 import com.histmersion.api.RowCount
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 object TiledPoints:
   /** Pure: what a tiled layer shows after a read at the same URL and zoom — the features read now, then those shown
@@ -39,7 +39,7 @@ final class TiledPoints[A](
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the
   // span the features shown were read for
   private var template: Option[ApiClient.Url] = None
-  private var span: (Years.Astronomical, Years.Astronomical) = (Years.Astronomical(0L), Years.Astronomical(1L))
+  private var span: (Year.Astronomical, Year.Astronomical) = (Year.Astronomical(0L), Year.Astronomical(1L))
   private var on = false
   private var tiles: Option[PointTiles] = None
   private var shown: (Seq[A], Seq[TileCellPoint]) = (Nil, Nil)
@@ -83,13 +83,13 @@ final class TiledPoints[A](
       changed.update(r => Poll.Revision(r.value + 1))
 
   /** The tiles of `url` (the span and options in it), drawn for `s`. */
-  def load(url: ApiClient.Url, s: (Years.Astronomical, Years.Astronomical)): Unit =
+  def load(url: ApiClient.Url, s: (Year.Astronomical, Year.Astronomical)): Unit =
     template = Some(url)
     span = s
     if on then source.foreach(_.setTiles(tileTemplate))
 
   /** What is shown recoloured for `s` (the span moved; the tiles for it come later). */
-  def recolour(s: (Years.Astronomical, Years.Astronomical)): Unit =
+  def recolour(s: (Year.Astronomical, Year.Astronomical)): Unit =
     span = s
     if on then
       items.show(shown._1, s)

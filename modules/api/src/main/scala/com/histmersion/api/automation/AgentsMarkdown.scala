@@ -2,12 +2,13 @@ package com.histmersion
 package api.automation
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.api.{Paging, Plural, RowCount, YearFmt}
+import com.histmersion.api.{Paging, Plural, RowCount}
 import com.histmersion.api.library.Facet
 import com.histmersion.api.given
 import com.histmersion.api.research.Article
 import com.histmersion.api.Markdown
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
@@ -623,7 +624,7 @@ object AgentsMarkdown:
             "places resolved" -> e.map(x => ratio(x.placesResolved.value, x.placesAsked.value)),
             "dated findings" -> e.map(x => ratio(x.datedFindings.value, x.findings.value)),
             "period" -> e.map(x =>
-              YearFmt.period(x.periodStart, x.periodEnd) match
+              Year.period(x.periodStart, x.periodEnd) match
                 case "" => "—"
                 case p  => p
             ), {

@@ -12,7 +12,6 @@ import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaGeoHit
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
-import com.histmersion.api.Years
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
@@ -34,7 +33,7 @@ class PointKindsSuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
 
-  private val span = (Years.Astronomical(-1700L), Years.Astronomical(-1200L))
+  private val span = (Year.Astronomical(-1700L), Year.Astronomical(-1200L))
 
   /** One sample of each kind, of a KNOWN type, and one of an unknown type where a kind has types. */
   final private case class Sample[A](kind: PointKind[A], known: A, unknown: Option[A])
@@ -160,8 +159,8 @@ class PointKindsSuite extends munit.FunSuite:
       Some(Preview.Target.Source(Preview.Target.Source.Citekey("zz2020_x")))
     )
     assertEquals(
-      PointKinds.Sites.target(site, Some(Years.Astronomical(-1300L))),
-      Some(Preview.Target.Place(Preview.Target.Place.Id("zz_fort"), Some(Years.Astronomical(-1300L))))
+      PointKinds.Sites.target(site, Some(Year.Astronomical(-1300L))),
+      Some(Preview.Target.Place(Preview.Target.Place.Id("zz_fort"), Some(Year.Astronomical(-1300L))))
     )
     assertEquals(PointKinds.Events.target(event, None), Some(Preview.Target.Event(Preview.Target.Event.Id("zz_b"))))
     assertEquals(PointKinds.Media.target(picture, None), None)

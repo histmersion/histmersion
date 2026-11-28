@@ -1,7 +1,7 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.{Geo, Years}
+import com.histmersion.api.Geo
 import com.histmersion.api.catalogue.TileProps as P
 import com.histmersion.web.map.*
 import org.scalajs.dom
@@ -10,6 +10,7 @@ import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import com.histmersion.api.Html
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The cells of a tiled layer drawn as bubbles ([[MapView.dots]] draws a cell alone as the bubble of its count): what
   * they count for and where a click goes — into their box.
@@ -29,7 +30,7 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inner(c: TileCellPoint): Html = Html.text(c.n.value.toString)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def fill(c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): String =
+  def fill(c: TileCellPoint, span: (Year.Astronomical, Year.Astronomical)): String =
     MapView
       .rampEnds(
         (c.midLo.toList.map(m => MapView.Mid(m.value)) ++ c.midHi.map(m => MapView.Mid(m.value))),
@@ -56,8 +57,8 @@ final class CellKind(val dot: DotKind) extends PointKind[TileCellPoint]:
       DotCluster.summary(Map(dot -> DotCluster.KindCount(c.n.value)), DotCluster.Undated(c.undated.value)).value
     )
   def action(c: TileCellPoint): UiLabels.Text = UiLabels.Text("zoom in")
-  def target(c: TileCellPoint, asOf: Option[Years.Astronomical]): Option[Preview.Target] = None
+  def target(c: TileCellPoint, asOf: Option[Year.Astronomical]): Option[Preview.Target] = None
   def activate(c: TileCellPoint, how: Activation): Unit = MapView.zoomInto(List(c.box))
   def open(key: PointKind.PointKey, c: TileCellPoint, row: dom.Element): Unit = MapView.zoomInto(List(c.box))
-  override def recolour(m: DomMarker, c: TileCellPoint, span: (Years.Astronomical, Years.Astronomical)): Unit =
+  override def recolour(m: DomMarker, c: TileCellPoint, span: (Year.Astronomical, Year.Astronomical)): Unit =
     MapView.repaintCell(m, member(c))

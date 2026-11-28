@@ -12,7 +12,6 @@ import com.histmersion.api.library.Filter
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Api
-import com.histmersion.api.Years
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** The EVENTS layer (#1449): every event of the span shown — the corpus's and the catalogues' — read from the server's
@@ -70,7 +69,7 @@ object EventMarkers:
 
   /** Load the events of `tiles` (a span, playback's widened to its bucket), drawn for `span`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def load(tiles: (Year, Year), span: (Years.Astronomical, Years.Astronomical)): Unit =
+  def load(tiles: (Year, Year), span: (Year.Astronomical, Year.Astronomical)): Unit =
     layer.load(
       ApiClient.tileTemplate(
         query(

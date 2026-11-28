@@ -6,8 +6,8 @@ import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
-import com.histmersion.api.Years
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
   * the app's links do, with the same card ([[Preview]]):
@@ -50,7 +50,7 @@ object PlaceHover:
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
   final case class Places(
       place: PlaceId => Option[(PlaceId, UiLabels.Text, PlaceKind)],
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   )
 
   private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[ShapeHit.Set, Places]
@@ -196,7 +196,7 @@ object PlaceHover:
       id: PlaceHover.PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   ): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
@@ -233,7 +233,7 @@ object PlaceHover:
       id: PlaceHover.PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   ): Unit =
     def target = Preview.Target.Place(id, asOf())
     val el = Option(m.el.firstElementChild).getOrElse(m.el)
@@ -331,7 +331,7 @@ object PlaceHover:
       id: PlaceHover.PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
-      asOf: () => Option[Years.Astronomical],
+      asOf: () => Option[Year.Astronomical],
       how: Activation
   ): Unit =
     val t = Preview.Target.Place(id, asOf())

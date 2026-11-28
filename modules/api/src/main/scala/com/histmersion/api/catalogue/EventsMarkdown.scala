@@ -1,6 +1,6 @@
 package com.histmersion
 package api.catalogue
-import com.histmersion.api.{OffsetPage, TimeSpan, YearFmt}
+import com.histmersion.api.{OffsetPage, TimeSpan}
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
@@ -8,7 +8,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 object EventsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  private[api] def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
+  private[api] def timeSpan(ts: TimeSpan): String = ts.showLong
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

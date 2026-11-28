@@ -8,8 +8,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
-import com.histmersion.api.YearFmt
-
 import java.util.UUID
 import com.histmersion.api.exchange.{
   IssueCondition,
@@ -246,7 +244,7 @@ class MergeViewSuite extends munit.FunSuite:
     assertEquals((lo, hi), (-1220L, -1180L))
     assertEquals(MergeView.bar(IssueSpan(Some(Year(-1200)), Some(Year(-1190))), lo, hi), (50.0, 25.0))
     assertEquals(MergeView.axis(Nil), None)
-    assertEquals(YearFmt.openPeriod(Some(Year(-1274)), None), "from 1274 BCE")
+    assertEquals(Year.openPeriod(Some(Year(-1274)), None), "from 1274 BCE")
 
   test("the window key and the /merge address"):
     assertEquals(WindowKey.parse(WindowKey.Wire("merge")), Some(WindowKey.Merge))

@@ -1,13 +1,14 @@
 package com.histmersion
 package web.library
 
-import com.histmersion.api.{Wording, YearFmt}
+import com.histmersion.api.Wording
 import com.histmersion.api.library.{Label, SearchHit}
 import com.histmersion.api.media.MediaRole
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The top of the reading pane, as it reads: what the item is (a source's type, venue and year; an article's kind), its
   * title, its authors, its status, its period, its regions and its summary. A row of the table already holds most of
@@ -44,7 +45,7 @@ object ReadingHead:
       h.title.value,
       h.authors.map(_.value).mkString(", "),
       Some(h.status),
-      YearFmt.period(h.periodStart, h.periodEnd),
+      Year.period(h.periodStart, h.periodEnd),
       regions(h.regions.map(_.value)),
       text(h.summary.map(_.value))
     )
@@ -65,7 +66,7 @@ object ReadingHead:
       s.title.value,
       s.authors.map(_.value).mkString(", "),
       Some(s.status),
-      YearFmt.period(s.periodStart, s.periodEnd),
+      Year.period(s.periodStart, s.periodEnd),
       regions(s.regions.map(_.value)),
       text(s.summary.map(_.value)),
       Creation.line(s.creator, s.createdAt)
@@ -79,7 +80,7 @@ object ReadingHead:
       a.title.value,
       "",
       None,
-      YearFmt.period(a.periodStart, a.periodEnd),
+      Year.period(a.periodStart, a.periodEnd),
       regions(a.regions.map(_.value)),
       text(a.summary.map(_.value))
     )
@@ -93,7 +94,7 @@ object ReadingHead:
       a.title.value,
       "",
       None,
-      YearFmt.period(a.periodStart, a.periodEnd),
+      Year.period(a.periodStart, a.periodEnd),
       regions(a.regions.map(_.value)),
       text(a.summary.map(_.value)),
       Creation.line(a.creator, a.createdAt)

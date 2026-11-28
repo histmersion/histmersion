@@ -6,7 +6,7 @@ import com.histmersion.util.problem.Problem
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{Write, YearFmt}
+import com.histmersion.api.Write
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Goal as DomainGoal
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule}

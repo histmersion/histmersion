@@ -15,7 +15,6 @@ import com.histmersion.api.library.Label
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Year
-import com.histmersion.api.Years
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** The filter panel on Explore's left (shared with Library: one filter state, [[UiState]]): the words, the place, the
@@ -171,7 +170,7 @@ object FilterBar:
         aria.invalid <-- bad.signal.map(_.toString),
         value <-- field.signal.map(v => Fmt.yr(Year(v.getOrElse(dflt))).value),
         onChange.mapToValue --> { raw =>
-          Fmt.parseYear(Years.Text(raw)).map(_.value).filter(y => valid(y, other())) match
+          Fmt.parseYear(Year.Text(raw)).map(_.value).filter(y => valid(y, other())) match
             case Some(y) =>
               bad.set(false)
               UiState.set(field := Some(y))(push = UiState.SetPush.Push)

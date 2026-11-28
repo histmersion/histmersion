@@ -3,7 +3,6 @@ package domain.catalogue.places
 
 import com.histmersion.domain.*
 
-import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.Period
 import com.histmersion.domain.catalogue.Place
@@ -76,7 +75,7 @@ object PlaceReview:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def periodText(p: Period): String =
-    YearFmt.period(
+    Year.period(
       Some(Year(p.start.value.toLong)),
       Some(Year(p.end.value.toLong))
     )

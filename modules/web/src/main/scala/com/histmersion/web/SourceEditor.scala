@@ -5,7 +5,7 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.{Api, ListPatch, Wording, YearFmt, Years}
+import com.histmersion.api.{Api, ListPatch, Wording}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -18,6 +18,7 @@ import com.histmersion.api.library.AuthorName
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.UiLabels
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year.{parse, show}
 
 /** Edit a source's metadata — the [[SourcePatch]] fields a person maintains: title, authors, year, venue, DOI, status,
   * topics, regions, tags, the period it is about, and the summary. Sent as ONE `PATCH` carrying only what changed, with
@@ -59,8 +60,8 @@ object SourceEditor:
       topics = s.topics.map(_.value),
       regions = s.regions.map(_.value),
       tags = s.tags.map(_.value),
-      periodStart = s.periodStart.fold("")(YearFmt(_)),
-      periodEnd = s.periodEnd.fold("")(YearFmt(_)),
+      periodStart = s.periodStart.fold("")(show(_)),
+      periodEnd = s.periodEnd.fold("")(show(_)),
       summary = s.summary.map(_.value).getOrElse("")
     )
 
@@ -85,9 +86,9 @@ object SourceEditor:
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def year(raw: Years.Text): Either[Problem, Option[api.catalogue.Year]] =
+  def year(raw: api.catalogue.Year.Text): Either[Problem, Option[api.catalogue.Year]] =
     if raw.value.trim.isEmpty then Right(None)
-    else Years.parse(raw).map(Some(_))
+    else parse(raw).map(Some(_))
 
   /** The patch that turns `orig` into `d`: only the changed parts, with `orig`'s `updatedAt` as the precondition —
     * `Right(None)` when nothing changed, `Left` with what is wrong, per field.
@@ -124,7 +125,7 @@ object SourceEditor:
     val status = Option.when(d.status != orig.status)(d.status)
     val summary = text(d.summary, orig.summary.map(_.value), Field.Summary, "the summary")
 
-    val period = (year(Years.Text(d.periodStart)), year(Years.Text(d.periodEnd))) match
+    val period = (year(api.catalogue.Year.Text(d.periodStart)), year(api.catalogue.Year.Text(d.periodEnd))) match
       case (Left(e), _)               => errs += Field.Period -> e.sentence; None
       case (_, Left(e))               => errs += Field.Period -> e.sentence; None
       case (Right(None), Right(None)) =>
@@ -132,7 +133,7 @@ object SourceEditor:
         None
       case (Right(Some(a)), Right(Some(b))) =>
         if a > b then {
-          errs += Field.Period -> s"the period starts (${YearFmt(a)}) after it ends (${YearFmt(b)})"; None
+          errs += Field.Period -> s"the period starts (${show(a)}) after it ends (${show(b)})"; None
         } else Option.when(!(orig.periodStart.contains(a) && orig.periodEnd.contains(b)))(Period.Input(a, b))
       case _ => errs += Field.Period -> "give both the start and the end of the period"; None
 
@@ -277,8 +278,8 @@ object SourceEditor:
         cls := "year-echo muted",
         child.text <-- draft.signal.map(
           _.fold("")(d =>
-            year(Years.Text(get(d))) match
-              case Right(Some(v)) => s"= ${YearFmt(v)}"
+            year(api.catalogue.Year.Text(get(d))) match
+              case Right(Some(v)) => s"= ${show(v)}"
               case Right(None)    => ""
               case Left(_)        => "not a year"
           )

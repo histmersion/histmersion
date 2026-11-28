@@ -1,15 +1,16 @@
 package com.histmersion
 package api.automation
-import com.histmersion.api.{OffsetPage, YearFmt}
+import com.histmersion.api.OffsetPage
 import com.histmersion.api.Markdown.*
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 object GoalsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def goalLine(g: Goal): String =
-    val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, ("")) match
+    val period = g.period("") match
       case "" => ""
       case p  => s" ($p)"
     val parent = g.parentSlug.map(p => s" ⊂ $p").getOrElse("")
@@ -24,7 +25,7 @@ object GoalsMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goal(g: Goal): String =
     val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"
-    val period = YearFmt.openPeriod(g.periodStart, g.periodEnd, ("")) match
+    val period = g.period("") match
       case "" => ""
       case p  => s"  \n**Period:** $p"
     val parent = g.parentSlug.map(p => s"  \n**Parent:** `$p`").getOrElse("")

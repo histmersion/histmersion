@@ -7,7 +7,6 @@ import com.histmersion.api.library.GeoHit
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.web.map.{ClusterMotion, ScreenPt}
 import com.histmersion.api.library.Citekey
-import com.histmersion.api.Years
 import com.histmersion.api.Paging
 import com.histmersion.web.map.Clustering
 
@@ -56,53 +55,53 @@ class PlaybackFramesSuite extends munit.FunSuite:
     assertEquals(
       PlaybackFeed.next(
         None,
-        Years.Astronomical(-3000),
+        Year.Astronomical(-3000),
         PlaybackFeed.WindowHalfYears(50),
         PlaybackBuckets.BucketYears(400),
-        Years.Astronomical(-1000)
+        Year.Astronomical(-1000)
       ),
       Some((-3050L, -2550L))
     )
     // the window's end (-2950) is far from what is held (-2550): nothing yet
     assertEquals(
       PlaybackFeed.next(
-        Some(Years.Astronomical(-2550)),
-        Years.Astronomical(-3000),
+        Some(Year.Astronomical(-2550)),
+        Year.Astronomical(-3000),
         PlaybackFeed.WindowHalfYears(50),
         PlaybackBuckets.BucketYears(400),
-        Years.Astronomical(-1000)
+        Year.Astronomical(-1000)
       ),
       None
     )
     // within half a stretch: the next one, from the year after what is held
     assertEquals(
       PlaybackFeed.next(
-        Some(Years.Astronomical(-2550)),
-        Years.Astronomical(-2800),
+        Some(Year.Astronomical(-2550)),
+        Year.Astronomical(-2800),
         PlaybackFeed.WindowHalfYears(50),
         PlaybackBuckets.BucketYears(400),
-        Years.Astronomical(-1000)
+        Year.Astronomical(-1000)
       ),
       Some((-2549L, -2149L))
     )
     // never past the last year played (and its window)
     assertEquals(
       PlaybackFeed.next(
-        Some(Years.Astronomical(-1100)),
-        Years.Astronomical(-1200),
+        Some(Year.Astronomical(-1100)),
+        Year.Astronomical(-1200),
         PlaybackFeed.WindowHalfYears(50),
         PlaybackBuckets.BucketYears(400),
-        Years.Astronomical(-1000)
+        Year.Astronomical(-1000)
       ),
       Some((-1099L, -950L))
     )
     assertEquals(
       PlaybackFeed.next(
-        Some(Years.Astronomical(-950)),
-        Years.Astronomical(-1000),
+        Some(Year.Astronomical(-950)),
+        Year.Astronomical(-1000),
         PlaybackFeed.WindowHalfYears(50),
         PlaybackBuckets.BucketYears(400),
-        Years.Astronomical(-1000)
+        Year.Astronomical(-1000)
       ),
       None
     )
@@ -111,17 +110,17 @@ class PlaybackFramesSuite extends munit.FunSuite:
   test("a full answer covers only up to the year before its latest start; a short one all it was asked") {
     val got = Seq(hit(Year(-3000), Year(-2900)), hit(Year(-2800), Year(-2700)), hit(Year(-2600), Year(-2500)))
     assertEquals(
-      PlaybackFeed.covered((Years.Astronomical(-3050), Years.Astronomical(-2550)), got, Paging.Limit(10)),
+      PlaybackFeed.covered((Year.Astronomical(-3050), Year.Astronomical(-2550)), got, Paging.Limit(10)),
       -2550L
     )
     assertEquals(
-      PlaybackFeed.covered((Years.Astronomical(-3050), Years.Astronomical(-2550)), got, Paging.Limit(3)),
+      PlaybackFeed.covered((Year.Astronomical(-3050), Year.Astronomical(-2550)), got, Paging.Limit(3)),
       -2601L
     )
     // never before what was asked
     assertEquals(
       PlaybackFeed.covered(
-        (Years.Astronomical(-2600), Years.Astronomical(-2550)),
+        (Year.Astronomical(-2600), Year.Astronomical(-2550)),
         Seq(hit(Year(-2600), Year(-2500))),
         Paging.Limit(1)
       ),
@@ -147,11 +146,11 @@ class PlaybackFramesSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      PlaybackFeed.inWindow(pts, Years.Astronomical(-2960), Years.Astronomical(-2900)).map(_.claim),
+      PlaybackFeed.inWindow(pts, Year.Astronomical(-2960), Year.Astronomical(-2900)).map(_.claim),
       List("a", "b")
     )
-    assertEquals(PlaybackFeed.inWindow(pts, Years.Astronomical(-2899), Years.Astronomical(-2801)).map(_.claim), Nil)
-    assertEquals(PlaybackFeed.keep(pts, Years.Astronomical(-2900)).map(_.claim), List("a", "c", "u"))
+    assertEquals(PlaybackFeed.inWindow(pts, Year.Astronomical(-2899), Year.Astronomical(-2801)).map(_.claim), Nil)
+    assertEquals(PlaybackFeed.keep(pts, Year.Astronomical(-2900)).map(_.claim), List("a", "c", "u"))
   }
 
   // ── PlaybackAreas ────────────────────────────────────────────────────────────

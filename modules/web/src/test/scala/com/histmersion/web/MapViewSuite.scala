@@ -9,7 +9,6 @@ import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.catalogue.{Latitude, Longitude, MapTilesUiConfig, Year}
 import com.histmersion.api.library.Citekey
-import com.histmersion.api.Years
 import com.histmersion.api.library.Doi
 import com.histmersion.api.Html.Atoms
 import com.histmersion.api.catalogue.Place
@@ -106,7 +105,7 @@ class MapViewSuite extends munit.FunSuite:
   test("colorFor at span start returns first viridis color") {
     val c = MapView.colorFor(
       Some(MapView.Mid(-3500.0)),
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assertEquals(c.value, Fmt.color(Fmt.RampPosition(0.0)).value)
@@ -115,7 +114,7 @@ class MapViewSuite extends munit.FunSuite:
   test("colorFor at span end returns last viridis color") {
     val c = MapView.colorFor(
       Some(MapView.Mid(-500.0)),
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assertEquals(c.value, Fmt.color(Fmt.RampPosition(1.0)).value)
@@ -124,7 +123,7 @@ class MapViewSuite extends munit.FunSuite:
   test("colorFor at span midpoint returns middle viridis color") {
     val c = MapView.colorFor(
       Some(MapView.Mid(-2000.0)),
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assertEquals(c.value, Fmt.color(Fmt.RampPosition(0.5)).value)
@@ -132,19 +131,19 @@ class MapViewSuite extends munit.FunSuite:
 
   test("colorFor with None mid returns first viridis stop") {
     val c =
-      MapView.colorFor(None, (Years.Astronomical(-3500L), Years.Astronomical(-500L)), Certainty.Stated(Confidence.High))
+      MapView.colorFor(None, (Year.Astronomical(-3500L), Year.Astronomical(-500L)), Certainty.Stated(Confidence.High))
     assertEquals(c.value, Fmt.color(Fmt.RampPosition(0.0)).value)
   }
 
   test("colorFor desaturates for low confidence") {
     val highC = MapView.colorFor(
       Some(MapView.Mid(-2000.0)),
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     val lowC = MapView.colorFor(
       Some(MapView.Mid(-2000.0)),
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.Low)
     )
     assert(highC != lowC, "low confidence should desaturate")
@@ -153,12 +152,12 @@ class MapViewSuite extends munit.FunSuite:
   test("colorFor uses viewport span, not global span") {
     val wide = MapView.colorFor(
       Some(MapView.Mid(-2000.0)),
-      (Years.Astronomical(-12000L), Years.Astronomical(2026L)),
+      (Year.Astronomical(-12000L), Year.Astronomical(2026L)),
       Certainty.Stated(Confidence.High)
     )
     val narrow = MapView.colorFor(
       Some(MapView.Mid(-2000.0)),
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assert(wide != narrow, "different spans should produce different colors for the same year")
@@ -170,7 +169,7 @@ class MapViewSuite extends munit.FunSuite:
     val items = List(hit(Year(-3000), Year(-2000)))
     val bg = MapView.gradientBg(
       items,
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assert(bg.value.startsWith("rgb("), s"single item should be flat: $bg")
@@ -181,7 +180,7 @@ class MapViewSuite extends munit.FunSuite:
     val items = List(hit(Year(-3000), Year(-2000)), hit(Year(-1000), Year(-500)))
     val bg = MapView.gradientBg(
       items,
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assert(bg.value.contains("linear-gradient"), s"expected gradient but got: $bg")
@@ -194,7 +193,7 @@ class MapViewSuite extends munit.FunSuite:
     val items = List(undatedHit, undatedHit)
     val bg = MapView.gradientBg(
       items,
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assert(bg.value.startsWith("rgb("), s"undated should be flat: $bg")
@@ -204,7 +203,7 @@ class MapViewSuite extends munit.FunSuite:
     val items = List(hit(Year(-2000), Year(-1000)), hit(Year(-2000), Year(-1000)))
     val bg = MapView.gradientBg(
       items,
-      (Years.Astronomical(-3500L), Years.Astronomical(-500L)),
+      (Year.Astronomical(-3500L), Year.Astronomical(-500L)),
       Certainty.Stated(Confidence.High)
     )
     assert(!bg.value.contains("gradient"), s"same midpoints should be flat: $bg")
@@ -287,7 +286,7 @@ class MapViewSuite extends munit.FunSuite:
     import com.histmersion.api.catalogue.GeoTime
     assertEquals(
       MapView.areaTime(
-        (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
+        (Year.Astronomical(-2000L), Year.Astronomical(-1000L)),
         GeoPick.Mid,
         playback = MapView.Playback.Stopped
       ),
@@ -295,7 +294,7 @@ class MapViewSuite extends munit.FunSuite:
     )
     assertEquals(
       MapView.areaTime(
-        (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
+        (Year.Astronomical(-2000L), Year.Astronomical(-1000L)),
         GeoPick.Start,
         playback = MapView.Playback.Stopped
       ),
@@ -303,7 +302,7 @@ class MapViewSuite extends munit.FunSuite:
     )
     assertEquals(
       MapView.areaTime(
-        (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
+        (Year.Astronomical(-2000L), Year.Astronomical(-1000L)),
         GeoPick.End,
         playback = MapView.Playback.Stopped
       ),
@@ -311,7 +310,7 @@ class MapViewSuite extends munit.FunSuite:
     )
     assertEquals(
       MapView.areaTime(
-        (Years.Astronomical(-2000L), Years.Astronomical(-1000L)),
+        (Year.Astronomical(-2000L), Year.Astronomical(-1000L)),
         GeoPick.Latest,
         playback = MapView.Playback.Stopped
       ),
@@ -320,7 +319,7 @@ class MapViewSuite extends munit.FunSuite:
     GeoPick.values.foreach(p =>
       assertEquals(
         MapView
-          .areaTime((Years.Astronomical(-1210L), Years.Astronomical(-1190L)), p, playback = MapView.Playback.Playing),
+          .areaTime((Year.Astronomical(-1210L), Year.Astronomical(-1190L)), p, playback = MapView.Playback.Playing),
         GeoTime.At(Year(-1200))
       )
     )
@@ -338,7 +337,7 @@ class MapViewSuite extends munit.FunSuite:
   test("the tiled layers are asked for the span itself; in playback for its window widened to whole buckets"):
     assertEquals(
       MapView.tileSpanOf(
-        (Years.Astronomical(-1500L), Years.Astronomical(-1600L)),
+        (Year.Astronomical(-1500L), Year.Astronomical(-1600L)),
         playback = MapView.Playback.Stopped,
         MapView.YearsPerSecond(0.0),
         MapTilesUiConfig.PlaybackBucketSeconds(1.0)
@@ -348,7 +347,7 @@ class MapViewSuite extends munit.FunSuite:
     // 166 years a second, a bucket of one second: 200-year buckets
     assertEquals(
       MapView.tileSpanOf(
-        (Years.Astronomical(-1650L), Years.Astronomical(-1550L)),
+        (Year.Astronomical(-1650L), Year.Astronomical(-1550L)),
         playback = MapView.Playback.Playing,
         MapView.YearsPerSecond(166.0),
         MapTilesUiConfig.PlaybackBucketSeconds(1.0)
@@ -358,7 +357,7 @@ class MapViewSuite extends munit.FunSuite:
     // the next frames stay in the same buckets: the same tiles
     assertEquals(
       MapView.tileSpanOf(
-        (Years.Astronomical(-1640L), Years.Astronomical(-1540L)),
+        (Year.Astronomical(-1640L), Year.Astronomical(-1540L)),
         playback = MapView.Playback.Playing,
         MapView.YearsPerSecond(166.0),
         MapTilesUiConfig.PlaybackBucketSeconds(1.0)
@@ -366,7 +365,7 @@ class MapViewSuite extends munit.FunSuite:
       (-1800L, -1401L)
     )
     assertEquals(
-      MapView.tileFilter((Years.Astronomical(-10L), Years.Astronomical(20L))).period,
+      MapView.tileFilter((Year.Astronomical(-10L), Year.Astronomical(20L))).period,
       Some(Period(Year(-10L), Year(20L)))
     )
 

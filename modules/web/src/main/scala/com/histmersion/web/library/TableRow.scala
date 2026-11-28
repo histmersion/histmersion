@@ -1,7 +1,7 @@
 package com.histmersion
 package web.library
 
-import com.histmersion.api.{Wording, YearFmt}
+import com.histmersion.api.Wording
 import com.histmersion.api.library.{Hit, Label}
 import com.histmersion.web.{ArticleLink, SourceLink}
 import com.histmersion.api.library.Source
@@ -45,7 +45,7 @@ object TableRow:
       s.year,
       Some(s.status),
       "",
-      YearFmt.period(s.periodStart, s.periodEnd),
+      Year.period(s.periodStart, s.periodEnd),
       SourceLink.href(s.citekey)
     )
 
@@ -59,6 +59,6 @@ object TableRow:
       None,
       None,
       Wording.capitalize(Label.display(Label.Text(a.kind.value.trim)).value),
-      YearFmt.period(a.periodStart, a.periodEnd),
+      Year.period(a.periodStart, a.periodEnd),
       ArticleLink.href(a.slug)
     )

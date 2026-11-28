@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{External, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.{PeriodODataset, Years}
+import com.histmersion.api.PeriodODataset
 import com.histmersion.api.given
 import com.histmersion.util.json.{Cursor, RawJson}
 import com.histmersion.util.json.RawJson.*
@@ -56,7 +56,7 @@ object PeriodO:
   val MinSiblingsValue: MinSiblingsCount.type = MinSiblingsCount
 
   def isoYear(raw: String): Option[Year] =
-    raw.trim.toLongOption.map(n => Years.fromAstronomical(Years.Astronomical(n)))
+    raw.trim.toLongOption.map(n => Year.fromAstronomical(Year.Astronomical(n)))
 
   /** The Lower Palaeolithic starts around 3.3 million years ago, and no period ends after 2100. */
   val MinYear: MinYear = MinYearNumber(-3000000L)

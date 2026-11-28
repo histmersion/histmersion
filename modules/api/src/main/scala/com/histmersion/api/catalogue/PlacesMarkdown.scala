@@ -2,7 +2,6 @@ package com.histmersion
 package api.catalogue
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Markdown.*
-import com.histmersion.api.YearFmt
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -11,7 +10,7 @@ object PlacesMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def kindOf(kind: Place.Summary.Kind, ps: Option[Year], pe: Option[Year]): String =
-    val p = YearFmt.period(ps, pe)
+    val p = Year.period(ps, pe)
     if p.isEmpty then kind.value else (s"$kind · $p")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -201,7 +200,7 @@ object PlacesMarkdown:
       "\n\n**Footprints (" + d.footprints.size + ")**\n" +
         d.footprints
           .map { f =>
-            val per = f.period.map(p => s" · ${YearFmt.period(Some(p.start), Some(p.end))}").getOrElse("")
+            val per = f.period.map(p => s" · ${Year.period(Some(p.start), Some(p.end))}").getOrElse("")
             val cert = f.certainty.map(c => s" · _${c}_").getOrElse("")
             val ck = f.citekey.map(c => s" [[$c]]").getOrElse("")
             s"- ${f.role}$per$cert$ck"
@@ -221,7 +220,7 @@ object PlacesMarkdown:
       "\n\n**Types**\n" +
         d.types
           .map { t =>
-            val per = t.period.map(p => s" · ${YearFmt.period(Some(p.start), Some(p.end))}").getOrElse("")
+            val per = t.period.map(p => s" · ${Year.period(Some(p.start), Some(p.end))}").getOrElse("")
             s"- ${t.typeLabel}$per"
           }
           .mkString("\n")

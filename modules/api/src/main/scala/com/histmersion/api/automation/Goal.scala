@@ -40,7 +40,10 @@ final case class Goal(
     createdAt: Option[Creation.At] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      api.json.Schema
+      api.json.Schema:
+
+  /** The period the goal is about (`from 1300 BCE`, `1300–1100 BCE`), `none` when it has neither end. */
+  def period(none: String): String = Year.openPeriod(periodStart, periodEnd, none)
 
 object Goal:
   /** Why a plan names a work: the planner's words, not a failure. */

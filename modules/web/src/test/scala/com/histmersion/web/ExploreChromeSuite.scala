@@ -11,7 +11,6 @@ import com.histmersion.web.ui.SidebarTab
 import scala.scalajs.js
 import com.histmersion.api.UiLabels
 import com.histmersion.api.RowCount
-import com.histmersion.api.Years
 import com.histmersion.api.Plural
 import com.histmersion.api.catalogue.Year
 import com.histmersion.lint.{tolerated, LintRule}
@@ -80,7 +79,7 @@ class ExploreChromeSuite extends munit.FunSuite:
     )
     assertEquals(
       ResultDetail
-        .pageOf(Preview.Target.Place(Preview.Target.Place.Id("pleiades_570406"), Some(Years.Astronomical(-500))))
+        .pageOf(Preview.Target.Place(Preview.Target.Place.Id("pleiades_570406"), Some(Year.Astronomical(-500))))
         .value,
       "/place/pleiades_570406"
     )

@@ -16,7 +16,6 @@ import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.media.MediaItem
-import com.histmersion.api.Years
 import com.histmersion.api.Api
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -184,15 +183,15 @@ class TiledLayersSuite extends munit.FunSuite:
     assertEquals(PlaybackBuckets.years(PlaybackBuckets.YearsPerSecond(0), PlaybackBuckets.Seconds(1.0)), 1L)
     assertEquals(PlaybackBuckets.years(PlaybackBuckets.YearsPerSecond(1000), PlaybackBuckets.Seconds(1.0)), 1000L)
     assertEquals(
-      PlaybackBuckets.widen((Years.Astronomical(-1650L), Years.Astronomical(-1550L)), PlaybackBuckets.BucketYears(200)),
+      PlaybackBuckets.widen((Year.Astronomical(-1650L), Year.Astronomical(-1550L)), PlaybackBuckets.BucketYears(200)),
       (-1800L, -1401L)
     )
     assertEquals(
-      PlaybackBuckets.widen((Years.Astronomical(10L), Years.Astronomical(10L)), PlaybackBuckets.BucketYears(100)),
+      PlaybackBuckets.widen((Year.Astronomical(10L), Year.Astronomical(10L)), PlaybackBuckets.BucketYears(100)),
       (0L, 99L)
     )
     assertEquals(
-      PlaybackBuckets.widen((Years.Astronomical(-1L), Years.Astronomical(0L)), PlaybackBuckets.BucketYears(100)),
+      PlaybackBuckets.widen((Year.Astronomical(-1L), Year.Astronomical(0L)), PlaybackBuckets.BucketYears(100)),
       (-100L, 99L)
     )
 

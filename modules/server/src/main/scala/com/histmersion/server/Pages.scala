@@ -3,7 +3,7 @@ package server
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{Html, Plural, Wording, YearFmt}
+import com.histmersion.api.{Html, Plural, Wording}
 import com.histmersion.api.Html.{html, Atoms}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -146,7 +146,7 @@ object Pages:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def source(p: SourcePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Html =
     val r = p.ref
-    val period = YearFmt.period(
+    val period = Year.period(
       p.periodStart.map(y => Year(y.value)),
       p.periodEnd.map(y => Year(y.value))
     )
@@ -259,7 +259,7 @@ object Pages:
     val meta = List(
       Html.text(display(a.kind.value.trim)),
       chips(ChipField.Place, a.regions.map(_.value)),
-      Html.text(YearFmt.period(a.periodStart, a.periodEnd)),
+      Html.text(Year.period(a.periodStart, a.periodEnd)),
       chips(ChipField.Tag, a.tags.map(_.value))
     ).filter(_.nonEmpty)
     Html.concat(

@@ -7,7 +7,6 @@ import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Field, Invalid, Raw, TypeName}
 
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.api.YearFmt
 import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -126,7 +125,7 @@ object Target:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def where(t: Target): Where =
-    val span = YearFmt.period(t.from, t.to)
+    val span = Year.period(t.from, t.to)
     val at =
       t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, ("N"), ("S"))}, ${degrees(lo.value, ("E"), ("W"))}")
     t.kind match

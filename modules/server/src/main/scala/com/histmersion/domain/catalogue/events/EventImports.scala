@@ -3,7 +3,7 @@ package domain.catalogue.events
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.api.{BBox, YearFmt}
+import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
   CatalogRecord,
@@ -32,6 +32,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;
@@ -362,7 +363,7 @@ final class EventImports(
         )
       }
     val examples = changed.take(5).map { (id, a, b, _) =>
-      def years(r: CatalogRecord) = r.timeSpan.outer.fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
+      def years(r: CatalogRecord) = r.timeSpan.outer.fold("undated")((x, y) => s"${Year.show(x)}…${Year.show(y)}")
       s"$id: ${years(a)} → ${years(b)}${EventPrecision
           .note(
             b.central.map(c => EventSummary.Central(c.value)),

@@ -3,7 +3,6 @@ package domain
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Problem.{Content, Invalid, Raw, Where}
-import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Period
 
 import com.histmersion.util.text.ComparedText
@@ -14,6 +13,7 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The deterministic checks every LLM answer passes through before code writes anything
   * (docs/research-embedded-agents.md §4.4). All pure; the engine supplies the corpus facts (the body, the set of
@@ -264,7 +264,7 @@ object AgentVerify:
     case YearUnit.BCE   => Right(SignedYear(-value.value))
     case YearUnit.CE    => Right(SignedYear(value.value))
     case YearUnit.CalBP =>
-      Right(SignedYear(Years.fromAstronomical(Years.Astronomical(1950L - value.value)).value))
+      Right(SignedYear(Year.fromAstronomical(Year.Astronomical(1950L - value.value)).value))
     case YearUnit.BP =>
       Left(Content.Proposal(Content.Requirement.Calibrated(Raw.of(value)), PeriodAt))
 
