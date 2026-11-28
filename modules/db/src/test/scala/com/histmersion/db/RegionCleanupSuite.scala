@@ -1,6 +1,10 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Approximation
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.places.PlaceFixtures
@@ -82,8 +86,8 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     val r =
       connect(ds)(
         PlaceFixtures.resolve(
-          Geocode.Attempt.Name("Zzrc Thessalia"),
-          Geocode.KindHint.Unknown,
+          Attempt.Name("Zzrc Thessalia"),
+          KindHint.Unknown,
           None,
           GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
         )
@@ -92,13 +96,13 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
     val alone =
       connect(ds)(
         PlaceFixtures.resolve(
-          Geocode.Attempt.Name("Zzrc Achaia"),
-          Geocode.KindHint.Unknown,
+          Attempt.Name("Zzrc Achaia"),
+          KindHint.Unknown,
           None,
           GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
         )
       )
-    assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
+    assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Approximation.GridSquare))))
     assertEquals(
       PlaceFixtures.get(ds, domain.catalogue.Place.Id.applyUnsafe(Thess)).map(_.locationPrecision),
       Some(Place.Precision.GridCell)

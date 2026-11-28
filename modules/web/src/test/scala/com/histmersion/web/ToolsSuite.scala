@@ -1,5 +1,14 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.ProviderDoctor
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.agentscheduler.Waiting
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -18,7 +27,6 @@ import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
-import com.histmersion.api.automation.Queue.QueueItem
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.SpatialHierarchyResult
@@ -204,10 +212,10 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(JobsView.kindLabel("some_kind"), "Some kind")
     assertEquals(JobsView.kindLabel("basemap-fetch"), "Download the background map")
     assertEquals(JobsView.kindLabel(Ingest.KindIngest), "Bring in a source")
-    assertEquals(RunsView.originLabel(Agents.Origin.Wire("ingest")), "by an ingest (before the enrich manager)")
+    assertEquals(RunsView.originLabel(Origin.Wire("ingest")), "by an ingest (before the enrich manager)")
     assert(Approval.Kind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
     assert(ApprovalsView.kindMeaning(Approval.Kind.Wire("article-publish")).exists(_.contains("unblocks its review")))
-    assert(Pipeline.values.forall(p => RunsView.pipelineMeaning(Agents.RunInfo.Pipeline(p.wire.value)).nonEmpty))
+    assert(Pipeline.values.forall(p => RunsView.pipelineMeaning(RunInfo.Pipeline(p.wire.value)).nonEmpty))
   }
 
   test("every value a filter button, chip or menu offers has a meaning on hover") {
@@ -233,8 +241,8 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(jobKinds.filter(JobsView.kindMeaning(_).isEmpty), Nil)
     assertEquals(JobsView.kindMeaning("something-new"), None)
     assert(Run.State.values.forall(s => RunsView.stateMeaning(s).value.nonEmpty))
-    assert(Agents.Origin.values.forall(o => RunsView.originMeaning(o.wire).nonEmpty))
-    assertEquals(RunsView.originLabel(Agents.Origin.Wire("scheduler")), "by a goal's schedule")
+    assert(Origin.values.forall(o => RunsView.originMeaning(o.wire).nonEmpty))
+    assertEquals(RunsView.originLabel(Origin.Wire("scheduler")), "by a goal's schedule")
     val providers = List(
       ProviderKind.Anthropic,
       ProviderKind.OpenAI,
@@ -243,17 +251,17 @@ class ToolsSuite extends munit.FunSuite:
       ProviderKind.Codex,
       ProviderKind.Opencode
     )
-    assert(providers.forall(p => RunsView.providerMeaning(Agents.ProviderDoctor.Provider(p.wire.value)).nonEmpty))
-    assertEquals(RunsView.providerMeaning(Agents.ProviderDoctor.Provider("some-plugin")), None)
+    assert(providers.forall(p => RunsView.providerMeaning(ProviderDoctor.Provider(p.wire.value)).nonEmpty))
+    assertEquals(RunsView.providerMeaning(ProviderDoctor.Provider("some-plugin")), None)
     assert(ApprovalsView.States.forall(s => ApprovalsView.stateMeaning(s).nonEmpty))
     assert(Approval.State.values.forall(s => ApprovalsView.States.contains(s.wire)))
     assert(ListFilters.DecidedBy.values.forall(d => ApprovalsView.decidedByMeaning(d.wire).nonEmpty))
     assert(ItemStatus.values.forall(s => ManagersView.itemStatusMeaning(s).value.nonEmpty))
-    assert(Manager.Kind.values.forall(k => ManagersView.managerMeaning(Managers.ManagerInfo.Id(k.wire.value)).nonEmpty))
+    assert(Manager.Kind.values.forall(k => ManagersView.managerMeaning(ManagerInfo.Id(k.wire.value)).nonEmpty))
     assert(
       ManagersView.managerMeaning(Managers.seedId(Goal.Ref("sea-peoples"))).exists(_.value.contains("sea-peoples"))
     )
-    assertEquals(ManagersView.managerMeaning(Managers.ManagerInfo.Id("nobody")), None)
+    assertEquals(ManagersView.managerMeaning(ManagerInfo.Id("nobody")), None)
     val jobTypes =
       List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review").map(
         JobKinds.Wire(_)
@@ -273,7 +281,7 @@ class ToolsSuite extends munit.FunSuite:
       AgentScheduler.Code.Running,
       AgentScheduler.Code.Settled,
       AgentScheduler.Code.Paused
-    ).map(AgentScheduler.Waiting.Code(_))
+    ).map(Waiting.Code(_))
     assertEquals(codes.filter(ManagersView.waitMeaning(_).isEmpty), Nil)
     assert(EventTier.all.forall(t => LayerFilters.tierMeaning(t).nonEmpty))
     assert(LayerFilters.tiers.forall(_.hint.nonEmpty))
@@ -453,20 +461,20 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("items are grouped by topic, groups in the order they were first added") {
-    def item(id: Queue.QueueItem.Id, t: Option[Queue.QueueItem.Topic]) = Queue.QueueItem(
+    def item(id: QueueItem.Id, t: Option[QueueItem.Topic]) = QueueItem(
       id,
       QueueItem.List("acquire"),
-      Queue.QueueItem.Text(s"i$id"),
+      QueueItem.Text(s"i$id"),
       t,
-      Queue.QueueItem.Status(Queue.Open)
+      QueueItem.Status(Queue.Open)
     )
     val gs = QueueView.groups(
-      Queue.Kind.Acquire,
+      api.automation.queue.Docket.Acquire,
       List(
-        item(Queue.QueueItem.Id(5), Some(Queue.QueueItem.Topic("b"))),
-        item(Queue.QueueItem.Id(2), Some(Queue.QueueItem.Topic("a"))),
-        item(Queue.QueueItem.Id(9), Some(Queue.QueueItem.Topic("b"))),
-        item(Queue.QueueItem.Id(1), Some(Queue.QueueItem.Topic("b")))
+        item(QueueItem.Id(5), Some(QueueItem.Topic("b"))),
+        item(QueueItem.Id(2), Some(QueueItem.Topic("a"))),
+        item(QueueItem.Id(9), Some(QueueItem.Topic("b"))),
+        item(QueueItem.Id(1), Some(QueueItem.Topic("b")))
       )
     )
     assertEquals(gs.map((t, is) => t -> is.map(_.id)), List(Some("b") -> List(1, 5, 9), Some("a") -> List(2)))
@@ -474,12 +482,12 @@ class ToolsSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def qi(
-      id: Queue.QueueItem.Id,
-      list: Queue.QueueItem.List,
-      topic: Option[Queue.QueueItem.Topic],
-      status: Queue.QueueItem.Status = Queue.QueueItem.Status(Queue.Open),
-      createdAt: Option[Queue.QueueItem.CreatedAt] = None
-  ) = Queue.QueueItem(id, list, Queue.QueueItem.Text(s"i$id"), topic, status, createdAt = createdAt)
+      id: QueueItem.Id,
+      list: QueueItem.List,
+      topic: Option[QueueItem.Topic],
+      status: QueueItem.Status = QueueItem.Status(Queue.Open),
+      createdAt: Option[QueueItem.CreatedAt] = None
+  ) = QueueItem(id, list, QueueItem.Text(s"i$id"), topic, status, createdAt = createdAt)
 
   test("the new windows round-trip their wire names and titles read plainly") {
     assertEquals(WindowKey.Tasks.wire, "tasks")
@@ -500,7 +508,7 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("every queue kind has its window, and back; other windows show no queue") {
-    Queue.Kind.values.foreach { k =>
+    api.automation.queue.Docket.values.foreach { k =>
       assertEquals(WindowKey.queueOf(WindowKey.ofQueue(k)), Some(k))
       assertEquals(WindowKey.ofQueue(k).wire.value, k.label.value)
     }
@@ -516,7 +524,7 @@ class ToolsSuite extends munit.FunSuite:
       qi(QueueItem.Id(30), QueueItem.List("tasks"), None)
     )
     assertEquals(
-      QueueView.groups(Queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
+      QueueView.groups(api.automation.queue.Docket.Tasks, its).map((t, is) => t -> is.map(_.id)),
       List[(Option[String], List[Int])](
         Some("Histmersion") -> List(7, 40),
         Some("Corpus hygiene") -> List(12),
@@ -572,7 +580,7 @@ class ToolsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      QueueView.groups(Queue.Kind.Log, its).map((t, is) => t -> is.map(_.id)),
+      QueueView.groups(api.automation.queue.Docket.Log, its).map((t, is) => t -> is.map(_.id)),
       List(
         Some("2026-09-27") -> List(597, 605),
         Some("2026-09-26") -> List(426),
@@ -616,16 +624,23 @@ class ToolsSuite extends munit.FunSuite:
       ),
       qi(QueueItem.Id(3), QueueItem.List("log"), Some(QueueItem.Topic("2026-07-02")))
     )
-    assertEquals(QueueView.groups(Queue.Kind.Log, its).map(_._1), List(Some("2026-07-02"), Some("Notes"), None))
     assertEquals(
-      QueueView.heading(None, UiLabels.Text(QueueView.spec(Queue.Kind.Log).untitled.value)),
+      QueueView.groups(api.automation.queue.Docket.Log, its).map(_._1),
+      List(Some("2026-07-02"), Some("Notes"), None)
+    )
+    assertEquals(
+      QueueView.heading(None, UiLabels.Text(QueueView.spec(api.automation.queue.Docket.Log).untitled.value)),
       ("Undated", Nil)
     )
   }
 
   test("each list's window: checkboxes and a show-done switch for acquire and tasks, neither for the log") {
     val (acq, tasks, log) =
-      (QueueView.spec(Queue.Kind.Acquire), QueueView.spec(Queue.Kind.Tasks), QueueView.spec(Queue.Kind.Log))
+      (
+        QueueView.spec(api.automation.queue.Docket.Acquire),
+        QueueView.spec(api.automation.queue.Docket.Tasks),
+        QueueView.spec(api.automation.queue.Docket.Log)
+      )
     assert(acq.checkable && tasks.checkable && !log.checkable)
     assertEquals(acq.showDone, Some(UiState.acquireDone))
     assertEquals(tasks.showDone, Some(UiState.tasksDone))
@@ -634,8 +649,9 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("the count line reads per list") {
-    val acq = QueueView.spec(Queue.Kind.Acquire); val tasks = QueueView.spec(Queue.Kind.Tasks)
-    val log = QueueView.spec(Queue.Kind.Log)
+    val acq = QueueView.spec(api.automation.queue.Docket.Acquire);
+    val tasks = QueueView.spec(api.automation.queue.Docket.Tasks)
+    val log = QueueView.spec(api.automation.queue.Docket.Log)
     val mixed = List(
       qi(QueueItem.Id(1), QueueItem.List("x"), None),
       qi(QueueItem.Id(2), QueueItem.List("x"), None, QueueItem.Status(Queue.Done)),
@@ -676,7 +692,8 @@ class ToolsSuite extends munit.FunSuite:
   // ── adding and editing items ───────────────────────────────────────────────────────────────
 
   test("an added item needs text; a blank topic or reason is left out; the worklog takes no reason") {
-    val tasks = QueueView.spec(Queue.Kind.Tasks); val log = QueueView.spec(Queue.Kind.Log)
+    val tasks = QueueView.spec(api.automation.queue.Docket.Tasks);
+    val log = QueueView.spec(api.automation.queue.Docket.Log)
     assertEquals(
       QueueView.validateAdd(tasks, QueueView.AddDraft(text = QueueView.AddDraft.Text("  \n "))).left.map(_.sentence),
       Left("Write the item's text first.")
@@ -690,7 +707,7 @@ class ToolsSuite extends munit.FunSuite:
           Problem.Unclassified(Legacy.Text(" "))
         )
       ),
-      Right(Queue.QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None, via = Some(Creation.Web)))
+      Right(QueueAdd(QueueItem.Text("re-run the lint"), None, reason = None, via = Some(Creation.Web)))
     )
     assertEquals(
       QueueView.validateAdd(
@@ -702,7 +719,7 @@ class ToolsSuite extends munit.FunSuite:
         )
       ),
       Right(
-        Queue.QueueAdd(
+        QueueAdd(
           QueueItem.Text("x"),
           Some(QueueItem.Topic("Corpus hygiene")),
           reason = Some(Queue.Rationale("because")),
@@ -720,7 +737,7 @@ class ToolsSuite extends munit.FunSuite:
         )
       ),
       Right(
-        Queue.QueueAdd(
+        QueueAdd(
           QueueItem.Text("ran the lint"),
           Some(QueueItem.Topic("2026-09-27")),
           reason = None,
@@ -743,11 +760,11 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(QueueView.editPatch(item, QueueItem.Text(" tidy up \n"), QueueItem.Topic(" Chores ")), Right(None))
     assertEquals(
       QueueView.editPatch(item, QueueItem.Text("tidy up well"), QueueItem.Topic("Chores")),
-      Right(Some(Queue.QueuePatch(text = Some(QueueItem.Text("tidy up well")))))
+      Right(Some(QueuePatch(text = Some(QueueItem.Text("tidy up well")))))
     )
     assertEquals(
       QueueView.editPatch(item, QueueItem.Text("tidy up"), QueueItem.Topic("")),
-      Right(Some(Queue.QueuePatch(topic = Some(QueueItem.Topic("")))))
+      Right(Some(QueuePatch(topic = Some(QueueItem.Topic("")))))
     )
     assertEquals(
       QueueView.editPatch(item.modify(_.topic).setTo(None), QueueItem.Text("tidy up"), QueueItem.Topic("  ")),
@@ -755,7 +772,7 @@ class ToolsSuite extends munit.FunSuite:
     )
     assertEquals(
       QueueView.editPatch(item, QueueItem.Text("tidy up"), QueueItem.Topic("Later")),
-      Right(Some(Queue.QueuePatch(topic = Some(QueueItem.Topic("Later")))))
+      Right(Some(QueuePatch(topic = Some(QueueItem.Topic("Later")))))
     )
     assert(QueueView.editPatch(item, QueueItem.Text("   "), QueueItem.Topic("Chores")).isLeft)
   }
@@ -790,7 +807,7 @@ class ToolsSuite extends munit.FunSuite:
     val item = qi(QueueItem.Id(567), QueueItem.List("acquire"), Some(QueueItem.Topic("mesopotamian_religion")))
     assertEquals(
       QueueView.fulfil(item, Preview.Target.Source.Citekey("lambert2013_babylonian")),
-      QueueItem.Id(567) -> Queue.QueuePatch(
+      QueueItem.Id(567) -> QueuePatch(
         status = Some(QueueItem.Status(Queue.Done)),
         reason = Some(Queue.Rationale("ingested as [[lambert2013_babylonian]]"))
       )
@@ -988,7 +1005,7 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("Upload… fills the form from the item and links the upload to it") {
-    val item = Queue.QueueItem(
+    val item = QueueItem(
       QueueItem.Id(567),
       QueueItem.List("acquire"),
       Lambert,
@@ -1016,14 +1033,14 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("picking an item in the upload form fills only what the reader has not typed, and keeps the file") {
-    val lambert = Queue.QueueItem(
+    val lambert = QueueItem(
       QueueItem.Id(567),
       QueueItem.List("acquire"),
       Lambert,
       Some(QueueItem.Topic("mesopotamian_religion")),
       QueueItem.Status(Queue.Open)
     )
-    val becks = Queue.QueueItem(QueueItem.Id(528), QueueItem.List("acquire"), Becks, None, QueueItem.Status(Queue.Open))
+    val becks = QueueItem(QueueItem.Id(528), QueueItem.List("acquire"), Becks, None, QueueItem.Status(Queue.Open))
     // a file dropped first, with the citekey suggested from its name and a title typed
     val typed = UploadView.Draft(
       fileName = Some(Api.FileName("scan.pdf")),
@@ -1051,8 +1068,8 @@ class ToolsSuite extends munit.FunSuite:
 
   test("the picker names an item by its id, and only an item it offers") {
     val items = List(
-      Queue.QueueItem(QueueItem.Id(567), QueueItem.List("acquire"), Lambert, None, QueueItem.Status(Queue.Open)),
-      Queue.QueueItem(
+      QueueItem(QueueItem.Id(567), QueueItem.List("acquire"), Lambert, None, QueueItem.Status(Queue.Open)),
+      QueueItem(
         QueueItem.Id(9),
         QueueItem.List("acquire"),
         QueueItem.Text("**A**, B"),
@@ -1072,7 +1089,7 @@ class ToolsSuite extends munit.FunSuite:
 
   test("Link existing source… starts the corpus search from the item's title") {
     def q(t: QueueItem.Text) = QueueItemRef.searchQuery(
-      Queue.QueueItem(QueueItem.Id(1), QueueItem.List("acquire"), t, None, QueueItem.Status(Queue.Open))
+      QueueItem(QueueItem.Id(1), QueueItem.List("acquire"), t, None, QueueItem.Status(Queue.Open))
     )
     assertEquals(q(Lambert), "Babylonian Creation Myths")
     assertEquals(q(Bailey), "Prehistoric Figurines")

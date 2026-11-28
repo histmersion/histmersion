@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.domain.library.acquisition.LastCheck
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 
 import com.histmersion.config.*
@@ -82,7 +84,7 @@ trait AgentUpstream:
     ingestLegal(doi, by)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
-  def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation("")
+  def fetcherGeneration: LastCheck.Generation = LastCheck.Generation("")
 
   /** Whether the acquisition toolset is attached (Offline is not). */
   def connected: Boolean = true

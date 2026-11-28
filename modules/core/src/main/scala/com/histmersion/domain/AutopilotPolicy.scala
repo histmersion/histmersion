@@ -1,6 +1,14 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.automation.autopilot.PlannedFacts
+import com.histmersion.domain.automation.autopilot.Ruling
+import com.histmersion.domain.automation.autopilot.GoalPlanFacts
+import com.histmersion.domain.automation.autopilot.GoalRow
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.automation.autopilot.Pacing
+import com.histmersion.domain.automation.autopilot.Stride
+
 import com.histmersion.api.Plural
 
 import com.histmersion.api.automation.Managers.*
@@ -66,7 +74,7 @@ object AutopilotPolicy:
   type Unfinished = Unfinished.T
   object Unfinished extends Newtype[Int, Pure]
 
-  private def counted(n: Int, singular: String, plural: String = ""): Plural.Phrase =
+  private[domain] def counted(n: Int, singular: String, plural: String = ""): Plural.Phrase =
     Plural.count(Plural.CountN(n.toLong), Plural.CountSingular(singular), Plural.CountPlural(plural))
 
   // ── auto approvals ─────────────────────────────────────────────────────────────────────────────
@@ -95,23 +103,6 @@ object AutopilotPolicy:
   type Rationale = Rationale.T
   object Rationale extends Newtype[String, Pure]
 
-  enum Verdict:
-    case Approve(reason: Rationale)
-    case Reject(reason: Rationale)
-    case Leave(why: Rationale)
-
-  /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
-  final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
-
-  object PlannedFacts:
-    type Slug = Slug.T
-    object Slug extends Newtype[String, Pure]
-    type SlugFree = SlugFree.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object SlugFree extends Newtype[Boolean, Pure]
-    type Hits = Hits.T
-    object Hits extends Newtype[Int, Pure]
-
   /** An `article-plan` (propose-articles): approved when every article's slug is still free and its filter returns at
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
     * is a person's.
@@ -122,7 +113,7 @@ object AutopilotPolicy:
       minSources: MinSources,
       approvedToday: ApprovedToday,
       cap: Cap
-  ): Verdict =
+  ): Ruling =
     val n = articles.size
     val bad = articles.flatMap { a =>
       if !a.slugFree.value then Some(s"${a.slug}: the slug is taken now")
@@ -130,130 +121,23 @@ object AutopilotPolicy:
         Some(s"${a.slug}: its filter returns ${a.hits} source(s), fewer than $minSources")
       else None
     }
-    if n == 0 then Verdict.Reject(Rationale("the plan names no article"))
-    else if bad.nonEmpty then Verdict.Reject(Rationale(s"checks failed — ${bad.mkString("; ")}"))
+    if n == 0 then Ruling.Reject(Rationale("the plan names no article"))
+    else if bad.nonEmpty then Ruling.Reject(Rationale(s"checks failed — ${bad.mkString("; ")}"))
     else if n > cap.value then
-      Verdict.Leave(
+      Ruling.Leave(
         Rationale(s"${counted(n, "article")} exceed the daily cap of $cap for one research area")
       )
     else if approvedToday.value + n > cap.value then
-      Verdict.Leave(
+      Ruling.Leave(
         Rationale(
           s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow"
         )
       )
     else
-      Verdict.Approve(
+      Ruling.Approve(
         Rationale(
           s"${counted(n, "article")}, every slug free and every filter at least $minSources sources " +
             s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday.value + n} of $cap today"
-        )
-      )
-
-  /** A draft to publish (compile-article), as code reads it. `hits` = what the run's filter returned (None: not known).
-    */
-  final case class DraftFacts(
-      slug: DraftFacts.Slug,
-      create: DraftFacts.Create,
-      filterRecorded: DraftFacts.FilterRecorded,
-      hits: Option[DraftFacts.Hits],
-      problems: List[DraftFacts.Problems],
-      cited: DraftFacts.Cited,
-      slugFree: DraftFacts.SlugFree
-  )
-
-  object DraftFacts:
-    type Slug = Slug.T
-    object Slug extends Newtype[String, Pure]
-    type Create = Create.T
-    object Create extends Newtype[Boolean, Pure]
-    type FilterRecorded = FilterRecorded.T
-    object FilterRecorded extends Newtype[Boolean, Pure]
-    type Hits = Hits.T
-    object Hits extends Newtype[Int, Pure]
-    type Problems = Problems.T
-    object Problems extends Newtype[String, Pure]
-    type Cited = Cited.T
-    object Cited extends Newtype[Int, Pure]
-    type SlugFree = SlugFree.T
-    object SlugFree extends Newtype[Boolean, Pure]
-
-  /** An `article-publish`: approved when the run recorded a filter that returns at least `minSources` sources, the code
-    * self-check left no problem, the text cites a source and (a new article) the slug is still free — within `cap`
-    * drafts a day. A failed check rejects it (the seeding manager compiles again); a reached cap leaves it for
-    * tomorrow.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def articlePublish(d: DraftFacts, minSources: MinSources, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if !d.filterRecorded.value then Verdict.Reject(Rationale("the run records no coverage filter"))
-    else if d.hits.forall(_.value < minSources.value) then
-      Verdict.Reject(
-        Rationale(
-          s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
-        )
-      )
-    else if d.problems.nonEmpty then
-      Verdict.Reject(
-        Rationale(
-          s"the self-check left ${counted(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
-        )
-      )
-    else if d.cited.value == 0 then Verdict.Reject(Rationale("the text cites no source"))
-    else if d.create.value && !d.slugFree.value then Verdict.Reject(Rationale(s"the slug ${d.slug} is taken now"))
-    else if approvedToday.value >= cap.value then
-      Verdict.Leave(Rationale(s"the daily cap of $cap drafts is reached; decided tomorrow"))
-    else
-      Verdict.Approve(
-        Rationale(
-          s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${counted(d.cited.value, "source")} cited, " +
-            s"no self-check problem; ${approvedToday.value + 1} of $cap today"
-        )
-      )
-
-  /** A goal's plan (plan-goal), as code reads it; `depth` = how far below a root goal it is (0 = a root). */
-  final case class GoalPlanFacts(
-      goal: GoalPlanFacts.Goal,
-      subGoals: GoalPlanFacts.SubGoals,
-      queries: GoalPlanFacts.Queries,
-      works: GoalPlanFacts.Works,
-      depth: GoalPlanFacts.Depth
-  )
-
-  object GoalPlanFacts:
-    type Goal = Goal.T
-    object Goal extends Newtype[String, Pure]
-    type SubGoals = SubGoals.T
-    object SubGoals extends Newtype[Int, Pure]
-    type Queries = Queries.T
-    object Queries extends Newtype[Int, Pure]
-    type Works = Works.T
-    object Works extends Newtype[Int, Pure]
-    type Depth = Depth.T
-    object Depth extends Newtype[Int, Pure]
-
-  /** A `goal-plan`: approved when it proposes something, and sub-goals only for a goal less than `maxDepth` deep —
-    * within `cap` plans a day.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def goalPlan(p: GoalPlanFacts, maxDepth: DepthLimit, approvedToday: ApprovedToday, cap: Cap): Verdict =
-    if p.subGoals.value + p.queries.value + p.works.value == 0 then
-      Verdict.Reject(Rationale("the plan proposes nothing"))
-    else if p.subGoals.value > 0 && p.depth.value >= maxDepth.value then
-      Verdict.Reject(
-        Rationale(
-          s"it proposes ${counted(p.subGoals.value, "sub-goal")} for a goal ${depthText(p.depth)}; " +
-            s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
-        )
-      )
-    else if approvedToday.value >= cap.value then
-      Verdict.Leave(Rationale(s"the daily cap of $cap goal plans is reached; decided tomorrow"))
-    else
-      Verdict.Approve(
-        Rationale(
-          s"${counted(p.subGoals.value, "sub-goal")}, ${counted(p.queries.value, "query", "queries")}, ${counted(p.works.value, "work")}" +
-            s" (depth ${p.depth} of $maxDepth); ${approvedToday.value + 1} of $cap today"
         )
       )
 
@@ -348,87 +232,10 @@ object AutopilotPolicy:
         s"$base a day, $n today for a backlog of $backlog" + (if ceiling.value > 0 then s" (at most $ceiling)" else "")
     )
 
-  // ── the next article (#3763) ───────────────────────────────────────────────────────────────────
-
-  /** What decides whether a goal's next article is proposed: its status, its linked articles and how many of them have
-    * not passed review, its approved articles not compiled yet, its seeding manager's state, and its proposal item's
-    * status and when it settled.
-    */
-  final case class NextFacts(
-      goal: NextFacts.Goal,
-      status: Goal.Status.Wire,
-      articles: NextFacts.Articles,
-      unreviewed: NextFacts.Unreviewed,
-      compileOpen: NextFacts.CompileOpen,
-      seedState: Option[Manager.State.Wire],
-      proposeStatus: Option[ItemStatus.Wire],
-      proposeSettled: Option[java.time.Instant]
-  )
-
-  object NextFacts:
-    type Goal = Goal.T
-    object Goal extends Newtype[String, Pure]
-    type Articles = Articles.T
-    object Articles extends Newtype[Int, Pure]
-    type Unreviewed = Unreviewed.T
-    object Unreviewed extends Newtype[Int, Pure]
-    type CompileOpen = CompileOpen.T
-    object CompileOpen extends Newtype[Int, Pure]
-
-  /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while the goal
-    * still has unfinished articles); None when they are all done (or it has none).
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def articlesInProgress(unreviewed: NextFacts.Unreviewed, compileOpen: NextFacts.CompileOpen): Option[Description] =
-    Option.when(unreviewed.value > 0 || compileOpen.value > 0)(
-      Description(
-        "its articles in progress come first (" + List(
-          Option.when(compileOpen.value > 0)(s"$compileOpen to compile"),
-          Option.when(unreviewed.value > 0)(s"$unreviewed to pass review")
-        ).flatten.mkString(", ") +
-          "): a new proposal waits until they are published and reviewed"
-      )
-    )
-
-  /** Whether to propose a goal's NEXT article now (#3763), and why: the goal has articles, every one of them compiled
-    * and past its review, its seeding manager is active, its proposal item is not open, and that proposal settled at
-    * least `cooldownHours` ago (0 = never). A person's goal status `done` ends it. The proposal then goes through the
-    * approvals policy like any other (`article-plan`).
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: CooldownHours): Option[Description] =
-    val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
-    val cooled =
-      f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours.value).toLong * 3600L).isAfter(now))
-    Option.when(
-      cooldownHours.value > 0 && f.status.value != Goal.Status.Done && f.articles.value > 0 &&
-        articlesInProgress(f.unreviewed, f.compileOpen).isEmpty && f.seedState.contains(
-          Manager.State.Active.wire
-        ) && !open && cooled
-    )(
-      Description(
-        s"its ${counted(f.articles.value, "article")} are compiled and passed review: its next article is proposed " +
-          "(the plan goes through the article-plan approvals)"
-      )
-    )
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def depthText(d: GoalPlanFacts.Depth): String =
-    if d.value == 0 then "at the root" else s"$d level(s) below a root"
-
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps count).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val NotePrefix: NotePrefix = NotePrefixValue(Approval.DecidedBy.AutopilotNote)
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def note(v: Verdict): Option[Note] = v match
-    case Verdict.Approve(r) => Some(Note(s"$NotePrefix approved — $r"))
-    case Verdict.Reject(r)  => Some(Note(s"$NotePrefix rejected — $r"))
-    case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -446,175 +253,6 @@ object AutopilotPolicy:
       case Some(p) if !seen(p) && n < 64 => go(p, seen + p, n + 1)
       case _                             => GoalPlanFacts.Depth(n)
     go(slug, Set(slug), 0)
-
-  // ── goal status ────────────────────────────────────────────────────────────────────────────────
-
-  /** What a goal's status is moved on from. `managed` = it has an active seeding manager or watcher; `articles` = the
-    * articles linked to it that exist; `compileOpen` = its seeding manager still has an article to compile (or a plan
-    * or a proposal waiting for a decision); `reviewed` = every linked article has a review ledger with no open MAJOR
-    * and no review item open; `children` = the statuses of its sub-goals.
-    */
-  final case class GoalFacts(
-      slug: GoalFacts.Slug,
-      status: Goal.Status.Wire,
-      managed: GoalFacts.Managed,
-      articles: GoalFacts.Articles,
-      compileOpen: GoalFacts.CompileOpen,
-      reviewed: GoalFacts.Reviewed,
-      children: List[Goal.Status.Wire]
-  )
-
-  object GoalFacts:
-    type Slug = Slug.T
-    object Slug extends Newtype[String, Pure]
-    type Managed = Managed.T
-    object Managed extends Newtype[Boolean, Pure]
-    type Articles = Articles.T
-    object Articles extends Newtype[Int, Pure]
-    type CompileOpen = CompileOpen.T
-    object CompileOpen extends Newtype[Boolean, Pure]
-    type Reviewed = Reviewed.T
-    object Reviewed extends Newtype[Boolean, Pure]
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  private def rank(s: Goal.Status.Wire): Int = Goal.Status.all.indexOf(s)
-
-  /** The status the facts support, when it is FURTHER than the goal's own (never back; `done` and an unknown status are
-    * a person's): seeding once it is managed; compiled once it has an article (a parent: once its sub-goals are
-    * compiled) and nothing is left to compile; reviewed once every article passed its review and every sub-goal is
-    * reviewed. With why, for the log.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def advance(f: GoalFacts): Option[(Goal.Status.Wire, Rationale)] =
-    val cur = rank(f.status)
-    if cur < 0 || f.status.value == Goal.Status.Done then None
-    else
-      val kids = f.children.map(rank)
-      val hasOwn = f.articles.value > 0
-      val compiled = (hasOwn || kids.nonEmpty) && !f.compileOpen.value && kids.forall(
-        _ >= rank(Goal.Status.Wire(Goal.Status.Compiled))
-      )
-      val reviewed =
-        compiled && (!hasOwn || f.reviewed.value) && kids.forall(_ >= rank(Goal.Status.Wire(Goal.Status.Reviewed)))
-      val (target, why) =
-        if reviewed then
-          (
-            Goal.Status.Wire(Goal.Status.Reviewed),
-            (if hasOwn then s"its ${counted(f.articles.value, "article")} passed review" else "") +
-              (if kids.nonEmpty then s"${if hasOwn then ", " else ""}its ${counted(kids.size, "sub-goal")} are reviewed"
-               else "")
-          )
-        else if compiled then
-          (
-            Goal.Status.Wire(Goal.Status.Compiled),
-            (if hasOwn then s"${counted(f.articles.value, "article")} compiled, none left to compile"
-             else "nothing left to compile") +
-              (if kids.nonEmpty then s", its ${counted(kids.size, "sub-goal")} are compiled" else "")
-          )
-        else if f.managed.value then
-          (Goal.Status.Wire(Goal.Status.Seeding), "its seeding manager and watcher are active")
-        else (f.status, "")
-      Option.when(rank(target) > cur)((target, Rationale(why)))
-
-  // ── the managers every goal has ────────────────────────────────────────────────────────────────
-
-  /** A goal as the autopilot sees it: its status, and whether it still needs a plan (it records none and links no
-    * query).
-    */
-  final case class GoalRow(slug: Goal.Slug, status: Goal.Status.Wire, needsPlan: GoalRow.NeedsPlan)
-
-  object GoalRow:
-    type NeedsPlan = NeedsPlan.T
-    object NeedsPlan extends Newtype[Boolean, Pure]
-
-  /** A manager as the autopilot sees it. `planItem` = it has a plan-goal item (any status). */
-  final case class ManagerRow(
-      id: ManagerRow.Id,
-      kind: Manager.Kind.Wire,
-      goal: Option[Goal.Slug],
-      state: Manager.State.Wire,
-      cron: Option[Cron],
-      autoIngest: Option[ManagerRow.AutoIngest],
-      planItem: ManagerRow.PlanItem = ManagerRow.PlanItem(false),
-      extendMinNew: Option[Settings.ExtendMinNew] = None
-  )
-
-  object ManagerRow:
-    type Id = Id.T
-    object Id extends Newtype[String, Pure]:
-      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-      def seed(goal: Goal.Slug): Id = Id(s"seed:${goal.value}")
-      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-      def watch(goal: Goal.Slug): Id = Id(s"watch:${goal.value}")
-    type AutoIngest = AutoIngest.T
-    object AutoIngest extends Newtype[Boolean, Pure]
-    type PlanItem = PlanItem.T
-    object PlanItem extends Newtype[Boolean, Pure]
-
-  /** The settings `ensure` works with. */
-  final case class Settings(
-      watchCron: Cron,
-      seedCron: Cron,
-      finishedWatchCron: Cron,
-      watchIngestPerDay: Settings.WatchIngestPerDay,
-      extendMinNew: Settings.ExtendMinNew
-  )
-
-  object Settings:
-    type WatchIngestPerDay = WatchIngestPerDay.T
-    object WatchIngestPerDay extends Newtype[Int, Pure]
-    type ExtendMinNew = ExtendMinNew.T
-    object ExtendMinNew extends Newtype[Int, Pure]
-
-  /** One change `ensure` asks for. */
-  enum Step:
-    /** Create the goal's seeding manager, active, with its cron (and a plan-goal item before its first proposal when
-      * the goal has no plan).
-      */
-    case CreateSeed(goal: Step.CreateSeed.Goal, cron: Step.CreateSeed.Cron, planFirst: Step.CreateSeed.PlanFirst)
-
-    /** Create the goal's watcher, active, auto-ingest on (at most `perDay` a day), with its cron. */
-    case CreateWatch(goal: Step.CreateWatch.Goal, cron: Step.CreateWatch.Cron, perDay: Step.CreateWatch.PerDay)
-
-    /** Resume a library-wide manager, or one the autopilot paused when it was turned off. */
-    case Resume(id: Step.Resume.Id)
-
-    /** Give a manager with no cron its spread cron. */
-    case SetCron(id: Step.SetCron.Id, cron: Step.SetCron.Cron)
-
-    /** Turn a watcher's auto-ingest on (it never said either way). */
-    case AutoIngestOn(id: Step.AutoIngestOn.Id, perDay: Step.AutoIngestOn.PerDay)
-
-    /** A plan-goal item first, for a goal that still needs a plan. */
-    case AddPlanItem(id: Step.AddPlanItem.Id, goal: Step.AddPlanItem.Goal)
-
-    /** The review manager's extend threshold (it sets none). */
-    case ExtendMinNew(id: Step.ExtendMinNew.Id, n: Step.ExtendMinNew.N)
-
-  object Step:
-    object CreateSeed:
-      export automation.Goal.Slug as Goal
-      export AutopilotPolicy.Cron
-      export GoalRow.NeedsPlan as PlanFirst
-    object CreateWatch:
-      export automation.Goal.Slug as Goal
-      export AutopilotPolicy.Cron
-      export Settings.WatchIngestPerDay as PerDay
-    object Resume:
-      export ManagerRow.Id
-    object SetCron:
-      export ManagerRow.Id
-      export AutopilotPolicy.Cron
-    object AutoIngestOn:
-      export ManagerRow.Id
-      export Settings.WatchIngestPerDay as PerDay
-    object AddPlanItem:
-      export ManagerRow.Id
-      export automation.Goal.Slug as Goal
-    object ExtendMinNew:
-      export ManagerRow.Id
-      export Settings.ExtendMinNew as N
 
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.
@@ -635,15 +273,15 @@ object AutopilotPolicy:
       goals: List[GoalRow],
       managers: List[ManagerRow],
       pausedByAutopilot: Set[ManagerRow.Id],
-      s: Settings
-  ): List[Step] =
+      s: Pacing
+  ): List[Stride] =
     val byId = managers.map(m => m.id -> m).toMap
     val library = List(ManagerRow.Id(ReviewId), ManagerRow.Id(EnrichId)).flatMap { id =>
       byId.get(id).toList.flatMap { m =>
-        Option.when(m.state == Manager.State.Paused.wire)(Step.Resume(id)).toList ++
+        Option.when(m.state == Manager.State.Paused.wire)(Stride.Resume(id)).toList ++
           Option
             .when(id.value == ReviewId && m.extendMinNew.isEmpty && s.extendMinNew.value > 0)(
-              Step.ExtendMinNew(id, s.extendMinNew)
+              Stride.ExtendMinNew(id, s.extendMinNew)
             )
             .toList
       }
@@ -652,23 +290,23 @@ object AutopilotPolicy:
       val done = finished(g.status)
       val seed = byId.get(ManagerRow.Id.seed(g.slug)) match
         case None if done => Nil
-        case None         => List(Step.CreateSeed(g.slug, stagger(s.seedCron, ManagerRow.Id.seed(g.slug)), g.needsPlan))
-        case Some(m)      =>
-          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
-            Option.when(!done && m.cron.isEmpty)(Step.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
+        case None    => List(Stride.CreateSeed(g.slug, stagger(s.seedCron, ManagerRow.Id.seed(g.slug)), g.needsPlan))
+        case Some(m) =>
+          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Stride.Resume(m.id)).toList ++
+            Option.when(!done && m.cron.isEmpty)(Stride.SetCron(m.id, stagger(s.seedCron, m.id))).toList ++
             Option
               .when(!done && g.needsPlan.value && !m.planItem.value && m.state != Manager.State.Stopped.wire)(
-                Step.AddPlanItem(m.id, g.slug)
+                Stride.AddPlanItem(m.id, g.slug)
               )
               .toList
       val watchCron = if done then s.finishedWatchCron else s.watchCron
       val watch = byId.get(ManagerRow.Id.watch(g.slug)) match
         case None =>
-          List(Step.CreateWatch(g.slug, stagger(watchCron, ManagerRow.Id.watch(g.slug)), s.watchIngestPerDay))
+          List(Stride.CreateWatch(g.slug, stagger(watchCron, ManagerRow.Id.watch(g.slug)), s.watchIngestPerDay))
         case Some(m) =>
-          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Step.Resume(m.id)).toList ++
-            Option.when(m.cron.isEmpty)(Step.SetCron(m.id, stagger(watchCron, m.id))).toList ++
-            Option.when(m.autoIngest.isEmpty)(Step.AutoIngestOn(m.id, s.watchIngestPerDay)).toList
+          Option.when(pausedByAutopilot(m.id) && m.state == Manager.State.Paused.wire)(Stride.Resume(m.id)).toList ++
+            Option.when(m.cron.isEmpty)(Stride.SetCron(m.id, stagger(watchCron, m.id))).toList ++
+            Option.when(m.autoIngest.isEmpty)(Stride.AutoIngestOn(m.id, s.watchIngestPerDay)).toList
       seed ++ watch
     }
     library ++ perGoal
@@ -683,20 +321,13 @@ object AutopilotPolicy:
       )
       .map(_.id)
 
-  // ── crons spread per goal ──────────────────────────────────────────────────────────────────────
-
-  /** A stable non-negative hash of `key` (the same on every machine and every run). */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def spread(key: ManagerRow.Id): Int = key.value.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
-
   /** `@daily`, `@weekly` and `@monthly` as five fields at a minute, hour (and weekday or day of the month) of `key`'s
     * own, so dozens of managers with the same cron do not fire in the same minute; any other cron is kept as given.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def stagger(base: Cron, key: ManagerRow.Id): Cron =
-    val h = spread(key)
+    val h = ManagerRow.spread(key)
     val (min, hour, day) = (h % 60, (h / 60) % 24, h / 1440)
     Cron(base.value.trim.toLowerCase match
       case "@daily"   => s"$min $hour * * *"
@@ -713,7 +344,7 @@ object AutopilotPolicy:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extendDue(
       newSources: NewSources,
-      min: Settings.ExtendMinNew,
+      min: Pacing.ExtendMinNew,
       lastExtend: Option[Instant],
       cooldownDays: CooldownDays,
       now: Instant

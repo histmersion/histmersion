@@ -1,5 +1,7 @@
 package com.histmersion
 package util.jobs
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.Problems
 
 import com.histmersion.util.database.Transactor
@@ -97,7 +99,7 @@ object JobRecords:
         sha256.map(h => com.histmersion.api.Sha256(h.value)),
         JobInfo.CreatedAt(now),
         JobInfo.UpdatedAt(now),
-        acquireItem.map(a => Queue.QueueItem.Id(a.value))
+        acquireItem.map(a => QueueItem.Id(a.value))
       )
       val _ = state.updateAndGet(_.updated(job.id, job))
       job

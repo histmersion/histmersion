@@ -9,7 +9,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.research.{Article, ArticleMarkdown, Articles, Backlink, CitedSource}
+import com.histmersion.api.research.{Article, ArticleMarkdown, Backlink, CitedSource}
 import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Citekey
@@ -37,7 +37,7 @@ class ArticlesSuite extends munit.FunSuite:
 
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
   test("put normalises the slug and derives the summary from the lede when none is given"):
-    val a = Articles
+    val a = Article
       .applyPut(
         Article.Slug(" Sea_Peoples "),
         Article.Put(
@@ -55,7 +55,7 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("put rejects a slug that is not a filename, an empty title and an inverted period"):
     assert(
-      Articles
+      Article
         .applyPut(
           Article.Slug("Sea Peoples!"),
           Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body("b"))
@@ -63,12 +63,12 @@ class ArticlesSuite extends munit.FunSuite:
         .isLeft
     )
     assert(
-      Articles
+      Article
         .applyPut(Article.Slug("x"), Article.Put(Article.Title("  "), Article.Kind.Wire("concept"), Article.Body("b")))
         .isLeft
     )
     assertEquals(
-      Articles
+      Article
         .applyPut(
           Article.Slug("x"),
           Article.Put(
@@ -91,7 +91,7 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("put needs both period bounds or neither"):
     assert(
-      Articles
+      Article
         .applyPut(
           Article.Slug("x"),
           Article
@@ -100,7 +100,7 @@ class ArticlesSuite extends munit.FunSuite:
         .isLeft
     )
     assertEquals(
-      Articles
+      Article
         .applyPut(Article.Slug("x"), Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body("b")))
         .toOption
         .get
@@ -110,12 +110,11 @@ class ArticlesSuite extends munit.FunSuite:
 
   // ── patch ────────────────────────────────────────────────────────────────────────────────────
   test("an empty patch changes nothing"):
-    assertEquals(Articles.applyPatch(existing, Article.Patch()), Right(existing))
+    assertEquals(existing.applyPatch(Article.Patch()), Right(existing))
 
   test("tags add/remove/replace leave the body and everything else alone"):
-    val a = Articles
+    val a = existing
       .applyPatch(
-        existing,
         Article.Patch(tags =
           Some(ListPatch(add = List(Write.ListItem("sea-peoples")), remove = List(Write.ListItem("levant"))))
         )
@@ -129,11 +128,8 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("append extends the article instead of re-uploading it"):
     val a =
-      Articles
-        .applyPatch(
-          existing,
-          Article.Patch(append = Some(Article.Patch.Append("## New evidence\n\n[[haak2015_massive]]")))
-        )
+      existing
+        .applyPatch(Article.Patch(append = Some(Article.Patch.Append("## New evidence\n\n[[haak2015_massive]]"))))
         .toOption
         .get
     assert(a.body.value.startsWith("# The Sea Peoples"), a.body)
@@ -141,31 +137,24 @@ class ArticlesSuite extends munit.FunSuite:
     assert(a.body.value.contains("Medinet Habu"), "the original prose survives an append")
 
   test("body replaces, and body + append apply in that order"):
-    val a = Articles
-      .applyPatch(
-        existing,
-        Article.Patch(body = Some(Article.Body("# New")), append = Some(Article.Patch.Append("tail")))
-      )
+    val a = existing
+      .applyPatch(Article.Patch(body = Some(Article.Body("# New")), append = Some(Article.Patch.Append("tail"))))
       .toOption
       .get
     assertEquals(a.body, "# New\n\ntail")
 
   test("period and kind are validated on the way in"):
-    assert(Articles.applyPatch(existing, Article.Patch(period = Some(Period.Input(Year(-100), Year(-900))))).isLeft)
-    assert(Articles.applyPatch(existing, Article.Patch(kind = Some(Article.Kind.Wire("not a kind")))).isLeft)
+    assert(existing.applyPatch(Article.Patch(period = Some(Period.Input(Year(-100), Year(-900))))).isLeft)
+    assert(existing.applyPatch(Article.Patch(kind = Some(Article.Kind.Wire("not a kind")))).isLeft)
     assertEquals(
-      Articles
-        .applyPatch(existing, Article.Patch(period = Some(Period.Input(Year(-1300), Year(-1100)))))
-        .toOption
-        .get
-        .period,
+      existing.applyPatch(Article.Patch(period = Some(Period.Input(Year(-1300), Year(-1100))))).toOption.get.period,
       Some(Period(Year(-1300), Year(-1100)))
     )
 
   test("ifUpdatedAt: matching passes, stale fails with a message telling you what to do"):
-    assertEquals(Articles.precondition(existing, Article.Patch(ifUpdatedAt = existing.updatedAt)), Right(()))
+    assertEquals(existing.precondition(Article.Patch(ifUpdatedAt = existing.updatedAt)), Right(()))
     val e =
-      Articles.precondition(existing, Article.Patch(ifUpdatedAt = Some(Article.UpdatedAt("older")))).left.toOption.get
+      existing.precondition(Article.Patch(ifUpdatedAt = Some(Article.UpdatedAt("older")))).left.toOption.get
     assert(
       e match
         case Problem.Conflict.Stale(t, key, sent, _) =>
@@ -179,15 +168,15 @@ class ArticlesSuite extends munit.FunSuite:
 
   // ── kinds ────────────────────────────────────────────────────────────────────────────────────
   test("a wiki directory maps to the singular kind it holds"):
-    assertEquals(Articles.kindOfDir("concepts"), "concept")
-    assertEquals(Articles.kindOfDir("myths"), "myth")
-    assertEquals(Articles.kindOfDir("Reports"), "report")
-    assertEquals(Articles.kindOfDir("timeline"), "timeline") // already singular, and never "timelin"
-    assertEquals(Articles.kindOfDir("regions"), "region")
+    assertEquals(Article.kindOfDir("concepts"), "concept")
+    assertEquals(Article.kindOfDir("myths"), "myth")
+    assertEquals(Article.kindOfDir("Reports"), "report")
+    assertEquals(Article.kindOfDir("timeline"), "timeline") // already singular, and never "timelin"
+    assertEquals(Article.kindOfDir("regions"), "region")
 
   test("ArticlePut.of round-trips a stored article back into writer form"):
     assertEquals(
-      Articles.applyPut(existing.slug, Article.Put.of(existing)).toOption.get.copy(updatedAt = None),
+      Article.applyPut(existing.slug, Article.Put.of(existing)).toOption.get.copy(updatedAt = None),
       existing.modify(_.updatedAt).setTo(None)
     )
 
@@ -294,7 +283,7 @@ class ArticlesSuite extends munit.FunSuite:
     val body = Article.Body(
       "# Title\n\n## Sources\n\nSource A.\n\n## Disagreements\n\nOld disagreement.\n\n## Conclusion\n\nDone."
     )
-    val result = Articles
+    val result = Article
       .appendUnderSection(body, Article.Section("## Disagreements"), Article.Prose("New disagreement content."))
       .toOption
       .get
@@ -308,12 +297,12 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("appendUnderSection matches case-insensitively and ignores leading #"):
     val body = Article.Body("# Title\n\n## Disagreements\n\nOld.\n\n## End")
-    assert(Articles.appendUnderSection(body, Article.Section("disagreements"), Article.Prose("New.")).isRight)
-    assert(Articles.appendUnderSection(body, Article.Section("## DISAGREEMENTS"), Article.Prose("New.")).isRight)
+    assert(Article.appendUnderSection(body, Article.Section("disagreements"), Article.Prose("New.")).isRight)
+    assert(Article.appendUnderSection(body, Article.Section("## DISAGREEMENTS"), Article.Prose("New.")).isRight)
 
   test("appendUnderSection returns an error when the heading is not found"):
     val body = Article.Body("# Title\n\n## Sources\n\nData.")
-    val result = Articles.appendUnderSection(body, Article.Section("## Missing"), Article.Prose("New content."))
+    val result = Article.appendUnderSection(body, Article.Section("## Missing"), Article.Prose("New content."))
     assert(result.isLeft)
     assertEquals(
       result.left.toOption,
@@ -323,7 +312,7 @@ class ArticlesSuite extends munit.FunSuite:
   test("appendUnderSection appends at the end when the section is the last heading"):
     val body = Article.Body("# Title\n\n## Last Section\n\nSome content.")
     val result =
-      Articles.appendUnderSection(body, Article.Section("## Last Section"), Article.Prose("Added text.")).toOption.get
+      Article.appendUnderSection(body, Article.Section("## Last Section"), Article.Prose("Added text.")).toOption.get
     assert(result.value.endsWith("Added text."), result)
 
   test("patch_article with section targets the append under the right heading"):
@@ -333,7 +322,7 @@ class ArticlesSuite extends munit.FunSuite:
       append = Some(Article.Patch.Append("Fresh dispute.")),
       section = Some(Article.Patch.Section("## Disagreements"))
     )
-    val a = Articles.applyPatch(ex, p).toOption.get
+    val a = ex.applyPatch(p).toOption.get
     val disIdx = a.body.value.indexOf("## Disagreements")
     val newIdx = a.body.value.indexOf("Fresh dispute.")
     assert(disIdx < newIdx, a.body)
@@ -343,7 +332,7 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("a stand-in summary is refused on put and on patch, with what to do instead"):
     for s <- List("placeholder", "TODO", " tbd ", "FIXME.", "Lorem ipsum dolor sit amet", "[placeholder]") do
-      val put = Articles.applyPut(
+      val put = Article.applyPut(
         Article.Slug("x"),
         Article.Put(
           Article.Title("T"),
@@ -353,13 +342,13 @@ class ArticlesSuite extends munit.FunSuite:
         )
       )
       assert(put.left.exists(_.sentence.contains("stand-in")), s"put accepted '$s': $put")
-      val patch = Articles.applyPatch(existing, Article.Patch(summary = Some(Article.SummaryText(s))))
+      val patch = existing.applyPatch(Article.Patch(summary = Some(Article.SummaryText(s))))
       assert(patch.isLeft, s"patch accepted '$s'")
 
   test("a real summary that merely mentions a stand-in word is kept"):
     val s = "The placeholder names in Linear B are discussed; TODO lists are not."
     assertEquals(
-      Articles
+      Article
         .applyPut(
           Article.Slug("x"),
           Article.Put(
@@ -375,9 +364,9 @@ class ArticlesSuite extends munit.FunSuite:
 
   test("without a summary, a body that opens with `## Summary` supplies it"):
     val body = Article.Body("## Summary\n\n*Hephaestus is the divine craftsman.*\n\n## Evidence\n\nMore.")
-    assertEquals(Articles.lede(body), Some("Hephaestus is the divine craftsman."))
+    assertEquals(Article.lede(body), Some("Hephaestus is the divine craftsman."))
     assertEquals(
-      Articles
+      Article
         .applyPut(Article.Slug("x"), Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), body))
         .map(_.summary),
       Right(Some("Hephaestus is the divine craftsman."))

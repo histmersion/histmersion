@@ -1,5 +1,22 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.agents.GenerateRequest
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.agents.ProbeRequest
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.FallthroughSet
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -13,7 +30,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{AgentRole, AgentsApi, AgentsMarkdown, ModelChains, PlanQuota}
-import com.histmersion.api.research.Articles
 import com.histmersion.util.console.Console
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.library.Citekey
@@ -40,7 +56,7 @@ object AgentCmd:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
-  private[cli] def follow(c: Client, id: Agents.RunInfo.Id, last: String)(using
+  private[cli] def follow(c: Client, id: RunInfo.Id, last: String)(using
       console: Console
   ): Either[Cli.Error, Unit] =
     c.call(AgentsApi.run)(id) match
@@ -82,7 +98,7 @@ object AgentCmd:
     case Doctor(offline: Boolean)
     case Probe(ck: String, model: Option[String])
     case Runs(
-        f: ListFilters.RunFilter,
+        f: RunFilter,
         limit: Option[Int],
         before: Option[String],
         json: Cli.JsonOutput
@@ -91,7 +107,7 @@ object AgentCmd:
     case Show(id: String, msgs: Boolean, fol: Boolean)
     case Compare(ids: List[String], json: Cli.JsonOutput)
     case Approvals(
-        f: ListFilters.ApprovalFilter,
+        f: ApprovalFilter,
         limit: Option[Int],
         before: Option[String],
         json: Cli.JsonOutput
@@ -149,15 +165,15 @@ object AgentCmd:
                 )
           else
             limits
-              .traverse(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l)))
+              .traverse(l => api.automation.modelchains.Limit.parse(api.automation.modelchains.Limit.Spec(l)))
               .left
               .map(m => Cli.Error(m))
               .flatMap { ls =>
                 c.call(AgentsApi.setAllowance)(
-                  ModelChains.AllowanceSet(
-                    ModelChains.AllowanceSet.Target(target),
+                  AllowanceSet(
+                    AllowanceSet.Target(target),
                     ls.map(_.spec),
-                    ModelChains.AllowanceSet.ReservePct(reserve)
+                    AllowanceSet.ReservePct(reserve)
                   )
                 ).map(a => Cli.out.println(AgentsMarkdown.allowance(a)))
               }
@@ -245,37 +261,38 @@ object AgentCmd:
         case Command.ModelsShow() => c.call(AgentsApi.models)(()).map(m => Cli.out.println(AgentsMarkdown.models(m)))
         case Command.ModelsSet(role, ms) =>
           c.call(AgentsApi.setChain)(
-            (AgentRole.Wire(role), ModelChains.ChainSet(ms.map(ModelChains.ChainSet.Models(_))))
+            (AgentRole.Wire(role), ChainSet(ms.map(ChainSet.Models(_))))
           ).map(r => Cli.out.println(AgentsMarkdown.roleChain(r)))
         case Command.ModelsReset(role) =>
           c.call(AgentsApi.resetChain)(AgentRole.Wire(role)).map(r => Cli.out.println(AgentsMarkdown.roleChain(r)))
         case Command.QuotaShow()  => c.call(AgentsApi.quota)(()).map(q => Cli.out.println(AgentsMarkdown.quota(q)))
         case Command.QuotaHold(p) =>
           c.call(AgentsApi.setPool)(
-            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold.Hold)))
+            (PlanQuota.PoolIdText(p), PoolSet(hold = Some(PoolSet.Hold.Hold)))
           ).map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         case Command.QuotaRelease(p) =>
           c.call(AgentsApi.setPool)(
-            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(hold = Some(PlanQuota.PoolSet.Hold.Release)))
+            (PlanQuota.PoolIdText(p), PoolSet(hold = Some(PoolSet.Hold.Release)))
           ).map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         case Command.QuotaFloors(p, change) =>
           val floors = change match
             case QuotaFloorsChange.Set(f) => f
             case QuotaFloorsChange.Reset  => ""
           c.call(AgentsApi.setPool)(
-            (PlanQuota.PoolIdText(p), PlanQuota.PoolSet(floors = Some(PlanQuota.PoolSet.Floors(floors))))
+            (PlanQuota.PoolIdText(p), PoolSet(floors = Some(PoolSet.Floors(floors))))
           ).map(x => Cli.out.println(AgentsMarkdown.pool(x)))
         case Command.QuotaFallthrough(role, on) =>
           c.call(AgentsApi.setFallthrough)(
             (
               PlanQuota.PoolIdText(role),
-              PlanQuota.FallthroughSet((if on then PlanQuota.FallthroughSet.Fallthrough.Fallthrough
-                                        else PlanQuota.FallthroughSet.Fallthrough.Stop))
+              FallthroughSet((if on then FallthroughSet.Fallthrough.Fallthrough
+                              else FallthroughSet.Fallthrough.Stop))
             )
           ).map(q => Cli.out.println(AgentsMarkdown.quota(q)))
         case Command.QuotaRefresh(p) =>
-          c.call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(p.map(PlanQuota.QuotaRefresh.Pool(_))))
-            .map(r => Cli.out.println(AgentsMarkdown.refreshed(r)))
+          c.call(AgentsApi.refreshQuota)(
+            api.automation.planquota.QuotaRefresh(p.map(api.automation.planquota.QuotaRefresh.Pool(_)))
+          ).map(r => Cli.out.println(AgentsMarkdown.refreshed(r)))
         case Command.Control(action, id, usd, tokens) =>
           c.call(AgentsApi.control)(
             (RunInfo.Id(id), action, usd.map(RunRequest.BudgetUsd(_)), tokens.map(RunRequest.BudgetTokens(_)))
@@ -295,7 +312,7 @@ object AgentCmd:
                   r.budgetTokens.map(RunRequest.BudgetTokens(_)),
                   Option.when(r.fix)(RunRequest.Fix.Fix),
                   r.rounds.map(RunRequest.Rounds(_)),
-                  r.item.map(Queue.QueueItem.Id(_)),
+                  r.item.map(QueueItem.Id(_)),
                   r.title.map(RunRequest.Title(_)),
                   r.kind.map(RunRequest.Kind(_)),
                   r.query.map(RunRequest.Query(_)),

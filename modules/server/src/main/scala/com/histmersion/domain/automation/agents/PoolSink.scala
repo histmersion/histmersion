@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
 import com.histmersion.api.automation.PlanQuota
 
 import com.histmersion.server.agents.PlanPools

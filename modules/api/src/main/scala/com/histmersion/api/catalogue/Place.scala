@@ -18,8 +18,8 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.api.StrictJson
 import com.histmersion.api.WireEnum
 import com.histmersion.api.Write
-import com.histmersion.api.{GeoPoint, Write, YearFmt}
-import com.histmersion.api.{WireEnum, YearFmt}
+import com.histmersion.api.{GeoPoint, Write}
+import com.histmersion.api.WireEnum
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -304,8 +304,8 @@ object Place:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def describe(dating: Dating, start: Option[Year], end: Option[Year]): Description = dating match
       case Unknown => Description("date unknown")
-      case EndOnly => Description(end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown"))
-      case Stated  => Description(YearFmt.openPeriod(start, end, none = ("")))
+      case EndOnly => Description(end.fold("date unknown")(e => s"end ${Year.show(e)}, start unknown"))
+      case Stated  => Description(Year.openPeriod(start, end, none = ("")))
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   @tolerated(LintRule.G47Root, "pending G47 (no FQN noise)")
@@ -1057,7 +1057,7 @@ object Place:
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def periodText(start: Option[Year], end: Option[Year]): Dating.Description =
-      Dating.Description(YearFmt.openPeriod(start, end))
+      Dating.Description(Year.openPeriod(start, end))
 
   final case class RebuildResult(
       links: RebuildResult.Links,
@@ -1210,8 +1210,7 @@ object Place:
     val NoBoundaryNote: Card.Note = Card.Note("point only — boundary not yet available")
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def isPeople(kind: Shape.IsPeopleKind): Boolean = (kind == Shape.IsPeopleKind(Kind.People))
+    def isPeople(kind: IsPeopleKind): Boolean = (kind == IsPeopleKind(Kind.People))
 
     val PeopleNote: Card.Note = Card.Note("a people or tribe — placed at a representative point, not an area")
 

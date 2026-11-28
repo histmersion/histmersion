@@ -1,5 +1,18 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.agents.MessageInfo
+import com.histmersion.api.automation.agents.StepKind
+import com.histmersion.api.automation.agents.WouldWrite
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.managers.HintProposal
 import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.jsoniterjson.Json
 
@@ -81,14 +94,14 @@ object AgentRepo:
       cost: BigDecimal,
       targetKind: Option[RunInfo.TargetKind],
       params: RunParams,
-      acquireItem: Option[Queue.QueueItem.Id],
+      acquireItem: Option[QueueItem.Id],
       goal: Option[Goal.Slug],
       parent: Option[RunInfo.Id],
       origin: Option[RunInfo.Origin],
       resumeAt: Option[RunInfo.ResumeAt],
       dryRun: RunInfo.DryRun,
-      managerId: Option[Managers.ManagerInfo.Id],
-      managerItem: Option[Managers.ManagerItem.Id],
+      managerId: Option[ManagerInfo.Id],
+      managerItem: Option[ManagerItem.Id],
       heartbeatAt: Option[RunInfo.HeartbeatAt],
       creator: Option[Creation]
   ) derives DbCodec
@@ -207,7 +220,7 @@ object AgentRepo:
     )
 
   /** A run that predates `jobs.origin` was started by a person. */
-  private val originExpr = sql"coalesce(j.origin, ${Origin.Person.wire})"
+  private val originExpr = sql"coalesce(j.origin, ${api.automation.agents.Origin.Person.wire})"
 
   /** ` AND (j.model is one of them OR a step of the run used one of them)` — `expr` maps a model to what is matched
     * (itself, or its provider).
@@ -313,7 +326,7 @@ object AgentRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def forManager(
-      managerId: Managers.ManagerInfo.Id,
+      managerId: ManagerInfo.Id,
       active: ActiveOnly = ActiveOnly(false),
       limit: PageSize = PageSize(200)
   )(using DbCon): Vector[RunInfo] =
@@ -562,7 +575,7 @@ object AgentRepo:
       r.current,
       r.edgeKind,
       r.target,
-      Agents.ApprovalInfo.Evidence(""),
+      ApprovalInfo.Evidence(""),
       None,
       r.state,
       r.note,
@@ -588,7 +601,7 @@ object AgentRepo:
           .modify(_.evidence)
           .setTo(ApprovalInfo.Evidence(d.flatMap(_.summary).map(_.value).getOrElse("")))
       case Some(ApprovalKind.HintEffect) =>
-        val p = Jsonb.read[Managers.HintProposal](r.proposal)
+        val p = Jsonb.read[HintProposal](r.proposal)
         base
           .modify(_.hintEffect)
           .setTo(p)
@@ -794,18 +807,18 @@ object AgentRepo:
       .map(info)
 
   /** Every OPEN approval, light (id, kind, subject, created), oldest first — what the digest groups. */
-  def openLight()(using DbCon): List[ApprovalDigest.Open] =
+  def openLight()(using DbCon): List[api.automation.approvaldigest.Open] =
     sql"""SELECT id, kind, subject, to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
           FROM approvals WHERE state = 'open' ORDER BY id"""
       .query[(Long, String, Option[String], String)]
       .run()
       .toList
       .map((i, k, s, c) =>
-        ApprovalDigest.Open(
-          ApprovalDigest.Open.Id(i),
-          ApprovalDigest.Open.Kind(k),
-          s.map(ApprovalDigest.Open.Subject(_)),
-          ApprovalDigest.Open.CreatedAt(c)
+        api.automation.approvaldigest.Open(
+          api.automation.approvaldigest.Open.Id(i),
+          api.automation.approvaldigest.Open.Kind(k),
+          s.map(api.automation.approvaldigest.Open.Subject(_)),
+          api.automation.approvaldigest.Open.CreatedAt(c)
         )
       )
 

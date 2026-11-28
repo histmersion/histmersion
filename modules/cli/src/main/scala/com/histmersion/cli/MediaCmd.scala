@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.cli.AllOrFirst.traverse
 
 import com.histmersion.api.media.MediaMarkdown
@@ -125,8 +127,8 @@ object MediaCmd:
               if noCalibre then
                 Right(
                   (
-                    MediaCoversReport((if dry then RepairAcquire.RepairRequest.DryRun.DryRun
-                                       else RepairAcquire.RepairRequest.DryRun.Apply)),
+                    MediaCoversReport((if dry then RepairRequest.DryRun.DryRun
+                                       else RepairRequest.DryRun.Apply)),
                     Nil
                   )
                 )
@@ -136,7 +138,7 @@ object MediaCmd:
                   Calibre(Settings.app.cli.calibre),
                   only.map(Citekey(_)),
                   (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse),
-                  (if dry then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
+                  (if dry then RepairRequest.DryRun.DryRun else RepairRequest.DryRun.Apply),
                   limit.map(Paging.Limit(_))
                 )
             (calReport, asks) = cal
@@ -147,8 +149,8 @@ object MediaCmd:
                 asks.traverse((k, isbn) =>
                   c.mediaCovers(
                     MediaCoversRequest(
-                      dryRun = (if dry then RepairAcquire.RepairRequest.DryRun.DryRun
-                                else RepairAcquire.RepairRequest.DryRun.Apply),
+                      dryRun = (if dry then RepairRequest.DryRun.DryRun
+                                else RepairRequest.DryRun.Apply),
                       citekey = Some(k),
                       refresh =
                         (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse),
@@ -161,7 +163,7 @@ object MediaCmd:
               Cli.out.println(MediaMarkdown.mediaCoversReport(olReports.foldLeft(calReport)(MediaCoversReport.combine)))
             // 3. the rest is the server's: Open Library by the records' ISBNs, and the illustrations
             req = MediaCoversRequest(
-              (if dry then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
+              (if dry then RepairRequest.DryRun.DryRun else RepairRequest.DryRun.Apply),
               limit.map(MediaCoversRequest.Limit(_)),
               only.map(Citekey(_)),
               (if refresh then MediaImportRequest.Refresh.Refresh else MediaImportRequest.Refresh.Reuse),

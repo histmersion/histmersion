@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
@@ -12,13 +14,11 @@ import com.histmersion.api.catalogue.{
   EventCatalogueRef,
   EventGeo,
   EventLead,
-  EventLeads,
   EventLinkCandidate,
   EventPrecision,
   EventSummary,
   EventTaxonomy,
-  EventTier,
-  SiteTypes
+  EventTier
 }
 import com.histmersion.api.views.EventDetail
 import com.histmersion.api.catalogue.Place
@@ -42,7 +42,7 @@ class EventMarkersSuite extends munit.FunSuite:
 
   test("the registry has an icon for every event kind and every site type, each a currentColor SVG"):
     val missing =
-      (EventTaxonomy.kinds.map(_.icon.value) ++ SiteTypes.all.map(_.icon.value)).filterNot(Glyphs.inner.contains)
+      (EventTaxonomy.kinds.map(_.icon.value) ++ SiteType.all.map(_.icon.value)).filterNot(Glyphs.inner.contains)
     assertEquals(missing, Nil)
     val svg = Glyphs.svg(Glyphs.Name("swords")).value
     assert(svg.startsWith("""<svg class="glyph" viewBox="0 0 24 24"""") && svg.contains("<polyline"), svg)
@@ -57,7 +57,7 @@ class EventMarkersSuite extends munit.FunSuite:
   test("within each shape every glyph is its own: event kinds, site types, source kinds"):
     def dupes[A](xs: List[A]) = xs.groupBy(identity).collect { case (k, v) if v.size > 1 => k }.toList
     assertEquals(dupes(EventTaxonomy.kinds.map(_.icon.value)), Nil)
-    assertEquals(dupes(SiteTypes.all.map(_.icon.value) :+ CardIcons.Unknown), Nil)
+    assertEquals(dupes(SiteType.all.map(_.icon.value) :+ CardIcons.Unknown), Nil)
     assertEquals(dupes(Source.Kinds.all.map(CardIcons.sourceKind(_, marker = true))), Nil)
     // the glyphs that blurred at ~15 px are gone from the markers: they are no longer vendored at all
     List("biohazard", "wheat-off", "handshake", "theater", "newspaper", "cog").foreach(n =>
@@ -150,7 +150,7 @@ class EventMarkersSuite extends munit.FunSuite:
   ):
     val k = MapKey.html(events = MapKey.Events.Shown, sites = MapKey.Sites.Shown).value
     EventTaxonomy.kinds.foreach(x => assert(k.contains(x.label.value), x.label))
-    SiteTypes.all.foreach(x => assert(k.contains(Html.text(x.label.value).value), x.label))
+    SiteType.all.foreach(x => assert(k.contains(Html.text(x.label.value).value), x.label))
     assert(k.contains("catalogue only (a lead)"))
     assert(!MapKey.html(events = MapKey.Events.Hidden, sites = MapKey.Sites.Shown).value.contains("natural events"))
     val bare = MapKey.html(events = MapKey.Events.Hidden, sites = MapKey.Sites.Hidden).value
@@ -196,7 +196,7 @@ class EventMarkersSuite extends munit.FunSuite:
         .value
         .contains("hd-ev--catalogue")
     )
-    assertEquals(LayerFilters.siteTypes.size, 1 + SiteTypes.all.size)
+    assertEquals(LayerFilters.siteTypes.size, 1 + SiteType.all.size)
     assert(LayerFilters.siteTypes.tail.forall(_.icon.value.contains("hd-badge--circle")))
     assertEquals(LayerFilters.siteTypes.head.icon, Icon.html(PointKinds.Sites.icon))
     // each menu's "all" says which menu it is: the events' square, the tier's solid-and-dashed pair
@@ -308,7 +308,7 @@ class EventMarkersSuite extends munit.FunSuite:
           EventLead.Tier("catalogue"),
           EventLead.Years("1600 BCE"),
           EventLead.Text("No source…"),
-          EventLeads.actions(Event.Id("e"), EventLead.Label("E"), EventLead.Years("1600 BCE"), LeadFacts.Proposed(1))
+          EventLead.actionsFor(Event.Id("e"), EventLead.Label("E"), EventLead.Years("1600 BCE"), LeadFacts.Proposed(1))
         )
       )
     )

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.StepKind
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.WouldWrite
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 

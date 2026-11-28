@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.autopilot
+
+import com.histmersion.api.automation.managers.ManagerInfo
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
@@ -110,7 +112,7 @@ object AutopilotRepo:
 
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def unpaused(managerId: Managers.ManagerInfo.Id)(using DbCon): Unit =
+  def unpaused(managerId: ManagerInfo.Id)(using DbCon): Unit =
     made()
     Unused(
       sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run(),

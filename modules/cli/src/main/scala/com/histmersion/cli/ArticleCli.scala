@@ -26,7 +26,6 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.research.CritiqueReason
 import com.histmersion.util.console.Console
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.research.Articles
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
@@ -82,7 +81,7 @@ object ArticleCli:
     (top ++ sub).sortBy((p, _) => p.toString)
 
   private def kindOf(dir: Path): Article.Kind.Wire =
-    Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
+    Article.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
 
   private def markdown(dir: Path): List[Path] =
     if !Files.isDirectory(dir) then Nil
@@ -199,7 +198,7 @@ object ArticleCli:
         .findFirstMatchIn(text.value)
         .map(_.group(1).trim)
         .filter(_.nonEmpty)
-        .getOrElse(Articles.Kinds.head)
+        .getOrElse(Article.Kinds.head)
     )
 
   // ── the `histmersion article …` subcommands ──────────────────────────────────────────────────────

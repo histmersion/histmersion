@@ -1,6 +1,27 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.autopilot.FocusGoal
+import com.histmersion.api.automation.autopilot.FocusWaiting
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.EnqueueKind
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.autopilot.GoalProgress
+import com.histmersion.api.automation.agentscheduler.Waiting
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.StrategyLine
+import com.histmersion.api.automation.agentscheduler.PoolUse
+import com.histmersion.api.automation.approvaldigest.KindGroup
+import com.histmersion.api.automation.autopilot.DrainInfo
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.api.automation.Manager
 import com.histmersion.testsupport.ComparedByValue.given
@@ -32,9 +53,9 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.badge(
         ManagerInfo(
-          Managers.ManagerInfo.Id("review"),
-          Managers.ManagerInfo.Kind("review"),
-          state = Managers.ManagerInfo.State("paused"),
+          ManagerInfo.Id("review"),
+          ManagerInfo.Kind("review"),
+          state = ManagerInfo.State("paused"),
           statusNote = Some(Manager.Status.parse("paused"))
         )
       ),
@@ -43,8 +64,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.badge(
         ManagerInfo(
-          Managers.ManagerInfo.Id("review"),
-          Managers.ManagerInfo.Kind("review"),
+          ManagerInfo.Id("review"),
+          ManagerInfo.Kind("review"),
           statusNote = Some(Manager.Status.parse("starved: skeptic chain below its plan floor"))
         )
       ),
@@ -53,8 +74,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.badge(
         ManagerInfo(
-          Managers.ManagerInfo.Id("review"),
-          Managers.ManagerInfo.Kind("review"),
+          ManagerInfo.Id("review"),
+          ManagerInfo.Kind("review"),
           statusNote = Some(Manager.Status.parse("at capacity (2 runs in flight, 3 pending)"))
         )
       ),
@@ -63,8 +84,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.badge(
         ManagerInfo(
-          Managers.ManagerInfo.Id("review"),
-          Managers.ManagerInfo.Kind("review"),
+          ManagerInfo.Id("review"),
+          ManagerInfo.Kind("review"),
           statusNote = Some(Manager.Status.parse("idle"))
         )
       ),
@@ -73,8 +94,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.badge(
         ManagerInfo(
-          Managers.ManagerInfo.Id("seed:g"),
-          Managers.ManagerInfo.Kind("seed"),
+          ManagerInfo.Id("seed:g"),
+          ManagerInfo.Kind("seed"),
           statusNote = Some(Manager.Status.parse("focus: its goal waits for a slot — idle"))
         )
       ),
@@ -83,8 +104,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.badge(
         ManagerInfo(
-          Managers.ManagerInfo.Id("review"),
-          Managers.ManagerInfo.Kind("review"),
+          ManagerInfo.Id("review"),
+          ManagerInfo.Kind("review"),
           statusNote = Some(Manager.Status.parse("3 pending"))
         )
       ),
@@ -109,17 +130,20 @@ class ManagersViewSuite extends munit.FunSuite:
 
   test("an item the focus holds is not released by hand; a person's hold is"):
     val focus = ManagerItem(
-      Managers.ManagerItem.Id(1),
-      Managers.ManagerInfo.Id("seed:g"),
+      ManagerItem.Id(1),
+      ManagerInfo.Id("seed:g"),
       ManagerItem.Kind(ProposeArticles),
-      Managers.ManagerItem.Target("g"),
-      Managers.ManagerItem.Status("held"),
-      hold = Some(Hold(reason = Managers.Rationale("focus: waits"), focus = Some(Managers.Hold.Focus("g"))))
+      ManagerItem.Target("g"),
+      ManagerItem.Status("held"),
+      hold = Some(
+        api.automation.managers
+          .Hold(reason = Managers.Rationale("focus: waits"), focus = Some(api.automation.managers.Hold.Focus("g")))
+      )
     )
     assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
     assertEquals(
       ManagersView.itemActionsFor(
-        focus.modify(_.hold).setTo(Some(Hold(reason = Managers.Rationale("held by a person"))))
+        focus.modify(_.hold).setTo(Some(api.automation.managers.Hold(reason = Managers.Rationale("held by a person"))))
       ),
       List("release", "priority", "skip")
     )
@@ -160,9 +184,9 @@ class ManagersViewSuite extends munit.FunSuite:
 
   test("settings form: blank is the default; it reads back what it shows; a bad number is refused"):
     val c = ManagerConfig(
-      maxRuns = Some(Managers.ManagerConfig.MaxRuns(3)),
-      includeTags = Some(List(Managers.ManagerConfig.IncludeTags("a"), Managers.ManagerConfig.IncludeTags("b"))),
-      models = Some(List(Agents.ModelOverride(AgentRole.Wire("fixer"), Agents.ModelOverride.Model("claude-code:opus"))))
+      maxRuns = Some(ManagerConfig.MaxRuns(3)),
+      includeTags = Some(List(ManagerConfig.IncludeTags("a"), ManagerConfig.IncludeTags("b"))),
+      models = Some(List(ModelOverride(AgentRole.Wire("fixer"), ModelOverride.Model("claude-code:opus"))))
     )
     assertEquals(ManagersView.config(ManagersView.fields(c)), Right(c))
     assertEquals(ManagersView.config(Map.empty), Right(ManagerConfig()))
@@ -173,68 +197,68 @@ class ManagersViewSuite extends munit.FunSuite:
   test("hint box: text alone, scoped, with an action; a hold needs a date or a source"):
     assertEquals(
       ManagersView.hint(
-        Managers.HintAdd.Text("prefer 2019"),
-        Managers.HintAdd.Item(""),
-        once = Managers.HintAdd.Once.Standing,
-        Managers.HintEffect.Action("none"),
-        Managers.HintEffect.Targets(""),
-        Managers.HintEffect.Tag(""),
-        Managers.HintEffect.Until(""),
-        Managers.HintEffect.UntilSource("")
+        HintAdd.Text("prefer 2019"),
+        HintAdd.Item(""),
+        once = HintAdd.Once.Standing,
+        HintEffect.Action("none"),
+        HintEffect.Targets(""),
+        HintEffect.Tag(""),
+        HintEffect.Until(""),
+        HintEffect.UntilSource("")
       ),
-      Right(HintAdd(Managers.HintAdd.Text("prefer 2019"), None, Some(Managers.HintAdd.Once.Standing)))
+      Right(HintAdd(HintAdd.Text("prefer 2019"), None, Some(HintAdd.Once.Standing)))
     )
     assertEquals(
       ManagersView
         .hint(
-          Managers.HintAdd.Text("x"),
-          Managers.HintAdd.Item("tin"),
-          once = Managers.HintAdd.Once.Once,
-          Managers.HintEffect.Action("none"),
-          Managers.HintEffect.Targets(""),
-          Managers.HintEffect.Tag(""),
-          Managers.HintEffect.Until(""),
-          Managers.HintEffect.UntilSource("")
+          HintAdd.Text("x"),
+          HintAdd.Item("tin"),
+          once = HintAdd.Once.Once,
+          HintEffect.Action("none"),
+          HintEffect.Targets(""),
+          HintEffect.Tag(""),
+          HintEffect.Until(""),
+          HintEffect.UntilSource("")
         )
         .map(_.item),
       Right(Some("tin"))
     )
     val p = ManagersView.hint(
-      Managers.HintAdd.Text("first"),
-      Managers.HintAdd.Item(""),
-      once = Managers.HintAdd.Once.Standing,
-      Managers.HintEffect.Action("prioritise"),
-      Managers.HintEffect.Targets("a, b"),
-      Managers.HintEffect.Tag(""),
-      Managers.HintEffect.Until(""),
-      Managers.HintEffect.UntilSource("")
+      HintAdd.Text("first"),
+      HintAdd.Item(""),
+      once = HintAdd.Once.Standing,
+      HintEffect.Action("prioritise"),
+      HintEffect.Targets("a, b"),
+      HintEffect.Tag(""),
+      HintEffect.Until(""),
+      HintEffect.UntilSource("")
     )
     assertEquals(p.map(_.effect.map(e => (e.action, e.targets))), Right(Some(("prioritise", List("a", "b")))))
     assert(
       ManagersView
         .hint(
-          Managers.HintAdd.Text("wait"),
-          Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once.Standing,
-          Managers.HintEffect.Action("hold"),
-          Managers.HintEffect.Targets("a"),
-          Managers.HintEffect.Tag(""),
-          Managers.HintEffect.Until(""),
-          Managers.HintEffect.UntilSource("")
+          HintAdd.Text("wait"),
+          HintAdd.Item(""),
+          once = HintAdd.Once.Standing,
+          HintEffect.Action("hold"),
+          HintEffect.Targets("a"),
+          HintEffect.Tag(""),
+          HintEffect.Until(""),
+          HintEffect.UntilSource("")
         )
         .isLeft
     )
     assertEquals(
       ManagersView
         .hint(
-          Managers.HintAdd.Text("wait"),
-          Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once.Standing,
-          Managers.HintEffect.Action("hold"),
-          Managers.HintEffect.Targets("a"),
-          Managers.HintEffect.Tag(""),
-          Managers.HintEffect.Until("2026-11-01"),
-          Managers.HintEffect.UntilSource("")
+          HintAdd.Text("wait"),
+          HintAdd.Item(""),
+          once = HintAdd.Once.Standing,
+          HintEffect.Action("hold"),
+          HintEffect.Targets("a"),
+          HintEffect.Tag(""),
+          HintEffect.Until("2026-11-01"),
+          HintEffect.UntilSource("")
         )
         .map(_.effect.flatMap(_.until)),
       Right(Some("2026-11-01"))
@@ -242,28 +266,28 @@ class ManagersViewSuite extends munit.FunSuite:
     assert(
       ManagersView
         .hint(
-          Managers.HintAdd.Text("skip"),
-          Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once.Standing,
-          Managers.HintEffect.Action("skip"),
-          Managers.HintEffect.Targets(""),
-          Managers.HintEffect.Tag(""),
-          Managers.HintEffect.Until(""),
-          Managers.HintEffect.UntilSource("")
+          HintAdd.Text("skip"),
+          HintAdd.Item(""),
+          once = HintAdd.Once.Standing,
+          HintEffect.Action("skip"),
+          HintEffect.Targets(""),
+          HintEffect.Tag(""),
+          HintEffect.Until(""),
+          HintEffect.UntilSource("")
         )
         .isLeft
     )
     assert(
       ManagersView
         .hint(
-          Managers.HintAdd.Text(" "),
-          Managers.HintAdd.Item(""),
-          once = Managers.HintAdd.Once.Standing,
-          Managers.HintEffect.Action("none"),
-          Managers.HintEffect.Targets(""),
-          Managers.HintEffect.Tag(""),
-          Managers.HintEffect.Until(""),
-          Managers.HintEffect.UntilSource("")
+          HintAdd.Text(" "),
+          HintAdd.Item(""),
+          once = HintAdd.Once.Standing,
+          HintEffect.Action("none"),
+          HintEffect.Targets(""),
+          HintEffect.Tag(""),
+          HintEffect.Until(""),
+          HintEffect.UntilSource("")
         )
         .isLeft
     )
@@ -288,10 +312,10 @@ class ManagersViewSuite extends munit.FunSuite:
   test("phase 2 settings: stale days, infer filter, seed checks round-trip through the form"):
     val f = ManagersView.fields(
       ManagerConfig(
-        staleAfterDays = Some(Managers.ManagerConfig.StaleAfterDays(30)),
-        inferFilter = Some(Managers.ManagerConfig.InferFilter.Explicit),
-        minSources = Some(Managers.ManagerConfig.MinSources(4)),
-        maxArticles = Some(Managers.ManagerConfig.MaxArticles(3))
+        staleAfterDays = Some(ManagerConfig.StaleAfterDays(30)),
+        inferFilter = Some(ManagerConfig.InferFilter.Explicit),
+        minSources = Some(ManagerConfig.MinSources(4)),
+        maxArticles = Some(ManagerConfig.MaxArticles(3))
       )
     )
     assertEquals(
@@ -324,8 +348,8 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     assert(ManagersView.config(Map(ManagersView.ConfigKey("dailyUsd") -> ManagersView.ConfigText("-1"))).isLeft)
     val m = ManagerInfo(
-      Managers.ManagerInfo.Id("review"),
-      Managers.ManagerInfo.Kind("review"),
+      ManagerInfo.Id("review"),
+      ManagerInfo.Kind("review"),
       effective = ManagerConfig(dailyUsd = Some(ManagerConfig.DailyUsd(2.0))),
       spentTodayUsd = ManagerInfo.SpentTodayUsd(0.5),
       tokensToday = ManagerInfo.TokensToday(12345L)
@@ -334,8 +358,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersMarkdown.today(
         ManagerInfo(
-          Managers.ManagerInfo.Id("enrich"),
-          Managers.ManagerInfo.Kind("enrich"),
+          ManagerInfo.Id("enrich"),
+          ManagerInfo.Kind("enrich"),
           spentTodayUsd = ManagerInfo.SpentTodayUsd(0.012)
         )
       ),
@@ -344,14 +368,14 @@ class ManagersViewSuite extends munit.FunSuite:
 
   test("the page buttons' line: one item, several, nothing to enrich"):
     val i = ManagerItem(
-      Managers.ManagerItem.Id(7),
-      Managers.ManagerInfo.Id("review"),
+      ManagerItem.Id(7),
+      ManagerInfo.Id("review"),
       ManagerItem.Kind(ArticleReview),
-      Managers.ManagerItem.Target("tin"),
-      Managers.ManagerItem.Status("pending")
+      ManagerItem.Target("tin"),
+      ManagerItem.Status("pending")
     )
     assertEquals(
-      ManagersView.enqueuedNote(EnqueueKind.Review, EnqueueResult(Managers.ManagerInfo.Id("review"), List(i))),
+      ManagersView.enqueuedNote(EnqueueKind.Review, EnqueueResult(ManagerInfo.Id("review"), List(i))),
       "queued for review (item #7, pending)"
     )
     assertEquals(
@@ -359,9 +383,9 @@ class ManagersViewSuite extends munit.FunSuite:
         .enqueuedNote(
           EnqueueKind.Enrich,
           EnqueueResult(
-            Managers.ManagerInfo.Id("enrich"),
+            ManagerInfo.Id("enrich"),
             List(i, i.modify(_.id).setTo(ManagerItem.Id(8))),
-            List(Managers.EnqueueResult.Skipped("[[x]]: notes"))
+            List(EnqueueResult.Skipped("[[x]]: notes"))
           )
         ),
       "2 items queued for enrichment; 1 source enriched already"
@@ -370,9 +394,9 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagersView.enqueuedNote(
         EnqueueKind.Enrich,
         EnqueueResult(
-          Managers.ManagerInfo.Id("enrich"),
+          ManagerInfo.Id("enrich"),
           Nil,
-          List(Managers.EnqueueResult.Skipped("a"), Managers.EnqueueResult.Skipped("b"))
+          List(EnqueueResult.Skipped("a"), EnqueueResult.Skipped("b"))
         )
       ),
       "nothing to enrich; 2 sources enriched already"
@@ -436,7 +460,7 @@ class ManagersViewSuite extends munit.FunSuite:
     val note = GoalsView.createdNote(
       a.toOption.get,
       planned = GoalsView.Planned.Planned,
-      seeded = Some(Managers.ManagerInfo.Id("seed:bronze-age-tin-where-from"))
+      seeded = Some(ManagerInfo.Id("seed:bronze-age-tin-where-from"))
     )
     assert(note.value.contains("planner is running") && note.value.contains("created paused"), note.value)
 
@@ -465,37 +489,37 @@ class ManagersViewSuite extends munit.FunSuite:
   test("hint box: suggest lets the model propose the action (none chosen here); both at once is refused"):
     assertEquals(
       ManagersView.hint(
-        Managers.HintAdd.Text("leave tin alone until December"),
-        Managers.HintAdd.Item(""),
-        Managers.HintAdd.Once.Standing,
-        Managers.HintEffect.Action("none"),
-        Managers.HintEffect.Targets(""),
-        Managers.HintEffect.Tag(""),
-        Managers.HintEffect.Until(""),
-        Managers.HintEffect.UntilSource(""),
-        suggest = Managers.HintAdd.Suggest.Suggest
+        HintAdd.Text("leave tin alone until December"),
+        HintAdd.Item(""),
+        HintAdd.Once.Standing,
+        HintEffect.Action("none"),
+        HintEffect.Targets(""),
+        HintEffect.Tag(""),
+        HintEffect.Until(""),
+        HintEffect.UntilSource(""),
+        suggest = HintAdd.Suggest.Suggest
       ),
       Right(
         HintAdd(
-          Managers.HintAdd.Text("leave tin alone until December"),
+          HintAdd.Text("leave tin alone until December"),
           None,
-          Some(Managers.HintAdd.Once.Standing),
-          suggest = Some(Managers.HintAdd.Suggest.Suggest)
+          Some(HintAdd.Once.Standing),
+          suggest = Some(HintAdd.Suggest.Suggest)
         )
       )
     )
     assert(
       ManagersView
         .hint(
-          Managers.HintAdd.Text("x"),
-          Managers.HintAdd.Item(""),
-          Managers.HintAdd.Once.Standing,
-          Managers.HintEffect.Action("skip"),
-          Managers.HintEffect.Targets("tin"),
-          Managers.HintEffect.Tag(""),
-          Managers.HintEffect.Until(""),
-          Managers.HintEffect.UntilSource(""),
-          suggest = Managers.HintAdd.Suggest.Suggest
+          HintAdd.Text("x"),
+          HintAdd.Item(""),
+          HintAdd.Once.Standing,
+          HintEffect.Action("skip"),
+          HintEffect.Targets("tin"),
+          HintEffect.Tag(""),
+          HintEffect.Until(""),
+          HintEffect.UntilSource(""),
+          suggest = HintAdd.Suggest.Suggest
         )
         .isLeft
     )
@@ -514,7 +538,7 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     assertEquals(
       off.map(_.watch),
-      Right(Some(ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Manual))))
+      Right(Some(ManagerConfig(autoIngest = Some(ManagerConfig.AutoIngest.Manual))))
     )
     val on =
       GoalsView.newArea(
@@ -525,7 +549,7 @@ class ManagersViewSuite extends munit.FunSuite:
         plan = GoalsView.NewAreaPlan.NoPlan,
         seed = GoalsView.NewAreaSeed.NoSeed,
         watch = GoalsView.Watch.Watched,
-        autoIngest = Managers.ManagerConfig.AutoIngest.Auto,
+        autoIngest = ManagerConfig.AutoIngest.Auto,
         perDay = GoalsView.PerDay("3")
       )
     assertEquals(on.map(_.watch.flatMap(_.autoIngestPerDay)), Right(Some(3)))
@@ -539,7 +563,7 @@ class ManagersViewSuite extends munit.FunSuite:
           GoalsView.NewAreaPlan.NoPlan,
           GoalsView.NewAreaSeed.NoSeed,
           watch = GoalsView.Watch.Watched,
-          autoIngest = Managers.ManagerConfig.AutoIngest.Auto,
+          autoIngest = ManagerConfig.AutoIngest.Auto,
           perDay = GoalsView.PerDay("lots")
         )
         .isLeft
@@ -561,7 +585,7 @@ class ManagersViewSuite extends munit.FunSuite:
       on.toOption.get,
       planned = GoalsView.Planned.Unplanned,
       seeded = None,
-      watched = Some(Managers.ManagerInfo.Id("watch:zz-tin"))
+      watched = Some(ManagerInfo.Id("watch:zz-tin"))
     )
     assert(
       note.value.contains("watcher watch:zz-tin created paused") && note.value.contains(
@@ -573,8 +597,8 @@ class ManagersViewSuite extends munit.FunSuite:
       on.toOption.get,
       planned = GoalsView.Planned.Unplanned,
       seeded = None,
-      watched = Some(Managers.ManagerInfo.Id("watch:zz-tin")),
-      active = Set(Managers.ManagerInfo.Id("watch:zz-tin"))
+      watched = Some(ManagerInfo.Id("watch:zz-tin")),
+      active = Set(ManagerInfo.Id("watch:zz-tin"))
     )
     assert(auto.value.contains("watcher watch:zz-tin created active (the autopilot is on)"), auto.value)
 
@@ -595,8 +619,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(
       ManagersView.fields(
         ManagerConfig(
-          autoIngest = Some(Managers.ManagerConfig.AutoIngest.Manual),
-          sweeps = Some(List(Managers.Sweep.Wire("currency")))
+          autoIngest = Some(ManagerConfig.AutoIngest.Manual),
+          sweeps = Some(List(Sweep.Wire("currency")))
         )
       )(ManagersView.ConfigKey("autoIngest")),
       "off"
@@ -609,21 +633,21 @@ class ManagersViewSuite extends munit.FunSuite:
     assert(!ManagersView.settingsFor(Manager.Kind.Wire("review")).map(_._1).contains(ManagersView.ConfigKey("sweeps")))
     val es = List(
       ManagerEvent(
-        Managers.ManagerEvent.Id(3),
-        Managers.ManagerInfo.Id("watch:t"),
-        kind = Managers.ManagerEvent.Kind("ingested"),
-        text = Managers.ManagerEvent.Text("[[a]] ingested")
+        ManagerEvent.Id(3),
+        ManagerInfo.Id("watch:t"),
+        kind = ManagerEvent.Kind("ingested"),
+        text = ManagerEvent.Text("[[a]] ingested")
       ),
       ManagerEvent(
-        Managers.ManagerEvent.Id(2),
-        Managers.ManagerInfo.Id("watch:t"),
-        kind = Managers.ManagerEvent.Kind("started")
+        ManagerEvent.Id(2),
+        ManagerInfo.Id("watch:t"),
+        kind = ManagerEvent.Kind("started")
       ),
       ManagerEvent(
-        Managers.ManagerEvent.Id(1),
-        Managers.ManagerInfo.Id("watch:t"),
-        kind = Managers.ManagerEvent.Kind("swept"),
-        text = Managers.ManagerEvent.Text("acquisition-sweep goal t: …")
+        ManagerEvent.Id(1),
+        ManagerInfo.Id("watch:t"),
+        kind = ManagerEvent.Kind("swept"),
+        text = ManagerEvent.Text("acquisition-sweep goal t: …")
       )
     )
     assertEquals(ManagersView.sweepEvents(es).map(_.id), List(3L, 1L))
@@ -640,7 +664,7 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagersView.config(Map(ManagersView.ConfigKey("autoApprove") -> ManagersView.ConfigText("sometimes"))).isLeft
     )
     assertEquals(
-      ManagersView.fields(ManagerConfig(autoApprove = Some(Managers.ManagerConfig.AutoApprove.Manual)))(
+      ManagersView.fields(ManagerConfig(autoApprove = Some(ManagerConfig.AutoApprove.Manual)))(
         ManagersView.ConfigKey("autoApprove")
       ),
       "off"
@@ -653,7 +677,6 @@ class ManagersViewSuite extends munit.FunSuite:
     )
 
   test("autopilot status: a goal's line and the stages count"):
-    import com.histmersion.api.automation.Autopilot.GoalProgress
     val gs = List(
       GoalProgress(
         GoalProgress.Slug("a"),
@@ -719,7 +742,7 @@ class SchedulerPanelSuite extends munit.FunSuite:
   test("facets count the queue, the most first; the heading says the strategy and the room"):
     assertEquals(ManagersView.facet(ws, w => Facet.Value(w.jobType.value)), List("review" -> 2, "sweep" -> 1))
     val s = SchedulerStatus(
-      AgentScheduler.StrategyLine.Name("goal-first"),
+      StrategyLine.Name("goal-first"),
       SchedulerStatus.StrategyFrom("person"),
       maxRuns = SchedulerStatus.MaxRuns(4),
       occupied = SchedulerStatus.Occupied(3),
@@ -733,7 +756,6 @@ class SchedulerPanelSuite extends munit.FunSuite:
 
 /** The approvals window's digest line. */
 class ApprovalDigestLineSuite extends munit.FunSuite:
-  import com.histmersion.api.automation.ApprovalDigest.KindGroup
   test("a kind: how many, the oldest, who decides"):
     assertEquals(
       ApprovalsView.digestLine(
@@ -762,7 +784,6 @@ class ApprovalDigestLineSuite extends munit.FunSuite:
 /** The autopilot section's drain line. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class DrainLineSuite extends munit.FunSuite:
-  import com.histmersion.api.automation.Autopilot.DrainInfo
   test("draining with runs in flight, then drained"):
     assertEquals(
       ManagersView.drainLine(

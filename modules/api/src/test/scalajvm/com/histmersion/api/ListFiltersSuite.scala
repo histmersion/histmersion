@@ -1,5 +1,9 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.problem.Problem

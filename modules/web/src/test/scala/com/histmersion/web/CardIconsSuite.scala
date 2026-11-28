@@ -1,15 +1,15 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.Years
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.media.MediaRole
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.views.PlaceDetail
@@ -60,7 +60,7 @@ class CardIconsSuite extends munit.FunSuite:
 
   test("every icon a card or a marker can name is in the registry"):
     val names = Source.Kinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
-      Place.Kind.all.map(k => CardIcons.place(Place.Kind.Wire(k.value), None)) ++ SiteTypes.all.map(t =>
+      Place.Kind.all.map(k => CardIcons.place(Place.Kind.Wire(k.value), None)) ++ SiteType.all.map(t =>
         CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(Place.Entry.SiteType(t.id.value)))
       ) ++
       List(
@@ -259,7 +259,7 @@ class CardIconsSuite extends munit.FunSuite:
     assertEquals(MapView.rangeOf(c.mids).map((lo, hi) => (lo.value, hi.value)), Some((-1600.0, -1250.0)))
     assert(
       MapView
-        .gradientOf(c.mids, (Years.Astronomical(-1700L), Years.Astronomical(-1200L)), c.certainty)
+        .gradientOf(c.mids, (Year.Astronomical(-1700L), Year.Astronomical(-1200L)), c.certainty)
         .value
         .startsWith("linear-gradient(")
     )
@@ -269,8 +269,8 @@ class CardIconsSuite extends munit.FunSuite:
       Certainty.Stated(Confidence.Low)
     )
     assertEquals(
-      MapView.gradientOf(Nil, (Years.Astronomical(0L), Years.Astronomical(1L)), Certainty.NoSay),
-      MapView.colorFor(None, (Years.Astronomical(0L), Years.Astronomical(1L)), Certainty.NoSay)
+      MapView.gradientOf(Nil, (Year.Astronomical(0L), Year.Astronomical(1L)), Certainty.NoSay),
+      MapView.colorFor(None, (Year.Astronomical(0L), Year.Astronomical(1L)), Certainty.NoSay)
     )
 
   test("a bubble's list: by kind, then by name"):
@@ -431,7 +431,7 @@ class CardIconsSuite extends munit.FunSuite:
     assert(!round.contains("<rect") && round.startsWith("""<span class="hd-dot hd-cluster" """), round)
 
   test("a bubble's colours: the ramp's ends of its dates, the same twice when they agree or none is dated"):
-    val span = (Years.Astronomical(-2000L), Years.Astronomical(0L))
+    val span = (Year.Astronomical(-2000L), Year.Astronomical(0L))
     def at(x: Fmt.ColorT) = Fmt.desaturate(Fmt.color(x), Confidence.High)
     val (a, b) = MapView.rampEnds(List(MapView.Mid(-1900.0), MapView.Mid(-100.0)), span, Certainty.NoSay)
     assertEquals(a.value, at(Fmt.ColorT(0.05)).value)

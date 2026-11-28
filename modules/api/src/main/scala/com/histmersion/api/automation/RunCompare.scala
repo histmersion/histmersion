@@ -1,5 +1,9 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.agents.Usage
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -14,11 +18,10 @@ import com.histmersion.api.json.TwoStates
 @tolerated(LintRule.Prefix, "pending G9 (namespaces, not prefixes)")
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 object RunCompare:
-  import Agents.{ModelOverride, Usage}
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class RunSide(
-      id: Agents.RunInfo.Id,
+      id: RunInfo.Id,
       status: RunSide.Status,
       dryRun: RunSide.DryRun,
       model: Option[RunSide.Model],

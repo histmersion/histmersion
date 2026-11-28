@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.catalogue.geocode.Attempt
+
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -193,10 +197,10 @@ private[places] object PointAreaRepo:
 
   /** The rule's report. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def reportIn(rule: Lint.Rule, kinds: List[Place.Kind.Wire], maxItems: PointAreas.ReportMaxItems)(using
+  def reportIn(rule: Rule, kinds: List[Place.Kind.Wire], maxItems: PointAreas.ReportMaxItems)(using
       DbCon
-  ): Lint.LintRuleReport =
-    if kinds.isEmpty then Lint.LintRuleReport(rule.name, rule.description, Lint.LintRuleReport.Count(0), Nil)
+  ): LintRuleReport =
+    if kinds.isEmpty then LintRuleReport(rule.name, rule.description, LintRuleReport.Count(0), Nil)
     else PointAreas.report(rule, groupsIn(kinds), holdersIn(kinds), sampleIn(kinds, maxItems), maxItems)
 
   /** The ids `--fix` may remove: every listed place no evidence names. */
@@ -261,8 +265,8 @@ private[places] object PointAreaRepo:
         .run()
         .toList
         .map((ck, name) =>
-          ck -> Geocode
-            .attempts(Geocode.Attempt.Name(name))
+          ck -> Attempt
+            .attempts(Attempt.Name(name))
             .flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList)
             .toSet
         )

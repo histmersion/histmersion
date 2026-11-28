@@ -1,7 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.catalogue.{CatalogRecord, SiteTypes}
+import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.Place as DPlace
@@ -31,7 +31,7 @@ trait SiteTypeService:
   def countSitesToType(refresh: SiteTypeService.Refresh, before: Option[DeepTime.SignedYear]): RowCount
 
   /** Record the refined types (`None` = asked, none of the curated classes), asked now. */
-  def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit
+  def setSiteTypes(types: List[(DPlace.Id, Option[api.catalogue.SiteType.Id])])(using WritePermit): Unit
 
 object SiteTypeService:
   type Refresh = Refresh.T
@@ -54,7 +54,7 @@ object SiteTypeService:
     def countSitesToType(refresh: Refresh, before: Option[DeepTime.SignedYear]): RowCount =
       db.read(SiteTypeRepo.countSitesToType(SiteTypeRepo.Refresh(refresh.value), before))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
+    def setSiteTypes(types: List[(DPlace.Id, Option[api.catalogue.SiteType.Id])])(using WritePermit): Unit =
       db.write(SiteTypeRepo.setSiteTypes(types.map((id, t) => id -> t.map(x => PlaceRepo.SiteType(x.value)))))
 
   /** The same rules over the shared in-memory state; `now` is the time a site is asked at (epoch ms). */
@@ -97,7 +97,7 @@ object SiteTypeService:
       RowCount(state.get.sites.count(toType(refresh, before)))
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])])(using WritePermit): Unit =
+    def setSiteTypes(types: List[(DPlace.Id, Option[api.catalogue.SiteType.Id])])(using WritePermit): Unit =
       val at = now()
       val typed = types.map((id, t) => HeldSite.Id(id.value) -> t).toMap
       val _ = state.updateAndGet(

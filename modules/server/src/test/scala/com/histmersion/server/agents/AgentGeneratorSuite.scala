@@ -104,7 +104,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
       fx
     )
     // the CLI form of the same rule is the person's own fixer's
-    assert(AgentGenerator.interactiveAgent(agent(StepAgent.Fixer)).exists(_.contains("--reason <citekey>=<why>")))
+    assert(AgentDefinitions.interactiveAgent(agent(StepAgent.Fixer)).exists(_.contains("--reason <citekey>=<why>")))
     assert(
       !fx.contains("*Unresolved / Open questions*, and *Not used*"),
       "the fixer is no longer told to write Not used"
@@ -184,7 +184,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   )
 
   test("Claude Code: the generated agent carries EXACTLY the prompt the engine sends, its tools, and the mod"):
-    val tree = AgentGenerator.claudeCode(d, Settings)
+    val tree = AgentDefinitions.claudeCode(d, Settings)
     d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode)).foreach { a =>
       val file = tree(s"claude-code/headless/agents/${a.name}.md")
       val body = AgentDefinitions.split(AgentDefinitions.Markdown(file)).toOption.get._2
@@ -218,11 +218,11 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(tree("claude-code/histmersion/.mcp.json").contains("http://127.0.0.1:18000/mcp\""))
     assert(tree("claude-code/.claude-plugin/marketplace.json").contains("\"histmersion-local\""))
     assert(!tree.values.exists(_.contains("{{tool:")), "no placeholder survives")
-    val noMod = AgentGenerator.claudeCode(d, Settings.modify(_.claudeMod).setTo(GenSettings.ClaudeMod(false)))
+    val noMod = AgentDefinitions.claudeCode(d, Settings.modify(_.claudeMod).setTo(GenSettings.ClaudeMod(false)))
     assert(!noMod.keys.exists(_.contains("quota-guard")))
 
   test("Codex: everything off in the base, one profile per role with its prompt and tools"):
-    val tree = AgentGenerator.codex(d, Settings)
+    val tree = AgentDefinitions.codex(d, Settings)
     val base = tree("codex/home/config.toml")
     List(
       "shell_tool = false",
@@ -250,7 +250,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(!tree("codex/home/article-cold-reader.config.toml").contains("approval_mode"), "no tools: nothing approved")
     assert(
       sk.contains(
-        s"developer_instructions = ${AgentGenerator.tomlString(d.system(agent(StepAgent.Skeptic), ToolStyle.Bare))}"
+        s"developer_instructions = ${AgentDefinitions.tomlString(d.system(agent(StepAgent.Skeptic), ToolStyle.Bare))}"
       ),
       "the profile carries the engine's prompt"
     )
@@ -267,11 +267,13 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("Codex: the base keeps the skills list and big tool outputs out of every request"):
     // `codex debug prompt-input` on a scratch home (codex-cli 0.163.0): without it, the developer message
     // carries an 8,070-character <skills_instructions> list of home/skills on every request
-    val base = AgentGenerator.codexBase(Settings)
+    val base = AgentDefinitions.codexBase(Settings)
     assert(base.contains("[skills]\ninclude_instructions = false\n\n[skills.bundled]\nenabled = false"), base)
     assert(!base.contains("tool_output_token_limit"), "0: the model's own limit")
     val limited =
-      AgentGenerator.codexBase(Settings.modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000)))
+      AgentDefinitions.codexBase(
+        Settings.modify(_.codexToolOutputTokens).setTo(GenSettings.CodexToolOutputTokens(6000))
+      )
     assert(limited.contains("\ntool_output_token_limit = 6000\n"), limited)
     assert(
       limited.indexOf("tool_output_token_limit") < limited.indexOf("[skills]"),
@@ -284,7 +286,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
       .setTo(GenSettings.CodexLeanBase(true))
       .modify(_.codexToolOutputTokens)
       .setTo(GenSettings.CodexToolOutputTokens(6000))
-    val tree = AgentGenerator.codex(d, lean)
+    val tree = AgentDefinitions.codex(d, lean)
     val base = tree("codex/home/config.toml")
     assert(base.contains("\nmodel_instructions_file = \"base-instructions.md\"\n"), base)
     assert(
@@ -309,13 +311,13 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
     assert(file.length < 1600, s"${file.length} characters")
     assertEquals(
-      AgentGenerator
+      AgentDefinitions
         .codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true)))
         .contains("@exec"),
       false,
       "no output limit: no budget line"
     )
-    val builtin = AgentGenerator.codex(d, Settings)
+    val builtin = AgentDefinitions.codex(d, Settings)
     assert(!builtin("codex/home/config.toml").contains("model_instructions_file"))
     assert(!builtin.contains("codex/home/base-instructions.md"))
 
@@ -330,10 +332,10 @@ class AgentGeneratorSuite extends munit.FunSuite:
     )
 
   test("TOML strings hold any text"):
-    assertEquals(AgentGenerator.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")
+    assertEquals(AgentDefinitions.tomlString("a \"b\" \\ c\nd\te\u0001"), "\"a \\\"b\\\" \\\\ c\\nd\\te\\u0001\"")
 
   test("opencode: deny everything, allow the role's tools; the MCP header reads the run token"):
-    val tree = AgentGenerator.opencode(d, Settings)
+    val tree = AgentDefinitions.opencode(d, Settings)
     val sk = tree("opencode/config/agents/article-skeptic.md")
     assert(sk.contains("  \"*\": deny\n  \"histmersion_get_source\": allow"), sk.take(400))
     assert(sk.contains("mode: primary"))

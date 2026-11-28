@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.domain.automation.agents.AgentDefinitions
+import com.histmersion.api.automation.planquota.PoolId
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{External, Problem}
 
@@ -14,7 +18,6 @@ import com.histmersion.domain.automation.agents.{
 }
 
 import com.histmersion.config.ClaudeCodeConfig
-import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 
 import java.nio.charset.StandardCharsets
@@ -85,7 +88,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
             )
           )
         )
-        val web = call.agent.map(a => AgentGenerator.claudeWebTools(a.web)).getOrElse(Nil)
+        val web = call.agent.map(a => AgentDefinitions.claudeWebTools(a.web)).getOrElse(Nil)
         // the CLI's working directory: empty, so no project CLAUDE.md, .claude/ or .mcp.json is read
         val work = Files.createDirectories(dir.resolve("work"))
         val argv = ClaudeCode.argv(
@@ -135,7 +138,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         }
         val o = out.get().getOrElse(throw IllegalStateException("claude-code: no outcome"))
         // every reading of the run is in the pool (also the ones the watch already recorded: newest wins)
-        pool.foreach(p => p.record(PlanQuota.PoolId.ClaudePlan, o.readings))
+        pool.foreach(p => p.record(PoolId.ClaudePlan, o.readings))
         val guard = stopped
           .get()
           .map(_.value)
@@ -143,7 +146,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
         guard match
           case Some(why) =>
             val until = pool
-              .flatMap(_.blocked(PlanQuota.PoolId.ClaudePlan, Some(AgentsControllers.ModelName(model.model.value))))
+              .flatMap(_.blocked(PoolId.ClaudePlan, Some(AgentsControllers.ModelName(model.model.value))))
               .flatMap(_._2)
               .map(i => java.time.Instant.ofEpochMilli(i.value))
             throw new ModelLimitReached(model, until, Problem.Run.Stopped(Problem.Run.Stop.Guard(Problem.Raw(why))))

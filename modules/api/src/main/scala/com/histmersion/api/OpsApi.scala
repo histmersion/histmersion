@@ -1,6 +1,17 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.checks.lint.LintReport
+import com.histmersion.api.checks.lint.LintFixResult
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueImport
+import com.histmersion.api.automation.queue.QueueImported
+import com.histmersion.api.library.query.QueryRequest
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.SchemaTables
+
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import sttp.model.StatusCode
@@ -18,10 +29,6 @@ import com.histmersion.lint.{tolerated, LintRule}
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
-
-  import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
-  import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}
-  import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 
   private lazy val base = endpoint.in("api").errorOut(Api.problemOut)
 

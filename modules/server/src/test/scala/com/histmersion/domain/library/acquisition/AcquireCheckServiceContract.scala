@@ -1,6 +1,13 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.api.automation.queue.Docket
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.domain.library.acquisition.Held
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.Sha256
@@ -68,7 +75,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     AcquireAttempt(
       T0.plusSeconds(seconds),
       AcquireAttempt.Trigger.Recheck,
-      AcquireRecheck.LastCheck.Generation("g1"),
+      LastCheck.Generation("g1"),
       outcome,
       answers,
       Some(
@@ -85,8 +92,8 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
   private def item(s: AcquisitionStores, text: String): AcquireAttemptRow.Id =
     s.queues
       .add(
-        Queue.Kind.Acquire,
-        Queue.QueueAdd(Queue.QueueItem.Text(text)),
+        Docket.Acquire,
+        QueueAdd(QueueItem.Text(text)),
         domain.Creator.New.Manual(domain.Creator.Surface.Cli)
       )
       .id
@@ -109,7 +116,7 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       attempt(240, AcquireAttempt.Outcome.Closed(domain.library.Citekey("zqa_one"))),
       Kept
     )
-    val _ = s.queues.patch(QueueItemId(done.value), Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
+    val _ = s.queues.patch(QueueItemId(done.value), QueuePatch(status = Some(QueueItem.Status(Queue.Done))))
     val got = s.attempts.of(List(open, done))
     assertEquals(got(open), List(fetched, third, failed))
     assertEquals(s.attempts.of(Nil), Map.empty)
@@ -117,9 +124,9 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     assertEquals(
       s.attempts.countSince(T0.plusSeconds(90)),
       Map(
-        AcquireRecheck.Outcome.NoCopy.wire -> 1,
-        AcquireRecheck.Outcome.Fetched.wire -> 1,
-        AcquireRecheck.Outcome.Closed.wire -> 1
+        domain.library.acquisition.Upshot.NoCopy.wire -> 1,
+        domain.library.acquisition.Upshot.Fetched.wire -> 1,
+        domain.library.acquisition.Upshot.Closed.wire -> 1
       )
     )
   }
@@ -153,11 +160,10 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
         )
       ),
       Map(
-        "10.5555/zq.a" -> AcquireRecheck
-          .Held(domain.library.Citekey("zqa_one"), AcquireRecheck.Held.HasOriginal(true)),
-        "10.5555/zq.b" -> AcquireRecheck.Held(
+        "10.5555/zq.a" -> Held(domain.library.Citekey("zqa_one"), Held.HasOriginal(true)),
+        "10.5555/zq.b" -> Held(
           domain.library.Citekey("zqa_two"),
-          AcquireRecheck.Held.HasOriginal(false)
+          Held.HasOriginal(false)
         )
       )
     )

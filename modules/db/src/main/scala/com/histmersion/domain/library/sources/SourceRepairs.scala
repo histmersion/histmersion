@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.checks.lint.LintFixResult
+
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.FindingPlacement

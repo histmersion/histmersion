@@ -1,5 +1,12 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Docket
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+import com.histmersion.domain.research.articles.lint.Context
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -152,8 +159,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val queues: QueueService = deps.queues
 
   /** The first acquisition item (any status) whose text names `doi`. */
-  def acquisitionItemNaming(doi: Doi): Option[Queue.QueueItem.Id] =
-    queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
+  def acquisitionItemNaming(doi: Doi): Option[QueueItem.Id] =
+    queues.naming(Docket.Acquire, doi).headOption.map(_.id)
 
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
     * Thumbnails come from the converter.
@@ -485,7 +492,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. `None` =
     * unknown.
     */
-  def geocode(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+  def geocode(name: Attempt.Name, hint: KindHint, at: Option[Period]): Option[Resolution] =
     places.geocode(name, hint, at)
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
@@ -577,8 +584,8 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
           MarkdownLint.issues(
             MarkdownLint.Scan.Text(text),
             field,
-            MarkdownLint.Context(
-              article = MarkdownLint.Context.Article(article),
+            Context(
+              article = Context.Article(article),
               isCitekey = Some(isCitekey)
             )
           ),
@@ -669,10 +676,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       )
       .toOption
       .flatten
-      .map(s =>
-        CoreQuota
-          .view(s, CoreBudget.limits(cfg.acquire.core), now)
-      )
+      .map(s => s.view(CoreBudget.limits(cfg.acquire.core), now))
       .toList
 
   // ── research ─────────────────────────────────────────────────────────────────────────────────

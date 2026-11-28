@@ -1,5 +1,12 @@
 package com.histmersion
 package server
+
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.Closure
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -9,8 +16,6 @@ import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
 import com.histmersion.config.*
-import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
-import com.histmersion.domain.ReviewLedger.{Closure, Entry, Ledger, Status}
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.automation.{Agents, Goal}
@@ -70,7 +75,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         finding(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Problem("a decorative citation")),
         Entry.Run.assume(RunA),
         Entry.Round(1),
-        Status.Rejected,
+        domain.research.workflows.Status.Rejected,
         closed = Some(
           Closure(
             Closure.By("fixer"),
@@ -84,7 +89,7 @@ class ArticleReviewHttpSuite extends DbSuite:
         finding(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Problem("term not defined")),
         Entry.Run.assume(RunA),
         Entry.Round(1),
-        Status.Fixed,
+        domain.research.workflows.Status.Fixed,
         closed = Some(Closure(Closure.By("cold-reader"), Closure.Round(2), Closure.Run.assume(RunA)))
       ),
       Entry(

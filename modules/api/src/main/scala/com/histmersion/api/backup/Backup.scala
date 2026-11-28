@@ -284,11 +284,9 @@ object Backup:
     export Result.{DurationMs, File, File as FailedFile, File as RunningFile}
     export Result.Pruned
 
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def running(file: Status.RunningFile, elapsedMs: Result.DurationMs): Status =
+    def running(file: RunningFile, elapsedMs: Result.DurationMs): Status =
       Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def failed(file: Status.FailedFile, elapsedMs: Result.DurationMs, problems: Problems): Status =
+    def failed(file: FailedFile, elapsedMs: Result.DurationMs, problems: Problems): Status =
       Status(file, State.Failed.wire, elapsedMs, problems = Some(problems.toNonEmpty))

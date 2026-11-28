@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.media.assets
+
+import com.histmersion.domain.catalogue.evidence.NearFinding
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.{Api, Write}
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.domain.DeepTime
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.media.MediaState
 import com.histmersion.domain.media.imports.{MediaMatch, Target}
 import com.histmersion.util.database.{RangeSql, Transactor, WritePermit}
@@ -151,7 +152,7 @@ trait AssetService:
     */
   def placeThumbs(
       placeId: Place.Id,
-      sameSiteKm: EventMatcher.NearFinding.Km,
+      sameSiteKm: NearFinding.Km,
       limit: AssetService.Limit
   ): List[MediaThumb]
 
@@ -290,7 +291,7 @@ object AssetService:
     def thumbs(targetType: TargetType, targetId: TargetId, limit: Limit): List[MediaThumb] =
       db.read(MediaRepo.thumbsIn(targetType, targetId, MediaRepo.Limit(limit.value)))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def placeThumbs(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit): List[MediaThumb] =
+    def placeThumbs(placeId: Place.Id, sameSiteKm: NearFinding.Km, limit: Limit): List[MediaThumb] =
       db.read(MediaRepo.placeThumbsIn(placeId, sameSiteKm, MediaRepo.Limit(limit.value)))
 
   /** Media's pictures alone, in memory: no place, event or source is held, so a provider's picture gets no point or
@@ -872,4 +873,4 @@ object AssetService:
         )
       }
 
-    def placeThumbs(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit): List[MediaThumb] = Nil
+    def placeThumbs(placeId: Place.Id, sameSiteKm: NearFinding.Km, limit: Limit): List[MediaThumb] = Nil

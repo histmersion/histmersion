@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.worklists
+
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.exchange.Bundle
@@ -27,15 +30,15 @@ object WorkListMergeFollowUps extends MergeFollowUps:
       ap: MergePlanner.Apply,
       counts: List[Bundle.KindCounts],
       dump: MergeFollowUps.DumpRecordRef
-  )(using DbCon, CreatedAt): (List[Bundle.Article.Slug], Queue.QueueItem.Id) =
+  )(using DbCon, CreatedAt): (List[Bundle.Article.Slug], QueueItem.Id) =
     val at = summon[CreatedAt]
     val short = mergeId.toString.take(8)
     val reviews = ap.reviews.map { slug =>
       QueueRepo.insert(
-        Queue.Kind.Tasks,
-        Queue.QueueAdd(
-          Queue.QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
-          topic = Some(Queue.QueueItem.Topic("merge")),
+        api.automation.queue.Docket.Tasks,
+        QueueAdd(
+          QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
+          topic = Some(QueueItem.Topic("merge")),
           reason = Some(Queue.Rationale(s"`merge apply` changed the article; a merged text is not reviewed"))
         ),
         ByMerge,
@@ -45,14 +48,14 @@ object WorkListMergeFollowUps extends MergeFollowUps:
     }
     val t = ap.tally
     val log = QueueRepo.insert(
-      Queue.Kind.Log,
-      Queue.QueueAdd(
-        Queue.QueueItem.Text(
+      api.automation.queue.Docket.Log,
+      QueueAdd(
+        QueueItem.Text(
           s"Merged the bundle of ${from.value} (${m.bundleId.toString.take(8)}…) as merge $short: " +
             s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), Plural.CountSingular("source"))} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted.value)} new, " +
             s"${Plural.count(Plural.CountN(reviews.size.toLong), Plural.CountSingular("article"))} to review; backup ${dump.value}"
         ),
-        topic = Some(Queue.QueueItem.Topic("merge"))
+        topic = Some(QueueItem.Topic("merge"))
       ),
       ByMerge,
       at

@@ -1,5 +1,11 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.GoalRef
+import com.histmersion.api.automation.queue.ItemGoals
+import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -28,25 +34,25 @@ class QueueLinksSuite extends munit.FunSuite:
     )
 
   test("ticking an item off records the run or job that did it; reopening forgets it"):
-    val done = applyPatch(open, fulfil(open, Citekey("drake2012"), Some(QueueItem.ClosedBy("job-9"))))
+    val done = open.applyPatch(open.fulfil(Citekey("drake2012"), Some(QueueItem.ClosedBy("job-9"))))
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("job-9"), Some("run-1")))
     assert(done.reason.exists(_.recordsIngestOf(Citekey("drake2012"))))
     assertEquals(
-      applyPatch(done, QueuePatch(text = Some(QueueItem.Text("Drake 2012, the book")))).closedBy,
+      done.applyPatch(QueuePatch(text = Some(QueueItem.Text("Drake 2012, the book")))).closedBy,
       Some("job-9"),
       "an edit keeps it"
     )
-    assertEquals(applyPatch(done, QueuePatch(status = Some(QueueItem.Status(Open)))).closedBy, None)
+    assertEquals(done.applyPatch(QueuePatch(status = Some(QueueItem.Status(Open)))).closedBy, None)
     assertEquals(
-      applyPatch(open, QueuePatch(status = Some(QueueItem.Status(Done)))).closedBy,
+      open.applyPatch(QueuePatch(status = Some(QueueItem.Status(Done)))).closedBy,
       None,
       "ticked off by a person"
     )
 
   test("a goal is set, kept, and cleared by a blank"):
-    assertEquals(applyPatch(open, QueuePatch(goal = Some(Goal.Slug("anatolia")))).goal, Some("anatolia"))
-    assertEquals(applyPatch(open, QueuePatch(text = Some(QueueItem.Text("x")))).goal, Some("collapse"))
-    assertEquals(applyPatch(open, QueuePatch(goal = Some(Goal.Slug("  ")))).goal, None)
+    assertEquals(open.applyPatch(QueuePatch(goal = Some(Goal.Slug("anatolia")))).goal, Some("anatolia"))
+    assertEquals(open.applyPatch(QueuePatch(text = Some(QueueItem.Text("x")))).goal, Some("collapse"))
+    assertEquals(open.applyPatch(QueuePatch(goal = Some(Goal.Slug("  ")))).goal, None)
 
   test("an item's goals: its own first, then the goals that link it, each once, by item"):
     val got = itemGoals(

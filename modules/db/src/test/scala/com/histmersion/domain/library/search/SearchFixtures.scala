@@ -1,10 +1,13 @@
 package com.histmersion
 package domain.library.search
+
+import com.histmersion.api.library.tree.TreeRow
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.SchemaTable
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.library.Tree
 
-import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.augustnagro.magnum.*
@@ -53,7 +56,7 @@ object SearchFixtures:
       unit: AggregateRepo.Unit,
       filter: Filter,
       scope: PlaceScope = PlaceScope.empty
-  ): Vector[Tree.TreeRow] =
+  ): Vector[TreeRow] =
     connect(ds)(AggregateRepo.treeRows(unit, filter, scope))
   def run(
       ds: DataSource,

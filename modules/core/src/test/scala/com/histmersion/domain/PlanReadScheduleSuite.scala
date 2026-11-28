@@ -11,33 +11,33 @@ class PlanReadScheduleSuite extends munit.FunSuite:
     val every3h = ReadSchedule.Every(java.time.Duration.ofMinutes(180))
     def read(
         schedule: ReadSchedule = every3h,
-        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn(true),
-        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted(true),
+        autopilotOn: ReadSchedule.AutopilotOn = ReadSchedule.AutopilotOn(true),
+        wanted: ReadSchedule.Wanted = ReadSchedule.Wanted(true),
         newest: Option[java.time.Instant] = minutesAgo(200),
         attempt: Option[java.time.Instant] = None
     ) =
-      PlanReadSchedule.scheduledRead(schedule, autopilotOn, wanted, newest, attempt, at)
+      schedule.scheduledRead(autopilotOn, wanted, newest, attempt, at)
     assertEquals(read(), ScheduledRead.Due)
     assertEquals(read(newest = None), ScheduledRead.Due, "never read: due")
     assertEquals(read(newest = minutesAgo(180)), ScheduledRead.Due, "exactly the interval: due")
     assertEquals(
       read(newest = minutesAgo(60)),
-      ScheduledRead.NotDue(PlanReadSchedule.Rationale("read 60 min ago (every 180 min)"))
+      ScheduledRead.NotDue(ReadSchedule.Rationale("read 60 min ago (every 180 min)"))
     )
     assertEquals(
       read(attempt = minutesAgo(5)),
-      ScheduledRead.NotDue(PlanReadSchedule.Rationale("read 5 min ago (every 180 min)")),
+      ScheduledRead.NotDue(ReadSchedule.Rationale("read 5 min ago (every 180 min)")),
       "a failed attempt counts like a reading: no retry before the interval"
     )
     assertEquals(
       read(schedule = ReadSchedule.Off),
-      ScheduledRead.NotDue(PlanReadSchedule.Rationale("the schedule is off"))
+      ScheduledRead.NotDue(ReadSchedule.Rationale("the schedule is off"))
     )
     assertEquals(
-      read(autopilotOn = PlanReadSchedule.AutopilotOn(false)),
-      ScheduledRead.NotDue(PlanReadSchedule.Rationale("the autopilot is off"))
+      read(autopilotOn = ReadSchedule.AutopilotOn(false)),
+      ScheduledRead.NotDue(ReadSchedule.Rationale("the autopilot is off"))
     )
     assertEquals(
-      read(wanted = PlanReadSchedule.Wanted(false)),
-      ScheduledRead.NotDue(PlanReadSchedule.Rationale("no queued work wants the pool"))
+      read(wanted = ReadSchedule.Wanted(false)),
+      ScheduledRead.NotDue(ReadSchedule.Rationale("no queued work wants the pool"))
     )

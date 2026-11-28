@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.goals
+
+import com.histmersion.api.automation.queue.QueueAdd
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -12,14 +14,11 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.PipelineDef
-import com.histmersion.domain.automation.workflows.Pipelines
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode, Pipeline, Role}
 import com.histmersion.api.automation.Goal.Plans.{LinkKind, Plan}
-import com.histmersion.domain.PlanGoal.*
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.automation.worklists.QueueService
@@ -38,7 +37,6 @@ import com.histmersion.domain.automation.Run
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.catalogue.Year
-import com.histmersion.domain.PlanGoal
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
@@ -85,14 +83,13 @@ final class PlanGoalPipeline(
   )(using Creator.New): Either[Halt, PipelineDef.Summary] =
     for
       loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(slug))
-      proposed <- ctx.llm[PlanAnswer, Proposed](
+      proposed <- ctx.llm[PlanAnswer, PlanAnswer.Proposed](
         AgentRepo.StepRecord.Name("propose"),
         StepAgent.GoalPlanner,
         Prompt.UserText(input(loaded, caps(ctx))),
         AnswerSchemas.plan
       )((a, last) =>
-        PlanGoal
-          .check(a, slug, taken, loaded.queries.toSet, caps(ctx), PlanGoal.LastRound(last.value))
+        a.check(slug, taken, loaded.queries.toSet, caps(ctx), PlanAnswer.LastRound(last.value))
           .map((p, warnings) => Checked(p, warnings.map(w => Checked.Warnings(w.sentence))))
       )
       plan <- ctx.code[Plan](AgentRepo.StepRecord.Name("verify"))(Right(verify(ctx, proposed, slug)))
@@ -126,10 +123,10 @@ final class PlanGoalPipeline(
   /** `agents.plan.*`, with the run's own sub-goal cap (the autopilot gives 0 at its depth limit). */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def caps(ctx: RunCtx): Caps =
+  private def caps(ctx: RunCtx): PlanAnswer.Caps =
     val c = cfg.plan.caps
     ctx.run.params.subGoals.fold(c)(n =>
-      c.copy(subGoals = Caps.SubGoals(math.max(0, math.min(n.value, c.subGoals.value))))
+      c.copy(subGoals = PlanAnswer.Caps.SubGoals(math.max(0, math.min(n.value, c.subGoals.value))))
     )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
@@ -148,7 +145,7 @@ final class PlanGoalPipeline(
         g.periodStart,
         g.periodEnd,
         goals.children(slug).map(c => Loaded.Children(s"${c.slug.value} — ${c.title.value}")),
-        links.filter(_.kind == LinkKind.SearchQuery).map(l => PlanGoal.Query(l.ref.value)),
+        links.filter(_.kind == LinkKind.SearchQuery).map(l => PlanAnswer.Query(l.ref.value)),
         links
           .filter(l => l.kind == LinkKind.Source || l.kind == LinkKind.Article)
           .map(l =>
@@ -160,7 +157,7 @@ final class PlanGoalPipeline(
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def input(l: Loaded, caps: Caps): String =
+  private def input(l: Loaded, caps: PlanAnswer.Caps): String =
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"${a.value} to ${b.value} (signed years, BCE negative)"
       case _                  => "not given"
@@ -179,14 +176,14 @@ final class PlanGoalPipeline(
     * DOI code could not check.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def verify(ctx: RunCtx, p: Proposed, slug: DomainGoal.Slug)(using WritePermit): Plan =
-    val plan = PlanGoal.verify(p, slug, host.workLookup)
+  private def verify(ctx: RunCtx, p: PlanAnswer.Proposed, slug: DomainGoal.Slug)(using WritePermit): Plan =
+    val plan = PlanAnswer.verify(p, slug, host.workLookup)
     plan.dropped.foreach(d => ctx.warn(s"verify: ${d.value}"))
     plan
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(ctx: RunCtx, line: String): Either[Problems, String] =
-    Pipelines.log(workLists, ctx, Pipelines.LogLine(line)).map(_.value)
+    PipelineDef.log(workLists, ctx, PipelineDef.LogLine(line)).map(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def runId(ctx: RunCtx): Run.Id =
@@ -203,19 +200,19 @@ final class PlanGoalPipeline(
     if !d.approved.value then
       log(
         ctx,
-        PlanGoal
+        PlanAnswer
           .logLine(
             slug,
             plan,
-            approved = PlanGoal.Approved(false),
-            PlanGoal.CreatedCount(0),
-            PlanGoal.LinkedCount(0),
-            PlanGoal.QueuedCount(0),
+            approved = PlanAnswer.Approved(false),
+            PlanAnswer.CreatedCount(0),
+            PlanAnswer.LinkedCount(0),
+            PlanAnswer.QueuedCount(0),
             runId(ctx)
           )
           .value
       ).map(l =>
-        Applied(PlanGoal.LogLine(l), PlanGoal.CreatedCount(0), PlanGoal.LinkedCount(0), PlanGoal.QueuedCount(0))
+        Applied(PlanAnswer.LogLine(l), PlanAnswer.CreatedCount(0), PlanAnswer.LinkedCount(0), PlanAnswer.QueuedCount(0))
       )
     else
       ctx.write(
@@ -225,12 +222,12 @@ final class PlanGoalPipeline(
       )(applyApproved(ctx, slug, plan))(
         Right(
           Applied(
-            PlanGoal.LogLine(
+            PlanAnswer.LogLine(
               s"plan-goal ${slug.value}: plan not applied (${AgentsMarkdown.DryRunNote}) (agent run ${ctx.run.id.value.take(8)})"
             ),
-            PlanGoal.CreatedCount(0),
-            PlanGoal.LinkedCount(0),
-            PlanGoal.QueuedCount(0)
+            PlanAnswer.CreatedCount(0),
+            PlanAnswer.LinkedCount(0),
+            PlanAnswer.QueuedCount(0)
           )
         )
       )
@@ -306,8 +303,8 @@ final class PlanGoalPipeline(
             .record(
               WorkListControllers.ListName("acquire"),
               QueueAdd(
-                Queue.QueueItem.Text(PlanGoal.acquireText(w, slug).value),
-                topic = Some(Queue.QueueItem.Topic(s"goal ${slug.value}")),
+                api.automation.queue.QueueItem.Text(PlanAnswer.acquireText(w, slug).value),
+                topic = Some(api.automation.queue.QueueItem.Topic(s"goal ${slug.value}")),
                 goal = Some(Goal.Slug(slug.value)),
                 job = Some(SpatialHierarchyResult.Job.Id(ctx.run.id.value))
               ),
@@ -328,23 +325,23 @@ final class PlanGoalPipeline(
     goals.setPlan(slug, BGoalRow.Plan(plan.asJson.noSpaces))
     log(
       ctx,
-      PlanGoal
+      PlanAnswer
         .logLine(
           slug,
           plan,
-          approved = PlanGoal.Approved(true),
-          PlanGoal.CreatedCount(created.size),
-          PlanGoal.LinkedCount(inCorpus.size),
-          PlanGoal.QueuedCount(items.size),
+          approved = PlanAnswer.Approved(true),
+          PlanAnswer.CreatedCount(created.size),
+          PlanAnswer.LinkedCount(inCorpus.size),
+          PlanAnswer.QueuedCount(items.size),
           runId(ctx)
         )
         .value
     ).map(l =>
       Applied(
-        PlanGoal.LogLine(l),
-        PlanGoal.CreatedCount(created.size),
-        PlanGoal.LinkedCount(inCorpus.size),
-        PlanGoal.QueuedCount(items.size)
+        PlanAnswer.LogLine(l),
+        PlanAnswer.CreatedCount(created.size),
+        PlanAnswer.LinkedCount(inCorpus.size),
+        PlanAnswer.QueuedCount(items.size)
       )
     )
 
@@ -362,7 +359,7 @@ object PlanGoalPipeline:
       periodStart: Option[Year],
       periodEnd: Option[Year],
       children: List[Loaded.Children],
-      queries: List[PlanGoal.Query],
+      queries: List[PlanAnswer.Query],
       linked: List[Loaded.Linked],
       topics: List[Loaded.Topics],
       tags0: List[Loaded.Tags0]
@@ -386,8 +383,8 @@ object PlanGoalPipeline:
 
   /** What applying the plan did. */
   final case class Applied(
-      line: PlanGoal.LogLine,
-      created: PlanGoal.CreatedCount,
-      linked: PlanGoal.LinkedCount,
-      queued: PlanGoal.QueuedCount
+      line: PlanAnswer.LogLine,
+      created: PlanAnswer.CreatedCount,
+      linked: PlanAnswer.LinkedCount,
+      queued: PlanAnswer.QueuedCount
   ) derives JsonCodec

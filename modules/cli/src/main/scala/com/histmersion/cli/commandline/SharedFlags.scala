@@ -2,6 +2,10 @@ package com.histmersion
 package cli
 package commandline
 
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.JobFilter
+
 import com.histmersion.api.{Dataset, ItemKind}
 import com.histmersion.api.exchange.MergeResolutions
 import com.histmersion.api.automation.ListFilters
@@ -64,7 +68,7 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
   private def until() = one("until", "Only those started before the end of: 2026-10-01, or an ISO instant")
 
   /** The filters of `agent approvals`. */
-  protected def approvalFilter(): () => ListFilters.ApprovalFilter =
+  protected def approvalFilter(): () => ApprovalFilter =
     val state = one("state", ListOpts.Help.approvalState)
     val kind = many("kind", ListOpts.Help.approvalKind)
     val subject =
@@ -81,7 +85,7 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
       )
 
   /** The filters of `agent runs`. */
-  protected def runFilter(): () => ListFilters.RunFilter =
+  protected def runFilter(): () => RunFilter =
     val status = many("status", ListOpts.Help.runStatus)
     val pipeline = many("pipeline", ListOpts.Help.pipeline)
     val manager = many("manager", "Only the runs these process managers dispatched (review, enrich, seed:<goal>, …)")
@@ -107,7 +111,7 @@ private[cli] trait SharedFlags extends CommandLine.Declares:
       )
 
   /** The filters of `jobs`. */
-  protected def jobFilter(): () => ListFilters.JobFilter =
+  protected def jobFilter(): () => JobFilter =
     val status = many("status", ListOpts.Help.jobStatus)
     val kind =
       many("kind", "Only these job kinds: ingest, reocr, agent, media-import, events-import, init, basemap-fetch, …")

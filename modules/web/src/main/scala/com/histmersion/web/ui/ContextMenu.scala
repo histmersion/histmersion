@@ -79,9 +79,8 @@ object ContextMenu:
     (math.max(margin, math.min(px, vw - w - margin)), math.max(margin, math.min(py, vh - h - margin)))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def show(
-      title: ContextMenu.ShowTitle,
+      title: ShowTitle,
       entries: List[Entry],
       x: Double,
       y: Double,
@@ -112,9 +111,8 @@ object ContextMenu:
 
   /** A right click and the menu key on the element open its menu; `entries` is read when it opens. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def on(title: ContextMenu.OnTitle, entries: () => List[Entry]): Modifier[HtmlElement] =
+  def on(title: OnTitle, entries: () => List[Entry]): Modifier[HtmlElement] =
     List(
       onContextMenu --> { ev =>
         val es = if nativeWanted(ev) then Nil else entries()
@@ -137,9 +135,8 @@ object ContextMenu:
   /** The visible way in: a "⋯" button that opens the same menu under itself. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def button(
-      title: ContextMenu.ButtonTitle,
+      title: ButtonTitle,
       entries: () => List[Entry],
       extraCls: ButtonExtraCls = ButtonExtraCls("")
   ): HtmlElement =

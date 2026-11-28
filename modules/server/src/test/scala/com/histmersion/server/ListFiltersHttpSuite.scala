@@ -1,6 +1,8 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.automation.activity.Counts
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -122,7 +124,7 @@ class ListFiltersHttpSuite extends DbSuite:
       // the kind counts are taken under the state (open) but not the kind filter
       assertEquals(facets(h1)(ListFilters.FacetName("kind")), Map("goal-plan" -> 2, "article-publish" -> 1))
       assertEquals(
-        Paging.decodeCounts(Activity.Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap,
+        Paging.decodeCounts(Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap,
         Map("open" -> 2)
       )
       val (_, ball, hall) = get(s"$url/api/agents/approvals?subject=$tag&state=all&kind=goal-plan,edge")

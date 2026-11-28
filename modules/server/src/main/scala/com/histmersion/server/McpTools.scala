@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.aliases.AliasKind
+import com.histmersion.api.library.repairacquire.RepairRequest
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.log.LogTools
 import com.histmersion.util.json.RawJson.*
@@ -23,7 +27,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.mcp.{McpConfig, McpEdge, McpOut}
-import com.histmersion.api.aliases.{Aliases, LabelRename}
+import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.automation.{ActivityMarkdown, AgentsMarkdown, AgentStatePut, ListFilters}
 import com.histmersion.api.exchange.{MergeMarkdown, MergePolicy, MergeResolution, MergeResolutions}
 import com.histmersion.api.library.{IngestMarkdown, RepairAcquire}
@@ -240,7 +244,7 @@ final class McpTools(
       .handle { in =>
         h.activity
           .page(
-            in.show.map(Activity.Show.Wire(_)),
+            in.show.map(api.automation.activity.Show.Wire(_)),
             in.since.map(ListFilters.TimeBound(_)),
             in.goal.map(ActivityQuery.Goal(_)),
             in.limit.map(ActivityQuery.Limit(_)),
@@ -424,9 +428,9 @@ final class McpTools(
             .flatMap(h.goals.put(_, put)) match
             case Right(g) =>
               ToolResult.text(
-                Aliases
-                  .note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
-                    Aliases.Note(GoalsMarkdown.goal(g))
+                AliasKinds.GoalRecords
+                  .note(AliasKind.Id(in.slug), AliasKind.Id(g.slug.value))(
+                    AliasKind.Note(GoalsMarkdown.goal(g))
                   )
                   .value
               )
@@ -459,9 +463,9 @@ final class McpTools(
           .flatMap(h.goals.patch(_, p)) match
           case Right(g) =>
             ToolResult.text(
-              Aliases
-                .note(AliasKinds.GoalRecords, Aliases.Id(in.slug), Aliases.Id(g.slug.value))(
-                  Aliases.Note(GoalsMarkdown.goal(g))
+              AliasKinds.GoalRecords
+                .note(AliasKind.Id(in.slug), AliasKind.Id(g.slug.value))(
+                  AliasKind.Note(GoalsMarkdown.goal(g))
                 )
                 .value
             )
@@ -593,7 +597,7 @@ final class McpTools(
           "article's versions, links and every [[old]] in other articles — each rewrite recorded as a " +
           "version; an event's attestations and asset links; a goal's sub-goals, links and schedules; a " +
           "place's names, parents, footprints, events, attestations and finding assignments). " +
-          s"${Aliases.Rule} (get_article / events / goals / places show the record under its new one, a " +
+          s"${AliasKind.Rule} (get_article / events / goals / places show the record under its new one, a " +
           "places filter on the old id still matches.) Refused when the new label " +
           "is taken or is an old label of another record. For a source's citekey use rename_source."
       )
@@ -677,22 +681,20 @@ final class McpTools(
         h.agents,
         dry =>
           Right(
-            RepairAcquire
-              .markdown(
-                h.maintenance.writing(
-                  EngineContributions
-                    .work(h.agents)
-                    .oaBacklog
-                    .repair(
-                      RepairAcquire
-                        .RepairRequest(
-                          (if dry.value then RepairAcquire.RepairRequest.DryRun.DryRun
-                           else RepairAcquire.RepairRequest.DryRun.Apply),
-                          Some(Activity.Actor("mcp"))
-                        )
+            h.maintenance
+              .writing(
+                EngineContributions
+                  .work(h.agents)
+                  .oaBacklog
+                  .repair(
+                    RepairRequest(
+                      (if dry.value then RepairRequest.DryRun.DryRun
+                       else RepairRequest.DryRun.Apply),
+                      Some(Activity.Actor("mcp"))
                     )
-                )
+                  )
               )
+              .markdown
               .value
           ),
         st => h.autopilot.page(st).markdown
@@ -802,13 +804,13 @@ object McpTools:
       subject: Option[String] = None
   ) derives JsonCodec:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def filter: ListFilters.JobFilter =
-      ListFilters.JobFilter(
-        status.toList.map(ListFilters.JobFilter.Status(_)),
-        kind.map(ListFilters.JobFilter.Kind(_)),
-        since.map(ListFilters.JobFilter.Since(_)),
-        until.map(ListFilters.JobFilter.Until(_)),
-        subject.map(ListFilters.JobFilter.Subject(_))
+    def filter: JobFilter =
+      JobFilter(
+        status.toList.map(JobFilter.Status(_)),
+        kind.map(JobFilter.Kind(_)),
+        since.map(JobFilter.Since(_)),
+        until.map(JobFilter.Until(_)),
+        subject.map(JobFilter.Subject(_))
       )
   object JobStatusInput:
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")

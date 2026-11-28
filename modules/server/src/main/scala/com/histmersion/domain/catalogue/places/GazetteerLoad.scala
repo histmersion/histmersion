@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.Manifest
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
 import hearth.kindlings.jsoniterjson.JsonObject
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -72,24 +76,24 @@ object GazetteerLoad:
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def locate(p: Stores, file: Gazetteer.SourceInfo.File): Option[(Store, Store.Key)] =
+  def locate(p: Stores, file: SourceInfo.File): Option[(Store, Store.Key)] =
     Store.Key
       .of(file.value)
       .toOption
       .flatMap(k => (p.extracts :: p.legacy.toList).find(_.isFile(k)).map(_ -> k))
 
   /** Every name `histmersion places load` and `init.fetch-sources` accept for these sources. */
-  val names: List[Gazetteer.Kind.Wire] = Gazetteer.Kind.values.toList.map(_.wire)
+  val names: List[api.catalogue.gazetteer.Kind.Wire] = api.catalogue.gazetteer.Kind.values.toList.map(_.wire)
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def manifest(p: Stores): Either[Problem, Gazetteer.Manifest] =
+  def manifest(p: Stores): Either[Problem, Manifest] =
     p.manifestText()
       .flatMap(text =>
         RawJson
-          .decode[Gazetteer.Manifest](text.value)
+          .decode[Manifest](text.value)
           .left
           .map(e =>
             Problem.Io.Corrupt(
@@ -102,7 +106,7 @@ object GazetteerLoad:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def pin(p: Stores, kind: Gazetteer.Kind): Either[Problem, Gazetteer.Extract] =
+  private def pin(p: Stores, kind: api.catalogue.gazetteer.Kind): Either[Problem, api.catalogue.gazetteer.Extract] =
     manifest(p).flatMap(
       _.extracts
         .find(_.name.value == kind.wire.value)
@@ -118,7 +122,7 @@ object GazetteerLoad:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[Problem, Blob] =
+  def verify(store: Store, key: Store.Key, x: api.catalogue.gazetteer.Extract): Either[Problem, Blob] =
     store.get(key) match
       case None    => Left(Problem.Io.Wrong(Problem.Io.Path.of(store.where(key)), Problem.Io.Kind.Present))
       case Some(f) =>
@@ -148,7 +152,7 @@ object GazetteerLoad:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def missing(p: Stores, x: Gazetteer.Extract): Problem =
+  def missing(p: Stores, x: api.catalogue.gazetteer.Extract): Problem =
     if x.sha256.value.trim.isEmpty || x.file.value.trim.isEmpty then
       Problem.Io.Extract(Problem.Raw.of(x.name), Problem.Io.Pinning.NotBuilt(Problem.Io.Path.of(p.manifestAt)))
     else
@@ -172,7 +176,7 @@ object GazetteerLoad:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: Store.Key): Either[Problem, Blob] =
+  private def adopt(p: Stores, x: api.catalogue.gazetteer.Extract, old: Store, key: Store.Key): Either[Problem, Blob] =
     verify(old, key, x).map { found =>
       val moved =
         for
@@ -204,7 +208,7 @@ object GazetteerLoad:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def extract(
       p: Stores,
-      x: Gazetteer.Extract,
+      x: api.catalogue.gazetteer.Extract,
       download: Download,
       timeoutSeconds: Settings.DownloadTimeoutSeconds
   ): Either[Problem, Blob] =
@@ -254,17 +258,17 @@ object GazetteerLoad:
     }
 
   /** Feed the records of one file to `sink` in batches; a malformed record is skipped and named. */
-  final private class Batcher(size: Int, sink: List[GazRecord] => Gazetteer.LoadCounts):
+  final private class Batcher(size: Int, sink: List[GazRecord] => LoadCounts):
     private val buf = List.newBuilder[GazRecord] // the batch being filled
     private var n = 0 // its size
-    var total: Gazetteer.LoadCounts =
-      Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source(""), Gazetteer.LoadCounts.Version("")) // the running sum
+    var total: LoadCounts =
+      LoadCounts(LoadCounts.Source(""), LoadCounts.Version("")) // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def add(r: Either[Problem, GazRecord]): Unit = r match
-      case Left(e) => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.sentence)).take(20))
+      case Left(e)    => total = total.copy(skipped = (total.skipped :+ LoadCounts.Skipped(e.sentence)).take(20))
       case Right(rec) =>
         span = Span(
           (span.from ++ rec.span.from).minByOption(_.value: Long),
@@ -330,14 +334,14 @@ object GazetteerLoad:
   def load(
       db: Transactor,
       s: Settings,
-      kind: Gazetteer.Kind,
+      kind: api.catalogue.gazetteer.Kind,
       apply: LoadApply,
       note: JobInfo.Progress => Unit,
       download: Download
-  )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
-    val result: Either[Problem, List[Gazetteer.LoadCounts]] = kind match
-      case Gazetteer.Kind.Lpf => loadLpf(db, s, apply.value, note)
-      case k                  =>
+  )(using WritePermit)(using Creator.New): Either[Problem, List[LoadCounts]] =
+    val result: Either[Problem, List[LoadCounts]] = kind match
+      case api.catalogue.gazetteer.Kind.Lpf => loadLpf(db, s, apply.value, note)
+      case k                                =>
         for
           x <- pin(s.stores, k)
           f <- extract(s.stores, x, download, s.downloadTimeoutSeconds)
@@ -345,8 +349,8 @@ object GazetteerLoad:
           val (c, _) = run(
             db,
             s,
-            Gazetteer.sourceKey(k),
-            Gazetteer.LoadCounts.Version(x.version.value),
+            k.sourceKey(),
+            LoadCounts.Version(x.version.value),
             apply.value,
             note,
             f.key.name.value
@@ -356,7 +360,7 @@ object GazetteerLoad:
           if apply.value then
             db.read(
               GazetteerRepo.recordSource(
-                GazetteerSourceRow.Key(Gazetteer.sourceKey(k).value),
+                GazetteerSourceRow.Key(k.sourceKey().value),
                 k,
                 GazetteerSourceRow.Title(x.title.value),
                 GazetteerSourceRow.Version(x.version.value),
@@ -381,7 +385,7 @@ object GazetteerLoad:
       line: String,
       n: Int,
       dataset: Gazetteer.DatasetName,
-      source: Option[Gazetteer.SourceInfo.Key]
+      source: Option[SourceInfo.Key]
   ): Either[Problem, GazRecord] =
     RawJson
       .parse(line)
@@ -408,12 +412,12 @@ object GazetteerLoad:
   private def run(
       db: Transactor,
       s: Settings,
-      key: Gazetteer.SourceInfo.Key,
-      version: Gazetteer.LoadCounts.Version,
+      key: SourceInfo.Key,
+      version: LoadCounts.Version,
       apply: Boolean,
       note: JobInfo.Progress => Unit,
       label: String
-  )(feed: Batcher => Unit)(using WritePermit)(using Creator.New): (Gazetteer.LoadCounts, Span) =
+  )(feed: Batcher => Unit)(using WritePermit)(using Creator.New): (LoadCounts, Span) =
     db.read:
       val session = GazetteerImport.session(key, version, apply, s.clock, s.openStartWindowYears, s.pointAreaKinds)
       val pruned = session.prune(s.batch.value)
@@ -431,10 +435,10 @@ object GazetteerLoad:
       b.flush()
       val swept = session.sweep()
       (
-        (b.total + swept + Gazetteer.LoadCounts(
+        (b.total + swept + LoadCounts(
           key,
           version,
-          placesRemoved = Gazetteer.LoadCounts.PlacesRemoved(pruned.value)
+          placesRemoved = LoadCounts.PlacesRemoved(pruned.value)
         ))
           .copy(source = key, version = version),
         b.span
@@ -471,12 +475,12 @@ object GazetteerLoad:
       s: Settings,
       apply: Boolean,
       note: JobInfo.Progress => Unit
-  )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
+  )(using WritePermit)(using Creator.New): Either[Problem, List[LoadCounts]] =
     val files = lpfFiles(s.stores.lpf)
     if files.isEmpty then
       Left(Problem.Io.Absent(Problem.Io.Held.LpfFiles, Problem.Io.Path.of(s.stores.lpf.where()), None))
     else
-      files.foldLeft[Either[Problem, List[Gazetteer.LoadCounts]]](Right(Nil)) { (acc, f) =>
+      files.foldLeft[Either[Problem, List[LoadCounts]]](Right(Nil)) { (acc, f) =>
         acc.flatMap(done => loadLpfFile(db, s, f, apply, note).map(done :+ _))
       }
 
@@ -489,10 +493,10 @@ object GazetteerLoad:
       f: Blob,
       apply: Boolean,
       note: JobInfo.Progress => Unit
-  )(using WritePermit)(using Creator.New): Either[Problem, Gazetteer.LoadCounts] =
+  )(using WritePermit)(using Creator.New): Either[Problem, LoadCounts] =
     val name = f.key.name.value
-    val slug = Gazetteer.datasetSlug(Gazetteer.SourceInfo.File(name))
-    val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(slug))
+    val slug = SourceInfo.datasetSlug(SourceInfo.File(name))
+    val key = api.catalogue.gazetteer.Kind.Lpf.sourceKey(Some(slug))
     val sha = f.sha256()
     val version = sha.value.take(12)
     val side = sidecar(s.stores.lpf, f)
@@ -514,7 +518,7 @@ object GazetteerLoad:
                     Gazetteer.tsvCells(line),
                     slug,
                     n,
-                    meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value))
+                    meta.citation.map(c => SourceInfo.Key(c.value))
                   )
                   .map(Gazetteer.inDataset(_, meta))
               )
@@ -526,7 +530,7 @@ object GazetteerLoad:
           meta -> ((b: Batcher) =>
             lines(f)((line, n) =>
               b.add(
-                parseLine(line, n, slug, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
+                parseLine(line, n, slug, meta.citation.map(c => SourceInfo.Key(c.value)))
                   .map(Gazetteer.inDataset(_, meta))
               )
             )
@@ -568,7 +572,7 @@ object GazetteerLoad:
                   fs.zipWithIndex.foreach((j, i) =>
                     b.add(
                       Gazetteer
-                        .fromFeature(j, slug, i, meta.citation.map(c => Gazetteer.SourceInfo.Key(c.value)))
+                        .fromFeature(j, slug, i, meta.citation.map(c => SourceInfo.Key(c.value)))
                         .map(Gazetteer.inDataset(_, meta))
                     )
                   )
@@ -576,13 +580,13 @@ object GazetteerLoad:
               }
           }
     parsed.map { (meta, feed) =>
-      val (c, seen) = run(db, s, key, Gazetteer.LoadCounts.Version(version), apply, note, name)(feed)
+      val (c, seen) = run(db, s, key, LoadCounts.Version(version), apply, note, name)(feed)
       if apply then
         val span = if !meta.span.isEmpty then meta.span else seen
         db.read(
           GazetteerRepo.recordSource(
             GazetteerSourceRow.Key(key.value),
-            Gazetteer.Kind.Lpf,
+            api.catalogue.gazetteer.Kind.Lpf,
             GazetteerSourceRow.Title(meta.title.fold(name)(_.value)),
             GazetteerSourceRow.Version(version),
             sha,
@@ -604,66 +608,67 @@ object GazetteerLoad:
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def list(db: Transactor, s: Settings): List[Gazetteer.SourceInfo] =
-    val stored = db.read(GazetteerRepo.sources()).map(r => Gazetteer.SourceInfo.Key(r.key.value) -> r).toMap
-    def withStored(i: Gazetteer.SourceInfo): Gazetteer.SourceInfo =
+  def list(db: Transactor, s: Settings): List[SourceInfo] =
+    val stored = db.read(GazetteerRepo.sources()).map(r => SourceInfo.Key(r.key.value) -> r).toMap
+    def withStored(i: SourceInfo): SourceInfo =
       stored
         .get(i.key)
         .fold(i)(r =>
           i.copy(
-            importedVersion = Some(Gazetteer.SourceInfo.ImportedVersion(r.version.value)),
-            importedAt = Some(Gazetteer.SourceInfo.ImportedAt(r.importedAt.value)),
-            places = Some(Gazetteer.SourceInfo.Places(r.places.value)),
-            names = Some(Gazetteer.SourceInfo.Names(r.names.value)),
-            links = Some(Gazetteer.SourceInfo.Links(r.links.value)),
-            licence = i.licence.orElse(r.licence.map(l => Gazetteer.SourceInfo.Licence(l.value))),
-            citation = i.citation.orElse(r.citation.map(q => Gazetteer.SourceInfo.Citation(q.value))),
+            importedVersion = Some(SourceInfo.ImportedVersion(r.version.value)),
+            importedAt = Some(SourceInfo.ImportedAt(r.importedAt.value)),
+            places = Some(SourceInfo.Places(r.places.value)),
+            names = Some(SourceInfo.Names(r.names.value)),
+            links = Some(SourceInfo.Links(r.links.value)),
+            licence = i.licence.orElse(r.licence.map(l => SourceInfo.Licence(l.value))),
+            citation = i.citation.orElse(r.citation.map(q => SourceInfo.Citation(q.value))),
             periodStart = r.periodStart.map(y => Year(y.value.toLong)),
             periodEnd = r.periodEnd.map(y => Year(y.value.toLong))
           )
         )
     val pinned = manifest(s.stores).toOption.toList.flatMap(_.extracts).flatMap { x =>
-      Gazetteer.Kind.parse(Gazetteer.Kind.Wire(x.name.value)).filter(_ != Gazetteer.Kind.Lpf).map { k =>
-        val built = x.file.value.trim.nonEmpty && x.sha256.value.trim.nonEmpty // a pin not built yet names no file
-        val at = Option.when(built)(locate(s.stores, x.file)).flatten
-        def expected = Store.Key.of(x.file.value).toOption.fold(s.stores.extracts.where())(s.stores.extracts.where(_))
-        Gazetteer.SourceInfo(
-          Gazetteer.sourceKey(k),
-          k,
-          x.title,
-          Option.when(built)(Gazetteer.SourceInfo.File(at.fold(expected)((store, key) => store.where(key)).value)),
-          (if at.isDefined then Gazetteer.SourceInfo.Present.Present else Gazetteer.SourceInfo.Present.Absent),
-          Option.when(built)(Gazetteer.SourceInfo.PinnedVersion(x.version.value)),
-          licence = Some(x.licence),
-          citation = x.attribution.map(a => Gazetteer.SourceInfo.Citation(a.value))
-        )
-      }
+      api.catalogue.gazetteer.Kind
+        .parse(api.catalogue.gazetteer.Kind.Wire(x.name.value))
+        .filter(_ != api.catalogue.gazetteer.Kind.Lpf)
+        .map { k =>
+          val built = x.file.value.trim.nonEmpty && x.sha256.value.trim.nonEmpty // a pin not built yet names no file
+          val at = Option.when(built)(locate(s.stores, x.file)).flatten
+          def expected = Store.Key.of(x.file.value).toOption.fold(s.stores.extracts.where())(s.stores.extracts.where(_))
+          SourceInfo(
+            k.sourceKey(),
+            k,
+            x.title,
+            Option.when(built)(SourceInfo.File(at.fold(expected)((store, key) => store.where(key)).value)),
+            (if at.isDefined then SourceInfo.Present.Present else SourceInfo.Present.Absent),
+            Option.when(built)(SourceInfo.PinnedVersion(x.version.value)),
+            licence = Some(x.licence),
+            citation = x.attribution.map(a => SourceInfo.Citation(a.value))
+          )
+        }
     }
     val lpf = lpfFiles(s.stores.lpf).map { f =>
-      val key = Gazetteer.sourceKey(
-        Gazetteer.Kind.Lpf,
-        Some(Gazetteer.datasetSlug(Gazetteer.SourceInfo.File(f.key.name.value)))
-      )
-      Gazetteer.SourceInfo(
+      val key =
+        api.catalogue.gazetteer.Kind.Lpf.sourceKey(Some(SourceInfo.datasetSlug(SourceInfo.File(f.key.name.value))))
+      SourceInfo(
         key,
-        Gazetteer.Kind.Lpf,
-        Gazetteer.SourceInfo.Title(f.key.name.value),
-        Some(Gazetteer.SourceInfo.File(f.where.value)),
-        present = Gazetteer.SourceInfo.Present.Present,
+        api.catalogue.gazetteer.Kind.Lpf,
+        SourceInfo.Title(f.key.name.value),
+        Some(SourceInfo.File(f.where.value)),
+        present = SourceInfo.Present.Present,
         None
       )
     }
     val onDisk = (pinned ++ lpf).map(_.key).toSet
     val gone = stored.filterNot((k, _) => onDisk.contains(k)).values.toList.sortBy(_.key.value).flatMap { r =>
-      Gazetteer.Kind
-        .parse(Gazetteer.Kind.Wire(r.kind.value))
+      api.catalogue.gazetteer.Kind
+        .parse(api.catalogue.gazetteer.Kind.Wire(r.kind.value))
         .map(k =>
-          Gazetteer.SourceInfo(
-            Gazetteer.SourceInfo.Key(r.key.value),
+          SourceInfo(
+            SourceInfo.Key(r.key.value),
             k,
-            Gazetteer.SourceInfo.Title(r.title.value),
-            Some(Gazetteer.SourceInfo.File(r.file.value)),
-            present = Gazetteer.SourceInfo.Present.Absent,
+            SourceInfo.Title(r.title.value),
+            Some(SourceInfo.File(r.file.value)),
+            present = SourceInfo.Present.Absent,
             None
           )
         )

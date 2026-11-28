@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.media.imports
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{reason, sentence}
 
@@ -160,7 +162,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     val base = MediaImportReport(
       provider = MediaItem.Provider(col.provider.value),
       dryRun =
-        (if dryRun.value then RepairAcquire.RepairRequest.DryRun.DryRun else RepairAcquire.RepairRequest.DryRun.Apply),
+        (if dryRun.value then RepairRequest.DryRun.DryRun else RepairRequest.DryRun.Apply),
       targets = MediaImportReport.Targets(places.size),
       items = MediaImportReport.Items(records.size),
       statements = MediaImportReport.Statements(kept.size),

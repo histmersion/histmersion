@@ -1,5 +1,10 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.QueueImport
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -191,15 +196,15 @@ class MaintenanceLockSuite extends DbSuite:
     refused("queue/add")(
       h.workLists.addOverRest(
         WorkListControllers.ListName("tasks"),
-        Queue.QueueAdd(text = Queue.QueueItem.Text("zzlock item"))
+        QueueAdd(text = QueueItem.Text("zzlock item"))
       )
     )
     refused("queue/patch")(
-      h.workLists.patch(QueueItemId(1), Queue.QueuePatch(status = Some(Queue.QueueItem.Status("done"))))
+      h.workLists.patch(QueueItemId(1), QueuePatch(status = Some(QueueItem.Status("done"))))
     )
     refused("queue/delete")(h.workLists.delete(QueueItemId(1)))
     refused("queue/import")(
-      h.workLists.importText(Queue.Kind.Label("tasks"), Queue.QueueImport(text = Queue.QueueItem.Text("")))
+      h.workLists.importText(api.automation.queue.Docket.Label("tasks"), QueueImport(text = QueueItem.Text("")))
     )
     // reads are NOT blocked: a restore stops writes, it does not take the service down
     val reads = underLock(h.checks.lint(Nil).left.map(Api.Error(_)))

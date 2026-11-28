@@ -1,5 +1,24 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.Stall
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.approvaldigest.Open
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.library.repairacquire.RepairRequest
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.managers.ItemPage
+import com.histmersion.api.automation.managers.EventPage
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.managers.ManagerUpdate
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -24,7 +43,6 @@ import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Stalls
 import com.histmersion.api.automation.Managers
 import com.histmersion.util.problem.Problems
 import com.histmersion.lint.{atBoundary, BoundaryKind}
@@ -67,36 +85,36 @@ object ManagerCmd:
     * it); a malformed one is a usage error before anything is sent.
     */
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
-  def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
+  def focusRequest(args: List[String]): Either[Cli.Error, Option[FocusSet]] =
     def usage(m: String) = Left(Cli.Error(Problem.Unclassified(Legacy.Text(m))))
     def num(s: String) =
       s.trim.toIntOption.toRight(
         Cli.Error(Problem.Unclassified(Legacy.Text(s"'$s' is not a whole number")))
       )
-    def by = Some(Autopilot.FocusSet.By("cli"))
+    def by = Some(FocusSet.By("cli"))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)
       case List(v @ ("pin" | "unpin"), g) =>
-        Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), Some(Goal.Slug(g)), by = by)))
+        Right(Some(FocusSet(FocusSet.Action(v), Some(Goal.Slug(g)), by = by)))
       case List("priority", g, n) =>
         num(n).map(p =>
           Some(
-            Autopilot.FocusSet(
-              Autopilot.FocusSet.Action("priority"),
+            FocusSet(
+              FocusSet.Action("priority"),
               Some(Goal.Slug(g)),
-              Some(Autopilot.FocusSet.Value(p)),
+              Some(FocusSet.Value(p)),
               by
             )
           )
         )
-      case List("max", "default") => Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), by = by)))
+      case List("max", "default") => Right(Some(FocusSet(FocusSet.Action("max"), by = by)))
       case List("max", n)         =>
         num(n).flatMap(m =>
           if m < 0 then usage("focus max takes 0 (no cap) or more, or `default`")
           else
             Right(
               Some(
-                Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), value = Some(Autopilot.FocusSet.Value(m)), by = by)
+                FocusSet(FocusSet.Action("max"), value = Some(FocusSet.Value(m)), by = by)
               )
             )
         )
@@ -117,7 +135,7 @@ object ManagerCmd:
     case Drain
     case Undrain
     case RepairAcquire(writes: Cli.Writes)
-    case Focus(request: Option[Autopilot.FocusSet])
+    case Focus(request: Option[FocusSet])
     case Mode(mode: String)
 
   /** What `agent manager <id> …` was asked to do. */
@@ -187,20 +205,20 @@ object ManagerCmd:
             EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))
           ).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
         case Command.Stalls(days, json) =>
-          c.call(ManagersApi.stalls)(days.map(Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
+          c.call(ManagersApi.stalls)(days.map(Stall.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
         case Command.Digest(json) =>
           c.call(ManagersApi.digest)(()).map(d => Output.emit(json, d)(ApprovalDigestMarkdown.digest))
         case Command.DecideAll(d, kind, subject, ids, note, limit, writes, json) =>
           c.call(ManagersApi.decideAll)(
-            ApprovalDigest.BulkDecide(
-              ApprovalDigest.BulkDecide.Decision(d),
-              kind.map(ApprovalDigest.BulkDecide.Kind(_)),
-              subject.map(ApprovalDigest.BulkDecide.Subject(_)),
-              ids.map(ApprovalDigest.Open.Id(_)),
-              note.map(ApprovalDigest.BulkDecide.Note(_)),
-              (if writes.dry then ApprovalDigest.BulkDecide.DryRun.DryRun else ApprovalDigest.BulkDecide.DryRun.Apply),
-              limit.map(ApprovalDigest.BulkDecide.Limit(_)),
-              Some(ApprovalDigest.BulkDecide.By("cli"))
+            BulkDecide(
+              BulkDecide.Decision(d),
+              kind.map(BulkDecide.Kind(_)),
+              subject.map(BulkDecide.Subject(_)),
+              ids.map(Open.Id(_)),
+              note.map(BulkDecide.Note(_)),
+              (if writes.dry then BulkDecide.DryRun.DryRun else BulkDecide.DryRun.Apply),
+              limit.map(BulkDecide.Limit(_)),
+              Some(BulkDecide.By("cli"))
             )
           ).map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
         case Command.Create(kind, goal, kvs, cron, active, json) =>
@@ -226,35 +244,35 @@ object ManagerCmd:
             case AutopilotVerb.On     =>
               status(
                 c.call(AutopilotApi.setAutopilot)(
-                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On.On, Some(Autopilot.AutopilotSet.By("cli")))
+                  AutopilotSet(on = AutopilotSet.On.On, Some(AutopilotSet.By("cli")))
                 )
               )
             case AutopilotVerb.Off =>
               status(
                 c.call(AutopilotApi.setAutopilot)(
-                  Autopilot.AutopilotSet(on = Autopilot.AutopilotSet.On.Off, Some(Autopilot.AutopilotSet.By("cli")))
+                  AutopilotSet(on = AutopilotSet.On.Off, Some(AutopilotSet.By("cli")))
                 )
               )
             case AutopilotVerb.Drain =>
               status(
                 c.call(AutopilotApi.drain)(
-                  Autopilot.DrainSet(on = Autopilot.DrainSet.On.On, Some(Autopilot.DrainSet.By("cli")))
+                  DrainSet(on = DrainSet.On.On, Some(DrainSet.By("cli")))
                 )
               )
             case AutopilotVerb.Undrain =>
               status(
                 c.call(AutopilotApi.drain)(
-                  Autopilot.DrainSet(on = Autopilot.DrainSet.On.Off, Some(Autopilot.DrainSet.By("cli")))
+                  DrainSet(on = DrainSet.On.Off, Some(DrainSet.By("cli")))
                 )
               )
             case AutopilotVerb.RepairAcquire(writes) =>
               c.call(AcquisitionWorkApi.repairAcquire)(
-                RepairAcquire.RepairRequest(
-                  (if writes.dry then RepairAcquire.RepairRequest.DryRun.DryRun
-                   else RepairAcquire.RepairRequest.DryRun.Apply),
+                RepairRequest(
+                  (if writes.dry then RepairRequest.DryRun.DryRun
+                   else RepairRequest.DryRun.Apply),
                   Some(Activity.Actor("cli"))
                 )
-              ).map(r => Output.emit(json, r)(RepairAcquire.markdown(_).value))
+              ).map(r => Output.emit(json, r)(_.markdown.value))
             case AutopilotVerb.Focus(request) =>
               request
                 .fold(c.call(ManagersApi.focus)(()))(r => c.call(ManagersApi.setFocus)(r))
@@ -283,8 +301,7 @@ object ManagerCmd:
             .map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
         case Command.SchedulerStrategy(name, json) =>
           c.call(ManagersApi.setScheduler)(
-            AgentScheduler
-              .SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(AgentScheduler.SchedulerSet.By("cli")))
+            SchedulerSet(SchedulerSet.Strategy(name), Some(SchedulerSet.By("cli")))
           ).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
         case Command.Manager(idText, verb) =>
           val id = ManagerInfo.Id(idText)

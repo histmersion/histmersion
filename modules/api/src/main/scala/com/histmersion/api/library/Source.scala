@@ -178,9 +178,8 @@ object Source:
     export Source.CalibreId as CalibreLineCalibreId
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
     def calibreLine(
-        calibreId: Option[Delete.CalibreLineCalibreId],
+        calibreId: Option[CalibreLineCalibreId],
         check: Option[CalibreEntryCheck]
     ): CalibreLine =
       calibreId match
@@ -525,11 +524,10 @@ object Source:
 
     /** A source's match as the plan's Markdown lists it. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def line(s: Match): Match.Line =
+    def line(s: Match): Line =
       val target = s.leftCitekey.fold("")(c => s" → `$c`")
       val score = s.score.fold("")(x => s" · score ${math.round((x).value * 10) / 10.0}")
-      Match.Line(
+      Line(
         s"- `${s.rightCitekey}`$target · ${MatchOutcome.wireOf(s.outcome)}$score" + s.issue.fold("")(i => s" · $i")
       )
 

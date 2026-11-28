@@ -3,7 +3,7 @@ package web
 
 import hearth.kindlings.optics.syntax.*
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, YearFmt}
+import com.histmersion.api.Api
 import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 
@@ -69,7 +69,7 @@ object EventsTab:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def when(e: EventSummary): When = When(e.datingNote.getOrElse(YearFmt.span(e.timeSpan)))
+  def when(e: EventSummary): When = When(e.datingNote.getOrElse(e.timeSpan.show))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

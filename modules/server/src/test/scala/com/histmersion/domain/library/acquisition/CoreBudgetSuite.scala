@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.domain.library.acquisition.Grant
+import com.histmersion.domain.library.acquisition.State
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -112,7 +115,7 @@ class CoreBudgetSuite extends munit.FunSuite:
   /** A clock the test moves; `sleep` moves it too (and is recorded), so nothing waits. */
   final private class Clock:
     val now = AtomicReference(t0)
-    val slept = ConcurrentLinkedQueue[CoreQuota.Grant.WaitMs]()
+    val slept = ConcurrentLinkedQueue[Grant.WaitMs]()
     def advance(seconds: Long): Unit = now.updateAndGet(_.plusSeconds(seconds))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def budget(): CoreBudget =
@@ -145,7 +148,7 @@ class CoreBudgetSuite extends munit.FunSuite:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     val cfg = loaded.config.acquire
-    Indexes
+    ScholarlyIndex
       .of(
         cfg,
         SttpHttp(cfg, tries = PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())),
@@ -277,10 +280,10 @@ class CoreBudgetSuite extends munit.FunSuite:
   test("the budget outlives a restart: what was spent and a block are read back from its store"):
     withCore { core =>
       val clock = Clock()
-      val saved = AtomicReference[Option[CoreQuota.State]](None)
+      val saved = AtomicReference[Option[State]](None)
       val store = new CoreQuotaStore:
         def load() = saved.get
-        def save(s: CoreQuota.State) = saved.set(Some(s))
+        def save(s: State) = saved.set(Some(s))
       val first = clock.budget()
       first.persistTo(store)
       val cfg = acquire(core, key = "k")

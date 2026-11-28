@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.domain.catalogue.events.Placement
+
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.catalogue.EventEntry
@@ -20,7 +22,6 @@ import com.histmersion.api.catalogue.{
   EventCatalogueRef,
   EventGeo,
   EventLead,
-  EventLeads,
   EventLinkCandidate,
   EventLinkList,
   EventLinksRequest,
@@ -39,7 +40,7 @@ import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueJobs
-import com.histmersion.domain.catalogue.events.{weights, CatalogMerge, EventSelection, EventService, EventSql}
+import com.histmersion.domain.catalogue.events.{weights, EventSelection, EventService, EventSql}
 import com.histmersion.domain.DeepTime.SignedYear
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.Title
@@ -112,9 +113,9 @@ final class EventLinksControllers(
   )
   private def namesOf(d: EventEntry): List[String] =
     val stored = events.tierAndNames(idOf(d)).map(_._2).getOrElse(Nil)
-    EventMatcher.searchNames(
+    NearFinding.searchNames(
       d.event.label.value :: stored.map(_.value),
-      EventMatcher.Weights.MinNameChars(ec.links.minNameChars.value)
+      NearFinding.Weights.MinNameChars(ec.links.minNameChars.value)
     )
 
   /** The passages of `citekey`'s body that name the event — a whole-word, case- and accent-insensitive match of each
@@ -183,11 +184,11 @@ final class EventLinksControllers(
         PageSize(500)
       )
       .map(f =>
-        EventMatcher.NearFinding(
-          EventMatcher.NearFinding.Id(f.id.value),
+        NearFinding(
+          NearFinding.Id(f.id.value),
           Citekey.assume(f.citekey.value),
-          EventMatcher.NearFinding.Km(f.km.value),
-          EventMatcher.NearFinding.YearGap(f.yearGap.value)
+          NearFinding.Km(f.km.value),
+          NearFinding.YearGap(f.yearGap.value)
         )
       )
     val named = PageSize
@@ -198,7 +199,7 @@ final class EventLinksControllers(
       .map(ck => ck -> passagesIn(ck, names))
       .filter(_._2.nonEmpty)
       .toMap
-    val cands = EventMatcher.candidates(id, near, named, w)
+    val cands = NearFinding.candidates(id, near, named, w)
     links.saveCandidates(id, cands)
     listOf(d)
 
@@ -254,7 +255,7 @@ final class EventLinksControllers(
                     Unused(links.setStatus(eid, ck, status(Event.LinkStatus.Confirmed)), Unused.Why.Idempotent)
                     confirm(tail, ok, no :+ s"$ck: already attests it")
                   else
-                    EventMatcher.attestationPassage(passagesIn(ck, names)) match
+                    NearFinding.attestationPassage(passagesIn(ck, names)) match
                       case None =>
                         confirm(
                           tail,
@@ -262,7 +263,7 @@ final class EventLinksControllers(
                           no :+ s"$ck: no passage of its text names the event (${names.mkString(", ")}) — not attested"
                         )
                       case Some(p) =>
-                        val a = attestations.create(EventMatcher.attestation(eid, ck, p))
+                        val a = attestations.create(NearFinding.attestation(eid, ck, p))
                         if !links.setStatus(eid, ck, status(Event.LinkStatus.Confirmed)) then
                           links.saveCandidates(
                             eid,
@@ -359,7 +360,7 @@ final class EventLinksControllers(
   )
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def leadOf(r: LeadRow): Option[EventLead] =
-    EventLeads.of(
+    EventLead.of(
       LeadFacts(
         com.histmersion.api.catalogue.Event.Id(r.id.value),
         LeadFacts.Label(r.label.value),
@@ -410,8 +411,8 @@ final class EventLinksControllers(
       val (total, rows) =
         leadFacts.leads(
           sel,
-          CatalogMerge.Tolerance.Km(ec.leads.km.value),
-          CatalogMerge.Tolerance.Years(ec.leads.years.value),
+          Placement.Tolerance.Km(ec.leads.km.value),
+          Placement.Tolerance.Years(ec.leads.years.value),
           settings().limits.page(PageSize.option(f.limit.value), PageSize(50)),
           Offset.option(f.offset.value).getOrElse(Offset.Start)
         )
@@ -432,7 +433,7 @@ final class EventLinksControllers(
     val id = idOf(d)
     val (tier, names, _) = events.tierAndNames(id).getOrElse((d.event.tier, Nil, None))
     val lead = leadFacts
-      .leadOf(id, CatalogMerge.Tolerance.Km(ec.leads.km.value), CatalogMerge.Tolerance.Years(ec.leads.years.value))
+      .leadOf(id, Placement.Tolerance.Km(ec.leads.km.value), Placement.Tolerance.Years(ec.leads.years.value))
       .flatMap(leadOf)
     d.modify(_.tier)
       .setTo(EventGeo.Tier(tier.value))
@@ -465,8 +466,8 @@ final class EventLinksControllers(
           .fold(Nil)(limit =>
             leadFacts.nearFindings(
               id,
-              CatalogMerge.Tolerance.Km(ec.links.km.value),
-              CatalogMerge.Tolerance.Years(ec.links.years.value),
+              Placement.Tolerance.Km(ec.links.km.value),
+              Placement.Tolerance.Years(ec.links.years.value),
               limit
             )
           )
@@ -494,7 +495,7 @@ final class EventLinksControllers(
         leadFacts.articleCandidates(
           citekeys,
           period.map(p => (SignedYear(p.start.value), SignedYear(p.end.value))),
-          CatalogMerge.Tolerance.Km(ec.leads.articleKm.value),
+          Placement.Tolerance.Km(ec.leads.articleKm.value),
           CatalogRecord.Vei(ec.leads.largeVei.value),
           CatalogRecord.Magnitude(ec.leads.largeMagnitude.value),
           candidateLimit
@@ -509,8 +510,8 @@ final class EventLinksControllers(
           com.histmersion.api.catalogue.Event.Id(id.value),
           ArticleEventLead.Label(label.value),
           ArticleEventLead.Kind(EventTaxonomy.canonical(kind.summary).value),
-          EventLeads.years(ts),
-          EventLeads
+          EventLead.yearsOf(ts),
+          EventLead
             .size(vei.map(v => LeadFacts.Vei(v.value)), mag.map(m => LeadFacts.Magnitude(m.value)))
             .map(ArticleEventLead.Size(_)),
           n,

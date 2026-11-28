@@ -117,6 +117,14 @@ class AnswerSchemasSuite extends munit.FunSuite:
     assertEquals(allSchemas.map(_._1).distinct.size, allSchemas.size)
     assert(allSchemas.size >= 12, allSchemas.map(_._1))
 
+  test("every step schema renders as recorded (golden/answer-schemas.tsv, written from the schemas of 2026-11-28)"):
+    val recorded = scala.io.Source
+      .fromResource("golden/answer-schemas.tsv")(using scala.io.Codec.UTF8)
+      .getLines()
+      .filter(_.nonEmpty)
+      .toList
+    assertEquals(allSchemas.map((name, s) => s"$name\t${derived(s).noSpaces}"), recorded)
+
   test("no step derives its schema at the call: every ResponseSchema the server sends is in AnswerSchemas"):
     val main = Iterator
       .iterate(Paths.get(sys.props("user.dir")).toAbsolutePath)(_.getParent)
@@ -287,21 +295,14 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
-    CliOutcomes
-      .result(
-        CliOutcome(
-          Vector.empty,
-          Vector.empty,
-          Some(CliOutcome.FinalText(answer.noSpaces)),
-          TokenUsage.Zero,
-          None,
-          CliOutcome.Turns(1)
-        ),
-        LlmCall.User("u"),
-        s,
-        None
-      )
-      .finalAnswer
+    CliOutcome(
+      Vector.empty,
+      Vector.empty,
+      Some(CliOutcome.FinalText(answer.noSpaces)),
+      TokenUsage.Zero,
+      None,
+      CliOutcome.Turns(1)
+    ).result(LlmCall.User("u"), s, None).finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):
     for (name, s) <- allSchemas do

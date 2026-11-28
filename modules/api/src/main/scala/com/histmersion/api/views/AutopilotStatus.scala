@@ -1,10 +1,16 @@
 package com.histmersion
 package api.views
+
+import com.histmersion.api.automation.autopilot.ApprovalRule
+import com.histmersion.api.automation.autopilot.ManagerBrief
+import com.histmersion.api.automation.autopilot.GoalProgress
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.autopilot.DrainInfo
+import com.histmersion.api.automation.autopilot.EngineStatus
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-import com.histmersion.api.automation.Autopilot.{ApprovalRule, DrainInfo, FocusInfo, GoalProgress, ManagerBrief}
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
 import com.histmersion.api.library.{AcquireChecksMarkdown, UpstreamQuota, UpstreamQuotaMarkdown}
 import com.histmersion.api.given
@@ -45,7 +51,7 @@ final case class AutopilotStatus(
       api.json.Schema:
 
   /** The automation's part of the page. */
-  def engine: Autopilot.EngineStatus = Autopilot.EngineStatus(
+  def engine: EngineStatus = EngineStatus(
     on,
     since,
     by,
@@ -82,7 +88,7 @@ final case class AutopilotStatus(
     )
 
 object AutopilotStatus:
-  export Autopilot.EngineStatus.{
+  export EngineStatus.{
     AgentSwitch,
     Backlog,
     BacklogDays,

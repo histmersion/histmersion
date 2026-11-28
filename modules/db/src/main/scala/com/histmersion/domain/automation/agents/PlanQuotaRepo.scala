@@ -1,10 +1,13 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
+import com.histmersion.api.automation.planquota.Channel
+import com.histmersion.api.automation.planquota.RefreshInfo
+
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
-
-import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
@@ -74,7 +77,7 @@ object PlanQuotaRepo:
           r.map(Reading.ResetsAt(_)),
           (if rej then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
           Reading.ObservedAt(o),
-          Source.parse(Source.Wire(s)).getOrElse(Source.Run),
+          Channel.parse(Channel.Wire(s)).getOrElse(Channel.Run),
           Option(m).filter(_.nonEmpty).map(Reading.Model(_))
         )
       }

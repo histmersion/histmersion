@@ -602,9 +602,7 @@ extension `op` (an operation added to the type by hand, then every call site fol
 becomes `x`; `x.value == y.value` (`!=`, `<`, `<=`, `>`, `>=`) of one newtype becomes `x == y` (Newtype's lifted
 CanEqual and Ordering); and a `.value` handed to a `sinks` method (regexes over SemanticDB symbols of methods whose
 parameter takes the newtype through a type class instance, e.g. Laminar's text child and `:=` through
-`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`; for an
-operator sink (`attr := x`), `sinkReceivers` (regexes over the receiver's symbol) keeps it to the display attributes,
-so a protocol position (an option's `value`, a data attribute, `disabled`) never goes through Display. With
+`com.histmersion.Display`) is dropped, adding `sinkImport` where the file's package is not `sinkPackage`. With
 `sinkRequires` (a type class symbol) a sink is rewritten only for a newtype whose companion gives that instance: the
 type's own display form, never the raw value lifted for every newtype; the others go to the worklist. It reads the project's SemanticDB (`semanticdbRoots`) for the companions'
 extensions, limits itself to `paths` (prefixes) less `excludes` (regexes over the path), and writes `report` (each rewrite) and `<report>-missing.tsv` (each
@@ -626,24 +624,12 @@ The fixture:
 `DisplayAsIs` writes the per-type decision that a newtype's friendly form is its text as it is: for each listed
 companion (`types`, SemanticDB symbols) one line `given Display[T] = Display(_.value)` at the top of its body (a body
 is created for a one-line object), importing `com.histmersion.Display` where the file's package does not see it.
-Types whose friendly form differs (enum spellings, times, years, ids shown short) are listed under `forms`
-(`newtype`, the `instance` text, the `imports` it needs), each the decided form of that type. Run as above with `display-as-is-<batch>.conf`; the fixture:
+Types whose friendly form differs (enum spellings, times, years, ids shown short) get a hand-written instance
+instead. Run as above with `display-as-is-<batch>.conf`; the fixture:
 
 ```text
 .claude/skills/scalafix/scripts/run-rule.sh tools/refactor/DisplayAsIs.scala \
   tools/refactor/display-as-is-fixture/input tools/refactor/display-as-is-fixture/expected
-```
-
-`ShownInterpolation` turns an `s"…"` that splices newtypes into `shown"…"` (`com.histmersion` in the newtype
-module), the interpolator whose every splice needs a `Display` instance or is a String, Int, Long, Double, Boolean
-or Char. It rewrites an interpolation only when every splice qualifies and each spliced newtype is in `asIs` (or the
-`types` of the DisplayAsIs configs listed in `asIsFrom`), so the text is the same as before: a newtype whose display
-is a label stays in `s"…"`, where it is usually a protocol value (a CSS class, a URL path), not text for a reader.
-`${x.value}` of an as-is newtype loses its `.value`. Config: `paths`, `excludes`, `report`; the fixture:
-
-```text
-.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/ShownInterpolation.scala \
-  tools/refactor/shown-interpolation-fixture/input tools/refactor/shown-interpolation-fixture/expected
 ```
 
 `RetypeToNewtype` retypes a parameter from a primitive to a newtype (G1; the G44plaindef findings are its worklist).
@@ -658,6 +644,92 @@ extension) and gets `.value` everywhere else. `report` lists each change. Run as
 ```text
 .claude/skills/scalafix/scripts/run-rule.sh tools/refactor/RetypeToNewtype.scala \
   tools/refactor/retype-to-newtype-fixture/input tools/refactor/retype-to-newtype-fixture/expected
+```
+
+## Operations onto types (G34/G3)
+
+`MoveOntoType` carries out `docs/research-domain-model/objects.md`: it moves the members of a standalone object onto
+the type they are about. Each `moves` entry names `source` (the object's SemanticDB symbol, `com/x/Years.`), optionally
+`member` (one member by name, with its overloads; a newtype's `type X` and `object X` move together; empty means every
+member no other entry names), `to` (an object symbol: the companion it joins; a type symbol `com/x/Mode#`: its
+companion, created when the file has none; a package symbol `com/x/` with `form = toplevel` and `file`: a new
+top-level file), `form` (`auto`: an extension when a def's first explicit parameter has the target's type, else a
+companion member; `companion`, `extension`, `toplevel`, `stay`, and `promote`: a nested type becomes top-level in
+`file`, and the entries whose `to` is its new companion (`com/x/Issue.`) go into that companion in the same run) and
+`name` (a rename at the new place).
+
+The rule reads the moved objects' sources and current SemanticDB before it rewrites anything (`semanticdb` lists the
+directories, default `target/out`; a document whose md5 differs from its file is refused), so one pass moves the
+definitions with the imports they need, rewrites every reference (`Obj.f(x, a)` → `x.f(a)`, `Obj.f(…)` → `T.f(…)`,
+`Obj.X` → `T.X`, the bare names an import brought in; a moved member's own `T.x` becomes `x` inside `T`; when `T`'s
+name means another type in a file, the member is imported instead), redirects `export` aliases, removes the importers
+of what moved, drops the moved members' comments (`keepComments = true` keeps them), deletes emptied objects and
+writes `report` (the emptied files, deleted afterwards with `git rm`, and the references it could not rewrite). A name
+clash at the target, a target module that cannot see the member's dependencies or a receiver whose static type is not
+the target's are compile errors fixed by hand. A whole-object move refuses an object with a member that has no name
+(`export X as Y`: dissolve the alias by hand first) and lists every such member at once. After a run, the moved
+members' tolerations the lint no longer needs go with `bash tools/lint/lint.sh --config tools/lint/prune-guidelines.conf`
+(after a compile). `bash tools/refactor/g3-inventory.sh` writes the G3Misplaced worklist (every finding, tolerated or
+not) that a batch config is generated from. Each batch has its own `move-onto-type-<batch>.conf`; after
+`sbt compile Test/compile`, from the worktree root:
+
+```text
+bash tools/refactor/move-onto-type.sh tools/refactor/move-onto-type-<batch>.conf
+```
+
+`move-onto-type.sh` names every module's SemanticDB root the way `tools/lint/lint.sh` does: without them Scalafix's
+auto-classpath misses some modules (upstreams) and hands the rule their files without symbols, so their references stay
+as they were. Compile the clean tree right before a run (SemanticDB a compile of a modified tree left is stale for
+HEAD). Then delete the files the report lists as `emptied`; a `LOST:` line is a target no file defines (its members
+would be written nowhere). `bash tools/refactor/g3-inventory.sh [out.tsv]` writes one TSV row per G3Misplaced finding,
+tolerated or not (path, line, `Object.def(param: Type)`), the worklist a batch config is generated from.
+
+```text
+bash tools/refactor/move-onto-type.sh tools/refactor/move-onto-type-kernel.conf
+```
+
+The fixture (input, expected, and the files the rule creates):
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/MoveOntoType.scala \
+  tools/refactor/move-onto-type-fixture/input tools/refactor/move-onto-type-fixture/expected
+```
+
+`StripSelfQualifier` (G47Self) drops a qualifier that names the enclosing object (`Obj.x` inside `object Obj`) when the
+object defines `x` and nothing closer takes the name: a nested template, an import of that name, a block's local
+definition, an enclosing def of that name, a parameter, a case or for binding. Run it with
+`bash tools/refactor/move-onto-type.sh tools/refactor/strip-self-qualifier.conf`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/StripSelfQualifier.scala \
+  tools/refactor/strip-self-qualifier-fixture/input tools/refactor/strip-self-qualifier-fixture/expected
+```
+
+`DropRootImports` (Layer, client side) drops `import com.histmersion.X` of a root-package type (`Newtype`, `Display`)
+from a file whose outermost clause is `package com.histmersion`: the chained clause already brings it into scope, and
+the spelled root package counts as the client naming a package outside the api. Syntactic; run it with
+`bash tools/refactor/scalafix.sh --config tools/refactor/drop-root-imports.conf --sourceroot . --files modules/api/src
+--files modules/web/src`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/DropRootImports.scala \
+  tools/refactor/drop-root-imports-fixture/input tools/refactor/drop-root-imports-fixture/expected
+```
+
+`SplitWireTwin` (G7, separate types per layer) copies a configured record (a case class or an enum with its companion's
+newtypes, aliases and exports) into another layer as its twin. Domain to api (`strip = true`): the twin derives the
+codecs and the original loses them (its codec derives, its codec givens with their annotations, and the listed imports
+nothing else in the file uses); a `given Schema[R] = KindlingsSchema.derived[R].schema.modify(_.f)(_.description("…"))`
+becomes `@description("…")` on the twin's field. Every name the twin uses is resolved through SemanticDB: the twin's own
+companion (renamed with the twin), another configured record (its twin), `types` (a symbol or prefix mapped elsewhere;
+an own newtype mapped there is not declared again), `redeclare` (a newtype declared again in the twin's companion),
+`visible` (as is). Anything else is reported `unmapped`/`nested` and that twin is not written. Run it with
+`bash tools/refactor/move-onto-type.sh tools/refactor/split-wire-twin-<slice>.conf` on a clean, freshly compiled tree;
+the fixture (the twins land on the placeholders under `input/twins/`, so they are compared too):
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/SplitWireTwin.scala \
+  tools/refactor/split-wire-twin-fixture/input tools/refactor/split-wire-twin-fixture/expected
 ```
 
 ## Remaining work

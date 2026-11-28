@@ -1,6 +1,9 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Next
+
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import scala.annotation.tailrec
@@ -184,9 +187,9 @@ object IngestBacklog:
   def onFailure(
       message: Problems,
       failures: Failure.Retry.Failures,
-      maxFailures: ManagerPolicy.ReviewSettings.MaxFailures,
-      backoffMinutes: ManagerPolicy.ReviewSettings.BackoffMinutes,
-      maxBackoffMinutes: ManagerPolicy.ReviewSettings.MaxBackoffMinutes,
+      maxFailures: ReviewSettings.MaxFailures,
+      backoffMinutes: ReviewSettings.BackoffMinutes,
+      maxBackoffMinutes: ReviewSettings.MaxBackoffMinutes,
       now: Instant
   ): Failure =
     val failed = Rationale.Failed(message)
@@ -196,7 +199,7 @@ object IngestBacklog:
       if n >= math.max(1, maxFailures.value) then Failure.ToAcquire(Rationale.GaveUp(message, Plural.CountN(n.toLong)))
       else
         Failure.Retry(
-          now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, ManagerPolicy.Next.Retry.Failures(n))),
+          now.plus(ReviewSettings.backoff(backoffMinutes, maxBackoffMinutes, Next.Retry.Failures(n))),
           Failure.Retry.Failures(n),
           failed
         )

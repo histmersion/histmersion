@@ -1,6 +1,8 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.library.query.SchemaTables
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -213,8 +215,7 @@ class QueryRepoSuite extends DbSuite:
 
   test("the generated tool description names the tables that exist"):
     // `Query` alone is ambiguous here — magnum exports one too
-    val d = Query
-      .toolDescription(Query.SchemaTables(SearchFixtures.tables(ds)))
+    val d = SchemaTables(SearchFixtures.tables(ds)).toolDescription
     assert(d.value.contains("sources("), d)
     assert(d.value.contains("queue_items("), d)
 

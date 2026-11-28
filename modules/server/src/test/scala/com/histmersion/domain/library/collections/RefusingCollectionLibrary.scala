@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.collections
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.automation.Queue
@@ -31,7 +33,7 @@ open class RefusingCollectionLibrary extends CollectionLibrary:
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult] = no
   def gaps(limit: Option[CollectionLibrary.Limit]): CalibreGaps = CalibreGaps(CalibreGaps.Count(0), Nil)
   def original(citekey: Citekey): Either[Api.Error, StoredOriginal] = no
-  def queueItem(id: CollectionLibrary.QueueItemId): Either[Api.Error, Option[Queue.QueueItem]] = no
+  def queueItem(id: CollectionLibrary.QueueItemId): Either[Api.Error, Option[QueueItem]] = no
   def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes)(using
       Creator.New
   ): Either[Api.Error, Ingest.Accepted] = no

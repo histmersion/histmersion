@@ -18,7 +18,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import scala.annotation.tailrec
 import com.histmersion.api.catalogue.EventArticleRef
-import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource, CritiqueReason}
+import com.histmersion.api.research.{Article, Backlink, CitedSource, CritiqueReason}
 import com.histmersion.api.Api
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
@@ -304,12 +304,12 @@ object ArticleService:
       @tailrec def attempt(): Either[Api.Error, Article.UpdatedAt] =
         val st = state.get
         val outcome = st.articles.get(articleKey(slug)).map(loaded) match
-          case None           => Left(Articles.notFound(Article.Slug(slug.value)))
+          case None           => Left(Article.notFound(Article.Slug(slug.value)))
           case Some(existing) =>
-            Articles.precondition(existing, patch) match
+            existing.precondition(patch) match
               case Left(msg) => Left(refused(msg, Write.CodePrecondition))
               case Right(_)  =>
-                Articles.applyPatch(existing, patch) match
+                existing.applyPatch(patch) match
                   case Left(msg)      => Left(refused(msg, Write.CodeInvalid))
                   case Right(updated) =>
                     critiqueRefusal(patch.critiqueReasons) match
@@ -377,7 +377,7 @@ object ArticleService:
         val st = state.get
         val aliasOf = st.aliases.get(aliasKey(newSlug))
         val outcome =
-          if !st.articles.contains(articleKey(oldSlug)) then Left(Articles.notFound(Article.Slug(oldSlug.value)))
+          if !st.articles.contains(articleKey(oldSlug)) then Left(Article.notFound(Article.Slug(oldSlug.value)))
           else if st.articles.contains(articleKey(newSlug)) then
             Left(
               refused(

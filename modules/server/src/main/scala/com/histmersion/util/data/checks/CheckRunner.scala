@@ -1,8 +1,10 @@
 package com.histmersion
 package util.data.checks
+
+import com.histmersion.api.checks.lint.LintReport
+import com.histmersion.api.checks.lint.LintFixResult
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
 import com.histmersion.util.database.{Transactor, WritePermit}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}

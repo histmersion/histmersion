@@ -48,7 +48,6 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.EventSummary
-import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -205,10 +204,10 @@ class EventCatalogRepoSuite extends DbSuite:
         Some(CatalogRecord.Vei(4))
       )
     )
-    val placed = CatalogMerge.place(
+    val placed = Placement.place(
       records,
       stored,
-      CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+      Placement.Tolerance(Placement.Tolerance.Km(60), Placement.Tolerance.Years(30))
     )
     // the first is natural_disaster like the compiled one, at its place and time: matched
     assertEquals(placed.map(_._2.eventId), List("zqec_compiled", "zztest_b"))
@@ -231,10 +230,10 @@ class EventCatalogRepoSuite extends DbSuite:
       EventFixtures
         .save(
           ds,
-          CatalogMerge.place(
+          Placement.place(
             records,
             EventFixtures.stored(ds),
-            CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+            Placement.Tolerance(Placement.Tolerance.Km(60), Placement.Tolerance.Years(30))
           )
         )
         .created,
@@ -293,8 +292,8 @@ class EventCatalogRepoSuite extends DbSuite:
     val near = EvidenceFixtures.nearFindings(
       ds,
       Event.Id("zqec_compiled"),
-      CatalogMerge.Tolerance.Km(150),
-      CatalogMerge.Tolerance.Years(100),
+      Placement.Tolerance.Km(150),
+      Placement.Tolerance.Years(100),
       PageSize(10)
     )
     assertEquals(near.map(_.id), List("zqec_src2020#0"))
@@ -304,8 +303,8 @@ class EventCatalogRepoSuite extends DbSuite:
       EvidenceFixtures.nearFindings(
         ds,
         Event.Id("zztest_b"),
-        CatalogMerge.Tolerance.Km(150),
-        CatalogMerge.Tolerance.Years(100),
+        Placement.Tolerance.Km(150),
+        Placement.Tolerance.Years(100),
         PageSize(10)
       ),
       Nil,
@@ -377,8 +376,8 @@ class EventCatalogRepoSuite extends DbSuite:
     val (_, rows) = EvidenceFixtures.leadRows(
       ds,
       sql"e.id = ${"zztest_b"}",
-      CatalogMerge.Tolerance.Km(300),
-      CatalogMerge.Tolerance.Years(500),
+      Placement.Tolerance.Km(300),
+      Placement.Tolerance.Years(500),
       PageSize(5),
       Offset(0)
     )
@@ -389,7 +388,7 @@ class EventCatalogRepoSuite extends DbSuite:
       ds,
       List(domain.library.Citekey("zqec_src2020")),
       Some((DeepTime.SignedYear(-1700L), DeepTime.SignedYear(-1100L))),
-      CatalogMerge.Tolerance.Km(300),
+      Placement.Tolerance.Km(300),
       CatalogRecord.Vei(4),
       CatalogRecord.Magnitude(7.0),
       PageSize(10)
@@ -400,7 +399,7 @@ class EventCatalogRepoSuite extends DbSuite:
         ds,
         List(domain.library.Citekey("zqec_src2020")),
         Some((DeepTime.SignedYear(-1700L), DeepTime.SignedYear(-1100L))),
-        CatalogMerge.Tolerance.Km(300),
+        Placement.Tolerance.Km(300),
         CatalogRecord.Vei(5),
         CatalogRecord.Magnitude(7.0),
         PageSize(10)

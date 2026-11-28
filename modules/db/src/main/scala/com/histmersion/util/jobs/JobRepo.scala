@@ -1,5 +1,7 @@
 package com.histmersion
 package util.jobs
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -80,7 +82,7 @@ object JobRepo:
       r.sha256.map(h => Sha256(h.value)),
       JobInfo.CreatedAt(r.createdAt.value),
       JobInfo.UpdatedAt(r.updatedAt.value),
-      r.acquireItem.map(a => Queue.QueueItem.Id(a.value)),
+      r.acquireItem.map(a => QueueItem.Id(a.value)),
       r.detail.flatMap(d => Jsonb.read[JobDetail](Jsonb.JsonText(d.value)))
     )
 
@@ -111,7 +113,7 @@ object JobRepo:
         None,
         None,
         sha256.map(h => Sha256(h.value)),
-        acquireItem = acquireItem.map(a => Queue.QueueItem.Id(a.value)),
+        acquireItem = acquireItem.map(a => QueueItem.Id(a.value)),
         detail = detail
       )
     )

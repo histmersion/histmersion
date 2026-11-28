@@ -5,7 +5,7 @@ import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, Plural, Years}
+import com.histmersion.api.{Api, Plural}
 import com.histmersion.web.ui.SidebarTab
 import org.scalajs.dom
 
@@ -23,6 +23,7 @@ import com.histmersion.web.marks.NoteEditor
 import com.histmersion.web.ui.ContextMenu
 import com.histmersion.web.ui.Flash
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 object App:
   /** Drops the answers to a superseded load ([[Latest]]). */
@@ -217,13 +218,13 @@ object App:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def quickRender(): Unit =
-    val a = Years.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))
-    val b = Years.Astronomical(UiState.to.now().getOrElse(config.time.defaultTo.value))
+    val a = Year.Astronomical(UiState.from.now().getOrElse(config.time.defaultFrom.value))
+    val b = Year.Astronomical(UiState.to.now().getOrElse(config.time.defaultTo.value))
     quickRenderRange(a, b)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def quickRenderRange(a: Years.Astronomical, b: Years.Astronomical): Unit =
+  private def quickRenderRange(a: Year.Astronomical, b: Year.Astronomical): Unit =
     if cachedFindings.nonEmpty then
       val filtered = cachedFindings.filter { pt =>
         pt.periodStart.forall(_.value <= b.value) && pt.periodEnd.forall(_.value >= a.value)
@@ -231,7 +232,7 @@ object App:
       MapView.render(filtered, (a, b))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def quickRenderIfCached(from: Years.Astronomical, to: Years.Astronomical): Unit =
+  def quickRenderIfCached(from: Year.Astronomical, to: Year.Astronomical): Unit =
     quickRenderRange(from, to)
 
   /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew its frames'
@@ -240,7 +241,7 @@ object App:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def restoreSpan(from: Years.Astronomical, to: Years.Astronomical): Unit =
+  def restoreSpan(from: Year.Astronomical, to: Year.Astronomical): Unit =
     MapView.render(
       cachedFindings.filter(pt =>
         pt.periodStart.forall(_.value <= to.value) && pt.periodEnd.forall(_.value >= from.value)
@@ -296,7 +297,7 @@ object App:
       if latest.isCurrent(mine) then
         cachedFindings = points
         cachedNonTimeKey = nonTimeParamsKey()
-        MapView.render(points, (Years.Astronomical(a), Years.Astronomical(b)))
+        MapView.render(points, (Year.Astronomical(a), Year.Astronomical(b)))
     }
 
     // a failed load ends the "loading…" state with what went wrong, instead of leaving it there

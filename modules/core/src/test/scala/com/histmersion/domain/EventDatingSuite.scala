@@ -17,20 +17,11 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import scala.util.Random
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  Correction,
-  Corrections,
-  EventFields,
-  EventPatch,
-  EventPrecision,
-  EventPut
-}
+import com.histmersion.api.catalogue.{CatalogRecord, Correction, EventPatch, EventPrecision, EventPut}
 import com.histmersion.api.catalogue.EventSummary
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
-import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.StoredEvent
 import com.histmersion.api.catalogue.EventEntry
@@ -130,12 +121,12 @@ class EventDatingSuite extends munit.FunSuite:
 
   test("corrections: upstream unchanged keeps, upstream agreeing retires, upstream elsewhere conflicts"):
     val (x, y, z) = ("Eruption of Hekla".asJson, "Hekla 3".asJson, "Eruption of Hekla volcano".asJson)
-    assertEquals(Corrections.reconcile(y, x, x), Corrections.Outcome.Keep)
-    assertEquals(Corrections.reconcile(y, x, y), Corrections.Outcome.Retire)
-    assertEquals(Corrections.reconcile(y, x, z), Corrections.Outcome.Conflict)
-    assertEquals(Corrections.status(Corrections.Outcome.Conflict), Correction.Status.Conflict)
+    assertEquals(Correction.reconcile(y, x, x), Correction.Outcome.Keep)
+    assertEquals(Correction.reconcile(y, x, y), Correction.Outcome.Retire)
+    assertEquals(Correction.reconcile(y, x, z), Correction.Outcome.Conflict)
+    assertEquals(Correction.statusOf(Correction.Outcome.Conflict), Correction.Status.Conflict)
     assertEquals(
-      Corrections.counts(List(Corrections.Outcome.Keep, Corrections.Outcome.Conflict, Corrections.Outcome.Keep)),
+      Correction.counts(List(Correction.Outcome.Keep, Correction.Outcome.Conflict, Correction.Outcome.Keep)),
       Correction.Counts(Correction.Counts.Kept(2), Correction.Counts.Retired(0), Correction.Counts.Conflicts(1))
     )
     val c = Correction(
@@ -150,7 +141,7 @@ class EventDatingSuite extends munit.FunSuite:
       Some(Correction.UpstreamNow(z.noSpaces))
     )
     assertEquals(
-      Corrections.describe(c),
+      c.describe,
       "label: “Hekla 3” (was “Eruption of Hekla” in gvp) — CONFLICT: the catalogue now says “Eruption of Hekla volcano”"
     )
 
@@ -166,26 +157,24 @@ class EventDatingSuite extends munit.FunSuite:
       Some(Longitude(20.25)),
       description = Some(CatalogRecord.Description("x"))
     )
-    val up = EventFields.upstream(r)
-    assertEquals(up.keySet, EventFields.all.toSet)
-    assertEquals(up(EventFields.Kind), "eruption".asJson, "canonical")
-    val p = EventFields.ofPatch(
-      EventPatch(
-        label = Some(EventSummary.Label("Zz")),
-        kind = Some(EventSummary.Kind("Volcanic eruption")),
-        geometry = Some(EventPatch.Geometry("""{"type":"Point","coordinates":[20.25, 10.5]}""")),
-        description = Some(EventSummary.Description(""))
-      )
-    )
-    assertEquals(p.keySet, Set(EventFields.Label, EventFields.Kind, EventFields.Geometry, EventFields.Description))
-    assertEquals(p(EventFields.Geometry), up(EventFields.Geometry), "the same point, whatever the spacing")
-    assertEquals(p(EventFields.Kind), up(EventFields.Kind))
-    assertEquals(p(EventFields.Description), Json.Null, "an empty description clears it")
-    assertEquals(EventFields.ofPut(EventPut(EventSummary.Label("Zz"))).keySet, EventFields.all.toSet)
+    val up = EventPatch.upstream(r)
+    assertEquals(up.keySet, EventPatch.all.toSet)
+    assertEquals(up(EventPatch.Kind), "eruption".asJson, "canonical")
+    val p = EventPatch(
+      label = Some(EventSummary.Label("Zz")),
+      kind = Some(EventSummary.Kind("Volcanic eruption")),
+      geometry = Some(EventPatch.Geometry("""{"type":"Point","coordinates":[20.25, 10.5]}""")),
+      description = Some(EventSummary.Description(""))
+    ).ofPatch
+    assertEquals(p.keySet, Set(EventPatch.Label, EventPatch.Kind, EventPatch.GeometryKey, EventPatch.Description))
+    assertEquals(p(EventPatch.GeometryKey), up(EventPatch.GeometryKey), "the same point, whatever the spacing")
+    assertEquals(p(EventPatch.Kind), up(EventPatch.Kind))
+    assertEquals(p(EventPatch.Description), Json.Null, "an empty description clears it")
+    assertEquals(EventPatch.ofPut(EventPut(EventSummary.Label("Zz"))).keySet, EventPatch.all.toSet)
 
   // ── deterministic merge ────────────────────────────────────────────────────────────────────
 
-  private val tol = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+  private val tol = Placement.Tolerance(Placement.Tolerance.Km(60), Placement.Tolerance.Years(30))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       p: CatalogRecord.Provider,
@@ -236,15 +225,15 @@ class EventDatingSuite extends munit.FunSuite:
       ev(Event.Id("zz_b"), Year(-1615), Year(-1605), com.histmersion.Latitude(36.45), com.histmersion.Longitude(25.45))
     val r =
       rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), Year(-1610), Latitude(36.4), Longitude(25.4))
-    assertEquals(CatalogMerge.place(List(r), List(a, b), tol).head._2.eventId, "zz_b")
-    assertEquals(CatalogMerge.place(List(r), List(b, a), tol).head._2.eventId, "zz_b")
+    assertEquals(Placement.place(List(r), List(a, b), tol).head._2.eventId, "zz_b")
+    assertEquals(Placement.place(List(r), List(b, a), tol).head._2.eventId, "zz_b")
     // the same span: the nearer wins; the same span and point: the smaller id
     val c =
       ev(Event.Id("zz_c"), Year(-1615), Year(-1605), com.histmersion.Latitude(36.40), com.histmersion.Longitude(25.40))
-    assertEquals(CatalogMerge.place(List(r), List(b, c), tol).head._2.eventId, "zz_c")
+    assertEquals(Placement.place(List(r), List(b, c), tol).head._2.eventId, "zz_c")
     val d =
       ev(Event.Id("zz_0"), Year(-1615), Year(-1605), com.histmersion.Latitude(36.40), com.histmersion.Longitude(25.40))
-    assertEquals(CatalogMerge.place(List(r), List(c, d), tol).head._2.eventId, "zz_0")
+    assertEquals(Placement.place(List(r), List(c, d), tol).head._2.eventId, "zz_0")
     // two stored events of one Wikidata item: the best fit, not whichever came last
     val w1 = ev(
       Event.Id("zz_w1"),
@@ -269,8 +258,8 @@ class EventDatingSuite extends munit.FunSuite:
       Latitude(36.4),
       Longitude(25.4)
     ).modify(_.wikidata).setTo(Some(EventEntry.Wikidata("Q1")))
-    assertEquals(CatalogMerge.place(List(rw), List(w1, w2), tol).head._2.eventId, "zz_w1")
-    assertEquals(CatalogMerge.place(List(rw), List(w2, w1), tol).head._2.eventId, "zz_w1")
+    assertEquals(Placement.place(List(rw), List(w1, w2), tol).head._2.eventId, "zz_w1")
+    assertEquals(Placement.place(List(rw), List(w2, w1), tol).head._2.eventId, "zz_w1")
 
   test("merge: shuffled records and shuffled stored events place identically"):
     val records = List(
@@ -339,15 +328,15 @@ class EventDatingSuite extends munit.FunSuite:
       ),
       ev(Event.Id("zz_vesuvius"), Year(-80), Year(-78), com.histmersion.Latitude(40.8), com.histmersion.Longitude(14.4))
     )
-    val expected = CatalogMerge.place(records, stored, tol).map((r, p) => r.key -> p).toMap
+    val expected = Placement.place(records, stored, tol).map((r, p) => r.key -> p).toMap
     val rnd = Random(1449)
     (1 to 30).foreach { _ =>
-      val got = CatalogMerge.place(rnd.shuffle(records), rnd.shuffle(stored), tol)
+      val got = Placement.place(rnd.shuffle(records), rnd.shuffle(stored), tol)
       assertEquals(got.map((r, p) => r.key -> p).toMap, expected)
     }
     // and the answer keeps the order it was given
     val shuffled = rnd.shuffle(records)
-    assertEquals(CatalogMerge.place(shuffled, stored, tol).map(_._1), shuffled)
+    assertEquals(Placement.place(shuffled, stored, tol).map(_._1), shuffled)
 
   test("the owner record of an event: the one its id is named after, else the lowest of its catalogue's"):
     assertEquals(

@@ -1,12 +1,13 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.GenerateResult
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.server.agents.ClaudeCode
 
 import com.histmersion.config.{AgentsConfig, AppConfig, UserPaths}
-import com.histmersion.api.automation.Agents.GenerateResult
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path, StandardCopyOption}
@@ -70,13 +71,13 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
 
   /** The definitions, loaded and checked; `known` are the MCP tool names placeholders may use. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def load(known: Set[ToolName]): Either[Problems, AgentGenerator.Defs] =
+  def load(known: Set[ToolName]): Either[Problems, AgentDefinitions.Defs] =
     for
       as <- defs.agents
       fs <- defs.fragments
       ss <- defs.skills
-      d = AgentGenerator.Defs(as, fs, ss)
-      _ <- Problems.from(AgentGenerator.check(d, known.map(t => t.value: String)).toVector).toLeft(())
+      d = AgentDefinitions.Defs(as, fs, ss)
+      _ <- Problems.from(AgentDefinitions.check(d, known.map(t => t.value: String)).toVector).toLeft(())
     yield d
 
   /** Generate the trees of `runtimes` (all three by default) into `out` (default [[root]]). */
@@ -97,9 +98,9 @@ final class AgentTrees(app: AppConfig, defs: AgentDefinitions, paths: UserPaths 
         )
       d <- load(known)
       sha = AgentTrees.sha(d)
-      tree = AgentGenerator.tree(
+      tree = AgentDefinitions.tree(
         d,
-        settings(AgentTrees.SettingsVersion(s"${AgentGenerator.PluginVersion}+${sha.value.take(12)}")),
+        settings(AgentTrees.SettingsVersion(s"${AgentDefinitions.PluginVersion}+${sha.value.take(12)}")),
         runtimes
       )
       res <- AgentTrees.write(stores.at(Location.AgentHomes, dir), tree, runtimes.map(_.wire.value), sha)
@@ -163,7 +164,7 @@ object AgentTrees:
 
   /** The definitions' fingerprint: what the trees were generated from. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def sha(d: AgentGenerator.Defs): Sha256 =
+  def sha(d: AgentDefinitions.Defs): Sha256 =
     Prompt.sha256(
       (d.agents.sortBy[String](_.name.value).map(a => s"${a.name}\u0000${a.body}\u0000${a.fingerprint}") ++
         d.fragments.toList.sortBy[String](_._1.value).map((k, v) => s"$k\u0000$v") ++

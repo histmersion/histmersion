@@ -1,11 +1,15 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.agents.Origin
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.automation.ListFilters
-import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
-import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, RunFilter}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Pipeline, RunState}
+import com.histmersion.api.automation.ListFilters.DecidedBy
 
 import java.time.Instant
 import com.histmersion.api.Api

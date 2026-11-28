@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.activity.Page
+
 import com.histmersion.api.automation.{Activity, ListFilters}
 
 import java.time.Instant
@@ -13,11 +16,11 @@ import com.histmersion.lint.{movesTo, FeaturePlace}
 final class ActivityControllers(activity: ActivityService, now: () => Instant):
 
   def page(
-      show: Option[Activity.Show.Wire],
+      show: Option[Show.Wire],
       since: Option[ListFilters.TimeBound],
       goal: Option[ActivityQuery.Goal],
       limit: Option[ActivityQuery.Limit],
       before: Option[ActivityCursor.Wire]
-  ): Either[Problems, Activity.Page] =
+  ): Either[Problems, Page] =
     val at = now()
     ActivityRules.query(show, since, goal, limit, before, at).map(activity.page(_, at))

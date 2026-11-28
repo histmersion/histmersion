@@ -1,5 +1,11 @@
 package com.histmersion
 package domain.automation.managers
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.HintProposal
+import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{Problem, Problems}
@@ -20,7 +26,7 @@ import com.histmersion.domain.automation.agents.{
   StepAgent
 }
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -93,11 +99,11 @@ final class HintEffectPipeline(
         ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, loaded, proposed))
       )
       closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
-        Pipelines
+        PipelineDef
           .log(
             workLists,
             ctx,
-            Pipelines.LogLine(
+            PipelineDef.LogLine(
               s"hint-effect ${loaded.managerId.value} hint #${loaded.hint.value}: $line " +
                 s"(agent run ${ctx.run.id.value.take(8)})"
             )

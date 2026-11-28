@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.search
+
+import com.histmersion.api.library.query.QueryRequest
 import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -40,10 +42,10 @@ object QueryTools:
         .description(queries.toolDescription.value)
         .input[QueryInput]
         .handle { in =>
-          queries.run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value))).left.map(Api.Error(_)) match
-            case Right(r) => ToolResult.text(Query.markdown(r).value)
+          queries.run(QueryRequest(QueryRequest.Sql(in.sql.value))).left.map(Api.Error(_)) match
+            case Right(r) => ToolResult.text(r.markdown.value)
             // hand the live schema back with the error so the next attempt can be right
-            case Left(e) => McpOut.error(e, s"${Query.schemaMarkdown(queries.schemaTables)}")
+            case Left(e) => McpOut.error(e, s"${queries.schemaTables.schemaMarkdown}")
         }
 
     val schema =
@@ -54,6 +56,6 @@ object QueryTools:
             "searching the corpus."
         )
         .input[SchemaInput]
-        .handle(_ => ToolResult.text(Query.schemaMarkdown(queries.schemaTables).value))
+        .handle(_ => ToolResult.text(queries.schemaTables.schemaMarkdown.value))
 
     List(query, schema)

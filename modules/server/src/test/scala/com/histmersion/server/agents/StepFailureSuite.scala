@@ -166,15 +166,15 @@ class StepFailureSuite extends munit.FunSuite:
 
   test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
     // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
-    assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""{"notes": "abc""")).exists(_.message.nonEmpty))
+    assert(CliOutcome.textProblem(CliOutcome.TextProblemText("""{"notes": "abc""")).exists(_.message.nonEmpty))
     assert(
-      CliOutcomes
-        .textProblem(CliOutcomes.TextProblemText("I could not find it."))
+      CliOutcome
+        .textProblem(CliOutcome.TextProblemText("I could not find it."))
         .exists(_.message.contains("no JSON object"))
     )
-    assert(CliOutcomes.textProblem(CliOutcomes.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
-    assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("""```json\n{"notes":"x"}\n```""")), None)
-    assertEquals(CliOutcomes.textProblem(CliOutcomes.TextProblemText("  ")), None)
+    assert(CliOutcome.textProblem(CliOutcome.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
+    assertEquals(CliOutcome.textProblem(CliOutcome.TextProblemText("""```json\n{"notes":"x"}\n```""")), None)
+    assertEquals(CliOutcome.textProblem(CliOutcome.TextProblemText("  ")), None)
     val text = """Here it is: {"notes": "abc"""
     val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
       Json.fromString(text).noSpaces + ""","usage":{}}"""
@@ -191,19 +191,14 @@ class StepFailureSuite extends munit.FunSuite:
     assert(!p.sentence.contains("not the JSON the schema asks for"), p)
     assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
     // Codex / opencode: the final text is the answer
-    val cli = CliOutcomes.result(
-      CliOutcome(
-        Vector.empty,
-        Vector.empty,
-        Some(CliOutcome.FinalText("no json")),
-        TokenUsage.Zero,
-        None,
-        CliOutcome.Turns(1)
-      ),
-      LlmCall.User("u"),
-      LibraryAnswers.notes,
-      None
-    )
+    val cli = CliOutcome(
+      Vector.empty,
+      Vector.empty,
+      Some(CliOutcome.FinalText("no json")),
+      TokenUsage.Zero,
+      None,
+      CliOutcome.Turns(1)
+    ).result(LlmCall.User("u"), LibraryAnswers.notes, None)
     assert(
       Engine
         .answerProblem(cli.finalAnswer.swap.toOption.get, cli.finishReason)
@@ -211,17 +206,12 @@ class StepFailureSuite extends munit.FunSuite:
         .startsWith("the answer is not valid JSON")
     )
     // an error result is not a parse problem: no cause, as before
-    val failed = CliOutcomes.result(
-      CliOutcome(
-        Vector.empty,
-        Vector.empty,
-        Some(CliOutcome.FinalText("boom")),
-        TokenUsage.Zero,
-        Some(Problem.Unclassified(Legacy.Text("crash"))),
-        CliOutcome.Turns(1)
-      ),
-      LlmCall.User("u"),
-      LibraryAnswers.notes,
-      None
-    )
+    val failed = CliOutcome(
+      Vector.empty,
+      Vector.empty,
+      Some(CliOutcome.FinalText("boom")),
+      TokenUsage.Zero,
+      Some(Problem.Unclassified(Legacy.Text("crash"))),
+      CliOutcome.Turns(1)
+    ).result(LlmCall.User("u"), LibraryAnswers.notes, None)
     assertEquals(Engine.undecoded(failed.finalAnswer), None)

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain
+
+import com.histmersion.domain.catalogue.places.placereview.Evidence
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
@@ -48,16 +50,16 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
 
   test("every Pleiades place's kind is the one the place-kind rule gives it"):
     val proposals = pleiades.filter(_.place.geometry.exists(_.value.contains("\"Point\""))).flatMap { in =>
-      val e = PlaceReview.Evidence(
-        PlaceReview.Evidence.Id(in.place.id.value),
-        PlaceReview.Evidence.Label(in.place.label.value),
+      val e = Evidence(
+        Evidence.Id(in.place.id.value),
+        Evidence.Label(in.place.label.value),
         Place.Kind.Wire(in.place.kind.value),
-        prop(in, "feature_types").map(PlaceReview.Evidence.FeatureTypes(_)),
-        prop(in, "time_periods").map(PlaceReview.Evidence.TimePeriods(_)),
+        prop(in, "feature_types").map(Evidence.FeatureTypes(_)),
+        prop(in, "time_periods").map(Evidence.TimePeriods(_)),
         in.place.period.map(p => DeepTime.SignedYear(p.start.value)),
         in.place.period.map(p => DeepTime.SignedYear(p.end.value))
       )
-      PlaceReview.propose(e).filter(_.fixable)
+      e.propose().filter(_.fixable)
     }
     assertEquals(proposals.map(_.describe).take(10), Nil, s"${proposals.size} proposal(s) for the committed seed")
 
@@ -87,4 +89,4 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       !byId.contains(api.catalogue.Place.Id("pleiades_981515")),
       "Withdrawn (duplicate): Creta et Cyrene"
     )
-    assert(pleiades.forall(in => PlaceReview.duplicateOf(PlaceReview.Evidence.Label(in.place.label.value)).isEmpty))
+    assert(pleiades.forall(in => Evidence.duplicateOf(Evidence.Label(in.place.label.value)).isEmpty))

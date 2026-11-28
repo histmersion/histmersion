@@ -1,6 +1,10 @@
 package com.histmersion
 package api.research
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+
 import com.github.plokhotnyuk.jsoniter_scala.core.{readFromString, writeToString}
 import com.histmersion.api.automation.{Agents, Goal, Pipeline, Queue}
 import com.histmersion.api.library.Citekey
@@ -20,8 +24,8 @@ class OpenWorkSuite extends munit.FunSuite:
 
   private def acquisition(v: Verdict, creator: Option[Creation] = None): OpenItem =
     OpenItem.Acquisition(
-      Queue.QueueItem.Id(1),
-      Queue.QueueItem.Text("Smith 2020, A work"),
+      QueueItem.Id(1),
+      QueueItem.Text("Smith 2020, A work"),
       v,
       Some(at),
       Terms.Tries(2),
@@ -41,24 +45,24 @@ class OpenWorkSuite extends munit.FunSuite:
   )
 
   private val decision = OpenItem.Decision(
-    Agents.ApprovalInfo(
-      Agents.ApprovalInfo.Id(7),
+    ApprovalInfo(
+      ApprovalInfo.Id(7),
       None,
-      Agents.ApprovalInfo.Kind("goal-plan"),
+      ApprovalInfo.Kind("goal-plan"),
       Citekey("smith2020"),
-      subject = Some(Agents.ApprovalInfo.Subject("bronze-age"))
+      subject = Some(ApprovalInfo.Subject("bronze-age"))
     ),
     Who.Owner
   )
   private val task = OpenItem.Task(
-    Queue.QueueItem.Id(2),
-    Queue.QueueItem.Text("Read the review"),
+    QueueItem.Id(2),
+    QueueItem.Text("Read the review"),
     Who.Agents,
     Some(Creation(Creation.Unattributed, surface = Some(Creation.Surface("rest")))),
     None
   )
   private val run = OpenItem.PausedRun(
-    Agents.RunInfo.Id("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f"),
+    RunInfo.Id("0193a5f2-7c1e-7b3a-9f0e-2d4c6b8a1e3f"),
     Pipeline.Wire("enrich-source"),
     None,
     None,
@@ -148,8 +152,8 @@ class OpenWorkSuite extends munit.FunSuite:
     )
     assertEquals(readFromString[OpenWork.State](writeToString(state)), state)
     val history = OpenWork.History(
-      Queue.QueueItem.Id(1),
-      Queue.QueueItem.Text("Smith 2020"),
+      QueueItem.Id(1),
+      QueueItem.Text("Smith 2020"),
       Verdict.NoFreeCopy(later),
       Vector(
         OpenWork.Attempt(

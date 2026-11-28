@@ -1,11 +1,13 @@
 package com.histmersion
 package api.catalogue
 
+import com.histmersion.api.catalogue.periodo.Definition
+
 import com.histmersion.util.problem.{External, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.{PeriodODataset, Years}
+import com.histmersion.api.PeriodODataset
 import com.histmersion.api.given
 import com.histmersion.util.json.{Cursor, RawJson}
 import com.histmersion.util.json.RawJson.*
@@ -56,7 +58,7 @@ object PeriodO:
   val MinSiblingsValue: MinSiblingsCount.type = MinSiblingsCount
 
   def isoYear(raw: String): Option[Year] =
-    raw.trim.toLongOption.map(n => Years.fromAstronomical(Years.Astronomical(n)))
+    raw.trim.toLongOption.map(n => Year.fromAstronomical(Year.Astronomical(n)))
 
   /** The Lower Palaeolithic starts around 3.3 million years ago, and no period ends after 2100. */
   val MinYear: MinYear = MinYearNumber(-3000000L)
@@ -139,7 +141,7 @@ object PeriodO:
   private def authority(
       id: HistoricalPeriod.Id,
       c: Cursor
-  ): (Authority, List[SkippedPeriod]) =
+  ): (api.catalogue.periodo.Authority, List[SkippedPeriod]) =
     val src = c.downField("source")
     val title = src.downField("title").text.orElse(src.downField("partOf").downField("title").text).getOrElse(id.value)
     val year = src.downField("yearPublished").whole.orElse(src.down("partOf", "yearPublished").whole).map(Year(_))
@@ -152,7 +154,7 @@ object PeriodO:
       .map((pid, p) => definition(HistoricalPeriod.Id(pid), p.cursor))
     val (implausible, kept) = implausibleSpans(defs.flatMap(_.toOption))
     (
-      Authority(id, HistoricalPeriod.Label(title), year, kept),
+      api.catalogue.periodo.Authority(id, HistoricalPeriod.Label(title), year, kept),
       defs.flatMap(_.left.toOption) ++ implausible
     )
 
@@ -306,22 +308,3 @@ object PeriodO:
           case None => out(r.id) = r
     rows.foreach(r => visit(r, Set(r.id)))
     out.values.toList
-
-  final case class Authority(
-      id: HistoricalPeriod.Id,
-      title: HistoricalPeriod.Label,
-      year: Option[Year],
-      periods: List[Definition]
-  ):
-    /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    def cite(periodId: HistoricalPeriod.Id): HistoricalPeriod.Authority =
-      HistoricalPeriod.Authority(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")
-
-  final case class Definition(
-      id: HistoricalPeriod.Id,
-      label: HistoricalPeriod.Label,
-      period: Period,
-      region: Option[HistoricalPeriod.Region],
-      broader: Option[HistoricalPeriod.Id]
-  )

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.research.articles
+
+import com.histmersion.api.research.CritiquePair
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -10,7 +12,7 @@ import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.api.research.{CritiqueReason, Critiques}
+import com.histmersion.api.research.CritiqueReason
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.research.Slug
@@ -74,7 +76,7 @@ private[articles] object CritiqueRepo:
         def stored(c: Citekey): Option[domain.library.Citekey] =
           domain.library.Citekey.option(c.value)
         val known = CitekeyResolver.stored.canonical(rs.flatMap(r => List(r.src, r.dst)).flatMap(stored).distinct)
-        val kinds = Critiques.Kinds
+        val kinds = CritiquePair.DisagreementKinds
         rs.foldLeft[Either[Api.Error, Vector[Change]]](Right(Vector.empty)) { (acc, r) =>
           acc.flatMap { done =>
             (stored(r.src).flatMap(known.get), stored(r.dst).flatMap(known.get)) match

@@ -1,5 +1,15 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.api.automation.managers.RunMark
+import com.histmersion.domain.automation.managers.Next
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.automation.managers.Assignable
+import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
@@ -8,8 +18,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.{ManagerDefaults, ManagerPolicy, ReviewArticle, ReviewManagerDefaults}
 import com.histmersion.domain.ManagerPolicy.counted
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings}
-import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.{Duration, Instant}
 import com.histmersion.domain.automation.Run
@@ -109,7 +117,7 @@ object ReviewManagerPolicy:
         OpenMajors(majors.size),
         MaxReopened(majors.map(_.reopened.value).maxOption.getOrElse(0)),
         Escalated(majors.count(_.finding.escalated.value)),
-        OnlyMissingCritiques(majors.nonEmpty && majors.forall(e => ReviewArticle.isMissingCritique(e.finding))),
+        OnlyMissingCritiques(majors.nonEmpty && majors.forall(e => e.finding.isMissingCritique)),
         openPairs
       )
 
@@ -171,7 +179,7 @@ object ReviewManagerPolicy:
           )
         )
         val mark = RunMark(
-          Agents.RunInfo.Id(run.value),
+          RunInfo.Id(run.value),
           state.before.map(b => RunMark.Before(b.value)),
           RunMark.After(f.openMajors.value),
           RunMark.MaxReopened(f.maxReopened.value),
@@ -237,7 +245,7 @@ object ReviewManagerPolicy:
           )
         else
           Next.Retry(
-            now.plus(ManagerPolicy.backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
+            now.plus(ReviewSettings.backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
             Next.Retry.Failures(n),
             Item.Note(s"run failed ($n of ${s.maxFailures})$why")
           )
@@ -250,7 +258,7 @@ object ReviewManagerPolicy:
   final case class Pick(
       kind: Item.Kind,
       target: Slug,
-      priority: ManagerPolicy.Candidate.Priority,
+      priority: Assignable.Priority,
       why: Rationale
   ):
     /** The item's outcome when a stale article is selected again: why. */
@@ -297,9 +305,9 @@ object ReviewManagerPolicy:
   /** The priorities of what the selection picks: open MAJORs, never reviewed, stale (a person's enqueue is 10, a
     * chained review 2 — both above).
     */
-  val MajorsPriority: ManagerPolicy.Candidate.Priority = ManagerPolicy.Candidate.Priority(1)
-  val UnreviewedPriority: ManagerPolicy.Candidate.Priority = ManagerPolicy.Candidate.Priority(0)
-  val StalePriority: ManagerPolicy.Candidate.Priority = ManagerPolicy.Candidate.Priority(-1)
+  val MajorsPriority: Assignable.Priority = Assignable.Priority(1)
+  val UnreviewedPriority: Assignable.Priority = Assignable.Priority(0)
+  val StalePriority: Assignable.Priority = Assignable.Priority(-1)
 
   /** The review manager's selection, in its order — articles with open MAJORs (most first), never reviewed ones, then
     * stale ones (converged long ago, or their filter gained sources) — at most `batch` articles. With `inferFilter`, an

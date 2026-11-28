@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.PauseReason
 import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.config.*

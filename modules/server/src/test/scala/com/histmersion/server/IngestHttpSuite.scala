@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.activity.Counts
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -315,7 +317,7 @@ class IngestHttpSuite extends munit.FunSuite:
       assert(new String(pb, "UTF-8").startsWith("["), new String(pb, "UTF-8").take(200))
       val failed = ph(Paging.TotalHeader.toLowerCase).toInt
       assert(failed >= 1, ph.toString)
-      val counts = Paging.decodeCounts(Activity.Counts.Wire(ph(Paging.CountsHeader.toLowerCase)))
+      val counts = Paging.decodeCounts(Counts.Wire(ph(Paging.CountsHeader.toLowerCase)))
       assertEquals(counts.find(_._1.value == "failed").map(_._2), Some(failed), ph.toString)
       assertEquals(ph.contains(Paging.NextHeader.toLowerCase), failed > 1, ph.toString)
       // the id is a cursor: down to it (upTo) holds it; older than it (before) does not

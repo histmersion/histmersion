@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.search
+
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.SchemaTable
+import com.histmersion.api.library.query.SchemaColumn
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.util.database.given

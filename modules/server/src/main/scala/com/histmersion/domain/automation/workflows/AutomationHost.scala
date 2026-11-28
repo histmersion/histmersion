@@ -1,11 +1,14 @@
 package com.histmersion
 package domain.automation.workflows
 
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.domain.PlanAnswer
+import com.histmersion.api.checks.lint.LintFixResult
+
 import com.histmersion.api.automation.Goal
-import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
+import com.histmersion.api.automation.Agents.{Pipeline, Role}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
-import com.histmersion.api.checks.Lint.LintFixResult
-import com.histmersion.domain.PlanGoal
 import com.histmersion.api.Api
 import com.histmersion.api.backup.Backup
 import com.histmersion.domain.research.Slug
@@ -68,7 +71,7 @@ trait AutomationHost:
   /** A goal plan's works looked up by DOI (the library's metadata: title, year, authors, whether the corpus holds it,
     * whether it is open access or retracted).
     */
-  def workLookup: PlanGoal.Lookup
+  def workLookup: PlanAnswer.Lookup
 
   /** The values of a search field the corpus uses, the most used first (a plan's vocabulary). */
   def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.Term]

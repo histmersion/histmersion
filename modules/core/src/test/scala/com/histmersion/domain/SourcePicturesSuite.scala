@@ -1,5 +1,7 @@
 package com.histmersion
 package domain
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
@@ -121,7 +123,7 @@ class SourcePicturesSuite extends munit.FunSuite:
   test("reports: a job's batches add up; the covers report in Markdown"):
     val a = MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),
-      dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+      dryRun = RepairRequest.DryRun.Apply,
       targets = MediaImportReport.Targets(50),
       files = MediaImportReport.Files(10),
       stored = MediaImportReport.Stored(4),
@@ -157,7 +159,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     )
     assert(MediaMarkdown.mediaImportReport(c).contains("**Not asked yet:** 880 places/events · 2 batches run"))
     val r = MediaCoversReport(
-      dryRun = RepairAcquire.RepairRequest.DryRun.DryRun,
+      dryRun = RepairRequest.DryRun.DryRun,
       sources = MediaCoversReport.Sources(3),
       covers = MediaCoversReport.Covers(1),
       illustrations = MediaCoversReport.Illustrations(1),
@@ -176,7 +178,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     assert(md.contains("[[anthony2007]] — cover from Calibre library: `Calibre id 12`"), md)
     assert(md.contains("- illustration: no figures: 1"), md)
     assertEquals(
-      MediaCoversReport.combine(r, r.modify(_.dryRun).setTo(RepairAcquire.RepairRequest.DryRun.Apply)).covers,
+      MediaCoversReport.combine(r, r.modify(_.dryRun).setTo(RepairRequest.DryRun.Apply)).covers,
       2
     )
 

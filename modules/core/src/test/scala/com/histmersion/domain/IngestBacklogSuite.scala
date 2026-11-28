@@ -1,5 +1,13 @@
 package com.histmersion
 package domain
+
+import com.histmersion.domain.library.acquisition.Upshot
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.OaWork
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.library.repairacquire.RepairResult
+import com.histmersion.api.library.repairacquire.RepairRow
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -203,13 +211,13 @@ class IngestBacklogSuite extends munit.FunSuite:
       assertEquals(read, Problem.Stored.Unrecognised(Problem.Stored.Text(text)))
       assertEquals(read.sentence, text, "its text, whole")
       assert(isNoLegalCopy(read), text)
-      assertEquals(AcquireRecheck.failure(read), AcquireRecheck.Outcome.NoCopy, text)
+      assertEquals(AcquireRecheck.failure(read), Upshot.NoCopy, text)
       onFailure(
         read,
         IngestBacklog.Failure.Retry.Failures(0),
-        ManagerPolicy.ReviewSettings.MaxFailures(3),
-        ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-        ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+        ReviewSettings.MaxFailures(3),
+        ReviewSettings.BackoffMinutes(15),
+        ReviewSettings.MaxBackoffMinutes(360),
         now
       ) match
         case Failure.ToAcquire(why) => assertEquals(why.said, text)
@@ -225,9 +233,9 @@ class IngestBacklogSuite extends munit.FunSuite:
     onFailure(
       Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty),
       IngestBacklog.Failure.Retry.Failures(0),
-      ManagerPolicy.ReviewSettings.MaxFailures(3),
-      ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-      ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+      ReviewSettings.MaxFailures(3),
+      ReviewSettings.BackoffMinutes(15),
+      ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
       case Failure.ToAcquire(why) => assertEquals(why.said, "no legal open-access PDF found for 10.1/x")
@@ -236,9 +244,9 @@ class IngestBacklogSuite extends munit.FunSuite:
       onFailure(
         Problem.Unclassified(Legacy.Text("timeout")),
         IngestBacklog.Failure.Retry.Failures(0),
-        ManagerPolicy.ReviewSettings.MaxFailures(3),
-        ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-        ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+        ReviewSettings.MaxFailures(3),
+        ReviewSettings.BackoffMinutes(15),
+        ReviewSettings.MaxBackoffMinutes(360),
         now
       ),
       Failure.Retry(
@@ -251,9 +259,9 @@ class IngestBacklogSuite extends munit.FunSuite:
       onFailure(
         Problem.Unclassified(Legacy.Text("timeout")),
         IngestBacklog.Failure.Retry.Failures(1),
-        ManagerPolicy.ReviewSettings.MaxFailures(3),
-        ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-        ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+        ReviewSettings.MaxFailures(3),
+        ReviewSettings.BackoffMinutes(15),
+        ReviewSettings.MaxBackoffMinutes(360),
         now
       ),
       Failure.Retry(
@@ -265,9 +273,9 @@ class IngestBacklogSuite extends munit.FunSuite:
     onFailure(
       Problem.Unclassified(Legacy.Text("timeout")),
       IngestBacklog.Failure.Retry.Failures(2),
-      ManagerPolicy.ReviewSettings.MaxFailures(3),
-      ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-      ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+      ReviewSettings.MaxFailures(3),
+      ReviewSettings.BackoffMinutes(15),
+      ReviewSettings.MaxBackoffMinutes(360),
       now
     ) match
       case Failure.ToAcquire(why) => assertEquals(why.said, "timeout (3 tries)")
@@ -276,9 +284,9 @@ class IngestBacklogSuite extends munit.FunSuite:
       onFailure(
         Problem.Unclassified(Legacy.Text("")),
         IngestBacklog.Failure.Retry.Failures(0),
-        ManagerPolicy.ReviewSettings.MaxFailures(3),
-        ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-        ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360),
+        ReviewSettings.MaxFailures(3),
+        ReviewSettings.BackoffMinutes(15),
+        ReviewSettings.MaxBackoffMinutes(360),
         now
       ).isInstanceOf[Failure.Retry]
     )
@@ -387,7 +395,7 @@ class IngestBacklogSuite extends munit.FunSuite:
             None,
             List(Goal.Slug("g1"), Goal.Slug("g2")),
             Managers.Rationale("fits"),
-            Some(Managers.OaWork.FoundBy("run"))
+            Some(OaWork.FoundBy("run"))
           )
         )
       )
@@ -398,56 +406,56 @@ class IngestBacklogSuite extends munit.FunSuite:
       "an old item's state still decodes"
     )
     assertEquals(
-      ManagersMarkdown.backlog(Managers.ManagerInfo.Backlog(0), None),
+      ManagersMarkdown.backlog(ManagerInfo.Backlog(0), None),
       "0 legal open-access works in the ingest backlog"
     )
     assertEquals(
-      ManagersMarkdown.backlog(Managers.ManagerInfo.Backlog(96), Some(Managers.ManagerInfo.BacklogDays(5))),
+      ManagersMarkdown.backlog(ManagerInfo.Backlog(96), Some(ManagerInfo.BacklogDays(5))),
       "96 legal open-access works in the ingest backlog (~5 more days at the current allowance)"
     )
     assertEquals(
-      ManagersMarkdown.backlog(Managers.ManagerInfo.Backlog(1), Some(Managers.ManagerInfo.BacklogDays(0))),
+      ManagersMarkdown.backlog(ManagerInfo.Backlog(1), Some(ManagerInfo.BacklogDays(0))),
       "1 legal open-access work in the ingest backlog (drained today at the current allowance)"
     )
-    assert(ManagersMarkdown.backlog(Managers.ManagerInfo.Backlog(3), None).contains("not draining"))
+    assert(ManagersMarkdown.backlog(ManagerInfo.Backlog(3), None).contains("not draining"))
     val info = ManagerInfo(
-      Managers.ManagerInfo.Id("watch:g"),
-      Managers.ManagerInfo.Kind("watch"),
-      backlog = Managers.ManagerInfo.Backlog(4),
-      backlogDays = Some(Managers.ManagerInfo.BacklogDays(1))
+      ManagerInfo.Id("watch:g"),
+      ManagerInfo.Kind("watch"),
+      backlog = ManagerInfo.Backlog(4),
+      backlogDays = Some(ManagerInfo.BacklogDays(1))
     )
     assert(
       ManagersMarkdown.line(info).contains("4 legal open-access works in the ingest backlog (~1 more day"),
       ManagersMarkdown.line(info)
     )
-    assert(!ManagersMarkdown.line(info.modify(_.backlog).setTo(Managers.ManagerInfo.Backlog(0))).contains("backlog"))
-    val r = RepairAcquire.RepairResult(
-      dryRun = RepairAcquire.RepairResult.DryRun.DryRun,
-      moved = RepairAcquire.RepairResult.Moved(1),
-      kept = RepairAcquire.RepairResult.Kept(1),
-      untouched = RepairAcquire.RepairResult.Untouched(5),
+    assert(!ManagersMarkdown.line(info.modify(_.backlog).setTo(ManagerInfo.Backlog(0))).contains("backlog"))
+    val r = RepairResult(
+      dryRun = RepairResult.DryRun.DryRun,
+      moved = RepairResult.Moved(1),
+      kept = RepairResult.Kept(1),
+      untouched = RepairResult.Untouched(5),
       rows = List(
-        RepairAcquire.RepairRow(
-          RepairAcquire.RepairRow.Item(7),
+        RepairRow(
+          RepairRow.Item(7),
           api.library.Doi("10.1/x"),
-          List(RepairAcquire.RepairRow.Goals("g")),
-          RepairAcquire.RepairRow.Watcher("watch:g"),
-          RepairAcquire.RepairRow.Action(RepairAcquire.Move),
-          RepairAcquire.RepairRow.Detail("legal open access")
+          List(RepairRow.Goals("g")),
+          RepairRow.Watcher("watch:g"),
+          RepairRow.Action(RepairAcquire.Move),
+          RepairRow.Detail("legal open access")
         ),
-        RepairAcquire.RepairRow(
-          RepairAcquire.RepairRow.Item(8),
+        RepairRow(
+          RepairRow.Item(8),
           api.library.Doi("10.1/y"),
-          List(RepairAcquire.RepairRow.Goals("g")),
-          RepairAcquire.RepairRow.Watcher("watch:g"),
-          RepairAcquire.RepairRow.Action(RepairAcquire.Keep),
-          RepairAcquire.RepairRow.Detail("closed")
+          List(RepairRow.Goals("g")),
+          RepairRow.Watcher("watch:g"),
+          RepairRow.Action(RepairAcquire.Keep),
+          RepairRow.Detail("closed")
         )
       ),
-      backlog = Managers.ManagerInfo.Backlog(1),
-      backlogDays = Some(Managers.ManagerInfo.BacklogDays(1))
+      backlog = ManagerInfo.Backlog(1),
+      backlogDays = Some(ManagerInfo.BacklogDays(1))
     )
-    val md = RepairAcquire.markdown(r)
+    val md = r.markdown
     assert(
       md.value.contains("dry run: nothing changed") && md.value.contains("would move 1 legal open-access work") &&
         md.value.contains("#7 https://doi.org/10.1/x · goal g · would move to watch:g") && md.value.contains(

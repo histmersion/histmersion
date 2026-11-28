@@ -1,5 +1,24 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.automation.managers.Next
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.domain.automation.managers.StepFacts
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.domain.automation.autopilot.Pacing
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.domain.automation.managers.Assignable
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -16,11 +35,7 @@ import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.domain.*
-import com.histmersion.domain.ManagerPolicy.Next
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts
 import com.histmersion.config.{AgentsConfig, ResearchAgentsConfig, ReviewManagerConfig}
 import com.histmersion.domain.ManagerDefaults
@@ -38,7 +53,6 @@ import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.automation.goals.GoalRow
 import com.histmersion.domain.automation.Goal
 import com.histmersion.domain.automation.managers.ManagerRepo
-import com.histmersion.api.research.Articles
 import com.histmersion.api.research.Article
 import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
@@ -130,7 +144,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           )
         )
     }
-    val task = ledger.flatMap(ReviewLedger.taskText(_, run)).map(t => Item.Task(t.value))
+    val task = ledger.flatMap(_.taskText(run)).map(t => Item.Task(t.value))
     ReviewManagerPolicy.evaluateReview(
       s,
       slug,
@@ -208,17 +222,17 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def fileTask(
       slug: Slug,
-      ledger: Option[ReviewLedger.Ledger],
+      ledger: Option[Ledger],
       text: Item.Task
-  ): Option[Queue.QueueItem.Id] =
+  ): Option[QueueItem.Id] =
     val open = ledger
       .flatMap(_.task)
       .flatMap(i => site.queues.get(QueueItemId(i.value)))
-      .filter(i => i.list == Queue.Kind.Tasks.label && i.status.value == Queue.Open)
+      .filter(i => i.list == api.automation.queue.Docket.Tasks.label && i.status.value == Queue.Open)
       // the article's collapsed item the ledger lost track of (#934)
       .orElse(
         site.queues
-          .list(Queue.Kind.Tasks, QueueScope.Open)
+          .list(api.automation.queue.Docket.Tasks, QueueScope.Open)
           .filter(i => ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
           .sortBy(_.id)
           .headOption
@@ -226,14 +240,14 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     open match
       case Some(item) =>
         site.workLists
-          .patch(QueueItemId(item.id.value), QueuePatch(text = Some(Queue.QueueItem.Text(text.value))))
+          .patch(QueueItemId(item.id.value), QueuePatch(text = Some(QueueItem.Text(text.value))))
           .toOption
           .map(_.id)
       case None =>
         site.workLists
           .record(
-            WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
-            QueueAdd(Queue.QueueItem.Text(text.value), topic = Some(Queue.QueueItem.Topic("agent review"))),
+            WorkListControllers.ListName(api.automation.queue.Docket.Tasks.label.value),
+            QueueAdd(QueueItem.Text(text.value), topic = Some(QueueItem.Topic("agent review"))),
             creator
           )
           .toOption
@@ -393,7 +407,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
                   AutopilotPolicy
                     .extendDue(
                       AutopilotPolicy.NewSources(n.value),
-                      AutopilotPolicy.Settings.ExtendMinNew(min),
+                      Pacing.ExtendMinNew(min),
                       at.flatMap(a => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(a.value))),
                       AutopilotPolicy.CooldownDays(mcfg.review.extendCooldownDays.value),
                       now
@@ -481,7 +495,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           .filter(e =>
             ManagerPolicy.matches(
               e,
-              ManagerPolicy.Candidate.Target(slug.value),
+              Assignable.Target(slug.value),
               tags.map(t => ManagerPolicy.Tag(t.value)),
               Nil,
               goals
@@ -505,7 +519,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         Slug
           .parse(raw.value.trim)
           .left
-          .map(_ => Articles.notFound(Article.Slug(raw.value.trim)))
+          .map(_ => Article.notFound(Article.Slug(raw.value.trim)))
           .flatMap(site.articles.get(_))
           .map(v => ManagerContext.ItemTarget(v.article.slug.value))
       case other => Left(Api.Error(Problem.Unclassified(Legacy.Text(s"unknown item kind '$other'"))))
@@ -561,7 +575,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case ArticleReview =>
         if ManagerPolicy.waitsFor(
             Item.Kind.ArticleReview,
-            ManagerPolicy.Candidate.Target(item.target.value),
+            Assignable.Target(item.target.value),
             c.openKeys(manager)
           )
         then None

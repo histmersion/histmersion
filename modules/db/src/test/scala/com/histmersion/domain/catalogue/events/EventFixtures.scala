@@ -94,7 +94,7 @@ object EventFixtures:
     connect(ds)(EventRepo.tierAndNames(id))
 
   def stored(ds: DataSource): List[StoredEvent] = connect(ds)(EventImportRepo.stored)
-  def save(ds: DataSource, placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
+  def save(ds: DataSource, placed: List[(CatalogRecord, Placement)]): EventSaved =
     transact(ds)(EventImportRepo.save(placed))
   def partsDone(ds: DataSource, provider: CatalogRecord.Provider): Set[EventImportRepo.PartName] =
     connect(ds)(EventImportRepo.partsDone(provider))

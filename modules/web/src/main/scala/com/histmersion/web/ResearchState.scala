@@ -1,6 +1,9 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Wording
 import com.histmersion.api.automation.Queue
@@ -19,9 +22,9 @@ final class ResearchState:
 
   private val state: Request[OpenWork.State] = Request()
   private val words: Var[String] = Var("")
-  private val histories: Var[Map[Queue.QueueItem.Id, Request[OpenWork.History]]] = Var(Map.empty)
-  private val expanded: Var[Set[Queue.QueueItem.Id]] = Var(Set.empty)
-  private val handing: Request[Queue.QueueItem] = Request()
+  private val histories: Var[Map[QueueItem.Id, Request[OpenWork.History]]] = Var(Map.empty)
+  private val expanded: Var[Set[QueueItem.Id]] = Var(Set.empty)
+  private val handing: Request[QueueItem] = Request()
 
   private def load(): Unit = state.ask(ApiClient.call(ResearchApi.state)(OpenWork.Scope()))
 
@@ -30,7 +33,7 @@ final class ResearchState:
   private val filtered: Signal[Option[OpenWork.State]] =
     loaded.combineWith(words.signal).map((s, w) => s.map(shown(_, w)))
 
-  private def historyOf(id: Queue.QueueItem.Id): Request[OpenWork.History] =
+  private def historyOf(id: QueueItem.Id): Request[OpenWork.History] =
     histories
       .now()
       .getOrElse(
@@ -42,7 +45,7 @@ final class ResearchState:
         }
       )
 
-  private def toggle(id: Queue.QueueItem.Id): Unit =
+  private def toggle(id: QueueItem.Id): Unit =
     if expanded.now().contains(id) then expanded.update(_ - id)
     else
       val _ = historyOf(id)
@@ -51,12 +54,12 @@ final class ResearchState:
   private def hand(t: OpenItem.Task): Unit =
     if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
     else
-      handing.askThen(ApiClient.queuePatch(t.item, Queue.QueuePatch(actor = Some(handedTo(t))))) {
+      handing.askThen(ApiClient.queuePatch(t.item, QueuePatch(actor = Some(handedTo(t))))) {
         case Loaded.Ready(_) => load()
         case _               => ()
       }
 
-  private def history(id: Queue.QueueItem.Id): HtmlElement =
+  private def history(id: QueueItem.Id): HtmlElement =
     val r = historyOf(id)
     div(
       cls := "state-history",
@@ -81,7 +84,7 @@ final class ResearchState:
       }
     )
 
-  private def expander(id: Queue.QueueItem.Id): HtmlElement =
+  private def expander(id: QueueItem.Id): HtmlElement =
     button(
       typ := "button",
       cls := "btn btn--ghost state-why",
@@ -92,7 +95,7 @@ final class ResearchState:
       onClick --> (_ => toggle(id))
     )
 
-  private def opened(id: Queue.QueueItem.Id): Modifier[HtmlElement] =
+  private def opened(id: QueueItem.Id): Modifier[HtmlElement] =
     child.maybe <-- expanded.signal.map(e => Option.when(e.contains(id))(history(id)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -266,4 +269,4 @@ object ResearchState:
   def handedTo(t: OpenItem.Task): Creation.Actor =
     if t.actor == Who.Owner then Creation.Agents else Creation.Person
 
-  def firstLine(text: Queue.QueueItem.Text): String = shown"$text".linesIterator.nextOption().getOrElse("")
+  def firstLine(text: QueueItem.Text): String = shown"$text".linesIterator.nextOption().getOrElse("")

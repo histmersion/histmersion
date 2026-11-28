@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.library.tree.TreeRow
+
 import com.histmersion.api.library.Tree
 
 import com.histmersion.domain.catalogue.places.PlaceScope
@@ -22,7 +24,7 @@ trait SearchService:
   def unlocated(filter: Filter, scope: PlaceScope): RowCount
   def selectionCounts(filter: Filter, scope: PlaceScope): Place.Counts
   def periods(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row]
-  def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow]
+  def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[TreeRow]
 
 object SearchService:
   def apply(db: Transactor): SearchService = Implementation(db)
@@ -36,5 +38,5 @@ object SearchService:
       db.read(SearchRepo.selectionCounts(filter, scope))
     def periods(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row] =
       db.read(AggregateRepo.periods(unit, filter, scope)).toList
-    def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
+    def treeRows(unit: AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[TreeRow] =
       db.read(AggregateRepo.treeRows(unit, filter, scope)).toList

@@ -6,8 +6,8 @@ import com.histmersion.web.ui.Layout
 import org.scalajs.dom
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
-import com.histmersion.api.Years
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The map's places — sites, polities, peoples, point labels, the chosen place's outline — answer the pointer the way
   * the app's links do, with the same card ([[Preview]]):
@@ -50,15 +50,14 @@ object PlaceHover:
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
   final case class Places(
       place: PlaceId => Option[(PlaceId, UiLabels.Text, PlaceKind)],
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   )
 
   private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[ShapeHit.Set, Places]
 
   /** The shapes of set `set` answer as the places `place` names. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def shapes(set: PlaceHover.ShapeSetName, places: Places): Unit = shapeSets(set) = places
+  def shapes(set: ShapeSetName, places: Places): Unit = shapeSets(set) = places
 
   /** Is this pointer type a finger? (`pen` hovers like a mouse.) */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -68,8 +67,7 @@ object PlaceHover:
   /** The place shape topmost under `p`, if any. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def placeAt(p: ScreenPt): Option[(ShapeHit, (PlaceHover.PlaceId, UiLabels.Text, PlaceKind), Places)] =
+  private def placeAt(p: ScreenPt): Option[(ShapeHit, (PlaceId, UiLabels.Text, PlaceKind), Places)] =
     if surface == null then None
     else
       surface
@@ -190,13 +188,12 @@ object PlaceHover:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def bind(
       m: DomMarker,
-      id: PlaceHover.PlaceId,
+      id: PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   ): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
@@ -227,13 +224,12 @@ object PlaceHover:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def bindName(
       m: DomMarker,
-      id: PlaceHover.PlaceId,
+      id: PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   ): Unit =
     def target = Preview.Target.Place(id, asOf())
     val el = Option(m.el.firstElementChild).getOrElse(m.el)
@@ -325,13 +321,12 @@ object PlaceHover:
     * go and closes the card.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def activatePlace(
-      id: PlaceHover.PlaceId,
+      id: PlaceId,
       label: UiLabels.Text,
       kind: PlaceKind,
-      asOf: () => Option[Years.Astronomical],
+      asOf: () => Option[Year.Astronomical],
       how: Activation
   ): Unit =
     val t = Preview.Target.Place(id, asOf())

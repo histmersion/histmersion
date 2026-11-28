@@ -59,7 +59,7 @@ class UndatedSitesSuite extends munit.FunSuite:
 
   test("merged with no dated site, a crowded tile's cells all say how many have no known date"):
     val c = tileAt(TileCoord.Z(6), Latitude(37.1), Longitude(22.1))
-    val cells = UndatedCells.merge(c.z, Nil, service.counted(c, grid, None))
+    val cells = GridCell.merge(c.z, Nil, service.counted(c, grid, None))
     assertEquals(cells.map(_.n.value).sum, 900)
     assert(cells.forall(cell => cell.undated.value == cell.n.value))
 

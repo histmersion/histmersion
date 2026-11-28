@@ -25,9 +25,8 @@ object Resolution:
     * server's is no conflict: resolved together, the server's is chosen, as Maven chooses the newest.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def conflicts(
-      plugin: Resolution.ConflictsPlugin,
+      plugin: ConflictsPlugin,
       resolved: List[ModuleCoordinates],
       server: ServerModules,
       order: VersionOrder

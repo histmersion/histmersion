@@ -1,6 +1,11 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.domain.catalogue.places.placereview.Evidence
+import com.histmersion.domain.catalogue.places.placereview.LinkedItem
+import com.histmersion.domain.catalogue.places.placereview.Reclassifiable
+import com.histmersion.domain.catalogue.places.placereview.Remedy
+
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -8,7 +13,6 @@ import com.histmersion.util.database.RangeSql
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.Geocode
@@ -53,7 +57,7 @@ private[places] object PlaceReviewRepo:
     export DeepTime.{SignedYear as From, SignedYear as To}
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  private given DbCodec[Candidate] = DbCodec.derived
+  private given DbCodec[Reclassifiable] = DbCodec.derived
 
   private def split(s: Option[String]): List[String] =
     s.toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty)
@@ -71,7 +75,7 @@ private[places] object PlaceReviewRepo:
 
   /** The evidence of every reviewed place, and for a withdrawn duplicate the seed places its name resolves to.
     */
-  def evidenceIn()(using DbCon): List[(Evidence, List[Candidate])] =
+  def evidenceIn()(using DbCon): List[(Evidence, List[Reclassifiable])] =
     val rows =
       sql"SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods', CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start(sql"p.period")} END, ${RangeSql.end(sql"p.period")} FROM places p WHERE $reviewedSql ORDER BY p.id"
         .query[Row]
@@ -104,22 +108,22 @@ private[places] object PlaceReviewRepo:
           ),
         descs.getOrElse(r.id, Nil)
       )
-      val cands = PlaceReview.duplicateOf(r.label).toList.flatMap { name =>
+      val cands = Evidence.duplicateOf(r.label).toList.flatMap { name =>
         // the name, or one of the alternatives a Pleiades title joins with '/' ("Peiros/Piros (river)")
-        val keys = PlaceReview.duplicateKeys(name)
+        val keys = Evidence.duplicateKeys(name)
         sql"""SELECT id, label, kind FROM places
               WHERE import_source IS NULL AND histmersion_place_key(label) = ANY($keys::text[])
                 AND label !~* '^withdrawn'
-              ORDER BY id""".query[Candidate].run().toList
+              ORDER BY id""".query[Reclassifiable].run().toList
       }
       (e, cands)
     }
 
   /** What `place-kind` lists, in place-id order. */
-  def proposalsIn()(using DbCon): List[Proposal] =
-    evidenceIn().flatMap((e, cs) => PlaceReview.propose(e, cs))
+  def proposalsIn()(using DbCon): List[Remedy] =
+    evidenceIn().flatMap((e, cs) => e.propose(cs))
 
-  def proposals()(using DbCon): List[Proposal] = proposalsIn()
+  def proposals()(using DbCon): List[Remedy] = proposalsIn()
 
   /** Apply the fixable proposals: a kind (and a polity's period) changes only while the place still has the kind the
     * proposal read; a merge moves the duplicate's findings, links, children, events, attestations and asset links to
@@ -128,11 +132,11 @@ private[places] object PlaceReviewRepo:
     * same transaction. Returns (reclassified, merged).
     */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def apply(ps: List[Proposal], toleranceKm: PointAreaRepo.Settings.ToleranceKm)(using DbCon): (RowCount, RowCount) =
+  def apply(ps: List[Remedy], toleranceKm: PointAreaRepo.Settings.ToleranceKm)(using DbCon): (RowCount, RowCount) =
     val todo = ps.filter(_.fixable)
     if todo.isEmpty then (RowCount(0), RowCount(0))
     else
-      val re = todo.collect { case p: Proposal.Reclassify => p }.filter { p =>
+      val re = todo.collect { case p: Remedy.Reclassify => p }.filter { p =>
         val range = RangeSql.literalOf(p.period)
         sql"""UPDATE places SET kind = ${p.to},
                 period = coalesce($range::int8range, period),
@@ -140,7 +144,7 @@ private[places] object PlaceReviewRepo:
               WHERE id = ${p.id} AND kind = ${p.from}""".update.run() > 0
       }
       val mg = todo
-        .collect { case p: Proposal.Merge => p }
+        .collect { case p: Remedy.Merge => p }
         .filter(p => mergeIn(Place.Id.assume(p.id.value), Place.Id.assume(p.into.value)))
       Unused(
         FindingPlaceRepo.materialisePlaces(

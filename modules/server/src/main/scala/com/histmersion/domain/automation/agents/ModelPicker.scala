@@ -1,5 +1,20 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.planquota.RefreshTrigger
+import com.histmersion.api.automation.modelchains.SettingSource
+import com.histmersion.api.automation.modelchains.Allowance
+import com.histmersion.api.automation.modelchains.LimitState
+import com.histmersion.api.automation.modelchains.Spend
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Verdict
+import com.histmersion.api.automation.modelchains.Measure
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.modelchains.RoleChain
+import com.histmersion.api.automation.modelchains.LimitStatus
+import com.histmersion.api.automation.modelchains.AllowanceStatus
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -42,7 +57,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 final class ModelPicker(
     ds: DataSource,
     cfg: => AgentsConfig,
-    resolve: ModelRef => Either[Problems, (LlmClient, Billing)],
+    resolve: ModelRef => Either[Problems, (LlmClient, api.automation.agents.Billing)],
     val pools: PlanPools,
     /** The names plugin AI providers are registered under now (the pinned generation's): what a chain or an allowance
       * may name besides the host's providers.
@@ -83,7 +98,7 @@ final class ModelPicker(
     * `refresh` names why and the model is wanted, a fresh reading taken first when the verdict hangs only on an old one
     * ([[PlanPools.decide]]).
     */
-  private def working(refresh: Option[PlanQuota.RefreshTrigger])(using WritePermit): PoolRead =
+  private def working(refresh: Option[RefreshTrigger])(using WritePermit): PoolRead =
     (p, m, now, want) =>
       (refresh, want) match
         case (Some(t), Want.Wanted) =>
@@ -189,8 +204,8 @@ final class ModelPicker(
     * cap must not read as no cap) and where it comes from.
     */
   final case class Effective(
-      target: Target.Wire,
-      allowance: Either[Problems, Allowance],
+      target: api.automation.modelchains.Aim.Wire,
+      allowance: Either[Problems, api.automation.modelchains.Allowance],
       source: SettingSource
   )
 
@@ -199,19 +214,21 @@ final class ModelPicker(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def allowances: (List[Effective], List[Problem]) =
-    val (fromConfig, problems) = parseAllowances(Allowance.Spec(cfg.allowances.value), known()) match
-      case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
-      case Left(m)   => (Nil, m.at(Problem.Field("agents.allowances")).toVector.toList)
+    val (fromConfig, problems) =
+      Allowance.parseAllowances(api.automation.modelchains.Allowance.Spec(cfg.allowances.value), known()) match
+        case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
+        case Left(m)   => (Nil, m.at(Problem.Field("agents.allowances")).toVector.toList)
     val saved = Transactor(ds).read(ModelSettingsRepo.allowances).map { s =>
-      val a: Either[Problems, Allowance] = for
-        t <- Target.parse(Target.Spec(s.target.value), known())
+      val a: Either[Problems, api.automation.modelchains.Allowance] = for
+        t <- api.automation.modelchains.Aim.parse(api.automation.modelchains.Aim.Spec(s.target.value), known())
         ss <- s.limits
-        ls <- ss.map(Limit.fromSpec).partitionMap(identity) match
+        ls <- ss.map(api.automation.modelchains.Limit.fromSpec).partitionMap(identity) match
           case (Nil, ok)          => Right(ok)
           case (first :: more, _) => Left(Problems.of(first, more*))
-        a <- Allowance.of(t, ls, Allowance.ReservePct(s.reservePct.value))
+        a <- api.automation.modelchains.Allowance
+          .of(t, ls, api.automation.modelchains.Allowance.ReservePct(s.reservePct.value))
       yield a
-      Effective(Target.Wire(s.target.value), a, SettingSource.Saved)
+      Effective(api.automation.modelchains.Aim.Wire(s.target.value), a, SettingSource.Saved)
     }
     val savedTargets = saved.map(_.target).toSet
     (fromConfig.filterNot(e => savedTargets.contains(e.target)) ++ saved, problems)
@@ -228,20 +245,25 @@ final class ModelPicker(
     effective
       .filter(e =>
         e.allowance.fold(
-          _ => Target.parse(Target.Spec(e.target.value), known()).exists(_.covers(m)),
+          _ =>
+            api.automation.modelchains.Aim
+              .parse(api.automation.modelchains.Aim.Spec(e.target.value), known())
+              .exists(_.covers(m)),
           _.target.covers(m)
         )
       )
-      .map(e => e -> e.allowance.map(a => states(a, spendsOf(a), LimitState.Now(now.value))))
+      .map(e => e -> e.allowance.map(a => a.states(spendsOf(a), LimitState.Now(now.value))))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def spendsOf(a: Allowance): Vector[Spend] =
+  private def spendsOf(a: api.automation.modelchains.Allowance): Vector[Spend] =
     if a.limits.isEmpty then Vector.empty
     else
       val secs = ModelSettingsRepo.WindowSeconds(a.limits.map(_.window.seconds.value).max)
       a.target match
-        case Target.Model(r)    => Transactor(ds).read(ModelSettingsRepo.spends(List(r.wire), Nil, secs))
-        case Target.Provider(k) => Transactor(ds).read(ModelSettingsRepo.spends(Nil, List(k.wire.value + ":"), secs))
+        case api.automation.modelchains.Aim.Model(r) =>
+          Transactor(ds).read(ModelSettingsRepo.spends(List(r.wire), Nil, secs))
+        case api.automation.modelchains.Aim.Provider(k) =>
+          Transactor(ds).read(ModelSettingsRepo.spends(Nil, List(k.wire.value + ":"), secs))
 
   /** Whether `m` has headroom now; if not, why and when it frees (None = not by itself). `unavailable`: it cannot be
     * offered at all (its plan's runtime has no login) — a configuration problem, not a wait. `refreshed`: what a fresh
@@ -257,7 +279,7 @@ final class ModelPicker(
       planBlocked: ModelState.PlanBlocked = ModelState.PlanBlocked(false),
       unavailable: ModelState.Unavailable = ModelState.Unavailable(false),
       refreshed: Option[ModelState.Refreshed] = None,
-      held: Option[PlanQuota.PoolId] = None,
+      held: Option[PoolId] = None,
       cooling: ModelState.Cooling = ModelState.Cooling(false)
   )
 
@@ -299,7 +321,7 @@ final class ModelPicker(
       (p, v, r.map(x => ModelState.Refreshed(s"${p.title}: fresh reading (${x.text})")))
     }
     val refreshed = plan.flatMap(_._3)
-    val blocked = plan.collect { case (p, PlanQuota.Verdict.Blocked(w, u), _) => (p, w, u) }
+    val blocked = plan.collect { case (p, Verdict.Blocked(w, u), _) => (p, w, u) }
     val spent = ss
       .filterNot(_.usable.usable)
       .map(s =>
@@ -355,7 +377,7 @@ final class ModelPicker(
       case _ => ModelState(ModelState.Usable(true), None, None, ht, hu, refreshed = refreshed)
 
   private def fmt(v: BigDecimal, m: Measure): String = m match
-    case Measure.Tokens => Limit.compact(v.setScale(0, BigDecimal.RoundingMode.HALF_UP))
+    case Measure.Tokens => api.automation.modelchains.Limit.compact(v.setScale(0, BigDecimal.RoundingMode.HALF_UP))
     case Measure.Usd    =>
       s"${v.setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString} USD"
 
@@ -370,7 +392,7 @@ final class ModelPicker(
       role: Role,
       overrideRef: Option[AgentsControllers.ModelName],
       now: PlanQuotaRepo.EpochMillis = PlanQuotaRepo.EpochMillis(wallClock.millis()),
-      refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
+      refresh: Option[RefreshTrigger] = Some(RefreshTrigger.Pick),
       onRefresh: ModelState.Refreshed => Unit = _ => ()
   )(using WritePermit): Either[PickFailure, Picked] =
     choose(role, overrideRef, now, working(refresh), onRefresh)
@@ -477,7 +499,7 @@ final class ModelPicker(
       model: ModelRef,
       passed: Problem.Run.PassedOver,
       freesAt: Option[PlanQuotaRepo.EpochMillis],
-      held: Option[PlanQuota.PoolId]
+      held: Option[PoolId]
   )
 
   // ── the picture (`agent models`) ───────────────────────────────────────────────────────────────
@@ -503,15 +525,15 @@ final class ModelPicker(
               case Left(why) =>
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
-                  ready = ModelChains.ChainEntry.Ready.Unready,
-                  usable = ModelChains.ChainEntry.Usable.Unusable,
+                  ready = ChainEntry.Ready.Unready,
+                  usable = ChainEntry.Usable.Unusable,
                   why.toVector.toList
                 )
               case Right((_, billing)) =>
                 val st = state(m, effective, now, stored)
                 ChainEntry(
                   ChainEntry.Model(m.wire.value),
-                  ready = ModelChains.ChainEntry.Ready.Ready,
+                  ready = ChainEntry.Ready.Ready,
                   (if st.usable.value then ChainEntry.Usable.Usable else ChainEntry.Usable.Unusable),
                   st.why.toList,
                   st.freesAt.map(f => LimitStatus.FreesAt(iso(f.value))),
@@ -543,14 +565,14 @@ final class ModelPicker(
         AllowanceStatus(
           AllowanceStatus.Target(t.value),
           src.wire,
-          ModelChains.AllowanceStatus.ReservePct(0),
+          AllowanceStatus.ReservePct(0),
           Nil,
-          usable = ModelChains.AllowanceStatus.Usable.Unusable,
+          usable = AllowanceStatus.Usable.Unusable,
           None,
           Some(AllowanceStatus.Note(s"cannot be read, so it blocks what it covers: ${why.sentences.mkString("; ")}"))
         )
       case Effective(t, Right(a), src) =>
-        val ss = states(a, spendsOf(a), LimitState.Now(now.value))
+        val ss = a.states(spendsOf(a), LimitState.Now(now.value))
         val (ok, frees) = verdict(ss)
         val note = Option.when(a.limits.isEmpty)("no limit: unlimited") orElse
           Option.when(a.target.wire.value.startsWith(ProviderKind.ClaudeCode.wire.value + ":"))(
@@ -598,7 +620,7 @@ object ModelPicker:
     * reading (as stored) and a run's (which may record one) stay apart in the call graph the GET-writes check walks.
     */
   type PoolRead =
-    (PlanQuota.PoolId, ChainEntry.Model, PlanQuota.Now, Want) => (PlanQuota.Verdict, Option[server.agents.Refreshed])
+    (PoolId, ChainEntry.Model, PlanQuota.Now, Want) => (Verdict, Option[server.agents.Refreshed])
 
   /** How a caller has a role's model chosen at a time, with a run's model override if any: as a run picks it
     * ([[ModelPicker.pick]]) or from what is stored ([[ModelPicker.look]]).
@@ -630,7 +652,7 @@ object ModelPicker:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def whenFrees(
-      models: List[(ModelRef, Option[PlanQuotaRepo.EpochMillis], Option[PlanQuota.PoolId])]
+      models: List[(ModelRef, Option[PlanQuotaRepo.EpochMillis], Option[PoolId])]
   ): (Option[PlanQuotaRepo.EpochMillis], Problem.Run.Frees) =
     val held =
       models.flatMap(_._3).distinct.map(p => Problem.Run.HeldPool(Problem.Raw.of(p.title), Problem.Raw.of(p.wire)))

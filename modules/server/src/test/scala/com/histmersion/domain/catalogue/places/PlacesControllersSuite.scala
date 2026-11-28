@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.Resolution
+import com.histmersion.api.catalogue.geocode.KindHint
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -67,9 +71,9 @@ class PlacesControllersSuite extends munit.FunSuite:
     )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val geocoder: Geocoding = (name, _, _, _) =>
-    Option.when(name == Geocode.Attempt.Name("Zzcl"))(
-      Geocode.Resolution(
-        Geocode.Resolution.Asked(name.value),
+    Option.when(name == Attempt.Name("Zzcl"))(
+      Resolution(
+        Resolution.Asked(name.value),
         api.catalogue.Place.Id("zzcl_hill"),
         api.catalogue.Place.Label("Zzclhill"),
         Longitude(34.6),
@@ -177,10 +181,10 @@ class PlacesControllersSuite extends munit.FunSuite:
         .isRight
     )
     assertEquals(
-      c.geocode(Geocode.Attempt.Name("Zzcl"), Geocode.KindHint.Unknown, None).map(_.placeId),
+      c.geocode(Attempt.Name("Zzcl"), KindHint.Unknown, None).map(_.placeId),
       Some("zzcl_hill")
     )
-    assertEquals(c.geocode(Geocode.Attempt.Name("nothing"), Geocode.KindHint.Unknown, None), None)
+    assertEquals(c.geocode(Attempt.Name("nothing"), KindHint.Unknown, None), None)
 
   test("a held lock refuses every write"):
     val gate = WriteGate()

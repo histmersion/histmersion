@@ -1,5 +1,10 @@
 package com.histmersion
 package domain.automation.goals
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 

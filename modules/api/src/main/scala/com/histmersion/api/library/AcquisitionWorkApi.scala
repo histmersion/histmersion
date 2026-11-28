@@ -1,5 +1,8 @@
 package com.histmersion
 package api.library
+
+import com.histmersion.api.library.repairacquire.RepairRequest
+import com.histmersion.api.library.repairacquire.RepairResult
 import com.histmersion.api.automation.ManagersApi
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
@@ -16,12 +19,12 @@ import com.histmersion.lint.{tolerated, LintRule}
 )
 object AcquisitionWorkApi:
 
-  lazy val repairAcquire: PublicEndpoint[RepairAcquire.RepairRequest, Api.Error, RepairAcquire.RepairResult, Any] =
+  lazy val repairAcquire: PublicEndpoint[RepairRequest, Api.Error, RepairResult, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "repair-acquire")
       .errorOut(Api.problemOut)
-      .in(jsonBody[RepairAcquire.RepairRequest])
-      .out(jsonBody[RepairAcquire.RepairResult])
+      .in(jsonBody[RepairRequest])
+      .out(jsonBody[RepairResult])
 
   lazy val acquireRecheck: PublicEndpoint[Acquire.Checks.RecheckRequest, Api.Error, Acquire.Checks.RecheckResult, Any] =
     endpoint.post

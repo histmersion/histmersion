@@ -21,10 +21,10 @@ object Markdown:
 
   private[api] def year(y: Option[Int]): String = (y.map(_.toString).getOrElse("n.d."))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  private[api] def fmtYear(v: Year): String = YearFmt(v)
+  private[api] def fmtYear(v: Year): String = Year.show(v)
   private[api] def period(start: Option[Year], end: Option[Year]): String = ((periodLabel(start, end)))
 
-  def periodLabel(start: Option[Year], end: Option[Year]): String = YearFmt.period(start, end)
+  def periodLabel(start: Option[Year], end: Option[Year]): String = Year.period(start, end)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def place(region: Option[Place.Region], lat: Option[Latitude], lon: Option[Longitude]): String =
     (lat, lon) match

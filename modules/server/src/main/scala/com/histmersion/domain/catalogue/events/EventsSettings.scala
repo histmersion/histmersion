@@ -1,10 +1,11 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.domain.catalogue.evidence.NearFinding
+
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy}
 import com.histmersion.config.{EventsConfig, EventsLinksConfig, EventsWikidataConfig}
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.upstreams.wikidata.{WikidataClasses, WikidataItem}
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -20,17 +21,17 @@ extension (c: EventsConfig)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def regionBox: Option[BBox] = BBox.parse(BBox.Text(c.region.value))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def tolerance: CatalogMerge.Tolerance =
-    CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(c.mergeKm.value), CatalogMerge.Tolerance.Years(c.mergeYears.value))
+  def tolerance: Placement.Tolerance =
+    Placement.Tolerance(Placement.Tolerance.Km(c.mergeKm.value), Placement.Tolerance.Years(c.mergeYears.value))
 extension (c: EventsLinksConfig)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def weights: EventMatcher.Weights =
-    EventMatcher.Weights(
-      EventMatcher.Weights.Km(c.km.value),
-      EventMatcher.Weights.Years(c.years.value),
-      EventMatcher.Weights.Name(c.nameWeight.value),
-      EventMatcher.Weights.Finding(c.findingWeight.value),
-      EventMatcher.Weights.MinScore(c.minScore.value),
-      EventMatcher.Weights.MinNameChars(c.minNameChars.value),
-      EventMatcher.Weights.MaxCandidates(c.maxCandidates.value)
+  def weights: NearFinding.Weights =
+    NearFinding.Weights(
+      NearFinding.Weights.Km(c.km.value),
+      NearFinding.Weights.Years(c.years.value),
+      NearFinding.Weights.Name(c.nameWeight.value),
+      NearFinding.Weights.Finding(c.findingWeight.value),
+      NearFinding.Weights.MinScore(c.minScore.value),
+      NearFinding.Weights.MinNameChars(c.minNameChars.value),
+      NearFinding.Weights.MaxCandidates(c.maxCandidates.value)
     )

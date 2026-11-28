@@ -1,12 +1,14 @@
 package com.histmersion
 package domain.catalogue.evidence
+
+import com.histmersion.api.catalogue.EventLead
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.Api
-import com.histmersion.api.catalogue.{EventLeads, EventLinksMarkdown, EventLinksRequest}
+import com.histmersion.api.catalogue.{EventLinksMarkdown, EventLinksRequest}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.Event
@@ -97,7 +99,7 @@ object EventLinksTools:
                 McpOut.ofText(r)
               case None =>
                 val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
-                ToolResult.text(EventLeads.markdown(links.leads(q)).value)
+                ToolResult.text(EventLead.markdown(links.leads(q)).value)
           }
         }
     List(linksTool)

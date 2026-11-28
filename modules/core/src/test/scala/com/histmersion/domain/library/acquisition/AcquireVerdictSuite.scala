@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.library.acquisition.LastCheck
+
 import com.histmersion.domain.{AcquireRecheck, Actor}
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.problem.{Problem, Problems}
@@ -10,10 +12,10 @@ import java.time.Instant
 class AcquireVerdictSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-11-22T12:00:00Z")
-  private val gen = AcquireRecheck.LastCheck.Generation("g1")
+  private val gen = LastCheck.Generation("g1")
   private val settings = AcquireVerdict.Settings(
-    AcquireRecheck.Settings.EveryDays(7),
-    AcquireRecheck.Settings.RetryHours(6),
+    domain.library.acquisition.Cadence.EveryDays(7),
+    domain.library.acquisition.Cadence.RetryHours(6),
     AcquireVerdict.Failures(5),
     AcquireVerdict.Settings.Days(14)
   )
@@ -34,7 +36,7 @@ class AcquireVerdictSuite extends munit.FunSuite:
       answers: Vector[Problem.NotFound.Answer],
       outcome: AcquireAttempt.Outcome = AcquireAttempt.Outcome.NoCopy,
       oa: Option[AcquireAttempt.Oa] = None,
-      generation: AcquireRecheck.LastCheck.Generation = gen
+      generation: LastCheck.Generation = gen
   ): AcquireAttempt =
     AcquireAttempt(
       now.minusSeconds(hoursAgo * 3600L),
@@ -57,7 +59,7 @@ class AcquireVerdictSuite extends munit.FunSuite:
   test("never checked, or checked only under another fetcher generation (or before attempts were typed): due now"):
     assertEquals(verdict(), AcquireVerdict.Unchecked(now))
     assertEquals(
-      verdict(attempt(1, Vector(notHeld), generation = AcquireRecheck.LastCheck.Generation("old"))),
+      verdict(attempt(1, Vector(notHeld), generation = LastCheck.Generation("old"))),
       AcquireVerdict.Unchecked(now)
     )
     assertEquals(
@@ -69,7 +71,7 @@ class AcquireVerdictSuite extends munit.FunSuite:
             AcquireAttempt.Outcome.LegacyNote("checked: no legal copy"),
             AcquireAttempt.Tries(3)
           ),
-          generation = AcquireRecheck.LastCheck.Generation("legacy")
+          generation = LastCheck.Generation("legacy")
         )
       ),
       AcquireVerdict.Unchecked(now)
@@ -186,7 +188,7 @@ class AcquireVerdictSuite extends munit.FunSuite:
       100,
       Vector.empty,
       AcquireAttempt.Outcome.Legacy(AcquireAttempt.Outcome.LegacyNote("x"), AcquireAttempt.Tries(4)),
-      generation = AcquireRecheck.LastCheck.Generation("legacy")
+      generation = LastCheck.Generation("legacy")
     )
     assertEquals(AcquireAttempt.Tries.of(List(attempt(1, Vector(notHeld)), legacy)), AcquireAttempt.Tries(5))
 

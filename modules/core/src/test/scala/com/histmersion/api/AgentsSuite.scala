@@ -1,5 +1,22 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.Logins
+import com.histmersion.api.automation.agents.Price
+import com.histmersion.api.automation.agents.Billing
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.agents.RunDetail
+import com.histmersion.api.automation.agents.WouldWrite
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -33,31 +50,31 @@ class AgentsSuite extends munit.FunSuite:
 
   test("ModelRef: only the first colon separates the provider (Ollama ids carry colons)"):
     assertEquals(
-      ModelRef.parse(Agents.ModelRef.Wire("local:qwen2.5-coder:32b")),
-      Right(ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen2.5-coder:32b")))
+      ModelRef.parse(ModelRef.Wire("local:qwen2.5-coder:32b")),
+      Right(ModelRef(ProviderKind.Local, ModelRef.Model("qwen2.5-coder:32b")))
     )
     assertEquals(
-      ModelRef.parse(Agents.ModelRef.Wire(" anthropic:claude-x ")),
-      Right(ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("claude-x")))
+      ModelRef.parse(ModelRef.Wire(" anthropic:claude-x ")),
+      Right(ModelRef(ProviderKind.Anthropic, ModelRef.Model("claude-x")))
     )
-    assertEquals(ModelRef.parse(Agents.ModelRef.Wire("openai:gpt")).map(_.wire), Right("openai:gpt"))
+    assertEquals(ModelRef.parse(ModelRef.Wire("openai:gpt")).map(_.wire), Right("openai:gpt"))
 
   test("ModelRef: unknown provider, no model, no colon are errors"):
-    assert(ModelRef.parse(Agents.ModelRef.Wire("ollama:qwen")).left.exists(unknownProvider(Problem.Raw("ollama"))))
+    assert(ModelRef.parse(ModelRef.Wire("ollama:qwen")).left.exists(unknownProvider(Problem.Raw("ollama"))))
     assertEquals(
-      ModelRef.parse(Agents.ModelRef.Wire("local:")),
+      ModelRef.parse(ModelRef.Wire("local:")),
       Left(Problem.Invalid.Missing(Problem.Field("model"), Vector(Problem.Field("local:"))))
     )
-    assert(ModelRef.parse(Agents.ModelRef.Wire("qwen")).left.exists {
+    assert(ModelRef.parse(ModelRef.Wire("qwen")).left.exists {
       case Problem.Invalid.Unreadable(t, raw, _, _) =>
-        t == Problem.TypeName.of(Agents.ModelRef.Wire) && raw == Problem.Raw("qwen")
+        t == Problem.TypeName.of(ModelRef.Wire) && raw == Problem.Raw("qwen")
       case _ => false
     })
 
   test("ModelRef: a plugin provider's name parses only while it is registered (known), never a host name"):
     assert(
       ModelRef
-        .parse(Agents.ModelRef.Wire("gemini:pro"))
+        .parse(ModelRef.Wire("gemini:pro"))
         .left
         .exists(e =>
           unknownProvider(Problem.Raw("gemini"))(e) && (e match
@@ -67,20 +84,20 @@ class AgentsSuite extends munit.FunSuite:
     )
     assertEquals(
       ModelRef.parse(
-        Agents.ModelRef.Wire("gemini:pro"),
+        ModelRef.Wire("gemini:pro"),
         Set(api.automation.ProviderKind.Plugin.Name("gemini"))
       ),
       Right(
         ModelRef(
           ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
-          Agents.ModelRef.Model("pro")
+          ModelRef.Model("pro")
         )
       )
     )
     assertEquals(
       ModelRef
         .parse(
-          Agents.ModelRef.Wire(" Gemini:pro:v2 "),
+          ModelRef.Wire(" Gemini:pro:v2 "),
           Set(api.automation.ProviderKind.Plugin.Name("gemini"))
         )
         .map(_.wire),
@@ -89,12 +106,12 @@ class AgentsSuite extends munit.FunSuite:
     // a host name stays the host's, whatever a plugin claims
     assertEquals(
       ModelRef
-        .parse(Agents.ModelRef.Wire("local:x"), Set(api.automation.ProviderKind.Plugin.Name("local"))),
-      Right(ModelRef(ProviderKind.Local, Agents.ModelRef.Model("x")))
+        .parse(ModelRef.Wire("local:x"), Set(api.automation.ProviderKind.Plugin.Name("local"))),
+      Right(ModelRef(ProviderKind.Local, ModelRef.Model("x")))
     )
     assert(
       ModelRef
-        .parse(Agents.ModelRef.Wire("ollama:x"), Set(api.automation.ProviderKind.Plugin.Name("gemini")))
+        .parse(ModelRef.Wire("ollama:x"), Set(api.automation.ProviderKind.Plugin.Name("gemini")))
         .left
         .exists(_.sentence.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini"))
     )
@@ -107,21 +124,21 @@ class AgentsSuite extends munit.FunSuite:
   test("a plugin provider's model is metered: no plan pool, paid, needs a price"):
     val m = ModelRef(
       ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
-      Agents.ModelRef.Model("pro")
+      ModelRef.Model("pro")
     )
-    assertEquals(PlanQuota.poolOf(m, PlanQuota.Logins()), None)
-    assert(PlanQuota.paid(m, PlanQuota.Logins()))
+    assertEquals(PlanQuota.poolOf(m, Logins()), None)
+    assert(PlanQuota.paid(m, Logins()))
     assert(Prices.billing(Map.empty, m, None).left.exists(_.sentence.contains("model 'pro' has no price")))
     assertEquals(
-      Prices.billing(Map(Agents.ModelRef.Model("pro") -> Price(BigDecimal(1), BigDecimal(2))), m, None),
+      Prices.billing(Map(ModelRef.Model("pro") -> Price(BigDecimal(1), BigDecimal(2))), m, None),
       Right(Billing.Metered(Price(BigDecimal(1), BigDecimal(2))))
     )
 
   test("Prices: two or four numbers per model, ; separated"):
     val p = Prices.parse(Agents.Prices.Wire("qwen2.5-coder:32b=0/0; claude-x=3/15/0.3/3.75")).toOption.get
-    assertEquals(p(Agents.ModelRef.Model("qwen2.5-coder:32b")), Price(BigDecimal(0), BigDecimal(0)))
+    assertEquals(p(ModelRef.Model("qwen2.5-coder:32b")), Price(BigDecimal(0), BigDecimal(0)))
     assertEquals(
-      p(Agents.ModelRef.Model("claude-x")),
+      p(ModelRef.Model("claude-x")),
       Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75")))
     )
     assertEquals(Prices.parse(Agents.Prices.Wire("  ")), Right(Map.empty))
@@ -133,7 +150,7 @@ class AgentsSuite extends munit.FunSuite:
 
   test("cost: per million tokens, cache reads and writes at their own rates"):
     val ps = Map(
-      Agents.ModelRef
+      ModelRef
         .Model("m") -> Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75")))
     )
     // 1M input of which 200k cache-read and 100k cache-write; 100k output
@@ -141,48 +158,48 @@ class AgentsSuite extends munit.FunSuite:
       ps,
       Agents.Prices.CostModel("m"),
       Usage(
-        input = Agents.Usage.Input(1000000),
-        output = Agents.Usage.Output(100000),
-        cacheRead = Agents.Usage.CacheRead(200000),
-        cacheWrite = Agents.Usage.CacheWrite(100000)
+        input = Usage.Input(1000000),
+        output = Usage.Output(100000),
+        cacheRead = Usage.CacheRead(200000),
+        cacheWrite = Usage.CacheWrite(100000)
       )
     )
     assertEquals(c, Right(BigDecimal("2.1") + BigDecimal("0.06") + BigDecimal("0.375") + BigDecimal("1.5")))
 
   test("cost: an UNPRICED model is refused, never free (the inverse of sttp-ai's PriceTable)"):
     val c =
-      Prices.cost(Map.empty, Agents.Prices.CostModel("gpt-x"), Usage(Agents.Usage.Input(10), Agents.Usage.Output(10)))
+      Prices.cost(Map.empty, Agents.Prices.CostModel("gpt-x"), Usage(Usage.Input(10), Usage.Output(10)))
     assert(c.left.exists(_.sentence.contains("has no price")), c)
 
   test("billing: a plan model needs no price and costs 0 USD; a metered one is priced"):
-    val plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet"))
-    val b = Prices.billing(Map.empty, plan, Some(PlanQuota.PoolId.ClaudePlan))
-    assertEquals(b, Right(Billing.Plan(PlanQuota.PoolId.ClaudePlan)))
-    assertEquals(b.map(_.cost(Usage(Agents.Usage.Input(1000000), Agents.Usage.Output(1000000)))), Right(BigDecimal(0)))
+    val plan = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
+    val b = Prices.billing(Map.empty, plan, Some(PoolId.ClaudePlan))
+    assertEquals(b, Right(Billing.Plan(PoolId.ClaudePlan)))
+    assertEquals(b.map(_.cost(Usage(Usage.Input(1000000), Usage.Output(1000000)))), Right(BigDecimal(0)))
     assertEquals(b.map(_.describe), Right("plan pool: claude-plan"))
     // a price in the table does not make a plan model metered
     assert(
       Prices
         .billing(
-          Map(Agents.ModelRef.Model("sonnet") -> Price(BigDecimal(3), BigDecimal(15))),
+          Map(ModelRef.Model("sonnet") -> Price(BigDecimal(3), BigDecimal(15))),
           plan,
-          Some(PlanQuota.PoolId.ClaudePlan)
+          Some(PoolId.ClaudePlan)
         )
         .exists(_.isInstanceOf[Billing.Plan])
     )
     val m =
       Prices.billing(
-        Map(Agents.ModelRef.Model("m") -> Price(BigDecimal(3), BigDecimal(15))),
-        ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("m")),
+        Map(ModelRef.Model("m") -> Price(BigDecimal(3), BigDecimal(15))),
+        ModelRef(ProviderKind.Anthropic, ModelRef.Model("m")),
         None
       )
-    assertEquals(m.map(_.cost(Usage(Agents.Usage.Input(1000000), Agents.Usage.Output(0)))), Right(BigDecimal(3)))
+    assertEquals(m.map(_.cost(Usage(Usage.Input(1000000), Usage.Output(0)))), Right(BigDecimal(3)))
     assertEquals(m.map(_.describe), Right("price: 3/15 USD per million tokens"))
 
   test("billing: an unpriced METERED model is refused — claude-code on an API key included"):
-    val local = Prices.billing(Map.empty, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen")), None)
+    val local = Prices.billing(Map.empty, ModelRef(ProviderKind.Local, ModelRef.Model("qwen")), None)
     assert(local.left.exists(_.sentence.contains("has no price")), local)
-    val keyed = Prices.billing(Map.empty, ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet")), None)
+    val keyed = Prices.billing(Map.empty, ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet")), None)
     assert(keyed.left.exists(e => e.sentence.contains("has no price") && e.sentence.contains("use an API key")), keyed)
 
   test("price text: two or four numbers, trailing zeros dropped"):
@@ -223,13 +240,13 @@ class AgentsSuite extends munit.FunSuite:
   test("approval vocabularies parse their wire names"):
     assertEquals(ApprovalKind.parse(Approval.Kind.Wire("status-change")), Some(ApprovalKind.StatusChange))
     assertEquals(ApprovalState.parse(Approval.State.Wire("open")), Some(ApprovalState.Open))
-    assertEquals(Decision.parse(Agents.Decision.Wire(" Approve ")), Some(Decision.Approve))
-    assertEquals(Decision.parse(Agents.Decision.Wire("accept")), None)
+    assertEquals(Decision.parse(Decision.Wire(" Approve ")), Some(Decision.Approve))
+    assertEquals(Decision.parse(Decision.Wire("accept")), None)
 
   test("RunParams: missing options decode as their defaults"):
     assertEquals(RawJson.decode[RunParams]("{}"), Right(RunParams()))
     assert(!RunParams().fixes)
-    assert(RunParams(fix = Some(Agents.RunRequest.Fix.Fix)).fixes)
+    assert(RunParams(fix = Some(RunRequest.Fix.Fix)).fixes)
 
   test("RunState: a run waits for an approval only from running, and leaves it only to the queue or cancelled"):
     import RunState.*
@@ -243,10 +260,10 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(RunState.parse(Run.State.Wire("waiting")), Some(WaitingApproval))
     assert(
       RunInfo(
-        Agents.RunInfo.Id("r"),
-        Agents.RunInfo.Pipeline("plan-goal"),
-        Agents.RunInfo.Target("g"),
-        Agents.RunInfo.Status("waiting")
+        RunInfo.Id("r"),
+        RunInfo.Pipeline("plan-goal"),
+        RunInfo.Target("g"),
+        RunInfo.Status("waiting")
       ).isWaiting
     )
 
@@ -264,11 +281,11 @@ class AgentsSuite extends munit.FunSuite:
       Goal.Plans.ScheduleKind.parse(api.automation.ScheduleKind.Wire("acquisition")).map(_.pipeline),
       Some(Pipeline.AcquisitionSweep)
     )
-    assertEquals(Origin.parse(Agents.Origin.Wire("scheduler")), Some(Origin.Scheduler))
+    assertEquals(Origin.parse(Origin.Wire("scheduler")), Some(Origin.Scheduler))
     // a run stored before P3 reads its new options as absent
     assertEquals(
       RawJson.decode[RunParams]("""{"fix":true}"""),
-      Right(RunParams(fix = Some(Agents.RunRequest.Fix.Fix)))
+      Right(RunParams(fix = Some(RunRequest.Fix.Fix)))
     )
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
@@ -292,12 +309,12 @@ class AgentsSuite extends munit.FunSuite:
     )
     val a =
       ApprovalInfo(
-        Agents.ApprovalInfo.Id(7),
-        Some(Agents.RunInfo.Id("run12345")),
-        Agents.ApprovalInfo.Kind("goal-plan"),
+        ApprovalInfo.Id(7),
+        Some(RunInfo.Id("run12345")),
+        ApprovalInfo.Kind("goal-plan"),
         Citekey(""),
-        evidence = Agents.ApprovalInfo.Evidence("covers it"),
-        subject = Some(Agents.ApprovalInfo.Subject("g")),
+        evidence = ApprovalInfo.Evidence("covers it"),
+        subject = Some(ApprovalInfo.Subject("g")),
         plan = Some(plan)
       )
     val md = AgentsMarkdown.approvals(List(a))
@@ -314,11 +331,11 @@ class AgentsSuite extends munit.FunSuite:
       problems = List(ArticleDraft.Problems("a paragraph with no [[citekey]]"))
     )
     val pub = ApprovalInfo(
-      Agents.ApprovalInfo.Id(8),
+      ApprovalInfo.Id(8),
       None,
-      Agents.ApprovalInfo.Kind("article-publish"),
+      ApprovalInfo.Kind("article-publish"),
       Citekey(""),
-      subject = Some(Agents.ApprovalInfo.Subject("tin")),
+      subject = Some(ApprovalInfo.Subject("tin")),
       article = Some(d)
     )
     val md2 = AgentsMarkdown.approvals(List(pub))
@@ -359,16 +376,16 @@ class AgentsSuite extends munit.FunSuite:
 
   test("ModelOverride: role=provider:model, only the first = separates; a missing role or model is an error"):
     assertEquals(
-      ModelOverride.parse(Agents.ModelOverride.Wire(" Skeptic = claude-code:haiku ")),
-      Right(ModelOverride(Agents.ModelOverride.Role("skeptic"), Agents.ModelOverride.Model("claude-code:haiku")))
+      ModelOverride.parse(ModelOverride.Wire(" Skeptic = claude-code:haiku ")),
+      Right(ModelOverride(ModelOverride.Role("skeptic"), ModelOverride.Model("claude-code:haiku")))
     )
     assertEquals(
-      ModelOverride.parse(Agents.ModelOverride.Wire("fixer=local:a > anthropic:b")),
-      Right(ModelOverride(Agents.ModelOverride.Role("fixer"), Agents.ModelOverride.Model("local:a > anthropic:b")))
+      ModelOverride.parse(ModelOverride.Wire("fixer=local:a > anthropic:b")),
+      Right(ModelOverride(ModelOverride.Role("fixer"), ModelOverride.Model("local:a > anthropic:b")))
     )
     assert(
       ModelOverride
-        .parse(Agents.ModelOverride.Wire("skeptic"))
+        .parse(ModelOverride.Wire("skeptic"))
         .left
         .exists {
           case Problem.Invalid.Unreadable(_, raw, _, _) => raw == Problem.Raw("skeptic")
@@ -376,12 +393,12 @@ class AgentsSuite extends munit.FunSuite:
         }
     )
     assertEquals(
-      ModelOverride.parse(Agents.ModelOverride.Wire("=local:x")),
+      ModelOverride.parse(ModelOverride.Wire("=local:x")),
       Left(Problem.Invalid.Missing(Problem.Field("role"), Vector(Problem.Field("=local:x"))))
     )
     assert(
       ModelOverride
-        .parse(Agents.ModelOverride.Wire("skeptic="))
+        .parse(ModelOverride.Wire("skeptic="))
         .left
         .toOption
         .contains(
@@ -391,77 +408,77 @@ class AgentsSuite extends munit.FunSuite:
 
   test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):
     val r = RunInfo(
-      Agents.RunInfo.Id("r"),
-      Agents.RunInfo.Pipeline("review-article"),
-      Agents.RunInfo.Target("x"),
-      Agents.RunInfo.Status("queued"),
-      model = Some(Agents.RunInfo.Model("anthropic:all")),
+      RunInfo.Id("r"),
+      RunInfo.Pipeline("review-article"),
+      RunInfo.Target("x"),
+      RunInfo.Status("queued"),
+      model = Some(RunInfo.Model("anthropic:all")),
       params = RunParams(modelFor =
-        Some(List(ModelOverride(Agents.ModelOverride.Role("skeptic"), Agents.ModelOverride.Model("claude-code:haiku"))))
+        Some(List(ModelOverride(ModelOverride.Role("skeptic"), ModelOverride.Model("claude-code:haiku"))))
       )
     )
     assertEquals(r.modelFor(Role.Skeptic), Some("claude-code:haiku"))
     assertEquals(r.modelFor(Role.Reviewer), Some("anthropic:all"))
     assertEquals(
       RunInfo(
-        Agents.RunInfo.Id("r"),
-        Agents.RunInfo.Pipeline("p"),
-        Agents.RunInfo.Target("x"),
-        Agents.RunInfo.Status("queued")
+        RunInfo.Id("r"),
+        RunInfo.Pipeline("p"),
+        RunInfo.Target("x"),
+        RunInfo.Status("queued")
       ).modelFor(Role.Fixer),
       None
     )
 
   test("a step's model: the configured ref, and the provider's id when it said another"):
     val s = StepInfo(
-      Agents.StepInfo.Seq(1),
-      Agents.StepInfo.Name("skeptic-1"),
-      Agents.StepInfo.Kind("llm"),
-      Agents.StepInfo.Attempt(1),
-      Agents.StepInfo.Status("done"),
-      model = Some(Agents.StepInfo.Model("claude-code:haiku")),
-      actualModel = Some(Agents.StepInfo.ActualModel("claude-haiku-5-5"))
+      StepInfo.Seq(1),
+      StepInfo.Name("skeptic-1"),
+      StepInfo.Kind("llm"),
+      StepInfo.Attempt(1),
+      StepInfo.Status("done"),
+      model = Some(StepInfo.Model("claude-code:haiku")),
+      actualModel = Some(StepInfo.ActualModel("claude-haiku-5-5"))
     )
     assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
     assertEquals(
-      s.modify(_.actualModel).setTo(Some(Agents.StepInfo.ActualModel("haiku"))).modelText,
+      s.modify(_.actualModel).setTo(Some(StepInfo.ActualModel("haiku"))).modelText,
       "claude-code:haiku"
     )
     assertEquals(s.modify(_.actualModel).setTo(None).modelText, "claude-code:haiku")
     assertEquals(s.modify(_.model).setTo(None).modelText, "claude-haiku-5-5")
     assertEquals(
       StepInfo(
-        Agents.StepInfo.Seq(1),
-        Agents.StepInfo.Name("load"),
-        Agents.StepInfo.Kind("code"),
-        Agents.StepInfo.Attempt(1),
-        Agents.StepInfo.Status("done")
+        StepInfo.Seq(1),
+        StepInfo.Name("load"),
+        StepInfo.Kind("code"),
+        StepInfo.Attempt(1),
+        StepInfo.Status("done")
       ).modelText,
       ""
     )
 
   test("agent show: an LLM step's tokens carry its first call's input and its turns (V072); older steps show neither"):
     val s = StepInfo(
-      Agents.StepInfo.Seq(2),
-      Agents.StepInfo.Name("notes"),
-      Agents.StepInfo.Kind("llm"),
-      Agents.StepInfo.Attempt(1),
-      Agents.StepInfo.Status("done"),
-      model = Some(Agents.StepInfo.Model("claude-code:sonnet")),
-      usage = Usage(Agents.Usage.Input(41000), Agents.Usage.Output(900)),
-      firstCallTokens = Some(Agents.StepInfo.FirstCallTokens(6963)),
-      turns = Some(Agents.StepInfo.Turns(9))
+      StepInfo.Seq(2),
+      StepInfo.Name("notes"),
+      StepInfo.Kind("llm"),
+      StepInfo.Attempt(1),
+      StepInfo.Status("done"),
+      model = Some(StepInfo.Model("claude-code:sonnet")),
+      usage = Usage(Usage.Input(41000), Usage.Output(900)),
+      firstCallTokens = Some(StepInfo.FirstCallTokens(6963)),
+      turns = Some(StepInfo.Turns(9))
     )
     val d = RunDetail(
       RunInfo(
-        Agents.RunInfo.Id("r1"),
-        Agents.RunInfo.Pipeline("enrich-source"),
-        Agents.RunInfo.Target("x2020"),
-        Agents.RunInfo.Status("done")
+        RunInfo.Id("r1"),
+        RunInfo.Pipeline("enrich-source"),
+        RunInfo.Target("x2020"),
+        RunInfo.Status("done")
       ),
       List(
         s,
-        s.modify(_.seq).setTo(Agents.StepInfo.Seq(3)).modify(_.firstCallTokens).setTo(None).modify(_.turns).setTo(None)
+        s.modify(_.seq).setTo(StepInfo.Seq(3)).modify(_.firstCallTokens).setTo(None).modify(_.turns).setTo(None)
       ),
       Nil
     )
@@ -474,14 +491,13 @@ class AgentsSuite extends munit.FunSuite:
 
   test("a dry run is marked in the run line and the run, and each skipped write is shown with its payload"):
     val r = RunInfo(
-      Agents.RunInfo.Id("r1"),
-      Agents.RunInfo.Pipeline("enrich-source"),
-      Agents.RunInfo.Target("x2020"),
-      Agents.RunInfo.Status("done"),
-      dryRun = Agents.RunInfo.DryRun.DryRun,
-      params = RunParams(modelFor =
-        Some(List(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("local:h"))))
-      )
+      RunInfo.Id("r1"),
+      RunInfo.Pipeline("enrich-source"),
+      RunInfo.Target("x2020"),
+      RunInfo.Status("done"),
+      dryRun = RunInfo.DryRun.DryRun,
+      params =
+        RunParams(modelFor = Some(List(ModelOverride(ModelOverride.Role("extractor"), ModelOverride.Model("local:h")))))
     )
     assert(
       AgentsMarkdown.runLine(r).contains("(dry run, writes nothing, extractor=local:h)"),
@@ -491,15 +507,15 @@ class AgentsSuite extends munit.FunSuite:
       r,
       List(
         StepInfo(
-          Agents.StepInfo.Seq(8),
-          Agents.StepInfo.Name("patch"),
-          Agents.StepInfo.Kind("code"),
-          Agents.StepInfo.Attempt(1),
-          Agents.StepInfo.Status("done"),
+          StepInfo.Seq(8),
+          StepInfo.Name("patch"),
+          StepInfo.Kind("code"),
+          StepInfo.Attempt(1),
+          StepInfo.Status("done"),
           wouldWrite = List(
             WouldWrite(
-              Agents.WouldWrite.What("patch [[x2020]]: summary"),
-              Agents.WouldWrite.Payload("""{"summary":"S"}""")
+              WouldWrite.What("patch [[x2020]]: summary"),
+              WouldWrite.Payload("""{"summary":"S"}""")
             )
           )
         )
@@ -519,7 +535,7 @@ class AgentsSuite extends munit.FunSuite:
     assert(
       !AgentsMarkdown
         .run(
-          d.modify(_.run).setTo(r.modify(_.dryRun).setTo(Agents.RunInfo.DryRun.Apply)).modify(_.steps).setTo(Nil),
+          d.modify(_.run).setTo(r.modify(_.dryRun).setTo(RunInfo.DryRun.Apply)).modify(_.steps).setTo(Nil),
           withMessages = false
         )
         .contains("dry run")

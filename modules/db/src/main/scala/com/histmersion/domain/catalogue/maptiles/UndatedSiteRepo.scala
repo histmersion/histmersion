@@ -46,9 +46,8 @@ private[maptiles] object UndatedSiteRepo:
   /** The undated sites in the box `envelope` (of type `siteType` when one is asked for), but those of `except`, as a
     * tile's candidates ([[TileRepo.cellsSql]]: no dates, each marked `ub`). Pure.
     */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def candidates(
-      siteType: Option[UndatedSiteRepo.CandidatesSiteType],
+      siteType: Option[CandidatesSiteType],
       envelope: Frag,
       except: List[TileRepo.SiteId] = Nil
   ): Frag =

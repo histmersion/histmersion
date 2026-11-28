@@ -4,7 +4,7 @@ package web
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, Plural, Years}
+import com.histmersion.api.{Api, Plural}
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -133,8 +133,8 @@ object TreeTab:
       countLine(
         data,
         RowCount(roots.size),
-        Years.Astronomical(UiState.from.now().getOrElse(data.from.value)),
-        Years.Astronomical(UiState.to.now().getOrElse(data.to.value))
+        Year.Astronomical(UiState.from.now().getOrElse(data.from.value)),
+        Year.Astronomical(UiState.to.now().getOrElse(data.to.value))
       )
     )
 
@@ -151,7 +151,7 @@ object TreeTab:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def countLine(data: TimeHistogram, roots: RowCount, from: Years.Astronomical, to: Years.Astronomical): UiLabels.Text =
+  def countLine(data: TimeHistogram, roots: RowCount, from: Year.Astronomical, to: Year.Astronomical): UiLabels.Text =
     val groups =
       if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("region"))
       else Plural.count(Plural.CountN(roots.value.toLong), Plural.CountSingular("period"))
@@ -337,6 +337,6 @@ object TreeTab:
       b.placeId.foreach { pid =>
         PlacesInput.preview(
           PlacesInput.PlaceId(pid.value),
-          lastData.flatMap(_.asOf).map(y => Years.Astronomical(y.value))
+          lastData.flatMap(_.asOf).map(y => Year.Astronomical(y.value))
         )
       }

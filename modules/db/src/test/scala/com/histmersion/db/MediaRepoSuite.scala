@@ -47,7 +47,6 @@ import com.histmersion.api.media.ImageSize
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.media.FigureLicenceFill
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.media.assets.MediaThumbRow
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -881,7 +880,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
       AssetFixtures.LinkRank(0)
     )
     def uids(id: domain.catalogue.Place.Id) =
-      AssetFixtures.placeThumbs(ds, id, EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)).map(_.uid)
+      AssetFixtures.placeThumbs(ds, id, NearFinding.Km(cfg.media.sameSiteKm.value)).map(_.uid)
     assertEquals(
       uids(domain.catalogue.Place.Id("zqmd_eq_a")).map(_.value),
       List(photo.value),
@@ -904,7 +903,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
     )
     assertEquals(
       AssetFixtures
-        .placeThumbs(ds, domain.catalogue.Place.Id("zqmd_eq_b"), EventMatcher.NearFinding.Km(0))
+        .placeThumbs(ds, domain.catalogue.Place.Id("zqmd_eq_b"), NearFinding.Km(0))
         .map(_.uid.value),
       List(plan.value),
       "no same-site radius: the alias only"
@@ -936,7 +935,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         .placeThumbs(
           ds,
           domain.catalogue.Place.Id("zqmd_eq_wd"),
-          EventMatcher.NearFinding.Km(cfg.media.sameSiteKm.value)
+          NearFinding.Km(cfg.media.sameSiteKm.value)
         )
         .map(_.uid.value)
         .headOption,

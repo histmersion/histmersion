@@ -1,12 +1,14 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.domain.PriorRun
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.domain.library.Citekey
-import com.histmersion.domain.AutoEnrich
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.util.database.TestCreators.given
 
@@ -17,7 +19,7 @@ extension (a: AgentsControllers)
   def attach(u: AgentUpstream): Unit = EngineContributions.work(a).attach(u)
   def acquireRecheck: AcquireRecheckService = EngineContributions.work(a).acquireRecheck
   def oaBacklog: OaBacklog = EngineContributions.work(a).oaBacklog
-  def autopilotPage(st: Autopilot.EngineStatus): String =
+  def autopilotPage(st: EngineStatus): String =
     EngineContributions.autopilot(a).page(st).markdown
-  def autoEnrich(citekey: Citekey): Option[AutoEnrich.Note] =
+  def autoEnrich(citekey: Citekey): Option[PriorRun.Note] =
     EngineContributions.enrich(a).autoEnrich(citekey)

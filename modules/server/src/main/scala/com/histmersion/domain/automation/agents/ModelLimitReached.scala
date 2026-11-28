@@ -1,9 +1,10 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 
 import scala.concurrent.duration.*

@@ -1,5 +1,7 @@
 package com.histmersion
 package api.catalogue
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
@@ -65,38 +67,25 @@ object Gazetteer:
   type FromTsvRowDataset = DatasetName
   val FromTsvRowDataset: DatasetName.type = DatasetName
 
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def sourceKey(kind: Kind, dataset: Option[DatasetName] = None): SourceInfo.Key = kind match
-    case Kind.Lpf => SourceInfo.Key(s"lpf:${dataset.getOrElse("")}")
-    case k        => SourceInfo.Key(k.wire.value)
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def datasetSlug(fileName: SourceInfo.File): DatasetName =
-    val base = fileName.value
-      .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
-      .replaceAll("(?i)\\.lpf$", "")
-    DatasetName((slug(base)).take(48))
-
-  private def slug(s: String): String =
+  private[catalogue] def slug(s: String): String =
     ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def rank(m: Place.Match): Rank = m.importSource.flatMap(s => Kind.ofKey(SourceInfo.Key(s.value))) match
-    case None                => if m.importSource.isEmpty then Rank(0) else Rank(5)
-    case Some(Kind.Lpf)      => Rank(1)
-    case Some(Kind.Wikidata) => Rank(2)
-    case Some(Kind.Tgn)      => Rank(3)
-    case Some(Kind.Geonames) => Rank(4)
+  def rank(m: Place.Match): Rank =
+    m.importSource.flatMap(s => api.catalogue.gazetteer.Kind.ofKey(SourceInfo.Key(s.value))) match
+      case None                                        => if m.importSource.isEmpty then Rank(0) else Rank(5)
+      case Some(api.catalogue.gazetteer.Kind.Lpf)      => Rank(1)
+      case Some(api.catalogue.gazetteer.Kind.Wikidata) => Rank(2)
+      case Some(api.catalogue.gazetteer.Kind.Tgn)      => Rank(3)
+      case Some(api.catalogue.gazetteer.Kind.Geonames) => Rank(4)
 
   val ImportedSources: List[ImportedSources] =
     List(
-      Kind.Wikidata,
-      Kind.Geonames,
-      Kind.Tgn
-    ).map(k => sourceKey(k))
+      api.catalogue.gazetteer.Kind.Wikidata,
+      api.catalogue.gazetteer.Kind.Geonames,
+      api.catalogue.gazetteer.Kind.Tgn
+    ).map(k => k.sourceKey())
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[Place.Id] =
@@ -113,21 +102,11 @@ object Gazetteer:
 
   val DefaultOpenStartWindowYears: DefaultOpenStartWindowYears = OpenStartWindowYears(300)
 
-  /** GeoNames, Wikidata and TGN leave most items undated, and their silence means unknown: an item with no inception
-    * was not there since forever.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def unknownWhenSilent(sourceKey: SourceInfo.Key): Boolean =
-    Kind
-      .ofKey(sourceKey)
-      .exists(k => k != Kind.Lpf)
-
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def validity(sourceKey: Gazetteer.ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity =
+  def validity(sourceKey: ValiditySourceKey, span: Span, windowYears: ValidityWindowYears): Validity =
     span match
-      case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == (true)) =>
+      case Span(None, Some(end)) if ((SourceInfo.unknownWhenSilent(sourceKey)) == (true)) =>
         Validity(
           Some(Year((end).value - math.max(0, (windowYears).value))),
           Some(end),
@@ -159,11 +138,6 @@ object Gazetteer:
         .flatMap(_("type"))
         .flatMap(_.asString)
         .exists(k => k == "Point" || k == "MultiPoint")
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def dropsPointArea(source: SourceInfo.Key, r: GazRecord, kinds: Set[PointAreaKinds]): Boolean =
-    PointAreaSources.contains(source) && kinds.map(_.value).contains(r.kind.value) && pointOnly(r.geometry)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
@@ -425,214 +399,3 @@ object Gazetteer:
 
   /** LP-TSV has no quoting: a tab separates, nothing escapes. */
   def tsvCells(line: String): List[String] = ((line).split("\t", -1).toList).map(refactorValue7 => (refactorValue7))
-
-  final case class Extract(
-      name: Extract.Name,
-      file: Extract.File,
-      sha256: Extract.Sha256,
-      bytes: Extract.Bytes,
-      features: Extract.Features,
-      version: Extract.Version,
-      title: Extract.Title,
-      licence: Extract.Licence,
-      attribution: Option[Extract.Attribution] = None,
-      url: Option[Extract.Url] = None,
-      built: Option[Extract.Built] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object Extract:
-    type Name = Name.T
-    object Name extends Newtype[String, Pure]
-    export SourceInfo.File
-    type Sha256 = Sha256.T
-    object Sha256 extends Newtype[String, Pure]
-    type Bytes = Bytes.T
-    object Bytes extends Newtype[Long, Pure]
-    type Features = Features.T
-    object Features extends Newtype[Long, Pure]
-    type Version = Version.T
-    object Version extends Newtype[String, Pure]
-    export SourceInfo.{Licence, Title}
-    type Attribution = Attribution.T
-    object Attribution extends Newtype[String, Pure]
-    type Url = Url.T
-    object Url extends Newtype[String, Pure]
-    type Built = Built.T
-    object Built extends Newtype[String, Pure]
-
-  /** `Tgn`: the Getty Thesaurus of Geographic Names. */
-  enum Kind derives CanEqual:
-    case Geonames, Wikidata, Lpf, Tgn
-
-    def wire: Kind.Wire = Kind.Wire(toString.toLowerCase(java.util.Locale.ROOT))
-
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  object Kind:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    def parse(s: Wire): Option[Kind] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
-
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    def ofKey(key: SourceInfo.Key): Option[Kind] = parse(Wire((key).value.takeWhile(_ != ':')))
-
-    given WireEnumValues[Kind]:
-      def all: Array[Kind] = values
-      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-      def wire(e: Kind): WireEnumValues.Wire = WireEnumValues.Wire((e.wire).value)
-      @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-      def fromWire(s: WireEnumValues.Wire): Option[Kind] = parse(Wire((s).value))
-    given JsonValueCodec[Kind] = WireEnum.codec
-    given Schema[Kind] = WireEnum.schema
-
-  final case class LoadCounts(
-      source: LoadCounts.Source,
-      version: LoadCounts.Version,
-      records: LoadCounts.Records = LoadCounts.Records((0).toLong),
-      created: LoadCounts.Created = LoadCounts.Created((0).toLong),
-      joined: LoadCounts.Joined = LoadCounts.Joined((0).toLong),
-      placesChanged: LoadCounts.PlacesChanged = LoadCounts.PlacesChanged((0).toLong),
-      namesAdded: LoadCounts.NamesAdded = LoadCounts.NamesAdded((0).toLong),
-      namesRemoved: LoadCounts.NamesRemoved = LoadCounts.NamesRemoved((0).toLong),
-      namesChanged: LoadCounts.NamesChanged = LoadCounts.NamesChanged((0).toLong),
-      linksAdded: LoadCounts.LinksAdded = LoadCounts.LinksAdded((0).toLong),
-      linksRemoved: LoadCounts.LinksRemoved = LoadCounts.LinksRemoved((0).toLong),
-      placesRemoved: LoadCounts.PlacesRemoved = LoadCounts.PlacesRemoved((0).toLong),
-      skipped: List[LoadCounts.Skipped] = Nil,
-      descriptionsAdded: LoadCounts.DescriptionsAdded = LoadCounts.DescriptionsAdded((0).toLong),
-      descriptionsRemoved: LoadCounts.DescriptionsRemoved = LoadCounts.DescriptionsRemoved((0).toLong),
-      descriptionsChanged: LoadCounts.DescriptionsChanged = LoadCounts.DescriptionsChanged((0).toLong),
-      linksChanged: LoadCounts.LinksChanged = LoadCounts.LinksChanged((0).toLong),
-      pointAreasSkipped: LoadCounts.PointAreasSkipped = LoadCounts.PointAreasSkipped((0).toLong)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema:
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    def +(o: LoadCounts): LoadCounts =
-      copy(
-        records = LoadCounts.Records(records.value + o.records.value),
-        created = LoadCounts.Created(created.value + o.created.value),
-        joined = LoadCounts.Joined(joined.value + o.joined.value),
-        placesChanged = LoadCounts.PlacesChanged(placesChanged.value + o.placesChanged.value),
-        namesAdded = LoadCounts.NamesAdded(namesAdded.value + o.namesAdded.value),
-        namesRemoved = LoadCounts.NamesRemoved(namesRemoved.value + o.namesRemoved.value),
-        namesChanged = LoadCounts.NamesChanged(namesChanged.value + o.namesChanged.value),
-        linksAdded = LoadCounts.LinksAdded(linksAdded.value + o.linksAdded.value),
-        linksRemoved = LoadCounts.LinksRemoved(linksRemoved.value + o.linksRemoved.value),
-        placesRemoved = LoadCounts.PlacesRemoved(placesRemoved.value + o.placesRemoved.value),
-        skipped = (skipped ++ o.skipped).take(20),
-        descriptionsAdded = LoadCounts.DescriptionsAdded(descriptionsAdded.value + o.descriptionsAdded.value),
-        descriptionsRemoved = LoadCounts.DescriptionsRemoved(descriptionsRemoved.value + o.descriptionsRemoved.value),
-        descriptionsChanged = LoadCounts.DescriptionsChanged(descriptionsChanged.value + o.descriptionsChanged.value),
-        linksChanged = LoadCounts.LinksChanged(linksChanged.value + o.linksChanged.value),
-        pointAreasSkipped = LoadCounts.PointAreasSkipped(pointAreasSkipped.value + o.pointAreasSkipped.value)
-      )
-
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    def unchanged: Boolean =
-      created.value == 0L && placesChanged.value == 0L && namesAdded.value == 0L && namesRemoved.value == 0L && namesChanged.value == 0L &&
-        linksAdded.value == 0L && linksRemoved.value == 0L && linksChanged.value == 0L && placesRemoved.value == 0L &&
-        descriptionsAdded.value == 0L && descriptionsRemoved.value == 0L && descriptionsChanged.value == 0L
-
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    def describe: String =
-      s"$source $version: ${Plural.count(Plural.CountN(records.value), Plural.CountSingular("record"))}, $created new place(s), $joined joined an existing place, " +
-        s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
-        (if linksChanged.value > 0 then s" ~$linksChanged" else "") +
-        (if descriptionsAdded.value + descriptionsRemoved.value + descriptionsChanged.value > 0 then
-           s", descriptions +$descriptionsAdded −$descriptionsRemoved ~$descriptionsChanged"
-         else "") +
-        (if placesRemoved.value > 0 then s", $placesRemoved place(s) removed" else "") +
-        (if pointAreasSkipped.value > 0 then s", $pointAreasSkipped point-only region(s)/polity(ies) not kept as places"
-         else "") +
-        (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
-
-  object LoadCounts:
-
-    export SourceInfo.{ImportedVersion as Version, Key as Source}
-    type Records = Records.T
-    object Records extends Newtype[Long, Pure]
-    type Created = Created.T
-    object Created extends Newtype[Long, Pure]
-    type Joined = Joined.T
-    object Joined extends Newtype[Long, Pure]
-    type PlacesChanged = PlacesChanged.T
-    object PlacesChanged extends Newtype[Long, Pure]
-    type NamesAdded = NamesAdded.T
-    object NamesAdded extends Newtype[Long, Pure]
-    type NamesRemoved = NamesRemoved.T
-    object NamesRemoved extends Newtype[Long, Pure]
-    type NamesChanged = NamesChanged.T
-    object NamesChanged extends Newtype[Long, Pure]
-    type LinksAdded = LinksAdded.T
-    object LinksAdded extends Newtype[Long, Pure]
-    type LinksRemoved = LinksRemoved.T
-    object LinksRemoved extends Newtype[Long, Pure]
-    type PlacesRemoved = PlacesRemoved.T
-    object PlacesRemoved extends Newtype[Long, Pure]
-    type Skipped = Skipped.T
-    object Skipped extends Newtype[String, Pure]
-    type DescriptionsAdded = DescriptionsAdded.T
-    object DescriptionsAdded extends Newtype[Long, Pure]
-    type DescriptionsRemoved = DescriptionsRemoved.T
-    object DescriptionsRemoved extends Newtype[Long, Pure]
-    type DescriptionsChanged = DescriptionsChanged.T
-    object DescriptionsChanged extends Newtype[Long, Pure]
-    type LinksChanged = LinksChanged.T
-    object LinksChanged extends Newtype[Long, Pure]
-    type PointAreasSkipped = PointAreasSkipped.T
-    object PointAreasSkipped extends Newtype[Long, Pure]
-
-  final case class Manifest(extracts: List[Extract]) derives JsonCodec, KindlingsSchema, api.json.Schema
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class SourceInfo(
-      key: SourceInfo.Key,
-      kind: Kind,
-      title: SourceInfo.Title,
-      file: Option[SourceInfo.File],
-      present: SourceInfo.Present,
-      pinnedVersion: Option[SourceInfo.PinnedVersion],
-      importedVersion: Option[SourceInfo.ImportedVersion] = None,
-      importedAt: Option[SourceInfo.ImportedAt] = None,
-      places: Option[SourceInfo.Places] = None,
-      names: Option[SourceInfo.Names] = None,
-      links: Option[SourceInfo.Links] = None,
-      licence: Option[SourceInfo.Licence] = None,
-      citation: Option[SourceInfo.Citation] = None,
-      periodStart: Option[Year] = None,
-      periodEnd: Option[Year] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object SourceInfo:
-    type Key = Key.T
-    object Key extends Newtype[String, Pure]
-    type Title = Title.T
-    object Title extends Newtype[String, Pure]
-    type File = File.T
-    object File extends Newtype[String, Pure]
-    enum Present derives CanEqual:
-      case Present, Absent
-    object Present extends TwoStates[Present]:
-      extension (present: Present) def present: Boolean = present == Present
-    type PinnedVersion = PinnedVersion.T
-    object PinnedVersion extends Newtype[String, Pure]
-    type ImportedVersion = ImportedVersion.T
-    object ImportedVersion extends Newtype[String, Pure]
-    type ImportedAt = ImportedAt.T
-    object ImportedAt extends Newtype[String, Pure]
-    type Places = Places.T
-    object Places extends Newtype[Int, Pure]
-    type Names = Names.T
-    object Names extends Newtype[Int, Pure]
-    type Links = Links.T
-    object Links extends Newtype[Int, Pure]
-    type Licence = Licence.T
-    object Licence extends Newtype[String, Pure]
-    type Citation = Citation.T
-    object Citation extends Newtype[String, Pure]

@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.api.automation.activity.Entry
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
 import hearth.kindlings.optics.syntax.*
@@ -60,7 +62,7 @@ final class AttestationsControllers(
   )
   private def refId(targetType: Attestation.TargetType, id: Attestation.TargetId): Attestation.TargetId =
     AliasKinds
-      .ofTarget(Activity.Entry.TargetKind(targetType.value))
+      .ofTarget(Entry.TargetKind(targetType.value))
       .fold(id)(k => Attestation.TargetId(current(k, AttestationsControllers.Alias(id.value)).value))
 
   @tolerated(

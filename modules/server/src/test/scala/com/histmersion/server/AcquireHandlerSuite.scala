@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.library.acquire.RetractionRow
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -354,7 +357,7 @@ class AcquireHandlerSuite extends DbSuite:
       .assessments(ds)
       .replaceRetractionWatch(
         List(
-          Acquire.RetractionRow(
+          RetractionRow(
             Doi("10.1177/zzretracted"),
             Some(RetractionNotice.Account("+Duplication of Image")),
             Some(RetractionNotice.Date("12/15/2021 0:00")),
@@ -448,13 +451,12 @@ class AcquireHandlerSuite extends DbSuite:
       .assessments(ds)
       .replaceRetractionWatch(
         List(
-          Acquire
-            .RetractionRow(
-              Doi("10.1177/zzretracted2"),
-              Some(RetractionNotice.Account("+Duplication")),
-              Some(RetractionNotice.Date("12/15/2021 0:00")),
-              Some(RetractionNotice.Nature("Retraction"))
-            )
+          RetractionRow(
+            Doi("10.1177/zzretracted2"),
+            Some(RetractionNotice.Account("+Duplication")),
+            Some(RetractionNotice.Date("12/15/2021 0:00")),
+            Some(RetractionNotice.Nature("Retraction"))
+          )
         )
       )
     val r = h
@@ -601,7 +603,7 @@ class AcquireHandlerSuite extends DbSuite:
     import com.augustnagro.magnum.*
     def items = QueueRows
       .acquireNaming(ds, domain.library.Doi("10.1038/zztest001"))
-      .filter(_.status == Queue.QueueItem.Status("open"))
+      .filter(_.status == QueueItem.Status("open"))
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
@@ -651,7 +653,7 @@ class AcquireHandlerSuite extends DbSuite:
     import com.histmersion.plugin.{Access, Fetch, SourceFetcher, WorkKey}
     def items = QueueRows
       .acquireNaming(ds, domain.library.Doi("10.1038/zztest001"))
-      .filter(_.status == Queue.QueueItem.Status("open"))
+      .filter(_.status == QueueItem.Status("open"))
     def dropItems(): Unit =
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()

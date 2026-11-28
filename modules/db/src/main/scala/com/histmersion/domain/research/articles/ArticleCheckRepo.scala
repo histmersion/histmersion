@@ -1,6 +1,13 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+import com.histmersion.api.research.critiquepairing.Mention
+import com.histmersion.api.research.critiquepairing.Work
+import com.histmersion.api.research.critiquepairing.MissedPair
+
 import com.histmersion.api.checks.Lint.*
 
 import com.histmersion.util.data.checks.{CheckInput, CheckRun}
@@ -123,7 +130,7 @@ private[articles] object ArticleCheckRepo:
           .toList
           .flatMap(pairs)
           .map((ck, detail) => LintItem(com.histmersion.api.library.Citekey(ck), LintItem.Detail(detail)))
-    Lint.report(r, items, Lint.ItemLimit(maxItems.value))
+    r.report(items, Lint.ItemLimit(maxItems.value))
 
   // ── article-critique-pairing ─────────────────────────────────────────────────────────────────
 
@@ -132,9 +139,9 @@ private[articles] object ArticleCheckRepo:
     */
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class PairingCorpus(
-      resolve: CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
+      resolve: Mention.Key => Option[com.histmersion.api.library.Citekey],
       edges: List[Coverage.Edge],
-      work: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work]
+      work: com.histmersion.api.library.Citekey => Option[Work]
   )
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
@@ -144,7 +151,7 @@ private[articles] object ArticleCheckRepo:
       .run()
       .map { (ck, authors, year) =>
         val key = com.histmersion.api.library.Citekey(ck)
-        key -> CritiquePairing.Work(
+        key -> Work(
           key,
           CritiquePairing.names(key, Option(authors).getOrElse(Nil).map(AuthorName(_))),
           year.map(y => Year(y.toLong))
@@ -168,7 +175,7 @@ private[articles] object ArticleCheckRepo:
       slug: PairingRepair.Slug,
       updatedAt: Option[PairingRepair.UpdatedAt],
       body: Article.Body,
-      applied: List[CritiquePairing.Hit]
+      applied: List[MissedPair]
   )
 
   object PairingRepair:

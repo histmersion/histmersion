@@ -1,7 +1,7 @@
 package com.histmersion
 package api.catalogue
 
-import com.histmersion.api.{TimeSpan, YearFmt, Years}
+import com.histmersion.api.TimeSpan
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
@@ -32,7 +32,7 @@ object EventPrecision:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def uncertainty(ts: TimeSpan, plusMinus: Option[EventSummary.PlusMinus]): Option[Uncertainty] =
     ts.outer.map { (a, b) =>
-      def a2(y: Year) = Years.toAstronomical(y)
+      def a2(y: Year) = y.toAstronomical
       def width(x: Option[Year], y: Option[Year]): Long =
         (for p <- x; q <- y yield (a2(q)).value - (a2(p)).value).getOrElse(0L).max(0)
       val derived =
@@ -77,7 +77,7 @@ object EventPrecision:
     central match
       case Some(c) =>
         Some(
-          YearFmt(Year(c.value)) + plusMinus.filter(p => (p).value > 0).fold("")(u => s" ± $u") + m.fold("")(x =>
+          Year.show(Year(c.value)) + plusMinus.filter(p => (p).value > 0).fold("")(u => s" ± $u") + m.fold("")(x =>
             s" ($x)"
           )
         )

@@ -90,17 +90,17 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
           val found = for
             txt <- body
             quote <- t.quote.filter(_.value.nonEmpty)
-            a <- TextAnchor.reanchor(
+            a <- Anchor.reanchor(
               txt,
-              TextAnchor.Quote(quote.value),
-              t.prefix.map(p => TextAnchor.Prefix(p.value)),
-              t.suffix.map(s => TextAnchor.Suffix(s.value)),
-              t.charStart.map(c => TextAnchor.ReanchorHint(c.value))
+              Anchor.Quote(quote.value),
+              t.prefix.map(p => Anchor.Prefix(p.value)),
+              t.suffix.map(s => Anchor.Suffix(s.value)),
+              t.charStart.map(c => Anchor.ReanchorHint(c.value))
             )
           yield a
           found match
             case Some(a) =>
-              Some(AnchorTry(t, foreign, Some(a), body.flatMap(TextAnchor.chunkOf(_, a, in.chunkChars)), None))
+              Some(AnchorTry(t, foreign, Some(a), body.flatMap(Anchor.chunkOf(_, a, in.chunkChars)), None))
             case None =>
               val tag = MergePlanner.IssueExtra(alt.fold("")(k => MergeDecision.Kind.wireOf(k).value))
               val id = MergePlanner.issueId(

@@ -1,5 +1,10 @@
 package com.histmersion
 package domain.automation.approvals
+
+import com.histmersion.api.automation.managers.HintProposal
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.Decision
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.{Problem, Problems}
@@ -39,7 +44,7 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[Problems, String] = _ =>
+    applyHint: HintProposal => Either[Problems, String] = _ =>
       Left(Problem.Config.Unavailable(Problem.Config.Capability.Agents))
 ):
 
@@ -55,7 +60,7 @@ final class Approvals(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def page(
-      f: ListFilters.ApprovalFilter,
+      f: ApprovalFilter,
       limit: ApprovalQuery.Limit,
       before: Option[ApprovalQuery.Cursor],
       upTo: Option[ApprovalQuery.UpTo]

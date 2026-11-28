@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.catalogue.SiteType
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -14,7 +16,6 @@ import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{EventsApi, Lpf}
 import com.histmersion.api.catalogue.{Latitude, Longitude, Place, Year}
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.util.console.Console
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.lint.{atBoundary, BoundaryKind}
@@ -233,10 +234,10 @@ object PlacesCmd:
           }
         case Command.SiteTypes(writes, limit, refresh, following) =>
           c.call(EventsApi.refineSiteTypes)(
-            SiteTypes.Request(
-              (if writes.dry then SiteTypes.Request.DryRun.DryRun else SiteTypes.Request.DryRun.Apply),
-              limit.map(SiteTypes.Request.Limit(_)),
-              (if refresh then SiteTypes.Request.Refresh.Refresh else SiteTypes.Request.Refresh.Reuse)
+            SiteType.Request(
+              (if writes.dry then SiteType.Request.DryRun.DryRun else SiteType.Request.DryRun.Apply),
+              limit.map(SiteType.Request.Limit(_)),
+              (if refresh then SiteType.Request.Refresh.Refresh else SiteType.Request.Refresh.Reuse)
             )
           ).flatMap(EventsCmd.follow(c, _, following))
         case Command.NameAdd(id, name, lang) =>

@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.personal
 
+import com.histmersion.api.automation.activity.Show
+
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.{Paging, Write}
@@ -272,7 +274,7 @@ final class PersonalControllers(
   def readMarks(
       caller: Caller,
       kind: Option[MarkKind.Wire],
-      show: Option[Activity.Show.Wire],
+      show: Option[Show.Wire],
       max: Option[Paging.Limit]
   ): Either[Api.Error, List[WireReadMark]] =
     for

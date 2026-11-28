@@ -1,5 +1,9 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.agentscheduler.StrategyLine
+import com.histmersion.api.automation.agentscheduler.PoolUse
+import com.histmersion.api.automation.planquota.WindowStatus
 import com.histmersion.api.jobs.JobInfo
 
 import com.histmersion.api.automation.Pipeline
@@ -152,29 +156,29 @@ object Wording:
   )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  val strategies: Map[AgentScheduler.StrategyLine.Name, String] = Map(
+  val strategies: Map[StrategyLine.Name, String] = Map(
     {
       val refactorTuple10 = "type-balanced" -> "Balance the kinds of work";
-      (AgentScheduler.StrategyLine.Name(refactorTuple10._1), (refactorTuple10._2))
+      (StrategyLine.Name(refactorTuple10._1), (refactorTuple10._2))
     }, {
       val refactorTuple11 = "goal-first" -> "One goal at a time";
-      (AgentScheduler.StrategyLine.Name(refactorTuple11._1), (refactorTuple11._2))
+      (StrategyLine.Name(refactorTuple11._1), (refactorTuple11._2))
     }, {
       val refactorTuple12 = "default" -> "The configured strategy";
-      (AgentScheduler.StrategyLine.Name(refactorTuple12._1), (refactorTuple12._2))
+      (StrategyLine.Name(refactorTuple12._1), (refactorTuple12._2))
     }
   )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def pool(id: AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
+  def pool(id: PoolUse.Pool): String = (id).value.trim.toLowerCase match
     case "claude-plan"  => ("Claude plan")
     case "chatgpt-plan" => ("ChatGPT plan")
     case other => ((humanize(Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def allowanceWindow(kind: PlanQuota.WindowStatus.Kind): String =
+  def allowanceWindow(kind: WindowStatus.Kind): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
     def span(minutes: AllowanceWindow.Minutes): String = (minutes.value: Long) match
       case 10080              => ("This week's limit")

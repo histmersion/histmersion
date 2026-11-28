@@ -18,7 +18,6 @@ import com.histmersion.lint.{tolerated, LintRule}
 object StoredCodecs:
   final class Codec[A](val write: (A, Boolean) => String, val decode: String => Either[String, A])
   object Codec:
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     given [A: JsonValueCodec] => Codec[A] = Codec(
       (a, drop) => s"${Jsonb.write(a, if drop then Jsonb.DropNulls(true) else Jsonb.DropNulls(false))}",
       t => Jsonb.decode[A](Jsonb.JsonText(s"$t")).left.map(e => s"$e")

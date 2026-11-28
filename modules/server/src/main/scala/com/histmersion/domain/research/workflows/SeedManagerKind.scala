@@ -1,5 +1,19 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.automation.managers.StepFacts
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.automation.autopilot.Ruling
+import com.histmersion.domain.automation.autopilot.PlannedFacts
+import com.histmersion.domain.automation.autopilot.DraftFacts
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
@@ -19,12 +33,7 @@ import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.ManagerPolicy
-import com.histmersion.domain.AutopilotPolicy.DraftFacts
-import com.histmersion.domain.AutopilotPolicy.PlannedFacts
-import com.histmersion.domain.AutopilotPolicy.Verdict
 import com.histmersion.api.automation.Goal.Plans.DraftMode
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.{AgentsConfig, AgentSeedConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
 import com.histmersion.domain.SeedPlanDefaults
@@ -223,14 +232,14 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       run: Option[RunInfo],
       mgr: Option[ManagerInfo],
       now: Instant
-  ): Option[Verdict] =
+  ): Option[Ruling] =
     val day = ManagerPolicy.dayStart(now)
     val caps = c.config.approvals.auto
     Option.when(a.approvalKind.exists(k => k == ApprovalKind.ArticlePlan || k == ApprovalKind.ArticlePublish)) {
       a.approvalKind match
         case Some(ApprovalKind.ArticlePlan) =>
           a.articles match
-            case None       => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
+            case None       => Ruling.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
             case Some(plan) =>
               val goal = a.subject.map(_.value).getOrElse(plan.goal.value)
               val min =
@@ -279,17 +288,16 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 DraftFacts.Cited(d.cited.distinct.size),
                 DraftFacts.SlugFree(!c.slugExists(ApprovalChecks.Slug(d.slug.value)))
               )
-              AutopilotPolicy.articlePublish(
-                facts,
+              facts.articlePublish(
                 AutopilotPolicy.MinSources(caps.publishMinSources.value),
                 AutopilotPolicy.ApprovedToday(
                   c.autoApprovedSince(Approval.Kind.ArticlePublish, day).size
                 ),
                 AutopilotPolicy.Cap(c.publishCap.value)
               )
-            case (None, _) => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable draft"))
-            case (_, None) => Verdict.Leave(AutopilotPolicy.Rationale("the run that drafted it is gone"))
-        case _ => Verdict.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
+            case (None, _) => Ruling.Leave(AutopilotPolicy.Rationale("the approval carries no readable draft"))
+            case (_, None) => Ruling.Leave(AutopilotPolicy.Rationale("the run that drafted it is gone"))
+        case _ => Ruling.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

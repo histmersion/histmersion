@@ -1,9 +1,9 @@
 package com.histmersion
 package api.automation
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalSchedule, GoalView}
-import com.histmersion.api.YearFmt
 import com.histmersion.api.given
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 object GoalsExport:
 
@@ -64,7 +64,7 @@ object GoalsExport:
     val heading = s"${"#" * math.min((depth) + 2, 6)} ${oneLine(g.title.value)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
-      Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, (""))).filter(_.nonEmpty).map(p => s"**Period:** $p"),
+      Option(g.period("")).filter(_.nonEmpty).map(p => s"**Period:** $p"),
       Option.when(g.regions.nonEmpty)(s"**Regions:** ${g.regions.mkString(", ")}"),
       Option.when(g.tags.nonEmpty)(s"**Tags:** ${g.tags.mkString(", ")}"),
       g.parentSlug.filter(_ => depth == (0)).map(p => s"**Parent:** `$p`" + (if known(p) then "" else " (not found)")),

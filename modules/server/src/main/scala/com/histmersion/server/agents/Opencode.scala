@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.Logins
 import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
@@ -10,7 +13,7 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.OpencodeConfig
-import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.api.automation.PlanQuota
 import java.nio.file.Path
 import sttp.ai.core.agent.*
@@ -43,7 +46,7 @@ object Opencode:
     val _ = env.put("OPENCODE_CONFIG_DIR", configDir.toString)
     val _ = env.put("OPENCODE_DISABLE_CLAUDE_CODE", "1")
     val _ = env.put("OPENCODE_DISABLE_AUTOUPDATE", "1")
-    val _ = env.put(AgentGenerator.TokenEnv, token.fold("none")(_.value))
+    val _ = env.put(AgentDefinitions.TokenEnv, token.fold("none")(_.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def schemaNote(schema: Codex.SchemaJson): SchemaNote =
@@ -121,8 +124,8 @@ object Opencode:
     else if PlanQuota
         .poolOf(
           ref,
-          PlanQuota.Logins(opencodeChatgpt = (if cfg.chatgptLogin.value then PlanQuota.Logins.OpencodeChatgpt.Chatgpt
-                                              else PlanQuota.Logins.OpencodeChatgpt.Other))
+          Logins(opencodeChatgpt = (if cfg.chatgptLogin.value then Logins.OpencodeChatgpt.Chatgpt
+                                    else Logins.OpencodeChatgpt.Other))
         )
         .isDefined && !rt.loopback
     then Left(Problem.Refused.Policy(Problem.Refused.Rule.OpencodeChatgptOutsideLocal))

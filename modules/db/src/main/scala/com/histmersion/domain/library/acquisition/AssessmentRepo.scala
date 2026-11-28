@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.api.library.acquire.RetractionRow
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 
@@ -52,7 +54,7 @@ private[acquisition] object AssessmentRepo:
   /** Replace the whole mirror: the CSV is a full export, so a partial refresh would leave a mixture of two vintages.
     * Batched — 60 000 single inserts take minutes.
     */
-  def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): RowCount =
+  def replaceRetractionWatch(rows: List[RetractionRow])(using DbCon): RowCount =
     Unused(sql"DELETE FROM retraction_watch".update.run(), Unused.Why.Idempotent)
     // the export can list a DOI twice (a retraction and a later reinstatement); the last wins
     val unique = rows.map(r => r.doi -> r).toMap.values.toVector

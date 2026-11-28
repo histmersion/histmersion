@@ -1,7 +1,9 @@
 package com.histmersion
 package domain.catalogue.events
 
-import com.histmersion.api.catalogue.{EventGeo, EventLeads}
+import com.histmersion.api.catalogue.EventLead
+
+import com.histmersion.api.catalogue.EventGeo
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.LeadFacts
@@ -41,7 +43,7 @@ final private[events] case class EventGeoRow(
       e.parentId.map(p => EventGeo.ParentId(p.value)),
       None,
       EventGeo.Tier(e.tier.value),
-      EventLeads
+      EventLead
         .size(
           vei.map(v => LeadFacts.Vei(v.value)),
           magnitude.map(m => LeadFacts.Magnitude(m.value))

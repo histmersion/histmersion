@@ -1,5 +1,18 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.agents.RunDetail
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.Report
+import com.histmersion.domain.research.workflows.Verdict
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -16,7 +29,6 @@ import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.domain.CompareRuns
-import com.histmersion.domain.ReviewArticle.{Finding, Merged, Report, Reviewer, Severity, Verdict}
 import com.histmersion.api.automation.{AgentsMarkdown, RunCompare}
 import com.histmersion.api.automation.Agents
 import com.histmersion.lint.{tolerated, LintRule}
@@ -195,8 +207,8 @@ class CompareRunsViewsSuite extends munit.FunSuite:
         (
           "a",
           "done",
-          List(ModelOverride(Agents.ModelOverride.Role("writer"), Agents.ModelOverride.Model("anthropic:y"))),
-          Usage(Agents.Usage.Input(10), Agents.Usage.Output(2)),
+          List(ModelOverride(ModelOverride.Role("writer"), ModelOverride.Model("anthropic:y"))),
+          Usage(Usage.Input(10), Usage.Output(2)),
           6L,
           2
         ),
@@ -243,7 +255,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
                 List(RunCompare.StepSide.Models("anthropic:x")),
                 Nil,
                 Nil,
-                Usage(Agents.Usage.Input(10), Agents.Usage.Output(2)),
+                Usage(Usage.Input(10), Usage.Output(2)),
                 RunCompare.StepSide.CostUsd(0),
                 RunCompare.StepSide.Seconds(3),
                 RunCompare.StepSide.Attempts(1),

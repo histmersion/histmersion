@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ModelRef
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.Problem
@@ -7,7 +9,6 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.agents.VerbatimFailure
-import com.histmersion.api.automation.Agents.ModelRef
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginAi
 import sttp.ai.core.agent.*

@@ -3,7 +3,7 @@ package server
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{Html, Plural, Wording, YearFmt}
+import com.histmersion.api.{Html, Plural, Wording}
 import com.histmersion.api.Html.{html, Atoms}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatSeverity}
 import com.histmersion.api.library.Label
 import com.histmersion.api.media.AssetLinks
-import com.histmersion.api.research.{ArticleMarkdown, Articles, Backlink, CitedSource, ReviewBadge, ReviewGoal}
+import com.histmersion.api.research.{ArticleMarkdown, Backlink, CitedSource, ReviewBadge, ReviewGoal}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Source
@@ -146,7 +146,7 @@ object Pages:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def source(p: SourcePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Html =
     val r = p.ref
-    val period = YearFmt.period(
+    val period = Year.period(
       p.periodStart.map(y => Year(y.value)),
       p.periodEnd.map(y => Year(y.value))
     )
@@ -239,7 +239,7 @@ object Pages:
   def article(p: ArticlePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Html =
     val a = p.article
     val body0 = a.body.value.trim
-    val heading = Articles.heading(Article.Body(body0))
+    val heading = Article.heading(Article.Body(body0))
     // the `# Title` line is rendered here, so the meta line can sit right under it
     val body1 = if heading.isEmpty then body0 else body0.linesIterator.dropWhile(_.trim.isEmpty).drop(1).mkString("\n")
     // item 23: a trailing hand-written "## Sources" list duplicates the generated footer
@@ -259,7 +259,7 @@ object Pages:
     val meta = List(
       Html.text(display(a.kind.value.trim)),
       chips(ChipField.Place, a.regions.map(_.value)),
-      Html.text(YearFmt.period(a.periodStart, a.periodEnd)),
+      Html.text(Year.period(a.periodStart, a.periodEnd)),
       chips(ChipField.Tag, a.tags.map(_.value))
     ).filter(_.nonEmpty)
     Html.concat(

@@ -1,6 +1,11 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -12,7 +17,6 @@ import com.histmersion.util.database.given
 import com.histmersion.api.Span
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.Geocode.KindHint
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
@@ -60,13 +64,13 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
 
   private val Seed = "pleiades_999000001"
 
-  private val LpfWd = Gazetteer.SourceInfo.Key("lpf:zzgazwd")
-  private val LpfGn = Gazetteer.SourceInfo.Key("lpf:zzgazgn")
-  private val Lpf = Gazetteer.SourceInfo.Key("lpf:zzgaz")
-  private val Wikidata = Gazetteer.SourceInfo.Key("wikidata")
-  private val Geonames = Gazetteer.SourceInfo.Key("geonames")
-  private val V1 = Gazetteer.LoadCounts.Version("v1")
-  private val V2 = Gazetteer.LoadCounts.Version("v2")
+  private val LpfWd = SourceInfo.Key("lpf:zzgazwd")
+  private val LpfGn = SourceInfo.Key("lpf:zzgazgn")
+  private val Lpf = SourceInfo.Key("lpf:zzgaz")
+  private val Wikidata = SourceInfo.Key("wikidata")
+  private val Geonames = SourceInfo.Key("geonames")
+  private val V1 = LoadCounts.Version("v1")
+  private val V2 = LoadCounts.Version("v2")
 
   // only this suite's rows: GazetteerLoadSuite (the server module, whose tests may run at the same
   // time) imports `lpf:zzgaz_hittite`, `lpf:zzgaz_kultepe` and `geonames` rows with 99900… ids too
@@ -123,14 +127,14 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def run(
-      source: Gazetteer.SourceInfo.Key,
-      version: Gazetteer.LoadCounts.Version,
+      source: SourceInfo.Key,
+      version: LoadCounts.Version,
       rs: List[GazRecord],
       apply: Boolean = true,
       batch: Int = 100,
       kinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet,
       sweep: Boolean = true
-  ): Gazetteer.LoadCounts =
+  ): LoadCounts =
     connect(ds):
       val s = GazetteerImport.session(source, version, apply, pointAreaKinds = kinds, clock = TestCreators.clock)
       val pruned = s.prune(batch)
@@ -138,7 +142,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
         rs.grouped(batch)
           .map(s.batch)
           .foldLeft(
-            Gazetteer.LoadCounts(source, version, placesRemoved = Gazetteer.LoadCounts.PlacesRemoved(pruned.value))
+            LoadCounts(source, version, placesRemoved = LoadCounts.PlacesRemoved(pruned.value))
           )(_ + _)
       if sweep then c + s.sweep() else c
 
@@ -422,7 +426,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
     def at(p: Option[Period]) =
       connect(ds)(
         PlaceFixtures.resolve(
-          Geocode.Attempt.Name("Zzgazmikoyan"),
+          Attempt.Name("Zzgazmikoyan"),
           KindHint.Unknown,
           p,
           GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)

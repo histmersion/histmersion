@@ -1,5 +1,16 @@
 package com.histmersion
 package db
+
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.WouldWrite
+import com.histmersion.api.automation.managers.HintProposal
+import com.histmersion.domain.Proposal
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.api.automation.modelchains.LimitSpec
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -14,10 +25,7 @@ import org.scalacheck.rng.Seed
 import io.github.iltotore.iron.RefinedType
 import hearth.kindlings.scalacheckderivation.extensions.*
 
-import com.histmersion.api.automation.Agents.{RunParams, WouldWrite}
 import com.histmersion.api.automation.Goal
-import com.histmersion.api.automation.Managers.{HintEffect, HintProposal, Hold, ItemState, ManagerConfig}
-import com.histmersion.api.automation.ModelChains.LimitSpec
 import com.histmersion.api.catalogue.{
   CatalogRecord,
   EventImportReport,
@@ -40,8 +48,6 @@ import com.histmersion.api.exchange.{
   MergeResolutions
 }
 import com.histmersion.api.research.Article
-import com.histmersion.domain.AgentProposals
-import com.histmersion.domain.ReviewLedger.Ledger
 import com.histmersion.domain.automation.approvals.ProposalEvidence
 import com.histmersion.util.database.StoredCreator
 import com.histmersion.util.problem.Problem
@@ -305,10 +311,10 @@ object StoredShapesSuite:
       ),
       column[HintProposal]("approvals-proposal-hint", 6, Arbitrary.derived[HintProposal].arbitrary),
       column[ProposalEvidence]("approvals-proposal-evidence", 7, Arbitrary.derived[ProposalEvidence].arbitrary),
-      column[AgentProposals.Proposal](
+      column[Proposal](
         "approvals-proposal-source",
         8,
-        Arbitrary.derived[AgentProposals.Proposal].arbitrary
+        Arbitrary.derived[Proposal].arbitrary
       ),
       column[ManagerConfig]("agent-managers-config", 9, Arbitrary.derived[ManagerConfig].arbitrary),
       droppedColumn[ManagerConfig]("agent-managers-config", "agent-managers-config"),

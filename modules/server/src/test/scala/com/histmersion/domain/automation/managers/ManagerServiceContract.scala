@@ -1,5 +1,13 @@
 package com.histmersion
 package domain.automation.managers
+
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemCounts
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -75,10 +83,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).light().map(l => (l.id, l.planItem)), List(("review", false), ("seed:zz-g", false)))
     val _ = m(s).upsert(
       ManagerInfo.Id("seed:zz-g"),
-      ManagerItem.Kind(PlanGoalItem),
-      ManagerItem.Target("zz-g"),
+      api.automation.managers.ManagerItem.Kind(PlanGoalItem),
+      api.automation.managers.ManagerItem.Target("zz-g"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(1),
+      api.automation.managers.ManagerItem.Priority(1),
       reopen = false
     )
     assertEquals(m(s).light().map(l => (l.id, l.planItem)), List(("review", false), ("seed:zz-g", true)))
@@ -88,20 +96,20 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).create(ManagerInfo.Id("review"), Kind.Review, None, State.Active, ManagerConfig()))
     val (a, made) = m(s).upsert(
       ManagerInfo.Id("review"),
-      ManagerItem.Kind("article-review"),
-      ManagerItem.Target("zz-a"),
+      api.automation.managers.ManagerItem.Kind("article-review"),
+      api.automation.managers.ManagerItem.Target("zz-a"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(1),
+      api.automation.managers.ManagerItem.Priority(1),
       reopen = false
     )
     assert(made)
     assertEquals(
       m(s).upsert(
         ManagerInfo.Id("review"),
-        ManagerItem.Kind("article-review"),
-        ManagerItem.Target("zz-a"),
+        api.automation.managers.ManagerItem.Kind("article-review"),
+        api.automation.managers.ManagerItem.Target("zz-a"),
         ItemOrigin.Person,
-        ManagerItem.Priority(5),
+        api.automation.managers.ManagerItem.Priority(5),
         reopen = false
       ),
       (a, false)
@@ -110,10 +118,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(
       m(s).upsert(
         ManagerInfo.Id("review"),
-        ManagerItem.Kind("article-review"),
-        ManagerItem.Target("zz-a"),
+        api.automation.managers.ManagerItem.Kind("article-review"),
+        api.automation.managers.ManagerItem.Target("zz-a"),
         ItemOrigin.Person,
-        ManagerItem.Priority(5),
+        api.automation.managers.ManagerItem.Priority(5),
         reopen = true
       ),
       (a, false)
@@ -121,14 +129,20 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).item(a).map(i => (i.priority, i.origin, i.status)), Some((5, "person", "pending")))
     val (b, _) = m(s).upsert(
       ManagerInfo.Id("review"),
-      ManagerItem.Kind("article-review"),
-      ManagerItem.Target("zz-b"),
+      api.automation.managers.ManagerItem.Kind("article-review"),
+      api.automation.managers.ManagerItem.Target("zz-b"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(0),
+      api.automation.managers.ManagerItem.Priority(0),
       reopen = false
     )
     assertEquals(
-      m(s).itemFor(ManagerInfo.Id("review"), ManagerItem.Kind("article-review"), ManagerItem.Target("zz-b")).map(_.id),
+      m(s)
+        .itemFor(
+          ManagerInfo.Id("review"),
+          api.automation.managers.ManagerItem.Kind("article-review"),
+          api.automation.managers.ManagerItem.Target("zz-b")
+        )
+        .map(_.id),
       Some(b)
     )
     assert(m(s).hold(a, Hold(reason = Managers.Rationale("a person"))))
@@ -136,17 +150,25 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).release(a))
     assert(!m(s).release(a), "not held any more")
     assert(
-      m(s).settle(b, ItemStatus.Stopped, ManagerItem.Outcome("skipped"), List(ItemStatus.Pending, ItemStatus.Held))
+      m(s).settle(
+        b,
+        ItemStatus.Stopped,
+        api.automation.managers.ManagerItem.Outcome("skipped"),
+        List(ItemStatus.Pending, ItemStatus.Held)
+      )
     )
-    assert(!m(s).settle(b, ItemStatus.Done, ManagerItem.Outcome("x"), List(ItemStatus.Pending)), "not pending")
+    assert(
+      !m(s).settle(b, ItemStatus.Done, api.automation.managers.ManagerItem.Outcome("x"), List(ItemStatus.Pending)),
+      "not pending"
+    )
     assertEquals(m(s).item(b).map(i => (i.status, i.outcome)), Some(("stopped", Some("skipped"))))
     assertEquals(
       m(s).upsert(
         ManagerInfo.Id("review"),
-        ManagerItem.Kind("article-review"),
-        ManagerItem.Target("zz-b"),
+        api.automation.managers.ManagerItem.Kind("article-review"),
+        api.automation.managers.ManagerItem.Target("zz-b"),
         ItemOrigin.Selection,
-        ManagerItem.Priority(0),
+        api.automation.managers.ManagerItem.Priority(0),
         reopen = true
       ),
       (b, false)
@@ -160,7 +182,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s).item(a).map(i => (i.status, i.runId.map(_.value: String), i.attempts, i.state.before)),
       Some(("active", Some(run), 1, Some(2)))
     )
-    assertEquals(m(s).openFor(ManagerItem.Target("zz-a")).map(_.id), List(a))
+    assertEquals(m(s).openFor(api.automation.managers.ManagerItem.Target("zz-a")).map(_.id), List(a))
     assertEquals(
       m(s).openKeys(ManagerInfo.Id("review")).toSet,
       Set(("article-review", "zz-a"), ("article-review", "zz-b"))
@@ -168,7 +190,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(
       m(s).openOf(
         ManagerInfo.Id("review"),
-        List(ManagerItem.Kind("article-review")),
+        List(api.automation.managers.ManagerItem.Kind("article-review")),
         List(api.automation.ItemStatus.Wire("active"))
       ),
       1
@@ -180,10 +202,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).get(ManagerInfo.Id("review")).map(_.inFlight), Some(1))
     val (c, _) = m(s).upsert(
       ManagerInfo.Id("review"),
-      ManagerItem.Kind("article-review"),
-      ManagerItem.Target("zz-c"),
+      api.automation.managers.ManagerItem.Kind("article-review"),
+      api.automation.managers.ManagerItem.Target("zz-c"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(9),
+      api.automation.managers.ManagerItem.Priority(9),
       reopen = false
     )
     assertEquals(m(s).pending(ManagerInfo.Id("review")).map(_.id), List(c, b), "the most urgent first")
@@ -204,47 +226,69 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       assert(m(s).create(ManagerInfo.Id("watch:zz-b"), Kind.Watch, None, State.Paused, ManagerConfig()))
       val (a1, _) = m(s).upsert(
         ManagerInfo.Id("watch:zz-a"),
-        ManagerItem.Kind(OaIngest),
-        ManagerItem.Target("10.5555/zz.1"),
+        api.automation.managers.ManagerItem.Kind(OaIngest),
+        api.automation.managers.ManagerItem.Target("10.5555/zz.1"),
         ItemOrigin.Selection,
-        ManagerItem.Priority(0),
+        api.automation.managers.ManagerItem.Priority(0),
         reopen = false
       )
       val (a2, _) = m(s).upsert(
         ManagerInfo.Id("watch:zz-a"),
-        ManagerItem.Kind(OaIngest),
-        ManagerItem.Target("10.5555/zz.2"),
+        api.automation.managers.ManagerItem.Kind(OaIngest),
+        api.automation.managers.ManagerItem.Target("10.5555/zz.2"),
         ItemOrigin.Selection,
-        ManagerItem.Priority(3),
+        api.automation.managers.ManagerItem.Priority(3),
         reopen = false
       )
       val (b1, _) = m(s).upsert(
         ManagerInfo.Id("watch:zz-b"),
-        ManagerItem.Kind(OaIngest),
-        ManagerItem.Target("10.5555/zz.1"),
+        api.automation.managers.ManagerItem.Kind(OaIngest),
+        api.automation.managers.ManagerItem.Target("10.5555/zz.1"),
         ItemOrigin.Selection,
-        ManagerItem.Priority(0),
+        api.automation.managers.ManagerItem.Priority(0),
         reopen = false
       )
       val (other, _) = m(s).upsert(
         ManagerInfo.Id("watch:zz-a"),
-        ManagerItem.Kind(AcquisitionSweep),
-        ManagerItem.Target("zz-a"),
+        api.automation.managers.ManagerItem.Kind(AcquisitionSweep),
+        api.automation.managers.ManagerItem.Target("zz-a"),
         ItemOrigin.Selection,
-        ManagerItem.Priority(9),
+        api.automation.managers.ManagerItem.Priority(9),
         reopen = false
       )
       assertEquals(m(s).backlogPending().map(_.id), List(a2, a1), "an active watcher's, the most urgent first")
       assertEquals(m(s).backlogOpen().map(_.id), List(a1, a2, b1), "every watcher's open ones, the oldest first")
       assertEquals(m(s).backlogOpenFor(Doi("10.5555/zz.1")).map(_.id), Some(a1))
       assertEquals(m(s).backlogOpenFor(Doi("10.5555/zz.9")), None)
-      assert(m(s).backlogRetry(a1, ManagerItem.Failures(2), t, ManagerItem.Outcome("again later")))
+      assert(
+        m(s).backlogRetry(
+          a1,
+          api.automation.managers.ManagerItem.Failures(2),
+          t,
+          api.automation.managers.ManagerItem.Outcome("again later")
+        )
+      )
       assertEquals(
         m(s).item(a1).map(i => (i.failures, i.attempts, i.notBefore, i.outcome)),
         Some((2, 1, Some("2026-11-03T06:00:00Z"), Some("again later")))
       )
-      assert(m(s).settle(a2, ItemStatus.Done, ManagerItem.Outcome("ingested"), List(ItemStatus.Pending)))
-      assert(!m(s).backlogRetry(a2, ManagerItem.Failures(1), t, ManagerItem.Outcome("x")), "not pending")
+      assert(
+        m(s).settle(
+          a2,
+          ItemStatus.Done,
+          api.automation.managers.ManagerItem.Outcome("ingested"),
+          List(ItemStatus.Pending)
+        )
+      )
+      assert(
+        !m(s).backlogRetry(
+          a2,
+          api.automation.managers.ManagerItem.Failures(1),
+          t,
+          api.automation.managers.ManagerItem.Outcome("x")
+        ),
+        "not pending"
+      )
       assertEquals(m(s).backlogOpen().map(_.id), List(a1, b1))
       assert(m(s).setItemState(b1, ItemState(before = Some(ItemState.Before(4))), List(ItemStatus.Pending)))
       assert(!m(s).setItemState(a2, ItemState(), List(ItemStatus.Pending)), "not in the statuses named")
@@ -270,10 +314,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
       m(s)
         .upsert(
           ManagerInfo.Id("watch:zz"),
-          ManagerItem.Kind(OaIngest),
-          ManagerItem.Target(s"10.1/$i"),
+          api.automation.managers.ManagerItem.Kind(OaIngest),
+          api.automation.managers.ManagerItem.Target(s"10.1/$i"),
           ItemOrigin.Selection,
-          ManagerItem.Priority(0),
+          api.automation.managers.ManagerItem.Priority(0),
           reopen = false
         )
         ._1
@@ -295,7 +339,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(
       m(s).openOf(
         ManagerInfo.Id("watch:zz"),
-        List(ManagerItem.Kind(OaIngest)),
+        List(api.automation.managers.ManagerItem.Kind(OaIngest)),
         List(api.automation.ItemStatus.Wire("held"))
       ),
       3
@@ -303,7 +347,7 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(
       m(s).openOf(
         ManagerInfo.Id("watch:zz"),
-        List(ManagerItem.Kind(OaIngest)),
+        List(api.automation.managers.ManagerItem.Kind(OaIngest)),
         List(api.automation.ItemStatus.Wire("held")),
         focusHeld = false
       ),
@@ -332,18 +376,18 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assertEquals(m(s).countEventsAll(Feeds.Ingested, Instant.parse("2099-01-01T00:00:00Z")), 0)
     val (i, _) = m(s).upsert(
       ManagerInfo.Id("watch:zz-g"),
-      ManagerItem.Kind(AcquisitionSweep),
-      ManagerItem.Target("zz-g"),
+      api.automation.managers.ManagerItem.Kind(AcquisitionSweep),
+      api.automation.managers.ManagerItem.Target("zz-g"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(0),
+      api.automation.managers.ManagerItem.Priority(0),
       reopen = false
     )
     val _ = m(s).upsert(
       ManagerInfo.Id("watch:zz-g"),
-      ManagerItem.Kind(OaIngest),
-      ManagerItem.Target("10.1/x"),
+      api.automation.managers.ManagerItem.Kind(OaIngest),
+      api.automation.managers.ManagerItem.Target("10.1/x"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(0),
+      api.automation.managers.ManagerItem.Priority(0),
       reopen = false
     )
     assertEquals(
@@ -353,7 +397,9 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
         .map(p => (p._1, p._2, p._3.isDefined)),
       Some((1, 0, true))
     )
-    assert(m(s).settle(i, ItemStatus.Done, ManagerItem.Outcome("swept 3"), List(ItemStatus.Pending)))
+    assert(
+      m(s).settle(i, ItemStatus.Done, api.automation.managers.ManagerItem.Outcome("swept 3"), List(ItemStatus.Pending))
+    )
     assertEquals(
       m(s).pace(Instant.parse("2000-01-01T00:00:00Z")).get(ManagerInfo.Id("watch:zz-g")).map(p => (p._1, p._2)),
       Some((0, 1))
@@ -383,18 +429,18 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     assert(m(s).create(ManagerInfo.Id("seed:zz-g"), Kind.Seed, Some(Goal.Slug("zz-g")), State.Active, ManagerConfig()))
     val (a, _) = m(s).upsert(
       ManagerInfo.Id("seed:zz-g"),
-      ManagerItem.Kind(ProposeArticles),
-      ManagerItem.Target("zz-g"),
+      api.automation.managers.ManagerItem.Kind(ProposeArticles),
+      api.automation.managers.ManagerItem.Target("zz-g"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(0),
+      api.automation.managers.ManagerItem.Priority(0),
       reopen = false
     )
     val (b, _) = m(s).upsert(
       ManagerInfo.Id("seed:zz-g"),
-      ManagerItem.Kind(ArticleCompile),
-      ManagerItem.Target("zz-art"),
+      api.automation.managers.ManagerItem.Kind(ArticleCompile),
+      api.automation.managers.ManagerItem.Target("zz-art"),
       ItemOrigin.Selection,
-      ManagerItem.Priority(0),
+      api.automation.managers.ManagerItem.Priority(0),
       reopen = false
     )
     val r1 = s.run(
@@ -432,10 +478,10 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
         m(s)
           .upsert(
             ManagerInfo.Id("seed:zz-g"),
-            ManagerItem.Kind(PlanGoalItem),
-            ManagerItem.Target("zz-g"),
+            api.automation.managers.ManagerItem.Kind(PlanGoalItem),
+            api.automation.managers.ManagerItem.Target("zz-g"),
             ItemOrigin.Selection,
-            ManagerItem.Priority(0),
+            api.automation.managers.ManagerItem.Priority(0),
             reopen = false
           )
           ._1,

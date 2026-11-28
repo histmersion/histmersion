@@ -1,7 +1,9 @@
 package com.histmersion
 package domain
 
-import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.Sweep
+
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}

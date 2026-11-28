@@ -1,13 +1,15 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.domain.catalogue.events.Placement
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{CatalogRecord, EventLinkCandidate, EventPut, EventTier, Latitude, Longitude, Year}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
-import com.histmersion.domain.catalogue.events.{CatalogMerge, EventSelection, EventSql}
+import com.histmersion.domain.catalogue.events.{EventSelection, EventSql}
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.catalogue.EventSummary
@@ -81,8 +83,8 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     val _ =
       s.eventImports.save(
         List(big, small).map(r =>
-          r -> CatalogMerge.Placement
-            .New(Event.Id.assume(CatalogRecord.eventId(r).value), CatalogMerge.Rationale("new"))
+          r -> Placement
+            .New(Event.Id.assume(CatalogRecord.eventId(r).value), Placement.Rationale("new"))
         )
       )
     s.eventLinks.saveCandidates(
@@ -102,16 +104,16 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     assertEquals(
       s.leads.nearFindings(
         Event.Id("zz_attested"),
-        CatalogMerge.Tolerance.Km(50),
-        CatalogMerge.Tolerance.Years(50),
+        Placement.Tolerance.Km(50),
+        Placement.Tolerance.Years(50),
         PageSize(10)
       ),
       Nil
     )
     val (total, rows) = s.leads.leads(
       EventSelection(Filter()),
-      CatalogMerge.Tolerance.Km(50),
-      CatalogMerge.Tolerance.Years(50),
+      Placement.Tolerance.Km(50),
+      Placement.Tolerance.Years(50),
       PageSize(10),
       Offset(0)
     )
@@ -124,15 +126,15 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     val catalogueOnly =
       s.leads.leads(
         EventSelection(Filter(), narrow = EventSql.Narrow(tier = Some(EventSql.Narrow.Tier(EventTier.Catalogue)))),
-        CatalogMerge.Tolerance.Km(50),
-        CatalogMerge.Tolerance.Years(50),
+        Placement.Tolerance.Km(50),
+        Placement.Tolerance.Years(50),
         PageSize(10),
         Offset(0)
       )
     assertEquals(catalogueOnly._1.value, 2)
     assertEquals(
       s.leads
-        .leadOf(Event.Id("gvp_8"), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50))
+        .leadOf(Event.Id("gvp_8"), Placement.Tolerance.Km(50), Placement.Tolerance.Years(50))
         .map(r => (r.vei, r.proposed, r.attesting)),
       List((Some(3), 1, 0))
     )
@@ -145,7 +147,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     )
     assertEquals(
       s.leads
-        .leadOf(Event.Id("gvp_8"), CatalogMerge.Tolerance.Km(50), CatalogMerge.Tolerance.Years(50))
+        .leadOf(Event.Id("gvp_8"), Placement.Tolerance.Km(50), Placement.Tolerance.Years(50))
         .map(r => (r.proposed, r.attesting)),
       List((0, 1))
     )

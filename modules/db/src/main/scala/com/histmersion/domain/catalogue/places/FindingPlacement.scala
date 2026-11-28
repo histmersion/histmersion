@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.geocode.Move
+import com.histmersion.api.catalogue.geocode.Placement
+
 import com.histmersion.api.catalogue.Geocode
 import com.augustnagro.magnum.{DbCon, Frag}
 import com.histmersion.domain.library.Citekey
@@ -52,19 +55,19 @@ object FindingPlacement:
   /** The moves `finding-geocode`'s repair would make: every old-geocoder point the current ranking puts more than
     * `repairKm` away. Read-only.
     */
-  def movesIn(s: GeocodeSettings)(using DbCon): List[Geocode.Move] = Geocoder.movesIn(s)
+  def movesIn(s: GeocodeSettings)(using DbCon): List[Move] = Geocoder.movesIn(s)
 
   /** The points `finding-unplaced`'s repair would give: every unplaced finding whose name the gazetteer resolves now.
     * Read-only.
     */
-  def placementsIn(s: GeocodeSettings)(using DbCon): List[Geocode.Placement] = Geocoder.placementsIn(s)
+  def placementsIn(s: GeocodeSettings)(using DbCon): List[Placement] = Geocoder.placementsIn(s)
 
   /** The moves applied (compare-and-set), the touched sources' findings placed again; the findings moved. */
-  def move(ms: List[Geocode.Move], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount =
+  def move(ms: List[Move], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount =
     Geocoder.apply(ms, toleranceKm)
 
   /** The points given (compare-and-set), the touched sources' findings placed again; the findings placed. */
-  def place(ps: List[Geocode.Placement], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount =
+  def place(ps: List[Placement], toleranceKm: Implementation.ToleranceKm)(using DbCon): RowCount =
     Geocoder.place(ps, toleranceKm)
 
   final private class Implementation(val toleranceKm: Implementation.ToleranceKm) extends FindingPlacement:

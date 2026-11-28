@@ -25,7 +25,6 @@ import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
 import com.histmersion.util.console.Console
 import com.histmersion.api.library.AcquisitionWorkApi
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Stalls
 import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.Problem
 import org.rogach.scallop.*

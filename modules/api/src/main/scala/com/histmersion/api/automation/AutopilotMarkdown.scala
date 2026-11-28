@@ -1,6 +1,15 @@
 package com.histmersion
 package api.automation
 
+import com.histmersion.api.automation.autopilot.ManagerBrief
+import com.histmersion.api.automation.autopilot.GoalProgress
+import com.histmersion.api.automation.autopilot.FocusGoal
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.autopilot.FocusWaiting
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.autopilot.DrainInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given
@@ -83,7 +92,7 @@ object AutopilotMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def status(
-      s: Autopilot.EngineStatus,
+      s: EngineStatus,
       ingestedBy: String = (""),
       beforeBacklog: List[String] = Nil,
       afterBacklog: List[String] = Nil
@@ -110,7 +119,7 @@ object AutopilotMarkdown:
       )(
         "the managers are disabled (agents.managers.enabled = false): nothing runs"
       ),
-      Option.when(!((s.cronsEnabled) == EngineStatus.CronsEnabled.Enabled))(Autopilot.EngineStatus.CronsOff),
+      Option.when(!((s.cronsEnabled) == EngineStatus.CronsEnabled.Enabled))(EngineStatus.CronsOff),
       s.goalPlansWait.map(w => s"$w; a person may still approve a plan")
     ).flatten.map(w => s"- **$w**")
     val rules =
@@ -124,7 +133,7 @@ object AutopilotMarkdown:
         }" + ingestedBy
     ) ++
       beforeBacklog ++ List(
-        s"- ${ManagersMarkdown.backlog(Managers.ManagerInfo.Backlog(s.backlog.value), s.backlogDays.map(d => Managers.ManagerInfo.BacklogDays(d.value)))}"
+        s"- ${ManagersMarkdown.backlog(ManagerInfo.Backlog(s.backlog.value), s.backlogDays.map(d => ManagerInfo.BacklogDays(d.value)))}"
       ) ++
       afterBacklog ++ List(
         s"- runs at once: at most ${s.maxConcurrentRuns} (agents.max-concurrent-runs)",

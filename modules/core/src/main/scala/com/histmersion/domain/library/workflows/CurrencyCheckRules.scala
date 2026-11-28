@@ -1,10 +1,11 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.domain.Proposal
+
 import com.histmersion.api.library.{Acquire, FollowupRow}
 import com.histmersion.api.given
 
-import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import io.github.iltotore.iron.constraint.any.Pure

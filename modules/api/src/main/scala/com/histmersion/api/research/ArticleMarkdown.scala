@@ -1,13 +1,14 @@
 package com.histmersion
 package api.research
 
-import com.histmersion.api.{Markdown, OffsetPage, Plural, YearFmt}
+import com.histmersion.api.{Markdown, OffsetPage, Plural}
 import com.histmersion.api.checks.{FormatField, FormatMarkdown}
 import com.histmersion.api.library.Label
 import com.histmersion.api.given
 import com.histmersion.api.library.Source
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
 object ArticleMarkdown:
 
@@ -24,9 +25,9 @@ object ArticleMarkdown:
     val a = v.article
     val body = a.body.value.trim
     val line =
-      metaLine(a.kind.value, a.regions.map(_.value), YearFmt.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
+      metaLine(a.kind.value, a.regions.map(_.value), Year.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
     val head =
-      if Articles.heading(Article.Body(body)).isEmpty then
+      if Article.heading(Article.Body(body)).isEmpty then
         s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
       else if line.isEmpty then body
       else
@@ -87,9 +88,9 @@ object ArticleMarkdown:
     if show.contains("body") then
       val body = a.body.value.trim
       val line =
-        metaLine(a.kind.value, a.regions.map(_.value), YearFmt.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
+        metaLine(a.kind.value, a.regions.map(_.value), Year.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
       val head =
-        if Articles.heading(Article.Body(body)).isEmpty then
+        if Article.heading(Article.Body(body)).isEmpty then
           s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
         else if line.isEmpty then body
         else
@@ -179,7 +180,7 @@ object ArticleMarkdown:
     OffsetPage
       .markdown(r.page, ("article(s)"), ("_No matching articles._"), r.articles) { a =>
         val tagsStr = a.tags.mkString(", ")
-        val meta = List(a.kind.value, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
+        val meta = List(a.kind.value, Year.period(a.periodStart, a.periodEnd), tagsStr)
           .map(_.trim)
           .filter(_.nonEmpty)
           .mkString(" · ")

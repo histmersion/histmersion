@@ -1,6 +1,11 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -12,7 +17,6 @@ import com.histmersion.util.database.given
 import com.histmersion.api.{GeoPoint, Span}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.Geocode.KindHint
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Migrate
@@ -117,17 +121,17 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
     * GazetteerRepoSuite) — so the rule is off here: these tests are about time, which applies to every imported place,
     * a site's as much as a state's.
     */
-  private val Wikidata = Gazetteer.SourceInfo.Key("wikidata")
-  private val Geonames = Gazetteer.SourceInfo.Key("geonames")
-  private val LpfZzpt = Gazetteer.SourceInfo.Key("lpf:zzpt")
-  private val V1 = Gazetteer.LoadCounts.Version("v1")
-  private val V2 = Gazetteer.LoadCounts.Version("v2")
+  private val Wikidata = SourceInfo.Key("wikidata")
+  private val Geonames = SourceInfo.Key("geonames")
+  private val LpfZzpt = SourceInfo.Key("lpf:zzpt")
+  private val V1 = LoadCounts.Version("v1")
+  private val V2 = LoadCounts.Version("v2")
 
   private def load(
-      source: Gazetteer.SourceInfo.Key,
-      version: Gazetteer.LoadCounts.Version,
+      source: SourceInfo.Key,
+      version: LoadCounts.Version,
       rs: List[GazRecord]
-  ): Gazetteer.LoadCounts =
+  ): LoadCounts =
     connect(ds)(
       GazetteerImport
         .session(source, version, apply = true, pointAreaKinds = Set.empty, clock = TestCreators.clock)
@@ -264,7 +268,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
     def at(p: Period) =
       connect(ds)(
         PlaceFixtures.resolve(
-          Geocode.Attempt.Name("Zzpt Kingdom of Patones"),
+          Attempt.Name("Zzpt Kingdom of Patones"),
           KindHint.Unknown,
           Some(p),
           GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)

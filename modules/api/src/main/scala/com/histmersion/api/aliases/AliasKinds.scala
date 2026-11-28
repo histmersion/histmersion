@@ -1,6 +1,8 @@
 package com.histmersion
 package api.aliases
 
+import com.histmersion.api.automation.activity.Entry
+
 /** The kinds of record whose old identifiers stay aliases (#1799), as the record references of every domain name them:
   * what each is called and what its identifier is called, and which bundle kind carries each. A closed vocabulary of
   * the identity area, as `BundleKind` is of the bundle: a lower domain names a higher one's kind (an attestation's
@@ -38,7 +40,7 @@ object AliasKinds:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def ofTarget(targetType: Activity.Entry.TargetKind): Option[AliasKind] =
+  def ofTarget(targetType: Entry.TargetKind): Option[AliasKind] =
     (targetType).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "event"   => Some(EventRecords)
       case "place"   => Some(PlaceRecords)

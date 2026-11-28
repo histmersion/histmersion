@@ -1,9 +1,11 @@
 package com.histmersion
 package web.settings
 
+import com.histmersion.api.automation.listfilters.JobFilter
+import com.histmersion.api.automation.activity.Entry
+
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.automation.ListFilters
-import com.histmersion.api.automation.Activity.Entry
 import com.histmersion.web.{ActivityView, ApiClient}
 import com.raquo.laminar.api.L.*
 
@@ -49,7 +51,7 @@ object DownloadJobs:
   def refresh(): Unit =
     ApiClient
       .jobs(
-        ListFilters.JobFilter(
+        JobFilter(
           status = List(JobState.Wire("running"), JobState.Wire("queued"), JobState.Wire("paused")),
           kind = Kinds
         ),

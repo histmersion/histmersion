@@ -1,5 +1,12 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.Billing
+import com.histmersion.api.automation.agents.CheckLevel
+import com.histmersion.api.automation.agents.DoctorCheck
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.agents.ProviderDoctor
 import com.histmersion.util.problem.ProblemLog
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson

@@ -9,7 +9,6 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.catalogue.EventEntry
 
 import com.histmersion.api.aliases.LabelRename
-import com.histmersion.api.aliases.LabelRenames
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.aliases.AliasKinds
 
@@ -238,8 +237,8 @@ final class EventsControllers(
       Caller.Local,
       id,
       from =>
-        LabelRenames
-          .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
+        LabelRename
+          .validate(Bundle.Kind.Event, LabelRename.Label(from.value), LabelRename.Label(req.to.value))
           .flatMap(l => Event.Id.parse(l.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid)))))
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 

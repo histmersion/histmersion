@@ -1,7 +1,10 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.automation.Agents.{RunDetail, RunInfo}
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.RunDetail
+
 import com.histmersion.api.automation.RunCompare
 import com.histmersion.domain.CompareRuns
 import io.scalaland.chimney.Transformer
@@ -22,7 +25,7 @@ object CompareRunsViews:
   private given roleToChoice: Transformer[AgentRole.Wire, CompareRuns.ModelChoice.Role] =
     r => CompareRuns.ModelChoice.Role(r.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private given stepStatusToDomain: Transformer[Agents.StepInfo.Status, Step.Status.Wire] =
+  private given stepStatusToDomain: Transformer[StepInfo.Status, Step.Status.Wire] =
     st => Step.Status.Wire(st.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private given runStatusToDomain: Transformer[RunInfo.Status, Run.State.Wire] =

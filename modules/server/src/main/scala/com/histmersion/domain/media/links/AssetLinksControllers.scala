@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.media.links
+
+import com.histmersion.api.automation.activity.Entry
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.aliases.AliasKinds
@@ -39,7 +41,7 @@ final class AssetLinksControllers(
   )
   private def refId(targetType: String, id: String): String =
     AliasKinds
-      .ofTarget(Activity.Entry.TargetKind(targetType))
+      .ofTarget(Entry.TargetKind(targetType))
       .fold(id)(kind => current(kind, AliasTable.Id(id)).value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -56,12 +56,11 @@ object MergeApplyJob:
   /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
   val InterruptedText: Problem = Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def of(
       id: SpatialHierarchyResult.Job.Id,
       status: JobState,
-      bundle: MergeApplyJob.OfBundle,
-      planHash: MergeApplyJob.OfPlanHash,
+      bundle: OfBundle,
+      planHash: OfPlanHash,
       elapsedMs: OfElapsedMs,
       error: Option[Failure],
       result: Option[MergeApplyResult]

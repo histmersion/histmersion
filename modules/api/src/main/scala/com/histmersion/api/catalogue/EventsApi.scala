@@ -130,10 +130,10 @@ object EventsApi:
         (Event.Id((refactorDecoded3)._1), (refactorDecoded3)._2)
       )((refactorEncoded3: (Event.Id, EventLinksRequest)) => (((refactorEncoded3)._1).value, (refactorEncoded3)._2))
 
-  lazy val refineSiteTypes: PublicEndpoint[SiteTypes.Request, Api.Error, JobInfo, Any] =
+  lazy val refineSiteTypes: PublicEndpoint[SiteType.Request, Api.Error, JobInfo, Any] =
     endpoint.post
       .in("api" / "site-types" / "refine")
-      .in(jsonBody[SiteTypes.Request])
+      .in(jsonBody[SiteType.Request])
       .errorOut(Api.problemOut)
       .out(statusCode(StatusCode.Accepted))
       .out(jsonBody[JobInfo])

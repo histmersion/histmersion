@@ -1,6 +1,26 @@
 package com.histmersion
 package domain.automation.autopilot
 
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.automation.autopilot.Pacing
+import com.histmersion.domain.automation.autopilot.GoalRow
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.automation.autopilot.Stride
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.domain.automation.autopilot.GoalFacts
+import com.histmersion.domain.automation.autopilot.NextFacts
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.autopilot.ManagerBrief
+import com.histmersion.api.automation.autopilot.GoalProgress
+import com.histmersion.api.automation.autopilot.ApprovalRule
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.jobs.Quiescent
 import hearth.kindlings.optics.syntax.*
@@ -15,10 +35,8 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Autopilot.*
-import com.histmersion.domain.AutopilotPolicy.{GoalFacts, GoalRow, ManagerRow, Step}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
 import com.histmersion.domain.automation.{
   Approval as DomainApproval,
   Goal as DomainGoal,
@@ -192,17 +210,17 @@ final class AutopilotService(
           m.cron.map(c => AutopilotPolicy.Cron(c.value)),
           m.config.autoIngest.map(a => ManagerRow.AutoIngest(a.autoIngest)),
           ManagerRow.PlanItem(m.planItem.value),
-          m.config.extendMinNew.map(n => AutopilotPolicy.Settings.ExtendMinNew(n.value))
+          m.config.extendMinNew.map(n => Pacing.ExtendMinNew(n.value))
         )
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def settings = AutopilotPolicy.Settings(
+  private def settings = Pacing(
     AutopilotPolicy.Cron(acfg.watchCron.value),
     AutopilotPolicy.Cron(acfg.seedCron.value),
     AutopilotPolicy.Cron(acfg.finishedWatchCron.value),
-    AutopilotPolicy.Settings.WatchIngestPerDay(math.max(0, acfg.watchIngestPerDay.value)),
-    AutopilotPolicy.Settings.ExtendMinNew(math.max(0, acfg.extendMinNew.value))
+    Pacing.WatchIngestPerDay(math.max(0, acfg.watchIngestPerDay.value)),
+    Pacing.ExtendMinNew(math.max(0, acfg.extendMinNew.value))
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
@@ -250,9 +268,9 @@ final class AutopilotService(
   private def itemOf(goal: DomainGoal.Slug): ManagerItem.Target = ManagerItem.Target(goal.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def applyStep(s: Step, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
+  private def applyStep(s: Stride, now: Instant)(using WritePermit)(using Creator.New): Option[String] =
     s match
-      case Step.CreateSeed(goal, cron, planFirst) =>
+      case Stride.CreateSeed(goal, cron, planFirst) =>
         val id = seedId(Goal.Ref(goal.value))
         Option.when(
           agents.managerStore
@@ -291,10 +309,10 @@ final class AutopilotService(
           )
           s"$id created"
         }
-      case Step.CreateWatch(goal, cron, perDay) =>
+      case Stride.CreateWatch(goal, cron, perDay) =>
         val id = watchId(Goal.Ref(goal.value))
         val c = ManagerConfig(
-          autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto),
+          autoIngest = Some(ManagerConfig.AutoIngest.Auto),
           autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(perDay.value))
         )
         Option.when(
@@ -319,14 +337,14 @@ final class AutopilotService(
           )
           s"$id created"
         }
-      case Step.Resume(rowId) =>
+      case Stride.Resume(rowId) =>
         val id = ManagerInfo.Id(rowId.value)
         Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = ManagerInfo.PauseRuns.Run)) {
           agents.autopilotRow.unpaused(id)
           event(id, "resumed by the autopilot")
           s"$id resumed"
         }
-      case Step.SetCron(rowId, cron) =>
+      case Stride.SetCron(rowId, cron) =>
         val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           Option.when(
@@ -336,7 +354,7 @@ final class AutopilotService(
             s"$id cron $cron"
           }
         }
-      case Step.AutoIngestOn(rowId, perDay) =>
+      case Stride.AutoIngestOn(rowId, perDay) =>
         val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           val c =
@@ -360,7 +378,7 @@ final class AutopilotService(
             s"$id auto-ingest on"
           }
         }
-      case Step.AddPlanItem(rowId, goal) =>
+      case Stride.AddPlanItem(rowId, goal) =>
         val id = ManagerInfo.Id(rowId.value)
         val (item, isNew) = agents.managerStore.upsert(
           id,
@@ -380,7 +398,7 @@ final class AutopilotService(
           )
           s"$id plan-goal queued"
         }
-      case Step.ExtendMinNew(rowId, n) =>
+      case Stride.ExtendMinNew(rowId, n) =>
         val id = ManagerInfo.Id(rowId.value)
         agents.managerStore.get(id).flatMap { m =>
           Option.when(
@@ -456,7 +474,7 @@ final class AutopilotService(
         GoalFacts.Reviewed(arts.forall(passed)),
         kids
       )
-      AutopilotPolicy.advance(facts).flatMap { (to, why) =>
+      facts.advance.flatMap { (to, why) =>
         agents.host.patchGoal(slugOf(g), Goal.Patch(status = Some(Goal.StatusValue(to.value)))) match
           case Left(e) =>
             scribe.warn(s"autopilot: goal $slug not moved to $to: ${e.problems.sentences.mkString("; ")}")
@@ -491,8 +509,8 @@ final class AutopilotService(
       agents.focus.facts().filter(f => f.articles.value > 0 && seeds.contains(f.slug.value)).flatMap { f =>
         val sid = seedId(Goal.Ref(f.slug.value))
         val item = agents.managerStore.itemFor(sid, ManagerItem.Kind(ProposeArticles), itemOf(f.slug))
-        val facts = AutopilotPolicy.NextFacts(
-          AutopilotPolicy.NextFacts.Goal(f.slug.value),
+        val facts = NextFacts(
+          NextFacts.Goal(f.slug.value),
           f.status,
           f.articles,
           f.unreviewed,
@@ -501,7 +519,7 @@ final class AutopilotService(
           item.map(i => DomainItemStatus.Wire(i.status.value)),
           item.flatMap(i => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(i.updatedAt.value)))
         )
-        AutopilotPolicy.nextArticle(facts, now, AutopilotPolicy.CooldownHours(acfg.nextArticleHours.value)).map { why =>
+        facts.nextArticle(now, AutopilotPolicy.CooldownHours(acfg.nextArticleHours.value)).map { why =>
           val (id, _) = agents.managerStore.upsert(
             sid,
             ManagerItem.Kind(ProposeArticles),
@@ -648,8 +666,8 @@ final class AutopilotService(
     def rule(k: Agents.ApprovalKind, cap: String) =
       ApprovalRule(
         k.wire,
-        if cfg.approvals.checked(k.transformInto[Approval.Kind]) then Autopilot.ApprovalRule.Mode("checked")
-        else Autopilot.ApprovalRule.Mode("person"),
+        if cfg.approvals.checked(k.transformInto[Approval.Kind]) then ApprovalRule.Mode("checked")
+        else ApprovalRule.Mode("person"),
         ApprovalRule.Cap(cap)
       ) match
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == DomainApproval.Mode.Auto =>

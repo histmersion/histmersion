@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.OaWork
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.json.RawJson.*
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonKeyCodec
 import hearth.kindlings.jsoniterjson.Json
@@ -350,8 +354,8 @@ final class AcquisitionSweepPipeline(
           mid,
           ctx.run.managerItem,
           Some(Run.Id.assume(ctx.run.id.value)),
-          Managers.ManagerEvent.Kind(Managers.Feed.Ingested),
-          Managers.ManagerEvent.Text(
+          ManagerEvent.Kind(Managers.Feed.Ingested),
+          ManagerEvent.Text(
             s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source.value)}): ${p.candidate.title} — https://doi.org/$doi"
           )
         )
@@ -393,7 +397,7 @@ final class AcquisitionSweepPipeline(
     val mid = ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value)))
     val placed = picks.map { p =>
       val c = p.candidate
-      val w = Managers.OaWork(
+      val w = OaWork(
         com.histmersion.api.library.Doi(c.doi.value),
         c.title,
         c.year,
@@ -401,7 +405,7 @@ final class AcquisitionSweepPipeline(
         c.venue,
         List(com.histmersion.api.automation.Goal.Slug(goal.value)),
         Managers.Rationale(s"${p.why}"),
-        Some(Managers.OaWork.FoundBy(ctx.run.id.value))
+        Some(OaWork.FoundBy(ctx.run.id.value))
       )
       ctx.write(
         s"ingest backlog of $mid: ${c.doi} for goal $goal",
@@ -423,7 +427,7 @@ final class AcquisitionSweepPipeline(
   private def queue(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit)(using Creator.New): Int =
     val queued = queuedDois()
     picks.count { p =>
-      val text = Queue.QueueItem.Text(AcquisitionSweepRules.acquireText(p.candidate, goal, p.why).value)
+      val text = QueueItem.Text(AcquisitionSweepRules.acquireText(p.candidate, goal, p.why).value)
       queueOnce(ctx, goal, p.candidate.doi, text, queued) match
         case Left(m)      => ctx.warn(s"queue: ${p.candidate.doi} not queued — $m"); false
         case Right(added) => added

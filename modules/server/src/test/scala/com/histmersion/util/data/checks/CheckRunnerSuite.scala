@@ -1,11 +1,15 @@
 package com.histmersion
 package util.data.checks
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+import com.histmersion.api.checks.lint.LintFixResult
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.checks.Lint
-import com.histmersion.api.checks.Lint.{LintFixResult, LintItem, LintRuleReport, Rule}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.DataOwner
 import com.histmersion.util.database.Transactor
@@ -34,8 +38,7 @@ class CheckRunnerSuite extends munit.FunSuite:
     val rule: Rule = Rule(name, Rule.Description(s"$name rule"))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(
-        rule,
+      rule.report(
         List.tabulate(items)(i => LintItem(Citekey(s"${run(shared).head}$i"), LintItem.Detail(name.value))),
         Lint.ItemLimit(maxItems.value)
       )

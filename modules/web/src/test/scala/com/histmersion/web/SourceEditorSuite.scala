@@ -18,7 +18,6 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.Write
 import com.histmersion.api.Api
 import com.histmersion.api.library.Doi
-import com.histmersion.api.Years
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** The metadata editor's pure half: the form ↔ patch mapping (only what changed, with the precondition), BCE/CE years,
@@ -140,11 +139,11 @@ class SourceEditorSuite extends munit.FunSuite:
   }
 
   test("typed years: BCE negative, blank is none") {
-    assertEquals(SourceEditor.year(Years.Text("1300 BCE")), Right(Some(-1300L)))
-    assertEquals(SourceEditor.year(Years.Text("-1300")), Right(Some(-1300L)))
-    assertEquals(SourceEditor.year(Years.Text("530 ce")), Right(Some(530L)))
-    assertEquals(SourceEditor.year(Years.Text("  ")), Right(None))
-    assert(SourceEditor.year(Years.Text("later")).isLeft)
+    assertEquals(SourceEditor.year(Year.Text("1300 BCE")), Right(Some(-1300L)))
+    assertEquals(SourceEditor.year(Year.Text("-1300")), Right(Some(-1300L)))
+    assertEquals(SourceEditor.year(Year.Text("530 ce")), Right(Some(530L)))
+    assertEquals(SourceEditor.year(Year.Text("  ")), Right(None))
+    assert(SourceEditor.year(Year.Text("later")).isLeft)
   }
 
   test("a server refusal is shown next to the field its message names") {

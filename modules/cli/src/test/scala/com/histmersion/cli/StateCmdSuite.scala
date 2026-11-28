@@ -1,6 +1,8 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.automation.{Goal, Queue}
 import com.histmersion.api.research.OpenWork
@@ -27,5 +29,5 @@ class StateCmdSuite extends munit.FunSuite:
   test("queue acquire why: the item's id"):
     assertEquals(
       Parsing.parse("queue", "acquire", "why", "42"),
-      Right(StateCmd.Command.Why(Queue.QueueItem.Id(42), json))
+      Right(StateCmd.Command.Why(QueueItem.Id(42), json))
     )

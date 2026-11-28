@@ -1,8 +1,11 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Docket
+import com.histmersion.api.automation.queue.QueueAdd
+
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem}
 import com.histmersion.domain.{Actor, Creator, Scheduling}
 import com.histmersion.util.database.{Jsonb, StoredCreator}
 
@@ -27,7 +30,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def listed(kind: Kind, scope: QueueScope): Vector[QueueItem] =
+  def listed(kind: Docket, scope: QueueScope): Vector[QueueItem] =
     val ofKind = items.filter(_.list == kind.label)
     scope match
       case QueueScope.Open        => ofKind.filter(_.status.value == Queue.Open)
@@ -50,7 +53,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
   /** The items of `kind` whose text names `doi`, as the database's `strpos` and the DOI rule find them. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  def naming(kind: Kind, doi: Doi): Vector[QueueItem] =
+  def naming(kind: Docket, doi: Doi): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else
@@ -60,11 +63,11 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
       )
 
   /** `in` added to `kind` at `now`, as the database inserts it. */
-  def added(kind: Kind, in: QueueAdd, creator: Creator.New, now: Instant): WorkListState =
+  def added(kind: Docket, in: QueueAdd, creator: Creator.New, now: Instant): WorkListState =
     addedAll(kind, List(in), creator, now)
 
   /** Each of `ins` added to `kind` at `now`, in order. */
-  def addedAll(kind: Kind, ins: List[QueueAdd], creator: Creator.New, now: Instant): WorkListState =
+  def addedAll(kind: Docket, ins: List[QueueAdd], creator: Creator.New, now: Instant): WorkListState =
     @tailrec def loop(rest: List[QueueAdd], made: Vector[QueueItem], last: QueueItemId): WorkListState = rest match
       case Nil        => WorkListState(items ++ made, last)
       case in :: tail =>
@@ -89,7 +92,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def removed(id: QueueItemId): WorkListState = this.modify(_.items).using(_.filterNot(_.id.value == id.value))
 
-  def emptied(kind: Kind): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
+  def emptied(kind: Docket): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
 
 object WorkListState:
 
@@ -102,7 +105,7 @@ object WorkListState:
 
   /** Item `id` of `kind` made from `in` at `now`: open unless it says otherwise, done at once when it is done. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def item(kind: Kind, in: QueueAdd, creator: Creator.New, id: QueueItemId, now: Instant): QueueItem =
+  def item(kind: Docket, in: QueueAdd, creator: Creator.New, id: QueueItemId, now: Instant): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Queue.Open)
     QueueItem(
       QueueItem.Id(id.value),

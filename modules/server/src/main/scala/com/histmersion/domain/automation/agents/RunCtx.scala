@@ -1,5 +1,14 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.WouldWrite
+import com.histmersion.api.automation.agents.StepKind
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.agents.Billing
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*

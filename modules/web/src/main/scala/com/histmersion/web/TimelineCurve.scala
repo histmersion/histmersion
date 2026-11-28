@@ -3,8 +3,8 @@ package web
 
 import com.histmersion.api.library.TimeBucket
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.Years
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The timeline's count curve, pure: buckets a few pixels wide, each one point at its middle, joined by a MONOTONE
   * cubic (Fritsch–Carlson, the rule of d3's `curveMonotoneX`). Between two points the curve never leaves the band their
@@ -30,8 +30,8 @@ object TimelineCurve:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def points(
       bs: Seq[TimeBucket],
-      from: Years.Astronomical,
-      to: Years.Astronomical,
+      from: Year.Astronomical,
+      to: Year.Astronomical,
       w: ElementSize,
       baseY: ScreenPixels,
       top: ScreenPixels

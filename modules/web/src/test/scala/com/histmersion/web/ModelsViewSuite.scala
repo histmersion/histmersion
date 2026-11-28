@@ -1,5 +1,15 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.modelchains.LimitSpec
+import com.histmersion.api.automation.modelchains.Measure
+import com.histmersion.api.automation.modelchains.LimitStatus
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.modelchains.AllowanceStatus
+import com.histmersion.api.automation.modelchains.SettingSource
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.planquota.WindowStatus
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -32,8 +42,8 @@ class ModelsViewSuite extends munit.FunSuite:
       ModelsView.limitsInput("2M tokens/5h, 5 usd/day"),
       Right(
         List(
-          LimitSpec(ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, ModelChains.LimitSpec.Window("5h")),
-          LimitSpec(ModelChains.LimitSpec.Amount(5), Measure.Usd, ModelChains.LimitSpec.Window("1d"))
+          LimitSpec(LimitSpec.Amount(2000000), Measure.Tokens, LimitSpec.Window("5h")),
+          LimitSpec(LimitSpec.Amount(5), Measure.Usd, LimitSpec.Window("1d"))
         )
       )
     )
@@ -45,23 +55,23 @@ class ModelsViewSuite extends munit.FunSuite:
 
   test("the used share of a limit, clamped; a chained model's state"):
     val l = LimitStatus(
-      ModelChains.LimitStatus.Limit("1k tokens/1h"),
+      LimitStatus.Limit("1k tokens/1h"),
       Measure.Tokens,
-      ModelChains.LimitStatus.Window("1h"),
-      ModelChains.LimitStatus.Amount(1000),
-      ModelChains.LimitStatus.Used(250),
-      ModelChains.LimitStatus.Remaining(750),
-      ModelChains.LimitStatus.Reserve(0),
-      usable = ModelChains.LimitStatus.Usable.Usable
+      LimitStatus.Window("1h"),
+      LimitStatus.Amount(1000),
+      LimitStatus.Used(250),
+      LimitStatus.Remaining(750),
+      LimitStatus.Reserve(0),
+      usable = LimitStatus.Usable.Usable
     )
     assertEquals(ModelsView.usedPct(l), 25)
     assertEquals(ModelsView.usedPct(l.modify(_.used).setTo(LimitStatus.Used(5000.0))), 100)
     assertEquals(
       ModelsView.entryState(
         ChainEntry(
-          ModelChains.ChainEntry.Model("local:a"),
-          ready = ModelChains.ChainEntry.Ready.Ready,
-          usable = ModelChains.ChainEntry.Usable.Usable
+          ChainEntry.Model("local:a"),
+          ready = ChainEntry.Ready.Ready,
+          usable = ChainEntry.Usable.Usable
         )
       ),
       "is-usable"
@@ -69,9 +79,9 @@ class ModelsViewSuite extends munit.FunSuite:
     assertEquals(
       ModelsView.entryState(
         ChainEntry(
-          ModelChains.ChainEntry.Model("local:a"),
-          ready = ModelChains.ChainEntry.Ready.Ready,
-          usable = ModelChains.ChainEntry.Usable.Unusable
+          ChainEntry.Model("local:a"),
+          ready = ChainEntry.Ready.Ready,
+          usable = ChainEntry.Usable.Unusable
         )
       ),
       "is-paused"
@@ -79,9 +89,9 @@ class ModelsViewSuite extends munit.FunSuite:
     assertEquals(
       ModelsView.entryState(
         ChainEntry(
-          ModelChains.ChainEntry.Model("local:a"),
-          ready = ModelChains.ChainEntry.Ready.Unready,
-          usable = ModelChains.ChainEntry.Usable.Unusable
+          ChainEntry.Model("local:a"),
+          ready = ChainEntry.Ready.Unready,
+          usable = ChainEntry.Usable.Unusable
         )
       ),
       "is-unready"
@@ -89,11 +99,11 @@ class ModelsViewSuite extends munit.FunSuite:
     assertEquals(
       ModelsView.limitsText(
         AllowanceStatus(
-          ModelChains.AllowanceStatus.Target("local:a"),
-          ModelChains.SettingSource.Wire("saved"),
-          ModelChains.AllowanceStatus.ReservePct(0),
-          List(l, l.modify(_.limit).setTo(ModelChains.LimitStatus.Limit("5 usd/1d"))),
-          usable = ModelChains.AllowanceStatus.Usable.Usable
+          AllowanceStatus.Target("local:a"),
+          SettingSource.Wire("saved"),
+          AllowanceStatus.ReservePct(0),
+          List(l, l.modify(_.limit).setTo(LimitStatus.Limit("5 usd/1d"))),
+          usable = AllowanceStatus.Usable.Usable
         )
       ),
       "1k tokens/1h, 5 usd/1d"
@@ -101,57 +111,57 @@ class ModelsViewSuite extends munit.FunSuite:
 
   test("a run paused for an allowance says when it goes on by itself"):
     val r = RunInfo(
-      Agents.RunInfo.Id("r"),
-      Agents.RunInfo.Pipeline("enrich-source"),
-      Agents.RunInfo.Target("a2020_b"),
-      Agents.RunInfo.Status("paused"),
+      RunInfo.Id("r"),
+      RunInfo.Pipeline("enrich-source"),
+      RunInfo.Target("a2020_b"),
+      RunInfo.Status("paused"),
       error = Some(Problem.Unclassified(Legacy.Text("allowance: all models …"))),
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T14:00:00Z")),
-      pausedFor = Some(Agents.PauseReason.Allowance)
+      pausedFor = Some(PauseReason.Allowance)
     )
-    assertEquals(RunsView.pausedFor(r), Some(Agents.PauseReason.Allowance))
+    assertEquals(RunsView.pausedFor(r), Some(PauseReason.Allowance))
     assert(
       RunsView
-        .pausedText(r, Agents.PauseReason.Allowance)
+        .pausedText(r, PauseReason.Allowance)
         .value
         .contains("resumes by itself at 2026-10-05T14:00:00Z")
     )
-    assert(RunsView.pausedText(r, Agents.PauseReason.Budget).value.contains("Raise the budget"))
+    assert(RunsView.pausedText(r, PauseReason.Budget).value.contains("Raise the budget"))
 
   test("a plan window's bar: the used share and where the floor sits; a reading's age in words"):
-    val w = PlanQuota.WindowStatus(
-      PlanQuota.WindowStatus.Limit("claude"),
-      PlanQuota.WindowStatus.Kind("five_hour"),
-      PlanQuota.WindowStatus.UsedPct(62.4),
-      PlanQuota.WindowStatus.LeftPct(37.6),
-      PlanQuota.WindowStatus.Floor(25),
-      usable = PlanQuota.WindowStatus.Usable.Usable,
-      stale = PlanQuota.WindowStatus.Stale.Fresh,
-      Some(PlanQuota.WindowStatus.ResetsAt("2026-10-05T21:40:00Z")),
-      PlanQuota.WindowStatus.ObservedAt("2026-10-05T19:00:00Z"),
-      PlanQuota.WindowStatus.AgeSeconds(90),
-      PlanQuota.WindowStatus.Source("run")
+    val w = WindowStatus(
+      WindowStatus.Limit("claude"),
+      WindowStatus.Kind("five_hour"),
+      WindowStatus.UsedPct(62.4),
+      WindowStatus.LeftPct(37.6),
+      WindowStatus.Floor(25),
+      usable = WindowStatus.Usable.Usable,
+      stale = WindowStatus.Stale.Fresh,
+      Some(WindowStatus.ResetsAt("2026-10-05T21:40:00Z")),
+      WindowStatus.ObservedAt("2026-10-05T19:00:00Z"),
+      WindowStatus.AgeSeconds(90),
+      WindowStatus.Source("run")
     )
     assertEquals(ModelsView.windowBar(w), (62, 75))
-    assertEquals(ModelsView.windowBar(w.modify(_.usedPct).setTo(PlanQuota.WindowStatus.UsedPct(130.0))), (100, 75))
+    assertEquals(ModelsView.windowBar(w.modify(_.usedPct).setTo(WindowStatus.UsedPct(130.0))), (100, 75))
     assertEquals(ModelsView.ageText(90), "90 s ago")
     assertEquals(ModelsView.ageText(600), "10 min ago")
     assertEquals(ModelsView.ageText(7200), "2 h ago")
 
   test("a run paused for a plan says when it goes on by itself"):
     val r = RunInfo(
-      Agents.RunInfo.Id("r"),
-      Agents.RunInfo.Pipeline("review-article"),
-      Agents.RunInfo.Target("x"),
-      Agents.RunInfo.Status("paused"),
+      RunInfo.Id("r"),
+      RunInfo.Pipeline("review-article"),
+      RunInfo.Target("x"),
+      RunInfo.Status("paused"),
       error = Some(Problem.Unclassified(Legacy.Text("plan-quota: …"))),
       resumeAt = Some(RunInfo.ResumeAt("2026-10-05T21:40:00Z")),
-      pausedFor = Some(Agents.PauseReason.PlanQuota)
+      pausedFor = Some(PauseReason.PlanQuota)
     )
-    assertEquals(RunsView.pausedFor(r), Some(Agents.PauseReason.PlanQuota))
+    assertEquals(RunsView.pausedFor(r), Some(PauseReason.PlanQuota))
     assert(
       RunsView
-        .pausedText(r, Agents.PauseReason.PlanQuota)
+        .pausedText(r, PauseReason.PlanQuota)
         .value
         .contains("resumes by itself at 2026-10-05T21:40:00Z")
     )

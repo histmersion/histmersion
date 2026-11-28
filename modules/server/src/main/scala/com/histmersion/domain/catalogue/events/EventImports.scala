@@ -3,7 +3,7 @@ package domain.catalogue.events
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.api.{BBox, YearFmt}
+import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.{
   CatalogProviderInfo,
   CatalogRecord,
@@ -32,6 +32,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The import loop of the event catalogues — Histmersion's own and the plugins' alike — and the re-derivation of the
   * stored records' dating (no network). `registered` are the catalogues of the calling thread's plugin generation;
@@ -181,19 +182,19 @@ final class EventImports(
           val skipped = judged.collect { case (_, Left(w)) => EventCount.Key(w.said) } ++
             List.fill(kept0.size - kept.size)(EventCount.Key("over --limit"))
           val named = if dryRun || provider != CatalogProvider.Wikidata then kept else withNames(kept, report)
-          val placed = CatalogMerge.place(named, known, ec.tolerance)
+          val placed = Placement.place(named, known, ec.tolerance)
           var created, merged, matched = 0
           val matchedIds = List.newBuilder[String]
           placed.foreach { (r, p) =>
             p match
-              case CatalogMerge.Placement.Existing(id, _) if preRun(id) =>
+              case Placement.Existing(id, _) if preRun(id) =>
                 matched += 1; matchedIds += s"${r.label} → $id"
               case _ if seen(p.eventId) => merged += 1
               case _                    => created += 1
             seen += p.eventId
           }
           val newEvents = placed
-            .collect { case (r, CatalogMerge.Placement.New(id, _)) => (id, r) }
+            .collect { case (r, Placement.New(id, _)) => (id, r) }
             .groupBy(_._1)
             .toList
             .map((id, rs) =>
@@ -351,7 +352,7 @@ final class EventImports(
         val s =
           store.save(
             batch
-              .map((id, _, b, _) => b -> CatalogMerge.Placement.Existing(id, CatalogMerge.Rationale("re-derived")))
+              .map((id, _, b, _) => b -> Placement.Existing(id, Placement.Rationale("re-derived")))
           )
         updated += s.updated.value
         counts = counts + s.corrections
@@ -362,7 +363,7 @@ final class EventImports(
         )
       }
     val examples = changed.take(5).map { (id, a, b, _) =>
-      def years(r: CatalogRecord) = r.timeSpan.outer.fold("undated")((x, y) => s"${YearFmt(x)}…${YearFmt(y)}")
+      def years(r: CatalogRecord) = r.timeSpan.outer.fold("undated")((x, y) => s"${Year.show(x)}…${Year.show(y)}")
       s"$id: ${years(a)} → ${years(b)}${EventPrecision
           .note(
             b.central.map(c => EventSummary.Central(c.value)),

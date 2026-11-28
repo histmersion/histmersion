@@ -387,10 +387,9 @@ object RepositoryLanding:
   /** Pure: the `citation_pdf_url`s a page names, made absolute against `pageUrl`, http(s) only. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def citationPdfUrls(
       html: CitationPdfUrlsHtml,
-      pageUrl: RepositoryLanding.CitationPdfUrlsPageUrl
+      pageUrl: CitationPdfUrlsPageUrl
   ): List[Candidate.Url] =
     metaTags(html)
       .collect {
@@ -421,9 +420,8 @@ object RepositoryLanding:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def isRepository(
-      pageUrl: RepositoryLanding.IsRepositoryPageUrl,
+      pageUrl: IsRepositoryPageUrl,
       indexSaysRepository: Candidate.Repository,
       html: IsRepositoryHtml,
       rules: Rules
@@ -441,10 +439,9 @@ object RepositoryLanding:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def pdfsOf(
-      pageUrl: RepositoryLanding.PdfsOfPageUrl,
-      indexSaysRepository: RepositoryLanding.PdfsOfIndexSaysRepository,
+      pageUrl: PdfsOfPageUrl,
+      indexSaysRepository: PdfsOfIndexSaysRepository,
       html: PdfsOfHtml,
       rules: Rules,
       oaPublisher: Candidate.Publisher = Candidate.Publisher(false)
@@ -468,8 +465,7 @@ object RepositoryLanding:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def galleyPdfUrls(html: Html, pageUrl: RepositoryLanding.GalleyPdfUrlsPageUrl): List[Candidate.Url] =
+  def galleyPdfUrls(html: Html, pageUrl: GalleyPdfUrlsPageUrl): List[Candidate.Url] =
     val page = (html).value.take(MaxHead)
     val links = GalleyLink
       .findAllMatchIn(page)

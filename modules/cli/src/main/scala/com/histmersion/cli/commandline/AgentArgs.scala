@@ -1,6 +1,10 @@
 package com.histmersion
 package cli
 package commandline
+
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.research.Article
+import com.histmersion.api.automation.agents.Decision
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -12,7 +16,6 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.{AgentRole, AgentsApi, AgentsMarkdown, ModelChains, PlanQuota}
-import com.histmersion.api.research.Articles
 import com.histmersion.util.console.Console
 import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.library.Citekey
@@ -92,7 +95,7 @@ object AgentArgs:
       AgentCmd.Command.Allowance(target_(), limits_.getOrElse(Nil), reserve_.getOrElse(0), remove_.getOrElse(false))
     )
 
-  private val Pools = PlanQuota.PoolId.values.map(_.wire).mkString(", ")
+  private val Pools = PoolId.values.map(_.wire).mkString(", ")
 
   /** `agent quota` shows; `agent quota hold|release|floors|fallthrough|refresh` change or read the pools. */
   final private class QuotaLeaf()
@@ -229,7 +232,7 @@ object AgentArgs:
       value[Int]("acquire-item", "enrich-source: the acquisition item this run fulfils (ticked off when it finishes)")
     private val title_ = value[String]("title", "compile-article: the title of a NEW article")
     private val kind_ =
-      value[String]("kind", s"compile-article: the kind of a new article (${Articles.Kinds.mkString(", ")})")
+      value[String]("kind", s"compile-article: the kind of a new article (${Article.Kinds.mkString(", ")})")
     private val query_ = value[String]("query", "compile-article: free-text filter for the sources to compile from")
     private val topics_ = values[String]("topic", "compile-article: a topic the sources must have (repeatable)")
     private val tags_ = values[String]("tag", "compile-article: a tag the sources must have (repeatable)")

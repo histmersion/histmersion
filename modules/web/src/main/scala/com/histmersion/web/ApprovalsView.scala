@@ -1,10 +1,17 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.approvaldigest.KindGroup
+import com.histmersion.api.automation.approvaldigest.Digest
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Paging, Plural, Wording}
-import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.Creation
 import com.raquo.laminar.api.L.*
 import com.histmersion.api.automation.ListFilters
@@ -139,12 +146,12 @@ object ApprovalsView:
       state: Option[Approval.State.Wire],
       kinds: List[Approval.Kind.Wire],
       by: List[Approval.DecidedBy.Wire],
-      subject: Option[ListFilters.ApprovalFilter.Subject]
-  ): ListFilters.ApprovalFilter =
-    ListFilters.ApprovalFilter(state = state, kind = kinds, subject = subject, decidedBy = by)
+      subject: Option[ApprovalFilter.Subject]
+  ): ApprovalFilter =
+    ApprovalFilter(state = state, kind = kinds, subject = subject, decidedBy = by)
 
   /** The filter in the window's fields now. */
-  def currentFilter(): ListFilters.ApprovalFilter =
+  def currentFilter(): ApprovalFilter =
     filterOfFields(
       UiState.approvalState.now(),
       UiState.approvalKinds.now(),
@@ -158,26 +165,26 @@ object ApprovalsView:
       kinds: List[String],
       by: List[String],
       subject: Option[String]
-  ): ListFilters.ApprovalFilter =
+  ): ApprovalFilter =
     filterOf(
       state.map(Approval.State.Wire(_)),
       kinds.map(Approval.Kind.Wire(_)),
       by.map(Approval.DecidedBy.Wire(_)),
-      subject.map(ListFilters.ApprovalFilter.Subject(_))
+      subject.map(ApprovalFilter.Subject(_))
     )
 
   /** The rows a filter shows, from the rows already loaded — what the list shows the moment a state or a kind is
     * picked, before the server's page replaces it. (The text and the decider are left to the server.)
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def visible(as: List[ApprovalInfo], f: ListFilters.ApprovalFilter): List[ApprovalInfo] =
+  def visible(as: List[ApprovalInfo], f: ApprovalFilter): List[ApprovalInfo] =
     val n = f.normalized
     val state = shownState(n.state)
     as.filter(a => (state.value == "all" || a.state == state) && (n.kind.isEmpty || n.kind.exists(_ == a.kind)))
 
   /** The heading's words before the noun: `open` (or the state picked) and the kinds picked. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def qualifier(f: ListFilters.ApprovalFilter): Option[ListFilters.Qualifier] = f.qualifier
+  def qualifier(f: ApprovalFilter): Option[ListFilters.Qualifier] = f.qualifier
 
   /** The approvals a bulk decision would apply to: those selected that are still shown and open. */
   def bulkTargets(selected: Set[ApprovalInfo.Id], shown: List[ApprovalInfo]): List[ApprovalInfo] =
@@ -278,7 +285,7 @@ object ApprovalsView:
     List(UiState.approvalState, UiState.approvalKinds, UiState.approvalBy, UiState.approvalSubject)
 
   /** The filter, as a signal: a change restarts the list from the newest page. */
-  private val filterSignal: Signal[ListFilters.ApprovalFilter] =
+  private val filterSignal: Signal[ApprovalFilter] =
     UiState.approvalState.signal
       .combineWith(UiState.approvalKinds.signal, UiState.approvalBy.signal, UiState.approvalSubject.signal)
       .map(filterOfFields)
@@ -314,7 +321,7 @@ object ApprovalsView:
   private def decide(a: ApprovalInfo, d: Decision, note: String): Unit =
     busy.update(_ + a.id)
     ApiClient
-      .decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(Agents.DecisionRequest.Note(_)))
+      .decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty).map(DecisionRequest.Note(_)))
       .onComplete { r =>
         busy.update(_ - a.id)
         r.failed.foreach(e => list.failure.set(Some(Problem.Unclassified(Legacy.Text(e.getMessage)))))
@@ -363,7 +370,7 @@ object ApprovalsView:
     * moment later.
     */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
-  private def shownSignal: Signal[(ListPaging.Listing[ApprovalInfo], ListFilters.ApprovalFilter)] =
+  private def shownSignal: Signal[(ListPaging.Listing[ApprovalInfo], ApprovalFilter)] =
     list.listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
 
   /** An approval's state (or "all") as its button and badge read it. */
@@ -442,7 +449,7 @@ object ApprovalsView:
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def digestLine(g: ApprovalDigest.KindGroup): String =
+  def digestLine(g: KindGroup): String =
     s"${kindLabel(g.kind)} ${Paging.grouped(Paging.GroupSize(g.count.value))}" + g.oldest
       .fold("")(o => s" (oldest $o)") +
       (g.decidedBy.value match
@@ -456,7 +463,7 @@ object ApprovalsView:
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def digestBar: HtmlElement =
-    val d = Var(Option.empty[ApprovalDigest.Digest])
+    val d = Var(Option.empty[Digest])
     def load(): Unit = ApiClient.approvalDigest.onComplete(_.toOption.foreach(x => d.set(Some(x))))
     div(
       cls := "approvals-digest",
@@ -558,7 +565,7 @@ object ApprovalsView:
           Option.when(l.rows.isEmpty)(
             p(
               cls := "muted",
-              if f.normalized != ListFilters.ApprovalFilter() then "No approvals match the filter."
+              if f.normalized != ApprovalFilter() then "No approvals match the filter."
               else "Nothing waits for a decision."
             )
           )

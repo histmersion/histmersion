@@ -1,11 +1,16 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.listfilters.JobFilter
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
-import com.histmersion.api.automation.ListFilters.{ApprovalFilter, DecidedBy, JobFilter, RunFilter}
+import com.histmersion.api.automation.ListFilters.DecidedBy
 
 import java.time.Instant
 import com.histmersion.api.automation.Approval
@@ -77,7 +82,7 @@ class ListQueriesSuite extends munit.FunSuite:
           manager = List(RunFilter.Manager("seed:x")),
           model = List(RunFilter.Model("codex:gpt-6")),
           provider = List(RunFilter.Provider("Codex")),
-          origin = List(Agents.Origin.Wire("manager")),
+          origin = List(Origin.Wire("manager")),
           since = Some(RunFilter.Since("7d")),
           until = Some(RunFilter.Until("2026-10-23")),
           subject = Some(RunFilter.Subject("tin"))
@@ -116,7 +121,7 @@ class ListQueriesSuite extends munit.FunSuite:
     )
     assert(
       ListQueries
-        .runs(RunFilter(origin = List(Agents.Origin.Wire("cron"))), now)
+        .runs(RunFilter(origin = List(Origin.Wire("cron"))), now)
         .left
         .exists(_.problems.sentences.mkString("; ").contains("unknown list filter term"))
     )

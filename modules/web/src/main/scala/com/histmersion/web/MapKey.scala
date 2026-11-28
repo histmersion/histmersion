@@ -1,11 +1,13 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
+import com.histmersion.api.catalogue.EventTaxonomy
 import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
@@ -50,7 +52,7 @@ object MapKey:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def sitesHtml: Html =
     val items = Html.concat(
-      (SiteTypes.all.map(t => t.icon.value -> t.label.value) :+ (CardIcons.Unknown -> "site of unknown type"))
+      (SiteType.all.map(t => t.icon.value -> t.label.value) :+ (CardIcons.Unknown -> "site of unknown type"))
         .map((icon, label) =>
           markup"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(
               Glyphs.Name(icon)

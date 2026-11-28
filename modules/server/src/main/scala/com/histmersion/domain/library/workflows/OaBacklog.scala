@@ -1,5 +1,18 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.OaWork
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.api.library.repairacquire.RepairRequest
+import com.histmersion.api.library.repairacquire.RepairResult
+import com.histmersion.api.library.repairacquire.RepairRow
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -22,7 +35,6 @@ import com.histmersion.domain.IngestBacklog.Placement
 import com.histmersion.domain.IngestBacklog.RepairAction
 import com.histmersion.domain.IngestBacklog.RepairFacts
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.api.library.RepairAcquire.*
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.library.workflows.OaBacklog.Snapshot
@@ -95,7 +107,10 @@ final class OaBacklog(
       .filter(i => ItemStatus.parse(i.status).exists(_.isFinal))
       .map(i => Placement.SettledBefore.Item(i.id.value))
     val acquire =
-      site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(i => Placement.JoinAcquire.Item(i.id.value))
+      site.queues
+        .naming(api.automation.queue.Docket.Acquire, doi)
+        .headOption
+        .map(i => Placement.JoinAcquire.Item(i.id.value))
     IngestBacklog.place(
       site.sourceStore.citekeyOfDoi(doi),
       acquire,
@@ -304,12 +319,15 @@ final class OaBacklog(
              else "") +
             (if known > 0 then s", $known in the corpus already" else "") +
             (if retried > 0 then s", $retried to try again later" else "") + s"; $waiting waiting"
-        site.workLists.logLine(QueueAdd(Queue.QueueItem.Text(line.take(1000))), InTreeWorkflow.IngestBacklog.creator)
+        site.workLists.logLine(
+          QueueAdd(api.automation.queue.QueueItem.Text(line.take(1000))),
+          InTreeWorkflow.IngestBacklog.creator
+        )
         List(line)
 
   private enum Drained derives CanEqual:
     case Ingested(citekey: Citekey)
-    case Queued(item: Queue.QueueItem.Id)
+    case Queued(item: api.automation.queue.QueueItem.Id)
     case Known
     case Retried
     case Lost
@@ -437,9 +455,9 @@ final class OaBacklog(
                     )
                   case None => Drained.Lost
 
-  private def settingsOf(managerId: ManagerInfo.Id): ManagerPolicy.ReviewSettings =
+  private def settingsOf(managerId: ManagerInfo.Id): ReviewSettings =
     val c = agents.managerStore.get(managerId).map(_.config).getOrElse(ManagerConfig())
-    ManagerPolicy.ReviewSettings.forKind(Manager.Kind.Watch, c, managerDefaults)
+    ReviewSettings.forKind(Manager.Kind.Watch, c, managerDefaults)
 
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
     * every goal. None when the list refused it.
@@ -448,15 +466,15 @@ final class OaBacklog(
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def acquireOnce(goals: List[Goal.Slug], doi: Doi, w: OaWork)(using
       WritePermit
-  )(using Creator.New): Option[Queue.QueueItem.Id] =
-    val existing = site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
+  )(using Creator.New): Option[api.automation.queue.QueueItem.Id] =
+    val existing = site.queues.naming(api.automation.queue.Docket.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
       val goal = goals.headOption
       val text = w.acquireText
-        .map(t => Queue.QueueItem.Text(t.value))
+        .map(t => api.automation.queue.QueueItem.Text(t.value))
         .orElse(
           goal.map(g =>
-            Queue.QueueItem.Text(
+            api.automation.queue.QueueItem.Text(
               AcquisitionSweepRules
                 .acquireText(
                   AcquisitionSweepRules.Candidate(
@@ -479,10 +497,10 @@ final class OaBacklog(
       text.flatMap(t =>
         site.workLists
           .record(
-            WorkListControllers.ListName(Queue.Kind.Acquire.label.value),
+            WorkListControllers.ListName(api.automation.queue.Docket.Acquire.label.value),
             QueueAdd(
               t,
-              topic = goal.map(g => Queue.QueueItem.Topic(s"goal $g")),
+              topic = goal.map(g => api.automation.queue.QueueItem.Topic(s"goal $g")),
               goal = goal.map(g => com.histmersion.api.automation.Goal.Slug(g.value))
             ),
             InTreeWorkflow.IngestBacklog.creator
@@ -606,8 +624,11 @@ final class OaBacklog(
                 row(Move, "legal open access", Some(id))
     }
     val untouched =
-      site.queues.list(Queue.Kind.Acquire, QueueScope.Open).size - (if dryRun then items.size
-                                                                    else out.count(_.action.value == Keep))
+      site.queues.list(api.automation.queue.Docket.Acquire, QueueScope.Open).size - (if dryRun then items.size
+                                                                                     else
+                                                                                       out.count(
+                                                                                         _.action.value == Keep
+                                                                                       ))
     val snap = snapshot(extra =
       if dryRun then
         out
@@ -629,7 +650,7 @@ final class OaBacklog(
     if !dryRun && (result.moved.value > 0 || result.removed.value > 0) then
       site.workLists.logLine(
         QueueAdd(
-          Queue.QueueItem.Text(
+          api.automation.queue.QueueItem.Text(
             (s"repair-acquire ($by): ${result.moved} legal open-access work(s) moved from the " +
               s"acquisition list into the watchers' ingest backlogs, ${result.removed} in the corpus already removed, ${result.kept} kept; " +
               s"${result.backlog} waiting in the backlog").take(1000)

@@ -1,9 +1,11 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.activity.Entry
+
 import com.histmersion.api.Api.JobControl
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Activity.Entry
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.api.automation.Goal
 
@@ -15,7 +17,7 @@ class ActivityViewSuite extends munit.FunSuite:
       ActivityTab.values.toList.filter(_.isChip).map(_.label),
       List("Everything", "Running now", "Agent work", "Background jobs", "Your actions", "Problems")
     )
-    assertEquals(ActivityTab.values.toList.filter(_.isChip).flatMap(_.show), Activity.Show.values.toList)
+    assertEquals(ActivityTab.values.toList.filter(_.isChip).flatMap(_.show), Show.values.toList)
     assertEquals(ActivityTab.values.toList.filterNot(_.isChip).map(_.slug), List("runs", "all-jobs", "worklog"))
 
   private def run(state: Entry.State) =

@@ -13,12 +13,12 @@ import scala.collection.mutable
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
-import com.histmersion.api.Years
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Event
 import com.histmersion.api.Geo
 import com.histmersion.api.Html.html as markup
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** The NAMES on the map: every region and polity on the boundaries layer is named, and the names that would collide are
   * thinned out, events first, then larger shapes ([[LabelPlacement]] decides where and which, [[LabelMotion]] how they
@@ -191,7 +191,7 @@ object MapLabels:
       label: js.Dynamic => Label,
       wrapClass: js.Dynamic => WrapClass,
       place: js.Dynamic => Option[(PlaceHover.PlaceId, UiLabels.Text, PlaceHover.PlaceKind)],
-      asOf: () => Option[Years.Astronomical],
+      asOf: () => Option[Year.Astronomical],
       release: js.Dynamic => Unit = _ => ()
   ): Unit =
     generation += 1
@@ -236,7 +236,7 @@ object MapLabels:
       label: js.Dynamic => Label,
       wrapClass: js.Dynamic => WrapClass,
       place: js.Dynamic => Option[(PlaceHover.PlaceId, UiLabels.Text, PlaceHover.PlaceKind)],
-      asOf: () => Option[Years.Astronomical]
+      asOf: () => Option[Year.Astronomical]
   ): Unit =
     if map != null && areasOn then
       val keep = named.map((f, _) => AreaKey + key(f).value).toSet

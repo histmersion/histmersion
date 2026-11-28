@@ -24,7 +24,6 @@ import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ui.Layout
 import com.histmersion.api.catalogue.Year
-import com.histmersion.api.Years
 import com.histmersion.api.Api
 import com.histmersion.api.Paging
 import com.histmersion.web.map.MapSurface
@@ -128,19 +127,19 @@ object PlacesInput:
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def fetchPlace(id: PlaceId, year: Option[Years.Astronomical]): Future[PlaceDetail] =
+  private def fetchPlace(id: PlaceId, year: Option[Year.Astronomical]): Future[PlaceDetail] =
     ApiClient.place(Place.Id(id.value), year.map(a => Api.AggregateQuery.AsOf(a.value)))
 
   /** The year the gazetteer is read at: the middle of the selected span. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def asOf(): Option[Years.Astronomical] =
+  private def asOf(): Option[Year.Astronomical] =
     val f = UiState.from.now()
     val t = UiState.to.now()
     (f, t) match
       case (None, None)       => None
-      case (None, Some(b))    => Some(Years.Astronomical(b))
-      case (Some(a), None)    => Some(Years.Astronomical(a))
-      case (Some(a), Some(b)) => Some(Years.Astronomical(Math.round((a.toDouble + b.toDouble) / 2)))
+      case (None, Some(b))    => Some(Year.Astronomical(b))
+      case (Some(a), None)    => Some(Year.Astronomical(a))
+      case (Some(a), Some(b)) => Some(Year.Astronomical(Math.round((a.toDouble + b.toDouble) / 2)))
 
   private def flag(contested: Boolean, label: String): Boolean =
     contested && !Option(label).getOrElse("").toLowerCase.contains("contested")
@@ -279,7 +278,7 @@ object PlacesInput:
       d: PlaceDetail,
       geo: js.Dynamic,
       names: scala.collection.mutable.ListBuffer[DomMarker],
-      at: () => Option[Years.Astronomical]
+      at: () => Option[Year.Astronomical]
   ): Option[ShapeFeature] =
     drawnPlaces(id) = (id, UiLabels.Text(d.place.label.value), PlaceHover.PlaceKind(d.place.kind.value))
     val t = if js.isUndefined(geo.selectDynamic("type")) then "" else geo.selectDynamic("type").toString
@@ -531,7 +530,7 @@ object PlacesInput:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def preview(id: PlaceId, asOfYear: Option[Years.Astronomical]): Unit =
+  def preview(id: PlaceId, asOfYear: Option[Year.Astronomical]): Unit =
     if !layer then ()
     else
       val wasShowing = previewId.contains(id) && previewShown

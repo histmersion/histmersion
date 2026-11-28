@@ -1,5 +1,47 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.GenerateRequest
+import com.histmersion.api.automation.agents.GenerateResult
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.QuotaInfo
+import com.histmersion.api.automation.planquota.Cooldown
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.FallthroughSet
+import com.histmersion.api.automation.planquota.QuotaRefresh
+import com.histmersion.api.automation.planquota.QuotaRefreshed
+import com.histmersion.api.automation.planquota.RefreshTrigger
+import com.histmersion.api.automation.planquota.PoolRefreshed
+import com.histmersion.api.automation.planquota.ModReport
+import com.histmersion.api.automation.planquota.GuardAnswer
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.Price
+import com.histmersion.api.automation.agents.ModelsInfo
+import com.histmersion.api.automation.agents.RoleModel
+import com.histmersion.api.automation.modelchains.RoleChain
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.modelchains.AllowanceStatus
+import com.histmersion.api.automation.modelchains.Allowance
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.agents.DoctorCheck
+import com.histmersion.api.automation.agents.CheckLevel
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.agents.RunDetail
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.agents.ProbeRequest
+import com.histmersion.api.automation.agents.ProbeResult
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.api.automation.agents.Usage
 import com.github.plokhotnyuk.jsoniter_scala.core.writeToString
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
@@ -320,12 +362,12 @@ final class AgentsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def covers(p: PlanQuota.PoolId): List[PlanQuota.PoolStatus.Covers] = p match
-    case PlanQuota.PoolId.ClaudePlan  => List(PlanQuota.PoolStatus.Covers(s"${ProviderKind.ClaudeCode.wire}:*"))
-    case PlanQuota.PoolId.ChatgptPlan =>
-      PlanQuota.PoolStatus.Covers(s"${ProviderKind.Codex.wire}:*") :: Option
+  private def covers(p: PoolId): List[PoolStatus.Covers] = p match
+    case PoolId.ClaudePlan  => List(PoolStatus.Covers(s"${ProviderKind.ClaudeCode.wire}:*"))
+    case PoolId.ChatgptPlan =>
+      PoolStatus.Covers(s"${ProviderKind.Codex.wire}:*") :: Option
         .when(cfg.providers.opencode.chatgptLogin.value)(
-          PlanQuota.PoolStatus.Covers(s"${ProviderKind.Opencode.wire}:openai/*")
+          PoolStatus.Covers(s"${ProviderKind.Opencode.wire}:openai/*")
         )
         .toList
 
@@ -338,37 +380,37 @@ final class AgentsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def quota: PlanQuota.QuotaInfo =
+  def quota: QuotaInfo =
     val now = PlanQuotaRepo.EpochMillis(clock.millis())
-    PlanQuota.QuotaInfo(
+    QuotaInfo(
       pools.statuses(covers, PlanQuota.Now(now.value)),
       picker.allowanceStatuses(now),
-      Role.values.toList.filter(picker.fallthrough).map(r => PlanQuota.QuotaInfo.Fallthrough(r.wire.value)),
-      PlanQuota.QuotaInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString),
+      Role.values.toList.filter(picker.fallthrough).map(r => QuotaInfo.Fallthrough(r.wire.value)),
+      QuotaInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString),
       picker
         .cooldowns(now)
         .map((m, u) =>
-          PlanQuota.Cooldown(
-            PlanQuota.Cooldown.Model(m.value),
-            PlanQuota.Cooldown.Until(u.toString),
+          Cooldown(
+            Cooldown.Model(m.value),
+            Cooldown.Until(u.toString),
             PlanQuota.Rationale(ModelPicker.CoolingWhy)
           )
         )
     )
 
-  private def poolOf(raw: PlanQuota.PoolId.Wire): Either[Problems, PlanQuota.PoolId] =
-    PlanQuota.PoolId
+  private def poolOf(raw: PoolId.Wire): Either[Problems, PoolId] =
+    PoolId
       .parse(raw)
       .toRight(
         Problem.Invalid.Unknown.here(
-          Problem.TypeName.of(PlanQuota.PoolId.Wire),
+          Problem.TypeName.of(PoolId.Wire),
           Problem.Raw.of(raw),
-          PlanQuota.PoolId.values.toVector.map(v => Problem.Raw.of(v.wire))
+          PoolId.values.toVector.map(v => Problem.Raw.of(v.wire))
         )
       )
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
-  def setPool(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet): Either[Problems, PlanQuota.PoolStatus] =
+  def setPool(pool: PlanQuota.PoolIdText, in: PoolSet): Either[Problems, PoolStatus] =
     maintenance.writing:
       setPoolHeld(pool, in)
 
@@ -377,16 +419,16 @@ final class AgentsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def setPoolHeld(pool: PlanQuota.PoolIdText, in: PlanQuota.PoolSet)(using
+  private def setPoolHeld(pool: PlanQuota.PoolIdText, in: PoolSet)(using
       WritePermit
-  ): Either[Problems, PlanQuota.PoolStatus] =
+  ): Either[Problems, PoolStatus] =
     for
-      p <- poolOf(PlanQuota.PoolId.Wire(pool.value))
+      p <- poolOf(PoolId.Wire(pool.value))
       f <- in.floors.map(_.value.trim) match
         case Some("") => Right(Some(None))
         case Some(t)  =>
-          PlanQuota.Floors
-            .parse(PlanQuota.Floors.Wire(t))
+          api.automation.planquota.Floors
+            .parse(api.automation.planquota.Floors.Wire(t))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
       _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.hold)))
@@ -394,7 +436,7 @@ final class AgentsControllers(
       st <- pools
         .statuses(covers)
         .find(_.pool == p.wire)
-        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(PlanQuota.PoolId.Wire), Problem.Raw.of(p.wire)))
+        .toRight(Problem.NotFound.Entity(Problem.TypeName.of(PoolId.Wire), Problem.Raw.of(p.wire)))
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
@@ -403,7 +445,7 @@ final class AgentsControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Problems, PlanQuota.QuotaInfo] =
+  def setFallthrough(role: Role.Wire, in: FallthroughSet): Either[Problems, QuotaInfo] =
     maintenance.writing:
       roleOf(role).map { r =>
         Transactor(ds).write(
@@ -416,7 +458,7 @@ final class AgentsControllers(
     * ChatGPT plan from the app-server (free), the Claude plan from its probe (one minimal `claude -p` turn) unless
     * `refresh = off`. The login is checked again first; a pool without one is not read.
     */
-  def refreshQuota(in: PlanQuota.QuotaRefresh): Either[Problems, PlanQuota.QuotaRefreshed] =
+  def refreshQuota(in: QuotaRefresh): Either[Problems, QuotaRefreshed] =
     maintenance.writing:
       refreshQuotaHeld(in)
 
@@ -426,49 +468,49 @@ final class AgentsControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   private def refreshQuotaHeld(
-      in: PlanQuota.QuotaRefresh
-  )(using WritePermit): Either[Problems, PlanQuota.QuotaRefreshed] =
+      in: QuotaRefresh
+  )(using WritePermit): Either[Problems, QuotaRefreshed] =
     in.pool
       .map(_.value.trim)
       .filter(_.nonEmpty)
-      .map(t => poolOf(PlanQuota.PoolId.Wire(t)).map(List(_)))
-      .getOrElse(Right(PlanQuota.PoolId.values.toList))
+      .map(t => poolOf(PoolId.Wire(t)).map(List(_)))
+      .getOrElse(Right(PoolId.values.toList))
       .map { ps =>
         val cooled = picker.cooldowns().map(_._1)
         val done =
-          ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = PlanPools.Force(true)))
+          ps.map(p => p -> pools.refreshPool(p, RefreshTrigger.Command, force = PlanPools.Force(true)))
         val after = pools.statuses(covers).map(st => st.pool -> st).toMap
         // a model parked after its plan's limit comes back as soon as a reading taken now says so (#1827)
         val still = picker.cooldowns().map(_._1).toSet
-        PlanQuota.QuotaRefreshed(
+        QuotaRefreshed(
           done.flatMap { (p, r) =>
             after
               .get(p.wire)
               .map(st =>
                 r match
                   case Right(x) =>
-                    PlanQuota.PoolRefreshed(
+                    PoolRefreshed(
                       p.wire,
-                      (if x.ok.value then PlanQuota.PoolRefreshed.Refreshed.Refreshed
-                       else PlanQuota.PoolRefreshed.Refreshed.Unchanged),
-                      PlanQuota.PoolRefreshed.Detail(x.text.value),
+                      (if x.ok.value then PoolRefreshed.Refreshed.Refreshed
+                       else PoolRefreshed.Refreshed.Unchanged),
+                      PoolRefreshed.Detail(x.text.value),
                       st
                     )
                   case Left(why) =>
-                    PlanQuota.PoolRefreshed(
+                    PoolRefreshed(
                       p.wire,
-                      PlanQuota.PoolRefreshed.Refreshed.Unchanged,
-                      PlanQuota.PoolRefreshed.Detail(s"not read: $why"),
+                      PoolRefreshed.Refreshed.Unchanged,
+                      PoolRefreshed.Detail(s"not read: $why"),
                       st
                     )
               )
           },
-          cooled.filterNot(still).map(m => PlanQuota.QuotaRefreshed.Lifted(m.value))
+          cooled.filterNot(still).map(m => QuotaRefreshed.Lifted(m.value))
         )
       }
 
   /** `POST /api/agents/quota/claude` — a mod's report, answered with go on or stop. */
-  def guard(r: PlanQuota.ModReport): PlanQuota.GuardAnswer = maintenance.writing(pools.guard(r))
+  def guard(r: ModReport): GuardAnswer = maintenance.writing(pools.guard(r))
 
   /** Stop the managers and the pool (tests; the server process just exits). */
   def stop(): Unit =
@@ -521,7 +563,7 @@ final class AgentsControllers(
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
     */
-  def resolve(m: ModelRef): Either[Problems, (LlmClient, Billing)] =
+  def resolve(m: ModelRef): Either[Problems, (LlmClient, api.automation.agents.Billing)] =
     for
       ps <- prices
       b <- Agents.Prices.billing(ps, m, pools.poolOf(m))
@@ -650,7 +692,7 @@ final class AgentsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def chainOf(role: Role): Either[Problems, ModelChains.RoleChain] =
+  private def chainOf(role: Role): Either[Problems, RoleChain] =
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
       .find(_.role.value == role.wire.value)
@@ -660,16 +702,16 @@ final class AgentsControllers(
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
     * come next). Works with agents off.
     */
-  def setChain(role: Role.Wire, in: ModelChains.ChainSet): Either[Problems, ModelChains.RoleChain] =
+  def setChain(role: Role.Wire, in: ChainSet): Either[Problems, RoleChain] =
     maintenance.writing(setChainHeld(role, in))
 
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def setChainHeld(role: Role.Wire, in: ModelChains.ChainSet)(using
+  private def setChainHeld(role: Role.Wire, in: ChainSet)(using
       WritePermit
-  ): Either[Problems, ModelChains.RoleChain] =
+  ): Either[Problems, RoleChain] =
     for
       r <- roleOf(role)
       ms <- ModelChains
@@ -684,13 +726,13 @@ final class AgentsControllers(
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
-  def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] = maintenance.writing(resetChainHeld(role))
+  def resetChain(role: Role.Wire): Either[Problems, RoleChain] = maintenance.writing(resetChainHeld(role))
 
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def resetChainHeld(role: Role.Wire)(using WritePermit): Either[Problems, ModelChains.RoleChain] =
+  private def resetChainHeld(role: Role.Wire)(using WritePermit): Either[Problems, RoleChain] =
     for
       r <- roleOf(role)
       _ = Transactor(ds).write(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
@@ -698,7 +740,7 @@ final class AgentsControllers(
     yield c
 
   /** `PUT /api/agents/allowances` — one model's or provider's limits and reserve, saved over config. */
-  def setAllowance(in: ModelChains.AllowanceSet): Either[Problems, ModelChains.AllowanceStatus] =
+  def setAllowance(in: AllowanceSet): Either[Problems, AllowanceStatus] =
     maintenance.writing(setAllowanceHeld(in))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -706,16 +748,16 @@ final class AgentsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def setAllowanceHeld(in: ModelChains.AllowanceSet)(using
+  private def setAllowanceHeld(in: AllowanceSet)(using
       WritePermit
-  ): Either[Problems, ModelChains.AllowanceStatus] =
+  ): Either[Problems, AllowanceStatus] =
     for
-      t <- ModelChains.Target
-        .parse(ModelChains.Target.Spec(in.target.value), knownPluginNames)
-      ls <- in.limits.map(ModelChains.Limit.fromSpec).partitionMap(identity) match
+      t <- api.automation.modelchains.Aim
+        .parse(api.automation.modelchains.Aim.Spec(in.target.value), knownPluginNames)
+      ls <- in.limits.map(api.automation.modelchains.Limit.fromSpec).partitionMap(identity) match
         case (Nil, ok)          => Right(ok)
         case (first :: more, _) => Left(Problems.of(first, more*))
-      a <- ModelChains.Allowance.of(t, ls, in.reservePct)
+      a <- Allowance.of(t, ls, in.reservePct)
       _ = Transactor(ds).write(
         ModelSettingsRepo.setAllowance(
           ModelSettingsRepo.Saved.Target(t.wire.value),
@@ -727,23 +769,23 @@ final class AgentsControllers(
         .allowanceStatuses(PlanQuotaRepo.EpochMillis(clock.millis()))
         .find(_.target.value == t.wire.value)
         .toRight(
-          Problem.NotFound.Entity(Problem.TypeName.of(ModelChains.Target.Wire), Problem.Raw.of(t.wire))
+          Problem.NotFound.Entity(Problem.TypeName.of(api.automation.modelchains.Aim.Wire), Problem.Raw.of(t.wire))
         )
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
-  def removeAllowance(target: ModelChains.AllowanceSet.Target): Either[Problems, Goal.Plans.Removed] =
+  def removeAllowance(target: AllowanceSet.Target): Either[Problems, Goal.Plans.Removed] =
     maintenance.writing(removeAllowanceHeld(target))
 
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def removeAllowanceHeld(target: ModelChains.AllowanceSet.Target)(using
+  private def removeAllowanceHeld(target: AllowanceSet.Target)(using
       WritePermit
   ): Either[Problems, Goal.Plans.Removed] =
-    ModelChains.Target
-      .parse(ModelChains.Target.Spec(target.value), knownPluginNames)
+    api.automation.modelchains.Aim
+      .parse(api.automation.modelchains.Aim.Spec(target.value), knownPluginNames)
       .map(t =>
         Goal.Plans.Removed(
           (if Transactor(ds).write(ModelSettingsRepo.removeAllowance(ModelSettingsRepo.Saved.Target(t.wire.value))) then
@@ -758,7 +800,7 @@ final class AgentsControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def doctor(offline: AgentsControllers.Offline): Agents.DoctorReport =
+  def doctor(offline: AgentsControllers.Offline): DoctorReport =
     val r =
       AgentDoctor(
         site.config,
@@ -1033,11 +1075,11 @@ final class AgentsControllers(
       .map(_.map(t => AgentsControllers.Target(t.value)))
       .getOrElse(
         managerStore
-          .get(Managers.ManagerInfo.Id(raw.value.trim))
+          .get(ManagerInfo.Id(raw.value.trim))
           .map(m => AgentsControllers.Target(m.id.value))
           .toRight(
             Api.Error(
-              Problem.NotFound.Entity(Problem.TypeName.of(Managers.ManagerInfo.Id), Problem.Raw.of(raw)),
+              Problem.NotFound.Entity(Problem.TypeName.of(ManagerInfo.Id), Problem.Raw.of(raw)),
               Some(Api.Error.Code(Write.CodeNotFound))
             )
           )
@@ -1146,8 +1188,8 @@ final class AgentsControllers(
       upTo: Option[Paging.Cursor] = None
   ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     runsPage(
-      ListFilters.RunFilter(
-        status = status.toList.map(st => ListFilters.RunFilter.Status(st.value)),
+      RunFilter(
+        status = status.toList.map(st => RunFilter.Status(st.value)),
         goal = goal.map(g => Goal.Slug(g.value))
       ),
       limit,
@@ -1163,7 +1205,7 @@ final class AgentsControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def runsPage(
-      f: ListFilters.RunFilter,
+      f: RunFilter,
       limit: Option[PageSize],
       before: Option[Paging.Cursor],
       upTo: Option[Paging.Cursor]
@@ -1324,7 +1366,7 @@ final class AgentsControllers(
       upTo: Option[Paging.Cursor] = None
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     approvalsPage(
-      ListFilters.ApprovalFilter(state = state.map(st => ListFilters.ApprovalFilter.State(st.value))),
+      ApprovalFilter(state = state.map(st => ApprovalFilter.State(st.value))),
       limit,
       before,
       upTo
@@ -1338,7 +1380,7 @@ final class AgentsControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def approvalsPage(
-      f: ListFilters.ApprovalFilter,
+      f: ApprovalFilter,
       limit: Option[PageSize],
       before: Option[Paging.Cursor],
       upTo: Option[Paging.Cursor]
@@ -1550,7 +1592,7 @@ final class AgentsControllers(
       result <- probeWith(picked.client, picked.billing, src)
     yield result
 
-  private def probeWith(client: LlmClient, billing: Billing, src: ProbeAnswer)(using
+  private def probeWith(client: LlmClient, billing: api.automation.agents.Billing, src: ProbeAnswer)(using
       WritePermit
   ): Either[Api.Error, ProbeResult] =
     for
@@ -1572,7 +1614,7 @@ final class AgentsControllers(
   )
   private def probeCall(
       client: LlmClient,
-      billing: Billing,
+      billing: api.automation.agents.Billing,
       src: ProbeAnswer,
       d: AgentDef,
       system: String

@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -200,7 +202,7 @@ class OpsHttpSuite extends DbSuite:
       def idOf(body: String) =
         """"id"\s*:\s*(\d+)""".r
           .findFirstMatchIn(body)
-          .map(m => Queue.QueueItem.Id(m.group(1).toInt))
+          .map(m => QueueItem.Id(m.group(1).toInt))
           .getOrElse(fail(body))
       val (ok, gone) = (
         idOf(post(s"$url/api/queue/tasks", """{"text":"zzgoals done item"}""")._2),

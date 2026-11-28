@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.domain.research.workflows.Ledger
+
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.database.Jsonb
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.domain.ReviewLedger.Ledger
 
 import com.augustnagro.magnum.*
 import io.github.iltotore.iron.constraint.any.Pure

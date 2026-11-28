@@ -1,5 +1,28 @@
 package com.histmersion
 package domain.automation.managers
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Next
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.domain.automation.managers.StepFacts
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ArticleSpec
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.domain.automation.managers.CronStep
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.agents.PauseReason
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -21,11 +44,7 @@ import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.domain.ManagerPolicy.Next
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
@@ -384,8 +403,7 @@ final class ManagerSupervisor(
   )(using WritePermit)(using Creator.New): Unit =
     val runInfoId = item.runId.get
     val run = runIdOf(runInfoId)
-    ManagerPolicy.evaluateStep(
-      s,
+    s.evaluateStep(
       ManagerPolicy.StepLabel(item.kind.value),
       itemTargetOf(item),
       item.failures.transformInto[Next.Retry.Failures],
@@ -444,10 +462,10 @@ final class ManagerSupervisor(
         val filed = task.flatMap(t =>
           workLists
             .record(
-              WorkListControllers.ListName(Queue.Kind.Tasks.label.value),
+              WorkListControllers.ListName(api.automation.queue.Docket.Tasks.label.value),
               QueueAdd(
-                Queue.QueueItem.Text(t.value),
-                topic = Some(Queue.QueueItem.Topic("agent manager")),
+                QueueItem.Text(t.value),
+                topic = Some(QueueItem.Topic("agent manager")),
                 goal = m.goal,
                 job = Some(run.transformInto[SpatialHierarchyResult.Job.Id])
               ),
@@ -708,7 +726,7 @@ final class ManagerSupervisor(
         }
         moved.toList.map { text =>
           workLists.logLine(
-            QueueAdd(Queue.QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)),
+            QueueAdd(QueueItem.Text(s"goal $g: $text (watcher $id)".take(1000)), goal = Some(apiGoal)),
             InTreeWorkflow.Managers.creator
           )
           scribe.info(s"goal $g: $text")
@@ -740,11 +758,11 @@ final class ManagerSupervisor(
         m.nextTickAt.flatMap(t => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(t.value))),
         now
       ) match
-        case ManagerPolicy.CronStep.Idle           => false
-        case ManagerPolicy.CronStep.Schedule(next) =>
+        case CronStep.Idle           => false
+        case CronStep.Schedule(next) =>
           Transactor(ds).write(Unused(ManagerRepo.setNextTick(m.id, next), Unused.Why.Idempotent))
           false
-        case ManagerPolicy.CronStep.Fire(next) =>
+        case CronStep.Fire(next) =>
           Transactor(ds).write(Unused(ManagerRepo.setNextTick(m.id, next), Unused.Why.Idempotent))
           val what = byKind.get(kindOf(m)).fold(Nil)(_.fire(this, m, now))
           recordEvent(
@@ -776,22 +794,21 @@ final class ManagerSupervisor(
   )(using WritePermit)(using Creator.New): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
-      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then
-        Left(SchedulerPolicy.Block.Refusal.TargetWritten)
+      if blocks(itemKindOf(item), unsettledOn(itemTargetOf(item))) then Left(Block.Refusal.TargetWritten)
       else
         guardedOpt(m.id.transformInto[ManagerLight.Id], out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())
           case None    =>
             if agents.managerStore.item(item.id).exists(_.status == ItemStatus.Pending.wire) then
-              Left(SchedulerPolicy.Block.Refusal.NotStartable)
-            else Left(SchedulerPolicy.Block.Refusal.Settled)
+              Left(Block.Refusal.NotStartable)
+            else Left(Block.Refusal.Settled)
     }
     ms.foreach { m =>
       val waits =
         decision.waiting
           .filter(_._1.c.managerId.value == m.id.value)
           .map(_._2)
-          .filterNot(_.why == SchedulerPolicy.Wait.Why.Busy(SchedulerPolicy.Block.Refusal.Settled))
+          .filterNot(_.why == domain.automation.scheduler.Wait.Why.Busy(Block.Refusal.Settled))
       val blocked = waits.map(_.why).find(_.isBudget)
       val starved = waits.filter(_.code == SchedulerPolicy.Code.Blocked).map(_.why).find(_.isStarved)
       val full = waits.exists(w =>
@@ -986,7 +1003,7 @@ final class ManagerSupervisor(
 
   /** [[ManagerPolicy.blocks]] over the unsettled runs on an item's target. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def blocks(kind: ManagerContext.ItemKind, unsettled: Seq[Agents.RunInfo]): Boolean =
+  def blocks(kind: ManagerContext.ItemKind, unsettled: Seq[RunInfo]): Boolean =
     ManagerPolicy.blocks(
       kind,
       pipelineOf(kind).wire.transformInto[DomainPipeline.Wire],

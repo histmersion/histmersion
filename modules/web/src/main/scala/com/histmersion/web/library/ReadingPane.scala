@@ -3,7 +3,6 @@ package web.library
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.api.YearFmt
 import com.histmersion.web.*
 import com.histmersion.web.map.{GeoBounds, TheMap}
 import com.histmersion.web.ui.Layout
@@ -30,6 +29,7 @@ import com.histmersion.web.WindowKey
 import com.histmersion.api.UiLabels
 import com.histmersion.web.{:=, given}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** Library's reading pane: the item chosen in the table. Its actions (show it on the map, open its page in a new tab,
   * pin it as a window; in a narrow window, back to the list), then what it is, its title, its authors, its status,
@@ -255,8 +255,8 @@ object ReadingPane:
           li(
             cls := "reading-finding",
             f.claim,
-            Option.when(YearFmt.period(f.periodStart, f.periodEnd).nonEmpty)(
-              span(cls := "lib-period", s" ${YearFmt.period(f.periodStart, f.periodEnd)}")
+            Option.when(Year.period(f.periodStart, f.periodEnd).nonEmpty)(
+              span(cls := "lib-period", s" ${Year.period(f.periodStart, f.periodEnd)}")
             ),
             f.regionName
               .filter(_.value.trim.nonEmpty)

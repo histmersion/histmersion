@@ -1,5 +1,14 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.agents.StepInfo
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -74,7 +83,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val Ck2 = Citekey("zzagent2024_new")
   private val ApiCk2 = api.library.Citekey("zzagent2024_new")
   private val CkRef = GoalLink.Ref("zzagent2000_old")
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -186,7 +195,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   ):
     val (a, h, up) = handlers(ScriptedClient(Model)); seed(h)
     up.citing = Map(Ck.value -> citing)
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget))
+    val run = start(a, RunRequest(RunRequest.Pipeline("currency-check"), GoalTarget))
     assertEquals(run.status, "done", run.error)
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.toList, List(s"assess $Ck", s"followups $Ck"))
@@ -216,7 +225,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     assert(run.progress.exists(_.value.contains("1 edge(s) proposed, 1 paper(s) queued")), run.progress)
 
     // again (as a schedule would): the open proposal and the queued paper are not doubled
-    val again = start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget))
+    val again = start(a, RunRequest(RunRequest.Pipeline("currency-check"), GoalTarget))
     assertEquals(again.status, "done", again.error)
     assertEquals(
       a.approvalsList(Some(ApprovalQuery.State("all")), None)
@@ -230,7 +239,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     assertEquals(queued.size, 1)
     // a rejected proposal is not asked again either
     assert(a.decide(ApiIds.approval(open.head.id), Approval.Outcome("reject"), DecisionRequest()).isRight)
-    assertEquals(start(a, RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget)).status, "done")
+    assertEquals(start(a, RunRequest(RunRequest.Pipeline("currency-check"), GoalTarget)).status, "done")
     assertEquals(
       a.approvalsList(Some(ApprovalQuery.State("all")), None)
         .left
@@ -273,7 +282,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       h.workLists
         .addOverRest(
           WorkListControllers.ListName("acquire"),
-          Queue.QueueAdd(Queue.QueueItem.Text("Zzagent queued. https://doi.org/10.5555/zzagent.q"))
+          QueueAdd(api.automation.queue.QueueItem.Text("Zzagent queued. https://doi.org/10.5555/zzagent.q"))
         )
         .isRight
     )
@@ -285,7 +294,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         work(ApiDoi("10.5555/zzagent.q"), ApiTitle("Queued"))
       )
     )
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
+    val run = start(a, RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(run.status, "done", run.error)
     // the model saw only the two new candidates, and its invented pick was sent back
     val offered = c.steps.head.head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
@@ -309,7 +318,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
 
     // the next sweep finds nothing new: the picked work is now queued, the other still on offer
     c.scripts += Seq(text("""{"picks":[]}"""))
-    val again = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
+    val again = start(a, RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(again.status, "done", again.error)
     assertEquals(
       h.workListView
@@ -408,7 +417,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         foundBy = List(Source.Candidate.FoundBy("crossref query \"zzagent tin trade\""))
       )
     )
-    val run = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
+    val run = start(a, RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(run.status, "done", run.error)
     assertEquals(c.steps.size, 1)
     val offered = c.steps.head.head.history.entries.collectFirst { case ConversationEntry.UserPrompt(p) => p }.get
@@ -426,7 +435,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
         .exists(_.text.value.contains("zzagent.a"))
     )
     // the next sweep: every candidate decided — no model is asked
-    val again = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
+    val again = start(a, RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(again.status, "done", again.error)
     assertEquals(c.steps.size, 1, "no ranking without a new candidate")
     assert(again.progress.exists(_.value.contains("nothing new")), again.progress)
@@ -570,7 +579,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       ("paused", Some("@daily"), Some("2026-10-05T00:00:00Z"), Some(List("acquisition", "currency")), Some(0.25))
     )
     val ev = connect(ds)(ManagerRepo.events(w.id, None, PageSize(10)))
-      .filter(_.kind == Managers.ManagerEvent.Kind(Managers.Feed.Migrated))
+      .filter(_.kind == ManagerEvent.Kind(Managers.Feed.Migrated))
     assertEquals(ev.size, 1)
     assert(
       ev.head.text.value.contains("created paused") && ev.head.text.value.contains("`@daily` (fires most often)"),
@@ -601,7 +610,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     assertEquals((w2.cron, w2.config.sweeps), (Some("@daily"), Some(List("acquisition", "currency"))))
     assert(
       connect(ds)(ManagerRepo.events(w.id, None, PageSize(10))).exists(e =>
-        e.kind == Managers.ManagerEvent.Kind(Managers.Feed.Migrated) && e.text.value.contains("was off")
+        e.kind == ManagerEvent.Kind(Managers.Feed.Migrated) && e.text.value.contains("was off")
       )
     )
     // the tick migrates too (with agents on)
@@ -626,7 +635,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     )
     up.found = Map("zzagent q" -> List(work(ApiDoi("10.5555/zzagent.z"), ApiTitle("Z"))))
     val id =
-      a.startRunAs(RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget), Origin.Scheduler, None)
+      a.startRunAs(RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget), Origin.Scheduler, None)
         .fold(e => fail(e.problems.sentences.mkString("; ")), _.id)
     a.engine.execute(ApiIds.run(id))
     assertEquals(connect(ds)(AgentRepo.get(id)).get.status, "paused")
@@ -638,7 +647,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       .map(_.text.value)
       .filter(_.contains(Goal.value))
     assert(tasks.exists(t => t.contains("scheduled acquisition-sweep") && t.contains("paused (provider)")), tasks)
-    val mine = start(a, RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
+    val mine = start(a, RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget))
     assertEquals(mine.status, "paused")
     assertEquals(tasks.size, 1, "a person's run is watched; it adds no backlog item")
 
@@ -652,7 +661,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     val before = CorpusSnapshot.of(ds)
     val run = start(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun))
+      RunRequest(RunRequest.Pipeline("currency-check"), GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun))
     )
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)
@@ -685,7 +694,7 @@ class SchedulerRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     val before = CorpusSnapshot.of(ds)
     val run = start(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("acquisition-sweep"), GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun))
+      RunRequest(RunRequest.Pipeline("acquisition-sweep"), GoalTarget, dryRun = Some(RunRequest.DryRun.DryRun))
     )
     assertEquals(run.status, "done", run.error)
     assertEquals(CorpusSnapshot.of(ds), before)

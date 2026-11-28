@@ -1,5 +1,19 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Closure
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.domain.automation.autopilot.Ruling
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -21,10 +35,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.Autopilot.AutopilotSet
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.domain.ReviewLedger.{absorb, Ledger}
 import com.histmersion.domain.automation.worklists.QueueRows
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
@@ -106,7 +118,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
   private val SweepKind = ManagerItem.Kind(AcquisitionSweep)
   private val NewTarget = ManagerItem.Target("zzagent_new")
   private val IngestedKind = ManagerRepo.EventKind(Feed.Ingested)
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-19T12:00:00Z")
 
@@ -392,7 +404,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       (seedM.state, seedM.cron.map(_.value: String)),
       (
         "active",
-        Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id.seed(Goal)))
+        Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.seed(Goal)))
       )
     )
     assertEquals(
@@ -433,10 +445,14 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       connect(ds)(ManagerRepo.events(seedId(ref(Goal)), None, PageSize(100)))
         .exists(e => e.kind.value == Feed.Approval && e.text.value.contains("approved by the autopilot"))
     )
-    assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith("autopilot: goal-plan")))
+    assert(
+      QueueRows
+        .list(ds, api.automation.queue.Docket.Log, all = true)
+        .exists(_.text.value.startsWith("autopilot: goal-plan"))
+    )
     assertEquals(
       QueueRows
-        .list(ds, Queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .filter(i => s"${i.text}".startsWith("autopilot: goal-plan"))
         .flatMap(_.creator.flatMap(_.workflow))
         .map(w => s"$w")
@@ -500,7 +516,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assert(TestRuns.transition(ds, ApiIds.run(rev.id), RunState.Queued, RunState.Running).isDefined)
     ReviewLedgerFixtures.put(
       ds,
-      absorb(Ledger(Ledger.Slug("zzagent_new")), Nil, ApiIds.run(rev.id), ReviewLedger.Closure.Round(1))._1
+      Ledger(Ledger.Slug("zzagent_new")).absorb(Nil, ApiIds.run(rev.id), Closure.Round(1))._1
     )
     assert(TestRuns.transition(ds, ApiIds.run(rev.id), RunState.Running, RunState.Done).isDefined)
     clock.tick(a)
@@ -512,7 +528,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
         .exists(e => e.kind.value == Feed.Autopilot && e.text.value.contains("compiled → reviewed"))
     )
     assert(
-      QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.contains(s"goal $Goal: compiled → reviewed"))
+      QueueRows
+        .list(ds, api.automation.queue.Docket.Log, all = true)
+        .exists(_.text.value.contains(s"goal $Goal: compiled → reviewed"))
     )
     val st = a.managing.autopilot
     note("autopilot, the goal reviewed", a.autopilotPage(st))
@@ -708,7 +726,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       a.managing
         .create(
           ManagerCreate(
-            Managers.ManagerCreate.Kind("watch"),
+            ManagerCreate.Kind("watch"),
             Some(api.automation.Goal.Slug("zzagent-apform"))
           )
         )
@@ -719,9 +737,9 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       a.managing
         .create(
           ManagerCreate(
-            Managers.ManagerCreate.Kind("seed"),
+            ManagerCreate.Kind("seed"),
             Some(api.automation.Goal.Slug("zzagent-apform")),
-            paused = Some(Managers.ManagerCreate.Paused.Paused)
+            paused = Some(ManagerCreate.Paused.Paused)
           )
         )
         .map(_.state),
@@ -751,7 +769,7 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))), None)
     assertEquals(
       connect(ds)(ManagerRepo.get(watchId(ref(Goal)))).flatMap(_.cron).map(_.value: String),
-      Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id.watch(Goal)))
+      Some(AutopilotPolicy.stagger(AutopilotPolicy.Cron("@monthly"), ManagerRow.Id.watch(Goal)))
     )
 
   // ── caps ───────────────────────────────────────────────────────────────────────────────────────
@@ -815,8 +833,8 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
       "2 of 2 articles approved today: the third waits"
     )
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p2.id)).get, None, None, now) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(s"$w".contains("daily cap"), w)
-      case v                                => fail(v.toString)
+      case Ruling.Leave(w) => assert(s"$w".contains("daily cap"), w)
+      case v               => fail(v.toString)
     // a thin filter is rejected with why
     val p3 = TestRuns
       .approvals(ds)
@@ -1011,13 +1029,19 @@ class ManagerAutopilotSuite extends DbSuite with RunTranscripts:
     assert(out.contains("lint --fix started"), out)
     assert(transact(ds)(AutopilotRepo.get()).lastLintAt.isDefined)
     val deadline = System.currentTimeMillis() + 60000
-    while !QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith("autopilot: lint --fix")) &&
+    while !QueueRows
+        .list(ds, api.automation.queue.Docket.Log, all = true)
+        .exists(_.text.value.startsWith("autopilot: lint --fix")) &&
       System.currentTimeMillis() < deadline
     do Thread.sleep(200)
-    assert(QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith("autopilot: lint --fix")))
+    assert(
+      QueueRows
+        .list(ds, api.automation.queue.Docket.Log, all = true)
+        .exists(_.text.value.startsWith("autopilot: lint --fix"))
+    )
     assertEquals(
       QueueRows
-        .list(ds, Queue.Kind.Log, all = true)
+        .list(ds, api.automation.queue.Docket.Log, all = true)
         .filter(i => s"${i.text}".startsWith("autopilot: lint --fix"))
         .flatMap(_.creator.flatMap(_.workflow))
         .map(w => s"$w")

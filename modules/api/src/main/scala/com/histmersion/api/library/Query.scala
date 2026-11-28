@@ -1,6 +1,8 @@
 package com.histmersion
 package api.library
 
+import com.histmersion.api.library.query.QueryResult
+
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
@@ -35,71 +37,6 @@ object Query:
 
   type StatementsSql = String
   export QueryResult.{Columns as MarkdownTableColumns, Rows as MarkdownTableRows}
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class QueryRequest(sql: QueryRequest.Sql) derives JsonCodec, KindlingsSchema, api.json.Schema
-
-  object QueryRequest:
-    export Query.Statement as Sql
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class QueryResult(
-      columns: List[QueryResult.Columns],
-      rows: List[List[Option[QueryResult.Rows]]],
-      rowCount: QueryResult.RowCount,
-      truncated: QueryResult.Truncated,
-      elapsedMs: QueryResult.ElapsedMs
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object QueryResult:
-    type Columns = Columns.T
-    object Columns extends Newtype[String, Pure]
-    type Rows = Rows.T
-    object Rows extends Newtype[String, Pure]
-    type RowCount = RowCount.T
-    object RowCount extends Newtype[Int, Pure]
-    enum Truncated derives CanEqual:
-      case Truncated, Complete
-    object Truncated extends TwoStates[Truncated]:
-      extension (truncated: Truncated) def truncated: Boolean = truncated == Truncated
-    type ElapsedMs = ElapsedMs.T
-    object ElapsedMs extends Newtype[Long, Pure]
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class SchemaColumn(
-      name: SchemaColumn.Name,
-      dataType: SchemaColumn.DataType,
-      nullable: SchemaColumn.Nullable
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object SchemaColumn:
-    type Name = Name.T
-    object Name extends Newtype[String, Pure]
-    type DataType = DataType.T
-    object DataType extends Newtype[String, Pure]
-    enum Nullable derives CanEqual:
-      case Nullable, Required
-    object Nullable extends TwoStates[Nullable]:
-      extension (nullable: Nullable) def nullable: Boolean = nullable == Nullable
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class SchemaTable(name: SchemaTable.Name, kind: SchemaTable.Kind, columns: List[SchemaColumn])
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object SchemaTable:
-    type Name = Name.T
-    object Name extends Newtype[String, Pure]
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class SchemaTables(tables: List[SchemaTable]) derives JsonCodec, KindlingsSchema, api.json.Schema
 
   private val Forbidden = Set(
     "SET",
@@ -213,15 +150,13 @@ object Query:
           Left(Problem.Refused.Policy(Problem.Refused.Rule.OneStatement))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def cell(v: Option[Query.MarkdownTableRows]): String =
+  private def cell(v: Option[MarkdownTableRows]): String =
     v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def markdownTable(
-      columns: List[Query.MarkdownTableColumns],
-      rows: List[List[Option[Query.MarkdownTableRows]]]
+      columns: List[MarkdownTableColumns],
+      rows: List[List[Option[MarkdownTableRows]]]
   ): String =
     if columns.isEmpty then ("_(no columns)_")
     else
@@ -230,75 +165,3 @@ object Query:
       val body = rows.map(r => columns.indices.map(i => cell(r.lift(i).flatten)).mkString("| ", " | ", " |"))
       // No stripMargin: every row starts with '|', which stripMargin would eat.
       ((List(header, rule) ++ body).mkString("\n"))
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def markdown(r: QueryResult): Markdown =
-    val head =
-      s"### ${r.rowCount} row(s)${
-          if (r.truncated) == QueryResult.Truncated.Truncated then " (truncated by the row cap)" else ""
-        } · ${r.elapsedMs} ms"
-    if r.rows.isEmpty then Markdown(s"$head\n\n_no rows_")
-    else Markdown(s"$head\n\n${markdownTable(r.columns, r.rows)}")
-
-  private val Key = Set(
-    "id",
-    "citekey",
-    "src",
-    "dst",
-    "kind",
-    "list",
-    "status",
-    "title",
-    "doi",
-    "year",
-    "topics",
-    "regions",
-    "tags",
-    "period",
-    "claim",
-    "region_name",
-    "geom",
-    "ord",
-    "topic",
-    "slug",
-    "created_at",
-    "done_at",
-    "text",
-    "name",
-    "label"
-  )
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def schemaMarkdown(s: SchemaTables): SchemaMarkdown =
-    if s.tables.isEmpty then SchemaMarkdown("_(no tables)_")
-    else
-      val rows = s.tables.map { t =>
-        val cols = t.columns.map(c => s"${c.name} ${c.dataType}").mkString(", ")
-        s"- **${t.name}** (${t.kind}) — $cols"
-      }
-      SchemaMarkdown(s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}")
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def toolDescription(s: SchemaTables): ToolDescription =
-    val tables =
-      if s.tables.isEmpty then "(schema unavailable — call the schema endpoint)"
-      else
-        s.tables
-          .map { t =>
-            val keys = t.columns.map(_.name).filter(n => Key.contains(n.value))
-            val cols = (if keys.isEmpty then t.columns.map(_.name).take(6) else keys).mkString(", ")
-            s"${t.name}($cols)"
-          }
-          .mkString("; ")
-    ToolDescription(
-      "Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
-        "rows back as a Markdown table. Use it for the questions `search`/`facets`/`histogram` cannot " +
-        "express — cross-tabulations, counts by two dimensions, set differences. The statement runs " +
-        "in a READ ONLY transaction with a statement timeout and a row cap, so INSERT/UPDATE/DELETE/" +
-        "CREATE/DROP are refused by Postgres itself; SELECT only. Deep time is an int8range of SIGNED " +
-        "years (BCE negative) — read the inclusive upper bound as `upper(period) - 1`. Geometry is " +
-        "PostGIS; use ST_X/ST_Y/ST_AsText. Tables: " + tables + "."
-    )

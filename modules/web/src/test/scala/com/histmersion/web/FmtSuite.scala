@@ -5,7 +5,6 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.Wcag
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Confidence
-import com.histmersion.api.Years
 import com.histmersion.api.Markdown
 import com.histmersion.api.UiLabels
 import com.histmersion.lint.{tolerated, LintRule}
@@ -118,29 +117,29 @@ class FmtSuite extends munit.FunSuite:
   // ── parseYear ─────────────────────────────────────────────────────────────────
 
   test("parseYear handles BCE") {
-    assertEquals(Fmt.parseYear(Years.Text("3300 BCE")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(Years.Text("3300 BC")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(Years.Text("3300bce")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Year.Text("3300 BCE")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Year.Text("3300 BC")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Year.Text("3300bce")).map(_.value), Some(-3300L))
   }
 
   test("parseYear handles CE") {
-    assertEquals(Fmt.parseYear(Years.Text("500 CE")).map(_.value), Some(500L))
-    assertEquals(Fmt.parseYear(Years.Text("500 AD")).map(_.value), Some(500L))
+    assertEquals(Fmt.parseYear(Year.Text("500 CE")).map(_.value), Some(500L))
+    assertEquals(Fmt.parseYear(Year.Text("500 AD")).map(_.value), Some(500L))
   }
 
   test("parseYear handles plain numbers") {
-    assertEquals(Fmt.parseYear(Years.Text("-3300")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(Years.Text("2026")).map(_.value), Some(2026L))
+    assertEquals(Fmt.parseYear(Year.Text("-3300")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Year.Text("2026")).map(_.value), Some(2026L))
   }
 
   test("parseYear handles circa") {
-    assertEquals(Fmt.parseYear(Years.Text("circa 3300 BCE")).map(_.value), Some(-3300L))
-    assertEquals(Fmt.parseYear(Years.Text("c. 1200 BCE")).map(_.value), Some(-1200L))
+    assertEquals(Fmt.parseYear(Year.Text("circa 3300 BCE")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(Year.Text("c. 1200 BCE")).map(_.value), Some(-1200L))
   }
 
   test("parseYear rejects garbage") {
-    assertEquals(Fmt.parseYear(Years.Text("hello")), None)
-    assertEquals(Fmt.parseYear(Years.Text("")), None)
+    assertEquals(Fmt.parseYear(Year.Text("hello")), None)
+    assertEquals(Fmt.parseYear(Year.Text("")), None)
   }
 
   // ── esc ───────────────────────────────────────────────────────────────────────

@@ -1,5 +1,9 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import hearth.kindlings.jsoniterjson.Json
@@ -1718,8 +1722,8 @@ object Api:
       )
 
   /** Declared before `places/{id}` so `sources` is never read as an id. */
-  lazy val placeSources: PublicEndpoint[Unit, Error, List[Gazetteer.SourceInfo], Any] =
-    base.get.in("places" / "sources").out(jsonBody[List[Gazetteer.SourceInfo]])
+  lazy val placeSources: PublicEndpoint[Unit, Error, List[SourceInfo], Any] =
+    base.get.in("places" / "sources").out(jsonBody[List[SourceInfo]])
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val loadPlaces: PublicEndpoint[(ExternalPlaces.Source, Apply), Error, JobInfo, Any] =
@@ -2339,14 +2343,14 @@ object Api:
         Option[Activity.Cursor]
     ),
     Error,
-    Activity.Page,
+    api.automation.activity.Page,
     Any
   ] =
     (base.get
       .in("activity")
       .in(
         query[Option[String]]("show").description(
-          s"one of: ${Activity.Show.values.map(_.wire).mkString(", ")} (default all)"
+          s"one of: ${Show.values.map(_.wire).mkString(", ")} (default all)"
         )
       )
       .in(query[Option[String]]("since").description("from: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago"))
@@ -2356,7 +2360,7 @@ object Api:
           .description(s"entries per page (default ${Activity.DefaultLimit}, at most ${Activity.MaxLimit})")
       )
       .in(query[Option[String]]("before").description("the next older page: the cursor the last page gave"))
-      .out(jsonBody[Activity.Page]))
+      .out(jsonBody[api.automation.activity.Page]))
       .mapIn[
         (
             Option[Activity.Kind],
@@ -2392,7 +2396,7 @@ object Api:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val jobs: PublicEndpoint[
-    (ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter]),
+    (JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter]),
     Error,
     (List[JobInfo], Paging.Page),
     Any
@@ -2405,8 +2409,8 @@ object Api:
       .in(query[Option[String]]("upTo"))
       .out(jsonBody[List[JobInfo]])
       .out(Paging.headers))
-      .mapIn[(ListFilters.JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter])](
-        (refactorDecoded194: (ListFilters.JobFilter, Option[Int], Option[String], Option[String])) =>
+      .mapIn[(JobFilter, Option[Jobs.Limit], Option[Jobs.Status], Option[api.Jobs.Filter])](
+        (refactorDecoded194: (JobFilter, Option[Int], Option[String], Option[String])) =>
           (
             (refactorDecoded194)._1,
             ((refactorDecoded194)._2).map(refactorElement171 => Jobs.Limit(refactorElement171)),
@@ -2415,7 +2419,7 @@ object Api:
           )
       )(
         (refactorEncoded194: (
-            ListFilters.JobFilter,
+            JobFilter,
             Option[Jobs.Limit],
             Option[Jobs.Status],
             Option[api.Jobs.Filter]

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.media.assets
+
+import com.histmersion.domain.catalogue.evidence.NearFinding
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.{Api, Write}
@@ -20,7 +22,6 @@ import com.histmersion.api.media.{
 }
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestCreators.given
 import com.histmersion.lint.{tolerated, LintRule}
@@ -123,7 +124,7 @@ object AssetFixtures:
   def placeThumbs(
       ds: DataSource,
       placeId: Place.Id,
-      sameSiteKm: EventMatcher.NearFinding.Km,
+      sameSiteKm: NearFinding.Km,
       limit: MediaRepo.Limit = MediaRepo.Limit(4)
   ): List[MediaThumb] =
     connect(ds)(MediaRepo.placeThumbsIn(placeId, sameSiteKm, limit))

@@ -30,29 +30,29 @@ class DomainSuite extends munit.FunSuite:
 
   // ── YearFmt ────────────────────────────────────────────────────────────────────────────────────
   test("YearFmt positive year"):
-    assertEquals(YearFmt(Year(530L)), "530 CE")
+    assertEquals(Year.show(Year(530L)), "530 CE")
 
   test("YearFmt negative year is BCE"):
-    assertEquals(YearFmt(Year(-1300L)), "1300 BCE")
+    assertEquals(Year.show(Year(-1300L)), "1300 BCE")
 
   test("YearFmt year 0 is 1 BCE (no year zero in historical reckoning)"):
-    assertEquals(YearFmt(Year(0L)), "1 BCE")
+    assertEquals(Year.show(Year(0L)), "1 BCE")
 
   test("YearFmt year 1 is 1 CE"):
-    assertEquals(YearFmt(Year(1L)), "1 CE")
+    assertEquals(Year.show(Year(1L)), "1 CE")
 
   test("YearFmt year -1 is 1 BCE"):
-    assertEquals(YearFmt(Year(-1L)), "1 BCE")
+    assertEquals(Year.show(Year(-1L)), "1 BCE")
 
   test("YearFmt.period renders a range"):
-    assertEquals(YearFmt.period(Some(Year(-1300L)), Some(Year(-1100L))), "1300 BCE–1100 BCE")
+    assertEquals(Year.period(Some(Year(-1300L)), Some(Year(-1100L))), "1300 BCE–1100 BCE")
 
   test("YearFmt.period renders a point"):
-    assertEquals(YearFmt.period(Some(Year(-1200L)), Some(Year(-1200L))), "1200 BCE")
+    assertEquals(Year.period(Some(Year(-1200L)), Some(Year(-1200L))), "1200 BCE")
 
   test("YearFmt.period is empty when either bound is missing"):
-    assertEquals(YearFmt.period(None, Some(Year(-1200L))), "")
-    assertEquals(YearFmt.period(Some(Year(-1200L)), None), "")
+    assertEquals(Year.period(None, Some(Year(-1200L))), "")
+    assertEquals(Year.period(Some(Year(-1200L)), None), "")
 
   // ── Confidence ─────────────────────────────────────────────────────────────────────────────────
   test("Confidence.fromString case-insensitive"):

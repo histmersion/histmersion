@@ -1,12 +1,15 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.modelchains.LimitSpec
+import com.histmersion.api.automation.modelchains.Spend
 import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.automation.Agents
-import com.histmersion.api.automation.ModelChains.{LimitSpec, Spend}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
@@ -29,15 +32,15 @@ private[agents] object ModelSettingsRepo:
 
   /** A saved chain: the role and its models (`provider:model`, first choice first). */
 
-  def chains(using DbCon): Map[ChainRole, List[Agents.ModelRef.Wire]] =
+  def chains(using DbCon): Map[ChainRole, List[ModelRef.Wire]] =
     sql"SELECT role, models FROM agent_role_chains"
       .query[(String, List[String])]
       .run()
-      .map((r, ms) => ChainRole(r) -> ms.map(m => Agents.ModelRef.Wire(m)))
+      .map((r, ms) => ChainRole(r) -> ms.map(m => ModelRef.Wire(m)))
       .toMap
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def setChain(role: ChainRole, models: List[Agents.ModelRef.Wire])(using DbCon): Unit =
+  def setChain(role: ChainRole, models: List[ModelRef.Wire])(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO agent_role_chains (role, models) VALUES ($role, $models::text[])
             ON CONFLICT (role) DO UPDATE SET models = EXCLUDED.models, updated_at = now()""".update.run()
@@ -98,7 +101,7 @@ private[agents] object ModelSettingsRepo:
     * was paid for.
     */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def spends(models: List[Agents.ModelRef.Wire], prefixes: List[String], seconds: WindowSeconds)(using
+  def spends(models: List[ModelRef.Wire], prefixes: List[String], seconds: WindowSeconds)(using
       DbCon
   ): Vector[Spend] =
     if models.isEmpty && prefixes.isEmpty then Vector.empty

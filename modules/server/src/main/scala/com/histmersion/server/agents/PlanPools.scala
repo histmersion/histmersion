@@ -1,5 +1,21 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.Rules
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.planquota.Verdict
+import com.histmersion.api.automation.planquota.WindowState
+import com.histmersion.api.automation.planquota.RefreshNeed
+import com.histmersion.api.automation.planquota.Reading
+import com.histmersion.domain.ReadSchedule
+import com.histmersion.api.automation.planquota.RefreshInfo
+import com.histmersion.api.automation.planquota.ModReport
+import com.histmersion.api.automation.planquota.GuardAnswer
+import com.histmersion.api.automation.planquota.WindowStatus
+import com.histmersion.api.automation.planquota.ModWindow
 import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -16,11 +32,10 @@ import com.histmersion.util.database.Transactor
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.{AgentsConfig, ClaudeCodeConfig, CodexConfig, ScheduledRefresh}
-import com.histmersion.api.automation.ModelChains.ChainEntry
 import com.histmersion.util.process.{ProcessLaunch, ProcessResult}
-import com.histmersion.domain.{PlanReadSchedule, ScheduledRead}
+import com.histmersion.domain.ScheduledRead
 import com.histmersion.api.automation.PlanQuota
-import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.api.automation.PlanQuota.*
 import com.histmersion.domain.automation.agents.PlanQuotaRepo
 
@@ -59,18 +74,24 @@ final class PlanPools(
   private val slots = ConcurrentHashMap[PoolId, Semaphore]()
   private val lastPoll = AtomicLong(0L)
   private val gate = RefreshGate()
-  private val logins = ConcurrentHashMap[PoolId, (Long, Login)]()
+  private val logins = ConcurrentHashMap[PoolId, (Long, api.automation.planquota.Login)]()
 
   @tolerated(LintRule.Global, "pending G15 (no globals; everything from config)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def now0: PlanQuota.Now = PlanQuota.Now(System.currentTimeMillis())
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def poolCfg(p: PoolId): (Floors.Wire, Int) = p match
+  private def poolCfg(p: PoolId): (api.automation.planquota.Floors.Wire, Int) = p match
     case PoolId.ClaudePlan =>
-      (Floors.Wire(cfg.quota.claudePlan.floors.value), cfg.quota.claudePlan.maxCallsInFlight.value)
+      (
+        api.automation.planquota.Floors.Wire(cfg.quota.claudePlan.floors.value),
+        cfg.quota.claudePlan.maxCallsInFlight.value
+      )
     case PoolId.ChatgptPlan =>
-      (Floors.Wire(cfg.quota.chatgptPlan.floors.value), cfg.quota.chatgptPlan.maxCallsInFlight.value)
+      (
+        api.automation.planquota.Floors.Wire(cfg.quota.chatgptPlan.floors.value),
+        cfg.quota.chatgptPlan.maxCallsInFlight.value
+      )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def staleMs: Long = math.max(1, cfg.quota.staleMinutes.value).toLong * 60000L
@@ -87,22 +108,22 @@ final class PlanPools(
     * nothing it could not read, and says so).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def floors(p: PoolId): (Floors, PoolStatus.FloorsSource, Option[Problem]) =
+  def floors(p: PoolId): (api.automation.planquota.Floors, PoolStatus.FloorsSource, Option[Problem]) =
     val saved = Transactor(ds).read(PlanQuotaRepo.pool(p)).floors
-    saved.map(f => Floors.parse(Floors.Wire(f.value))) match
+    saved.map(f => api.automation.planquota.Floors.parse(api.automation.planquota.Floors.Wire(f.value))) match
       case Some(Right(f)) => (f, PoolStatus.FloorsSource("saved"), None)
       case Some(Left(m))  =>
         (
-          Floors.Empty,
+          api.automation.planquota.Floors.Empty,
           PoolStatus.FloorsSource("saved"),
           Some(Problem.Config.FloorsUnread(Problem.Config.FloorsFrom.Saved, m.toNonEmpty))
         )
       case None =>
-        Floors.parse(poolCfg(p)._1) match
+        api.automation.planquota.Floors.parse(poolCfg(p)._1) match
           case Right(f) => (f, PoolStatus.FloorsSource("config"), None)
           case Left(m)  =>
             (
-              Floors.Empty,
+              api.automation.planquota.Floors.Empty,
               PoolStatus.FloorsSource("config"),
               Some(
                 Problem.Config.FloorsUnread(
@@ -172,7 +193,7 @@ final class PlanPools(
   def decide(
       p: PoolId,
       model: Option[ChainEntry.Model],
-      trigger: RefreshTrigger,
+      trigger: api.automation.planquota.RefreshTrigger,
       now: PlanQuota.Now = now0
   )(using WritePermit): (Verdict, List[WindowState], Option[Refreshed]) =
     val (v, states) = current(p, model, now)
@@ -223,7 +244,11 @@ final class PlanPools(
     * (`force`: now).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def login(p: PoolId, now: PlanQuota.Now = now0, force: PlanPools.Force = PlanPools.Force(false)): Login =
+  def login(
+      p: PoolId,
+      now: PlanQuota.Now = now0,
+      force: PlanPools.Force = PlanPools.Force(false)
+  ): api.automation.planquota.Login =
     val every = math.max(1, cfg.quota.pollSeconds.value).toLong * 1000L
     Option(logins.get(p)).filter((at, _) => !force.value && now.value - at < every).map(_._2).getOrElse {
       val l = p match
@@ -234,7 +259,7 @@ final class PlanPools(
     }
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def claudeLogin(): Login =
+  private def claudeLogin(): api.automation.planquota.Login =
     val cc = cfg.providers.claudeCode
     seams.runCommand(
       List(ProcessLaunch.Command(cc.command.value), ProcessLaunch.Command("auth"), ProcessLaunch.Command("status")),
@@ -242,7 +267,7 @@ final class PlanPools(
       AgentsConfig.DoctorTimeoutSeconds(math.max(1, cfg.doctorTimeoutSeconds.value))
     ) match
       case Left(why) =>
-        Login.Unknown(PlanQuota.Rationale(s"'claude auth status' failed: ${why.sentence}"))
+        api.automation.planquota.Login.Unknown(PlanQuota.Rationale(s"'claude auth status' failed: ${why.sentence}"))
       case Right((_, out)) => PlanPools.claudeLogin(out, cc.useApiKey)
 
   /** Whether `m` may be offered at all: a model whose own runtime spends the pool (claude-code on the Claude plan,
@@ -251,21 +276,22 @@ final class PlanPools(
   def unavailable(m: ModelRef, now: PlanQuota.Now = now0): Option[Problem] =
     poolOf(m).filter(p => PlanPools.loginGates(p, m)).flatMap { p =>
       login(p, now) match
-        case Login.Missing(why) => Some(Problem.Run.Needs(Problem.Run.Need.Login(Problem.Raw.of(why))))
-        case _                  => None
+        case api.automation.planquota.Login.Missing(why) =>
+          Some(Problem.Run.Needs(Problem.Run.Need.Login(Problem.Raw.of(why))))
+        case _ => None
     }
 
   // ── fresh readings ─────────────────────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def claudeMode: Either[Problem, RefreshMode] =
-    RefreshMode
-      .parse(RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
+  private def claudeMode: Either[Problem, api.automation.planquota.RefreshMode] =
+    api.automation.planquota.RefreshMode
+      .parse(api.automation.planquota.RefreshMode.Wire(cfg.quota.claudePlan.refresh.value))
       .toRight(
         Problem.Invalid.Unknown(
-          Problem.TypeName.named[RefreshMode],
+          Problem.TypeName.named[api.automation.planquota.RefreshMode],
           Problem.Raw.of(cfg.quota.claudePlan.refresh),
-          RefreshMode.values.toVector.map(m => Problem.Raw.of(m.wire)),
+          api.automation.planquota.RefreshMode.values.toVector.map(m => Problem.Raw.of(m.wire)),
           Vector(Problem.Field("agents.quota.claude-plan.refresh"))
         )
       )
@@ -275,7 +301,7 @@ final class PlanPools(
   def refreshMode(p: PoolId): Option[Refreshed.Mode] = p match
     case PoolId.ClaudePlan =>
       claudeMode.toOption
-        .filter(_ != RefreshMode.Off)
+        .filter(_ != api.automation.planquota.RefreshMode.Off)
         .map(m =>
           Refreshed.Mode(
             s"${m.wire}: one claude -p turn on ${cfg.quota.claudePlan.probeModel}, at most once per ${cfg.quota.staleMinutes} min while a run waits" +
@@ -300,15 +326,14 @@ final class PlanPools(
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def refreshOnSchedule(
       p: PoolId,
-      autopilotOn: PlanReadSchedule.AutopilotOn,
-      wanted: PlanReadSchedule.Wanted,
+      autopilotOn: ReadSchedule.AutopilotOn,
+      wanted: ReadSchedule.Wanted,
       now: java.time.Instant
   )(using WritePermit): Either[PlanQuota.Rationale, Refreshed] =
     val at = now.toEpochMilli
     gate.exclusive(p, at) { last =>
       val newest = lastObserved(p).map(o => java.time.Instant.ofEpochMilli(o.value))
-      PlanReadSchedule.scheduledRead(
-        schedule(p).readSchedule,
+      schedule(p).readSchedule.scheduledRead(
         autopilotOn,
         wanted,
         newest,
@@ -322,16 +347,16 @@ final class PlanPools(
               None,
               login(p, PlanQuota.Now(at)),
               seams.refreshes.value && refreshMode(p).isDefined,
-              last.map(l => PlanQuota.RefreshInfo.LastAttempt(l.value)),
-              PlanQuota.Rules.MinGap(staleMs),
+              last.map(l => RefreshInfo.LastAttempt(l.value)),
+              Rules.MinGap(staleMs),
               PlanQuota.Now(at),
               force = true
             )
             .map(_ =>
               takeAndLog(
                 p,
-                RefreshTrigger.Schedule,
-                PlanQuota.Rationale(s"${RefreshTrigger.Schedule.wire}"),
+                api.automation.planquota.RefreshTrigger.Schedule,
+                PlanQuota.Rationale(s"${api.automation.planquota.RefreshTrigger.Schedule.wire}"),
                 PlanQuota.Now(at)
               )
             )
@@ -346,7 +371,7 @@ final class PlanPools(
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def refreshPool(
       p: PoolId,
-      trigger: RefreshTrigger,
+      trigger: api.automation.planquota.RefreshTrigger,
       model: Option[ChainEntry.Model] = None,
       force: PlanPools.Force = PlanPools.Force(false),
       now: PlanQuota.Now = now0
@@ -359,8 +384,8 @@ final class PlanPools(
           needNow,
           login(p, now, force),
           seams.refreshes.value && refreshMode(p).isDefined,
-          last.map(l => PlanQuota.RefreshInfo.LastAttempt(l.value)),
-          PlanQuota.Rules.MinGap(staleMs),
+          last.map(l => RefreshInfo.LastAttempt(l.value)),
+          Rules.MinGap(staleMs),
           now,
           force.value
         )
@@ -377,7 +402,12 @@ final class PlanPools(
   /** One reading of `p`, logged (server log and the pool's refresh log) with why it was taken. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  private def takeAndLog(p: PoolId, trigger: RefreshTrigger, why: PlanQuota.Rationale, now: PlanQuota.Now)(using
+  private def takeAndLog(
+      p: PoolId,
+      trigger: api.automation.planquota.RefreshTrigger,
+      why: PlanQuota.Rationale,
+      now: PlanQuota.Now
+  )(using
       WritePermit
   ): Refreshed =
     val r = take(p, now)
@@ -467,10 +497,10 @@ final class PlanPools(
   /** A mod's report: recorded, and answered with whether the run may go on. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def guard(report: ModReport, now: PlanQuota.Now = now0)(using WritePermit): GuardAnswer =
-    val src = Source
-      .parse(Source.Wire(report.source.value))
-      .filter(s => s == Source.Mod || s == Source.Interactive)
-      .getOrElse(Source.Mod)
+    val src = api.automation.planquota.Channel
+      .parse(api.automation.planquota.Channel.Wire(report.source.value))
+      .filter(s => s == api.automation.planquota.Channel.Mod || s == api.automation.planquota.Channel.Interactive)
+      .getOrElse(api.automation.planquota.Channel.Mod)
     record(PoolId.ClaudePlan, PlanPools.modReadings(report.rateLimits, src, now))
     verdict(PoolId.ClaudePlan, None, now)._1 match
       case Verdict.Usable(_)           => GuardAnswer(allow = GuardAnswer.Allow.Allow)
@@ -517,8 +547,8 @@ final class PlanPools(
       }
       val lg = login(p, now)
       val missing = lg match
-        case Login.Missing(why) => Some(why)
-        case _                  => None
+        case api.automation.planquota.Login.Missing(why) => Some(why)
+        case _                                           => None
       val (ok, why, until) = (v, missing) match
         case (_, Some(m))                  => (false, Some(s"unavailable: no login — $m"), None)
         case (Verdict.Usable(n), None)     => (true, n.map(_.value), None)
@@ -544,9 +574,9 @@ final class PlanPools(
         login = Some(
           PoolStatus.Login(
             lg match
-              case Login.Present(d) => d.value
-              case Login.Missing(w) => s"no login: $w"
-              case Login.Unknown(w) => s"not known: $w"
+              case api.automation.planquota.Login.Present(d) => d.value
+              case api.automation.planquota.Login.Missing(w) => s"no login: $w"
+              case api.automation.planquota.Login.Unknown(w) => s"not known: $w"
           )
         ),
         refresh = refreshMode(p).map(m => PoolStatus.Refresh(m.value)),
@@ -666,30 +696,33 @@ object PlanPools:
     * API key where the plan is wanted, is Missing; an answer that is not JSON is Unknown.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): Login =
+  def claudeLogin(out: AgentDoctor.Output, useApiKey: ClaudeCodeConfig.UseApiKey): api.automation.planquota.Login =
     if RawJson.parse(out.value.trim).isLeft then
-      Login.Unknown(
+      api.automation.planquota.Login.Unknown(
         PlanQuota.Rationale(s"'claude auth status' did not answer JSON: ${out.value.take(200)}")
       )
     else
       AgentDoctor
         .login(out, useApiKey)
         .fold(
-          p => Login.Missing(PlanQuota.Rationale(s"${p.sentence}")),
-          d => Login.Present(Login.Present.Detail(d.value))
+          p => api.automation.planquota.Login.Missing(PlanQuota.Rationale(s"${p.sentence}")),
+          d => api.automation.planquota.Login.Present(api.automation.planquota.Login.Present.Detail(d.value))
         )
 
   /** The runs' CODEX_HOME has a login when its `auth.json` exists (it is never read). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): Login = home match
-    case None =>
-      Login.Missing(
-        PlanQuota.Rationale("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
-      )
-    case Some(h) =>
-      if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
-        Login.Present(Login.Present.Detail(s"$h has a login"))
-      else Login.Missing(PlanQuota.Rationale(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
+  def codexLogin(home: Option[java.nio.file.Path], command: CodexConfig.Command): api.automation.planquota.Login =
+    home match
+      case None =>
+        api.automation.planquota.Login.Missing(
+          PlanQuota.Rationale("no CODEX_HOME — set agents.runtimes.dir or agents.providers.codex.home")
+        )
+      case Some(h) =>
+        if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then
+          api.automation.planquota.Login.Present(api.automation.planquota.Login.Present.Detail(s"$h has a login"))
+        else
+          api.automation.planquota.Login
+            .Missing(PlanQuota.Rationale(s"$h has none — run `CODEX_HOME=\"$h\" $command login` once"))
 
   /** The probe's output → the readings to record: its `rate_limit_event` windows; when it carried none but ended on the
     * plan's usage limit, one refused window until the reset it names (else the cool-down). Left = it said nothing about
@@ -704,7 +737,12 @@ object PlanPools:
     val o = ClaudeCode.parse(run.lines)
     if o.readings.nonEmpty then
       Right(
-        o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(Reading.ObservedAt(now.value)))
+        o.readings.map(
+          _.modify(_.source)
+            .setTo(api.automation.planquota.Channel.Probe)
+            .modify(_.observedAt)
+            .setTo(Reading.ObservedAt(now.value))
+        )
       )
     else
       o.result.flatMap(ClaudeCode.usageLimit) match
@@ -723,7 +761,7 @@ object PlanPools:
                 Some(Reading.ResetsAt(until)),
                 rejected = Reading.Rejected.Rejected,
                 Reading.ObservedAt(now.value),
-                Source.Probe
+                api.automation.planquota.Channel.Probe
               )
             )
           )
@@ -771,7 +809,7 @@ object PlanPools:
     * the window it names refused.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def claudeReadings(info: Json, source: Source, now: PlanQuota.Now): List[Reading] =
+  def claudeReadings(info: Json, source: api.automation.planquota.Channel, now: PlanQuota.Now): List[Reading] =
     val c = info.cursor
     val status = c.downField("status").as[String].toOption
     val repKind = c.downField("rateLimitType").as[String].toOption
@@ -826,7 +864,7 @@ object PlanPools:
 
   /** A mod's `rateLimits` (`percentUsed`, `resetsAt` ISO) → readings. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def modReadings(ws: List[ModWindow], source: Source, now: PlanQuota.Now): List[Reading] =
+  def modReadings(ws: List[ModWindow], source: api.automation.planquota.Channel, now: PlanQuota.Now): List[Reading] =
     ws.map { w =>
       val reset = w.resetsAt
         .flatMap(t => scala.util.Try(java.time.Instant.parse(t.value).toEpochMilli).toOption)
@@ -877,7 +915,7 @@ object PlanPools:
           wc.downField("resetsAt").as[Long].toOption.map(s => Reading.ResetsAt(s * 1000)),
           rejected = (if reached then Reading.Rejected.Rejected else Reading.Rejected.Accepted),
           Reading.ObservedAt(now.value),
-          Source.AppServer,
+          api.automation.planquota.Channel.AppServer,
           model.map(Reading.Model(_))
         )
       }

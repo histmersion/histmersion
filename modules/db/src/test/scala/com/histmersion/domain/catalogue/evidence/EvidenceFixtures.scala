@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.domain.catalogue.events.Placement
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
@@ -12,7 +14,7 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.catalogue.Event
-import com.histmersion.domain.catalogue.events.{BEventRow, CatalogMerge}
+import com.histmersion.domain.catalogue.events.BEventRow
 import com.histmersion.domain.library.Citekey
 
 import com.augustnagro.magnum.{connect, transact}
@@ -38,16 +40,16 @@ object EvidenceFixtures:
   def nearFindings(
       ds: DataSource,
       id: Event.Id,
-      km: CatalogMerge.Tolerance.Km,
-      years: CatalogMerge.Tolerance.Years,
+      km: Placement.Tolerance.Km,
+      years: Placement.Tolerance.Years,
       limit: PageSize
   ): List[EventFindingRef] =
     connect(ds)(LeadRepo.nearFindings(id, km, years, limit))
   def leadRows(
       ds: DataSource,
       where: Frag,
-      km: CatalogMerge.Tolerance.Km,
-      years: CatalogMerge.Tolerance.Years,
+      km: Placement.Tolerance.Km,
+      years: Placement.Tolerance.Years,
       limit: PageSize,
       offset: Offset
   ): (RowCount, List[LeadRow]) =
@@ -56,7 +58,7 @@ object EvidenceFixtures:
       ds: DataSource,
       citekeys: List[Citekey],
       period: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
-      km: CatalogMerge.Tolerance.Km,
+      km: Placement.Tolerance.Km,
       minVei: CatalogRecord.Vei,
       minMagnitude: CatalogRecord.Magnitude,
       limit: PageSize

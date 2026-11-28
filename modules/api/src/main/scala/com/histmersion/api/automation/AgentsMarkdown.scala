@@ -1,13 +1,39 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.ModelsInfo
+import com.histmersion.api.automation.agents.RoleModel
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.modelchains.RoleChain
+import com.histmersion.api.automation.modelchains.Measure
+import com.histmersion.api.automation.modelchains.AllowanceStatus
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.Reading
+import com.histmersion.api.automation.planquota.WindowStatus
+import com.histmersion.api.automation.planquota.RefreshInfo
+import com.histmersion.api.automation.planquota.QuotaRefreshed
+import com.histmersion.api.automation.planquota.PoolRefreshed
+import com.histmersion.api.automation.planquota.QuotaInfo
+import com.histmersion.api.automation.agents.GenerateResult
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.agents.CheckLevel
+import com.histmersion.api.automation.agents.DoctorCheck
+import com.histmersion.api.automation.agents.ProviderDoctor
+import com.histmersion.api.automation.agents.ProbeResult
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.agents.RunDetail
+import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.api.{Paging, Plural, RowCount, YearFmt}
+import com.histmersion.api.{Paging, Plural, RowCount}
 import com.histmersion.api.library.Facet
 import com.histmersion.api.given
 import com.histmersion.api.research.Article
 import com.histmersion.api.Markdown
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
@@ -62,22 +88,22 @@ object AgentsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def chainEntry(e: ModelChains.ChainEntry): String =
+  private def chainEntry(e: ChainEntry): String =
     val mark =
-      if (e.usable) == ModelChains.ChainEntry.Usable.Usable then ""
-      else if !((e.ready) == ModelChains.ChainEntry.Ready.Ready) then " (not ready)"
-      else if (e.cooling) == ModelChains.ChainEntry.Cooling.Cooling then
+      if (e.usable) == ChainEntry.Usable.Usable then ""
+      else if !((e.ready) == ChainEntry.Ready.Ready) then " (not ready)"
+      else if (e.cooling) == ChainEntry.Cooling.Cooling then
         " (cooling down" + e.freesAt.fold("")(t => s" until $t") + ": its plan reported its usage limit)"
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     (s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def roleChain(c: ModelChains.RoleChain): String =
+  def roleChain(c: RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
-      val state = if (e.usable) == ModelChains.ChainEntry.Usable.Usable then "usable"
-      else if !((e.ready) == ModelChains.ChainEntry.Ready.Ready) then "not ready"
-      else if (e.cooling) == ModelChains.ChainEntry.Cooling.Cooling then "cooling down"
+      val state = if (e.usable) == ChainEntry.Usable.Usable then "usable"
+      else if !((e.ready) == ChainEntry.Ready.Ready) then "not ready"
+      else if (e.cooling) == ChainEntry.Cooling.Cooling then "cooling down"
       else "below its allowance"
       s"${i + 1}. `${e.model}` — $state${said(e.problems).fold("")(p => s": $p")}${e.freesAt.fold("")(t =>
           s" (frees $t)"
@@ -91,15 +117,15 @@ object AgentsMarkdown:
   private def said(problems: List[Problem]): Option[String] =
     Option.when(problems.nonEmpty)(problems.map(_.sentence).mkString("; "))
 
-  private def amount(v: Double, m: ModelChains.Measure): String = m match
-    case ModelChains.Measure.Tokens =>
-      ModelChains.Limit.compact(BigDecimal((v)).setScale(0, BigDecimal.RoundingMode.HALF_UP))
-    case ModelChains.Measure.Usd => ((usd(((v)))))
+  private def amount(v: Double, m: Measure): String = m match
+    case Measure.Tokens =>
+      api.automation.modelchains.Limit.compact(BigDecimal((v)).setScale(0, BigDecimal.RoundingMode.HALF_UP))
+    case Measure.Usd => ((usd(((v)))))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
-    val state = if (a.usable) == ModelChains.AllowanceStatus.Usable.Usable then "has headroom"
+  private def allowanceBlock(a: AllowanceStatus): String =
+    val state = if (a.usable) == AllowanceStatus.Usable.Usable then "has headroom"
     else s"**below its reserve**${a.freesAt.fold(" (does not free by itself)")(t => s" until $t")}"
     val limits = a.limits.map { l =>
       s"  - ${l.limit}: ${amount(l.used.value, l.measure)} used, ${amount(l.remaining.value, l.measure)} left" +
@@ -112,7 +138,7 @@ object AgentsMarkdown:
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n"))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def allowance(a: ModelChains.AllowanceStatus): String = ((allowanceBlock(a)))
+  def allowance(a: AllowanceStatus): String = ((allowanceBlock(a)))
 
   private def pct(d: Double): String =
     (java.math.BigDecimal((d)).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
@@ -125,12 +151,12 @@ object AgentsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def pool(p: PlanQuota.PoolStatus): String =
+  def pool(p: PoolStatus): String =
     val state =
-      if !((p.available) == PlanQuota.PoolStatus.Available.Available) then
+      if !((p.available) == PoolStatus.Available.Available) then
         s"**${p.reason.map(r => s"$r").getOrElse("unavailable: no login")}**"
-      else if (p.held) == PlanQuota.PoolStatus.Held.Held then "**held** — no agent use until released"
-      else if (p.usable) == PlanQuota.PoolStatus.Usable.Usable then "usable" + p.reason.fold("")(r => s" ($r)")
+      else if (p.held) == PoolStatus.Held.Held then "**held** — no agent use until released"
+      else if (p.usable) == PoolStatus.Usable.Usable then "usable" + p.reason.fold("")(r => s" ($r)")
       else
         s"**paused** — ${p.reason.map(r => s"$r").getOrElse("below its floor")}" + p.until.fold("")(u =>
           s"; frees at $u"
@@ -142,10 +168,9 @@ object AgentsMarkdown:
           p.windows
             .map { w =>
               val name =
-                if w.limit == PlanQuota.Reading.Limit("claude") || w.limit == PlanQuota.Reading.Limit("codex") then
-                  w.kind
+                if w.limit == Reading.Limit("claude") || w.limit == Reading.Limit("codex") then w.kind
                 else s"${w.limit}/${w.kind}"
-              val left = if (w.usable) == PlanQuota.WindowStatus.Usable.Usable then s"${pct(w.leftPct.value)}%"
+              val left = if (w.usable) == WindowStatus.Usable.Usable then s"${pct(w.leftPct.value)}%"
               else s"**${pct(w.leftPct.value)}%**"
               s"| $name | ${pct(w.usedPct.value)}% | $left | ${w.floor}% | ${w.resetsAt.getOrElse("—")} | " +
                 s"${age(w.ageSeconds.value)} ago${if w.stale.stale then " (stale)" else ""} | ${w.source} |"
@@ -158,24 +183,22 @@ object AgentsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def refreshLine(p: PlanQuota.PoolStatus): String =
+  private def refreshLine(p: PoolStatus): String =
     val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
     val times =
-      if p.refreshesToday == PlanQuota.PoolStatus.RefreshesToday(1) then "once" else s"${p.refreshesToday} times"
+      if p.refreshesToday == PoolStatus.RefreshesToday(1) then "once" else s"${p.refreshesToday} times"
     val last = p.lastRefresh.fold("")(r =>
-      s"; last ${r.at} (${r.trigger}, ${r.mode}): ${
-          if (r.ok) == PlanQuota.RefreshInfo.Ok.Ok then "" else "failed — "
-        }${r.detail}"
+      s"; last ${r.at} (${r.trigger}, ${r.mode}): ${if (r.ok) == RefreshInfo.Ok.Ok then "" else "failed — "}${r.detail}"
     )
     (s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def refreshed(q: PlanQuota.QuotaRefreshed): String =
+  def refreshed(q: QuotaRefreshed): String =
     (q.pools
       .map(r =>
         s"**${r.pool}**: ${
-            if (r.refreshed) == PlanQuota.PoolRefreshed.Refreshed.Refreshed then "read" else "no reading"
+            if (r.refreshed) == PoolRefreshed.Refreshed.Refreshed then "read" else "no reading"
           } — ${r.detail}\n\n${pool(r.status)}"
       )
       .mkString("\n\n") +
@@ -185,7 +208,7 @@ object AgentsMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def quota(q: PlanQuota.QuotaInfo): String =
+  def quota(q: QuotaInfo): String =
     val metered =
       if q.metered.isEmpty then "_No metered allowance: API keys are capped only by the run's and the day's budgets._"
       else q.metered.map(allowanceBlock).mkString("\n")
@@ -623,7 +646,7 @@ object AgentsMarkdown:
             "places resolved" -> e.map(x => ratio(x.placesResolved.value, x.placesAsked.value)),
             "dated findings" -> e.map(x => ratio(x.datedFindings.value, x.findings.value)),
             "period" -> e.map(x =>
-              YearFmt.period(x.periodStart, x.periodEnd) match
+              Year.period(x.periodStart, x.periodEnd) match
                 case "" => "—"
                 case p  => p
             ), {

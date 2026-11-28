@@ -72,8 +72,7 @@ object EventScale:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def ofKind(kind: EventScale.OfKindKind): Option[EventSummary.Scale] =
+  def ofKind(kind: OfKindKind): Option[EventSummary.Scale] =
     val k = normKind(kind)
     if localKinds(LocalKinds((k).value)) then Some(EventSummary.Scale(Local))
     else if regionalKinds(RegionalKinds((k).value)) || (k).value.endsWith("_era") then
@@ -100,10 +99,9 @@ object EventScale:
 
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def effective(
       stated: Option[EventSummary.Scale],
-      kind: EventScale.EffectiveKind,
+      kind: EffectiveKind,
       hasParent: Boolean,
       placeKind: Option[Place.Kind.Wire],
       geometryType: Option[GeometryType]

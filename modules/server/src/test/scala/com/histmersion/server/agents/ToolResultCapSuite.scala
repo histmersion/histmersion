@@ -1,13 +1,14 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.library.query.QueryResult
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.ToolResultCap
 
-import com.histmersion.api.library.Query.QueryResult
 import com.histmersion.domain.library.workflows.LibraryAgentTools
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.api.library.Query
@@ -118,7 +119,7 @@ class ToolResultCapSuite extends munit.FunSuite:
     val few = r.modify(_.rows).setTo(r.rows.take(3)).modify(_.rowCount).setTo(QueryResult.RowCount(3))
     assertEquals(
       LibraryAgentTools.queryResult(few, AgentToolsConfig.QueryMaxRows(50), ToolResultCap.CapMax(100000)),
-      Query.markdown(few)
+      few.markdown
     )
     assert(
       LibraryAgentTools.queryResult(r, AgentToolsConfig.QueryMaxRows(0), ToolResultCap.CapMax(600)).length <= 600,

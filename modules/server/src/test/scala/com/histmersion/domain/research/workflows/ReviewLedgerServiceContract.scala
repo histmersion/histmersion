@@ -1,13 +1,18 @@
 package com.histmersion
 package domain.research.workflows
 
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Severity
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Ledger
+import com.histmersion.domain.research.workflows.Entry
+import com.histmersion.domain.research.workflows.Status
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.Caller
-import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
-import com.histmersion.domain.ReviewLedger.{Entry, Ledger, Status}
 import com.histmersion.domain.research.{ResearchStores, ResearchStoreSuite, Slug}
 import com.histmersion.api.research.Article
 import com.histmersion.util.database.TestPermits.given

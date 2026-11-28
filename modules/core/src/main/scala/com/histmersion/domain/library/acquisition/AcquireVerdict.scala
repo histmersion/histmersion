@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.library.acquisition.LastCheck
+
 import com.histmersion.domain.{AcquireRecheck, Actor}
 import com.histmersion.util.problem.{Problem, Problems}
 
@@ -41,8 +43,8 @@ object AcquireVerdict:
   import Settings.Days
 
   final case class Settings(
-      everyDays: AcquireRecheck.Settings.EveryDays,
-      retryHours: AcquireRecheck.Settings.RetryHours,
+      everyDays: domain.library.acquisition.Cadence.EveryDays,
+      retryHours: domain.library.acquisition.Cadence.RetryHours,
       giveUpChecks: Failures,
       giveUpDays: Days
   )
@@ -57,7 +59,7 @@ object AcquireVerdict:
   def of(
       identifier: Identifier,
       newestFirst: List[AcquireAttempt],
-      generation: AcquireRecheck.LastCheck.Generation,
+      generation: LastCheck.Generation,
       settings: Settings,
       now: Instant
   ): AcquireVerdict =

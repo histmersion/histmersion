@@ -1,5 +1,7 @@
 package com.histmersion
 package api.media
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -11,7 +13,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaCoversReport(
-    dryRun: RepairAcquire.RepairRequest.DryRun,
+    dryRun: RepairRequest.DryRun,
     sources: MediaCoversReport.Sources = MediaCoversReport.Sources(0),
     covers: MediaCoversReport.Covers = MediaCoversReport.Covers(0),
     illustrations: MediaCoversReport.Illustrations = MediaCoversReport.Illustrations(0),
@@ -36,9 +38,9 @@ object MediaCoversReport:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
-      (if ((a.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun) && ((b.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun)
-       then RepairAcquire.RepairRequest.DryRun.DryRun
-       else RepairAcquire.RepairRequest.DryRun.Apply),
+      (if ((a.dryRun) == RepairRequest.DryRun.DryRun) && ((b.dryRun) == RepairRequest.DryRun.DryRun)
+       then RepairRequest.DryRun.DryRun
+       else RepairRequest.DryRun.Apply),
       Sources((a.sources).value + (b.sources).value),
       Covers((a.covers).value + (b.covers).value),
       Illustrations((a.illustrations).value + (b.illustrations).value),

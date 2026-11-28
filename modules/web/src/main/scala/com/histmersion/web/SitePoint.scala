@@ -1,11 +1,12 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.SiteType.get
+
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.UiLabels
 import io.github.iltotore.iron.constraint.any.Pure
@@ -31,7 +32,7 @@ final case class SitePoint(
 
   /** Its type, when it is one the map knows. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def known: Option[SiteTypes.SiteType] = siteType.flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
+  def known: Option[api.catalogue.SiteType] = siteType.flatMap(t => get(api.catalogue.SiteType.Id(t.value)))
 
 object SitePoint:
 

@@ -31,24 +31,24 @@ class AgentVerifySuite extends munit.FunSuite:
 
   test("quote: verbatim modulo hyphenation, ligatures, Unicode quotes and whitespace"):
     assertEquals(
-      findQuote(AgentProposals.Proposal.Quote("ten tons of copper and one ton of tin"), body, MinRatio(0.9)),
+      findQuote(domain.Proposal.Quote("ten tons of copper and one ton of tin"), body, MinRatio(0.9)),
       QuoteMatch.Verbatim
     )
     assertEquals(
       findQuote(
-        AgentProposals.Proposal.Quote("\"a ratio typical of bronze\" according to the excavators"),
+        domain.Proposal.Quote("\"a ratio typical of bronze\" according to the excavators"),
         body,
         MinRatio(0.9)
       ),
       QuoteMatch.Verbatim
     )
     assertEquals(
-      findQuote(AgentProposals.Proposal.Quote("The finds date to about 1320 BCE."), body, MinRatio(0.9)),
+      findQuote(domain.Proposal.Quote("The finds date to about 1320 BCE."), body, MinRatio(0.9)),
       QuoteMatch.Verbatim
     )
 
   test("quote: OCR noise (a slipped letter, a dropped word) is a fuzzy match with its ratio"):
-    val noisy = AgentProposals.Proposal.Quote("The Uluburun shlp carried ten tons of copper and one ton of qxzv tin")
+    val noisy = domain.Proposal.Quote("The Uluburun shlp carried ten tons of copper and one ton of qxzv tin")
     findQuote(noisy, body, MinRatio(0.85)) match
       case QuoteMatch.Fuzzy(r) => assert(r.value >= 0.85 && r.value < 1.0, r)
       case other               => fail(s"expected Fuzzy, got $other")
@@ -56,22 +56,22 @@ class AgentVerifySuite extends munit.FunSuite:
   test("quote: an invented or paraphrased quote is missing"):
     assert(
       !findQuote(
-        AgentProposals.Proposal.Quote("The ship sank off the coast of Cyprus after a storm in winter"),
+        domain.Proposal.Quote("The ship sank off the coast of Cyprus after a storm in winter"),
         body,
         MinRatio(0.9)
       ).accepted
     )
     assert(
       !findQuote(
-        AgentProposals.Proposal.Quote("carried copper and tin from Cornwall to Egypt by sea"),
+        domain.Proposal.Quote("carried copper and tin from Cornwall to Egypt by sea"),
         body,
         MinRatio(0.9)
       ).accepted
     )
 
   test("quote: a short quote must be verbatim — three words match anywhere by chance"):
-    assert(!findQuote(AgentProposals.Proposal.Quote("ten tins of"), body, MinRatio(0.5)).accepted)
-    assertEquals(findQuote(AgentProposals.Proposal.Quote("ten tons of"), body, MinRatio(0.5)), QuoteMatch.Verbatim)
+    assert(!findQuote(domain.Proposal.Quote("ten tins of"), body, MinRatio(0.5)).accepted)
+    assertEquals(findQuote(domain.Proposal.Quote("ten tons of"), body, MinRatio(0.5)), QuoteMatch.Verbatim)
 
   test("similarWord: one edit at four letters or more, never on short words"):
     assert(similarWord("mycenaean", "mycenacan"))

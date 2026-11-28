@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.domain.catalogue.evidence.NearFinding
+import com.histmersion.domain.catalogue.places.placereview.Remedy
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.catalogue.RegionNode
@@ -17,7 +20,6 @@ import com.histmersion.config.PlacesConfig
 import com.histmersion.domain.DeepTime.SignedYear
 import com.histmersion.util.identity.AliasTable
 import com.histmersion.api.library.Finding
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.TestCreators.given
@@ -73,7 +75,6 @@ object PlaceFixtures:
       modernFrom: SignedYear = PlaceSql.DefaultModernFrom
   ): Vector[Place.Summary] = connect(ds)(PlaceRepo.children(id, asOf, limit, modernFrom))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hierarchy(
       ds: DataSource,
       asOf: Option[SignedYear],
@@ -86,7 +87,7 @@ object PlaceFixtures:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def placesOf(ds: DataSource, findingId: Finding.Id): Vector[Place.Summary] =
-    connect(ds)(PlaceRepo.placesOf(EventMatcher.NearFinding.Id(findingId.value)))
+    connect(ds)(PlaceRepo.placesOf(NearFinding.Id(findingId.value)))
 
   def geoJson(
       ds: DataSource,
@@ -176,7 +177,7 @@ object PlaceFixtures:
 
   /** The places of the gazetteer slice the rows of a tree hang off. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def gazetteer(ds: DataSource, rows: Seq[Tree.TreeRow]): (List[RegionNode], List[Place.Relation]) =
+  def gazetteer(ds: DataSource, rows: Seq[api.library.tree.TreeRow]): (List[RegionNode], List[Place.Relation]) =
     connect(ds)(
       TreeRepo.gazetteer(
         rows.iterator
@@ -229,11 +230,11 @@ object PlaceFixtures:
 
   def gazetteerSources(ds: DataSource): List[GazetteerSourceRow] = connect(ds)(GazetteerRepo.sources())
 
-  def proposals(ds: DataSource): List[PlaceReview.Proposal] = connect(ds)(PlaceReviewRepo.proposals())
+  def proposals(ds: DataSource): List[Remedy] = connect(ds)(PlaceReviewRepo.proposals())
 
   def applyProposals(
       ds: DataSource,
-      ps: List[PlaceReview.Proposal],
+      ps: List[Remedy],
       toleranceKm: PlacesConfig.PointToleranceKm
   ): (RowCount, RowCount) =
     transact(ds)(PlaceReviewRepo.apply(ps, areaTolerance(toleranceKm)))

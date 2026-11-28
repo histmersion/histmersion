@@ -1,5 +1,18 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.checks.lint.LintReport
+import com.histmersion.api.checks.lint.LintFixResult
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.QueueImport
+import com.histmersion.api.automation.queue.QueueImported
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.QueryRequest
+import com.histmersion.api.library.query.SchemaTables
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.util.problem.{External, Legacy, Problem}
 import com.histmersion.api.log.LogEvent
 import com.histmersion.api.automation.Creation
@@ -358,7 +371,7 @@ final class Client(
       writes: Cli.Writes
   ): Either[Cli.Error, Place.ImportResult] =
     call(Api.fetchExternalPlaces)((source, (if writes.dry then Api.Apply.DryRun else Api.Apply.Apply)))
-  def placeSources: Either[Cli.Error, List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
+  def placeSources: Either[Cli.Error, List[SourceInfo]] = call(Api.placeSources)(())
   def loadPlaces(source: Api.ExternalPlaces.Source, apply: Api.Apply): Either[Cli.Error, JobInfo] =
     call(Api.loadPlaces)((source, apply))
   def buildHierarchy: Either[Cli.Error, SpatialHierarchyResult] = call(Api.buildHierarchy)(())
@@ -442,22 +455,22 @@ final class Client(
   def articleVersion(slug: ReviewGoal.Slug, versionId: Article.VersionId): Either[Cli.Error, Article.VersionFull] =
     call(Api.articleVersion)((slug, versionId))
   // ── lint · queue · read-only query (plan §5.2 stream 2.8) ───────────────────────────────────
-  def lint(rules: List[Lint.Wire]): Either[Cli.Error, Lint.LintReport] = call(OpsApi.lint)(rules)
-  def lintFix(rules: List[Lint.Wire]): Either[Cli.Error, Lint.LintFixResult] = call(OpsApi.lintFix)(rules)
+  def lint(rules: List[Lint.Wire]): Either[Cli.Error, LintReport] = call(OpsApi.lint)(rules)
+  def lintFix(rules: List[Lint.Wire]): Either[Cli.Error, LintFixResult] = call(OpsApi.lintFix)(rules)
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   def queueList(list: Queue.Wire, all: Boolean): Either[Cli.Error, QueueListing] =
     call(OpsApi.queueList)((list, all, None, None))
-  def queueAdd(list: Queue.Wire, in: Queue.QueueAdd): Either[Cli.Error, Queue.QueueItem] =
+  def queueAdd(list: Queue.Wire, in: QueueAdd): Either[Cli.Error, QueueItem] =
     call(OpsApi.queueAdd)((list, in))
-  def queuePatch(id: Queue.Id, p: Queue.QueuePatch): Either[Cli.Error, Queue.QueueItem] =
+  def queuePatch(id: Queue.Id, p: QueuePatch): Either[Cli.Error, QueueItem] =
     call(OpsApi.queuePatch)((id, p))
-  def queueDelete(id: Queue.Id): Either[Cli.Error, Queue.QueueItem] = call(OpsApi.queueDelete)(id)
+  def queueDelete(id: Queue.Id): Either[Cli.Error, QueueItem] = call(OpsApi.queueDelete)(id)
   def queueExport(list: Queue.Wire): Either[Cli.Error, Queue.Export] = call(OpsApi.queueExport)(list)
   def goalsExport: Either[Cli.Error, Goal.Export] = call(OpsApi.goalsExport)(())
-  def queueImport(list: Queue.Wire, req: Queue.QueueImport): Either[Cli.Error, Queue.QueueImported] =
+  def queueImport(list: Queue.Wire, req: QueueImport): Either[Cli.Error, QueueImported] =
     call(OpsApi.queueImport)((list, req))
-  def query(sql: Query.Statement): Either[Cli.Error, Query.QueryResult] = call(OpsApi.query)(Query.QueryRequest(sql))
-  def schemaTables: Either[Cli.Error, Query.SchemaTables] = call(OpsApi.schemaTables)(())
+  def query(sql: Query.Statement): Either[Cli.Error, QueryResult] = call(OpsApi.query)(QueryRequest(sql))
+  def schemaTables: Either[Cli.Error, SchemaTables] = call(OpsApi.schemaTables)(())
   // ── ingest, jobs and assets (plan §1.8) ─────────────────────────────────────────────────────
   /** Upload one document. The body is the FILE itself (tapir `fileBody`), so a 200 MB scan is streamed rather than held
     * in memory, and every other parameter travels as a query parameter.
@@ -472,7 +485,7 @@ final class Client(
   def basemapRemove(q: Basemap.RemoveQuery): Either[Cli.Error, Basemap.Removed] = call(BasemapApi.remove)(q)
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def jobs(
-      f: ListFilters.JobFilter,
+      f: JobFilter,
       limit: Option[Paging.Limit],
       before: Option[Api.Jobs.Status] = None
   ): Either[Cli.Error, (List[JobInfo], Paging.Page)] =

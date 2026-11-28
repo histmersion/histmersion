@@ -1,10 +1,11 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.managers.ItemCounts
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.ItemStatus
-import com.histmersion.api.automation.Managers.ItemCounts
 
 class ItemCountsSuite extends munit.FunSuite:
 

@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.catalogue.periodo.Authority
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.{PresetRegion, SkippedPeriod}
@@ -12,7 +14,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 @movesTo(FeaturePlace.Kernel)
 final case class PeriodODataset(
-    authorities: List[PeriodO.Authority],
+    authorities: List[Authority],
     parents: Map[PeriodODataset.ParentsKey, PeriodODataset.ParentsValue] = Map.empty,
     skipped: List[SkippedPeriod] = Nil,
     presets: Map[PeriodODataset.PresetsKey, PresetRegion] = Map.empty,

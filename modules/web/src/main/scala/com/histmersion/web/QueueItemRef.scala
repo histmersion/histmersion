@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.api.automation.Queue
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.UiLabels
@@ -74,7 +76,7 @@ object QueueItemRef:
   /** Pure: the parts of an item's first line, as far as they can be told. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def parse(text: Queue.QueueItem.Text): Ref =
+  def parse(text: QueueItem.Text): Ref =
     val line = text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     line match
       case AuthorYear(who, year, title, venue) =>
@@ -182,7 +184,7 @@ object QueueItemRef:
   /** The upload form filled in from an item, linked to it so the accepted upload ticks it off. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def uploadDraft(item: Queue.QueueItem): UploadView.Draft =
+  def uploadDraft(item: QueueItem): UploadView.Draft =
     val r = parse(item.text)
     UploadView.Draft(
       citekey = UploadView.Draft.Citekey(citekey(r).map(_.value).getOrElse("")),
@@ -198,7 +200,7 @@ object QueueItemRef:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def searchQuery(item: Queue.QueueItem): Api.Search.Text =
+  def searchQuery(item: QueueItem): Api.Search.Text =
     val r = parse(item.text)
     Api.Search.Text(
       r.title

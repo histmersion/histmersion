@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.automation.managers.ManagerConfig
+
 import com.histmersion.api.automation.Manager as ApiManager
-import com.histmersion.api.automation.Managers.ManagerConfig
 
 import java.time.Instant
 import com.histmersion.domain.automation.Manager

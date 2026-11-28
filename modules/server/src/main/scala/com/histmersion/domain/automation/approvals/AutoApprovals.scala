@@ -1,5 +1,16 @@
 package com.histmersion
 package domain.automation.approvals
+
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.domain.automation.autopilot.Ruling
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.domain.automation.autopilot.GoalPlanFacts
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -10,10 +21,8 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.domain.AutopilotPolicy.{DraftFacts, GoalPlanFacts, PlannedFacts, Verdict}
 import com.histmersion.api.automation.Goal.Plans.DraftMode
-import com.histmersion.api.automation.Managers.{Feed, ManagerEvent}
-import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
+import com.histmersion.api.automation.Managers.Feed
 import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.automation.{Approval as DomainApproval, Run}
 import com.histmersion.util.jobs.Job
@@ -60,7 +69,7 @@ final class AutoApprovals(
     a.runId.flatMap(id => Run.Id.option(id.value)).flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
-  def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
+  def checked(a: ApprovalInfo, manager: Option[ManagerInfo]): Boolean =
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&
         manager
@@ -123,24 +132,24 @@ final class AutoApprovals(
   final private case class Candidate(
       approval: ApprovalInfo,
       run: Option[RunInfo],
-      manager: Option[Managers.ManagerInfo]
+      manager: Option[ManagerInfo]
   )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decide(
       a: ApprovalInfo,
       run: Option[RunInfo],
-      mgr: Option[Managers.ManagerInfo],
+      mgr: Option[ManagerInfo],
       now: Instant
   )(using WritePermit)(using Creator.New): List[String] =
     val verdict = judge(a, run, mgr, now)
     val what = s"${a.kind} #${a.id}${a.subject.fold("")(s => s" ($s)")}"
     val runId = a.runId.flatMap(id => Run.Id.option(id.value))
-    AutopilotPolicy.note(verdict) match
+    verdict.note match
       case None =>
         val why = verdict match
-          case Verdict.Leave(w) => s"$w"
-          case _                => ""
+          case Ruling.Leave(w) => s"$w"
+          case _               => ""
         mgr.foreach { m =>
           val text = s"approval #${a.id} (${a.kind}) left for a person: $why"
           if !agents.managerStore.lastEventOf(m.id, ManagerEvent.Kind(Feed.Approval)).exists(_.text.value == text) then
@@ -155,8 +164,8 @@ final class AutoApprovals(
         Nil
       case Some(note) =>
         val decision = verdict match
-          case Verdict.Approve(_) => Decision.Approve
-          case _                  => Decision.Reject
+          case Ruling.Approve(_) => Decision.Approve
+          case _                 => Decision.Reject
         agents.decide(
           DomainApproval.Id(a.id.value),
           DomainApproval.Outcome(decision.wire.value),
@@ -216,7 +225,7 @@ final class AutoApprovals(
     )
 
   /** The checks of one approval as the corpus is now. */
-  def judge(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[Managers.ManagerInfo], now: Instant): Verdict =
+  def judge(a: ApprovalInfo, run: Option[RunInfo], mgr: Option[ManagerInfo], now: Instant): Ruling =
     agents.workflows.managerKinds.view
       .flatMap(_.judge(this, a, run, mgr, now))
       .headOption
@@ -224,14 +233,14 @@ final class AutoApprovals(
 
   /** The approvals the engine's own workflows open (a goal's plan). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def judgeOwn(a: ApprovalInfo, now: Instant): Verdict =
+  private def judgeOwn(a: ApprovalInfo, now: Instant): Ruling =
     val day = ManagerPolicy.dayStart(now)
     val caps = cfg.approvals.auto
     a.approvalKind match
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
-          case (_, Some(wait)) => Verdict.Leave(AutopilotPolicy.Rationale(wait.value))
-          case (None, _)       => Verdict.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
+          case (_, Some(wait)) => Ruling.Leave(AutopilotPolicy.Rationale(wait.value))
+          case (None, _)       => Ruling.Leave(AutopilotPolicy.Rationale("the approval carries no readable plan"))
           case (Some(p), _)    =>
             val raw = a.subject.fold(p.goal.value)(_.value)
             (domain.automation.Goal.Slug.option(raw), Slug.option(raw)) match
@@ -245,14 +254,13 @@ final class AutoApprovals(
                       .flatMap(_.parentSlug)
                       .flatMap(parent => Slug.option(parent.value))
                 )
-                AutopilotPolicy.goalPlan(
-                  GoalPlanFacts(
-                    GoalPlanFacts.Goal(raw),
-                    GoalPlanFacts.SubGoals(p.subGoals.size),
-                    GoalPlanFacts.Queries(p.queries.size),
-                    GoalPlanFacts.Works(p.works.size),
-                    depth
-                  ),
+                GoalPlanFacts(
+                  GoalPlanFacts.Goal(raw),
+                  GoalPlanFacts.SubGoals(p.subGoals.size),
+                  GoalPlanFacts.Queries(p.queries.size),
+                  GoalPlanFacts.Works(p.works.size),
+                  depth
+                ).goalPlan(
                   AutopilotPolicy.DepthLimit(caps.maxGoalDepth.value),
                   AutopilotPolicy.ApprovedToday(
                     agents.approvalStore.autoApprovedSince(ApprovalKind.GoalPlan, day).size
@@ -260,13 +268,13 @@ final class AutoApprovals(
                   goalPlanCap
                 ) match
                   // decided by code whatever the focus: only the sub-goals it would open are bounded
-                  case v @ Verdict.Approve(_) =>
+                  case v @ Ruling.Approve(_) =>
                     agents.focus
                       .goalPlanBlock(goal, AutopilotPolicy.Proposed(p.subGoals.size))
-                      .fold(v)(d => Verdict.Leave(AutopilotPolicy.Rationale(d.value)))
+                      .fold(v)(d => Ruling.Leave(AutopilotPolicy.Rationale(d.value)))
                   case v => v
-              case _ => Verdict.Leave(AutopilotPolicy.Rationale("the approval names no valid goal"))
-      case _ => Verdict.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
+              case _ => Ruling.Leave(AutopilotPolicy.Rationale("the approval names no valid goal"))
+      case _ => Ruling.Leave(AutopilotPolicy.Rationale("not a kind the autopilot decides"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def checkpoint(run: Run.Id, step: AgentRepo.StepRecord.Name): Option[String] =

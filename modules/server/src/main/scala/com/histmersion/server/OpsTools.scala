@@ -1,5 +1,10 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.Docket
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -13,7 +18,6 @@ import sttp.tapir.Schema
 import com.histmersion.api.{Api, Markdown}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Queue.{QueueAdd, QueuePatch}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, Lint}
@@ -105,7 +109,7 @@ object OpsTools:
                   in.rules.map(CheckRule.Name(_)),
                   CheckControllers.ApplyFix(in.fix)
                 ) match
-                  case Right(rep) => ToolResult.text(Lint.markdown(rep).value)
+                  case Right(rep) => ToolResult.text(rep.markdown.value)
                   case Left(e)    => McpOut.error(e)
           }
         }
@@ -166,7 +170,7 @@ object OpsTools:
           .getOrElse(
             McpOut.error(
               Api.Error(Problem.Invalid.Missing.here(Problem.Field("list"))),
-              s"The lists: ${Queue.Kind.all.mkString(", ")}."
+              s"The lists: ${Docket.all.mkString(", ")}."
             )
           )
       case "add" =>
@@ -175,8 +179,8 @@ object OpsTools:
             val added = h.workLists.addOverMcp(
               WorkListControllers.ListName(list),
               QueueAdd(
-                Queue.QueueItem.Text(text),
-                in.topic.map(Queue.QueueItem.Topic(_)),
+                QueueItem.Text(text),
+                in.topic.map(QueueItem.Topic(_)),
                 reason = in.reason.map((text => Queue.Rationale(text))),
                 createdBy = in.createdBy
               )
@@ -192,7 +196,7 @@ object OpsTools:
             McpOut.of(
               h.workLists.patch(
                 QueueItemId(id),
-                QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done)))
+                QueuePatch(status = Some(QueueItem.Status(Queue.Done)))
               )
             )(i => s"done **#${i.id}**: ${i.text}")
           case None =>

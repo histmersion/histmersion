@@ -1,6 +1,8 @@
 package com.histmersion
 package server.events
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -36,7 +38,6 @@ import com.histmersion.api.catalogue.{
   Period
 }
 import com.histmersion.api.library.{Filter, Finding, Source}
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.db.DbSuite
 import com.histmersion.server.ServerPlugins
 import com.histmersion.domain.library.acquisition.CoreBudget
@@ -314,10 +315,10 @@ class EventImportSuite extends DbSuite:
         .run()
     val h = CatalogueWiring(deps(cfg), http)
     assertEquals(
-      h.siteTypes.runSiteTypes(SiteTypes.Request(dryRun = SiteTypes.Request.DryRun.DryRun), _ => ()).pending,
+      h.siteTypes.runSiteTypes(SiteType.Request(dryRun = SiteType.Request.DryRun.DryRun), _ => ()).pending,
       2
     )
-    val r = h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ())
+    val r = h.siteTypes.runSiteTypes(SiteType.Request(), _ => ())
     assertEquals((r.asked, r.pending), (2, 0))
     val types = connect(ds)(
       sql"""SELECT id, site_type FROM places WHERE id LIKE 'wikidata_q91%' ORDER BY id"""
@@ -326,7 +327,7 @@ class EventImportSuite extends DbSuite:
         .toList
     )
     assertEquals(types, List("wikidata_q9100001" -> Some("settlement"), "wikidata_q9100002" -> Some("burial")))
-    assertEquals(h.siteTypes.runSiteTypes(SiteTypes.Request(), _ => ()).asked, 0, "asked once")
+    assertEquals(h.siteTypes.runSiteTypes(SiteType.Request(), _ => ()).asked, 0, "asked once")
 
   // ── the P0 dating fixes ─────────────────────────────────────────────────────────────────────
 

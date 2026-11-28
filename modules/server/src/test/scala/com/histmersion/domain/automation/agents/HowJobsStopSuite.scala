@@ -11,7 +11,6 @@ import hearth.kindlings.jsoniterjson.Json
 
 import Halt.Stopped
 import com.histmersion.api.automation.AgentRole
-import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -31,31 +30,42 @@ class HowJobsStopSuite extends munit.FunSuite:
     */
   private val masterPauses: List[(String, Stopped)] = List(
     "requested: paused on request" ->
-      Stopped.Paused(PauseReason.Requested, Problem.Run.Paused(Problem.Run.PauseReason.Requested, None)),
-    "requested: paused before it started" -> Stopped.Paused(PauseReason.Requested, Problem.Run.Unstarted),
-    "interrupted: interrupted" -> Stopped.Paused(PauseReason.Interrupted, Problem.Run.Interrupted),
+      Stopped.Paused(
+        api.automation.agents.PauseReason.Requested,
+        Problem.Run.Paused(Problem.Run.PauseReason.Requested, None)
+      ),
+    "requested: paused before it started" -> Stopped
+      .Paused(api.automation.agents.PauseReason.Requested, Problem.Run.Unstarted),
+    "interrupted: interrupted" -> Stopped
+      .Paused(api.automation.agents.PauseReason.Interrupted, Problem.Run.Interrupted),
     "interrupted: the upload is no longer held by this process" ->
-      Stopped.Paused(PauseReason.Interrupted, Problem.Run.UploadUnheld),
+      Stopped.Paused(api.automation.agents.PauseReason.Interrupted, Problem.Run.UploadUnheld),
     "budget: the run spent $1.2000 of its $1.00 USD" ->
-      Stopped.Paused(PauseReason.Budget, unrecognised("the run spent $1.2000 of its $1.00 USD")),
+      Stopped.Paused(api.automation.agents.PauseReason.Budget, unrecognised("the run spent $1.2000 of its $1.00 USD")),
     "budget: enrich: the run's budget is exhausted" ->
-      Stopped.Paused(PauseReason.Budget, unrecognised("enrich: the run's budget is exhausted")),
+      Stopped.Paused(api.automation.agents.PauseReason.Budget, unrecognised("enrich: the run's budget is exhausted")),
     "provider: enrich: HTTP 529 — fix the provider, then resume" ->
-      Stopped.Paused(PauseReason.Provider, unrecognised("enrich: HTTP 529 — fix the provider, then resume")),
+      Stopped.Paused(
+        api.automation.agents.PauseReason.Provider,
+        unrecognised("enrich: HTTP 529 — fix the provider, then resume")
+      ),
     "allowance: all models for role writer are below their allowance; no window frees by itself" ->
       Stopped.Paused(
-        PauseReason.Allowance,
+        api.automation.agents.PauseReason.Allowance,
         unrecognised("all models for role writer are below their allowance; no window frees by itself")
       ),
     "plan-quota: enrich: all models for role extractor are below their plan floor or allowance; …" ->
       Stopped.Paused(
-        PauseReason.PlanQuota,
+        api.automation.agents.PauseReason.PlanQuota,
         unrecognised("enrich: all models for role extractor are below their plan floor or allowance; …")
       ),
     "stalled: no sign of life for 10 min at step 4 (stall 1 of 3)" ->
-      Stopped.Paused(PauseReason.Stalled, unrecognised("no sign of life for 10 min at step 4 (stall 1 of 3)")),
-    "requested: " -> Stopped.Paused(PauseReason.Requested, unrecognised("")),
-    "stalled: : " -> Stopped.Paused(PauseReason.Stalled, unrecognised(": ")),
+      Stopped.Paused(
+        api.automation.agents.PauseReason.Stalled,
+        unrecognised("no sign of life for 10 min at step 4 (stall 1 of 3)")
+      ),
+    "requested: " -> Stopped.Paused(api.automation.agents.PauseReason.Requested, unrecognised("")),
+    "stalled: : " -> Stopped.Paused(api.automation.agents.PauseReason.Stalled, unrecognised(": ")),
     "interrupted" -> Stopped.Interrupted,
     "stopped while the autopilot drains: it resumes once the drain is lifted" -> Stopped.Draining
   )
@@ -87,11 +97,11 @@ class HowJobsStopSuite extends munit.FunSuite:
 
   test("every pause reason reads from what it writes, with the problem it stopped on"):
     val why: Problem = Problem.Run.AtStep(Problem.Run.Step("enrich"), Problem.Run.Failure.BudgetSpent)
-    PauseReason.values.foreach { r =>
+    api.automation.agents.PauseReason.values.foreach { r =>
       val c = Stopped.Paused(r, why)
       assertEquals(Stopped.of(c.problem), c)
       assertEquals(c.problem.sentence, s"${r.wire}: ${why.sentence}", "the words a pause always said")
-      PauseReason.values.foreach(o => assertEquals(Stopped.of(c.problem).pausedOn(o), o == r))
+      api.automation.agents.PauseReason.values.foreach(o => assertEquals(Stopped.of(c.problem).pausedOn(o), o == r))
     }
 
   test("a restart's interruption and the drain's stop are what a later job takes up; nothing else is"):
@@ -116,11 +126,11 @@ class HowJobsStopSuite extends munit.FunSuite:
     assertEquals(Stopped.Failed(two).problem, Problem.Run.Failed(two), "a run shows every one")
 
   test("a paused run's reason is the one its stored problem names; none means a person paused it"):
-    PauseReason.values.foreach { r =>
+    api.automation.agents.PauseReason.values.foreach { r =>
       assertEquals(Stopped.pausedFor(Some(Stopped.Paused(r, Problem.Run.Unstarted).problem)), Some(r))
     }
-    assertEquals(Stopped.pausedFor(None), Some(PauseReason.Requested))
-    assertEquals(Stopped.pausedFor(Some(text("interrupted"))), Some(PauseReason.Interrupted))
+    assertEquals(Stopped.pausedFor(None), Some(api.automation.agents.PauseReason.Requested))
+    assertEquals(Stopped.pausedFor(Some(text("interrupted"))), Some(api.automation.agents.PauseReason.Interrupted))
     assertEquals(Stopped.pausedFor(Some(text("cancelled"))), None)
 
   test("the JSON a column is filtered by is contained in a pause for that reason's entry, and in no other's"):
@@ -129,9 +139,9 @@ class HowJobsStopSuite extends munit.FunSuite:
         case (Some(w), Some(p), _, _) => p.toList.forall((k, v) => w(k).exists(contains(_, v)))
         case (_, _, Some(w), Some(p)) => p.forall(x => w.exists(contains(_, x)))
         case _                        => whole.noSpaces == part.noSpaces
-    PauseReason.values.foreach { r =>
+    api.automation.agents.PauseReason.values.foreach { r =>
       val pattern = Stopped.pausedMatch(r)
-      PauseReason.values.foreach { o =>
+      api.automation.agents.PauseReason.values.foreach { o =>
         val row = Json.arr(Stopped.Paused(o, Problem.Run.Unstarted).problem.entry.asJson)
         assertEquals(contains(row, pattern), o == r, s"${r.wire} in a ${o.wire} pause")
       }
@@ -155,11 +165,11 @@ class HowJobsStopSuite extends munit.FunSuite:
     // what the engine stores for the pause RunCtx halts with: the step's AtStep, typed, whole
     val atStep =
       Problem.Run.AtStep(Problem.Run.Step("enrich"), Problem.Run.Failure.Failed(NonEmptyVector.of(exhausted)))
-    val stored = Stopped.Paused(PauseReason.Allowance, atStep).problem
+    val stored = Stopped.Paused(api.automation.agents.PauseReason.Allowance, atStep).problem
     assertEquals(stored.sentence, s"allowance: enrich: $sentence", "the words the pause said before it was typed")
     assertEquals(ModelPicker.pausedRole(stored), Some(AgentRole.Extractor))
     assertEquals(
-      ModelPicker.pausedRole(Stopped.Paused(PauseReason.Allowance, exhausted).problem),
+      ModelPicker.pausedRole(Stopped.Paused(api.automation.agents.PauseReason.Allowance, exhausted).problem),
       Some(AgentRole.Extractor)
     )
     assertEquals(

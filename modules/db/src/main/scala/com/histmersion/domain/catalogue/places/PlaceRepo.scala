@@ -1,5 +1,10 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.SiteType.Pleiades
+import com.histmersion.api.catalogue.SiteType.Geonames
+import com.histmersion.api.catalogue.SiteType.p31Of
+import com.histmersion.domain.catalogue.evidence.NearFinding
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.Problem
@@ -18,14 +23,13 @@ import com.histmersion.domain.*
 import com.augustnagro.magnum.*
 import scala.util.chaining.*
 import com.histmersion.util.database.NewtypeColumns.given
-import com.histmersion.api.catalogue.{Geocode, GeoTime, ManualPlaceName, Period, SiteTypes}
+import com.histmersion.api.catalogue.{Geocode, GeoTime, ManualPlaceName, Period}
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.CatalogRecord
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
@@ -469,7 +473,7 @@ private[places] object PlaceRepo:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  private def siteTypeOf(id: domain.catalogue.Place.Id)(using DbCon): Option[SiteTypes.SiteType.Id] =
+  private def siteTypeOf(id: domain.catalogue.Place.Id)(using DbCon): Option[api.catalogue.SiteType.Id] =
     sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class',
                  properties->>'p31'
           FROM places WHERE id = $id"""
@@ -477,14 +481,14 @@ private[places] object PlaceRepo:
       .run()
       .headOption
       .flatMap((kind, stored, ft, fcode, wd, p31) =>
-        SiteTypes.of(
+        com.histmersion.api.catalogue.SiteType.of(
           Place.Id(id.value),
           Place.Kind.Wire(kind),
-          stored.map(SiteTypes.SiteType.Id(_)),
-          ft.map(SiteTypes.Pleiades.FeatureType(_)),
-          fcode.map(SiteTypes.Geonames.Fcode(_)),
+          stored.map(api.catalogue.SiteType.Id(_)),
+          ft.map(Pleiades.FeatureType(_)),
+          fcode.map(Geonames.Fcode(_)),
           wd.map(CatalogRecord.Wikidata.Class(_)),
-          SiteTypes.p31Of(p31.map(CatalogRecord.Wikidata.P31Json(_)))
+          p31Of(p31.map(CatalogRecord.Wikidata.P31Json(_)))
         )
       )
 
@@ -598,7 +602,7 @@ private[places] object PlaceRepo:
 
   /** The gazetteer places one finding was materialised into. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def placesOf(findingId: EventMatcher.NearFinding.Id)(using DbCon): Vector[Place.Summary] =
+  def placesOf(findingId: NearFinding.Id)(using DbCon): Vector[Place.Summary] =
     sql"""SELECT $summaryCols FROM finding_places fp JOIN places p ON p.id = fp.place_id
           WHERE fp.finding_id = $findingId ORDER BY p.label, p.id"""
       .query[Place.Summary]
@@ -625,12 +629,11 @@ private[places] object PlaceRepo:
     * always a superset of the true circle.
     */
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[places] def geoJsonQuery(
-      kind: Option[PlaceRepo.GeoJsonQueryKind],
+      kind: Option[GeoJsonQueryKind],
       asOf: Option[DeepTime.SignedYear],
       limit: GeoJsonQueryLimit,
-      modernFrom: PlaceRepo.GeoJsonQueryModernFrom = DefaultModernFrom
+      modernFrom: GeoJsonQueryModernFrom = DefaultModernFrom
   ): Frag =
     geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(y)), limit, modernFrom)
 
@@ -856,14 +859,14 @@ private[places] object PlaceRepo:
             ),
             i
           ) =>
-        val siteType = SiteTypes.of(
+        val siteType = com.histmersion.api.catalogue.SiteType.of(
           Place.Id(id),
           Place.Kind.Wire(placeKind),
-          stored.map(SiteTypes.SiteType.Id(_)),
-          featureTypes.map(SiteTypes.Pleiades.FeatureType(_)),
-          fcode.map(SiteTypes.Geonames.Fcode(_)),
+          stored.map(api.catalogue.SiteType.Id(_)),
+          featureTypes.map(Pleiades.FeatureType(_)),
+          fcode.map(Geonames.Fcode(_)),
           wdClass.map(CatalogRecord.Wikidata.Class(_)),
-          SiteTypes.p31Of(p31.map(CatalogRecord.Wikidata.P31Json(_)))
+          p31Of(p31.map(CatalogRecord.Wikidata.P31Json(_)))
         )
         val propsObj = Json
           .obj(

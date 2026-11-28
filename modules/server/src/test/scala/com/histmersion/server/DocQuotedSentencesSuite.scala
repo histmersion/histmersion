@@ -1,6 +1,9 @@
 package com.histmersion
 package server
 
+import com.histmersion.domain.library.acquisition.Purpose
+import com.histmersion.domain.library.acquisition.Denial
+
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
 import java.util.regex.Pattern
@@ -58,9 +61,9 @@ object DocQuotedSentencesSuite:
   /** Every sentence a quote may be checked against. */
   val Rendered: Vector[String] =
     (Problem.examples ++ Quoted).map(_.sentence) ++
-      CoreQuota.Purpose.values.toVector.map(p =>
-        CoreQuota.Refusal
-          .OverBudget(p, CoreQuota.Refusal.OverBudget.Spent(6), CoreQuota.Refusal.OverBudget.Cap(6))
+      Purpose.values.toVector.map(p =>
+        Denial
+          .OverBudget(p, Denial.OverBudget.Spent(6), Denial.OverBudget.Cap(6))
           .describe
           .toString
       )

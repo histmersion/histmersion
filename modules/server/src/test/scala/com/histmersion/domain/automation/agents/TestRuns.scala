@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.util.problem.Problem
 import com.histmersion.api.automation.Stopped
 import io.scalaland.chimney.dsl.*
@@ -55,7 +58,7 @@ object TestRuns:
       acquireItem: Option[SweepAcquireItem.Item] = None,
       goal: Option[Goal.Slug] = None,
       parent: Option[Run.Id] = None,
-      origin: Origin = Origin.Person,
+      origin: api.automation.agents.Origin = api.automation.agents.Origin.Person,
       dryRun: RunService.DryRun = RunService.DryRun(false)
   ): RunInfo =
     val id = runs(ds).create(
@@ -75,7 +78,7 @@ object TestRuns:
       acquireItem: Option[SweepAcquireItem.Item],
       goal: Option[Goal.Slug],
       parent: Option[Run.Id],
-      origin: Origin,
+      origin: api.automation.agents.Origin,
       dryRun: RunService.DryRun,
       managerId: Option[ManagerLight.Id] = None,
       managerItem: Option[FocusRepo.WorkRow.Id] = None

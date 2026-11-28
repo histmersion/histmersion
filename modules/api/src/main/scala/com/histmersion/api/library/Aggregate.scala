@@ -1,6 +1,8 @@
 package com.histmersion
 package api.library
 
+import com.histmersion.api.library.aggregate.Counting
+
 import com.histmersion.api.given
 import com.histmersion.api.catalogue.Period
 import io.github.iltotore.iron.constraint.any.Pure
@@ -58,19 +60,6 @@ object Aggregate:
       val (lo, hi) = order(from, to)
       val first = BigInt(Math.floorDiv(lo.value, size.value)) * size.value
       ((BigInt(hi.value) - first) / size.value) + 1
-
-  enum Counting:
-    case Overlap, Starts
-
-  object Counting:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Option[Counting] = (s).value.trim.toLowerCase match
-      case "starts"       => Some(Starts)
-      case "overlap" | "" => Some(Overlap)
-      case _              => None
 
   val UnitStarts = "starts"
 

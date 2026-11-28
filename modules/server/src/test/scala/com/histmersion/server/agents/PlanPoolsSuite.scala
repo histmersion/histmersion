@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.planquota.ModWindow
+import com.histmersion.api.automation.planquota.Channel
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
@@ -120,13 +123,13 @@ class PlanPoolsSuite extends munit.FunSuite:
         ),
         ModWindow(ModWindow.Kind("seven_day"), ModWindow.PercentUsed(42), None)
       ),
-      Source.Mod,
+      Channel.Mod,
       Now(5L)
     )
     assertEquals(
       rs.map(r => (r.kind, r.usedPct, r.resetsAt, r.source)),
       List(
-        ("five_hour", 12.0, Some(java.time.Instant.parse("2026-10-05T21:40:00Z").toEpochMilli), Source.Mod),
-        ("seven_day", 42.0, None, Source.Mod)
+        ("five_hour", 12.0, Some(java.time.Instant.parse("2026-10-05T21:40:00Z").toEpochMilli), Channel.Mod),
+        ("seven_day", 42.0, None, Channel.Mod)
       )
     )

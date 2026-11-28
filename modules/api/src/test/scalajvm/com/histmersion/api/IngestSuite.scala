@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
@@ -331,7 +333,7 @@ class IngestSuite extends munit.FunSuite:
       JobKinds.Wire(Ingest.KindIngest),
       JobInfo.Status("running"),
       (Some("ck")).map(Citekey.apply),
-      acquireItem = Some(Queue.QueueItem.Id(42))
+      acquireItem = Some(QueueItem.Id(42))
     )
     assert(
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),

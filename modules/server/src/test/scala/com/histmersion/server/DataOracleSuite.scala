@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
@@ -402,18 +405,18 @@ class DataOracleSuite extends DbSuite with db.Bounded:
       )
     val _ = QueueRows.add(
       ds,
-      Queue.Kind.Tasks,
-      Queue.QueueAdd(Queue.QueueItem.Text("check the storm god"), topic = Some(Queue.QueueItem.Topic("oracle")))
+      api.automation.queue.Docket.Tasks,
+      QueueAdd(QueueItem.Text("check the storm god"), topic = Some(QueueItem.Topic("oracle")))
     )
     val _ = QueueRows.add(
       ds,
-      Queue.Kind.Log,
-      Queue.QueueAdd(Queue.QueueItem.Text("crafted the oracle"), topic = Some(Queue.QueueItem.Topic("oracle")))
+      api.automation.queue.Docket.Log,
+      QueueAdd(QueueItem.Text("crafted the oracle"), topic = Some(QueueItem.Topic("oracle")))
     )
     val _ = QueueRows.add(
       ds,
-      Queue.Kind.Acquire,
-      Queue.QueueAdd(Queue.QueueItem.Text("Doe, The Lost Book (1900)"), topic = Some(Queue.QueueItem.Topic("oracle")))
+      api.automation.queue.Docket.Acquire,
+      QueueAdd(QueueItem.Text("Doe, The Lost Book (1900)"), topic = Some(QueueItem.Topic("oracle")))
     )
 
   /** After home imported work once, both go on. */
@@ -504,8 +507,8 @@ class DataOracleSuite extends DbSuite with db.Bounded:
     )
     val _ = QueueRows.add(
       work,
-      Queue.Kind.Tasks,
-      Queue.QueueAdd(Queue.QueueItem.Text("a task work added"), topic = Some(Queue.QueueItem.Topic("oracle")))
+      api.automation.queue.Docket.Tasks,
+      QueueAdd(QueueItem.Text("a task work added"), topic = Some(QueueItem.Topic("oracle")))
     )
 
   // ── normalisation ──────────────────────────────────────────────────────────────────────────

@@ -3,7 +3,7 @@ package server
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.api.{Html, Wording, YearFmt}
+import com.histmersion.api.{Html, Wording}
 import com.histmersion.api.Html.{html, Atoms}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -18,6 +18,7 @@ import com.histmersion.api.research.ReviewGoal
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.domain.research.articles.ArticleTools
+import com.histmersion.api.catalogue.Year
 
 @movesTo(FeaturePlace.ResearchArticles)
 object HtmlRender:
@@ -142,7 +143,7 @@ object HtmlRender:
       case (r, Some(la), Some(lo)) =>
         r.fold("")(_ + " ") + String.format(java.util.Locale.ROOT, "(%.2f, %.2f)", la.value, lo.value)
       case (r, _, _) => r.getOrElse("")
-    val period = YearFmt.period(f.periodStart, f.periodEnd)
+    val period = Year.period(f.periodStart, f.periodEnd)
     val meta = List(
       f.confidence.fold(Html.empty)(confidenceBadge),
       Html.text(where),

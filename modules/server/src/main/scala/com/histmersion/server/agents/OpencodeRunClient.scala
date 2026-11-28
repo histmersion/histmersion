@@ -1,11 +1,12 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.domain.automation.agents.{FirstCallProbe, LlmCall, LlmClient, ModelLimitReached}
 
 import com.histmersion.config.OpencodeConfig
-import com.histmersion.api.automation.Agents.ModelRef
 import sttp.ai.core.agent.*
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{movesTo, FeaturePlace}
@@ -64,16 +65,11 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
           AgentResponse(o.finalText.fold("")(_.value), Nil, StopReason.EndTurn, Some(o.usage), Some(model.model.value))
         }
         val o = out.get().getOrElse(throw IllegalStateException("opencode: no outcome"))
-        o.error.filter(e => CliOutcomes.isLimit(ClaudeCode.Limit.Sentence(e.sentence))) match
+        o.error.filter(e => CliOutcome.isLimit(ClaudeCode.Limit.Sentence(e.sentence))) match
           case Some(m) =>
             // m is opencode run's own words (Opencode.parse), whole: "opencode run: <what it said>"
             throw new ModelLimitReached(model, None, m)
           case None =>
-            CliOutcomes.result(
-              o,
-              call.user,
-              call.schema,
-              Some(ClaudeCode.ModelId(model.model.value))
-            )
+            o.result(call.user, call.schema, Some(ClaudeCode.ModelId(model.model.value)))
       finally grant.foreach(g => rt.tokens.revoke(g.token))
     }

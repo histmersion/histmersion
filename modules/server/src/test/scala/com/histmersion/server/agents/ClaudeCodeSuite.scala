@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.api.automation.planquota.PoolId
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -29,8 +33,7 @@ import com.histmersion.domain.automation.agents.{
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.ClaudeCodeConfig
-import com.histmersion.api.automation.Agents.{ModelRef, ProbeAnswer, ProviderKind}
-import com.histmersion.api.automation.PlanQuota.PoolId
+import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.*
 import sttp.shared.Identity

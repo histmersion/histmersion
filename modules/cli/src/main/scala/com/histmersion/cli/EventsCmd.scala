@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.catalogue.EventLead
 import com.histmersion.api.library.Filter
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -14,12 +16,10 @@ import com.histmersion.api.catalogue.{Event, EventCorrection, EventSummary}
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.{
-  Corrections,
   EventCandidatesRequest,
   EventGeometry,
   EventImportReport,
   EventImportRequest,
-  EventLeads,
   EventLinksMarkdown,
   EventLinksRequest,
   EventPatch,
@@ -209,7 +209,7 @@ object EventsCmd:
         case Command.Corrections(st, ev, limit) =>
           c.call(EventsApi.corrections)(
             (st.map(Event.Id(_)), ev.map(EventCorrection.Status(_)), limit.map(UnreadPage.Offset(_)), None)
-          ).map(l => Cli.out.println(Corrections.markdown(l)))
+          ).map(l => Cli.out.println(Correction.markdown(l)))
         case Command.Catalogues() =>
           c.call(EventsApi.catalogues)(())
             .map(cs =>
@@ -248,5 +248,5 @@ object EventsCmd:
               tier = tier.map(Api.EventQuery.Tier(_)),
               area = area.map(Api.EventQuery.Area(_))
             )
-          ).map(l => Cli.out.println(EventLeads.markdown(l)))
+          ).map(l => Cli.out.println(EventLead.markdown(l)))
         case Command.Patch(id, p) => c.patchEvent(Event.Uid(id), p).map(d => Cli.out.println(d.markdown))

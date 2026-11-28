@@ -1,5 +1,8 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.util.problem.Text.sentence
@@ -208,9 +211,9 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         Span(Some(Year(-1650)), Some(Year(-1180)))
       )
     )
-    assertEquals(Gazetteer.datasetSlug(Gazetteer.SourceInfo.File("WHG Hittite Sites.lpf.json")), "whg_hittite_sites")
-    assertEquals(Gazetteer.datasetSlug(Gazetteer.SourceInfo.File("kultepe.tsv")), "kultepe")
-    assertEquals(Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(Gazetteer.DatasetName("kultepe"))), "lpf:kultepe")
+    assertEquals(SourceInfo.datasetSlug(SourceInfo.File("WHG Hittite Sites.lpf.json")), "whg_hittite_sites")
+    assertEquals(SourceInfo.datasetSlug(SourceInfo.File("kultepe.tsv")), "kultepe")
+    assertEquals(api.catalogue.gazetteer.Kind.Lpf.sourceKey(Some(Gazetteer.DatasetName("kultepe"))), "lpf:kultepe")
 
   test("canonical: the seed before an LPF dataset before Wikidata before GeoNames; the smaller id breaks a tie"):
     val seed =
@@ -248,9 +251,12 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(Gazetteer.canonical(Nil), None)
 
   test("Getty TGN (#1403): a source kind of its own, ranked between Wikidata and GeoNames, an imported source"):
-    assertEquals(Gazetteer.Kind.parse(Gazetteer.Kind.Wire("tgn")), Some(Gazetteer.Kind.Tgn))
-    assertEquals(Gazetteer.Kind.ofKey(Gazetteer.SourceInfo.Key("tgn")), Some(Gazetteer.Kind.Tgn))
-    assertEquals(Gazetteer.sourceKey(Gazetteer.Kind.Tgn), "tgn")
+    assertEquals(
+      api.catalogue.gazetteer.Kind.parse(api.catalogue.gazetteer.Kind.Wire("tgn")),
+      Some(api.catalogue.gazetteer.Kind.Tgn)
+    )
+    assertEquals(api.catalogue.gazetteer.Kind.ofKey(SourceInfo.Key("tgn")), Some(api.catalogue.gazetteer.Kind.Tgn))
+    assertEquals(api.catalogue.gazetteer.Kind.Tgn.sourceKey(), "tgn")
     val wd = api.catalogue.Place.Match(
       api.catalogue.Place.Id("wikidata_q1"),
       Some(api.catalogue.Place.Match.ImportSource("wikidata"))
@@ -273,9 +279,9 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
     assertEquals(Gazetteer.ImportedSources, List("wikidata", "geonames", "tgn"))
     assert(
-      Gazetteer.unknownWhenSilent(Gazetteer.SourceInfo.Key("tgn")) && !Gazetteer.unknownWhenSilent(
-        Gazetteer.SourceInfo.Key("lpf:x")
-      ) && !Gazetteer.unknownWhenSilent(Gazetteer.SourceInfo.Key(""))
+      SourceInfo.unknownWhenSilent(SourceInfo.Key("tgn")) && !SourceInfo.unknownWhenSilent(
+        SourceInfo.Key("lpf:x")
+      ) && !SourceInfo.unknownWhenSilent(SourceInfo.Key(""))
     )
     assert(Gazetteer.PointAreaSources.contains("tgn"))
     val r = Gazetteer.fromFeature(
@@ -335,32 +341,26 @@ class GazetteerSourcesSuite extends munit.FunSuite:
 
   test("load counts: a re-run of the same version is unchanged"):
     assert(
-      Gazetteer
-        .LoadCounts(
-          Gazetteer.LoadCounts.Source("geonames"),
-          Gazetteer.LoadCounts.Version("v1"),
-          records = Gazetteer.LoadCounts.Records(10),
-          joined = Gazetteer.LoadCounts.Joined(4)
-        )
-        .unchanged
+      LoadCounts(
+        LoadCounts.Source("geonames"),
+        LoadCounts.Version("v1"),
+        records = LoadCounts.Records(10),
+        joined = LoadCounts.Joined(4)
+      ).unchanged
     )
     assert(
-      !Gazetteer
-        .LoadCounts(
-          Gazetteer.LoadCounts.Source("geonames"),
-          Gazetteer.LoadCounts.Version("v1"),
-          namesAdded = Gazetteer.LoadCounts.NamesAdded(1)
-        )
-        .unchanged
+      !LoadCounts(
+        LoadCounts.Source("geonames"),
+        LoadCounts.Version("v1"),
+        namesAdded = LoadCounts.NamesAdded(1)
+      ).unchanged
     )
     assert(
-      !Gazetteer
-        .LoadCounts(
-          Gazetteer.LoadCounts.Source("geonames"),
-          Gazetteer.LoadCounts.Version("v1"),
-          linksChanged = Gazetteer.LoadCounts.LinksChanged(1)
-        )
-        .unchanged,
+      !LoadCounts(
+        LoadCounts.Source("geonames"),
+        LoadCounts.Version("v1"),
+        linksChanged = LoadCounts.LinksChanged(1)
+      ).unchanged,
       "a link's item facts changed"
     )
 
@@ -577,22 +577,22 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
 
   test("load counts: descriptions count as a change, and add up"):
-    val a = Gazetteer.LoadCounts(
-      Gazetteer.LoadCounts.Source("wikidata"),
-      Gazetteer.LoadCounts.Version("v2"),
-      descriptionsChanged = Gazetteer.LoadCounts.DescriptionsChanged(2)
+    val a = LoadCounts(
+      LoadCounts.Source("wikidata"),
+      LoadCounts.Version("v2"),
+      descriptionsChanged = LoadCounts.DescriptionsChanged(2)
     )
     assert(!a.unchanged)
     assert(a.describe.contains("descriptions +0 −0 ~2"), a.describe)
     assertEquals(
-      (a + Gazetteer.LoadCounts(
-        Gazetteer.LoadCounts.Source("wikidata"),
-        Gazetteer.LoadCounts.Version("v2"),
-        descriptionsAdded = Gazetteer.LoadCounts.DescriptionsAdded(1L)
+      (a + LoadCounts(
+        LoadCounts.Source("wikidata"),
+        LoadCounts.Version("v2"),
+        descriptionsAdded = LoadCounts.DescriptionsAdded(1L)
       )).descriptionsAdded,
       1L
     )
-    assert(Gazetteer.LoadCounts(Gazetteer.LoadCounts.Source("wikidata"), Gazetteer.LoadCounts.Version("v2")).unchanged)
+    assert(LoadCounts(LoadCounts.Source("wikidata"), LoadCounts.Version("v2")).unchanged)
 
   // ── an area known only by a point (2026-10-09) ────────────────────────────────────────────────
 
@@ -635,39 +635,37 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       )
     for
       k <- List(Place.Kind.Region, Place.Kind.Polity, Place.Kind.People);
-      src <- List("wikidata", "geonames").map(s => Gazetteer.SourceInfo.Key(s))
-    do assert(Gazetteer.dropsPointArea(src, r(GazRecord.Kind(k), Pt), kinds), s"$src $k")
+      src <- List("wikidata", "geonames").map(s => SourceInfo.Key(s))
+    do assert(SourceInfo.dropsPointArea(src, r(GazRecord.Kind(k), Pt), kinds), s"$src $k")
     assert(
-      !Gazetteer
-        .dropsPointArea(Gazetteer.SourceInfo.Key("wikidata"), r(GazRecord.Kind(Place.Kind.Region), Poly), kinds),
+      !SourceInfo.dropsPointArea(SourceInfo.Key("wikidata"), r(GazRecord.Kind(Place.Kind.Region), Poly), kinds),
       "a shape is a region"
     )
     assert(
-      !Gazetteer.dropsPointArea(Gazetteer.SourceInfo.Key("wikidata"), r(GazRecord.Kind(Place.Kind.Site), Pt), kinds),
+      !SourceInfo.dropsPointArea(SourceInfo.Key("wikidata"), r(GazRecord.Kind(Place.Kind.Site), Pt), kinds),
       "a site is a point by nature"
     )
     assert(
-      !Gazetteer.dropsPointArea(Gazetteer.SourceInfo.Key("geonames"), r(GazRecord.Kind(Place.Kind.Feature), Pt), kinds)
+      !SourceInfo.dropsPointArea(SourceInfo.Key("geonames"), r(GazRecord.Kind(Place.Kind.Feature), Pt), kinds)
     )
     assert(
-      !Gazetteer.dropsPointArea(Gazetteer.SourceInfo.Key("lpf:whg"), r(GazRecord.Kind(Place.Kind.Region), Pt), kinds),
+      !SourceInfo.dropsPointArea(SourceInfo.Key("lpf:whg"), r(GazRecord.Kind(Place.Kind.Region), Pt), kinds),
       "an LPF dataset keeps its points"
     )
     assert(
-      !Gazetteer
-        .dropsPointArea(Gazetteer.SourceInfo.Key("wikidata"), r(GazRecord.Kind(Place.Kind.Region), Pt), Set.empty),
+      !SourceInfo.dropsPointArea(SourceInfo.Key("wikidata"), r(GazRecord.Kind(Place.Kind.Region), Pt), Set.empty),
       "\"\" keeps every record"
     )
     assert(
-      Gazetteer.dropsPointArea(
-        Gazetteer.SourceInfo.Key("wikidata"),
+      SourceInfo.dropsPointArea(
+        SourceInfo.Key("wikidata"),
         r(GazRecord.Kind(Place.Kind.Polity), Pt),
         Set(Gazetteer.PointAreaKinds(Place.Kind.Polity))
       )
     )
     assert(
-      !Gazetteer.dropsPointArea(
-        Gazetteer.SourceInfo.Key("wikidata"),
+      !SourceInfo.dropsPointArea(
+        SourceInfo.Key("wikidata"),
         r(GazRecord.Kind(Place.Kind.Region), Pt),
         Set(Gazetteer.PointAreaKinds(Place.Kind.Polity))
       )
@@ -679,11 +677,11 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assert(AppConfig.load().places.sources.pointAreaFixSeconds.value <= 50, "well inside netty's 60 s idle timeout")
 
   test("load counts: a dropped point-only area is reported, and is no change by itself"):
-    val c = Gazetteer.LoadCounts(
-      Gazetteer.LoadCounts.Source("wikidata"),
-      Gazetteer.LoadCounts.Version("v1"),
-      records = Gazetteer.LoadCounts.Records(3),
-      pointAreasSkipped = Gazetteer.LoadCounts.PointAreasSkipped(2)
+    val c = LoadCounts(
+      LoadCounts.Source("wikidata"),
+      LoadCounts.Version("v1"),
+      records = LoadCounts.Records(3),
+      pointAreasSkipped = LoadCounts.PointAreasSkipped(2)
     )
     assert(c.unchanged)
     assert(c.describe.contains("2 point-only region(s)/polity(ies) not kept as places"), c.describe)

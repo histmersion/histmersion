@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.domain.library.acquisition.Held
+
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.library.{Citekey, Doi}
 import com.histmersion.util.database.Timestamps
@@ -70,8 +73,8 @@ private[acquisition] object AcquireCheckRepo:
       AcquireAttemptRow.Id,
       String,
       AcquireAttemptRow.Trigger.Wire,
-      AcquireRecheck.LastCheck.Generation,
-      AcquireRecheck.Outcome.Wire,
+      LastCheck.Generation,
+      domain.library.acquisition.Upshot.Wire,
       Option[Citekey],
       Option[AcquireAttempt.Outcome.Source],
       List[Problem.NotFound.Fetcher],
@@ -128,11 +131,14 @@ private[acquisition] object AcquireCheckRepo:
         val facts =
           scripts.map(w => StoredScripts.parse(w).map(s => AcquireAttempt.Oa(status, url, licence, s.scripts)))
         val found: Option[AcquireAttempt.Outcome] =
-          (AcquireRecheck.Outcome.parse(outcome), citekey, source, failed) match
-            case (Some(AcquireRecheck.Outcome.Closed), Some(ck), _, _)      => Some(AcquireAttempt.Outcome.Closed(ck))
-            case (Some(AcquireRecheck.Outcome.Fetched), _, Some(s), _)      => Some(AcquireAttempt.Outcome.Fetched(s))
-            case (Some(AcquireRecheck.Outcome.NoCopy), _, _, _)             => Some(AcquireAttempt.Outcome.NoCopy)
-            case (Some(AcquireRecheck.Outcome.Failed), _, _, Some(why))     => Some(AcquireAttempt.Outcome.Failed(why))
+          (domain.library.acquisition.Upshot.parse(outcome), citekey, source, failed) match
+            case (Some(domain.library.acquisition.Upshot.Closed), Some(ck), _, _) =>
+              Some(AcquireAttempt.Outcome.Closed(ck))
+            case (Some(domain.library.acquisition.Upshot.Fetched), _, Some(s), _) =>
+              Some(AcquireAttempt.Outcome.Fetched(s))
+            case (Some(domain.library.acquisition.Upshot.NoCopy), _, _, _) => Some(AcquireAttempt.Outcome.NoCopy)
+            case (Some(domain.library.acquisition.Upshot.Failed), _, _, Some(why)) =>
+              Some(AcquireAttempt.Outcome.Failed(why))
             case (None, _, _, _) if outcome == AcquireAttemptRow.LegacyWire =>
               Some(
                 AcquireAttempt.Outcome.Legacy(
@@ -185,11 +191,14 @@ private[acquisition] object AcquireCheckRepo:
     val licence = attempt.oa.flatMap(_.licence)
     val at = attempt.at.toString
     val (outcome, citekey, source, failure, reason, checks) = attempt.outcome match
-      case AcquireAttempt.Outcome.Closed(ck)  => (AcquireRecheck.Outcome.Closed.wire, Some(ck), None, None, None, None)
-      case AcquireAttempt.Outcome.Fetched(s)  => (AcquireRecheck.Outcome.Fetched.wire, None, Some(s), None, None, None)
-      case AcquireAttempt.Outcome.NoCopy      => (AcquireRecheck.Outcome.NoCopy.wire, None, None, None, None, None)
+      case AcquireAttempt.Outcome.Closed(ck) =>
+        (domain.library.acquisition.Upshot.Closed.wire, Some(ck), None, None, None, None)
+      case AcquireAttempt.Outcome.Fetched(s) =>
+        (domain.library.acquisition.Upshot.Fetched.wire, None, Some(s), None, None, None)
+      case AcquireAttempt.Outcome.NoCopy =>
+        (domain.library.acquisition.Upshot.NoCopy.wire, None, None, None, None, None)
       case AcquireAttempt.Outcome.Failed(why) =>
-        (AcquireRecheck.Outcome.Failed.wire, None, None, Some(why.toNonEmpty), None, None)
+        (domain.library.acquisition.Upshot.Failed.wire, None, None, Some(why.toNonEmpty), None, None)
       case AcquireAttempt.Outcome.Legacy(r, n) => (AcquireAttemptRow.LegacyWire, None, None, None, Some(r), Some(n))
     val _ =
       sql"""DELETE FROM acquire_attempts
@@ -214,15 +223,15 @@ private[acquisition] object AcquireCheckRepo:
                     $reason, $checks)
             RETURNING item_id""".query[AcquireAttemptRow.Id].run()
 
-  def countSince(since: Instant)(using DbCon): Map[AcquireRecheck.Outcome.Wire, RowCount] =
+  def countSince(since: Instant)(using DbCon): Map[domain.library.acquisition.Upshot.Wire, RowCount] =
     val from = since.toString
     sql"""SELECT outcome, count(*)::int FROM acquire_attempts
            WHERE at >= $from::timestamptz AND outcome <> 'legacy' GROUP BY outcome"""
-      .query[(AcquireRecheck.Outcome.Wire, RowCount)]
+      .query[(domain.library.acquisition.Upshot.Wire, RowCount)]
       .run()
       .toMap
 
-  def heldByDoi(dois: List[Doi])(using DbCon): Map[Doi, AcquireRecheck.Held] =
+  def heldByDoi(dois: List[Doi])(using DbCon): Map[Doi, Held] =
     if dois.isEmpty then Map.empty
     else
       sql"""SELECT DISTINCT ON (lower(doi)) lower(doi), citekey,
@@ -230,7 +239,7 @@ private[acquisition] object AcquireCheckRepo:
                       FROM sources
                      WHERE lower(doi) = ANY(ARRAY(SELECT lower(trim(d)) FROM unnest(${dois.distinct}::text[]) AS d))
                      ORDER BY lower(doi), citekey"""
-        .query[(Doi, Citekey, AcquireRecheck.Held.HasOriginal)]
+        .query[(Doi, Citekey, Held.HasOriginal)]
         .run()
-        .map((d, ck, has) => d -> AcquireRecheck.Held(ck, has))
+        .map((d, ck, has) => d -> Held(ck, has))
         .toMap

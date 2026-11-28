@@ -1,11 +1,13 @@
 package com.histmersion
 package domain.catalogue.events
+
+import com.histmersion.api.catalogue.EventPatch
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventFields, EventTaxonomy}
+import com.histmersion.api.catalogue.{CatalogRecord, EventTaxonomy}
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.database.Transactor
 import hearth.kindlings.optics.syntax.*
@@ -33,7 +35,7 @@ trait EventImportService:
   def stored(): List[StoredEvent]
 
   /** Write placed records in one transaction. */
-  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved
+  def save(placed: List[(CatalogRecord, Placement)])(using WritePermit)(using Creator.New): EventSaved
 
   /** The stored records of `provider` (every catalogue's when `None`) with the event each is of and its kind, in key
     * order; and how many no longer decode.
@@ -56,7 +58,7 @@ object EventImportService:
 
   final private class Implementation(db: Transactor, clock: Clock) extends EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved =
+    def save(placed: List[(CatalogRecord, Placement)])(using WritePermit)(using Creator.New): EventSaved =
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         EventImportRepo.save(placed)
@@ -129,7 +131,7 @@ object EventImportService:
         names: List[BEventRow.Names],
         wd: Option[Wikidata.Id]
     ): (CatalogueState, Correction.Counts) =
-      val now = EventFields.upstream(r)
+      val now = EventPatch.upstream(r)
       val applied = s.corrections.filter(c =>
         c.targetKind.value == Correction.Target.Event && c.targetId.value == id.value &&
           Correction.Status.applied(Correction.Status.Applied(c.status.value))
@@ -138,16 +140,16 @@ object EventImportService:
       val outcomes = applied.flatMap(c =>
         now
           .get(c.field.value)
-          .map(up => (c, Corrections.reconcile(json(c.value.value), json(c.upstreamValue.value), up), up))
+          .map(up => (c, Correction.reconcile(json(c.value.value), json(c.upstreamValue.value), up), up))
       )
       val keep = outcomes.collect {
-        case (c, o, _) if o != Corrections.Outcome.Retire => (c.field.value: String) -> json(c.value.value)
+        case (c, o, _) if o != Correction.Outcome.Retire => (c.field.value: String) -> json(c.value.value)
       }.toMap
       def text(f: String): Option[Option[String]] = keep.get(f).map(_.asString)
-      val spanKept = keep.contains(EventFields.Span)
-      val geom: Option[HeldEvent.Geometry] = keep.get(EventFields.Geometry) match
+      val spanKept = keep.contains(EventPatch.Span)
+      val geom: Option[HeldEvent.Geometry] = keep.get(EventPatch.GeometryKey) match
         case Some(g) => Option.when(!g.isNull)(HeldEvent.Geometry(g.noSpaces))
-        case None    => for la <- r.lat; lo <- r.lon yield HeldEvent.Geometry(EventFields.point(la, lo).noSpaces)
+        case None    => for la <- r.lat; lo <- r.lon yield HeldEvent.Geometry(EventPatch.point(la, lo).noSpaces)
       val refreshed = s
         .modify(_.corrections)
         .using(_.map { c =>
@@ -155,7 +157,7 @@ object EventImportService:
             .find(_._1.id == c.id)
             .fold(c) { case (_, o, up) =>
               c.modify(_.status)
-                .setTo(Corrections.status(o))
+                .setTo(Correction.statusOf(o))
                 .modify(_.upstreamNow)
                 .setTo(Some(Correction.UpstreamNow(up.noSpaces)))
             }
@@ -165,24 +167,24 @@ object EventImportService:
           if e.id != id then e
           else
             e.modify(_.label)
-              .setTo(HeldEvent.Label(text(EventFields.Label).flatten.getOrElse(r.label.value)))
+              .setTo(HeldEvent.Label(text(EventPatch.Label).flatten.getOrElse(r.label.value)))
               .modify(_.kind)
               .setTo(
                 HeldEvent.Kind(
-                  text(EventFields.Kind).flatten
+                  text(EventPatch.Kind).flatten
                     .getOrElse(EventTaxonomy.canonical(r.kind.summary).value)
                 )
               )
               .modify(_.historicity)
-              .setTo(HeldEvent.Historicity(text(EventFields.Historicity).flatten.getOrElse(r.historicity.value)))
+              .setTo(HeldEvent.Historicity(text(EventPatch.Historicity).flatten.getOrElse(r.historicity.value)))
               .modify(_.description)
               .setTo(
-                text(EventFields.Description)
+                text(EventPatch.Description)
                   .map(_.map(HeldEvent.Description(_)))
                   .getOrElse(r.description.map(d => HeldEvent.Description(d.value)))
               )
               .modify(_.timeSpan)
-              .setTo(keep.get(EventFields.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan))
+              .setTo(keep.get(EventPatch.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan))
               .modify(_.central)
               .setTo(if spanKept then None else r.central.map(c => HeldEvent.Central(c.value)))
               .modify(_.plusMinus)
@@ -196,7 +198,7 @@ object EventImportService:
               .modify(_.names)
               .using(merged(_, names))
         })
-      (refreshed, Corrections.counts(outcomes.map(_._2)))
+      (refreshed, Correction.counts(outcomes.map(_._2)))
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def inserted(
@@ -212,7 +214,7 @@ object EventImportService:
         HeldEvent.Kind(EventTaxonomy.canonical(r.kind.summary).value),
         r.timeSpan,
         HeldEvent.Historicity(r.historicity.value),
-        for la <- r.lat; lo <- r.lon yield HeldEvent.Geometry(EventFields.point(la, lo).noSpaces),
+        for la <- r.lat; lo <- r.lon yield HeldEvent.Geometry(EventPatch.point(la, lo).noSpaces),
         None,
         None,
         r.description.map(d => HeldEvent.Description(d.value)),
@@ -238,7 +240,7 @@ object EventImportService:
     private def saveOne(
         s: CatalogueState,
         eventId: Event.Id,
-        group: List[(CatalogRecord, CatalogMerge.Placement)]
+        group: List[(CatalogRecord, Placement)]
     ): (CatalogueState, Boolean, Option[Correction.Counts]) =
       val recs = group.map(_._1).sortBy(keyOrder)
       val names = recs
@@ -260,13 +262,13 @@ object EventImportService:
           (after, false, Some(c))
         }
       val (written, created, refreshed) = group.head._2 match
-        case CatalogMerge.Placement.New(_, _) =>
+        case Placement.New(_, _) =>
           val creator = recs.find(r => CatalogRecord.eventId(r).value == eventId.value).getOrElse(recs.head)
           catalogue match
             case None          => (inserted(s, eventId, creator, names, wd), true, None)
             case Some(Some(p)) => refreshOrFill(p)
             case Some(None)    => (fill(s, eventId, names, wd), false, None)
-        case CatalogMerge.Placement.Existing(_, _) =>
+        case Placement.Existing(_, _) =>
           catalogue.flatten.fold((fill(s, eventId, names, wd), false, None))(refreshOrFill)
       @tailrec def kept(rest: List[CatalogRecord], acc: CatalogueState): CatalogueState = rest match
         case r :: tail => kept(tail, upsertRecord(acc, eventId, r))
@@ -274,10 +276,10 @@ object EventImportService:
       (kept(recs, written), created, refreshed)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using WritePermit)(using Creator.New): EventSaved =
+    def save(placed: List[(CatalogRecord, Placement)])(using WritePermit)(using Creator.New): EventSaved =
       val groups = placed.groupBy(_._2.eventId).toList.sortBy(_._1.value)
       @tailrec def loop(
-          rest: List[(Event.Id, List[(CatalogRecord, CatalogMerge.Placement)])],
+          rest: List[(Event.Id, List[(CatalogRecord, Placement)])],
           s: CatalogueState,
           created: Int,
           updated: Int,

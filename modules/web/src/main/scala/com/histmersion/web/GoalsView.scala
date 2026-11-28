@@ -1,16 +1,24 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.Wording
-import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Pipeline, RunInfo, RunRequest}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Pipeline}
 import com.histmersion.api.automation.Goal.Plans.*
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import com.histmersion.api.automation.{Agents, AgentsMarkdown, Goal, ListFilters, Managers, Queue}
-import com.histmersion.api.research.Articles
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Paging
 import com.histmersion.api.UiLabels
@@ -120,7 +128,7 @@ object GoalsView:
       put: Goal.Put,
       plan: NewArea.Plan,
       seed: NewArea.Seed,
-      watch: Option[Managers.ManagerConfig] = None
+      watch: Option[ManagerConfig] = None
   ):
     /** The one request that creates all of it, on the server, in one transaction. */
     def create: Goal.AreaCreate = Goal.AreaCreate(slug, put, plan, seed, watch)
@@ -133,17 +141,16 @@ object GoalsView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def newArea(
       title: Goal.Title,
       slug: Goal.Slug,
       notes: Goal.Notes,
       tags: TagsText,
-      plan: GoalsView.NewAreaPlan,
-      seed: GoalsView.NewAreaSeed,
+      plan: NewAreaPlan,
+      seed: NewAreaSeed,
       watch: Watch = Watch.Unwatched,
-      autoIngest: Managers.ManagerConfig.AutoIngest = Managers.ManagerConfig.AutoIngest.Manual,
+      autoIngest: ManagerConfig.AutoIngest = ManagerConfig.AutoIngest.Manual,
       perDay: PerDay = PerDay("")
   ): Either[Problem, NewArea] =
     val t = title.value.trim
@@ -155,10 +162,10 @@ object GoalsView:
     else
       val ok = s
       val w = Option.when(watch.watched)(
-        Managers.ManagerConfig(
+        ManagerConfig(
           autoIngest = Some(autoIngest),
           autoIngestPerDay =
-            if autoIngest.autoIngest then cap.toIntOption.map(Managers.ManagerConfig.AutoIngestPerDay(_)) else None
+            if autoIngest.autoIngest then cap.toIntOption.map(ManagerConfig.AutoIngestPerDay(_)) else None
         )
       )
       Right(
@@ -182,11 +189,11 @@ object GoalsView:
   def createdNote(
       a: NewArea,
       planned: Planned,
-      seeded: Option[Managers.ManagerInfo.Id],
-      watched: Option[Managers.ManagerInfo.Id] = None,
-      active: Set[Managers.ManagerInfo.Id] = Set.empty
+      seeded: Option[ManagerInfo.Id],
+      watched: Option[ManagerInfo.Id] = None,
+      active: Set[ManagerInfo.Id] = Set.empty
   ): CreatedNote =
-    def made(id: Managers.ManagerInfo.Id, resume: String) =
+    def made(id: ManagerInfo.Id, resume: String) =
       if active(id) then shown"$id created active (the autopilot is on)"
       else shown"$id created paused — resume it $resume"
     CreatedNote(
@@ -259,8 +266,7 @@ object GoalsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def badge(status: GoalsView.BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
+  def badge(status: BadgeStatus, text: BadgeText = BadgeText("")): HtmlElement =
     span(
       cls := s"job-state goal-status state-${status.value}",
       meaning(Goal.Stage(status.value)).map(m => title := m),
@@ -310,7 +316,7 @@ object GoalsView:
         (if plan.now() then NewAreaPlan.Plan else NewAreaPlan.NoPlan),
         (if seed.now() then NewAreaSeed.Seed else NewAreaSeed.NoSeed),
         (if watch.now() then Watch.Watched else Watch.Unwatched),
-        (if ingest.now() then Managers.ManagerConfig.AutoIngest.Auto else Managers.ManagerConfig.AutoIngest.Manual),
+        (if ingest.now() then ManagerConfig.AutoIngest.Auto else ManagerConfig.AutoIngest.Manual),
         PerDay(perDay.now())
       ) match
         case Left(m)  => msg.set(Some(Left(m.sentence)))
@@ -413,12 +419,12 @@ object GoalsView:
         .onComplete(_.fold(e => failure.set(Some(e.getMessage)), v => { failure.set(None); view.set(Some(v)) }))
       if RunsView.enabled.now().enabled then
         ApiClient
-          .agentRuns(ListFilters.RunFilter(goal = Some(slug)), Some(Paging.Limit(RunLimit)))
+          .agentRuns(RunFilter(goal = Some(slug)), Some(Paging.Limit(RunLimit)))
           .foreach(r => runs.set(r._1))
       // the goal's own open plan, filtered on the server (it used to be looked for among the newest 100 open approvals)
       ApiClient
         .approvals(
-          ListFilters.ApprovalFilter(kind = List(ApprovalKind.GoalPlan.wire), goal = Some(slug)),
+          ApprovalFilter(kind = List(ApprovalKind.GoalPlan.wire), goal = Some(slug)),
           Some(ApprovalsView.Limit)
         )
         .foreach(a => approvals.set(a._1))
@@ -515,9 +521,8 @@ object GoalsView:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private def planSection(
-      slug: GoalsView.PlanSectionSlug,
+      slug: PlanSectionSlug,
       approvals: Signal[List[ApprovalInfo]],
       busy: Signal[Boolean],
       plan: () => Unit
@@ -579,7 +584,7 @@ object GoalsView:
           case LinkKind.QueueItem =>
             val text = span(shown"#${l.ref} ", span(cls := "muted", l.title.map(_.value).getOrElse("(gone)")))
             l.queue
-              .flatMap(q => Queue.Kind.parse(Queue.Kind.Label(q.value)))
+              .flatMap(q => Docket.parse(Docket.Label(q.value)))
               .zip(l.ref.value.toIntOption)
               .fold(text)((k, id) => QueueItemLink(k, GoalLink.QueueNumber(id), text)),
         Option.when(l.title.isEmpty && l.kind != LinkKind.Query)(span(cls := "muted", " (missing)")),

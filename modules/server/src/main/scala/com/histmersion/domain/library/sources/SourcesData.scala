@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintFixResult
+
 import com.histmersion.util.database.Transactor
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
@@ -48,7 +52,7 @@ object SourcesData:
 
   final private class Check(val owner: DataOwner, name: Rule.Name, override val fix: Option[SafeFix]) extends CheckRule:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    val rule: Rule = Lint.rule(name).getOrElse(Rule(name, Rule.Description(name.value)))
+    val rule: Rule = Rule.rule(name).getOrElse(Rule(name, Rule.Description(name.value)))
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =

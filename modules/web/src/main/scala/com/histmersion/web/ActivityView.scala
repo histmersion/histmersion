@@ -1,11 +1,16 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.activity.Entry
+import com.histmersion.api.automation.activity.EntryKind
+import com.histmersion.api.automation.activity.Writer
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.activity.Counts
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.Wording
-import com.histmersion.api.automation.Activity.{Entry, EntryKind}
 import com.histmersion.api.automation.Run
 import com.raquo.laminar.api.L.*
 
@@ -138,7 +143,7 @@ object ActivityView:
             " · by ",
             RouteLink(
               Route.Job(Route.Job.Id(id.value)),
-              if e.by.exists(_ == Activity.Writer.Agent.wire) || kind.contains(EntryKind.Decision)
+              if e.by.exists(_ == Writer.Agent.wire) || kind.contains(EntryKind.Decision)
               then s"agent work ${id.value.take(8)}"
               else s"job ${id.value.take(8)}"
             )
@@ -148,7 +153,7 @@ object ActivityView:
       e.article.map(slug => span(" · ", ArticleLink(Article.Slug(slug.value), slug.value))),
       e.queueItem
         .filter(_ => kind.contains(EntryKind.Job))
-        .map(id => span(" · for ", QueueItemLink(Queue.Kind.Acquire, id, s"“To acquire” item $id"))),
+        .map(id => span(" · for ", QueueItemLink(api.automation.queue.Docket.Acquire, id, s"“To acquire” item $id"))),
       e.approval.map(id => span(" · ", RouteLink(Route.Research(ResearchSection.Decisions), s"decision #$id")))
     ).flatten
 
@@ -229,10 +234,10 @@ object ActivityView:
   /** A list of one query, its first page loaded on mount and every 15 s while shown (unless older pages were asked
     * for); "Show older" appends the next page.
     */
-  final private class Feed(show: Activity.Show, goal: Option[Goal.Slug], limit: Paging.Limit):
+  final private class Feed(show: Show, goal: Option[Goal.Slug], limit: Paging.Limit):
     val entries = Var(List.empty[Entry])
     val next = Var(Option.empty[Paging.Cursor])
-    val counts = Var(Activity.Counts())
+    val counts = Var(Counts())
     val loaded = Var(false)
     val failure = Var(Option.empty[String])
     private var older = false
@@ -289,7 +294,7 @@ object ActivityView:
       ui: UiConfig,
       on: Option[ActivityTab],
       goal: Option[Goal.Slug],
-      counts: Signal[Activity.Counts]
+      counts: Signal[Counts]
   ): HtmlElement =
     navTag(
       cls := "activity-chips",
@@ -319,7 +324,7 @@ object ActivityView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane(ui: UiConfig, tab: ActivityTab, goal: Option[Goal.Slug]): HtmlElement =
-    val feed = Feed(tab.show.getOrElse(Activity.Show.Everything), goal, Paging.Limit(Activity.DefaultLimit))
+    val feed = Feed(tab.show.getOrElse(Show.Everything), goal, Paging.Limit(Activity.DefaultLimit))
     div(
       cls := "activity-pane",
       polled(feed),
@@ -352,20 +357,20 @@ object ActivityView:
   /** The overview's few latest entries, linking to the whole list. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def short(limit: Paging.Limit): HtmlElement =
-    val feed = Feed(Activity.Show.Everything, None, limit)
+    val feed = Feed(Show.Everything, None, limit)
     div(cls := "activity-short", polled(feed), list(feed, "Nothing has happened yet."))
 
   /** A goal's slice of the list. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def history(goal: Goal.Slug, limit: Paging.Limit): HtmlElement =
-    val feed = Feed(Activity.Show.Everything, Some(goal), limit)
+    val feed = Feed(Show.Everything, Some(goal), limit)
     div(cls := "activity-history", polled(feed), list(feed, "Nothing has happened for this goal yet."))
 
   /** The overview's chips: each a link to the whole list, shown that way. */
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def shortChips(ui: UiConfig): HtmlElement =
-    val counts = Var(Activity.Counts())
+    val counts = Var(Counts())
     div(
       onMountCallback(_ =>
         ApiClient.activity(None, None, None, Some(Paging.Limit(1)), None).foreach(p => counts.set(p.counts))

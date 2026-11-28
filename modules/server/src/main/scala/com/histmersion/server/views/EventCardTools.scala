@@ -1,5 +1,7 @@
 package com.histmersion
 package server.views
+
+import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
@@ -12,7 +14,6 @@ import com.histmersion.domain.catalogue.events.EventsControllers
 
 import chimp.server.*
 import com.histmersion.api.{Api, Markdown, StrictJson, Write}
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.catalogue.{EventGeometry, EventPatch}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
@@ -219,9 +220,9 @@ object EventCardTools:
                   .flatMap(page.patch(Caller.Local, _, p)) match
                   case Right(d) =>
                     ToolResult.text(
-                      Aliases
-                        .note(AliasKinds.EventRecords, Aliases.Id(in.id.value), Aliases.Id(d.event.id.value))(
-                          Aliases.Note(d.markdown.value)
+                      AliasKinds.EventRecords
+                        .note(AliasKind.Id(in.id.value), AliasKind.Id(d.event.id.value))(
+                          AliasKind.Note(d.markdown.value)
                         )
                         .value
                     )

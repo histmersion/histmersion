@@ -8,7 +8,7 @@ import com.histmersion.api.given
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.research.{Article, Articles}
+import com.histmersion.api.research.Article
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.catalogue.Year
@@ -111,14 +111,14 @@ class ArticleNoteSuite extends munit.FunSuite:
     assert(!ArticleNote.render(a).contains("2026-08-25"), ArticleNote.render(a))
 
   test("the lede skips a leading image embed line and never invents a summary"):
-    assertEquals(Articles.lede(Article.Body("# T\n\n")), None)
-    assertEquals(Articles.lede(Article.Body("# T\n\n![[map.png]]\n")), None)
+    assertEquals(Article.lede(Article.Body("# T\n\n")), None)
+    assertEquals(Article.lede(Article.Body("# T\n\n![[map.png]]\n")), None)
 
   test("the lede strips a MATCHED emphasis pair only"):
-    assertEquals(Articles.lede(Article.Body("# T\n\n*A lede.*\n")), Some("A lede."))
-    assertEquals(Articles.lede(Article.Body("# T\n\n_A lede._\n")), Some("A lede."))
-    assertEquals(Articles.lede(Article.Body("# T\n\n**A lede.**\n")), Some("A lede."))
-    assertEquals(Articles.lede(Article.Body("# T\n\nsome *emphasis* inside\n")), Some("some *emphasis* inside"))
+    assertEquals(Article.lede(Article.Body("# T\n\n*A lede.*\n")), Some("A lede."))
+    assertEquals(Article.lede(Article.Body("# T\n\n_A lede._\n")), Some("A lede."))
+    assertEquals(Article.lede(Article.Body("# T\n\n**A lede.**\n")), Some("A lede."))
+    assertEquals(Article.lede(Article.Body("# T\n\nsome *emphasis* inside\n")), Some("some *emphasis* inside"))
 
   test(
     "#958: the filter and reasons travel in the frontmatter; the generated sections are exported and dropped on import"

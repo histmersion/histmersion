@@ -1,6 +1,10 @@
 package com.histmersion
 package api.automation
 
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.api.WireEnumValues
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -40,7 +44,9 @@ final case class Goal(
     createdAt: Option[Creation.At] = None
 ) derives JsonCodec,
       KindlingsSchema,
-      api.json.Schema
+      api.json.Schema:
+
+  def period(none: String): String = Year.openPeriod(periodStart, periodEnd, none)
 
 object Goal:
   /** Why a plan names a work: the planner's words, not a failure. */
@@ -182,7 +188,7 @@ object Goal:
       goal: Put,
       plan: AreaCreate.Plan = AreaCreate.Plan.NoPlan,
       seed: AreaCreate.Seed = AreaCreate.Seed.NoSeed,
-      watch: Option[Managers.ManagerConfig] = None,
+      watch: Option[ManagerConfig] = None,
       createdBy: Option[Creation.By] = None,
       via: Option[Creation.Via] = None
   ) extends Creation.Requested derives StrictJson, KindlingsSchema, api.json.Schema
@@ -201,9 +207,9 @@ object Goal:
     */
   final case class AreaCreated(
       goal: Goal,
-      run: Option[Agents.RunInfo] = None,
-      seed: Option[Managers.ManagerInfo] = None,
-      watch: Option[Managers.ManagerInfo] = None
+      run: Option[RunInfo] = None,
+      seed: Option[ManagerInfo] = None,
+      watch: Option[ManagerInfo] = None
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
@@ -367,7 +373,7 @@ object Goal:
         case Enabled, Disabled
       object Enabled extends TwoStates[Enabled]:
         extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
-      export Managers.ManagerConfig.BudgetUsd
+      export ManagerConfig.BudgetUsd
       type NextRunAt = NextRunAt.T
       object NextRunAt extends Newtype[String, Pure]
       type LastRunAt = LastRunAt.T
@@ -394,7 +400,7 @@ object Goal:
         case Enabled, Disabled
       object Enabled extends TwoStates[Enabled]:
         extension (enabled: Enabled) def enabled: Boolean = enabled == Enabled
-      export Managers.ManagerConfig.BudgetUsd
+      export ManagerConfig.BudgetUsd
 
     final case class Removed(removed: Removed.Value) derives JsonCodec, KindlingsSchema, api.json.Schema
 

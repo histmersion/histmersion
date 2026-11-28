@@ -25,7 +25,7 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.catalogue.{EventArticleRef, Period}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.library.SourceColumns.given
-import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource, Coverage}
+import com.histmersion.api.research.{Article, Backlink, CitedSource, Coverage}
 import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
@@ -145,12 +145,12 @@ private[articles] object ArticleRepo:
     // discarding the first. See the twin comment in `SourceRepo.patch`.
     val _ = sql"SELECT slug FROM articles WHERE slug = $slug FOR UPDATE".query[String].run()
     load(slug) match
-      case None           => Left(Articles.notFound(Article.Slug(slug.value)))
+      case None           => Left(Article.notFound(Article.Slug(slug.value)))
       case Some(existing) =>
-        Articles.precondition(existing, p) match
+        existing.precondition(p) match
           case Left(msg) => Left(Api.Error(msg, Some(Api.Error.Code(Write.CodePrecondition))))
           case Right(_)  =>
-            Articles.applyPatch(existing, p) match
+            existing.applyPatch(p) match
               case Left(msg) => Left(Api.Error(msg, Some(Api.Error.Code(Write.CodeInvalid))))
               // the critique reasons (V091) sit beside the row: checked first, so a refused one
               // writes nothing; a patch of them alone leaves the article, its versions and its
@@ -277,7 +277,7 @@ private[articles] object ArticleRepo:
       .query[Slug]
       .run()
       .headOption
-    if !exists(oldSlug) then Left(Articles.notFound(Article.Slug(oldSlug.value)))
+    if !exists(oldSlug) then Left(Article.notFound(Article.Slug(oldSlug.value)))
     else if exists(newSlug) then
       Left(
         Api.Error(

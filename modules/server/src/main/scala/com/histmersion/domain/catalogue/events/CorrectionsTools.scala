@@ -5,7 +5,6 @@ import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
-import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.mcp.McpOut
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -76,6 +75,6 @@ object CorrectionsTools:
                   None
                 )
               )
-          )(c => Corrections.markdown(c).value)
+          )(c => Correction.markdown(c).value)
         }
     List(corrections)

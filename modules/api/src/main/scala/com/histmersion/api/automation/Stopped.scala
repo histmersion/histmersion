@@ -1,11 +1,12 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.agents.PauseReason
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.api.problem.StoredShapes
 import com.histmersion.api.problem.Answer.entry
 
-import com.histmersion.api.automation.Agents.PauseReason
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.lint.{tolerated, LintRule}
 

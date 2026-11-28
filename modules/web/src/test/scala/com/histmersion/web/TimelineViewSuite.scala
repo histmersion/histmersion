@@ -3,9 +3,9 @@ package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.api.Years
 import com.histmersion.api.library.TimeBucket
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class TimelineViewSuite extends munit.FunSuite:
@@ -13,15 +13,15 @@ class TimelineViewSuite extends munit.FunSuite:
   // ── bucketSizeFor ─────────────────────────────────────────────────────────────
 
   test("narrow span with normal screen produces 1-year buckets") {
-    assertEquals(TimelineView.bucketSizeFor(Years.Shift(100L), 600.0), 1L)
+    assertEquals(TimelineView.bucketSizeFor(Year.Shift(100L), 600.0), 1L)
   }
 
   test("very narrow span produces 1-year buckets") {
-    assertEquals(TimelineView.bucketSizeFor(Years.Shift(10L), 600.0), 1L)
+    assertEquals(TimelineView.bucketSizeFor(Year.Shift(10L), 600.0), 1L)
   }
 
   test("wide span with wide screen stays under MAX_BUCKETS") {
-    val size = TimelineView.bucketSizeFor(Years.Shift(14026L), 3392.0)
+    val size = TimelineView.bucketSizeFor(Year.Shift(14026L), 3392.0)
     val buckets = Math.ceil(14026.0 / size.value).toLong
     assert(
       buckets <= TimelineView.MAX_BUCKETS.value,
@@ -30,7 +30,7 @@ class TimelineViewSuite extends munit.FunSuite:
   }
 
   test("wide span with narrow screen stays under MAX_BUCKETS") {
-    val size = TimelineView.bucketSizeFor(Years.Shift(14026L), 400.0)
+    val size = TimelineView.bucketSizeFor(Year.Shift(14026L), 400.0)
     val buckets = Math.ceil(14026.0 / size.value).toLong
     assert(
       buckets <= TimelineView.MAX_BUCKETS.value,
@@ -39,12 +39,12 @@ class TimelineViewSuite extends munit.FunSuite:
   }
 
   test("bucket size is always at least 1") {
-    assertEquals(TimelineView.bucketSizeFor(Years.Shift(1L), 10000.0), 1L)
-    assertEquals(TimelineView.bucketSizeFor(Years.Shift(0L), 600.0), 1L)
+    assertEquals(TimelineView.bucketSizeFor(Year.Shift(1L), 10000.0), 1L)
+    assertEquals(TimelineView.bucketSizeFor(Year.Shift(0L), 600.0), 1L)
   }
 
   test("medium span with medium screen produces reasonable buckets") {
-    val size = TimelineView.bucketSizeFor(Years.Shift(3000L), 800.0)
+    val size = TimelineView.bucketSizeFor(Year.Shift(3000L), 800.0)
     assert(size.value >= 1L, "size must be positive")
     val buckets = Math.ceil(3000.0 / size.value).toLong
     assert(buckets <= TimelineView.MAX_BUCKETS.value, s"$buckets buckets (size=$size) exceeds limit")
@@ -63,7 +63,7 @@ class TimelineViewSuite extends munit.FunSuite:
       (100000L, 100.0)
     )
     for (span, px) <- cases do
-      val size = TimelineView.bucketSizeFor(Years.Shift(span), px)
+      val size = TimelineView.bucketSizeFor(Year.Shift(span), px)
       val buckets = Math.ceil(span.toDouble / size.value).toLong
       assert(
         buckets <= TimelineView.MAX_BUCKETS.value,
@@ -76,8 +76,8 @@ class TimelineViewSuite extends munit.FunSuite:
   test("realign is identity when nothing moved") {
     assertEquals(
       TimelineView.realign(
-        (Years.Astronomical(-3000L), Years.Astronomical(-1000L), 800.0),
-        (Years.Astronomical(-3000L), Years.Astronomical(-1000L), 800.0)
+        (Year.Astronomical(-3000L), Year.Astronomical(-1000L), 800.0),
+        (Year.Astronomical(-3000L), Year.Astronomical(-1000L), 800.0)
       ),
       (0.0, 1.0)
     )
@@ -85,8 +85,8 @@ class TimelineViewSuite extends munit.FunSuite:
 
   test("realign stretches a curve to a wider element") {
     val (tx, scale) = TimelineView.realign(
-      (Years.Astronomical(0L), Years.Astronomical(100L), 400.0),
-      (Years.Astronomical(0L), Years.Astronomical(100L), 800.0)
+      (Year.Astronomical(0L), Year.Astronomical(100L), 400.0),
+      (Year.Astronomical(0L), Year.Astronomical(100L), 800.0)
     )
     assertEquals(tx, 0.0)
     assertEquals(scale, 2.0)
@@ -95,8 +95,8 @@ class TimelineViewSuite extends munit.FunSuite:
   test("realign shrinks and shifts a curve when the span widens (zoom out)") {
     // drawn for 0..100 at 1000px; now showing -100..200 → the old curve covers the middle third
     val (tx, scale) = TimelineView.realign(
-      (Years.Astronomical(0L), Years.Astronomical(100L), 1000.0),
-      (Years.Astronomical(-100L), Years.Astronomical(200L), 1000.0)
+      (Year.Astronomical(0L), Year.Astronomical(100L), 1000.0),
+      (Year.Astronomical(-100L), Year.Astronomical(200L), 1000.0)
     )
     assertEqualsDouble(scale, 1.0 / 3, 1e-9)
     assertEqualsDouble(tx, 1000.0 / 3, 1e-9)
@@ -104,8 +104,8 @@ class TimelineViewSuite extends munit.FunSuite:
 
   test("realign shifts a curve when the span pans") {
     val (tx, scale) = TimelineView.realign(
-      (Years.Astronomical(0L), Years.Astronomical(100L), 1000.0),
-      (Years.Astronomical(50L), Years.Astronomical(150L), 1000.0)
+      (Year.Astronomical(0L), Year.Astronomical(100L), 1000.0),
+      (Year.Astronomical(50L), Year.Astronomical(150L), 1000.0)
     )
     assertEquals(scale, 1.0)
     assertEquals(tx, -500.0)
@@ -120,22 +120,22 @@ class TimelineViewSuite extends munit.FunSuite:
 
   test("underlayBuckets keeps the overlapping buckets plus one neighbour each side") {
     assertEquals(
-      TimelineView.underlayBuckets(ov, Years.Astronomical(300), Years.Astronomical(450)).map(_.start),
+      TimelineView.underlayBuckets(ov, Year.Astronomical(300), Year.Astronomical(450)).map(_.start),
       List(200L, 300L, 400L, 500L)
     )
   }
 
   test("underlayBuckets clamps at the ends of the data") {
     assertEquals(
-      TimelineView.underlayBuckets(ov, Years.Astronomical(-50), Years.Astronomical(50)).map(_.start),
+      TimelineView.underlayBuckets(ov, Year.Astronomical(-50), Year.Astronomical(50)).map(_.start),
       List(0L, 100L)
     )
     assertEquals(
-      TimelineView.underlayBuckets(ov, Years.Astronomical(950), Years.Astronomical(2000)).map(_.start),
+      TimelineView.underlayBuckets(ov, Year.Astronomical(950), Year.Astronomical(2000)).map(_.start),
       List(800L, 900L)
     )
   }
 
   test("underlayBuckets is empty outside the data") {
-    assertEquals(TimelineView.underlayBuckets(ov, Years.Astronomical(5000), Years.Astronomical(6000)), Nil)
+    assertEquals(TimelineView.underlayBuckets(ov, Year.Astronomical(5000), Year.Astronomical(6000)), Nil)
   }

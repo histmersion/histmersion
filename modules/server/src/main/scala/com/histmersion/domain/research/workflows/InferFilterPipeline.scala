@@ -1,12 +1,14 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -18,7 +20,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.library.Facet
 import com.histmersion.api.research.Article.Plans.FilterProposal
-import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.json.JsonCodec
@@ -68,26 +69,25 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
           ctx.code[String](AgentRepo.StepRecord.Name("close"))(
             log(
               ctx,
-              FilterInference
-                .logLine(slug, FilterInference.Outcome("it records a filter already; nothing proposed"), runId)
+              FilterAnswer.logLine(slug, FilterAnswer.Outcome("it records a filter already; nothing proposed"), runId)
             )
           )
         else
           for
-            inferred <- ctx.llm[FilterAnswer, Inferred](
+            inferred <- ctx.llm[FilterAnswer, FilterAnswer.Inferred](
               AgentRepo.StepRecord.Name("propose"),
               StepAgent.FilterInferrer,
               Prompt.UserText(input(loaded)),
               ResearchAnswers.filter
             )((a, last) =>
-              check(slug, loaded, a, FilterInference.Last(last.value))
+              check(slug, loaded, a, FilterAnswer.Last(last.value))
                 .map(Checked(_))
             )
             recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(
               ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, slug, inferred))
             )
             closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
-              log(ctx, FilterInference.logLine(slug, FilterInference.Outcome(recorded.line.value), runId))
+              log(ctx, FilterAnswer.logLine(slug, FilterAnswer.Outcome(recorded.line.value), runId))
             )
           yield closed
     yield PipelineDef.Summary(line)
@@ -155,10 +155,10 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       slug: Slug,
       l: Loaded,
       a: FilterAnswer,
-      last: FilterInference.Last
-  ): Either[List[Problem], Inferred] =
-    FilterInference.filterOf(a) match
-      case Left(ps) => if last.value then Right(Inferred(None, ps)) else Left(ps)
+      last: FilterAnswer.Last
+  ): Either[List[Problem], FilterAnswer.Inferred] =
+    a.filterOf match
+      case Left(ps) => if last.value then Right(FilterAnswer.Inferred(None, ps)) else Left(ps)
       case Right(f) =>
         val cap = ArticlesControllers.FilterReachCap(research.inferFilter.sample.value + l.cited.size)
         val (total, in, rows) = site.articles.filterReach(f, l.cited, cap)
@@ -166,7 +166,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
           .map(r => r)
           .filterNot(l.cited.contains)
           .take(math.max(0, research.inferFilter.sample.value))
-        FilterInference.judge(
+        FilterAnswer.judge(
           slug,
           f,
           a.rationale,
@@ -182,7 +182,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
     * already approved (auto). None passed: nothing is recorded.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def record(ctx: RunCtx, slug: Slug, inf: Inferred)(using
+  private def record(ctx: RunCtx, slug: Slug, inf: FilterAnswer.Inferred)(using
       WritePermit
   )(using Creator.New): Either[Problems, Recorded] =
     inf.proposal match
@@ -254,8 +254,8 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
             )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[Problems, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).map(_.value)
+  private def log(ctx: RunCtx, line: FilterAnswer.LogLine): Either[Problems, String] =
+    PipelineDef.log(site.workLists, ctx, PipelineDef.LogLine(line.value)).map(_.value)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the
@@ -267,10 +267,10 @@ object InferFilterPipeline:
 
   /** The checks a proposed filter is held to (`agents.infer-filter`), each within its range. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def limits(c: AgentInferFilterConfig): FilterInference.Limits = FilterInference.Limits(
-    FilterInference.Limits.MinHits(math.max(1, c.minHits.value)),
-    FilterInference.Limits.MaxHits(math.max(c.minHits.value, c.maxHits.value)),
-    FilterInference.Limits.MinCitedShare(math.min(1.0, math.max(0.0, c.minCitedShare.value)))
+  def limits(c: AgentInferFilterConfig): FilterAnswer.Limits = FilterAnswer.Limits(
+    FilterAnswer.Limits.MinHits(math.max(1, c.minHits.value)),
+    FilterAnswer.Limits.MaxHits(math.max(c.minHits.value, c.maxHits.value)),
+    FilterAnswer.Limits.MinCitedShare(math.min(1.0, math.max(0.0, c.minCitedShare.value)))
   )
 
   /** The article as the step sees it (checkpointed). `tags0` = the corpus's tags. */
@@ -305,8 +305,7 @@ object InferFilterPipeline:
     * and the line for the log.
     */
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-  final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], applied: Boolean, line: Recorded.Line)
-      derives JsonCodec
+  final case class Recorded(approval: Option[ApprovalInfo.Id], applied: Boolean, line: Recorded.Line) derives JsonCodec
 
   object Recorded:
     type Line = Line.T

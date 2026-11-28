@@ -1,5 +1,9 @@
 package com.histmersion
 package api.catalogue
+
+import hearth.kindlings.jsoniterjson.Json
+import com.histmersion.util.json.RawJson.*
+import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -116,3 +120,62 @@ object Correction:
     val Place = "place"
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val all: scala.List[TargetKind] = scala.List(TargetKind(Event), TargetKind(Place))
+
+  type Markdown = Markdown.T
+  object Markdown extends Newtype[String, Pure]
+
+  enum Outcome derives CanEqual:
+    case Keep
+
+    case Retire
+
+    case Conflict
+
+  def reconcile(value: Json, upstreamThen: Json, upstreamNow: Json): Outcome =
+    if upstreamNow == value then Outcome.Retire
+    else if upstreamNow == upstreamThen then Outcome.Keep
+    else Outcome.Conflict
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def statusOf(o: Outcome): StatusValue = o match
+    case Outcome.Keep     => StatusValue(Status.Active)
+    case Outcome.Retire   => StatusValue(Status.Agreed)
+    case Outcome.Conflict => StatusValue(Status.Conflict)
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def counts(os: Iterable[Outcome]): Counts =
+    Counts(
+      Counts.Kept(os.count(_ == Outcome.Keep)),
+      Counts.Retired(os.count(_ == Outcome.Retire)),
+      Counts.Conflicts(os.count(_ == Outcome.Conflict))
+    )
+
+  def show(json: String): String =
+    RawJson.parse(json).toOption match
+      case Some(j) if j.isNull => ("none")
+      case Some(j)             => (j.asString.getOrElse(j.noSpaces))
+      case None                => (json)
+
+  extension (c: Correction)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
+    def describe: String =
+      val base = s"${c.field}: “${Fmt.clip(show(c.value.value))}” (was “${Fmt.clip(show(c.upstreamValue.value))}”" +
+        c.upstream.fold("")(u => s" in $u") + ")"
+      (c.status.value: String) match
+        case Status.Conflict =>
+          s"$base — CONFLICT: the catalogue now says “${Fmt.clip(c.upstreamNow.map(u => show(u.value)).getOrElse("?"))}”"
+        case Status.Agreed => (s"$base — retired: the catalogue now agrees")
+        case _             => base
+
+  private object Fmt:
+
+    def clip(s: String): String = if (s).length > 80 then ((s).take(79) + "…") else ((s))
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def markdown(l: List): Markdown =
+    if l.corrections.isEmpty then Markdown("_No corrections by hand._")
+    else
+      val lines =
+        l.corrections.map(c => s"- **${c.targetId}**${c.label.fold("")(t => s" ($t)")} · ${c.status} · ${c.describe}")
+      Markdown((s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n"))

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.media.covers
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.Write
@@ -66,7 +68,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
         .mkString(" and ") + req.citekey.fold(" of every source")(c => s" of $c") +
         (if req.refresh.refresh then " (refresh)" else "")
     jobs.start(CoversControllers.CoversJobKind, JobKinds.Subject(what)) { progress =>
-      val r = pictures.run(req.modify(_.dryRun).setTo(RepairAcquire.RepairRequest.DryRun.Apply), progress)
+      val r = pictures.run(req.modify(_.dryRun).setTo(RepairRequest.DryRun.Apply), progress)
       Right(
         BackgroundJob.Outcome.Summary(
           s"${r.sources} source(s) · ${r.covers} cover(s) · ${r.illustrations} illustration(s)" +

@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.domain.Proposal
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.Text.sentence
@@ -11,11 +14,9 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.api.automation.ListFilters.DecidedBy
-import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.automation.approvals.ApprovalQuery
-import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.util.jobs.{Job, RunRow}
 
 import java.time.Instant

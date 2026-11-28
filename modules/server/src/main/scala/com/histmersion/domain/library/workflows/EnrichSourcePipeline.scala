@@ -1,5 +1,23 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.domain.library.workflows.Loaded
+import com.histmersion.domain.library.workflows.MetaChecked
+import com.histmersion.domain.library.workflows.Classification
+import com.histmersion.domain.library.workflows.Classified
+import com.histmersion.domain.library.workflows.Geocoded
+import com.histmersion.domain.library.workflows.Notes
+import com.histmersion.domain.library.workflows.Patched
+import com.histmersion.domain.library.workflows.Upstreamed
+import com.histmersion.domain.library.workflows.StatusRouted
+import com.histmersion.domain.library.workflows.Closed
+import com.histmersion.domain.library.workflows.VerifiedFinding
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.library.workflows.VerifiedFindings
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.domain.library.workflows.GeocodeChoice
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -9,7 +27,7 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.*
-import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
+import com.histmersion.domain.automation.workflows.PipelineDef
 
 import com.histmersion.domain.automation.worklists.QueueItemId
 
@@ -72,7 +90,7 @@ final class EnrichSourcePipeline(
         StepAgent.EnrichClassify,
         Prompt.UserText(classifyInput(loaded)),
         LibraryAnswers.classification
-      )((c, last) => accepted(checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), Last(last.value))))
+      )((c, last) => accepted(c.checkClassification(MaxAbsYear(lib.verify.maxAbsYear.value), Last(last.value))))
       verified <- findings(ctx, loaded, classified)
       geocoded <- ctx.code[Geocoded](AgentRepo.StepRecord.Name("geocode"))(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String](
@@ -81,7 +99,7 @@ final class EnrichSourcePipeline(
         Prompt.UserText(notesInput(loaded, classified, verified)),
         LibraryAnswers.notes
       )((n, _) =>
-        checkNotes(n, isCitekey, site.articleExists)
+        n.checkNotes(isCitekey, site.articleExists)
           .map(d => Checked(d.value))
       )
       patched <- ctx.code[Patched](AgentRepo.StepRecord.Name("patch"))(
@@ -178,8 +196,7 @@ final class EnrichSourcePipeline(
             LibraryAnswers.findings
           ) { (f, last) =>
             accepted(
-              checkFindings(
-                f,
+              f.checkFindings(
                 w,
                 MinRatio(lib.verify.quoteMinRatio.value),
                 MaxAbsYear(lib.verify.maxAbsYear.value),
@@ -204,7 +221,7 @@ final class EnrichSourcePipeline(
   private def geocode(ctx: RunCtx, fs: List[VerifiedFinding])(using WritePermit): Geocoded =
     val placed = fs.map { f =>
       val hit = f.place.flatMap(p =>
-        site.geocode(LibrarySite.PlaceName(p.value), f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period)
+        site.geocode(LibrarySite.PlaceName(p.value), f.placeKind.getOrElse(KindHint.Unknown), f.period)
       )
       f.place.foreach { p =>
         hit match
@@ -256,7 +273,7 @@ final class EnrichSourcePipeline(
       fs: List[Finding.Input],
       notes: String
   )(using Creator.New): Either[Problems, Patched] =
-    val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty).map(PatchNotes(_)))
+    val (p, fields, proposal) = l.patch(c, fs, Option(notes).filter(_.nonEmpty).map(PatchNotes(_)))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
       site.sources.patch(ck, p).map(_ => ())
@@ -273,8 +290,7 @@ final class EnrichSourcePipeline(
         load(ck).flatMap { fresh =>
           val again = fresh.modify(_.windows).setTo(Nil).modify(_.head).setTo(Loaded.Head(""))
           val existing = fresh.existingClaims.map(x => AgentVerify.normalise(AgentVerify.Text(x.value))).toSet
-          val (p2, fields2, proposal2) = patch(
-            again,
+          val (p2, fields2, proposal2) = again.patch(
             c,
             fs.filterNot(f => existing.contains(AgentVerify.normalise(AgentVerify.Text(f.claim.value)))),
             Option(notes).filter(_.nonEmpty).map(PatchNotes(_))
@@ -375,11 +391,11 @@ final class EnrichSourcePipeline(
     else if a.retracted.value then
       StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
     else
-      val proposal = AgentProposals.Proposal(
+      val proposal = Proposal(
         ApprovalKind.StatusChange,
         ck,
         status = Some(c.status),
-        evidence = AgentProposals.Proposal.Evidence(
+        evidence = Proposal.Evidence(
           Option(c.statusEvidence.value).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)")
         )
       )
@@ -425,8 +441,8 @@ final class EnrichSourcePipeline(
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
     val line = s"enrich-source [[$ck]] (agent run ${ctx.run.id.value.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    Pipelines
-      .log(site.workLists, ctx, Pipelines.LogLine(line))
+    PipelineDef
+      .log(site.workLists, ctx, PipelineDef.LogLine(line))
       .map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
@@ -434,13 +450,13 @@ final class EnrichSourcePipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-  private def tickOff(id: Queue.QueueItem.Id, ck: Citekey, runId: Agents.RunInfo.Id): String =
-    Queue.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
+  private def tickOff(id: QueueItem.Id, ck: Citekey, runId: RunInfo.Id): String =
+    QueueItem.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: ${m.sentence}"
       case Right(item) =>
         site.workLists.patch(
           QueueItemId(id.value),
-          Queue.fulfil(item, com.histmersion.api.library.Citekey(ck.value), Some(Queue.QueueItem.ClosedBy(runId.value)))
+          item.fulfil(com.histmersion.api.library.Citekey(ck.value), Some(QueueItem.ClosedBy(runId.value)))
         ) match
           case Right(_) => s"ticked off acquisition item $id"
           case Left(e)  => s"acquisition item $id NOT ticked off: ${e.problems.sentences.mkString("; ")}"

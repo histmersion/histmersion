@@ -1,5 +1,9 @@
 package com.histmersion
 package db
+
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -32,7 +36,6 @@ import com.histmersion.domain.catalogue.evidence.*
 import com.histmersion.api.{GeoPoint, TimeSpan}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
@@ -459,23 +462,23 @@ class BundleSuite extends DbSuite with Bounded:
     )
     val q1 = QueueRows.add(
       ds,
-      Kind.Tasks,
+      api.automation.queue.Docket.Tasks,
       QueueAdd(
-        Queue.QueueItem.Text("read alpha"),
-        Some(Queue.QueueItem.Topic("Hittites")),
+        QueueItem.Text("read alpha"),
+        Some(QueueItem.Topic("Hittites")),
         reason = Some(Queue.Rationale("why"))
       )
     )
     val _ = QueueRows.add(
       ds,
-      Kind.Log,
+      api.automation.queue.Docket.Log,
       QueueAdd(
-        Queue.QueueItem.Text("2026-10-03: did things"),
-        createdAt = Some(Queue.QueueItem.CreatedAt("2026-10-03T09:00:00Z"))
+        QueueItem.Text("2026-10-03: did things"),
+        createdAt = Some(QueueItem.CreatedAt("2026-10-03T09:00:00Z"))
       )
     )
-    val q3 = QueueRows.add(ds, Kind.Acquire, QueueAdd(Queue.QueueItem.Text("buy a book")))
-    val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some(Queue.QueueItem.Status("done"))))
+    val q3 = QueueRows.add(ds, api.automation.queue.Docket.Acquire, QueueAdd(QueueItem.Text("buy a book")))
+    val _ = QueueRows.patch(ds, q1.id, QueuePatch(status = Some(QueueItem.Status("done"))))
     val _ = QueueRows.delete(ds, q3.id)
 
   /** The event-catalogue sets (#1647): the catalogue's columns of an event, its catalogue record, a candidate decided
@@ -1161,7 +1164,11 @@ class BundleSuite extends DbSuite with Bounded:
         }
       }
       if rnd.nextBoolean() then
-        val _ = QueueRows.add(a, Kind.Tasks, QueueAdd(Queue.QueueItem.Text(rnd.alphanumeric.take(20).mkString)))
+        val _ = QueueRows.add(
+          a,
+          api.automation.queue.Docket.Tasks,
+          QueueAdd(QueueItem.Text(rnd.alphanumeric.take(20).mkString))
+        )
       val first = exportOf(a, sa)
       val r = importInto(b, first, sb)
       assert(r.applied.applied, s"iteration $i: ${r.problems.mkString("\n")}")

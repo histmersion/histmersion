@@ -1,6 +1,23 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.automation.autopilot.PlannedFacts
+import com.histmersion.domain.automation.autopilot.Ruling
+import com.histmersion.domain.automation.autopilot.DraftFacts
+import com.histmersion.domain.automation.autopilot.GoalPlanFacts
+import com.histmersion.domain.automation.autopilot.GoalFacts
+import com.histmersion.domain.automation.autopilot.Pacing
+import com.histmersion.domain.automation.autopilot.GoalRow
+import com.histmersion.domain.automation.autopilot.Stride
+import com.histmersion.domain.automation.autopilot.ManagerRow
+import com.histmersion.domain.automation.managers.Assignable
+import com.histmersion.domain.automation.managers.ReviewSettings
+import com.histmersion.domain.automation.managers.Next
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.domain.automation.managers.StepFacts
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.automation.autopilot.NextFacts
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -13,7 +30,6 @@ import com.histmersion.config.given
 
 import com.histmersion.api.automation.Agents.{ApprovalKind, RunState}
 import com.histmersion.domain.AutopilotPolicy.*
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.api.automation.Managers.*
 
 import java.time.Instant
@@ -41,33 +57,33 @@ class AutopilotPolicySuite extends munit.FunSuite:
   test("article-plan: every slug free and every filter at min-sources → approved, counted against the area's cap"):
     val ok = List(
       PlannedFacts(
-        AutopilotPolicy.PlannedFacts.Slug("a"),
-        slugFree = AutopilotPolicy.PlannedFacts.SlugFree(true),
-        AutopilotPolicy.PlannedFacts.Hits(9)
+        PlannedFacts.Slug("a"),
+        slugFree = PlannedFacts.SlugFree(true),
+        PlannedFacts.Hits(9)
       ),
       PlannedFacts(
-        AutopilotPolicy.PlannedFacts.Slug("b"),
-        slugFree = AutopilotPolicy.PlannedFacts.SlugFree(true),
-        AutopilotPolicy.PlannedFacts.Hits(5)
+        PlannedFacts.Slug("b"),
+        slugFree = PlannedFacts.SlugFree(true),
+        PlannedFacts.Hits(5)
       )
     )
     articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6)) match
-      case Verdict.Approve(r) =>
+      case Ruling.Approve(r) =>
         assert(s"$r".contains("2 articles") && s"$r".contains("a 9, b 5") && s"$r".contains("2 of 6"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(4), AutopilotPolicy.Cap(6))
-        .isInstanceOf[Verdict.Approve]
+        .isInstanceOf[Ruling.Approve]
     )
     assertEquals(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(6)),
-      Verdict.Leave(
+      Ruling.Leave(
         AutopilotPolicy.Rationale("the area's daily cap is reached (5 of 6 articles approved today); decided tomorrow")
       )
     )
     assert(
       articlePlan(ok, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(1))
-        .isInstanceOf[Verdict.Leave],
+        .isInstanceOf[Ruling.Leave],
       "a plan larger than the whole cap is a person's"
     )
 
@@ -75,75 +91,74 @@ class AutopilotPolicySuite extends munit.FunSuite:
     articlePlan(
       List(
         PlannedFacts(
-          AutopilotPolicy.PlannedFacts.Slug("a"),
-          slugFree = AutopilotPolicy.PlannedFacts.SlugFree(false),
-          AutopilotPolicy.PlannedFacts.Hits(9)
+          PlannedFacts.Slug("a"),
+          slugFree = PlannedFacts.SlugFree(false),
+          PlannedFacts.Hits(9)
         ),
         PlannedFacts(
-          AutopilotPolicy.PlannedFacts.Slug("b"),
-          slugFree = AutopilotPolicy.PlannedFacts.SlugFree(true),
-          AutopilotPolicy.PlannedFacts.Hits(2)
+          PlannedFacts.Slug("b"),
+          slugFree = PlannedFacts.SlugFree(true),
+          PlannedFacts.Hits(2)
         )
       ),
       AutopilotPolicy.MinSources(5),
       AutopilotPolicy.ApprovedToday(0),
       AutopilotPolicy.Cap(6)
     ) match
-      case Verdict.Reject(r) =>
+      case Ruling.Reject(r) =>
         assert(s"$r".contains("a: the slug is taken") && s"$r".contains("b: its filter returns 2"), r)
       case v => fail(v.toString)
     assert(
       articlePlan(Nil, AutopilotPolicy.MinSources(5), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(6))
-        .isInstanceOf[Verdict.Reject]
+        .isInstanceOf[Ruling.Reject]
     )
 
   private val draft =
     DraftFacts(
-      AutopilotPolicy.DraftFacts.Slug("x"),
-      create = AutopilotPolicy.DraftFacts.Create(true),
-      filterRecorded = AutopilotPolicy.DraftFacts.FilterRecorded(true),
-      hits = Some(AutopilotPolicy.DraftFacts.Hits(8)),
+      DraftFacts.Slug("x"),
+      create = DraftFacts.Create(true),
+      filterRecorded = DraftFacts.FilterRecorded(true),
+      hits = Some(DraftFacts.Hits(8)),
       problems = Nil,
-      cited = AutopilotPolicy.DraftFacts.Cited(4),
-      slugFree = AutopilotPolicy.DraftFacts.SlugFree(true)
+      cited = DraftFacts.Cited(4),
+      slugFree = DraftFacts.SlugFree(true)
     )
 
   test(
     "article-publish: filter recorded and wide enough, no problems, cites, slug free → approved within the daily cap"
   ):
     assert(
-      articlePublish(draft, AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10))
-        .isInstanceOf[Verdict.Approve]
+      draft
+        .articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10))
+        .isInstanceOf[Ruling.Approve]
     )
     assert(
-      articlePublish(draft, AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(10), AutopilotPolicy.Cap(10))
-        .isInstanceOf[Verdict.Leave]
+      draft
+        .articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(10), AutopilotPolicy.Cap(10))
+        .isInstanceOf[Ruling.Leave]
     )
     assert(
-      articlePublish(
-        draft
-          .modify(_.create)
-          .setTo(AutopilotPolicy.DraftFacts.Create(false))
-          .modify(_.slugFree)
-          .setTo(AutopilotPolicy.DraftFacts.SlugFree(false)),
-        AutopilotPolicy.MinSources(3),
-        AutopilotPolicy.ApprovedToday(0),
-        AutopilotPolicy.Cap(10)
-      ).isInstanceOf[Verdict.Approve],
+      draft
+        .modify(_.create)
+        .setTo(DraftFacts.Create(false))
+        .modify(_.slugFree)
+        .setTo(DraftFacts.SlugFree(false))
+        .articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10))
+        .isInstanceOf[Ruling.Approve],
       "an extension"
     )
 
   test("article-publish: each failed check rejects with why"):
     def why(d: DraftFacts) =
-      articlePublish(d, AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10)) match
-        case Verdict.Reject(r) => s"$r"
-        case v                 => fail(v.toString)
+      d.articlePublish(AutopilotPolicy.MinSources(3), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(10)) match
+        case Ruling.Reject(r) => s"$r"
+        case v                => fail(v.toString)
     assert(
-      why(draft.modify(_.filterRecorded).setTo(AutopilotPolicy.DraftFacts.FilterRecorded(false)))
+      why(draft.modify(_.filterRecorded).setTo(DraftFacts.FilterRecorded(false)))
         .contains("no coverage filter")
     )
     assert(
-      why(draft.modify(_.hits).setTo(Some(AutopilotPolicy.DraftFacts.Hits(1))))
+      why(draft.modify(_.hits).setTo(Some(DraftFacts.Hits(1))))
         .contains("returns 1 source(s), fewer than 3")
     )
     assert(why(draft.modify(_.hits).setTo(None)).contains("unknown number"))
@@ -151,69 +166,60 @@ class AutopilotPolicySuite extends munit.FunSuite:
       why(
         draft
           .modify(_.problems)
-          .setTo(List(AutopilotPolicy.DraftFacts.Problems("p1"), AutopilotPolicy.DraftFacts.Problems("p2")))
+          .setTo(List(DraftFacts.Problems("p1"), DraftFacts.Problems("p2")))
       ).contains("2 problems: p1; p2")
     )
-    assert(why(draft.modify(_.cited).setTo(AutopilotPolicy.DraftFacts.Cited(0))).contains("cites no source"))
-    assert(why(draft.modify(_.slugFree).setTo(AutopilotPolicy.DraftFacts.SlugFree(false))).contains("slug x is taken"))
+    assert(why(draft.modify(_.cited).setTo(DraftFacts.Cited(0))).contains("cites no source"))
+    assert(why(draft.modify(_.slugFree).setTo(DraftFacts.SlugFree(false))).contains("slug x is taken"))
 
   test(
     "goal-plan: something proposed → approved; sub-goals at the depth limit rejected; nothing rejected; the cap leaves it"
   ):
     val p = GoalPlanFacts(
-      AutopilotPolicy.GoalPlanFacts.Goal("g"),
-      subGoals = AutopilotPolicy.GoalPlanFacts.SubGoals(3),
-      queries = AutopilotPolicy.GoalPlanFacts.Queries(4),
-      works = AutopilotPolicy.GoalPlanFacts.Works(2),
-      depth = AutopilotPolicy.GoalPlanFacts.Depth(1)
+      GoalPlanFacts.Goal("g"),
+      subGoals = GoalPlanFacts.SubGoals(3),
+      queries = GoalPlanFacts.Queries(4),
+      works = GoalPlanFacts.Works(2),
+      depth = GoalPlanFacts.Depth(1)
     )
     assert(
-      goalPlan(p, AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
-        .isInstanceOf[Verdict.Approve]
+      p.goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
+        .isInstanceOf[Ruling.Approve]
     )
-    goalPlan(
-      p.modify(_.depth).setTo(AutopilotPolicy.GoalPlanFacts.Depth(2)),
-      AutopilotPolicy.DepthLimit(2),
-      AutopilotPolicy.ApprovedToday(0),
-      AutopilotPolicy.Cap(5)
-    ) match
-      case Verdict.Reject(r) =>
+    p.modify(_.depth)
+      .setTo(GoalPlanFacts.Depth(2))
+      .goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5)) match
+      case Ruling.Reject(r) =>
         assert(s"$r".contains("3 sub-goals") && s"$r".contains("2 level(s) below a root"), r)
       case v => fail(v.toString)
     assert(
-      goalPlan(
-        p.modify(_.subGoals)
-          .setTo(AutopilotPolicy.GoalPlanFacts.SubGoals(0))
-          .modify(_.depth)
-          .setTo(AutopilotPolicy.GoalPlanFacts.Depth(2)),
-        AutopilotPolicy.DepthLimit(2),
-        AutopilotPolicy.ApprovedToday(0),
-        AutopilotPolicy.Cap(5)
-      ).isInstanceOf[Verdict.Approve],
+      p.modify(_.subGoals)
+        .setTo(GoalPlanFacts.SubGoals(0))
+        .modify(_.depth)
+        .setTo(GoalPlanFacts.Depth(2))
+        .goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
+        .isInstanceOf[Ruling.Approve],
       "no sub-goals: fine at any depth"
     )
     assert(
-      goalPlan(
-        p.modify(_.subGoals)
-          .setTo(AutopilotPolicy.GoalPlanFacts.SubGoals(0))
-          .modify(_.queries)
-          .setTo(AutopilotPolicy.GoalPlanFacts.Queries(0))
-          .modify(_.works)
-          .setTo(AutopilotPolicy.GoalPlanFacts.Works(0)),
-        AutopilotPolicy.DepthLimit(2),
-        AutopilotPolicy.ApprovedToday(0),
-        AutopilotPolicy.Cap(5)
-      ).isInstanceOf[Verdict.Reject]
+      p.modify(_.subGoals)
+        .setTo(GoalPlanFacts.SubGoals(0))
+        .modify(_.queries)
+        .setTo(GoalPlanFacts.Queries(0))
+        .modify(_.works)
+        .setTo(GoalPlanFacts.Works(0))
+        .goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(0), AutopilotPolicy.Cap(5))
+        .isInstanceOf[Ruling.Reject]
     )
     assert(
-      goalPlan(p, AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(5))
-        .isInstanceOf[Verdict.Leave]
+      p.goalPlan(AutopilotPolicy.DepthLimit(2), AutopilotPolicy.ApprovedToday(5), AutopilotPolicy.Cap(5))
+        .isInstanceOf[Ruling.Leave]
     )
 
   test("the note marks the decision as the autopilot's; a left one carries none"):
-    assertEquals(note(Verdict.Approve(AutopilotPolicy.Rationale("r"))), Some("autopilot: approved — r"))
-    assertEquals(note(Verdict.Reject(AutopilotPolicy.Rationale("r"))), Some("autopilot: rejected — r"))
-    assertEquals(note(Verdict.Leave(AutopilotPolicy.Rationale("r"))), None)
+    assertEquals(Ruling.Approve(AutopilotPolicy.Rationale("r")).note, Some("autopilot: approved — r"))
+    assertEquals(Ruling.Reject(AutopilotPolicy.Rationale("r")).note, Some("autopilot: rejected — r"))
+    assertEquals(Ruling.Leave(AutopilotPolicy.Rationale("r")).note, None)
 
   test("depth: the parents above a goal; a cycle stops"):
     val parent = Map(Slug("c") -> Slug("b"), Slug("b") -> Slug("a"))
@@ -226,100 +232,96 @@ class AutopilotPolicySuite extends munit.FunSuite:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val g =
     GoalFacts(
-      AutopilotPolicy.GoalFacts.Slug("g"),
+      GoalFacts.Slug("g"),
       Goal.Status.Wire(Goal.Status.Planned),
-      managed = AutopilotPolicy.GoalFacts.Managed(false),
-      articles = AutopilotPolicy.GoalFacts.Articles(0),
-      compileOpen = AutopilotPolicy.GoalFacts.CompileOpen(false),
-      reviewed = AutopilotPolicy.GoalFacts.Reviewed(false),
+      managed = GoalFacts.Managed(false),
+      articles = GoalFacts.Articles(0),
+      compileOpen = GoalFacts.CompileOpen(false),
+      reviewed = GoalFacts.Reviewed(false),
       Nil
     )
 
   test(
     "advance: planned → seeding once managed; → compiled with an article and nothing left; → reviewed when it passed"
   ):
-    assertEquals(advance(g), None)
+    assertEquals(g.advance, None)
     assertEquals(
-      advance(g.modify(_.managed).setTo(AutopilotPolicy.GoalFacts.Managed(true))).map(_._1),
+      g.modify(_.managed).setTo(GoalFacts.Managed(true)).advance.map(_._1),
       Some(Goal.Status.Seeding)
     )
     assertEquals(
-      advance(
-        g.modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-          .modify(_.articles)
-          .setTo(AutopilotPolicy.GoalFacts.Articles(2))
-          .modify(_.compileOpen)
-          .setTo(AutopilotPolicy.GoalFacts.CompileOpen(true))
-      ).map(_._1),
+      g.modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .modify(_.articles)
+        .setTo(GoalFacts.Articles(2))
+        .modify(_.compileOpen)
+        .setTo(GoalFacts.CompileOpen(true))
+        .advance
+        .map(_._1),
       Some(Goal.Status.Seeding)
     )
     assertEquals(
-      advance(
-        g.modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-          .modify(_.articles)
-          .setTo(AutopilotPolicy.GoalFacts.Articles(2))
-      ).map(_._1),
+      g.modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .modify(_.articles)
+        .setTo(GoalFacts.Articles(2))
+        .advance
+        .map(_._1),
       Some(Goal.Status.Compiled)
     )
     assertEquals(
-      advance(
-        g.modify(_.status)
-          .setTo(Goal.Status.Wire(Goal.Status.Compiled))
-          .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-          .modify(_.articles)
-          .setTo(AutopilotPolicy.GoalFacts.Articles(2))
-          .modify(_.reviewed)
-          .setTo(AutopilotPolicy.GoalFacts.Reviewed(true))
-      ).map((a, p) => (a, s"$p")),
+      g.modify(_.status)
+        .setTo(Goal.Status.Wire(Goal.Status.Compiled))
+        .modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .modify(_.articles)
+        .setTo(GoalFacts.Articles(2))
+        .modify(_.reviewed)
+        .setTo(GoalFacts.Reviewed(true))
+        .advance
+        .map((a, p) => (a, s"$p")),
       Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
 
   test("advance: never back, never past done, an unknown status is left"):
     assertEquals(
-      advance(
-        g.modify(_.status)
-          .setTo(Goal.Status.Wire(Goal.Status.Reviewed))
-          .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-      ),
+      g.modify(_.status)
+        .setTo(Goal.Status.Wire(Goal.Status.Reviewed))
+        .modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .advance,
       None
     )
     assertEquals(
-      advance(
-        g.modify(_.status)
-          .setTo(Goal.Status.Wire(Goal.Status.Done))
-          .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-          .modify(_.articles)
-          .setTo(AutopilotPolicy.GoalFacts.Articles(3))
-          .modify(_.reviewed)
-          .setTo(AutopilotPolicy.GoalFacts.Reviewed(true))
-      ),
+      g.modify(_.status)
+        .setTo(Goal.Status.Wire(Goal.Status.Done))
+        .modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .modify(_.articles)
+        .setTo(GoalFacts.Articles(3))
+        .modify(_.reviewed)
+        .setTo(GoalFacts.Reviewed(true))
+        .advance,
       None
     )
     assertEquals(
-      advance(
-        g.modify(_.status)
-          .setTo(Goal.Status.Wire("frozen"))
-          .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-      ),
+      g.modify(_.status)
+        .setTo(Goal.Status.Wire("frozen"))
+        .modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .advance,
       None
     )
     assertEquals(
-      advance(
-        g.modify(_.status)
-          .setTo(Goal.Status.Wire(Goal.Status.Compiled))
-          .modify(_.managed)
-          .setTo(AutopilotPolicy.GoalFacts.Managed(true))
-          .modify(_.articles)
-          .setTo(AutopilotPolicy.GoalFacts.Articles(1))
-          .modify(_.compileOpen)
-          .setTo(AutopilotPolicy.GoalFacts.CompileOpen(true))
-      ),
+      g.modify(_.status)
+        .setTo(Goal.Status.Wire(Goal.Status.Compiled))
+        .modify(_.managed)
+        .setTo(GoalFacts.Managed(true))
+        .modify(_.articles)
+        .setTo(GoalFacts.Articles(1))
+        .modify(_.compileOpen)
+        .setTo(GoalFacts.CompileOpen(true))
+        .advance,
       None
     )
 
@@ -328,42 +330,44 @@ class AutopilotPolicySuite extends munit.FunSuite:
       g.modify(_.status)
         .setTo(Goal.Status.Wire(Goal.Status.Seeding))
         .modify(_.managed)
-        .setTo(AutopilotPolicy.GoalFacts.Managed(true))
+        .setTo(GoalFacts.Managed(true))
         .modify(_.children)
         .setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Seeding)))
-    assertEquals(advance(p), None)
+    assertEquals(p.advance, None)
     assertEquals(
-      advance(
-        p.modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Reviewed)))
-      ).map(_._1),
+      p.modify(_.children)
+        .setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Reviewed)))
+        .advance
+        .map(_._1),
       Some(Goal.Status.Compiled)
     )
     assertEquals(
-      advance(
-        p.modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Reviewed), Goal.Status.Wire(Goal.Status.Done)))
-      ).map(_._1),
+      p.modify(_.children)
+        .setTo(List(Goal.Status.Wire(Goal.Status.Reviewed), Goal.Status.Wire(Goal.Status.Done)))
+        .advance
+        .map(_._1),
       Some(Goal.Status.Reviewed),
       "no own article: reviewed when its sub-goals are"
     )
     assertEquals(
-      advance(
-        p.modify(_.articles)
-          .setTo(AutopilotPolicy.GoalFacts.Articles(1))
-          .modify(_.children)
-          .setTo(List(Goal.Status.Wire(Goal.Status.Reviewed)))
-      ).map(_._1),
+      p.modify(_.articles)
+        .setTo(GoalFacts.Articles(1))
+        .modify(_.children)
+        .setTo(List(Goal.Status.Wire(Goal.Status.Reviewed)))
+        .advance
+        .map(_._1),
       Some(Goal.Status.Compiled),
       "its own article not reviewed yet"
     )
 
   // ── ensure ─────────────────────────────────────────────────────────────────────────────────────
 
-  private val st = Settings(
+  private val st = Pacing(
     AutopilotPolicy.Cron("@weekly"),
     AutopilotPolicy.Cron("@weekly"),
     AutopilotPolicy.Cron("@monthly"),
-    AutopilotPolicy.Settings.WatchIngestPerDay(5),
-    AutopilotPolicy.Settings.ExtendMinNew(3)
+    Pacing.WatchIngestPerDay(5),
+    Pacing.ExtendMinNew(3)
   )
 
   test(
@@ -374,12 +378,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
         GoalRow(
           Goal.Slug("a"),
           Goal.Status.Wire(Goal.Status.Planned),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(true)
+          needsPlan = GoalRow.NeedsPlan(true)
         ),
         GoalRow(
           Goal.Slug("r"),
           Goal.Status.Wire(Goal.Status.Reviewed),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(false)
+          needsPlan = GoalRow.NeedsPlan(false)
         )
       ),
       Nil,
@@ -389,18 +393,18 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(steps.map(_.getClass.getSimpleName), List("CreateSeed", "CreateWatch", "CreateWatch"))
     assertEquals(
       steps.head,
-      Step.CreateSeed(
-        AutopilotPolicy.Step.CreateSeed.Goal("a"),
+      Stride.CreateSeed(
+        Stride.CreateSeed.Goal("a"),
         stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.seed(Goal.Slug("a"))),
-        planFirst = AutopilotPolicy.Step.CreateSeed.PlanFirst(true)
+        planFirst = Stride.CreateSeed.PlanFirst(true)
       )
     )
     assertEquals(
       steps(2),
-      Step.CreateWatch(
-        AutopilotPolicy.Step.CreateWatch.Goal("r"),
+      Stride.CreateWatch(
+        Stride.CreateWatch.Goal("r"),
         stagger(AutopilotPolicy.Cron("@monthly"), ManagerRow.Id.watch(Goal.Slug("r"))),
-        AutopilotPolicy.Step.CreateWatch.PerDay(5)
+        Stride.CreateWatch.PerDay(5)
       )
     )
 
@@ -415,7 +419,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         Manager.State.Wire("paused"),
         Some(AutopilotPolicy.Cron("0 3 * * 1")),
         None,
-        planItem = AutopilotPolicy.ManagerRow.PlanItem(true)
+        planItem = ManagerRow.PlanItem(true)
       ),
       ManagerRow(
         ManagerRow.Id.watch(Goal.Slug("a")),
@@ -423,7 +427,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
         Some(Goal.Slug("a")),
         Manager.State.Wire("paused"),
         None,
-        Some(AutopilotPolicy.ManagerRow.AutoIngest(false))
+        Some(ManagerRow.AutoIngest(false))
       ),
       ManagerRow(
         ManagerRow.Id.seed(Goal.Slug("b")),
@@ -447,12 +451,12 @@ class AutopilotPolicySuite extends munit.FunSuite:
         GoalRow(
           Goal.Slug("a"),
           Goal.Status.Wire(Goal.Status.Seeding),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(true)
+          needsPlan = GoalRow.NeedsPlan(true)
         ),
         GoalRow(
           Goal.Slug("b"),
           Goal.Status.Wire(Goal.Status.Planned),
-          needsPlan = AutopilotPolicy.GoalRow.NeedsPlan(true)
+          needsPlan = GoalRow.NeedsPlan(true)
         )
       ),
       ms,
@@ -462,19 +466,19 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       steps,
       List(
-        Step.Resume(ManagerRow.Id(ReviewId)),
-        Step.ExtendMinNew(ManagerRow.Id(ReviewId), AutopilotPolicy.Step.ExtendMinNew.N(3)),
-        Step.Resume(ManagerRow.Id.seed(Goal.Slug("a"))),
-        Step.SetCron(
+        Stride.Resume(ManagerRow.Id(ReviewId)),
+        Stride.ExtendMinNew(ManagerRow.Id(ReviewId), Stride.ExtendMinNew.N(3)),
+        Stride.Resume(ManagerRow.Id.seed(Goal.Slug("a"))),
+        Stride.SetCron(
           ManagerRow.Id.watch(Goal.Slug("a")),
           stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.watch(Goal.Slug("a")))
         ),
-        Step.SetCron(
+        Stride.SetCron(
           ManagerRow.Id.seed(Goal.Slug("b")),
           stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id.seed(Goal.Slug("b")))
         ),
-        Step.AddPlanItem(ManagerRow.Id.seed(Goal.Slug("b")), AutopilotPolicy.Step.AddPlanItem.Goal("b")),
-        Step.AutoIngestOn(ManagerRow.Id.watch(Goal.Slug("b")), AutopilotPolicy.Step.AutoIngestOn.PerDay(5))
+        Stride.AddPlanItem(ManagerRow.Id.seed(Goal.Slug("b")), Stride.AddPlanItem.Goal("b")),
+        Stride.AutoIngestOn(ManagerRow.Id.watch(Goal.Slug("b")), Stride.AutoIngestOn.PerDay(5))
       )
     )
     val done = ms.map(m =>
@@ -484,17 +488,17 @@ class AutopilotPolicySuite extends munit.FunSuite:
         .modify(_.cron)
         .setTo(m.cron.orElse(Some(AutopilotPolicy.Cron("x"))))
         .modify(_.autoIngest)
-        .setTo(m.autoIngest.orElse(Some(AutopilotPolicy.ManagerRow.AutoIngest(true))))
+        .setTo(m.autoIngest.orElse(Some(ManagerRow.AutoIngest(true))))
         .modify(_.planItem)
-        .setTo(AutopilotPolicy.ManagerRow.PlanItem(true))
+        .setTo(ManagerRow.PlanItem(true))
         .modify(_.extendMinNew)
-        .setTo(Some(AutopilotPolicy.Settings.ExtendMinNew(3)))
+        .setTo(Some(Pacing.ExtendMinNew(3)))
     )
     assertEquals(
       ensure(
         List(
-          GoalRow(Goal.Slug("a"), Goal.Status.Wire(Goal.Status.Seeding), AutopilotPolicy.GoalRow.NeedsPlan(true)),
-          GoalRow(Goal.Slug("b"), Goal.Status.Wire(Goal.Status.Planned), AutopilotPolicy.GoalRow.NeedsPlan(true))
+          GoalRow(Goal.Slug("a"), Goal.Status.Wire(Goal.Status.Seeding), GoalRow.NeedsPlan(true)),
+          GoalRow(Goal.Slug("b"), Goal.Status.Wire(Goal.Status.Planned), GoalRow.NeedsPlan(true))
         ),
         done,
         Set.empty,
@@ -535,11 +539,11 @@ class AutopilotPolicySuite extends munit.FunSuite:
 
   test("stagger: spread per key, stable, valid, at most weekly; another cron kept"):
     val crons =
-      (1 to 60).map(i => stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id(s"watch:goal-$i")))
+      (1 to 60).map(i => stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id(s"watch:goal-$i")))
     assert(crons.distinct.size > 50, crons.distinct.size)
     assertEquals(
-      stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id("watch:x")),
-      stagger(AutopilotPolicy.Cron("@weekly"), AutopilotPolicy.ManagerRow.Id("watch:x"))
+      stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id("watch:x")),
+      stagger(AutopilotPolicy.Cron("@weekly"), ManagerRow.Id("watch:x"))
     )
     crons.foreach(c =>
       assert(
@@ -553,20 +557,18 @@ class AutopilotPolicySuite extends munit.FunSuite:
       domain.Cron
         .parse(
           domain.Cron
-            .Text(stagger(AutopilotPolicy.Cron("@daily"), AutopilotPolicy.ManagerRow.Id("k")).value)
+            .Text(stagger(AutopilotPolicy.Cron("@daily"), ManagerRow.Id("k")).value)
         )
         .isRight && domain.Cron
         .parse(
           domain.Cron
-            .Text(stagger(AutopilotPolicy.Cron("@monthly"), AutopilotPolicy.ManagerRow.Id("k")).value)
+            .Text(stagger(AutopilotPolicy.Cron("@monthly"), ManagerRow.Id("k")).value)
         )
         .isRight
     )
-    assertEquals(stagger(AutopilotPolicy.Cron("0 4 * * 1"), AutopilotPolicy.ManagerRow.Id("k")), "0 4 * * 1")
+    assertEquals(stagger(AutopilotPolicy.Cron("0 4 * * 1"), ManagerRow.Id("k")), "0 4 * * 1")
     val minutes = (1 to 60)
-      .map(i =>
-        stagger(AutopilotPolicy.Cron("@daily"), AutopilotPolicy.ManagerRow.Id(s"g$i")).value.split(" ")(0).toInt
-      )
+      .map(i => stagger(AutopilotPolicy.Cron("@daily"), ManagerRow.Id(s"g$i")).value.split(" ")(0).toInt)
       .distinct
     assert(minutes.size > 25, minutes.size)
 
@@ -576,7 +578,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       extendDue(
         AutopilotPolicy.NewSources(3),
-        AutopilotPolicy.Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         None,
         AutopilotPolicy.CooldownDays(14),
         now
@@ -585,7 +587,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       extendDue(
         AutopilotPolicy.NewSources(2),
-        AutopilotPolicy.Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         None,
         AutopilotPolicy.CooldownDays(14),
         now
@@ -595,7 +597,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       extendDue(
         AutopilotPolicy.NewSources(9),
-        AutopilotPolicy.Settings.ExtendMinNew(0),
+        Pacing.ExtendMinNew(0),
         None,
         AutopilotPolicy.CooldownDays(14),
         now
@@ -605,7 +607,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(
       extendDue(
         AutopilotPolicy.NewSources(9),
-        AutopilotPolicy.Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         Some(now.minusSeconds(3600)),
         AutopilotPolicy.CooldownDays(14),
         now
@@ -615,7 +617,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       extendDue(
         AutopilotPolicy.NewSources(9),
-        AutopilotPolicy.Settings.ExtendMinNew(3),
+        Pacing.ExtendMinNew(3),
         Some(now.minusSeconds(15L * 86400)),
         AutopilotPolicy.CooldownDays(14),
         now
@@ -645,15 +647,15 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(
       ManagerPolicy.waitsFor(
         Item.Kind.ProposeArticles,
-        ManagerPolicy.Candidate.Target("g"),
-        List((Item.Kind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
+        Assignable.Target("g"),
+        List((Item.Kind.PlanGoalItem, Assignable.Target("g")))
       )
     )
     assert(
       !ManagerPolicy.waitsFor(
         Item.Kind.ProposeArticles,
-        ManagerPolicy.Candidate.Target("h"),
-        List((Item.Kind.PlanGoalItem, ManagerPolicy.Candidate.Target("g")))
+        Assignable.Target("h"),
+        List((Item.Kind.PlanGoalItem, Assignable.Target("g")))
       )
     )
     assertEquals(itemKindOf(Kind.Seed, api.ItemKind.Word("plan-goal")), Some(PlanGoalItem))
@@ -709,10 +711,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
       backoffMinutes = ReviewSettings.BackoffMinutes(15),
       maxBackoffMinutes = ReviewSettings.MaxBackoffMinutes(360)
     )
-    ManagerPolicy.evaluateStep(
-      s,
+    s.evaluateStep(
       ManagerPolicy.StepLabel(ArticleCompile),
-      ManagerPolicy.Candidate.Target("x"),
+      Assignable.Target("x"),
       Next.Retry.Failures(0),
       ItemState(),
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
@@ -723,10 +724,9 @@ class AutopilotPolicySuite extends munit.FunSuite:
     ) match
       case Next.Retry(at, f, note) if f.value == 1 => assert(at.isAfter(now) && note.value.contains("again"), note)
       case n                                       => fail(n.toString)
-    ManagerPolicy.evaluateStep(
-      s,
+    s.evaluateStep(
       ManagerPolicy.StepLabel(ArticleCompile),
-      ManagerPolicy.Candidate.Target("x"),
+      Assignable.Target("x"),
       Next.Retry.Failures(1),
       ItemState(),
       Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
@@ -740,7 +740,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
 
   test("ManagerConfig: autoApprove and extendMinNew parse, merge and print"):
     val c = ManagerConfig
-      .parse(List(Managers.ManagerConfig.Spec("autoApprove=on"), Managers.ManagerConfig.Spec("extend-min-new=4")))
+      .parse(List(ManagerConfig.Spec("autoApprove=on"), ManagerConfig.Spec("extend-min-new=4")))
       .toOption
       .get
     assertEquals((c.autoApprove.map(_.autoApprove), c.extendMinNew), (Some(true), Some(4)))
@@ -843,7 +843,6 @@ class ScaledCapSuite extends munit.FunSuite:
 /** #3763: new articles only once the current ones are done. */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class NextArticleSuite extends munit.FunSuite:
-  import AutopilotPolicy.{articlesInProgress, nextArticle, NextFacts}
   import com.histmersion.domain.automation.{ItemStatus, Manager}
 
   private val now = java.time.Instant.parse("2026-10-24T12:00:00Z")
@@ -860,77 +859,80 @@ class NextArticleSuite extends munit.FunSuite:
   )
 
   test("in progress: an article to compile or to pass review keeps a new proposal back"):
-    assertEquals(articlesInProgress(NextFacts.Unreviewed(0), NextFacts.CompileOpen(0)), None)
+    assertEquals(NextFacts.articlesInProgress(NextFacts.Unreviewed(0), NextFacts.CompileOpen(0)), None)
     assert(
-      articlesInProgress(NextFacts.Unreviewed(1), NextFacts.CompileOpen(0)).exists(_.value.contains("1 to pass review"))
+      NextFacts
+        .articlesInProgress(NextFacts.Unreviewed(1), NextFacts.CompileOpen(0))
+        .exists(_.value.contains("1 to pass review"))
     )
     assert(
-      articlesInProgress(NextFacts.Unreviewed(0), NextFacts.CompileOpen(2)).exists(_.value.contains("2 to compile"))
+      NextFacts
+        .articlesInProgress(NextFacts.Unreviewed(0), NextFacts.CompileOpen(2))
+        .exists(_.value.contains("2 to compile"))
     )
 
   test("the next article: every article done, the seeding manager active, no proposal open, the cooldown over"):
     assert(
-      nextArticle(done, now, AutopilotPolicy.CooldownHours(24))
+      done
+        .nextArticle(now, AutopilotPolicy.CooldownHours(24))
         .exists(_.value.contains("2 articles are compiled and passed review"))
     )
     assertEquals(
-      nextArticle(done.modify(_.unreviewed).setTo(NextFacts.Unreviewed(1)), now, AutopilotPolicy.CooldownHours(24)),
+      done.modify(_.unreviewed).setTo(NextFacts.Unreviewed(1)).nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "an article to review"
     )
     assertEquals(
-      nextArticle(done.modify(_.compileOpen).setTo(NextFacts.CompileOpen(1)), now, AutopilotPolicy.CooldownHours(24)),
+      done.modify(_.compileOpen).setTo(NextFacts.CompileOpen(1)).nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "an article to compile"
     )
     assertEquals(
-      nextArticle(done.modify(_.articles).setTo(NextFacts.Articles(0)), now, AutopilotPolicy.CooldownHours(24)),
+      done.modify(_.articles).setTo(NextFacts.Articles(0)).nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "no article yet: the first proposal is the plan's"
     )
     assertEquals(
-      nextArticle(
-        done.modify(_.proposeStatus).setTo(Some(ItemStatus.Pending.wire)),
-        now,
-        AutopilotPolicy.CooldownHours(24)
-      ),
+      done
+        .modify(_.proposeStatus)
+        .setTo(Some(ItemStatus.Pending.wire))
+        .nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "a proposal open"
     )
     assertEquals(
-      nextArticle(
-        done.modify(_.proposeSettled).setTo(Some(now.minusSeconds(3600))),
-        now,
-        AutopilotPolicy.CooldownHours(24)
-      ),
+      done
+        .modify(_.proposeSettled)
+        .setTo(Some(now.minusSeconds(3600)))
+        .nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "the cooldown"
     )
     assertEquals(
-      nextArticle(
-        done.modify(_.seedState).setTo(Some(Manager.State.Paused.wire)),
-        now,
-        AutopilotPolicy.CooldownHours(24)
-      ),
+      done
+        .modify(_.seedState)
+        .setTo(Some(Manager.State.Paused.wire))
+        .nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "a paused manager"
     )
     assertEquals(
-      nextArticle(
-        done.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Done)),
-        now,
-        AutopilotPolicy.CooldownHours(24)
-      ),
+      done
+        .modify(_.status)
+        .setTo(Goal.Status.Wire(Goal.Status.Done))
+        .nextArticle(now, AutopilotPolicy.CooldownHours(24)),
       None,
       "a person's done"
     )
-    assertEquals(nextArticle(done, now, AutopilotPolicy.CooldownHours(0)), None, "off")
+    assertEquals(done.nextArticle(now, AutopilotPolicy.CooldownHours(0)), None, "off")
     assert(
-      nextArticle(
-        done.modify(_.proposeStatus).setTo(None).modify(_.proposeSettled).setTo(None),
-        now,
-        AutopilotPolicy.CooldownHours(24)
-      ).isDefined,
+      done
+        .modify(_.proposeStatus)
+        .setTo(None)
+        .modify(_.proposeSettled)
+        .setTo(None)
+        .nextArticle(now, AutopilotPolicy.CooldownHours(24))
+        .isDefined,
       "never proposed"
     )
 

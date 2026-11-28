@@ -1,5 +1,16 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.research.workflows.Support
+import com.histmersion.domain.research.workflows.SourceFact
+import com.histmersion.domain.research.workflows.Extracted
+import com.histmersion.domain.research.workflows.ExtractAnswer
+import com.histmersion.domain.research.workflows.EdgeFact
+import com.histmersion.domain.research.workflows.DraftAnswer
+import com.histmersion.domain.research.workflows.Corpus
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Problem, Problems}
@@ -12,15 +23,14 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.workflows.PipelineDef
-import com.histmersion.domain.automation.workflows.Pipelines
 
 import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role, RunInfo, RunRequest}
+import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline, Role}
 import com.histmersion.domain.CompileArticle.*
 import com.histmersion.api.automation.Goal.Plans.{ArticleDraft, DraftMode, LinkKind}
-import com.histmersion.api.automation.Queue.QueueAdd
+import com.histmersion.api.automation.Queue
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.json.JsonCodec
@@ -109,7 +119,7 @@ final class CompileArticlePipeline(
   )(using Creator.New): Either[Halt, String] =
     for
       extracted <- extractAll(ctx, snap, found)
-      ev <- ctx.code[Evidence](StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
+      ev <- ctx.code[Support](StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
       line <-
         if ev.used.isEmpty then
           ctx.code[String](StepRecord.Name("close"))(
@@ -263,16 +273,13 @@ final class CompileArticlePipeline(
               Prompt.UserText(user),
               ResearchAnswers.extract
             ) { (a, last) =>
-              CompileArticle
-                .checkExtract(
-                  a,
-                  ck,
-                  AgentVerify.SourceBody(text),
-                  AgentVerify.MinRatio(lib.verify.quoteMinRatio.value),
-                  MaxClaims(research.compile.maxClaims.value),
-                  CompileArticle.Last(last.value)
-                )
-                .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
+              a.checkExtract(
+                ck,
+                AgentVerify.SourceBody(text),
+                AgentVerify.MinRatio(lib.verify.quoteMinRatio.value),
+                MaxClaims(research.compile.maxClaims.value),
+                CompileArticle.Last(last.value)
+              ).map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
             }
             .map(sofar :+ _)
         }
@@ -284,7 +291,7 @@ final class CompileArticlePipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-  private def evidenceOf(found: Found, extracted: List[Extracted]): Evidence =
+  private def evidenceOf(found: Found, extracted: List[Extracted]): Support =
     val edges = found.sources.flatMap { s =>
       site.citations
         .neighbors(s.citekey, CompileArticle.DisagreementKinds.toList.map(k => Edge.Kind.Wire(k.value)))
@@ -305,7 +312,7 @@ final class CompileArticlePipeline(
       ctx: RunCtx,
       s: Snap,
       found: Found,
-      ev: Evidence,
+      ev: Support,
       extracted: List[Extracted]
   )(using WritePermit): Either[Halt, ArticleDraft] =
     locally {
@@ -316,7 +323,7 @@ final class CompileArticlePipeline(
           s"EXTEND the ${s.kind} article \"${s.title}\" (slug ${s.slug}): write only what the new sources in the " +
             s"claim table add, and say under which existing heading it goes. The current article:\n\n" +
             Prompt.data("article", s.body.value)
-      val user = s"$task\n\n${Prompt.data("evidence", CompileArticle.evidenceText(ev, extracted).value)}\n\n" +
+      val user = s"$task\n\n${Prompt.data("evidence", ev.evidenceText(extracted).value)}\n\n" +
         s"The article is compiled from ${found.filter} → ${found.total}. Code records this filter with the article and " +
         "generates its Not used list and Method note from it; give a reason for each source of the claim table you do " +
         "not cite in `reasons`." + ctx.notes
@@ -345,19 +352,7 @@ final class CompileArticlePipeline(
         )
         val title =
           Option.when(s.mode == DraftMode.Extend)(s.title).orElse(ctx.run.params.title.map(t => Title(t.value)))
-        CompileArticle
-          .checkDraft(
-            a,
-            s.slug,
-            s.mode,
-            s.kind,
-            title,
-            s.body,
-            ev,
-            found.filter,
-            corpus,
-            CompileArticle.Last(last.value)
-          )
+        a.checkDraft(s.slug, s.mode, s.kind, title, s.body, ev, found.filter, corpus, CompileArticle.Last(last.value))
           .map((v, ws) => Checked(v, ws.map(w => Checked.Warnings(w.sentence))))
       }
     }
@@ -372,10 +367,10 @@ final class CompileArticlePipeline(
   ): Either[Problems, Written] =
     def task(why: String)(using WritePermit): Unit =
       ctx.warn(why)
-      val item = Pipelines.entry(
+      val item = PipelineDef.entry(
         ctx,
-        Pipelines.EntryText(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.value.take(8)})"),
-        Some(Pipelines.EntryTopic("agent compile"))
+        QueueItem.Text(s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.value.take(8)})"),
+        Some(QueueItem.Topic("agent compile"))
       )
       val _ = ctx.write("tasks item", item.asJson)(
         site.workLists.record(WorkListControllers.ListName("tasks"), item, ctx.creator).map(_ => ())
@@ -496,7 +491,7 @@ final class CompileArticlePipeline(
       WritePermit
   )(using Creator.New): Either[Problems, String] =
     if w.written.value then
-      Pipelines
+      PipelineDef
         .goalOf(ctx.run)
         .foreach(g =>
           Unused(
@@ -526,7 +521,7 @@ final class CompileArticlePipeline(
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(ctx: RunCtx, line: String): Either[Problems, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
+    PipelineDef.log(site.workLists, ctx, PipelineDef.LogLine(line)).map(_.value)
 
 object CompileArticlePipeline:
 

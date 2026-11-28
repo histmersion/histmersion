@@ -5,7 +5,6 @@ import com.histmersion.api.Markdown.*
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
-import com.histmersion.api.YearFmt
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -44,7 +43,7 @@ object SearchMarkdown:
           h.status.wire.value,
           reg
         ).filter(_.nonEmpty).mkString(" · ")
-        val per = YearFmt.period(h.periodStart, h.periodEnd)
+        val per = Year.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary = h.summary.map(s => s"\n  ${s.value.trim.take(240)}").getOrElse("")
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_${snippet(h)}$summary"
@@ -64,7 +63,7 @@ object SearchMarkdown:
           h.status.wire.value,
           reg
         ).filter(_.nonEmpty).mkString(" · ")
-        val per = YearFmt.period(h.periodStart, h.periodEnd)
+        val per = Year.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
         val summary = h.summary.map(s => s"\n  ${s.value.trim.take(240)}").getOrElse("")
@@ -73,7 +72,7 @@ object SearchMarkdown:
           else
             val items = hit.matched.map { m =>
               val loc = located(m.regionName.map(_.value), m.lat, m.lon)
-              val p = YearFmt.period(m.periodStart, m.periodEnd)
+              val p = Year.period(m.periodStart, m.periodEnd)
               val tail = List(loc, p, m.why.mkString(", ")).filter(_.nonEmpty).mkString(" · ")
               s"\n    - ${m.claim.value.trim}${if tail.nonEmpty then s"  \n      _${tail}_" else ""}"
             }
@@ -91,7 +90,7 @@ object SearchMarkdown:
     else
       val body = result.hits.map { hit =>
         val h = hit.source
-        val per = YearFmt.period(h.periodStart, h.periodEnd)
+        val per = Year.period(h.periodStart, h.periodEnd)
         val meta = List(
           year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))),
           h.status.wire.value,
@@ -138,7 +137,7 @@ object SearchMarkdown:
           val items = hs
             .map { h =>
               val loc = located(h.regionName.map(_.value), h.lat, h.lon)
-              val p = YearFmt.period(h.periodStart, h.periodEnd)
+              val p = Year.period(h.periodStart, h.periodEnd)
               s"  - ${h.claim} — _${List(loc, p).filter(_.nonEmpty).mkString(", ")}_"
             }
             .mkString("\n")
@@ -205,8 +204,7 @@ object SearchMarkdown:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def tree(h: TimeHistogram, unit: SearchMarkdown.TreeUnit): String =
+  def tree(h: TimeHistogram, unit: TreeUnit): String =
     val span = s"${yearLabel(h.from.value)} → ${yearLabel(h.to.value)}"
     if h.tree.isEmpty then (s"_No $unit to group for $span._")
     else

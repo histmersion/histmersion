@@ -1,5 +1,13 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.research.workflows.DraftAnswer
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.util.json.RawJson
@@ -14,7 +22,6 @@ import com.histmersion.domain.automation.agents.Toolbox
 
 import com.histmersion.domain.automation.workflows.ToolName
 
-import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.domain.library.LibraryTools.GetSourceInput
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.util.database.TestCreators.given
@@ -75,7 +82,7 @@ class AgentSchemaSuite extends munit.FunSuite:
       assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 
   test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
-    val js = SttpAiJson.schema(ResponseSchema.derived[EnrichSource.Findings]().schema).noSpaces
+    val js = SttpAiJson.schema(ResponseSchema.derived[Findings]().schema).noSpaces
     assert(js.contains("\"placeKind\""), js)
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 
@@ -91,12 +98,12 @@ class AgentSchemaSuite extends munit.FunSuite:
 
   test("#958: the fixer and the compile writer answer coverage reasons; article_coverage takes a slug"):
     def js[A](s: ResponseSchema[A]) = SttpAiJson.schema(s.schema).noSpaces
-    val fixer = js(ResponseSchema.derived[ReviewArticle.FixerAnswer]())
+    val fixer = js(ResponseSchema.derived[FixerAnswer]())
     assert(
       fixer.contains("\"reasons\"") && fixer.contains("\"citekey\"") && fixer.contains("an empty reason removes one"),
       fixer
     )
-    val draft = js(ResponseSchema.derived[CompileArticle.DraftAnswer]())
+    val draft = js(ResponseSchema.derived[DraftAnswer]())
     assert(draft.contains("\"reasons\"") && draft.contains("you do NOT cite"), draft)
     val t = TestToolbox(null).tool(ResearchAgentTools.ArticleCoverage).get
     assertEquals(t.name, "article_coverage")

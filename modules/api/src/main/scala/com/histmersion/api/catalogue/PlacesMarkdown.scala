@@ -1,8 +1,9 @@
 package com.histmersion
 package api.catalogue
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Markdown.*
-import com.histmersion.api.YearFmt
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -11,7 +12,7 @@ object PlacesMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[api] def kindOf(kind: Place.Summary.Kind, ps: Option[Year], pe: Option[Year]): String =
-    val p = YearFmt.period(ps, pe)
+    val p = Year.period(ps, pe)
     if p.isEmpty then kind.value else (s"$kind · $p")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -57,15 +58,14 @@ object PlacesMarkdown:
     else (s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): String =
+  def gazetteerSources(rows: List[SourceInfo]): String =
     if rows.isEmpty then ("_No external gazetteer sources: no pinned extracts and no LPF files._")
     else
       val head =
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
       val body = rows.map { r =>
-        val file = r.file.fold("—")(f =>
-          s"`$f`" + (if (r.present) == Gazetteer.SourceInfo.Present.Present then "" else " (missing)")
-        )
+        val file =
+          r.file.fold("—")(f => s"`$f`" + (if (r.present) == SourceInfo.Present.Present then "" else " (missing)"))
         val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.fold("")(_.value.take(10))})")
         val n = (x: Option[Int]) => x.fold("—")(_.toString)
         s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places.map(_.value))} | " +
@@ -179,7 +179,7 @@ object PlacesMarkdown:
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src = p.source.map(s => s"  \n**Source:** $s").getOrElse("") +
       d.siteType
-        .flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
+        .flatMap(t => SiteType.get(SiteType.Id(t.value)))
         .map(t => s"  \n**Site type:** ${t.label}")
         .getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
@@ -201,7 +201,7 @@ object PlacesMarkdown:
       "\n\n**Footprints (" + d.footprints.size + ")**\n" +
         d.footprints
           .map { f =>
-            val per = f.period.map(p => s" · ${YearFmt.period(Some(p.start), Some(p.end))}").getOrElse("")
+            val per = f.period.map(p => s" · ${Year.period(Some(p.start), Some(p.end))}").getOrElse("")
             val cert = f.certainty.map(c => s" · _${c}_").getOrElse("")
             val ck = f.citekey.map(c => s" [[$c]]").getOrElse("")
             s"- ${f.role}$per$cert$ck"
@@ -221,7 +221,7 @@ object PlacesMarkdown:
       "\n\n**Types**\n" +
         d.types
           .map { t =>
-            val per = t.period.map(p => s" · ${YearFmt.period(Some(p.start), Some(p.end))}").getOrElse("")
+            val per = t.period.map(p => s" · ${Year.period(Some(p.start), Some(p.end))}").getOrElse("")
             s"- ${t.typeLabel}$per"
           }
           .mkString("\n")

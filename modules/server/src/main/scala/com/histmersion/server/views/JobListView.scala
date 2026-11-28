@@ -1,5 +1,7 @@
 package com.histmersion
 package server.views
+
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
@@ -7,7 +9,6 @@ import com.histmersion.api.Paging
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.api.automation.Agents.RunState
-import com.histmersion.api.automation.ListFilters.JobFilter
 import com.histmersion.util.jobs.{JobListing, JobQuery}
 
 import java.time.Instant

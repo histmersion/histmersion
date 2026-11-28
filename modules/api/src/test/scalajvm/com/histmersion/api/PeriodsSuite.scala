@@ -14,7 +14,6 @@ import com.histmersion.api.catalogue.{
   Period,
   PeriodO,
   PeriodsMarkdown,
-  PresetMenu,
   PresetRegion,
   SkippedPeriod,
   Year
@@ -317,7 +316,7 @@ class PeriodsSuite extends munit.FunSuite:
     presets.foreach { p =>
       assert(p.region.exists(_.value.trim.nonEmpty), s"${p.id} ${p.label}: no region")
       assert(p.authority.exists(_.value.startsWith(s"PeriodO ${p.id} · ")), s"${p.id}: ${p.authority}")
-      assert(PresetMenu.source(p).exists(_.value.nonEmpty), p.id)
+      assert(PresetRegion.source(p).exists(_.value.nonEmpty), p.id)
     }
 
   test("no age is offered as one authority's continent-wide umbrella span"):
@@ -491,7 +490,7 @@ class PeriodsSuite extends munit.FunSuite:
       ),
       HistoricalPeriod(HistoricalPeriod.Id("x"), HistoricalPeriod.Label("Not a preset"), None, Period(Year(1), Year(2)))
     )
-    val gs = PresetMenu.groups(ps)
+    val gs = PresetRegion.groups(ps)
     assertEquals(gs.map(_.region), List(PresetRegion.Aegean, PresetRegion.Scandinavia))
     assertEquals(gs(1).presets.map(_.id), List("n", "b"))
     assert(gs.forall(!_.inView))
@@ -503,44 +502,44 @@ class PeriodsSuite extends munit.FunSuite:
     )
     val greece = BBox(Longitude(21.0), Latitude(36.0), Longitude(26.0), Latitude(40.0))
     assertEquals(
-      PresetMenu.groups(ps, Some(greece)).map(g => (g.region, g.inView)),
+      PresetRegion.groups(ps, Some(greece)).map(g => (g.region, g.inView)),
       List(PresetRegion.Aegean -> true, PresetRegion.BritainIreland -> false)
     )
     val britain = BBox(Longitude(-6.0), Latitude(50.5), Longitude(1.0), Latitude(55.0))
     assertEquals(
-      PresetMenu.groups(ps, Some(britain)).map(_.region),
+      PresetRegion.groups(ps, Some(britain)).map(_.region),
       List(PresetRegion.BritainIreland, PresetRegion.Aegean)
     )
     val world = BBox(Longitude(-180), Latitude(-85), Longitude(180), Latitude(85))
     assertEquals(
-      PresetMenu.groups(ps, Some(world)).map(g => (g.region, g.inView)),
+      PresetRegion.groups(ps, Some(world)).map(g => (g.region, g.inView)),
       List(PresetRegion.Aegean -> false, PresetRegion.BritainIreland -> false)
     )
 
   test("share: the part of a view inside a box"):
     val box = BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10))
     assertEqualsDouble(
-      PresetMenu.share(BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10)), box).value,
+      PresetRegion.share(BBox(Longitude(0), Latitude(0), Longitude(10), Latitude(10)), box).value,
       1.0,
       1e-9
     )
     assertEqualsDouble(
-      PresetMenu.share(BBox(Longitude(5), Latitude(0), Longitude(15), Latitude(10)), box).value,
+      PresetRegion.share(BBox(Longitude(5), Latitude(0), Longitude(15), Latitude(10)), box).value,
       0.5,
       1e-9
     )
     assertEqualsDouble(
-      PresetMenu.share(BBox(Longitude(20), Latitude(20), Longitude(30), Latitude(30)), box).value,
+      PresetRegion.share(BBox(Longitude(20), Latitude(20), Longitude(30), Latitude(30)), box).value,
       0.0,
       1e-9
     )
     assertEqualsDouble(
-      PresetMenu.share(BBox(Longitude(170), Latitude(0), Longitude(-170), Latitude(10)), box).value,
+      PresetRegion.share(BBox(Longitude(170), Latitude(0), Longitude(-170), Latitude(10)), box).value,
       0.0,
       1e-9
     ) // across the antimeridian
     assertEqualsDouble(
-      PresetMenu.share(BBox(Longitude(1), Latitude(1), Longitude(1), Latitude(1)), box).value,
+      PresetRegion.share(BBox(Longitude(1), Latitude(1), Longitude(1), Latitude(1)), box).value,
       0.0,
       1e-9
     ) // no area
@@ -548,13 +547,13 @@ class PeriodsSuite extends munit.FunSuite:
   test("a row names its authority without the PeriodO id, and the id it cites"):
     val p =
       preset(HistoricalPeriod.Id("p0ds9qjq7b2"), HistoricalPeriod.Label("Bronze Age"), Year(-3200), PresetRegion.Aegean)
-    assertEquals(PresetMenu.source(p), Some("An authority (2020)"))
-    assertEquals(PresetMenu.periodoId(p), Some("p0ds9qjq7b2"))
+    assertEquals(PresetRegion.source(p), Some("An authority (2020)"))
+    assertEquals(PresetRegion.periodoId(p), Some("p0ds9qjq7b2"))
     assertEquals(
-      PresetMenu.source(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))),
+      PresetRegion.source(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))),
       Some("Bryce 2005")
     )
     assertEquals(
-      PresetMenu.periodoId(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))),
+      PresetRegion.periodoId(p.modify(_.authority).setTo(Some(HistoricalPeriod.Authority("Bryce 2005")))),
       None
     )

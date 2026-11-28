@@ -1,6 +1,9 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Docket
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import hearth.kindlings.optics.syntax.*
 
@@ -39,7 +42,7 @@ object UploadView:
       doi: Draft.Doi = Draft.Doi(""),
       quality: Draft.Quality = Draft.Quality.Fast,
       force: Draft.Force = Draft.Force.Normal,
-      forItem: Option[Queue.QueueItem] = None
+      forItem: Option[QueueItem] = None
   )
 
   object Draft:
@@ -131,7 +134,7 @@ object UploadView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def withItem(d: Draft, item: Queue.QueueItem): Draft =
+  def withItem(d: Draft, item: QueueItem): Draft =
     val from = QueueItemRef.uploadDraft(item)
     val prev = d.forItem.map(QueueItemRef.uploadDraft)
     // the citekey suggested from the file's name was not typed either: the item's is better
@@ -159,13 +162,13 @@ object UploadView:
   /** The picker's label for an item: its id and the first line of its text, shortened. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def itemLabel(item: Queue.QueueItem, max: Int = 110): UiLabels.Text =
+  def itemLabel(item: QueueItem, max: Int = 110): UiLabels.Text =
     val line = item.text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     UiLabels.Text(shown"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
 
   /** The item a picker entry names (`#42 …`), among the items offered. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def pickedItem(typed: String, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
+  def pickedItem(typed: String, items: List[QueueItem]): Option[QueueItem] =
     """^\s*#(\d+)\b""".r
       .findFirstMatchIn(typed)
       .flatMap(m => m.group(1).toIntOption)
@@ -188,11 +191,11 @@ object UploadView:
   private val progress = Var(Option.empty[Double])
 
   /** The accepted upload, and the acquisition item its job will tick off. */
-  private val accepted = Var(Option.empty[(Ingest.Accepted, Option[Queue.QueueItem.Id])])
+  private val accepted = Var(Option.empty[(Ingest.Accepted, Option[QueueItem.Id])])
   private val dragging = Var(false)
 
   /** The open acquisition items the picker offers; reloaded when the list changes elsewhere. */
-  private val openItems = Var(List.empty[Queue.QueueItem])
+  private val openItems = Var(List.empty[QueueItem])
 
   /** What is typed in the picker, until it names an item. */
   private val pickText = Var("")
@@ -294,8 +297,8 @@ object UploadView:
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private def loadItems(): Unit =
     ApiClient
-      .queueList(Queue.Kind.Acquire.label, false)
-      .foreach(l => openItems.set(l.items.filter(_.status == Queue.QueueItem.Status(Queue.Open))))
+      .queueList(Docket.Acquire.label, false)
+      .foreach(l => openItems.set(l.items.filter(_.status == QueueItem.Status(Queue.Open))))
 
   /** "from the acquisition queue…": type to narrow, pick to fill the form in. */
   private def itemPicker: HtmlElement =
@@ -333,7 +336,7 @@ object UploadView:
     div(
       cls := "tool-pane upload-pane",
       onMountCallback(_ => loadItems()),
-      QueueView.changed.events.filter(_ == Queue.Kind.Acquire) --> (_ => loadItems()),
+      QueueView.changed.events.filter(_ == Docket.Acquire) --> (_ => loadItems()),
       itemPicker,
       // the drop zone doubles as the file picker
       label(

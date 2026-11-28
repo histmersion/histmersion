@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.library.acquisition.Ceilings
+import com.histmersion.domain.library.acquisition.Purpose
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.plugin.Header
 
@@ -12,16 +15,16 @@ import com.histmersion.lint.{tolerated, LintRule}
 /** The server's CORE budget as the plugin SPI lends it ([[UpstreamQuota]], `core`): the same [[CoreBudget]] the
   * new-source search's CORE index spends, under the limits `acquire.core.*` sets. A purpose is `lookup` or `search`.
   */
-final class CoreQuotaLend(budget: CoreBudget, limits: CoreQuota.Limits) extends UpstreamQuota:
+final class CoreQuotaLend(budget: CoreBudget, limits: Ceilings) extends UpstreamQuota:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def take(purpose: UpstreamQuota.TakePurpose): Either[Problem, Unit] =
-    CoreQuota.Purpose.values.find(_.wire.value == purpose.value) match
+    Purpose.values.find(_.wire.value == purpose.value) match
       case None =>
         Left(
           Problem.Unclassified(
             Legacy.Text(
-              s"CORE's budget has no purpose '$purpose' (${CoreQuota.Purpose.values.map(_.wire).mkString(", ")})"
+              s"CORE's budget has no purpose '$purpose' (${Purpose.values.map(_.wire).mkString(", ")})"
             )
           )
         )

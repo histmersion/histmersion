@@ -65,12 +65,11 @@ object LibDirectory:
     try s.iterator().asScala.filter(p => Files.isRegularFile(p) && p.getFileName.toString.endsWith(".jar")).toList
     finally s.close()
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def sha256(p: Path): LibDirectory.Sha256Result =
+  def sha256(p: Path): Sha256Result =
     val md = MessageDigest.getInstance("SHA-256")
     val in = Files.newInputStream(p)
     try
       val buf = new Array[Byte](1 << 16)
       Iterator.continually(in.read(buf)).takeWhile(_ >= 0).foreach(n => md.update(buf, 0, n))
     finally in.close()
-    LibDirectory.Sha256Result(md.digest().map(b => f"$b%02x").mkString)
+    Sha256Result(md.digest().map(b => f"$b%02x").mkString)

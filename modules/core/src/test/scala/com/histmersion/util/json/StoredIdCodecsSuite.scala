@@ -1,11 +1,12 @@
 package com.histmersion
 package util.json
+
+import com.histmersion.domain.Proposal
+import com.histmersion.domain.PlanAnswer
 import com.histmersion.util.json.RawJson
 
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.domain.PlanGoal.ProposedWork
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** Rows stored when ids were plain text still load, whatever the id looks like. */
@@ -21,5 +22,7 @@ class StoredIdCodecsSuite extends munit.FunSuite:
 
   test("a stored proposed work with a DOI written as a link decodes"):
     val w =
-      RawJson.decode[ProposedWork]("""{"doi":"https://doi.org/10.1/x","why":"w"}""").fold(e => fail(e), identity)
+      RawJson
+        .decode[PlanAnswer.ProposedWork]("""{"doi":"https://doi.org/10.1/x","why":"w"}""")
+        .fold(e => fail(e), identity)
     assertEquals(w.doi.value, "https://doi.org/10.1/x")

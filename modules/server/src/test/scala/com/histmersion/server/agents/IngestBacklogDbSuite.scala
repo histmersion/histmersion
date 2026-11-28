@@ -1,6 +1,21 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.OaWork
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.library.repairacquire.RepairRequest
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.managers.EnqueueRequest
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
@@ -19,11 +34,8 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.Autopilot.AutopilotSet
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
-import com.histmersion.api.library.RepairAcquire.RepairRequest
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.goals.GoalLinkRepo
 import com.histmersion.domain.automation.managers.ManagerRepo
@@ -84,7 +96,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   private val QueryRef = LinkAdd.Ref(Query)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Query2Ref = LinkAdd.Ref(Query2)
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   /** The crons off (a test drives every sweep itself), room for every run; the acquisition list's re-check off (it
@@ -271,7 +283,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     ).get
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def acquire(h: ServerWiring): List[Queue.QueueItem] =
+  private def acquire(h: ServerWiring): List[api.automation.queue.QueueItem] =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false))
       .toOption
@@ -542,8 +554,9 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
       .addOverRest(
         WorkListControllers.ListName("acquire"),
         QueueAdd(
-          Queue.QueueItem.Text(s"Zz (2023). Mine. https://doi.org/${doi("p")} (open access) — for goal $Goal: mine"),
-          topic = Some(Queue.QueueItem.Topic(s"goal $Goal"))
+          api.automation.queue.QueueItem
+            .Text(s"Zz (2023). Mine. https://doi.org/${doi("p")} (open access) — for goal $Goal: mine"),
+          topic = Some(api.automation.queue.QueueItem.Topic(s"goal $Goal"))
         )
       )
       .toOption
@@ -585,7 +598,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     assert(dry.untouched.value >= 1, "the person's item")
     assertEquals(acquire(h).size, 4, "a dry run changes nothing")
     assertEquals(backlog(m.id), Nil)
-    assert(RepairAcquire.markdown(dry).value.contains("would move 1 legal open-access work"))
+    assert(dry.markdown.value.contains("would move 1 legal open-access work"))
 
     val done = a.oaBacklog.repair(RepairRequest(by = Some(Activity.Actor("test"))))
     assertEquals((done.moved, done.removed, done.kept), (1, 1, 1))

@@ -13,17 +13,14 @@ object DeepTime:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def year(y: SignedYear): Option[Year] = yearOf(y.value)
-
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def yearOf(y: Long): Option[Year] = Option.when(y.isValidInt)(Year(y.toInt))
+  def year(y: SignedYear): Option[Year] = Option.when(y.value.isValidInt)(Year(y.value.toInt))
 
   /** The period between two years given in either order; `None` when either lies beyond a `Year`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def span(a: SignedYear, b: SignedYear): Option[Period] =
     for
-      start <- yearOf(a.value.min(b.value))
-      end <- yearOf(a.value.max(b.value))
+      start <- year(SignedYear(a.value.min(b.value)))
+      end <- year(SignedYear(a.value.max(b.value)))
       period <- Period.from(start, end).toOption
     yield period

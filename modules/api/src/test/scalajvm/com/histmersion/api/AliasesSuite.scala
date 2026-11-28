@@ -1,11 +1,12 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.aliases.AliasKind
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.aliases.AliasKinds
 
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -17,25 +18,25 @@ class AliasesSuite extends munit.FunSuite:
 
   test("the rule names the kind's identifier"):
     assert(
-      Aliases.rule(AliasKinds.SourceRecords).value.startsWith("The old citekey stays an alias"),
-      Aliases.rule(AliasKinds.SourceRecords)
+      AliasKinds.SourceRecords.rule.value.startsWith("The old citekey stays an alias"),
+      AliasKinds.SourceRecords.rule
     )
     assert(
-      Aliases.rule(AliasKinds.GoalRecords).value.contains("under its new slug"),
-      Aliases.rule(AliasKinds.GoalRecords)
+      AliasKinds.GoalRecords.rule.value.contains("under its new slug"),
+      AliasKinds.GoalRecords.rule
     )
-    AliasKinds.all.foreach(k => assert(Aliases.rule(k).value.contains("every write"), k.toString))
+    AliasKinds.all.foreach(k => assert(k.rule.value.contains("every write"), k.toString))
 
   test("followed: a note only when the identifier asked for was an old one"):
     assertEquals(
-      Aliases.followed(AliasKinds.EventRecords, Aliases.Id("zz_old"), Aliases.Id("zz_new")),
+      AliasKinds.EventRecords.followed(AliasKind.Id("zz_old"), AliasKind.Id("zz_new")),
       Some("_`zz_old` is an old id of this event — it went to `zz_new`._")
     )
-    assertEquals(Aliases.followed(AliasKinds.EventRecords, Aliases.Id(" zz_new "), Aliases.Id("zz_new")), None)
-    assertEquals(Aliases.note(AliasKinds.GoalRecords, Aliases.Id("a"), Aliases.Id("a"))(Aliases.Note("md")), "md")
+    assertEquals(AliasKinds.EventRecords.followed(AliasKind.Id(" zz_new "), AliasKind.Id("zz_new")), None)
+    assertEquals(AliasKinds.GoalRecords.note(AliasKind.Id("a"), AliasKind.Id("a"))(AliasKind.Note("md")), "md")
     assert(
-      Aliases
-        .note(AliasKinds.GoalRecords, Aliases.Id("a"), Aliases.Id("b"))(Aliases.Note("md"))
+      AliasKinds.GoalRecords
+        .note(AliasKind.Id("a"), AliasKind.Id("b"))(AliasKind.Note("md"))
         .value
         .endsWith("\n\nmd")
     )

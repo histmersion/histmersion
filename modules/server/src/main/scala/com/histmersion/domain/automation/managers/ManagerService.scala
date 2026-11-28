@@ -1,7 +1,18 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunInfo}
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.managers.ItemCounts
+
+import com.histmersion.api.automation.Agents.JobKind
 import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo
@@ -235,7 +246,6 @@ object ManagerService:
     )(using WritePermit): Boolean =
       db.write(ManagerRepo.setConfig(id, config, cron, next))
     @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def upsert(
         managerId: ManagerInfo.Id,
         kind: ManagerItem.Kind,
@@ -253,7 +263,6 @@ object ManagerService:
     def openKeys(managerId: ManagerInfo.Id): List[(ManagerItem.Kind, ManagerItem.Target)] =
       db.read(ManagerRepo.openKeys(managerId))
     @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def openOf(
         managerId: ManagerInfo.Id,
         kinds: List[ManagerItem.Kind],

@@ -1,6 +1,17 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.automation.scheduler.JobType
+import com.histmersion.domain.automation.scheduler.Settings
+import com.histmersion.domain.automation.scheduler.Candidate
+import com.histmersion.domain.automation.scheduler.Scored
+import com.histmersion.domain.automation.scheduler.Strategy
+import com.histmersion.domain.automation.scheduler.PassState
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.domain.automation.scheduler.Capacity
+import com.histmersion.domain.automation.scheduler.Decision
+import com.histmersion.domain.automation.scheduler.Wait
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Managers.*
@@ -45,42 +56,6 @@ object SchedulerPolicy:
   /** A pin is worth this many priority levels. */
   val PinBoost = 1000
 
-  // ── job types ──────────────────────────────────────────────────────────────────────────────────
-
-  /** What kind of work an item is, for the priorities and the shares. */
-  enum JobType(val wire: JobType.Wire, val label: JobType.Label) derives CanEqual:
-    case GoalPlan extends JobType(JobType.Wire("goal-plan"), JobType.Label("goal plans"))
-    case Propose extends JobType(JobType.Wire("propose"), JobType.Label("article proposals"))
-    case Sweep extends JobType(JobType.Wire("sweep"), JobType.Label("candidate sweeps and their ranking"))
-    case Currency extends JobType(JobType.Wire("currency"), JobType.Label("currency checks"))
-    case Enrich extends JobType(JobType.Wire("enrich"), JobType.Label("source enrichment"))
-    case Compile extends JobType(JobType.Wire("compile"), JobType.Label("article compiles"))
-    case Extend extends JobType(JobType.Wire("extend"), JobType.Label("article extensions"))
-    case Filter extends JobType(JobType.Wire("filter"), JobType.Label("coverage filters"))
-    case Review extends JobType(JobType.Wire("review"), JobType.Label("reviews and their revisions"))
-
-  object JobType:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-    type Label = Label.T
-    object Label extends Newtype[String, Pure]
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Option[JobType] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
-
-    /** The job type of a manager item kind. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def of(itemKind: Candidate.Kind): JobType = itemKind.value match
-      case PlanGoalItem     => GoalPlan
-      case ProposeArticles  => Propose
-      case AcquisitionSweep => Sweep
-      case CurrencyCheck    => Currency
-      case SourceEnrich     => Enrich
-      case ArticleCompile   => Compile
-      case ArticleExtend    => Extend
-      case InferFilter      => Filter
-      case _                => Review
-
   /** `"review=9, compile=8"` → per job type (unknown types and malformed entries dropped). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def parseTypeMap(s: String): Map[JobType, Int] =
@@ -107,187 +82,6 @@ object SchedulerPolicy:
   def parsePriorities(s: String): Map[JobType, Settings.TypePriorityValue] =
     parseTypeMap(s).view.mapValues(Settings.TypePriorityValue(_)).toMap
 
-  // ── inputs ─────────────────────────────────────────────────────────────────────────────────────
-
-  /** One pending, due manager item. `goal` = the goal it advances (its manager's, or the goal its article or source is
-    * linked to; None: library work), `goalPriority` (a pin already added), `goalCreated` (None: library work, after
-    * every goal), `gathering` = its goal is still gathering sources; `pools` = the plan pools its run would draw on
-    * (none: metered or not known); `block` = why it cannot start whatever the order (a chain below its floor, a budget,
-    * a daily cap, an item it waits for); `managerCap` = the manager's own saved `maxRuns`, if a person set one.
-    */
-  final case class Candidate(
-      id: Candidate.Id,
-      managerId: Candidate.ManagerId,
-      kind: Candidate.Kind,
-      target: Candidate.Target,
-      goal: Option[Candidate.Goal] = None,
-      goalPriority: Candidate.GoalPriority = Candidate.GoalPriority(0),
-      goalCreated: Option[Instant] = None,
-      gathering: Candidate.Gathering = Candidate.Gathering(false),
-      itemPriority: Candidate.ItemPriority = Candidate.ItemPriority(0),
-      waitingSince: Instant = Instant.EPOCH,
-      pools: List[Candidate.Pools] = Nil,
-      block: Option[Block] = None,
-      person: Candidate.Person = Candidate.Person(false)
-  ):
-    def jobType: JobType = JobType.of(kind)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def label: String = s"#$id $kind $target"
-
-  object Candidate:
-
-    type Id = Id.T
-    object Id extends Newtype[Long, Pure]
-    type ManagerId = ManagerId.T
-    object ManagerId extends Newtype[String, Pure]
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
-    type Target = Target.T
-    object Target extends Newtype[String, Pure]
-    type Goal = Goal.T
-    object Goal extends Newtype[String, Pure]
-    type GoalPriority = GoalPriority.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object GoalPriority extends Newtype[Int, Pure]
-    type Gathering = Gathering.T
-    object Gathering extends Newtype[Boolean, Pure]
-    type ItemPriority = ItemPriority.T
-    object ItemPriority extends Newtype[Int, Pure]
-    type Pools = Pools.T
-    object Pools extends Newtype[String, Pure]
-    type Person = Person.T
-    object Person extends Newtype[Boolean, Pure]
-
-  /** Why an item cannot start now whatever the order. */
-  final case class Block(why: Block.Why):
-    def code: Block.Code = why.code
-
-  object Block:
-    type Code = Code.T
-    object Code extends Newtype[String, Pure]
-    type Usd = Usd.T
-    object Usd extends Newtype[BigDecimal, Pure]:
-      extension (u: Usd) def money: String = ManagersMarkdown.usd(u.value.toDouble)
-    type Chain = Chain.T
-    object Chain extends Newtype[String, Pure]
-    type Detail = Detail.T
-    object Detail extends Newtype[String, Pure]
-    type Since = Since.T
-    object Since extends Newtype[String, Pure]
-    type By = By.T
-    object By extends Newtype[String, Pure]
-    type Because = Because.T
-    object Because extends Newtype[String, Pure]
-
-    /** Which spend cap was reached. */
-    enum SpendCap:
-      /** `agents.budgets.daily-usd`: all agents' spend today. */
-      case Daily(limit: Usd)
-
-      /** `agents.budgets.monthly-usd`: all agents' spend this month. */
-      case Monthly(limit: Usd)
-
-      /** A manager's own daily cap, against its metered spend today. */
-      case Manager(spent: Usd, cap: Usd)
-
-      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-      def render: String = this match
-        case Daily(l)      => s"today's agent spend reached agents.budgets.daily-usd ($l)"
-        case Monthly(l)    => s"this month's agent spend reached agents.budgets.monthly-usd ($l)"
-        case Manager(s, c) =>
-          s"its spend today (${s.money} USD, metered calls only) reached its daily-usd (${c.money}); " +
-            "it starts again tomorrow (UTC)"
-
-    /** What another item must finish first. */
-    enum Precondition:
-      case Plan, Filter
-
-    /** Why `start` did not start an item. */
-    enum Refusal:
-      case TargetWritten, NotStartable, Settled, Gone
-
-      def render: String = this match
-        case TargetWritten => "another run is writing its target"
-        case NotStartable  => "it could not start now (its manager's events say why)"
-        case Settled       => "settled without a run"
-        case Gone          => "the item is gone"
-
-    /** The one account of why an item waits or nothing starts, closed: each case holds what its sentence is made of.
-      * The sentence ([[render]]) and the [[code]] it is filed under come from the case alone.
-      */
-    enum Why derives CanEqual:
-      /** A spend cap is reached. */
-      case Budget(cap: SpendCap)
-
-      /** The plan pools the item's role chains draw on are below their floors (`chain` says which and when it frees).
-        */
-      case Starved(chain: Chain)
-
-      /** The agents are draining: nothing new starts until a person lifts it. */
-      case Draining(since: Since, by: Option[By])
-
-      /** An item of the same goal must finish first. */
-      case WaitsFor(first: Precondition)
-
-      /** The goal's articles are in progress; `detail` counts them. */
-      case ArticlesInProgress(detail: Detail)
-
-      /** Too many planned goals are unfinished; `detail` counts them. */
-      case UnfinishedGoals(detail: Detail)
-
-      /** `runs` runs draw on the plan pool already. */
-      case PoolFull(pool: Candidate.Pools, runs: Resources.PoolCapValue)
-
-      /** The item's manager has its own `maxRuns` in flight. */
-      case ManagerFull(manager: Candidate.ManagerId, maxRuns: Resources.ManagerCapValue)
-
-      /** All places are taken; `because` says which items are ahead. */
-      case NoPlaceFree(maxRuns: Resources.MaxRuns, occupied: Resources.Occupied, because: Option[Because])
-
-      /** The dispatch refused to start it. */
-      case Busy(refusal: Refusal)
-
-      /** The code this reason is filed under. */
-      def code: Code = this match
-        case Budget(_)             => Code("budget")
-        case Starved(_)            => Code("quota")
-        case Draining(_, _)        => Code("drain")
-        case WaitsFor(_)           => Code("waits-for")
-        case ArticlesInProgress(_) => Code("articles-in-progress")
-        case UnfinishedGoals(_)    => Code("unfinished-goals")
-        case PoolFull(_, _)        => Code("pool")
-        case ManagerFull(_, _)     => Code("manager-cap")
-        case NoPlaceFree(_, _, _)  => Code("capacity")
-        case Busy(_)               => Code("busy")
-
-      /** The sentence. */
-      @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-      def render: String = this match
-        case Budget(c)      => s"budget: ${c.render}"
-        case Starved(c)     => s"starved: $c"
-        case Draining(s, b) =>
-          s"draining since $s${b.fold("")(x => s" (by $x)")}: nothing new starts until it is lifted " +
-            "(histmersion agent autopilot undrain)"
-        case WaitsFor(Precondition.Plan)   => "its goal's plan comes first (the plan-goal item is open)"
-        case WaitsFor(Precondition.Filter) =>
-          "its article's coverage filter is inferred first (the infer-filter item is open)"
-        case ArticlesInProgress(d) => s"$d"
-        case UnfinishedGoals(d)    => s"$d"
-        case PoolFull(p, n)        =>
-          s"plan pool $p has $n run(s) drawing on it already (its max-calls-in-flight × agents.scheduler.pool-overcommit)"
-        case ManagerFull(m, n)      => s"its manager $m has its own maxRuns $n in flight"
-        case NoPlaceFree(m, o, why) =>
-          s"no place free: $m run(s) at once (agents.max-concurrent-runs), $o occupied${why.fold("")(w => s"; $w")}"
-        case Busy(r) => r.render
-
-      def isStarved: Boolean = this match
-        case Starved(_) => true
-        case _          => false
-
-      def isBudget: Boolean = this match
-        case Budget(_) => true
-        case _         => false
-
   /** The plan pools waiting work wants a current reading of: a waiting candidate's own pools, and for one starved below
     * its plans' floors, the pools its role chains draw on (`chainPools`), since a fresh reading may show the window has
     * reset. A candidate blocked for any other reason wants none.
@@ -299,144 +93,6 @@ object SchedulerPolicy:
         case Some(b) if b.why.isStarved => chainPools(c)
         case Some(_)                    => Nil
     }.toSet
-
-  /** What is free now: `maxRuns` (`agents.max-concurrent-runs`) and `occupied` (every queued or running agent run, a
-    * person's too), each pool's cap in runs and the runs drawing on it, each manager's own cap and its runs, the
-    * gathering goals' runs, why nothing may start at all (`stop`: draining, a budget), and the types of the last
-    * starts, newest first.
-    */
-  final case class Resources(
-      maxRuns: Resources.MaxRuns,
-      occupied: Resources.Occupied,
-      poolCap: Map[Candidate.Pools, Resources.PoolCapValue] = Map.empty,
-      poolUsed: Map[Candidate.Pools, Resources.PoolUsedValue] = Map.empty,
-      managerCap: Map[Candidate.ManagerId, Resources.ManagerCapValue] = Map.empty,
-      managerUsed: Map[Candidate.ManagerId, Resources.ManagerUsedValue] = Map.empty,
-      gatheringUsed: Resources.GatheringUsed = Resources.GatheringUsed(0),
-      stop: Option[Block] = None,
-      recent: List[JobType] = Nil
-  ):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def room: Resources.Room = Resources.Room(math.max(0, maxRuns.value - occupied.value))
-
-  object Resources:
-
-    type MaxRuns = MaxRuns.T
-    object MaxRuns extends Newtype[Int, Pure]
-    type Occupied = Occupied.T
-    object Occupied extends Newtype[Int, Pure]
-    type Room = Room.T
-    object Room extends Newtype[Int, Pure]
-    type PoolCapValue = PoolCapValue.T
-    object PoolCapValue extends Newtype[Int, Pure]
-    type PoolUsedValue = PoolUsedValue.T
-    object PoolUsedValue extends Newtype[Int, Pure]
-    type ManagerCapValue = ManagerCapValue.T
-    object ManagerCapValue extends Newtype[Int, Pure]
-    type ManagerUsedValue = ManagerUsedValue.T
-    object ManagerUsedValue extends Newtype[Int, Pure]
-    type GatheringUsed = GatheringUsed.T
-    object GatheringUsed extends Newtype[Int, Pure]
-
-  /** The scheduler's settings ([[AgentSchedulerConfig]] parsed). */
-  final case class Settings(
-      strategy: Strategy,
-      agingHours: Settings.AgingHours = Settings.AgingHours(24),
-      maxWaitHours: Settings.MaxWaitHours = Settings.MaxWaitHours(72),
-      minShare: Settings.MinShare = Settings.MinShare(0.05),
-      weights: Map[JobType, Settings.WeightsValue] = Map.empty,
-      typePriority: Map[JobType, Settings.TypePriorityValue] = Map.empty,
-      gatheringSlots: Settings.GatheringSlots = Settings.GatheringSlots(1)
-  ):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def weight(t: JobType): Settings.WeightsValue =
-      Settings.WeightsValue(math.max(0, weights.get(t).fold(1)(_.value)))
-    def priorityOf(t: JobType): Settings.TypePriorityValue =
-      typePriority.getOrElse(t, Settings.TypePriorityValue(0))
-
-  object Settings:
-    export SchedulerDefaults.{AgingHours, MaxWaitHours, MinShare}
-    type WeightsValue = WeightsValue.T
-    object WeightsValue extends Newtype[Int, Pure]
-    type TypePriorityValue = TypePriorityValue.T
-    object TypePriorityValue extends Newtype[Int, Pure]
-    export SchedulerDefaults.GatheringSlots
-
-  // ── scoring ────────────────────────────────────────────────────────────────────────────────────
-
-  /** A candidate with what the pass computed: the hours it waited, its aging levels, its effective goal priority (the
-    * goal's plus aging), and whether it waited past `max-wait-hours`.
-    */
-  final case class Scored(
-      c: Candidate,
-      waitedMinutes: Scored.WaitedMinutes,
-      aging: Scored.Aging,
-      effective: Scored.Effective,
-      overdue: Scored.Overdue
-  )
-
-  object Scored:
-    type WaitedMinutes = WaitedMinutes.T
-    object WaitedMinutes extends Newtype[Long, Pure]
-    type Aging = Aging.T
-    object Aging extends Newtype[Int, Pure]
-    type Effective = Effective.T
-    object Effective extends Newtype[Int, Pure]
-    type Overdue = Overdue.T
-    object Overdue extends Newtype[Boolean, Pure]
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def score(c: Candidate, s: Settings, now: Instant): Scored =
-    val mins = math.max(0L, Duration.between(c.waitingSince, now).toMinutes)
-    val aging = if s.agingHours.value <= 0 then 0 else (mins / (s.agingHours.value.toLong * 60L)).toInt
-    Scored(
-      c,
-      Scored.WaitedMinutes(mins),
-      Scored.Aging(aging),
-      Scored.Effective(c.goalPriority.value + aging),
-      Scored.Overdue(s.maxWaitHours.value > 0 && mins >= s.maxWaitHours.value.toLong * 60L)
-    )
-
-  /** The order inside one class of work: effective goal priority (highest first), the goal's age (oldest first; library
-    * work after every goal), the job type's priority, the item's, how long it waited, its id.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def goalKey(x: Scored, s: Settings): (Int, Long, String, Int, Int, Long, Long) =
-    (
-      -x.effective.value,
-      x.c.goalCreated.fold(Long.MaxValue)(_.toEpochMilli),
-      x.c.goal.map(_.value).getOrElse("￿"),
-      -s.priorityOf(x.c.jobType).value,
-      -x.c.itemPriority.value,
-      -x.waitedMinutes.value,
-      x.c.id.value
-    )
-
-  // ── strategies ─────────────────────────────────────────────────────────────────────────────────
-
-  /** What a pass has decided so far (the strategy's view): the starts per type, counted from the recent ones plus this
-    * pass's.
-    */
-  final case class PassState(started: Map[JobType, PassState.StartedValue], admitted: List[Scored])
-
-  object PassState:
-    type StartedValue = StartedValue.T
-    object StartedValue extends Newtype[Int, Pure]
-
-  /** A strategy picks the next candidate from those that may still start, and says why. The rest of the pass — the
-    * resources, aging, max wait, minimum shares, the gathering places and the explanations — is the same for every
-    * strategy.
-    */
-  trait Strategy:
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def name: SchedulerPolicy.StrategyName
-    def describe: String
-    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, String)]
-
-    /** Why `x` stands behind `ahead` (the first candidate before it in the order), in a sentence. */
-    def behindWhy(x: Scored, ahead: Scored, s: Settings): String
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -453,13 +109,12 @@ object SchedulerPolicy:
     */
   object GoalFirst extends Strategy:
 
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    val name = SchedulerPolicy.StrategyName("goal-first")
+    val name = StrategyName("goal-first")
     val describe =
       "depth first: the highest-priority goals, oldest first, take the allowance; newer goals of the same " +
         "priority wait until the older ones have nothing to run (aging and max-wait bound the wait)"
     def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, String)] =
-      pool.minByOption(goalKey(_, s)).map(x => x -> s"goal-first: ${goalName(x)} (${goalFacts(x)}) is first in line")
+      pool.minByOption(_.goalKey(s)).map(x => x -> s"goal-first: ${goalName(x)} (${goalFacts(x)}) is first in line")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def behindWhy(x: Scored, ahead: Scored, s: Settings): String =
@@ -471,8 +126,7 @@ object SchedulerPolicy:
     */
   object TypeBalanced extends Strategy:
 
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    val name = SchedulerPolicy.StrategyName("type-balanced")
+    val name = StrategyName("type-balanced")
     val describe = "breadth: the allowance is spread over the job types by weight (agents.scheduler.type-weights); " +
       "inside each type the highest-priority goals first, oldest as tiebreak, so every goal advances"
 
@@ -491,7 +145,7 @@ object SchedulerPolicy:
       pickType(pool.map(_.c.jobType).distinct, st, s).flatMap { t =>
         pool
           .filter(_.c.jobType == t)
-          .minByOption(goalKey(_, s))
+          .minByOption(_.goalKey(s))
           .map(x =>
             x ->
               (s"type-balanced: ${t.label} are furthest below their share (weight ${s.weight(t)}, " +
@@ -512,30 +166,9 @@ object SchedulerPolicy:
     val all: List[Strategy] = List(TypeBalanced, GoalFirst)
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def parse(s: SchedulerPolicy.StrategyName): Option[Strategy] =
+    def parse(s: StrategyName): Option[Strategy] =
       all.find(_.name.value == Option(s).fold("")(_.value).trim.toLowerCase(java.util.Locale.ROOT))
-    @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-    def names: List[SchedulerPolicy.StrategyName] = all.map(_.name)
-
-  // ── the pass ───────────────────────────────────────────────────────────────────────────────────
-
-  /** Why a candidate did not start: a code ([[Code]]), a sentence, the items it waits behind (labels), and its place in
-    * the order (1 = next).
-    */
-  final case class Wait(
-      code: Wait.Code,
-      why: Wait.Why,
-      behind: List[Wait.Behind] = Nil,
-      position: Wait.Position = Wait.Position(0)
-  )
-
-  object Wait:
-    export Block.{Code, Why}
-    type Behind = Behind.T
-    object Behind extends Newtype[String, Pure]
-    type Position = Position.T
-    object Position extends Newtype[Int, Pure]
+    def names: List[StrategyName] = all.map(_.name)
 
   object Code:
     val Blocked: Block.Code = Block.Code("blocked")
@@ -545,23 +178,6 @@ object SchedulerPolicy:
     val Capacity: Block.Code = Block.Code("capacity")
     val Busy: Block.Code = Block.Code("busy")
 
-  /** What one pass decided: the items started (with why they were chosen), the ones that wait (why), and the order the
-    * waiting ones would start in.
-    */
-  final case class Decision(started: List[(Scored, StartedNote)], waiting: List[(Scored, Wait)]):
-    def waitOf(id: Candidate.Id): Option[Wait] = waiting.find(_._1.c.id == id).map(_._2)
-
-  /** Does a job type with work need its minimum share now: among the last ⌈1/minShare⌉ starts (the recent ones, newest
-    * first, and this pass's) none was of type `t` — and that many starts have been made.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def shareDue(t: JobType, started: List[JobType], minShare: Settings.MinShare): Boolean =
-    minShare.value > 0 && {
-      val n = math.ceil(1.0 / math.min(1.0, minShare.value)).toInt
-      started.size >= n && !started.take(n).contains(t)
-    }
-
   /** One pass: the candidates in the order the strategy and the anti-starvation rules give, each started (`start`:
     * Right when its run was created; Left why not — another run writes its target, say) while there is room and its
     * pools and its manager have room. Deterministic: the same inputs and the same `start` answers give the same
@@ -569,10 +185,10 @@ object SchedulerPolicy:
     */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def run(cands: List[Candidate], res: Resources, s: Settings, now: Instant)(
+  def run(cands: List[Candidate], res: Capacity, s: Settings, now: Instant)(
       start: Candidate => Either[Block.Refusal, Unit]
   ): Decision =
-    val scored = cands.map(score(_, s, now))
+    val scored = cands.map(_.score(s, now))
     val (blocked, open) = scored.partition(_.c.block.isDefined)
     val blockedWaits = blocked.map(x => x -> Wait(Code.Blocked, x.c.block.get.why))
     res.stop match
@@ -614,7 +230,7 @@ object SchedulerPolicy:
                     pool = rest,
                     waits = a.waits :+ (x -> Wait(
                       Code.Pool,
-                      Wait.Why.PoolFull(p, res.poolCap.getOrElse(p, Resources.PoolCapValue(0))),
+                      Wait.Why.PoolFull(p, res.poolCap.getOrElse(p, Capacity.PoolCapValue(0))),
                       inFlightOn(p, a.started)
                     ))
                   )
@@ -627,7 +243,7 @@ object SchedulerPolicy:
                       Code.Manager,
                       Wait.Why.ManagerFull(
                         x.c.managerId,
-                        res.managerCap.getOrElse(x.c.managerId, Resources.ManagerCapValue(0))
+                        res.managerCap.getOrElse(x.c.managerId, Capacity.ManagerCapValue(0))
                       )
                     ))
                   )
@@ -672,7 +288,7 @@ object SchedulerPolicy:
             Code.Capacity,
             Wait.Why.NoPlaceFree(
               res.maxRuns,
-              Resources.Occupied(math.min(res.maxRuns.value, res.occupied.value + done.started.size)),
+              Capacity.Occupied(math.min(res.maxRuns.value, res.occupied.value + done.started.size)),
               because
             ),
             behind.map(Wait.Behind(_)),
@@ -707,26 +323,26 @@ object SchedulerPolicy:
     lazy val starved = pool
       .map(_.c.jobType)
       .distinct
-      .filter(shareDue(_, recent, s.minShare))
+      .filter(_.shareDue(recent, s.minShare))
       .sortBy(t => (-s.priorityOf(t).value, t.ordinal))
     lazy val gatherers = pool.filter(_.c.gathering.value)
     if overdue.nonEmpty then
       val x = overdue.maxBy(x => (x.waitedMinutes.value: Long, -x.c.id.value))
-      x -> s"waited ${hours(x.waitedMinutes)} — past agents.scheduler.max-wait-hours (${s.maxWaitHours} h): admitted next"
+      x -> s"waited ${Scored.hours(x.waitedMinutes)} — past agents.scheduler.max-wait-hours (${s.maxWaitHours} h): admitted next"
     else if starved.nonEmpty then
       val t = starved.head
-      val x = pool.filter(_.c.jobType == t).minBy(goalKey(_, s))
+      val x = pool.filter(_.c.jobType == t).minBy(_.goalKey(s))
       x -> s"minimum share: no ${t.label} among the last ${math.ceil(1.0 / math.min(1.0, s.minShare.value)).toInt} starts (agents.scheduler.min-share ${s.minShare})"
     else if s.gatheringSlots.value > gathering && gatherers.nonEmpty then
-      val x = s.strategy.next(gatherers, st, s).map(_._1).getOrElse(gatherers.minBy(goalKey(_, s)))
+      val x = s.strategy.next(gatherers, st, s).map(_._1).getOrElse(gatherers.minBy(_.goalKey(s)))
       x -> s"gathering share: goals still gathering their sources keep ${s.gatheringSlots} place(s) (agents.scheduler.gathering-slots); ${goalName(x)}"
-    else s.strategy.next(pool, st, s).getOrElse(pool.minBy(goalKey(_, s)) -> "the only kind left (weight 0)")
+    else s.strategy.next(pool, st, s).getOrElse(pool.minBy(_.goalKey(s)) -> "the only kind left (weight 0)")
 
   /** The order the candidates would start in with unlimited room (resources aside) — for the queue view and for what
     * waits for room. The anti-starvation rules apply as in the pass (the gathering places as if free).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def order(cands: List[Scored], res: Resources, s: Settings): List[(Scored, String)] =
+  def order(cands: List[Scored], res: Capacity, s: Settings): List[(Scored, String)] =
     @annotation.tailrec
     def go(
         pool: List[Scored],
@@ -745,14 +361,6 @@ object SchedulerPolicy:
           acc :+ (x -> why)
         )
     go(cands, res.recent, res.gatheringUsed.value, Vector.empty).toList
-
-  /** `95` minutes → `1 h 35 min`. */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def hours(minutes: Scored.WaitedMinutes): String =
-    val m = minutes.value
-    if m < 60 then s"$m min"
-    else s"${m / 60} h" + (if m % 60 != 0 then s" ${m % 60} min" else "")
 
   /** The settings in effect: `strategy` (a person's choice) over the config's; an unknown name is the default. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

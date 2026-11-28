@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.activity
+
+import com.histmersion.api.automation.activity.Entry
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.activity.Counts
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -8,7 +12,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Activity.{Entry, Show}
 import com.histmersion.config.AppConfig
 
 import com.augustnagro.magnum.*
@@ -227,7 +230,7 @@ class ActivityServiceSuite extends DbSuite:
     test(s"$label: the counts: one running, one problem this week"):
       assertEquals(
         w.service.page(ActivityQuery(), now).counts,
-        Activity.Counts(running = Activity.Counts.Running(1), problemsWeek = Activity.Counts.ProblemsWeek(1))
+        Counts(running = Counts.Running(1), problemsWeek = Counts.ProblemsWeek(1))
       )
 
   spec("in memory", inMemory)

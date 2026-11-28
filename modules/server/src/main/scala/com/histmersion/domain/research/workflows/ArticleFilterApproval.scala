@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.util.problem.{Legacy, Problem}
 
-import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.approvals.{ApprovalEffects, SubjectEffect}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
 import com.histmersion.domain.automation.Approval

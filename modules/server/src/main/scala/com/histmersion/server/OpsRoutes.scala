@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.Docket
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import sttp.tapir.server.ServerEndpoint

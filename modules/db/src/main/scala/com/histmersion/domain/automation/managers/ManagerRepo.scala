@@ -1,12 +1,25 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ItemCounts
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ManagerHint
+
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 
-import com.histmersion.api.automation.Agents.{PauseReason, RunState}
+import com.histmersion.api.automation.Agents.RunState
 import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
@@ -134,8 +147,7 @@ object ManagerRepo:
     * call is recorded at 0 — and tokens in + out, every call's.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def spendToday(id: ManagerRow.Id)(using DbCon): (BigDecimal, ManagerRepo.SpendCount) =
+  def spendToday(id: ManagerRow.Id)(using DbCon): (BigDecimal, SpendCount) =
     sql"""SELECT coalesce(sum(s.cost_usd), 0), coalesce(sum(s.tokens_in + s.tokens_out), 0)::bigint
           FROM agent_steps s JOIN jobs j ON j.id = s.job_id
           WHERE j.manager_id = $id
@@ -347,7 +359,7 @@ object ManagerRepo:
       priority: ItemRow.Priority,
       attempts: ItemRow.Attempts,
       failures: ItemRow.Failures,
-      runId: Option[Agents.RunInfo.Id],
+      runId: Option[RunInfo.Id],
       evaluatedRun: Option[ItemRow.EvaluatedRun],
       notBefore: Option[ItemRow.NotBefore],
       hold: Option[Hold],
@@ -364,9 +376,9 @@ object ManagerRepo:
     export ManagerItem.{Kind, Target}
     export com.histmersion.api.automation.ItemStatus.Wire as Status
     export ManagerItem.{Attempts, Failures, Priority}
-    export Agents.RunInfo.Id as EvaluatedRun
+    export RunInfo.Id as EvaluatedRun
     export ManagerItem.{NotBefore, Outcome}
-    export com.histmersion.api.automation.Managers.ItemOrigin.Wire as Origin
+    export ItemOrigin.Wire as Origin
     export ManagerItem.{CreatedAt, UpdatedAt}
 
   private val itemSelect =
@@ -504,7 +516,7 @@ object ManagerRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toEvaluate(managerId: ManagerRow.Id)(using
       DbCon
-  ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Problem])])] =
+  ): List[(ManagerItem, Option[(RunInfo.Status, Option[Problem])])] =
     val rows =
       sql"$itemSelect WHERE manager_id = $managerId AND status = 'active' ORDER BY id"
         .query[ItemRow]
@@ -515,7 +527,7 @@ object ManagerRepo:
       val run = i.runId.flatMap(r =>
         (
           sql"SELECT status, error FROM jobs WHERE id = $r"
-            .query[(Agents.RunInfo.Status, Option[NonEmptyVector[Problem]])]
+            .query[(RunInfo.Status, Option[NonEmptyVector[Problem]])]
             .run()
             .headOption
             .map((status, error) => (status, error.map(Problems.asOne)))
@@ -908,8 +920,7 @@ object ManagerRepo:
       .toMap
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def countEventsByIn(kind: ManagerRepo.CountEventsByInKind, since: java.time.Instant)(using
+  def countEventsByIn(kind: CountEventsByInKind, since: java.time.Instant)(using
       DbCon
   ): Map[ManagerInfo.Id, RowCount] =
     val at = since.toString
@@ -991,13 +1002,12 @@ object ManagerRepo:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def eventIn(
       managerId: ManagerRow.Id,
       itemId: Option[ItemRow.Id],
-      runId: Option[Agents.RunInfo.Id],
-      kind: ManagerRepo.EventInKind,
-      text: ManagerRepo.EventInText
+      runId: Option[RunInfo.Id],
+      kind: EventInKind,
+      text: EventInText
   )(using
       DbCon
   ): Unit =
@@ -1005,13 +1015,12 @@ object ManagerRepo:
                   VALUES ($managerId, $itemId, $runId, $kind, ${text.value.take(2000)})""".update.run()
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def event(
       managerId: ManagerRow.Id,
       itemId: Option[ItemRow.Id],
-      runId: Option[Agents.RunInfo.Id],
-      kind: ManagerRepo.EventKind,
-      text: ManagerRepo.EventText
+      runId: Option[RunInfo.Id],
+      kind: EventKind,
+      text: EventText
   )(using DbCon): Unit =
     eventIn(managerId, itemId, runId, kind, text)
 
@@ -1030,8 +1039,7 @@ object ManagerRepo:
 
   /** How many events of `kind` a manager has recorded since `since` (a watcher's ingests today). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def countEvents(managerId: ManagerRow.Id, kind: ManagerRepo.CountEventsKind, since: java.time.Instant)(using
+  def countEvents(managerId: ManagerRow.Id, kind: CountEventsKind, since: java.time.Instant)(using
       DbCon
   ): RowCount =
     val at = since.toString
@@ -1042,8 +1050,7 @@ object ManagerRepo:
     * shared cap).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def countEventsAll(kind: ManagerRepo.CountEventsAllKind, since: java.time.Instant)(using DbCon): RowCount =
+  def countEventsAll(kind: CountEventsAllKind, since: java.time.Instant)(using DbCon): RowCount =
     val at = since.toString
 
     sql"""SELECT count(*)::int FROM manager_events WHERE kind = $kind AND at >= $at::timestamptz"""
@@ -1053,8 +1060,7 @@ object ManagerRepo:
 
   /** The newest event of `kind` (a starved note is logged once per change). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def lastEventOf(managerId: ManagerRow.Id, kind: ManagerRepo.LastEventOfKind)(using DbCon): Option[ManagerEvent] =
+  def lastEventOf(managerId: ManagerRow.Id, kind: LastEventOfKind)(using DbCon): Option[ManagerEvent] =
 
     sql"$eventSelect WHERE manager_id = $managerId AND kind = $kind ORDER BY id DESC LIMIT 1"
       .query[ManagerEvent]

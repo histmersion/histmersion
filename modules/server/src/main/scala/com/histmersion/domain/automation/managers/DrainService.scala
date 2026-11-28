@@ -1,6 +1,13 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.automation.autopilot.DrainInfo
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.domain.automation.agents.AgentsControllers
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.jobs.{Job, RunRow}
@@ -8,8 +15,6 @@ import com.histmersion.util.jobs.{Job, RunRow}
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Autopilot.{DrainInfo, DrainSet, EngineStatus}
-import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -67,14 +72,14 @@ final class DrainService(
 
   /** Why nothing new starts (the scheduler's stop), while draining. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def block: Option[SchedulerPolicy.Block] =
+  def block: Option[Block] =
     agents.autopilotRow
       .drain()
       .map((since, by, _) =>
-        SchedulerPolicy.Block(
-          SchedulerPolicy.Block.Why.Draining(
-            SchedulerPolicy.Block.Since(since.value),
-            Option.when(by.value.nonEmpty)(SchedulerPolicy.Block.By(by.value))
+        Block(
+          Block.Why.Draining(
+            Block.Since(since.value),
+            Option.when(by.value.nonEmpty)(Block.By(by.value))
           )
         )
       )
@@ -121,7 +126,7 @@ final class DrainService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(line: String): Unit =
     agents.workLists.logLine(
-      QueueAdd(Queue.QueueItem.Text(line.take(1000))),
+      QueueAdd(QueueItem.Text(line.take(1000))),
       domain.automation.workflows.InTreeWorkflow.Drain.creator
     )
     scribe.info(line)

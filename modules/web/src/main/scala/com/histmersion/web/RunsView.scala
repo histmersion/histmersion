@@ -1,10 +1,21 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.agents.ProviderDoctor
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.agents.RunDetail
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
 import com.histmersion.api.{Paging, Plural, Wording}
-import com.histmersion.api.automation.Agents.{Pipeline, RunDetail, RunInfo, RunRequest, RunState, TargetKind}
+import com.histmersion.api.automation.Agents.{Pipeline, RunState, TargetKind}
 import com.histmersion.api.automation.Creation
 import com.raquo.laminar.api.L.*
 
@@ -107,12 +118,12 @@ object RunsView:
     * manager; the rest (model, dates, text) is left to the server's page.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def visible(runs: List[RunInfo], f: ListFilters.RunFilter): List[RunInfo] =
+  def visible(runs: List[RunInfo], f: RunFilter): List[RunInfo] =
     val n = f.normalized
     runs.filter(r =>
       (n.status.isEmpty || n.status.exists(_.value == r.status.value)) &&
         (n.pipeline.isEmpty || n.pipeline.exists(_ == r.pipeline)) &&
-        (n.origin.isEmpty || n.origin.contains(r.origin.getOrElse(Agents.Origin.Person.wire))) &&
+        (n.origin.isEmpty || n.origin.contains(r.origin.getOrElse(api.automation.agents.Origin.Person.wire))) &&
         (n.manager.isEmpty || r.managerId.exists(m => n.manager.exists(_.value == m.value)))
     )
 
@@ -138,7 +149,7 @@ object RunsView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def originLabel(origin: Agents.Origin.Wire): Text = origin.value match
+  def originLabel(origin: api.automation.agents.Origin.Wire): Text = origin.value match
     case "person"    => Text("by a person")
     case "manager"   => Text("by a manager")
     case "ingest"    => Text("by an ingest (before the enrich manager)")
@@ -148,25 +159,26 @@ object RunsView:
 
   /** Who started a run, in a sentence; a tooltip on its filter chip. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def originMeaning(origin: Agents.Origin.Wire): Option[Text] = Agents.Origin.values.find(_.wire == origin).map {
-    case Agents.Origin.Person    => Text("Started by a person: from this page, the CLI or an MCP tool.")
-    case Agents.Origin.Scheduler =>
-      Text("Started by a goal's schedule; nobody watches it, so a failure or a pause leaves a backlog item.")
-    case Agents.Origin.Run =>
-      Text("Started by another run, such as a compile-article run starting the review of its article.")
-    case Agents.Origin.FromIngest =>
-      Text(
-        "Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over."
-      )
-    case Agents.Origin.Manager => Text("Dispatched by a process manager for one of its work items.")
-  }
+  def originMeaning(origin: api.automation.agents.Origin.Wire): Option[Text] =
+    api.automation.agents.Origin.values.find(_.wire == origin).map {
+      case api.automation.agents.Origin.Person => Text("Started by a person: from this page, the CLI or an MCP tool.")
+      case api.automation.agents.Origin.Scheduler =>
+        Text("Started by a goal's schedule; nobody watches it, so a failure or a pause leaves a backlog item.")
+      case api.automation.agents.Origin.Run =>
+        Text("Started by another run, such as a compile-article run starting the review of its article.")
+      case api.automation.agents.Origin.FromIngest =>
+        Text(
+          "Queued by an ingest for the source it brought in (automatic enrichment), before the enrich manager took that over."
+        )
+      case api.automation.agents.Origin.Manager => Text("Dispatched by a process manager for one of its work items.")
+    }
 
   /** Who serves a model, for a person; a tooltip on the provider menu's options. A provider a plugin registered has no
     * meaning here.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def providerMeaning(provider: Agents.ProviderDoctor.Provider): Option[Text] = provider.value match
+  def providerMeaning(provider: ProviderDoctor.Provider): Option[Text] = provider.value match
     case "anthropic" => Some(Text("Anthropic's API, with an API key: metered, billed per token."))
     case "openai"    => Some(Text("OpenAI's API, with an API key: metered, billed per token."))
     case "local"     =>
@@ -181,18 +193,18 @@ object RunsView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def filterOf(
       status: Option[RunState],
-      pipelines: List[ListFilters.RunFilter.Pipeline],
-      origins: List[ListFilters.RunFilter.Origin],
-      manager: Option[ListFilters.RunFilter.Manager],
-      provider: Option[ListFilters.RunFilter.Provider],
-      model: Option[ListFilters.RunFilter.Model],
+      pipelines: List[RunFilter.Pipeline],
+      origins: List[RunFilter.Origin],
+      manager: Option[RunFilter.Manager],
+      provider: Option[RunFilter.Provider],
+      model: Option[RunFilter.Model],
       goal: Option[Goal.Slug],
-      since: Option[ListFilters.RunFilter.Since],
-      until: Option[ListFilters.RunFilter.Until],
-      subject: Option[ListFilters.RunFilter.Subject]
-  ): ListFilters.RunFilter =
-    ListFilters.RunFilter(
-      status.toList.map(s => ListFilters.RunFilter.Status(s.wire.value)),
+      since: Option[RunFilter.Since],
+      until: Option[RunFilter.Until],
+      subject: Option[RunFilter.Subject]
+  ): RunFilter =
+    RunFilter(
+      status.toList.map(s => RunFilter.Status(s.wire.value)),
       pipelines,
       manager.toList,
       goal,
@@ -242,26 +254,26 @@ object RunsView:
   /** The approval a waiting run waits for, from its progress line (`approve: waiting for approval 12`). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def waitingFor(r: RunInfo): Option[Agents.ApprovalInfo.Id] =
+  def waitingFor(r: RunInfo): Option[ApprovalInfo.Id] =
     if !r.isWaiting then None
-    else r.progress.map(_.value).collect { case WaitingOn(id) => Agents.ApprovalInfo.Id(id.toLong) }
+    else r.progress.map(_.value).collect { case WaitingOn(id) => ApprovalInfo.Id(id.toLong) }
 
   /** Why a paused run stopped: the cause the server reads from the run's stored sentence. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def pausedFor(r: RunInfo): Option[Agents.PauseReason] = r.pausedFor
+  def pausedFor(r: RunInfo): Option[PauseReason] = r.pausedFor
 
   /** What a paused run's window says about its pause. An allowance pause ends by itself. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def pausedText(r: RunInfo, why: Agents.PauseReason): Text =
+  def pausedText(r: RunInfo, why: PauseReason): Text =
     Text(
       why match
-        case Agents.PauseReason.Budget    => s"Paused: ${why.wire}. Raise the budget to resume."
-        case Agents.PauseReason.Allowance =>
+        case PauseReason.Budget    => s"Paused: ${why.wire}. Raise the budget to resume."
+        case PauseReason.Allowance =>
           s"Paused: every model of a role is below its allowance; ${r.resumeAt.fold(
               "it resumes once an allowance is raised"
             )(t => s"it resumes by itself at $t")}."
-        case Agents.PauseReason.PlanQuota =>
+        case PauseReason.PlanQuota =>
           s"Paused: a subscription is below its floor (or held), and the chain does not fall through to a paid key; " +
             s"${r.resumeAt.fold("it resumes once the hold is released or a floor is lowered")(t =>
                 s"it resumes by itself at $t"
@@ -273,11 +285,11 @@ object RunsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def budget(s: Text): Option[RunRequest.BudgetUsd] =
-    s.value.trim.toDoubleOption.filter(_ > 0).map(Agents.RunRequest.BudgetUsd(_))
+    s.value.trim.toDoubleOption.filter(_ > 0).map(RunRequest.BudgetUsd(_))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def tokens(u: Agents.Usage): Text = Text(s"${u.input} in / ${u.output} out")
+  def tokens(u: Usage): Text = Text(s"${u.input} in / ${u.output} out")
 
   /** The columns of a run's steps table, in order. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -288,7 +300,7 @@ object RunsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  def stepCells(s: Agents.StepInfo): List[(Text, Text)] =
+  def stepCells(s: StepInfo): List[(Text, Text)] =
     StepColumns.zip(
       List(
         s.seq.toString,
@@ -322,22 +334,22 @@ object RunsView:
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def currentFilter(): ListFilters.RunFilter =
+  private def currentFilter(): RunFilter =
     filterOf(
       UiState.runStatus.now(),
-      UiState.runPipelines.now().map(ListFilters.RunFilter.Pipeline(_)),
-      UiState.runOrigins.now().map(Agents.Origin.Wire(_)),
-      UiState.runManager.now().map(ListFilters.RunFilter.Manager(_)),
-      UiState.runProvider.now().map(ListFilters.RunFilter.Provider(_)),
-      UiState.runModel.now().map(ListFilters.RunFilter.Model(_)),
+      UiState.runPipelines.now().map(RunFilter.Pipeline(_)),
+      UiState.runOrigins.now().map(api.automation.agents.Origin.Wire(_)),
+      UiState.runManager.now().map(RunFilter.Manager(_)),
+      UiState.runProvider.now().map(RunFilter.Provider(_)),
+      UiState.runModel.now().map(RunFilter.Model(_)),
       UiState.runGoal.now().map(Goal.Slug(_)),
-      UiState.runSince.now().map(ListFilters.RunFilter.Since(_)),
-      UiState.runUntil.now().map(ListFilters.RunFilter.Until(_)),
-      UiState.runSubject.now().map(ListFilters.RunFilter.Subject(_))
+      UiState.runSince.now().map(RunFilter.Since(_)),
+      UiState.runUntil.now().map(RunFilter.Until(_)),
+      UiState.runSubject.now().map(RunFilter.Subject(_))
     )
 
   /** The filter, as a signal (every field but the state is its own), so a change restarts the list. */
-  private val filterSignal: Signal[ListFilters.RunFilter] =
+  private val filterSignal: Signal[RunFilter] =
     UiState.signal.map(_ => currentFilter()).distinct
 
   /** The rows, the poll and "Show older" ([[PolledList]]). */
@@ -390,8 +402,8 @@ object RunsView:
           "origin",
           facet(Facet.Name("origin")),
           UiState.runOrigins,
-          v => originLabel(Agents.Origin.Wire(v)).value,
-          v => originMeaning(Agents.Origin.Wire(v)).map(_.value),
+          v => originLabel(api.automation.agents.Origin.Wire(v)).value,
+          v => originMeaning(api.automation.agents.Origin.Wire(v)).map(_.value),
           about = "Show only runs started the ways picked (any of them)."
         ),
         div(
@@ -401,14 +413,14 @@ object RunsView:
             facet(Facet.Name("manager")),
             UiState.runManager,
             show = v => Wording.manager(Wording.ManagerId(v)),
-            hint = v => ManagersView.managerMeaning(Managers.ManagerInfo.Id(v)).map(_.value),
+            hint = v => ManagersView.managerMeaning(ManagerInfo.Id(v)).map(_.value),
             about = "Show only the runs one process manager dispatched."
           ),
           ListFilterBar.picker(
             "provider",
             facet(Facet.Name("provider")),
             UiState.runProvider,
-            hint = v => providerMeaning(Agents.ProviderDoctor.Provider(v)).map(_.value),
+            hint = v => providerMeaning(ProviderDoctor.Provider(v)).map(_.value),
             about = "Show only runs that used a model of this provider: started with it, or reported by a step."
           ),
           // a model's name is its own (provider:model), not an identifier of ours
@@ -642,7 +654,7 @@ object RunsView:
           cls := "run-paused",
           pausedText(r, why),
           Option
-            .when(why == Agents.PauseReason.Allowance)(span(" ", WinLink(WindowKey.Models, "models & allowances")))
+            .when(why == PauseReason.Allowance)(span(" ", WinLink(WindowKey.Models, "models & allowances")))
         )
       ),
       Option.when(r.isWaiting)(

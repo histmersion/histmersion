@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Docket
+import com.histmersion.api.automation.queue.QueueAdd
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.domain.{CreatedAt, Creator, Scheduling}
@@ -83,7 +87,7 @@ private[worklists] object QueueRepo:
     */
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def list(kind: Kind, all: Boolean)(using DbCon): Vector[QueueItem] =
+  def list(kind: Docket, all: Boolean)(using DbCon): Vector[QueueItem] =
     if all then items(sql"""SELECT $Cols FROM queue_items WHERE list = ${kind.label} ORDER BY id""".query[Row].run())
     else items(sql"""SELECT $Cols FROM queue_items
               WHERE list = ${kind.label} AND status = $Open ORDER BY id""".query[Row].run())
@@ -93,7 +97,7 @@ private[worklists] object QueueRepo:
     */
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def forGoal(kind: Kind, goal: GoalText, linked: List[Goal.Plans.GoalLink.Ref], all: Boolean)(using
+  def forGoal(kind: Docket, goal: GoalText, linked: List[Goal.Plans.GoalLink.Ref], all: Boolean)(using
       DbCon
   ): Vector[QueueItem] =
     items(sql"""SELECT $Cols FROM queue_items
@@ -103,7 +107,7 @@ private[worklists] object QueueRepo:
 
   /** The items of `kind` (any status but notes) that agent run or background job `job` wrote or ticked off. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def forJob(kind: Kind, job: JobText)(using DbCon): Vector[QueueItem] =
+  def forJob(kind: Docket, job: JobText)(using DbCon): Vector[QueueItem] =
     items(sql"""SELECT $Cols FROM queue_items
             WHERE list = ${kind.label} AND status <> $Note AND (created_job = $job OR closed_job = $job)
             ORDER BY id""".query[Row].run())
@@ -126,7 +130,7 @@ private[worklists] object QueueRepo:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def naming(kind: Kind, doi: Doi)(using DbCon): Vector[QueueItem] =
+  def naming(kind: Docket, doi: Doi)(using DbCon): Vector[QueueItem] =
     val d = doi.value.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else
@@ -139,7 +143,7 @@ private[worklists] object QueueRepo:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def insert(kind: Kind, in: QueueAdd, creator: Creator.New, at: CreatedAt)(using DbCon): QueueItem =
+  def insert(kind: Docket, in: QueueAdd, creator: Creator.New, at: CreatedAt)(using DbCon): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Open)
     val goal = in.goal.map(_.value.trim).filter(_.nonEmpty)
     val job = in.job.map(_.value.trim).filter(_.nonEmpty)
@@ -173,5 +177,5 @@ private[worklists] object QueueRepo:
 
   /** Every row of `kind` removed; how many. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def deleteList(kind: Kind)(using DbCon): RowCount =
+  def deleteList(kind: Docket)(using DbCon): RowCount =
     RowCount(sql"DELETE FROM queue_items WHERE list = ${kind.label}".update.run())

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.queue.Docket
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.domain.automation.workflows.PipelineDef
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
@@ -7,12 +11,10 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.goals.GoalService
-import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.domain.automation.worklists.QueueScope
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.automation.Queue
@@ -53,9 +55,9 @@ private[workflows] trait GoalSweep:
   /** Every DOI in the acquisition queue (open or done) → its item id. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  protected def queuedDois(): Map[Doi, Queue.QueueItem.Id] =
+  protected def queuedDois(): Map[Doi, api.automation.queue.QueueItem.Id] =
     site.queues
-      .list(Queue.Kind.Acquire, QueueScope.All)
+      .list(Docket.Acquire, QueueScope.All)
       .flatMap(i => Scheduling.dois(i.text.value).map(_ -> i.id))
       .toMap
 
@@ -69,10 +71,10 @@ private[workflows] trait GoalSweep:
       ctx: RunCtx,
       goal: Goal.Slug,
       doi: Doi,
-      text: Queue.QueueItem.Text,
-      queued: Map[Doi, Queue.QueueItem.Id]
+      text: api.automation.queue.QueueItem.Text,
+      queued: Map[Doi, api.automation.queue.QueueItem.Id]
   )(using WritePermit)(using Creator.New): Either[String, Boolean] =
-    queued.get(doi).orElse(site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)) match
+    queued.get(doi).orElse(site.queues.naming(Docket.Acquire, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(
           s"link queue item $id to goal $goal",
@@ -89,7 +91,7 @@ private[workflows] trait GoalSweep:
       case None =>
         val item = QueueAdd(
           text,
-          topic = Some(Queue.QueueItem.Topic(s"goal $goal")),
+          topic = Some(api.automation.queue.QueueItem.Topic(s"goal $goal")),
           goal = Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
           job = Some(JobInfo.Id(ctx.run.id.value))
         )
@@ -111,7 +113,7 @@ private[workflows] trait GoalSweep:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   protected def log(ctx: RunCtx, line: String): Either[Problems, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).map(_.value)
+    PipelineDef.log(site.workLists, ctx, PipelineDef.LogLine(line)).map(_.value)
 
 object GoalSweep:
   type Limit = Limit.T

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.{Api, Dataset, Write}
@@ -65,7 +67,7 @@ object PlacesRoutes:
       places: PlacesControllers,
       gazetteer: GazetteerControllers,
       card: ServerEndpoint[Any, Identity],
-      sources: () => List[Gazetteer.SourceInfo],
+      sources: () => List[SourceInfo],
       load: (Api.ExternalPlaces.Source, Api.Apply) => Either[Api.Error, JobInfo]
   ): List[ServerEndpoint[Any, Identity]] =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Rest)

@@ -1,5 +1,7 @@
 package com.histmersion
 package api.media
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -13,7 +15,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
 final case class MediaImportReport(
     provider: MediaItem.Provider,
-    dryRun: RepairAcquire.RepairRequest.DryRun,
+    dryRun: RepairRequest.DryRun,
     targets: MediaImportReport.Targets = MediaImportReport.Targets(0),
     items: MediaImportReport.Items = MediaImportReport.Items(0),
     statements: MediaImportReport.Statements = MediaImportReport.Statements(0),

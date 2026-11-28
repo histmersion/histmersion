@@ -1,5 +1,19 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.agents.StepKind
+import com.histmersion.api.automation.modelchains.LimitSpec
+import com.histmersion.api.automation.modelchains.Measure
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.agents.CheckLevel
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
@@ -73,8 +87,8 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
   private val Ck = Citekey("zzchain2019_tin")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ApiTarget = RunRequest.Target(Ck.value)
-  private val A = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzA"))
-  private val B = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzB"))
+  private val A = ModelRef(ProviderKind.Local, ModelRef.Model("zzA"))
+  private val B = ModelRef(ProviderKind.Local, ModelRef.Model("zzB"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -224,7 +238,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
 
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
@@ -364,8 +378,8 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
       .setAllowance(
         AllowanceSet(
           allowanceTarget(A),
-          List(LimitSpec(ModelChains.LimitSpec.Amount(2000000), Measure.Tokens, ModelChains.LimitSpec.Window("5h"))),
-          ModelChains.AllowanceSet.ReservePct(20)
+          List(LimitSpec(LimitSpec.Amount(2000000), Measure.Tokens, LimitSpec.Window("5h"))),
+          AllowanceSet.ReservePct(20)
         )
       )
       .left
@@ -418,7 +432,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     assert(
       again
-        .setChain(Agents.Role.Wire("extractor"), ChainSet(List(ModelChains.ChainEntry.Model("ollama:x"))))
+        .setChain(Agents.Role.Wire("extractor"), ChainSet(List(ChainEntry.Model("ollama:x"))))
         .left
         .map(Api.Error(_))
         .left
@@ -437,7 +451,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
         .setAllowance(
           AllowanceSet(
             allowanceTarget(A),
-            List(LimitSpec(ModelChains.LimitSpec.Amount(1), Measure.Usd, ModelChains.LimitSpec.Window("fortnight")))
+            List(LimitSpec(LimitSpec.Amount(1), Measure.Usd, LimitSpec.Window("fortnight")))
           )
         )
         .left
@@ -447,7 +461,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     assert(
       again
-        .setAllowance(AllowanceSet(allowanceTarget(A), Nil, ModelChains.AllowanceSet.ReservePct(120)))
+        .setAllowance(AllowanceSet(allowanceTarget(A), Nil, AllowanceSet.ReservePct(120)))
         .left
         .map(Api.Error(_))
         .left
@@ -455,7 +469,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     )
     assert(
       again
-        .setAllowance(AllowanceSet(ModelChains.AllowanceSet.Target("nobody:*"), Nil))
+        .setAllowance(AllowanceSet(AllowanceSet.Target("nobody:*"), Nil))
         .left
         .map(Api.Error(_))
         .left
@@ -468,7 +482,7 @@ class ModelChainRunSuite extends DbSuite with RunTranscripts:
     val c = a
       .setChain(
         Agents.Role.Wire("extractor"),
-        ChainSet(List(ModelChains.ChainEntry.Model("local:zzUnpriced"), chainModel(B)))
+        ChainSet(List(ChainEntry.Model("local:zzUnpriced"), chainModel(B)))
       )
       .left
       .map(Api.Error(_))

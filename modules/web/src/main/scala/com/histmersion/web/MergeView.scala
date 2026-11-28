@@ -6,7 +6,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
-import com.histmersion.api.{Api, Plural, RegisteredPlanMatches, YearFmt}
+import com.histmersion.api.{Api, Plural, RegisteredPlanMatches}
 import com.histmersion.web.map.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom
@@ -843,7 +843,7 @@ object MergeView:
                   styleAttr := f"--at:$at%.2f%%;--w:$w%.2f%%"
                 )
               ),
-              span(cls := "muted", s" ${YearFmt.openPeriod(s.start, s.end)}")
+              span(cls := "muted", s" ${Year.openPeriod(s.start, s.end)}")
             )
           }
         )

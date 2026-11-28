@@ -180,11 +180,10 @@ object PluginEvents:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def polite(
       http: HttpTransport,
       media: MediaConfig,
-      intervalMs: PluginEvents.IntervalMs,
+      intervalMs: IntervalMs,
       sleep: Polite.IntervalMs => Unit = ms => Thread.sleep(ms.value),
       log: HostLog = HostLog.scribe
   ): Polite =

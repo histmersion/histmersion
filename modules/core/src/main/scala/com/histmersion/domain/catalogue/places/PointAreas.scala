@@ -1,13 +1,16 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+
 import com.histmersion.domain.*
 
 import com.histmersion.api.Plural
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.given
 
-import com.histmersion.api.checks.Lint.{LintItem, LintRuleReport, Rule}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Citekey
 import com.histmersion.lint.{tolerated, LintRule}

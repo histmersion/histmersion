@@ -2,6 +2,8 @@ package com.histmersion
 package cli
 package commandline
 
+import com.histmersion.api.automation.activity.Show
+
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.api.Api
@@ -36,7 +38,7 @@ object ActivityArgs:
       with SharedFlags:
     private val kind_ = value[String](
       "kind",
-      s"Only: ${Activity.Show.values.filter(_ != Activity.Show.Everything).map(_.wire).mkString(", ")}"
+      s"Only: ${Show.values.filter(_ != Show.Everything).map(_.wire).mkString(", ")}"
     )
     private val running_ = flag("running", "Only what is running now (as --kind running)")
     private val since_ = value[String]("since", "From: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")

@@ -1,6 +1,8 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.planquota.PoolId
+
 import com.histmersion.api.automation.PlanQuota.*
 
 import java.util.concurrent.ConcurrentHashMap

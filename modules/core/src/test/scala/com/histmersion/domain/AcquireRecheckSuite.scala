@@ -1,6 +1,16 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.domain.library.acquisition.Cadence
+import com.histmersion.domain.library.acquisition.Held
+import com.histmersion.domain.library.acquisition.Action
+import com.histmersion.domain.library.acquisition.Rationale
+import com.histmersion.domain.library.acquisition.Shared
+import com.histmersion.domain.library.acquisition.Recheckable
+import com.histmersion.domain.library.acquisition.JobPlan
+import com.histmersion.domain.library.acquisition.Tally
+
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -26,14 +36,14 @@ class AcquireRecheckSuite extends munit.FunSuite:
   private val now = Instant.parse("2026-10-27T12:00:00Z")
   private val Gen = LastCheck.Generation("g1")
   private def daysAgo(d: Int) = now.minusSeconds(d.toLong * 86400L)
-  private val settings = Settings(
-    enabled = AcquireRecheck.Settings.Enabled(true),
-    everyDays = AcquireRecheck.Settings.EveryDays(7),
-    perDay = AcquireRecheck.Settings.PerDay(40),
-    perPass = AcquireRecheck.Settings.PerPass(3),
-    passMinutes = AcquireRecheck.Settings.PassMinutes(10),
-    sharePercent = AcquireRecheck.Settings.SharePercent(25),
-    retryHours = AcquireRecheck.Settings.RetryHours(6)
+  private val settings = Cadence(
+    enabled = Cadence.Enabled(true),
+    everyDays = Cadence.EveryDays(7),
+    perDay = Cadence.PerDay(40),
+    perPass = Cadence.PerPass(3),
+    passMinutes = Cadence.PassMinutes(10),
+    sharePercent = Cadence.SharePercent(25),
+    retryHours = Cadence.RetryHours(6)
   )
 
   test("due: never checked, checked longer ago than every-days, or checked under another fetcher generation"):
@@ -69,7 +79,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
     assert(
       isDue(
-        Some(LastCheck(daysAgo(1), AcquireRecheck.LastCheck.Generation("g0"))),
+        Some(LastCheck(daysAgo(1), LastCheck.Generation("g0"))),
         Gen,
         AcquireRecheck.IsDueEveryDays(7),
         AcquireRecheck.IsDueRetryHours(6),
@@ -81,8 +91,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
       dueAt(
         Some(LastCheck(daysAgo(2), Gen)),
         Gen,
-        AcquireRecheck.Settings.EveryDays(7),
-        AcquireRecheck.Settings.RetryHours(6)
+        Cadence.EveryDays(7),
+        Cadence.RetryHours(6)
       ),
       Some(daysAgo(2).plusSeconds(7L * 86400L))
     )
@@ -90,8 +100,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
       dueAt(
         Some(LastCheck(daysAgo(2), Gen)),
         Gen,
-        AcquireRecheck.Settings.EveryDays(0),
-        AcquireRecheck.Settings.RetryHours(6)
+        Cadence.EveryDays(0),
+        Cadence.RetryHours(6)
       ),
       Some(daysAgo(1)),
       "a window under a day is a day"
@@ -129,7 +139,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
     val checks = List(
       LastCheck(daysAgo(1), Gen),
       LastCheck(daysAgo(3), Gen),
-      LastCheck(daysAgo(1), AcquireRecheck.LastCheck.Generation("g0"))
+      LastCheck(daysAgo(1), LastCheck.Generation("g0"))
     )
     assertEquals(
       nextDue(checks, Gen, AcquireRecheck.NextDueEveryDays(7), AcquireRecheck.NextDueRetryHours(6)),
@@ -141,8 +151,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
     "closing rules: in the corpus with its original → closed; metadata only → fetched into that source; else a new one"
   ):
     val held = Map(
-      Doi("10.1/a") -> Held(Citekey("a2020_x"), hasOriginal = AcquireRecheck.Held.HasOriginal(true)),
-      Doi("10.1/b") -> Held(Citekey("b2021_y"), hasOriginal = AcquireRecheck.Held.HasOriginal(false))
+      Doi("10.1/a") -> Held(Citekey("a2020_x"), hasOriginal = Held.HasOriginal(true)),
+      Doi("10.1/b") -> Held(Citekey("b2021_y"), hasOriginal = Held.HasOriginal(false))
     )
     assertEquals(action(List(Doi("10.1/a")), held.get), Action.Close(Citekey("a2020_x")))
     assertEquals(action(List(Doi("10.1/b")), held.get), Action.Fetch(Doi("10.1/b"), Some(Citekey("b2021_y"))))
@@ -156,10 +166,16 @@ class AcquireRecheckSuite extends munit.FunSuite:
   test("a failed legal ingest: no legal copy, or no answer"):
     assertEquals(
       failure(Problem.NotFound.Copy(Problem.Raw("10.1/x"), Vector.empty)),
-      Outcome.NoCopy
+      domain.library.acquisition.Upshot.NoCopy
     )
-    assertEquals(failure(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))), Outcome.Failed)
-    assertEquals(Outcome.values.toList.flatMap(o => Outcome.parse(o.wire)), Outcome.values.toList)
+    assertEquals(
+      failure(Problem.Unclassified(Legacy.Text("HTTP 503 from the converter"))),
+      domain.library.acquisition.Upshot.Failed
+    )
+    assertEquals(
+      domain.library.acquisition.Upshot.values.toList.flatMap(o => domain.library.acquisition.Upshot.parse(o.wire)),
+      domain.library.acquisition.Upshot.values.toList
+    )
 
   test("the reason: the day, what was found and what each fetcher answered"):
     val copy = Problem.NotFound.Copy(
@@ -254,42 +270,40 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
 
   test("a pass's allowance: the day's cap, the pass's, and the shared allowance after the backlog, within the share"):
-    assertEquals(allowance(settings, checkedToday = AcquireRecheck.CheckedToday(0), shared = None), 3, "the pass's cap")
+    assertEquals(settings.allowance(checkedToday = AcquireRecheck.CheckedToday(0), shared = None), 3, "the pass's cap")
     assertEquals(
-      allowance(settings, checkedToday = AcquireRecheck.CheckedToday(39), shared = None),
+      settings.allowance(checkedToday = AcquireRecheck.CheckedToday(39), shared = None),
       1,
       "what is left of the day's"
     )
     assertEquals(
-      allowance(settings, checkedToday = AcquireRecheck.CheckedToday(45), shared = None),
+      settings.allowance(checkedToday = AcquireRecheck.CheckedToday(45), shared = None),
       0,
       "never negative"
     )
     assertEquals(
-      allowance(
-        settings,
+      settings.allowance(
         AcquireRecheck.CheckedToday(0),
         Some(
           Shared(
-            left = AcquireRecheck.Shared.Left(60),
-            cap = AcquireRecheck.Shared.Cap(60),
-            backlogPending = AcquireRecheck.Shared.BacklogPending(0),
-            fetchedToday = AcquireRecheck.Shared.FetchedToday(0)
+            left = Shared.Left(60),
+            cap = Shared.Cap(60),
+            backlogPending = Shared.BacklogPending(0),
+            fetchedToday = Shared.FetchedToday(0)
           )
         )
       ),
       3
     )
     assertEquals(
-      allowance(
-        settings,
+      settings.allowance(
         AcquireRecheck.CheckedToday(0),
         Some(
           Shared(
-            left = AcquireRecheck.Shared.Left(60),
-            cap = AcquireRecheck.Shared.Cap(60),
-            backlogPending = AcquireRecheck.Shared.BacklogPending(59),
-            fetchedToday = AcquireRecheck.Shared.FetchedToday(0)
+            left = Shared.Left(60),
+            cap = Shared.Cap(60),
+            backlogPending = Shared.BacklogPending(59),
+            fetchedToday = Shared.FetchedToday(0)
           )
         )
       ),
@@ -297,15 +311,14 @@ class AcquireRecheckSuite extends munit.FunSuite:
       "the watchers' backlog first"
     )
     assertEquals(
-      allowance(
-        settings,
+      settings.allowance(
         AcquireRecheck.CheckedToday(0),
         Some(
           Shared(
-            left = AcquireRecheck.Shared.Left(60),
-            cap = AcquireRecheck.Shared.Cap(60),
-            backlogPending = AcquireRecheck.Shared.BacklogPending(0),
-            fetchedToday = AcquireRecheck.Shared.FetchedToday(14)
+            left = Shared.Left(60),
+            cap = Shared.Cap(60),
+            backlogPending = Shared.BacklogPending(0),
+            fetchedToday = Shared.FetchedToday(14)
           )
         )
       ),
@@ -313,64 +326,65 @@ class AcquireRecheckSuite extends munit.FunSuite:
       "25 % of 60 = 15, 14 taken"
     )
     assertEquals(
-      allowance(
-        settings,
+      settings.allowance(
         AcquireRecheck.CheckedToday(0),
         Some(
           Shared(
-            left = AcquireRecheck.Shared.Left(2),
-            cap = AcquireRecheck.Shared.Cap(60),
-            backlogPending = AcquireRecheck.Shared.BacklogPending(5),
-            fetchedToday = AcquireRecheck.Shared.FetchedToday(0)
+            left = Shared.Left(2),
+            cap = Shared.Cap(60),
+            backlogPending = Shared.BacklogPending(5),
+            fetchedToday = Shared.FetchedToday(0)
           )
         )
       ),
       0
     )
     assertEquals(
-      allowance(
-        settings.modify(_.sharePercent).setTo(AcquireRecheck.Settings.SharePercent(0)),
-        AcquireRecheck.CheckedToday(0),
-        Some(
-          Shared(
-            AcquireRecheck.Shared.Left(60),
-            AcquireRecheck.Shared.Cap(60),
-            AcquireRecheck.Shared.BacklogPending(0),
-            AcquireRecheck.Shared.FetchedToday(0)
+      settings
+        .modify(_.sharePercent)
+        .setTo(Cadence.SharePercent(0))
+        .allowance(
+          AcquireRecheck.CheckedToday(0),
+          Some(
+            Shared(
+              Shared.Left(60),
+              Shared.Cap(60),
+              Shared.BacklogPending(0),
+              Shared.FetchedToday(0)
+            )
           )
-        )
-      ),
+        ),
       0,
       "no share: nothing under a shared cap"
     )
     assertEquals(
-      allowance(
-        settings
-          .modify(_.sharePercent)
-          .setTo(AcquireRecheck.Settings.SharePercent(100))
-          .modify(_.perPass)
-          .setTo(AcquireRecheck.Settings.PerPass(100)),
-        AcquireRecheck.CheckedToday(0),
-        Some(
-          Shared(
-            AcquireRecheck.Shared.Left(60),
-            AcquireRecheck.Shared.Cap(60),
-            AcquireRecheck.Shared.BacklogPending(0),
-            AcquireRecheck.Shared.FetchedToday(0)
+      settings
+        .modify(_.sharePercent)
+        .setTo(Cadence.SharePercent(100))
+        .modify(_.perPass)
+        .setTo(Cadence.PerPass(100))
+        .allowance(
+          AcquireRecheck.CheckedToday(0),
+          Some(
+            Shared(
+              Shared.Left(60),
+              Shared.Cap(60),
+              Shared.BacklogPending(0),
+              Shared.FetchedToday(0)
+            )
           )
-        )
-      ),
+        ),
       40,
       "the day's cap still holds"
     )
 
   test("a pass is due once its minutes passed since the last"):
-    assert(passDue(None, AcquireRecheck.Settings.PassMinutes(10), now))
-    assert(!passDue(Some(now.minusSeconds(300)), AcquireRecheck.Settings.PassMinutes(10), now))
-    assert(passDue(Some(now.minusSeconds(600)), AcquireRecheck.Settings.PassMinutes(10), now))
+    assert(passDue(None, Cadence.PassMinutes(10), now))
+    assert(!passDue(Some(now.minusSeconds(300)), Cadence.PassMinutes(10), now))
+    assert(passDue(Some(now.minusSeconds(600)), Cadence.PassMinutes(10), now))
 
   test("a check that got no answer (a rate limit) is due again after retry-hours, not every-days"):
-    val failed = LastCheck(now.minusSeconds(2L * 3600L), Gen, failed = AcquireRecheck.LastCheck.Failed(true))
+    val failed = LastCheck(now.minusSeconds(2L * 3600L), Gen, failed = LastCheck.Failed(true))
     assert(
       !isDue(Some(failed), Gen, AcquireRecheck.IsDueEveryDays(7), AcquireRecheck.IsDueRetryHours(6), now),
       "two hours ago: not yet"
@@ -386,11 +400,11 @@ class AcquireRecheckSuite extends munit.FunSuite:
       "six hours ago: due"
     )
     assertEquals(
-      dueAt(Some(failed), Gen, AcquireRecheck.Settings.EveryDays(7), AcquireRecheck.Settings.RetryHours(6)),
+      dueAt(Some(failed), Gen, Cadence.EveryDays(7), Cadence.RetryHours(6)),
       Some(failed.at.plusSeconds(6L * 3600L))
     )
     assertEquals(
-      dueAt(Some(failed), Gen, AcquireRecheck.Settings.EveryDays(7), AcquireRecheck.Settings.RetryHours(0)),
+      dueAt(Some(failed), Gen, Cadence.EveryDays(7), Cadence.RetryHours(0)),
       Some(failed.at.plusSeconds(3600L)),
       "a retry under an hour is an hour"
     )
@@ -406,44 +420,34 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("the order items are tried in: the never-checked first, then the oldest check, then the item id"):
     val cs = List(
-      Candidate(AcquireRecheck.Candidate.Item(5), Some(LastCheck(daysAgo(1), Gen))),
-      Candidate(AcquireRecheck.Candidate.Item(9), None),
-      Candidate(AcquireRecheck.Candidate.Item(2), Some(LastCheck(daysAgo(3), Gen))),
-      Candidate(AcquireRecheck.Candidate.Item(4), None),
-      Candidate(AcquireRecheck.Candidate.Item(1), Some(LastCheck(daysAgo(1), Gen)))
+      Recheckable(Recheckable.Item(5), Some(LastCheck(daysAgo(1), Gen))),
+      Recheckable(Recheckable.Item(9), None),
+      Recheckable(Recheckable.Item(2), Some(LastCheck(daysAgo(3), Gen))),
+      Recheckable(Recheckable.Item(4), None),
+      Recheckable(Recheckable.Item(1), Some(LastCheck(daysAgo(1), Gen)))
     )
     assertEquals(order(cs).map(_.item), List(4, 9, 2, 1, 5))
 
   test("a job over every item: all of them, due or not; resumed, it skips the ones checked since it started"):
     val since = now.minusSeconds(3600L)
     val cs = List(
-      Candidate(AcquireRecheck.Candidate.Item(1), None),
-      Candidate(AcquireRecheck.Candidate.Item(2), Some(LastCheck(daysAgo(1), Gen))),
-      Candidate(AcquireRecheck.Candidate.Item(3), Some(LastCheck(now.minusSeconds(60), Gen))),
-      Candidate(
-        AcquireRecheck.Candidate.Item(4),
-        Some(LastCheck(since, Gen, failed = AcquireRecheck.LastCheck.Failed(true)))
+      Recheckable(Recheckable.Item(1), None),
+      Recheckable(Recheckable.Item(2), Some(LastCheck(daysAgo(1), Gen))),
+      Recheckable(Recheckable.Item(3), Some(LastCheck(now.minusSeconds(60), Gen))),
+      Recheckable(
+        Recheckable.Item(4),
+        Some(LastCheck(since, Gen, failed = LastCheck.Failed(true)))
       ),
-      Candidate(AcquireRecheck.Candidate.Item(5), Some(LastCheck(daysAgo(30), Gen)))
+      Recheckable(Recheckable.Item(5), Some(LastCheck(daysAgo(30), Gen)))
     )
-    val notDue = (c: Candidate) => false
+    val notDue = (c: Recheckable) => false
     assertEquals(
-      jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(true), AcquireRecheck.JobPlan.UpTo(0), now),
-        cs,
-        AcquireRecheck.Tally.Tried(0),
-        notDue
-      ).map(_.item),
+      JobPlan(all = JobPlan.All(true), JobPlan.UpTo(0), now).jobPicks(cs, Tally.Tried(0), notDue).map(_.item),
       List(1, 5, 2, 4, 3),
       "a new job: every item, none of them due"
     )
     assertEquals(
-      jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(true), AcquireRecheck.JobPlan.UpTo(0), since),
-        cs,
-        AcquireRecheck.Tally.Tried(2),
-        notDue
-      ).map(_.item),
+      JobPlan(all = JobPlan.All(true), JobPlan.UpTo(0), since).jobPicks(cs, Tally.Tried(2), notDue).map(_.item),
       List(1, 5, 2),
       "resumed: #3 and #4 were checked at or after its start — even the one that got no answer"
     )
@@ -457,52 +461,38 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("a capped job: only the due items, no more than it planned less what it tried already"):
     val since = now.minusSeconds(3600L)
-    val cs = (1 to 6).toList.map(i => Candidate(Candidate.Item(i), if i == 6 then Some(LastCheck(now, Gen)) else None))
-    val due = (c: Candidate) => c.item.value != 2
+    val cs =
+      (1 to 6).toList.map(i => Recheckable(Recheckable.Item(i), if i == 6 then Some(LastCheck(now, Gen)) else None))
+    val due = (c: Recheckable) => c.item.value != 2
     assertEquals(
-      jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(false), AcquireRecheck.JobPlan.UpTo(4), since),
-        cs,
-        AcquireRecheck.Tally.Tried(0),
-        due
-      ).map(_.item),
+      JobPlan(all = JobPlan.All(false), JobPlan.UpTo(4), since).jobPicks(cs, Tally.Tried(0), due).map(_.item),
       List(1, 3, 4, 5)
     )
     assertEquals(
-      jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(false), AcquireRecheck.JobPlan.UpTo(4), since),
-        cs,
-        AcquireRecheck.Tally.Tried(3),
-        due
-      ).map(_.item),
+      JobPlan(all = JobPlan.All(false), JobPlan.UpTo(4), since).jobPicks(cs, Tally.Tried(3), due).map(_.item),
       List(1),
       "resumed after 3 tries"
     )
     assertEquals(
-      jobPicks(
-        JobPlan(all = AcquireRecheck.JobPlan.All(false), AcquireRecheck.JobPlan.UpTo(4), since),
-        cs,
-        AcquireRecheck.Tally.Tried(9),
-        due
-      ),
+      JobPlan(all = JobPlan.All(false), JobPlan.UpTo(4), since).jobPicks(cs, Tally.Tried(9), due),
       Nil
     )
 
   test("the job's progress line counts what it found, with the last no-answer's reason, shortened"):
-    val t = Tally(total = AcquireRecheck.Tally.Total(453))
-      .add(Outcome.Closed, AcquireRecheck.Detail("a2020_x"))
-      .add(Outcome.Fetched, AcquireRecheck.Detail("unpaywall"))
-      .add(Outcome.NoCopy, Detail("none"))
+    val t = Tally(total = Tally.Total(453))
+      .add(domain.library.acquisition.Upshot.Closed, AcquireRecheck.Detail("a2020_x"))
+      .add(domain.library.acquisition.Upshot.Fetched, AcquireRecheck.Detail("unpaywall"))
+      .add(domain.library.acquisition.Upshot.NoCopy, Detail("none"))
       .add(
-        Outcome.Failed,
+        domain.library.acquisition.Upshot.Failed,
         Detail("HTTP 429 Too Many Requests from api.example.invalid — retry after 3600 seconds, said the upstream")
       )
     assertEquals(t.tried, 3)
     assertEquals(
-      progressLine(t),
+      t.progressLine,
       "3/453 items · 1 closed · 1 fetched · 1 no legal copy · 1 failed (HTTP 429 Too Many Requests from api.example.invalid — retry …)"
     )
     assertEquals(
-      progressLine(Tally(total = AcquireRecheck.Tally.Total(2))),
+      Tally(total = Tally.Total(2)).progressLine,
       "0/2 items · 0 closed · 0 fetched · 0 no legal copy · 0 failed"
     )

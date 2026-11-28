@@ -20,15 +20,7 @@ import scala.util.Random
 import com.histmersion.domain.catalogue.Historicity
 import com.histmersion.util.database.Migrate
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  Corrections,
-  EventFields,
-  EventPatch,
-  EventPrecision,
-  EventPut,
-  Period
-}
+import com.histmersion.api.catalogue.{CatalogRecord, EventPatch, EventPrecision, EventPut, Period}
 import com.histmersion.api.library.Filter
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.db.DbSuite
@@ -175,8 +167,8 @@ class EventCorrectionsRepoSuite extends DbSuite:
         )
       )
       .toList
-    val tol = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
-    val expected = CatalogMerge.place(recs, mine, tol).map((r, p) => r.key -> p.eventId).toMap
+    val tol = Placement.Tolerance(Placement.Tolerance.Km(60), Placement.Tolerance.Years(30))
+    val expected = Placement.place(recs, mine, tol).map((r, p) => r.key -> p.eventId).toMap
     assertEquals(
       expected.values.toSet,
       Set("zqcr_m1"),
@@ -185,7 +177,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
     val rnd = Random(88)
     (1 to 10).foreach { _ =>
       assertEquals(
-        CatalogMerge.place(rnd.shuffle(recs), rnd.shuffle(mine), tol).map((r, p) => r.key -> p.eventId).toMap,
+        Placement.place(rnd.shuffle(recs), rnd.shuffle(mine), tol).map((r, p) => r.key -> p.eventId).toMap,
         expected
       )
     }
@@ -214,10 +206,10 @@ class EventCorrectionsRepoSuite extends DbSuite:
   private def reimport(r: CatalogRecord): EventSaved =
     EventFixtures.save(
       ds,
-      CatalogMerge.place(
+      Placement.place(
         List(r),
         EventFixtures.stored(ds),
-        CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+        Placement.Tolerance(Placement.Tolerance.Km(60), Placement.Tolerance.Years(30))
       )
     )
   private def event = EventFixtures.get(ds, Id).get
@@ -257,10 +249,10 @@ class EventCorrectionsRepoSuite extends DbSuite:
     // historicity equals the catalogue's: no correction for it
     assertEquals(
       corrections.map(c => c.field -> c.status).toSet,
-      Set(EventFields.Label -> Correction.Status.Active, EventFields.Description -> Correction.Status.Active)
+      Set(EventPatch.Label -> Correction.Status.Active, EventPatch.Description -> Correction.Status.Active)
     )
     assertEquals(
-      corrections.find(_.field.value == EventFields.Label).map(c => Corrections.show(c.upstreamValue.value)),
+      corrections.find(_.field.value == EventPatch.Label).map(c => Correction.show(c.upstreamValue.value)),
       Some("Eruption of Zqcr")
     )
     val again = reimport(upstream0)
@@ -281,7 +273,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
       agrees.corrections,
       Correction.Counts(kept = Correction.Counts.Kept(1), retired = Correction.Counts.Retired(1))
     )
-    assertEquals(corrections.find(_.field.value == EventFields.Label).map(_.status), Some(Correction.Status.Agreed))
+    assertEquals(corrections.find(_.field.value == EventPatch.Label).map(_.status), Some(Correction.Status.Agreed))
     assertEquals(event.event.label, "Hekla 3 (Zqcr)")
     // the catalogue now says something else about the description: the person's stays, flagged
     val changed =
@@ -298,8 +290,8 @@ class EventCorrectionsRepoSuite extends DbSuite:
       .corrections
       .filter(_.targetId == TargetId)
     assertEquals(
-      conflict.map(x => (x.field, x.upstreamNow.map(n => Corrections.show(n.value)))),
-      List(EventFields.Description -> Some("Confirmed Eruption at Zqcr; area: SW flank"))
+      conflict.map(x => (x.field, x.upstreamNow.map(n => Correction.show(n.value)))),
+      List(EventPatch.Description -> Some("Confirmed Eruption at Zqcr; area: SW flank"))
     )
     assertEquals(conflict.head.label, Some("Hekla 3 (Zqcr)"))
     val lint = connect(ds)(CorrectionRepo.conflictsIn())
@@ -316,7 +308,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
         .patch(ds, Id, EventPatch(description = Some(EventSummary.Description("Confirmed Eruption at Zqcr"))))
         .isRight
     )
-    assertEquals(corrections.filter(_.field.value == EventFields.Description), Nil)
+    assertEquals(corrections.filter(_.field.value == EventPatch.Description), Nil)
 
   test("corrections: a span set by hand drops the stated year and ±, and survives; a rename and a delete carry them"):
     val mine = TimeSpan(Some(Year(1104)), Some(Year(1104)), Some(Year(1104)), Some(Year(1104)))
@@ -349,7 +341,7 @@ class EventCorrectionsRepoSuite extends DbSuite:
         .corrections(ds, EventKind, Some(Correction.TargetId("zzcr_renamed")), None, PageSize(10), Offset(0))
         .corrections
         .map(_.field),
-      List(EventFields.Span)
+      List(EventPatch.Span)
     )
     // the renamed event is still refreshed from its owner record, the correction applied
     val _ = reimport(upstream0)

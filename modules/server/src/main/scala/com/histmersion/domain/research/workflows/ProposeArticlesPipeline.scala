@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -15,7 +17,6 @@ import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.agents.StepAgent
 import com.histmersion.domain.automation.approvals.AutoApprovals
 import com.histmersion.domain.automation.workflows.PipelineDef
-import com.histmersion.domain.automation.workflows.Pipelines
 
 import com.histmersion.api.Plural
 import com.histmersion.config.*
@@ -31,7 +32,6 @@ import com.histmersion.domain.research.articles.ArticlesControllers
 import com.histmersion.api.library.Facet
 import com.histmersion.api.research.Article.Plans.ArticlePlan
 import com.histmersion.api.automation.Goal.Plans.LinkKind
-import com.histmersion.domain.PlanArticles.ArticlesAnswer
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.api.VocabularyCodecs.given
@@ -93,21 +93,21 @@ final class ProposeArticlesPipeline(
         ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, goal, plan))
       )
       closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
-        log(ctx, PlanArticles.logLine(goal, plan, PlanArticles.Outcome(recorded.line.value), runId))
+        log(ctx, ArticlesAnswer.logLine(goal, plan, ArticlesAnswer.Outcome(recorded.line.value), runId))
       )
     yield PipelineDef.Summary(closed)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[Problems, String] =
-    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).map(_.value)
+  private def log(ctx: RunCtx, line: ArticlesAnswer.LogLine): Either[Problems, String] =
+    PipelineDef.log(site.workLists, ctx, PipelineDef.LogLine(line.value)).map(_.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def limits(ctx: RunCtx): PlanArticles.Limits =
+  private def limits(ctx: RunCtx): ArticlesAnswer.Limits =
     val p = ctx.run.params
-    PlanArticles.Limits(
-      PlanArticles.Limits.MinSources(math.max(1, p.minSources.fold(lib.seed.minSources.value)(_.value))),
-      PlanArticles.Limits.MaxOverlap(math.min(1.0, math.max(0.0, lib.seed.maxOverlap.value))),
-      PlanArticles.Limits.MaxArticles(math.max(1, p.maxArticles.fold(lib.seed.maxArticles.value)(_.value)))
+    ArticlesAnswer.Limits(
+      ArticlesAnswer.Limits.MinSources(math.max(1, p.minSources.fold(lib.seed.minSources.value)(_.value))),
+      ArticlesAnswer.Limits.MaxOverlap(math.min(1.0, math.max(0.0, lib.seed.maxOverlap.value))),
+      ArticlesAnswer.Limits.MaxArticles(math.max(1, p.maxArticles.fold(lib.seed.maxArticles.value)(_.value)))
     )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
@@ -229,12 +229,11 @@ final class ProposeArticlesPipeline(
       last: Boolean
   ): Either[List[Problem], ArticlePlan] =
     val lim = limits(ctx)
-    PlanArticles
-      .check(a, lim.maxArticles, PlanArticles.LastRound(last))
+    a.check(lim.maxArticles, ArticlesAnswer.LastRound(last))
       .flatMap { (cs, dropped) =>
         val taken = l.articles.map(_.slug).toSet
         val existing = l.articles.map(e => (Article.Slug(e.slug.value), sourcesOf(e)))
-        val plan = PlanArticles.verify(
+        val plan = ArticlesAnswer.verify(
           l.slug,
           a.rationale,
           cs,
@@ -323,7 +322,7 @@ object ProposeArticlesPipeline:
     type Topics = Topics.T
     object Topics extends Newtype[String, Pure]
 
-  final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line) derives JsonCodec
+  final case class Recorded(approval: Option[ApprovalInfo.Id], line: Recorded.Line) derives JsonCodec
 
   object Recorded:
     type Line = Line.T

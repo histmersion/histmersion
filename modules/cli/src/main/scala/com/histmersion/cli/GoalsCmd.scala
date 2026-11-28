@@ -1,13 +1,14 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.automation.agents.RunRequest
+
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.automation.GoalsMarkdown
 
 import com.histmersion.api.Api
 import com.histmersion.config.*
-import com.histmersion.api.automation.Agents.RunRequest
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown}
 import com.histmersion.api.automation.Goal

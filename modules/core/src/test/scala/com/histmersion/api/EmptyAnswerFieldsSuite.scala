@@ -1,5 +1,35 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.domain.library.workflows.Classification
+import com.histmersion.domain.library.workflows.Frame
+import com.histmersion.domain.library.workflows.FindingGuards
+import com.histmersion.domain.library.workflows.FindingProposal
+import com.histmersion.domain.library.workflows.Findings
+import com.histmersion.domain.research.workflows.ClaimAnswer
+import com.histmersion.domain.research.workflows.ExtractAnswer
+import com.histmersion.domain.research.workflows.SourceFact
+import com.histmersion.domain.research.workflows.Extracted
+import com.histmersion.domain.research.workflows.Corpus
+import com.histmersion.domain.research.workflows.DraftAnswer
+import com.histmersion.domain.research.workflows.FindingAnswer
+import com.histmersion.domain.research.workflows.RulesAnswer
+import com.histmersion.domain.research.workflows.ColdReaderAnswer
+import com.histmersion.domain.research.workflows.ReaderFindingAnswer
+import com.histmersion.domain.research.workflows.SkepticAnswer
+import com.histmersion.domain.research.workflows.Finding
+import com.histmersion.domain.research.workflows.Reviewer
+import com.histmersion.domain.research.workflows.Merged
+import com.histmersion.domain.research.workflows.BodyCorpus
+import com.histmersion.domain.research.workflows.FixerAnswer
+import com.histmersion.domain.research.workflows.Snapshot
+import com.histmersion.domain.research.workflows.RejectionAnswer
+import com.histmersion.domain.research.workflows.Prior
+import com.histmersion.domain.research.workflows.CheckAnswer
+import com.histmersion.domain.research.workflows.WontFixAnswer
+import com.histmersion.domain.research.workflows.RecheckAnswer
+import com.histmersion.domain.research.workflows.Recheck
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
@@ -17,7 +47,6 @@ import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
 
-import com.histmersion.api.automation.Agents.ProbeAnswer
 import com.histmersion.api.automation.Goal.Plans.DraftMode
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Source
@@ -25,7 +54,6 @@ import com.histmersion.api.research.Article
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.CompileArticle
-import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.Title
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.research.Slug
@@ -85,75 +113,57 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     Classification(summary, Nil, Nil, Nil, None, status, evidence)
 
   test("classify: an empty summary or status fails; a status other than unassessed needs its evidence"):
-    val noSummary = checkClassification(
-      classification(summary = Classification.Summary(" ")),
-      CheckClassificationMaxAbsYear(50000),
-      last = Last(false)
-    )
+    val noSummary = classification(summary = Classification.Summary(" "))
+      .checkClassification(CheckClassificationMaxAbsYear(50000), last = Last(false))
     assertEquals(noSummary.left.toOption.map(_.map(_.sentence)), Some(List("the summary is empty")))
     assert(
-      checkClassification(
-        classification(status = domain.library.Source.Status.Wire("")),
-        CheckClassificationMaxAbsYear(50000),
-        last = Last(true)
-      ).left
+      classification(status = domain.library.Source.Status.Wire(""))
+        .checkClassification(CheckClassificationMaxAbsYear(50000), last = Last(true))
+        .left
         .exists(_.exists(_.sentence.contains("unknown source status")))
     )
-    val noEvidence = checkClassification(
-      classification(evidence = Classification.StatusEvidence("")),
-      CheckClassificationMaxAbsYear(50000),
-      last = Last(false)
-    )
+    val noEvidence = classification(evidence = Classification.StatusEvidence(""))
+      .checkClassification(CheckClassificationMaxAbsYear(50000), last = Last(false))
     assertEquals(
       noEvidence.left.toOption.map(_.map(_.sentence)),
       Some(List("the status evidence is empty — say, from the text, why that status"))
     )
     // unassessed needs none (the schema: "empty if unassessed")
     assert(
-      checkClassification(
-        classification(
-          status = domain.library.Source.Status.Wire("unassessed"),
-          evidence = Classification.StatusEvidence("")
-        ),
-        CheckClassificationMaxAbsYear(50000),
-        last = Last(false)
-      ).isRight
+      classification(
+        status = domain.library.Source.Status.Wire("unassessed"),
+        evidence = Classification.StatusEvidence("")
+      ).checkClassification(CheckClassificationMaxAbsYear(50000), last = Last(false)).isRight
     )
     // the last attempt keeps the classification, with a warning
-    val (c, ws) = checkClassification(
-      classification(evidence = Classification.StatusEvidence("")),
-      CheckClassificationMaxAbsYear(50000),
-      last = Last(true)
-    ).toOption.get
+    val (c, ws) = classification(evidence = Classification.StatusEvidence(""))
+      .checkClassification(CheckClassificationMaxAbsYear(50000), last = Last(true))
+      .toOption
+      .get
     assertEquals(c.status, Source.Status.Current)
     assert(ws.exists(_.value.contains("status evidence is empty")), ws)
 
   private val window =
-    Window(Window.Index(1), None, Window.Text("The Uluburun ship carried ten tons of copper and one ton of tin."))
+    Frame(Frame.Index(1), None, Frame.Text("The Uluburun ship carried ten tons of copper and one ton of tin."))
   private val open =
     FindingGuards(FindingGuards.MinPlacedShare(0.0), FindingGuards.CenturyGapYears(1000000L), Nil, (_, _, _) => true)
   private def proposal(
       claim: FindingProposal.Claim,
-      quote: AgentProposals.Proposal.Quote =
-        AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin."),
+      quote: domain.Proposal.Quote =
+        domain.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin."),
       confidence: domain.library.Confidence.Wire = domain.library.Confidence.Wire("high")
   ) = FindingProposal(claim, quote, None, None, None, None, None, Nil, confidence)
 
   test("findings: an empty claim, quote or confidence fails, naming the finding"):
     def problems(p: FindingProposal) =
-      checkFindings(
-        Findings(List(p)),
-        window,
-        minRatio,
-        CheckFindingsMaxAbsYear(50000),
-        None,
-        Set.empty,
-        open,
-        last = Last(false)
-      ).left.toOption.get
+      Findings(List(p))
+        .checkFindings(window, minRatio, CheckFindingsMaxAbsYear(50000), None, Set.empty, open, last = Last(false))
+        .left
+        .toOption
+        .get
     assert(problems(proposal(FindingProposal.Claim(""))).head.sentence.contains("the claim is empty"))
     assert(
-      problems(proposal(FindingProposal.Claim("Tin by sea."), quote = AgentProposals.Proposal.Quote(""))).head.sentence
+      problems(proposal(FindingProposal.Claim("Tin by sea."), quote = domain.Proposal.Quote(""))).head.sentence
         .contains("the quote is not in the text")
     )
     assert(
@@ -164,7 +174,11 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("notes: empty notes fail"):
     assertEquals(
-      checkNotes(Notes(Notes.Value("  ")), _ => true, _ => true).left.map(_.map(_.sentence)),
+      domain.library.workflows
+        .Notes(domain.library.workflows.Notes.Value("  "))
+        .checkNotes(_ => true, _ => true)
+        .left
+        .map(_.map(_.sentence)),
       Left(List("the notes are empty"))
     )
 
@@ -177,15 +191,12 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("extract: an empty claim, quote or confidence fails; an unused record must say why"):
     def problems(c: ClaimAnswer) =
-      checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(true), Coverage.Rationale("tin"), List(c)),
-        domain.library.Citekey("ck"),
-        record,
-        minRatio,
-        MaxClaims(10),
-        last = CompileArticle.Last(false)
-      ).left.toOption.get
-    val quote = AgentProposals.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
+      ExtractAnswer(ExtractAnswer.Relevant(true), Coverage.Rationale("tin"), List(c))
+        .checkExtract(domain.library.Citekey("ck"), record, minRatio, MaxClaims(10), last = CompileArticle.Last(false))
+        .left
+        .toOption
+        .get
+    val quote = domain.Proposal.Quote("The Uluburun ship carried ten tons of copper and one ton of tin.")
     assertEquals(
       problems(
         ClaimAnswer(ClaimAnswer.Claim(""), quote, None, None, domain.library.Confidence.Wire("high"))
@@ -196,7 +207,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       problems(
         ClaimAnswer(
           ClaimAnswer.Claim("Tin."),
-          AgentProposals.Proposal.Quote(""),
+          domain.Proposal.Quote(""),
           None,
           None,
           domain.library.Confidence.Wire("high")
@@ -209,14 +220,11 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       ).head.sentence.contains("unknown confidence")
     )
     assertEquals(
-      checkExtract(
-        ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(""), Nil),
-        domain.library.Citekey("ck"),
-        record,
-        minRatio,
-        MaxClaims(10),
-        last = CompileArticle.Last(false)
-      ).left.toOption.map(_.map(_.sentence)),
+      ExtractAnswer(ExtractAnswer.Relevant(false), Coverage.Rationale(""), Nil)
+        .checkExtract(domain.library.Citekey("ck"), record, minRatio, MaxClaims(10), last = CompileArticle.Last(false))
+        .left
+        .toOption
+        .map(_.map(_.sentence)),
       Some(List("say why the record is not used"))
     )
 
@@ -238,10 +246,10 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       Extracted(
         domain.library.Citekey("a2019_tin"),
         List(
-          Claim(
+          domain.research.workflows.Claim(
             domain.library.Citekey("a2019_tin"),
             ClaimAnswer.Claim("c"),
-            AgentProposals.Proposal.Quote("q"),
+            domain.Proposal.Quote("q"),
             None,
             None,
             Confidence.High,
@@ -276,8 +284,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         current: Option[Title] = None,
         last: CompileArticle.Last = CompileArticle.Last(false)
     ) =
-      checkDraft(
-        a,
+      a.checkDraft(
         Slug("tin"),
         mode,
         Article.Kind.Wire("concept"),
@@ -325,7 +332,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
 
   test("rules reviewer: an empty verdict, or a finding with no where or no problem, fails"):
-    def problems(a: RulesAnswer) = checkRules(a, last = CheckRulesLast(false)).left.toOption.get.map(_.sentence)
+    def problems(a: RulesAnswer) = a.checkRules(last = CheckRulesLast(false)).left.toOption.get.map(_.sentence)
     assertEquals(
       problems(RulesAnswer(RulesAnswer.Verdict(""), Nil, RulesAnswer.Filter("f"), Nil, Nil)),
       List("no verdict given — PASS, MINOR or MAJOR")
@@ -368,15 +375,14 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     )
     // the quote and fix stay optional
     assert(
-      checkRules(
-        RulesAnswer(RulesAnswer.Verdict("MINOR"), List(finding()), RulesAnswer.Filter("f"), Nil, Nil),
-        last = CheckRulesLast(false)
-      ).isRight
+      RulesAnswer(RulesAnswer.Verdict("MINOR"), List(finding()), RulesAnswer.Filter("f"), Nil, Nil)
+        .checkRules(last = CheckRulesLast(false))
+        .isRight
     )
 
   test("cold reader: an empty verdict, explain-back or finding where fails"):
     def problems(a: ColdReaderAnswer) =
-      checkColdReader(a, last = CheckColdReaderLast(false)).left.toOption.get.map(_.sentence)
+      a.checkColdReader(last = CheckColdReaderLast(false)).left.toOption.get.map(_.sentence)
     val reader = ReaderFindingAnswer(
       ReaderFindingAnswer.Severity("minor"),
       ReaderFindingAnswer.Kind("term"),
@@ -405,33 +411,33 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       SkepticAnswer.Verdict(""),
       List(finding(where = FindingAnswer.Where(""))),
       List(
-        AgentProposals.ProposalAnswer(
-          AgentProposals.ProposalAnswer.Kind("status"),
-          AgentProposals.ProposalAnswer.Citekey("a2019_tin"),
+        Proposal.ProposalAnswer(
+          Proposal.ProposalAnswer.Kind("status"),
+          Proposal.ProposalAnswer.Citekey("a2019_tin"),
           Some(domain.library.Source.Status.Wire("contested")),
           None,
           None,
-          AgentProposals.ProposalAnswer.Evidence(""),
-          AgentProposals.ProposalAnswer.Quote("q")
+          Proposal.ProposalAnswer.Evidence(""),
+          Proposal.ProposalAnswer.Quote("q")
         )
       ),
       SkepticAnswer.ClaimsChecked(1)
     )
-    val ps = checkSkeptic(
-      a,
-      last = CheckSkepticLast(false),
-      _.value == "a2019_tin",
-      _ => Some(record),
-      minRatio
-    ).left.toOption.get.map(_.sentence)
+    val ps = a
+      .checkSkeptic(last = CheckSkepticLast(false), _.value == "a2019_tin", _ => Some(record), minRatio)
+      .left
+      .toOption
+      .get
+      .map(_.sentence)
     assert(ps.contains("no verdict given — PASS, MINOR or MAJOR") && ps.exists(_.contains("no where stated")), ps)
-    val (_, ws) = checkSkeptic(
-      a.modify(_.verdict).setTo(SkepticAnswer.Verdict("MINOR")).modify(_.findings).setTo(List(finding())),
-      last = CheckSkepticLast(false),
-      _.value == "a2019_tin",
-      _ => Some(record),
-      minRatio
-    ).toOption.get
+    val (_, ws) = a
+      .modify(_.verdict)
+      .setTo(SkepticAnswer.Verdict("MINOR"))
+      .modify(_.findings)
+      .setTo(List(finding()))
+      .checkSkeptic(last = CheckSkepticLast(false), _.value == "a2019_tin", _ => Some(record), minRatio)
+      .toOption
+      .get
     assert(ws.exists(_.contains("no evidence given")), ws)
 
   test("fixer: a replace with null text, an empty anchor, a rejection with no reason fail"):
@@ -442,18 +448,17 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val s1 = Finding(
       Finding.Id("S1"),
       Reviewer.Skeptic,
-      Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("date"),
       Finding.Where("Intro"),
       Finding.Quote(""),
       Finding.Problem("the date is wrong"),
       Finding.Fix("")
     )
-    val m = Merged(Merged.Round(1), Verdict.Major, List(s1), None, Nil, Nil)
+    val m = Merged(Merged.Round(1), domain.research.workflows.Verdict.Major, List(s1), None, Nil, Nil)
     val bc = BodyCorpus(_.value == "a2019_tin", _.value == "a2019_tin", _ => Nil)
     def problems(a: FixerAnswer) =
-      checkFix(
-        a,
+      a.checkFix(
         m,
         Slug("tin"),
         good,
@@ -463,7 +468,10 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         _ => Some(record),
         minRatio,
         last = LastRound(false)
-      ).left.toOption.get.map(_.sentence)
+      ).left
+        .toOption
+        .get
+        .map(_.sentence)
     val nullText = problems(
       FixerAnswer(
         List(EditAnswer(Op.Replace, EditAnswer.Anchor("by sea"), None)),
@@ -511,7 +519,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     Finding(
       Finding.Id("R1"),
       Reviewer.Rules,
-      Severity.Major,
+      domain.research.workflows.Severity.Major,
       Finding.Kind("term"),
       Finding.Where("Intro"),
       Finding.Quote("Tin reached the Aegean"),
@@ -523,11 +531,11 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   private var noCheckNote: CheckAnswer.Note = scala.compiletime.uninitialized
   private var noWontFixId: WontFixAnswer.Id = scala.compiletime.uninitialized
   private var noWontFixReason: ReviewArticle.Rationale = scala.compiletime.uninitialized
-  private var noWorkDoi: PlanGoal.WorkAnswer.Doi = scala.compiletime.uninitialized
+  private var noWorkDoi: PlanAnswer.WorkAnswer.Doi = scala.compiletime.uninitialized
 
   test("check: an empty or null id, and a not-fixed check with no note, fail; a fixed check's note stays optional"):
     def problems(c: CheckAnswer) =
-      checkChecks(Reviewer.Rules, ledgerPrior, List(c), last = LastRound(false))._2.map(_.sentence)
+      Reviewer.Rules.checkChecks(ledgerPrior, List(c), last = LastRound(false))._2.map(_.sentence)
     assert(
       problems(
         CheckAnswer(
@@ -590,7 +598,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
 
   test("recheck: a not-fixed check with no note, or a finding with no where, fails; empty lessons are dropped"):
     def recheck(a: RecheckAnswer) =
-      checkRecheck(Reviewer.Rules, a, ledgerPrior, CheckRecheckEdited(""), NoEvidence, last = CheckRecheckLast(false))
+      Reviewer.Rules.checkRecheck(a, ledgerPrior, CheckRecheckEdited(""), NoEvidence, last = CheckRecheckLast(false))
     val noNote =
       recheck(
         RecheckAnswer(
@@ -632,28 +640,32 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
     val r1 = Finding(
       Finding.Id("R1"),
       Reviewer.Rules,
-      Severity.Minor,
+      domain.research.workflows.Severity.Minor,
       Finding.Kind("language"),
       Finding.Where("Intro"),
       Finding.Quote(""),
       Finding.Problem("wordy"),
       Finding.Fix("")
     )
-    val m = Merged(Merged.Round(1), Verdict.Minor, List(r1), None, Nil, Nil)
+    val m = Merged(Merged.Round(1), domain.research.workflows.Verdict.Minor, List(r1), None, Nil, Nil)
     val bc = BodyCorpus(_.value == "a2019_tin", _.value == "a2019_tin", _ => Nil)
     def problems(w: WontFixAnswer) =
-      checkFix(
-        FixerAnswer(Nil, Nil, Nil, Nil, FixerAnswer.Notes(""), wontFix = List(w)),
-        m,
-        Slug("tin"),
-        good,
-        Snapshot.Kind("concept"),
-        bc,
-        _.value == "a2019_tin",
-        _ => Some(record),
-        minRatio,
-        last = LastRound(false)
-      ).left.toOption.get.map(_.sentence)
+      FixerAnswer(Nil, Nil, Nil, Nil, FixerAnswer.Notes(""), wontFix = List(w))
+        .checkFix(
+          m,
+          Slug("tin"),
+          good,
+          Snapshot.Kind("concept"),
+          bc,
+          _.value == "a2019_tin",
+          _ => Some(record),
+          minRatio,
+          last = LastRound(false)
+        )
+        .left
+        .toOption
+        .get
+        .map(_.sentence)
     assert(
       problems(WontFixAnswer(WontFixAnswer.Id(""), ReviewArticle.Rationale("wordy, but exact"))).contains(
         "a won't-fix with no id — give the id of the minor finding you decline"
@@ -673,16 +685,17 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   // ── plan-goal and the acquisition sweep ───────────────────────────────────────────────────────
 
   test("plan: an empty rationale, sub-goal title or query, or a null DOI fails"):
-    import PlanGoal.*
-    val caps = Caps(Caps.SubGoals(3), Caps.Queries(3), Caps.Works(3), Caps.QueryChars(80))
-    def problems(a: PlanAnswer) = check(
-      a,
-      domain.automation.Goal.Slug("g"),
-      _ => false,
-      Set.empty,
-      caps,
-      last = LastRound(false)
-    ).left.toOption.get
+    val caps = PlanAnswer.Caps(
+      PlanAnswer.Caps.SubGoals(3),
+      PlanAnswer.Caps.Queries(3),
+      PlanAnswer.Caps.Works(3),
+      PlanAnswer.Caps.QueryChars(80)
+    )
+    def problems(a: PlanAnswer) = a
+      .check(domain.automation.Goal.Slug("g"), _ => false, Set.empty, caps, last = PlanAnswer.LastRound(false))
+      .left
+      .toOption
+      .get
     assertEquals(
       problems(PlanAnswer(PlanAnswer.Rationale(""), Nil, List(PlanAnswer.Queries("bronze age tin")), Nil))
         .map(_.sentence),
@@ -692,7 +705,9 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       problems(
         PlanAnswer(
           PlanAnswer.Rationale("why"),
-          List(SubGoalAnswer(SubGoalAnswer.Slug("tin-trade"), SubGoalAnswer.Title(""))),
+          List(
+            PlanAnswer.SubGoalAnswer(PlanAnswer.SubGoalAnswer.Slug("tin-trade"), PlanAnswer.SubGoalAnswer.Title(""))
+          ),
           Nil,
           Nil
         )
@@ -710,7 +725,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
           PlanAnswer.Rationale("why"),
           Nil,
           Nil,
-          List(WorkAnswer(noWorkDoi, WorkRationale("x")))
+          List(PlanAnswer.WorkAnswer(noWorkDoi, WorkRationale("x")))
         )
       )
         .exists(_.sentence.contains("is not a DOI"))

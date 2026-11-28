@@ -3,9 +3,9 @@ package web.library
 
 import com.histmersion.api.personal.{Bookmark, Note, PersonalMarkdown, ReadMark, Target, UnreadRow}
 import com.histmersion.api.ItemKind
-import com.histmersion.api.YearFmt
 import com.histmersion.web.marks.Ago
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Year
 
 /** One row of a shelf of My library, as it reads: what it points at, its name, what it is (`kind`), the line under it
   * (where it is, a note's first line, the authors), when, and whether it is a source or an article not marked read.
@@ -86,7 +86,7 @@ object ShelfRow:
       List(
         TableRow.authors(u.authors.map(_.value)),
         u.year.fold("")(_.toString),
-        YearFmt.period(u.periodStart, u.periodEnd)
+        Year.period(u.periodStart, u.periodEnd)
       )
         .filter(_.nonEmpty)
         .mkString(" · "),

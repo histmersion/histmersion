@@ -1,6 +1,12 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.library.acquisition.LastCheck
+import com.histmersion.domain.library.acquisition.Cadence
+import com.histmersion.domain.library.acquisition.Held
+import com.histmersion.domain.library.acquisition.Action
+import com.histmersion.domain.library.acquisition.Recheckable
+
 import com.histmersion.util.problem.Text.{line, sentence, sentences}
 import com.histmersion.util.problem.{Problem, Problems}
 import hearth.kindlings.optics.syntax.*
@@ -41,56 +47,9 @@ object AcquireRecheck:
     * re-check may take, and the hours after which a check that got no answer is due again.
     */
   export LastCheck.Generation as IsDueGeneration
-  export Settings.{EveryDays as IsDueEveryDays, RetryHours as IsDueRetryHours}
+  export Cadence.{EveryDays as IsDueEveryDays, RetryHours as IsDueRetryHours}
   export LastCheck.Generation as NextDueGeneration
-  export Settings.{EveryDays as NextDueEveryDays, RetryHours as NextDueRetryHours}
-
-  final case class Settings(
-      enabled: Settings.Enabled,
-      everyDays: Settings.EveryDays,
-      perDay: Settings.PerDay,
-      perPass: Settings.PerPass,
-      passMinutes: Settings.PassMinutes,
-      sharePercent: Settings.SharePercent,
-      retryHours: Settings.RetryHours
-  )
-
-  object Settings:
-    type Enabled = Enabled.T
-    object Enabled extends Newtype[Boolean, Pure]
-    type EveryDays = EveryDays.T
-    object EveryDays extends Newtype[Int, Pure]:
-      extension (d: EveryDays) def after(at: Instant): Instant = at.plusSeconds(math.max(1, d.value).toLong * 86400L)
-    type PerDay = PerDay.T
-    object PerDay extends Newtype[Int, Pure]
-    type PerPass = PerPass.T
-    object PerPass extends Newtype[Int, Pure]
-    type PassMinutes = PassMinutes.T
-    object PassMinutes extends Newtype[Int, Pure]
-    type SharePercent = SharePercent.T
-    object SharePercent extends Newtype[Int, Pure]
-    type RetryHours = RetryHours.T
-    object RetryHours extends Newtype[Int, Pure]:
-      extension (h: RetryHours) def after(at: Instant): Instant = at.plusSeconds(math.max(1, h.value).toLong * 3600L)
-
-  /** An item's last check: when, under which fetcher generation ([[generation]]), and whether it got no answer
-    * ([[Outcome.Failed]]: a rate limit, an upstream down).
-    */
-  final case class LastCheck(
-      at: Instant,
-      generation: LastCheck.Generation,
-      failed: LastCheck.Failed = LastCheck.Failed(false)
-  )
-
-  object LastCheck:
-    type Generation = Generation.T
-    object Generation extends Newtype[String, Pure]
-    type Failed = Failed.T
-    object Failed extends Newtype[Boolean, Pure]:
-      def of(attempt: library.acquisition.AcquireAttempt): Failed = Failed(attempt.failed)
-
-    def of(attempt: library.acquisition.AcquireAttempt): LastCheck =
-      LastCheck(attempt.at, attempt.generation, Failed.of(attempt))
+  export Cadence.{EveryDays as NextDueEveryDays, RetryHours as NextDueRetryHours}
 
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
@@ -99,8 +58,8 @@ object AcquireRecheck:
   def dueAt(
       last: Option[LastCheck],
       generation: LastCheck.Generation,
-      everyDays: Settings.EveryDays,
-      retryHours: Settings.RetryHours
+      everyDays: Cadence.EveryDays,
+      retryHours: Cadence.RetryHours
   ): Option[Instant] =
     last
       .filter(_.generation == generation)
@@ -109,35 +68,14 @@ object AcquireRecheck:
         else l.at.plusSeconds(math.max(1, everyDays.value).toLong * 86400L)
       )
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def isDue(
       last: Option[LastCheck],
-      generation: AcquireRecheck.IsDueGeneration,
-      everyDays: AcquireRecheck.IsDueEveryDays,
-      retryHours: AcquireRecheck.IsDueRetryHours,
+      generation: IsDueGeneration,
+      everyDays: IsDueEveryDays,
+      retryHours: IsDueRetryHours,
       now: Instant
   ): Boolean =
     dueAt(last, generation, everyDays, retryHours).forall(!_.isAfter(now))
-
-  /** What the corpus holds under an item's DOI: the source, and whether it has its original (a converted body or a
-    * stored file).
-    */
-  final case class Held(citekey: Citekey, hasOriginal: Held.HasOriginal)
-
-  object Held:
-    type HasOriginal = HasOriginal.T
-    object HasOriginal extends Newtype[Boolean, Pure]
-
-  /** What a pass does with one open item. */
-  enum Action derives CanEqual:
-    /** No DOI in its text: nothing to look up. */
-    case NoDoi
-
-    /** The corpus has the work with its original: the item is done. */
-    case Close(citekey: Citekey)
-
-    /** Try the legal chain — into the metadata-only source `into` when there is one (its enrichment stays). */
-    case Fetch(doi: Doi, into: Option[Citekey])
 
   /** The first DOI an item names decides (an item is one work). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -149,121 +87,20 @@ object AcquireRecheck:
           case Some(h) if h.hasOriginal.value => Action.Close(h.citekey)
           case other                          => Action.Fetch(doi, other.map(_.citekey))
 
-  /** What a check found, as stored (`acquire_attempts.outcome`). */
-  enum Outcome(val wire: Outcome.Wire) derives CanEqual:
-    /** In the corpus with its original: closed. */
-    case Closed extends Outcome(Outcome.Wire("closed"))
-
-    /** A legal copy found and handed to the conversion; the conversion closes the item. */
-    case Fetched extends Outcome(Outcome.Wire("fetched"))
-
-    /** The legal chain has no copy (yet). */
-    case NoCopy extends Outcome(Outcome.Wire("no-copy"))
-
-    /** The check did not get to an answer (an upstream down, the converter refused): tried again when due. */
-    case Failed extends Outcome(Outcome.Wire("failed"))
-
-  object Outcome:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
-
-    def of(o: library.acquisition.AcquireAttempt.Outcome): Option[Outcome] = o match
-      case library.acquisition.AcquireAttempt.Outcome.Closed(_)    => Some(Closed)
-      case library.acquisition.AcquireAttempt.Outcome.Fetched(_)   => Some(Fetched)
-      case library.acquisition.AcquireAttempt.Outcome.NoCopy       => Some(NoCopy)
-      case library.acquisition.AcquireAttempt.Outcome.Failed(_)    => Some(Failed)
-      case library.acquisition.AcquireAttempt.Outcome.Legacy(_, _) => None
-
   /** A failed legal ingest: no legal copy, or something else in the way. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def failure(message: Problems): Outcome =
-    if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
+  def failure(message: Problems): domain.library.acquisition.Upshot =
+    if IngestBacklog.isNoLegalCopy(message) then domain.library.acquisition.Upshot.NoCopy
+    else domain.library.acquisition.Upshot.Failed
 
   /** What each fetcher answered when a legal ingest found no copy ([[Problem.NotFound.Copy]]'s answers). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def answers(message: Problems): Vector[Problem.NotFound.Answer] =
     message.toVector.collectFirst { case Problem.NotFound.Copy(_, said) => said }.getOrElse(Vector.empty)
 
-  /** Why an item carries what it carries after one attempt: the account of the re-check, not a failure. */
-  enum Rationale:
-    case Closed(day: LocalDate, citekey: Citekey)
-    case Fetched(day: LocalDate, source: library.acquisition.AcquireAttempt.Outcome.Source)
-    case NoCopy(day: LocalDate, answers: Vector[Problem.NotFound.Answer])
-    case Failed(day: LocalDate, why: Problems)
-    case Legacy(day: LocalDate, note: library.acquisition.AcquireAttempt.Outcome.LegacyNote)
-
-    /** The short reason an item carries, at most 500 characters: `checked 2026-10-27: no legal copy (unpaywall: no copy
-      * — none; …)`.
-      */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def said: String =
-      val text = this match
-        case Closed(day, citekey) =>
-          s"checked $day: in the corpus with its original as [[$citekey]] — closed"
-        case Fetched(day, source) =>
-          s"checked $day: a legal copy found ($source) — converting; the item closes once it is stored"
-        case NoCopy(day, answers) =>
-          s"checked $day: no legal copy" + (if answers.isEmpty then ""
-                                            else answers.map(_.line).mkString(" (", "; ", ")"))
-        case Failed(day, why) => s"checked $day: no answer (${why.sentences.mkString("; ")})"
-        case Legacy(_, note)  => s"$note"
-      text.take(500)
-
-  object Rationale:
-    type Said = Said.T
-    object Said extends Newtype[String, Pure]:
-      def of(rationale: Rationale): Said = Said(rationale.said)
-
-    def of(attempt: library.acquisition.AcquireAttempt): Rationale =
-      val day = LocalDate.ofInstant(attempt.at, ZoneOffset.UTC)
-      attempt.outcome match
-        case library.acquisition.AcquireAttempt.Outcome.Closed(ck)      => Closed(day, ck)
-        case library.acquisition.AcquireAttempt.Outcome.Fetched(source) => Fetched(day, source)
-        case library.acquisition.AcquireAttempt.Outcome.NoCopy          => NoCopy(day, attempt.answers)
-        case library.acquisition.AcquireAttempt.Outcome.Failed(why)     => Failed(day, why)
-        case library.acquisition.AcquireAttempt.Outcome.Legacy(note, _) => Legacy(day, note)
-
-  /** What the shared daily legal ingest allowance leaves the re-check (the autopilot's: absent when it is off or has no
-    * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched
-    * today.
-    */
-  final case class Shared(
-      left: Shared.Left,
-      cap: Shared.Cap,
-      backlogPending: Shared.BacklogPending,
-      fetchedToday: Shared.FetchedToday
-  )
-
-  object Shared:
-    type Left = Left.T
-    object Left extends Newtype[Int, Pure]
-    type Cap = Cap.T
-    object Cap extends Newtype[Int, Pure]
-    type BacklogPending = BacklogPending.T
-    object BacklogPending extends Newtype[Int, Pure]
-    type FetchedToday = FetchedToday.T
-    object FetchedToday extends Newtype[Int, Pure]
-
-  /** How many items this pass may try: within the day's cap (after `checkedToday`) and the pass's; and, under a shared
-    * allowance, within what the watchers' backlog leaves of it (the backlog and the watchers' new finds come first) and
-    * within the re-check's share of the cap — each try may fetch one work.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def allowance(s: Settings, checkedToday: CheckedToday, shared: Option[Shared]): Allowance =
-    val own = math.min(math.max(0, s.perDay.value) - math.max(0, checkedToday.value), math.max(0, s.perPass.value))
-    val room = shared.fold(Int.MaxValue) { sh =>
-      val share = math.max(0, sh.cap.value) * math.max(0, math.min(100, s.sharePercent.value)) / 100
-      math.min(sh.left.value - math.max(0, sh.backlogPending.value), share - math.max(0, sh.fetchedToday.value))
-    }
-    Allowance(math.max(0, math.min(own, room)))
-
   /** Is a pass due: never run (since the start), or `passMinutes` passed since the last. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def passDue(last: Option[Instant], passMinutes: Settings.PassMinutes, now: Instant): Boolean =
+  def passDue(last: Option[Instant], passMinutes: Cadence.PassMinutes, now: Instant): Boolean =
     last.forall(l => !l.plusSeconds(math.max(1, passMinutes.value).toLong * 60L).isAfter(now))
 
   /** The fetcher generation: one short digest of what the legal chain is — its fetchers in order, and each one's plugin
@@ -277,112 +114,17 @@ object AcquireRecheck:
     )
 
   /** The earliest time one of the checked items falls due again (None: none waits). */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def nextDue(
       checks: List[LastCheck],
-      generation: AcquireRecheck.NextDueGeneration,
-      everyDays: AcquireRecheck.NextDueEveryDays,
-      retryHours: AcquireRecheck.NextDueRetryHours
+      generation: NextDueGeneration,
+      everyDays: NextDueEveryDays,
+      retryHours: NextDueRetryHours
   ): Option[Instant] =
     checks.flatMap(c => dueAt(Some(c), generation, everyDays, retryHours)).minOption
 
-  // ── the re-check job ─────────────────────────────────────────────────────────────────────────────
-
-  /** An open item that names a DOI, as a pass or a job orders it: its id and its last check. */
-  final case class Candidate(item: Candidate.Item, last: Option[LastCheck])
-
-  object Candidate:
-    type Item = Item.T
-    object Item extends Newtype[Int, Pure]
-
   /** The order items are tried in: the never-checked first, then the oldest check, then the item id. */
-  def order(candidates: List[Candidate]): List[Candidate] =
+  def order(candidates: List[Recheckable]): List[Recheckable] =
     candidates.sortBy(c => (c.last.isDefined, c.last.fold(0L)(_.at.toEpochMilli), c.item))
-
-  /** A re-check JOB: a person's pass over many items, run past the request. `all` = every open item that names a DOI,
-    * due or not and past every cap (`upTo` unused); else at most `upTo` due ones (the caps as they stood when it
-    * started). `since` = when it first started: an item checked since then was checked by it, so a job resumed after a
-    * restart or a drain skips it.
-    */
-  final case class JobPlan(all: JobPlan.All, upTo: JobPlan.UpTo, since: Instant)
-
-  object JobPlan:
-    type All = All.T
-    object All extends Newtype[Boolean, Pure]
-    type UpTo = UpTo.T
-    object UpTo extends Newtype[Int, Pure]
 
   /** Was this item checked by a job that started at `since` (or since then by anything else)? */
   def checkedSince(last: Option[LastCheck], since: Instant): Boolean = last.exists(l => !l.at.isBefore(since))
-
-  /** What a job — or its resumption — still tries, in [[order]]: the items not checked since it started; for a capped
-    * job only the `due` ones, and no more than its `upTo` less the `triedByJob` already.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def jobPicks(
-      plan: JobPlan,
-      candidates: List[Candidate],
-      triedByJob: Tally.Tried,
-      due: Candidate => Boolean
-  ): List[Candidate] =
-    val left = order(candidates.filterNot(c => checkedSince(c.last, plan.since)))
-    if plan.all.value then left else left.filter(due).take(math.max(0, plan.upTo.value - math.max(0, triedByJob.value)))
-
-  /** What a job did so far: of the `total` items it tries, how many it `tried`, and what they found; the last item that
-    * got no answer, why (the job goes on with the next).
-    */
-  final case class Tally(
-      total: Tally.Total,
-      tried: Tally.Tried = Tally.Tried(0),
-      closed: Tally.Closed = Tally.Closed(0),
-      fetched: Tally.Fetched = Tally.Fetched(0),
-      noCopy: Tally.NoCopy = Tally.NoCopy(0),
-      failed: Tally.Failed = Tally.Failed(0),
-      lastFailure: Option[Detail] = None
-  ):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def add(outcome: Outcome, detail: Detail): Tally = outcome match
-      case Outcome.Closed  => this.modify(_.closed).setTo(Tally.Closed(closed.value + 1))
-      case Outcome.Fetched =>
-        this
-          .modify(_.tried)
-          .setTo(Tally.Tried(tried.value + 1))
-          .modify(_.fetched)
-          .setTo(Tally.Fetched(fetched.value + 1))
-      case Outcome.NoCopy =>
-        this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.noCopy).setTo(Tally.NoCopy(noCopy.value + 1))
-      case Outcome.Failed =>
-        this
-          .modify(_.tried)
-          .setTo(Tally.Tried(tried.value + 1))
-          .modify(_.failed)
-          .setTo(Tally.Failed(failed.value + 1))
-          .modify(_.lastFailure)
-          .setTo(Some(detail))
-
-  object Tally:
-
-    type Total = Total.T
-    object Total extends Newtype[Int, Pure]
-    type Tried = Tried.T
-    object Tried extends Newtype[Int, Pure]
-    type Closed = Closed.T
-    object Closed extends Newtype[Int, Pure]
-    type Fetched = Fetched.T
-    object Fetched extends Newtype[Int, Pure]
-    type NoCopy = NoCopy.T
-    object NoCopy extends Newtype[Int, Pure]
-    type Failed = Failed.T
-    object Failed extends Newtype[Int, Pure]
-
-  /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def progressLine(t: Tally): ProgressLine =
-    val why =
-      t.lastFailure.map(_.value.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)
-    ProgressLine(
-      s"${t.tried}/${t.total} items · ${t.closed} closed · ${t.fetched} fetched · ${t.noCopy} no legal copy · " +
-        s"${t.failed} failed" + why.fold("")(w => s" ($w)")
-    )

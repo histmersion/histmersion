@@ -1,5 +1,32 @@
 package com.histmersion
 package domain.automation.scheduler
+
+import com.histmersion.domain.automation.scheduler.Block
+import com.histmersion.api.automation.Stall
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.domain.automation.scheduler.Decision
+import com.histmersion.domain.automation.goals.Stage
+import com.histmersion.domain.automation.autopilot.NextFacts
+import com.histmersion.domain.automation.scheduler.Candidate
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.automation.scheduler.Capacity
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.agents.Billing
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.planquota.RefreshTrigger
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.StrategyLine
+import com.histmersion.api.automation.agentscheduler.PoolUse
+import com.histmersion.api.automation.agentscheduler.TypeLine
+import com.histmersion.api.automation.agentscheduler.Started
+import com.histmersion.domain.automation.scheduler.Scored
+import com.histmersion.domain.automation.scheduler.Wait
+import com.histmersion.api.automation.agentscheduler.WhyInfo
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -11,15 +38,14 @@ import com.histmersion.domain.automation.managers.{ManagerDefaultsViews, Manager
 import com.histmersion.api.Write
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Agents.{ApprovalState, Billing, PauseReason, Pipeline, Role, RunState}
+import com.histmersion.api.automation.Agents.{ApprovalState, Pipeline, Role, RunState}
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.SchedulerPolicy.*
 import com.histmersion.api.automation.AgentScheduler.*
 
 import java.time.Instant
 import javax.sql.DataSource
-import com.histmersion.api.automation.{Agents, AgentScheduler, ApprovalDigest, PlanQuota, Queue, Stalls}
+import com.histmersion.api.automation.{Agents, AgentScheduler, ApprovalDigest, PlanQuota, Queue}
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
@@ -39,12 +65,12 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @tolerated(LintRule.Repository, "pending G11 (a repository stays inside its feature)")
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-private given waitWhyToStall: Transformer[SchedulerPolicy.Block.Why, Stalls.SchedWait.Why] =
+private given waitWhyToStall: Transformer[Block.Why, Stall.SchedWait.Why] =
   why =>
     why match
-      case SchedulerPolicy.Block.Why.Budget(cap) => Stalls.SchedWait.Why.Budget(Stalls.SchedWait.Detail(cap.render))
-      case SchedulerPolicy.Block.Why.Starved(c)  => Stalls.SchedWait.Why.Starved(Stalls.SchedWait.Detail(s"$c"))
-      case other                                 => Stalls.SchedWait.Why.Other(Stalls.SchedWait.Detail(other.render))
+      case Block.Why.Budget(cap) => Stall.SchedWait.Why.Budget(Stall.SchedWait.Detail(cap.render))
+      case Block.Why.Starved(c)  => Stall.SchedWait.Why.Starved(Stall.SchedWait.Detail(s"$c"))
+      case other                 => Stall.SchedWait.Why.Other(Stall.SchedWait.Detail(other.render))
 
 /** The central agent scheduler (docs/research-goal-advancement.md "As built"): the managers PRODUCE pending items; once
   * per managers' tick [[pass]] reads them all — with each goal's priority and age, the plan pools each would draw on,
@@ -71,19 +97,25 @@ final class SchedulerService(
 
   /** The model a manager's override names for `role`, if any. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def modelOf(over: List[Agents.ModelOverride], role: Role): Option[AgentsControllers.ModelName] =
+  private def modelOf(over: List[ModelOverride], role: Role): Option[AgentsControllers.ModelName] =
     over.find(o => Role.parse(o.role).contains(role)).map(o => AgentsControllers.ModelName(o.model.value))
 
   /** The settings in effect now. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def settings: Settings = SchedulerPolicy.settings(
+  def settings: domain.automation.scheduler.Settings = SchedulerPolicy.settings(
     ManagerDefaultsViews.scheduler(cfg.scheduler),
     chosen.map(c => SchedulerPolicy.StrategyName(c._1.value))
   )
 
   /** One pass as shown: when, whether it was dry, its inputs and its decision. */
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-  final private case class Snapshot(at: Instant, dry: Boolean, in: Inputs, s: Settings, d: Decision)
+  final private case class Snapshot(
+      at: Instant,
+      dry: Boolean,
+      in: Inputs,
+      s: domain.automation.scheduler.Settings,
+      d: Decision
+  )
 
   /** The last real pass (a `var`: the supervisor's tick writes it, the status reads it). */
   @volatile private var last: Option[Snapshot] = None
@@ -108,9 +140,10 @@ final class SchedulerService(
         f.slug -> GoalInfo(
           f.priority.value + (if f.pinned.value then PinBoost else 0),
           instantOf(f.createdAt.value),
-          !GoalFocus.finished(f.status) && GoalFocus
-            .stage(f, GoalFocus.Settings.MinSources(agents.sourcesToPlan.value)) == GoalFocus.Stage.Gathering,
-          AutopilotPolicy
+          !GoalFocus.finished(f.status) && f.stage(
+            domain.automation.goals.Thresholds.MinSources(agents.sourcesToPlan.value)
+          ) == Stage.Gathering,
+          NextFacts
             .articlesInProgress(
               f.unreviewed,
               f.compileOpen
@@ -121,7 +154,7 @@ final class SchedulerService(
       .toMap
 
   /** The inputs of one pass: the candidates (with their manager and item), the resources. */
-  final case class Inputs(cands: List[Candidate], items: Map[Candidate.Id, (ManagerInfo, ManagerItem)], res: Resources)
+  final case class Inputs(cands: List[Candidate], items: Map[Candidate.Id, (ManagerInfo, ManagerItem)], res: Capacity)
 
   /** Why nothing may start for any manager now (a spend cap reached), if so. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -143,11 +176,11 @@ final class SchedulerService(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def poolIds(
-      over: List[Agents.ModelOverride],
+      over: List[ModelOverride],
       now: Instant,
       pipelines: List[Pipeline],
       choose: ModelPicker.Choose
-  ): Either[Block.Chain, List[PlanQuota.PoolId]] =
+  ): Either[Block.Chain, List[PoolId]] =
     val roles = pipelines.flatMap(_.roles).distinct
     val picks = roles.map(r => r -> choose(r, modelOf(over, r), PlanQuotaRepo.EpochMillis(now.toEpochMilli)))
     picks.collectFirst { case (r, Left(f)) => (r, f) } match
@@ -166,10 +199,10 @@ final class SchedulerService(
         Right(if pools.nonEmpty && plans.forall(_.isInstanceOf[Billing.Plan]) then pools else Nil)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def poolCap(p: PlanQuota.PoolId): Int =
+  private def poolCap(p: PoolId): Int =
     val calls = p match
-      case PlanQuota.PoolId.ClaudePlan  => cfg.quota.claudePlan.maxCallsInFlight.value
-      case PlanQuota.PoolId.ChatgptPlan => cfg.quota.chatgptPlan.maxCallsInFlight.value
+      case PoolId.ClaudePlan  => cfg.quota.claudePlan.maxCallsInFlight.value
+      case PoolId.ChatgptPlan => cfg.quota.chatgptPlan.maxCallsInFlight.value
     math.max(1, calls) * math.max(1, cfg.scheduler.poolOvercommit.value)
 
   /** What one pass reads: every due pending item of `ms` (the active managers that may start runs) at `now`, the goals,
@@ -214,11 +247,11 @@ final class SchedulerService(
         if items.exists(i => i.kind.value == ArticleReview || i.kind.value == ProposeArticles) then
           agents.managerStore
             .openKeys(m.id)
-            .map((k, t) => (Item.Kind(k.value), t.transformInto[ManagerPolicy.Candidate.Target]))
+            .map((k, t) => (Item.Kind(k.value), t.transformInto[domain.automation.managers.Assignable.Target]))
         else Nil
       val over = m.config.models.getOrElse(Nil)
       val memo =
-        collection.mutable.Map.empty[Pipeline, Either[Block.Chain, List[PlanQuota.PoolId]]] // per manager and pass
+        collection.mutable.Map.empty[Pipeline, Either[Block.Chain, List[PoolId]]] // per manager and pass
       items.map { i =>
         val itemKind = ManagerContext.ItemKind(i.kind.value)
         val pipeline = agents.managers.pipelineOf(itemKind)
@@ -229,7 +262,10 @@ final class SchedulerService(
           .map(d => Block(d))
           .orElse(pools.left.toOption.map(chain => Block(Block.Why.Starved(chain))))
           .orElse(
-            Option.when(ManagerPolicy.waitsFor(itemKind, i.target.transformInto[ManagerPolicy.Candidate.Target], open))(
+            Option.when(
+              ManagerPolicy
+                .waitsFor(itemKind, i.target.transformInto[domain.automation.managers.Assignable.Target], open)
+            )(
               Block(
                 Block.Why.WaitsFor(
                   if i.kind.value == ProposeArticles then Block.Precondition.Plan else Block.Precondition.Filter
@@ -277,16 +313,16 @@ final class SchedulerService(
       }
     }
     val runs = agents.managerStore.occupyingRuns()
-    val pipePools = collection.mutable.Map.empty[Pipeline, List[PlanQuota.PoolId]] // per pass
-    def poolsOfRun(w: Pipeline.Wire): List[PlanQuota.PoolId] =
+    val pipePools = collection.mutable.Map.empty[Pipeline, List[PoolId]] // per pass
+    def poolsOfRun(w: Pipeline.Wire): List[PoolId] =
       Pipeline
         .parse(w)
         .toList
         .flatMap(p => pipePools.getOrElseUpdate(p, poolIds(Nil, now, List(p), choose).getOrElse(Nil)))
-    val caps = ms.flatMap(m => m.config.maxRuns.map(r => m.id -> Resources.ManagerCapValue(r.value))).toMap
-    val res = Resources(
-      maxRuns = Resources.MaxRuns(cfg.maxConcurrentRuns.value),
-      occupied = Resources.Occupied(
+    val caps = ms.flatMap(m => m.config.maxRuns.map(r => m.id -> Capacity.ManagerCapValue(r.value))).toMap
+    val res = Capacity(
+      maxRuns = Capacity.MaxRuns(cfg.maxConcurrentRuns.value),
+      occupied = Capacity.Occupied(
         agents.jobRuns
           .count(
             Job.Kind.assume(Agents.JobKind),
@@ -297,26 +333,26 @@ final class SchedulerService(
           )
           .value
       ),
-      poolCap = PlanQuota.PoolId.values.toList
-        .map(p => Candidate.Pools(p.wire.value) -> Resources.PoolCapValue(poolCap(p)))
+      poolCap = PoolId.values.toList
+        .map(p => Candidate.Pools(p.wire.value) -> Capacity.PoolCapValue(poolCap(p)))
         .toMap,
       poolUsed = runs
         .flatMap((p, _) => poolsOfRun(p))
         .groupMapReduce(p => Candidate.Pools(p.wire.value))(_ => 1)(_ + _)
         .view
-        .mapValues(Resources.PoolUsedValue(_))
+        .mapValues(Capacity.PoolUsedValue(_))
         .toMap,
       managerCap = caps.map((id, cap) => Candidate.ManagerId(id.value) -> cap),
       managerUsed = caps.keys
-        .map(id => Candidate.ManagerId(id.value) -> Resources.ManagerUsedValue(agents.managerStore.running(id).value))
+        .map(id => Candidate.ManagerId(id.value) -> Capacity.ManagerUsedValue(agents.managerStore.running(id).value))
         .toMap,
-      gatheringUsed = Resources.GatheringUsed(
+      gatheringUsed = Capacity.GatheringUsed(
         runs.count(_._2.exists(g => gs.get(DomainGoal.Slug.assume(g.value)).exists(_.gathering)))
       ),
       stop = stop.orElse(budgetBlock()),
       recent = agents.managerStore
         .recentKinds(PageSize.assume(math.max(1, cfg.scheduler.shareWindow.value)))
-        .map(k => JobType.of(Candidate.Kind(k.value)))
+        .map(k => domain.automation.scheduler.JobType.of(Candidate.Kind(k.value)))
     )
     Inputs(cands, perManager.flatMap((m, is) => is.map(i => Candidate.Id(i.id.value) -> (m, i))).toMap, res)
 
@@ -343,16 +379,16 @@ final class SchedulerService(
   def refreshPlans(now: Instant)(using WritePermit): List[String] =
     val wanted = if agents.drain.draining then Set.empty[Candidate.Pools] else wantedPools()
     val autopilotOn = agents.autopilot.on
-    PlanQuota.PoolId.values.toList.flatMap { p =>
+    PoolId.values.toList.flatMap { p =>
       agents.pools
         .refreshOnSchedule(
           p,
-          PlanReadSchedule.AutopilotOn(autopilotOn),
-          PlanReadSchedule.Wanted(wanted.contains(Candidate.Pools(p.wire.value))),
+          ReadSchedule.AutopilotOn(autopilotOn),
+          ReadSchedule.Wanted(wanted.contains(Candidate.Pools(p.wire.value))),
           now
         )
         .toOption
-        .map(r => s"plan refresh ${p.wire} (${PlanQuota.RefreshTrigger.Schedule.wire}): ${r.text}")
+        .map(r => s"plan refresh ${p.wire} (${RefreshTrigger.Schedule.wire}): ${r.text}")
     }
 
   private def wantedPools(): Set[Candidate.Pools] =
@@ -407,8 +443,8 @@ final class SchedulerService(
     val res = snap.in.res
     SchedulerStatus(
       StrategyLine.Name(s.strategy.name.value),
-      if chosen.isDefined then AgentScheduler.SchedulerStatus.StrategyFrom("person")
-      else AgentScheduler.SchedulerStatus.StrategyFrom("config"),
+      if chosen.isDefined then SchedulerStatus.StrategyFrom("person")
+      else SchedulerStatus.StrategyFrom("config"),
       Strategies.all.map(x => StrategyLine(StrategyLine.Name(x.name.value), StrategyLine.Describe(x.describe))),
       Some(SchedulerStatus.At(snap.at.toString)),
       (if snap.dry then SchedulerStatus.Dry.Dry else SchedulerStatus.Dry.Live),
@@ -419,7 +455,7 @@ final class SchedulerService(
         .map((p, cap) =>
           PoolUse(PoolUse.Pool(p.value), PoolUse.Used(res.poolUsed.get(p).fold(0)(_.value)), PoolUse.Cap(cap.value))
         ),
-      JobType.values.toList.map(t =>
+      domain.automation.scheduler.JobType.values.toList.map(t =>
         TypeLine(
           TypeLine.JobType(t.wire.value),
           TypeLine.Label(t.label.value),
@@ -456,26 +492,26 @@ final class SchedulerService(
 
   /** The waiting items in the order shown: the ones in the order first (by place), then the rest. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def ordered(d: Decision): List[(Scored, SchedulerPolicy.Wait)] =
+  private def ordered(d: Decision): List[(Scored, Wait)] =
     val (inOrder, rest) = d.waiting.partition(_._2.position.value > 0)
     inOrder.sortBy(w => (w._2.position.value: Int)) ++ rest
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def wire(x: (Scored, SchedulerPolicy.Wait)): Waiting =
+  private def wire(x: (Scored, Wait)): api.automation.agentscheduler.Waiting =
     val (sc, w) = x
-    Waiting(
-      Waiting.Item(sc.c.id.value),
-      Waiting.Manager(sc.c.managerId.value),
-      Waiting.Kind(sc.c.kind.value),
-      Waiting.JobType(sc.c.jobType.wire.value),
-      Waiting.Target(sc.c.target.value),
+    api.automation.agentscheduler.Waiting(
+      api.automation.agentscheduler.Waiting.Item(sc.c.id.value),
+      api.automation.agentscheduler.Waiting.Manager(sc.c.managerId.value),
+      api.automation.agentscheduler.Waiting.Kind(sc.c.kind.value),
+      api.automation.agentscheduler.Waiting.JobType(sc.c.jobType.wire.value),
+      api.automation.agentscheduler.Waiting.Target(sc.c.target.value),
       sc.c.goal.map(g => Goal.Slug(g.value)),
-      Waiting.Priority(sc.effective.value),
-      Waiting.WaitedMinutes(sc.waitedMinutes.value),
-      Waiting.Code(w.code.value),
+      api.automation.agentscheduler.Waiting.Priority(sc.effective.value),
+      api.automation.agentscheduler.Waiting.WaitedMinutes(sc.waitedMinutes.value),
+      api.automation.agentscheduler.Waiting.Code(w.code.value),
       AgentScheduler.Rationale(w.why.render),
-      w.behind.map(b => Waiting.Behind(b.value)),
-      Waiting.Position(w.position.value)
+      w.behind.map(b => api.automation.agentscheduler.Waiting.Behind(b.value)),
+      api.automation.agentscheduler.Waiting.Position(w.position.value)
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -602,7 +638,7 @@ final class SchedulerService(
   def stalls(
       days: Option[AgentAutopilotConfig.StallDays] = None,
       now: Instant = Instant.now(agents.clock)
-  ): Stalls.StallReport =
+  ): Stall.StallReport =
     val n = math.max(0, days.fold(cfg.autopilot.stallDays.value)(_.value))
     val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(DomainGoal.Status.Wire(g.status.value)))
     val progress = agents.managerStore.lastProgress()
@@ -616,10 +652,10 @@ final class SchedulerService(
       .groupMap(_._1)(_._2)
     val snap = last.getOrElse(dry(now))
     val waits = snap.d.waiting.groupMap(_._1.c.goal)(x =>
-      Stalls.SchedWait(
-        Stalls.SchedWait.Code(x._2.code.value),
-        x._2.why.transformInto[Stalls.SchedWait.Why],
-        Stalls.SchedWait.Position(x._2.position.value)
+      Stall.SchedWait(
+        Stall.SchedWait.Code(x._2.code.value),
+        x._2.why.transformInto[Stall.SchedWait.Why],
+        Stall.SchedWait.Position(x._2.position.value)
       )
     )
     val stops = agents.focusStore.lastStops()
@@ -634,33 +670,33 @@ final class SchedulerService(
         (progress.get(Goal.Slug(g.slug.value)).map(_.value).toList :+ g.createdAt.value).flatMap(instantOf).maxOption
       val idle = last.map(t => java.time.Duration.between(t, now).toDays.toInt)
       val aps = (bySubj
-        .getOrElse(Some(ApprovalDigest.Open.Subject(g.slug.value)), Nil) ++ articles
+        .getOrElse(Some(api.automation.approvaldigest.Open.Subject(g.slug.value)), Nil) ++ articles
         .getOrElse(DomainGoal.Slug.assume(g.slug.value), Nil)
-        .flatMap(a => bySubj.getOrElse(Some(ApprovalDigest.Open.Subject(a.value)), Nil)))
-        .map(o => Stalls.Facts.ApprovalId(o.id.value) -> Stalls.Facts.ApprovalKind(o.kind.value))
+        .flatMap(a => bySubj.getOrElse(Some(api.automation.approvaldigest.Open.Subject(a.value)), Nil)))
+        .map(o => Stall.Facts.ApprovalId(o.id.value) -> Stall.Facts.ApprovalKind(o.kind.value))
         .distinct
-      Stalls.Facts(
-        Stalls.Facts.Slug(g.slug.value),
-        Stalls.Facts.Title(g.title.value),
-        Stalls.Facts.Status(g.status.value),
-        last.map(t => Stalls.Facts.LastProgress(t.toString)),
-        idle.map(Stalls.Facts.IdleDays(_)),
+      Stall.Facts(
+        Stall.Facts.Slug(g.slug.value),
+        Stall.Facts.Title(g.title.value),
+        Stall.Facts.Status(g.status.value),
+        last.map(t => Stall.Facts.LastProgress(t.toString)),
+        idle.map(Stall.Facts.IdleDays(_)),
         aps,
-        Stalls.Facts.PersonHeld(held.get(slug).fold(0)(_.value)),
-        paused.getOrElse(ManagerLight.Goal(g.slug.value), Nil).map(id => Stalls.Facts.Paused(id.value)),
-        (if draining then Stalls.Facts.Draining.Draining else Stalls.Facts.Draining.Running),
+        Stall.Facts.PersonHeld(held.get(slug).fold(0)(_.value)),
+        paused.getOrElse(ManagerLight.Goal(g.slug.value), Nil).map(id => Stall.Facts.Paused(id.value)),
+        (if draining then Stall.Facts.Draining.Draining else Stall.Facts.Draining.Running),
         waits.getOrElse(Some(Candidate.Goal(g.slug.value)), Nil),
-        stops.get(slug).map(w => Stalls.Facts.LastStop(s"$w")),
-        Stalls.Facts.Sources(sources.get(slug).fold(0)(_.value)),
-        (if sweeps.get(slug).exists(_.value.contains("no new candidates")) then Stalls.Facts.NoCandidates.NoCandidates
-         else Stalls.Facts.NoCandidates.HasCandidates),
-        Stalls.Facts.Open(
+        stops.get(slug).map(w => Stall.Facts.LastStop(s"$w")),
+        Stall.Facts.Sources(sources.get(slug).fold(0)(_.value)),
+        (if sweeps.get(slug).exists(_.value.contains("no new candidates")) then Stall.Facts.NoCandidates.NoCandidates
+         else Stall.Facts.NoCandidates.HasCandidates),
+        Stall.Facts.Open(
           List(seedId(Goal.Ref(g.slug.value)), watchId(Goal.Ref(g.slug.value))).flatMap(pace.get).map(_._1.value).sum
         ),
-        Stalls.Facts.Running(running.get(slug).fold(0)(_.value))
+        Stall.Facts.Running(running.get(slug).fold(0)(_.value))
       )
     }
-    Stalls.report(facts, Stalls.ReportDays(n), Stalls.ReportAt(now.toString))
+    Stall.report(facts, Stall.StallReport.Days(n), Stall.StallReport.At(now.toString))
 
   // ── a person's switch ──────────────────────────────────────────────────────────────────────────
 
@@ -701,7 +737,7 @@ final class SchedulerService(
     done.map { line =>
       last = None
       agents.workLists.logLine(
-        QueueAdd(Queue.QueueItem.Text(s"agent scheduler: $line".take(1000))),
+        QueueAdd(QueueItem.Text(s"agent scheduler: $line".take(1000))),
         domain.automation.workflows.InTreeWorkflow.Scheduler.creator
       )
       scribe.info(s"agent scheduler: $line")

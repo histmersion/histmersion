@@ -14,15 +14,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.{Citekey, Title}
 import com.histmersion.api.catalogue.Year
-import com.histmersion.api.research.{
-  Coverage,
-  CritiquePair,
-  CritiqueReason,
-  CritiqueRef,
-  Critiques,
-  CritiqueSide,
-  CritiqueState
-}
+import com.histmersion.api.research.{Coverage, CritiquePair, CritiqueReason, CritiqueRef, CritiqueSide, CritiqueState}
 import com.histmersion.api.research.Article
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.library.Filter
@@ -74,7 +66,7 @@ class CritiquesSuite extends munit.FunSuite:
         |""".stripMargin
     )
     assertEquals(
-      Critiques.paragraphs(body),
+      CritiquePair.paragraphs(body),
       List("One [[a]] and two [[b]].", "- item [[a]] more of it [[c]]", "- item [[b]]", "| x [[a]] | [[b]] |")
     )
 
@@ -123,7 +115,7 @@ class CritiquesSuite extends munit.FunSuite:
         Some(Activity.Actor("person"))
       )
     )
-    val pairs = Critiques.build(body, resolve, edges, reasons, refs)
+    val pairs = CritiquePair.build(body, resolve, edges, reasons, refs)
     assertEquals(
       pairs.map(p => (p.ref.wire, p.kinds, p.state, p.src.cited.cited, p.dst.cited.cited)),
       List(
@@ -145,7 +137,7 @@ class CritiquesSuite extends munit.FunSuite:
       )
     )
     // a reason on an addressed pair: the text wins
-    val both = Critiques.build(
+    val both = CritiquePair.build(
       body,
       resolve,
       edges.take(1),
@@ -157,7 +149,7 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(both.map(_.state), List(CritiqueState.Addressed))
     // an empty stored reason is no reason
     assertEquals(
-      Critiques
+      CritiquePair
         .build(
           body,
           resolve,
@@ -171,7 +163,7 @@ class CritiquesSuite extends munit.FunSuite:
 
   test("two kinds between the same two sources are one pair; both sides cited but apart is open"):
     val body = Article.Body("One [[a2000_x]].\n\nTwo [[b2001_y]].")
-    val pairs = Critiques.build(
+    val pairs = CritiquePair.build(
       body,
       selfResolve,
       List(
@@ -182,7 +174,7 @@ class CritiquesSuite extends munit.FunSuite:
     )
     assertEquals(pairs.map(p => (p.kinds, p.state)), List((List("refutes", "updates"), CritiqueState.Open)))
     assertEquals(
-      Critiques.find(pairs, CritiqueRef(Citekey("a2000_x"), Citekey("b2001_y"))).map(_.ref),
+      CritiquePair.find(pairs, CritiqueRef(Citekey("a2000_x"), Citekey("b2001_y"))).map(_.ref),
       Some(CritiqueRef(Citekey("b2001_y"), Citekey("a2000_x")))
     )
 
@@ -262,7 +254,7 @@ class CritiquesSuite extends munit.FunSuite:
         state = CritiqueState.Addressed
       )
     )
-    assertEquals(Critiques.ranked(ps).map(_.src.citekey), List("c6", "c4", "c3", "c1", "c5", "c2"))
+    assertEquals(CritiquePair.ranked(ps).map(_.src.citekey), List("c6", "c4", "c3", "c1", "c5", "c2"))
 
   test(
     "the skeptic's brief: the counts, the first N open pairs in full, the rest by name, the reasoned ones with their reasons"
@@ -286,7 +278,11 @@ class CritiquesSuite extends munit.FunSuite:
       reason = Some(Coverage.Rationale("off the point"))
     )
     val (text, shown) =
-      Critiques.promptText(open :+ why, maxOpen = Critiques.OpenLimit(2), maxReasoned = Critiques.ReasonedLimit(10))
+      CritiquePair.promptText(
+        open :+ why,
+        maxOpen = CritiquePair.OpenLimit(2),
+        maxReasoned = CritiquePair.ReasonedLimit(10)
+      )
     assertEquals(shown.map(_.src.citekey), List("c1", "c2"))
     assert(text.value.startsWith("6 pairs — 0 addressed, 1 reasoned, 5 open."), text)
     assert(text.value.contains("- c1>d: [[c1]] (not cited) challenges [[d]] (cited)"), text)
@@ -294,7 +290,7 @@ class CritiquesSuite extends munit.FunSuite:
     assert(text.value.contains("- r1>d: off the point"), text)
     // nothing open, nothing reasoned: nothing to say
     assertEquals(
-      Critiques.promptText(
+      CritiquePair.promptText(
         List(
           pair(
             Citekey("a"),
@@ -305,14 +301,14 @@ class CritiquesSuite extends munit.FunSuite:
             state = CritiqueState.Addressed
           )
         ),
-        Critiques.OpenLimit(5),
-        Critiques.ReasonedLimit(5)
+        CritiquePair.OpenLimit(5),
+        CritiquePair.ReasonedLimit(5)
       ),
       ("", Nil)
     )
     assert(
-      Critiques
-        .promptText(List(why), Critiques.OpenLimit(5), Critiques.ReasonedLimit(5))
+      CritiquePair
+        .promptText(List(why), CritiquePair.OpenLimit(5), CritiquePair.ReasonedLimit(5))
         ._1
         .value
         .contains("No pair is open.")
@@ -345,8 +341,8 @@ class CritiquesSuite extends munit.FunSuite:
         CritiqueSide.Cited.Cited
       )
     )
-    assertEquals(Critiques.methodPart(ps), Some("disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open"))
-    assertEquals(Critiques.methodPart(Nil), None)
+    assertEquals(CritiquePair.methodPart(ps), Some("disagreements checked: 3 pairs — 1 addressed, 1 reasoned, 1 open"))
+    assertEquals(CritiquePair.methodPart(Nil), None)
     val c = Coverage(
       Article.Slug("s"),
       Article.Filter(topics = List(Filter.Topics("t"))),
@@ -434,7 +430,7 @@ class CritiquesSuite extends munit.FunSuite:
       "# T\n\nOne [[a]] and\ntwo [[b]].\n\n- item [[a]]\n  more [[c]]\n| x [[a]] |\n\n## Not used\n\n- [[a]] — off\n\n## After\n\nLast [[b]]."
     )
     assertEquals(
-      Critiques.units(body).map(u => (u.from, u.to, u.text)),
+      CritiquePair.units(body).map(u => (u.from, u.to, u.text)),
       List(
         (2, 3, "One [[a]] and two [[b]]."),
         (5, 6, "- item [[a]] more [[c]]"),
@@ -442,8 +438,8 @@ class CritiquesSuite extends munit.FunSuite:
         (15, 15, "Last [[b]].")
       )
     )
-    assert(Critiques.together(body, CritiqueRef(Citekey("a"), Citekey("b")), selfResolve))
-    assert(!Critiques.together(body, CritiqueRef(Citekey("b"), Citekey("c")), selfResolve))
+    assert(CritiquePair.together(body, CritiqueRef(Citekey("a"), Citekey("b")), selfResolve))
+    assert(!CritiquePair.together(body, CritiqueRef(Citekey("b"), Citekey("c")), selfResolve))
 
   test(
     "criticised: the target of challenges/refutes/updates, the source of superseded_by; bearing = open on a cited work"
@@ -509,9 +505,9 @@ class CritiquesSuite extends munit.FunSuite:
         CritiqueSide.Cited.Uncited
       )
     )
-    assertEquals(Critiques.toRule(ps).map(_.ref.wire), List("a1>b1"))
+    assertEquals(CritiquePair.toRule(ps).map(_.ref.wire), List("a1>b1"))
     val (text, shown) =
-      Critiques.promptText(ps, maxOpen = Critiques.OpenLimit(10), maxReasoned = Critiques.ReasonedLimit(10))
+      CritiquePair.promptText(ps, maxOpen = CritiquePair.OpenLimit(10), maxReasoned = CritiquePair.ReasonedLimit(10))
     assertEquals(shown.map(_.ref.wire), List("a1>b1"))
     assert(
       text.value.contains(
@@ -519,5 +515,5 @@ class CritiquesSuite extends munit.FunSuite:
       ),
       text
     )
-    val (bg, none) = Critiques.promptText(ps.drop(2), Critiques.OpenLimit(10), Critiques.ReasonedLimit(10))
+    val (bg, none) = CritiquePair.promptText(ps.drop(2), CritiquePair.OpenLimit(10), CritiquePair.ReasonedLimit(10))
     assert(bg.value.contains("No open pair is on a work the article cites.") && none.isEmpty, bg)

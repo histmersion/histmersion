@@ -1,5 +1,26 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.managers.ManagerDetail
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.managers.ItemPage
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.managers.EventPage
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.agentscheduler.WhyInfo
+import com.histmersion.api.automation.approvaldigest.Digest
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.approvaldigest.BulkResult
 import com.histmersion.api.json.NewtypeCodecs.given
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
@@ -213,67 +234,67 @@ object ManagersApi:
       .in(jsonBody[EnqueueRequest])
       .out(jsonBody[EnqueueResult])
 
-  lazy val focus: PublicEndpoint[Unit, Api.Error, Autopilot.FocusInfo, Any] =
+  lazy val focus: PublicEndpoint[Unit, Api.Error, FocusInfo, Any] =
     endpoint.get
       .in("api" / "agents" / "autopilot" / "focus")
       .errorOut(Api.problemOut)
-      .out(jsonBody[Autopilot.FocusInfo])
+      .out(jsonBody[FocusInfo])
 
-  lazy val setFocus: PublicEndpoint[Autopilot.FocusSet, Api.Error, Autopilot.FocusInfo, Any] =
+  lazy val setFocus: PublicEndpoint[FocusSet, Api.Error, FocusInfo, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "focus")
       .errorOut(Api.problemOut)
-      .in(jsonBody[Autopilot.FocusSet])
-      .out(jsonBody[Autopilot.FocusInfo])
+      .in(jsonBody[FocusSet])
+      .out(jsonBody[FocusInfo])
 
   private lazy val sched = endpoint.in("api" / "agents" / "scheduler").errorOut(Api.problemOut)
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val scheduler: PublicEndpoint[Option[Scheduler.Limit], Api.Error, AgentScheduler.SchedulerStatus, Any] =
+  lazy val scheduler: PublicEndpoint[Option[Scheduler.Limit], Api.Error, SchedulerStatus, Any] =
     (sched.get
       .in(query[Option[Int]]("limit"))
-      .out(jsonBody[AgentScheduler.SchedulerStatus]))
+      .out(jsonBody[SchedulerStatus]))
       .mapIn[Option[Scheduler.Limit]]((refactorDecoded12: Option[Int]) =>
         (refactorDecoded12).map(refactorElement15 => Scheduler.Limit(refactorElement15))
       )((refactorEncoded12: Option[Scheduler.Limit]) =>
         (refactorEncoded12).map(refactorElement16 => (refactorElement16).value)
       )
 
-  lazy val setScheduler: PublicEndpoint[AgentScheduler.SchedulerSet, Api.Error, AgentScheduler.SchedulerStatus, Any] =
-    sched.post.in(jsonBody[AgentScheduler.SchedulerSet]).out(jsonBody[AgentScheduler.SchedulerStatus])
+  lazy val setScheduler: PublicEndpoint[SchedulerSet, Api.Error, SchedulerStatus, Any] =
+    sched.post.in(jsonBody[SchedulerSet]).out(jsonBody[SchedulerStatus])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val schedulerWhy: PublicEndpoint[ManagerInfo.Id, Api.Error, AgentScheduler.WhyInfo, Any] =
+  lazy val schedulerWhy: PublicEndpoint[ManagerInfo.Id, Api.Error, WhyInfo, Any] =
     (sched.get
       .in("why" / path[String]("item"))
-      .out(jsonBody[AgentScheduler.WhyInfo]))
+      .out(jsonBody[WhyInfo]))
       .mapIn[ManagerInfo.Id]((refactorDecoded13: String) => ManagerInfo.Id(refactorDecoded13))(
         (refactorEncoded13: ManagerInfo.Id) => (refactorEncoded13).value
       )
 
-  lazy val digest: PublicEndpoint[Unit, Api.Error, ApprovalDigest.Digest, Any] =
+  lazy val digest: PublicEndpoint[Unit, Api.Error, Digest, Any] =
     endpoint.get
       .in("api" / "agents" / "approvals" / "digest")
       .errorOut(Api.problemOut)
-      .out(jsonBody[ApprovalDigest.Digest])
+      .out(jsonBody[Digest])
 
-  lazy val decideAll: PublicEndpoint[ApprovalDigest.BulkDecide, Api.Error, ApprovalDigest.BulkResult, Any] =
+  lazy val decideAll: PublicEndpoint[BulkDecide, Api.Error, BulkResult, Any] =
     endpoint.post
       .in("api" / "agents" / "approvals" / "decide")
       .errorOut(Api.problemOut)
-      .in(jsonBody[ApprovalDigest.BulkDecide])
-      .out(jsonBody[ApprovalDigest.BulkResult])
+      .in(jsonBody[BulkDecide])
+      .out(jsonBody[BulkResult])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val stalls: PublicEndpoint[Option[Stalls.Limit], Api.Error, Stalls.StallReport, Any] =
+  lazy val stalls: PublicEndpoint[Option[Stall.Limit], Api.Error, Stall.StallReport, Any] =
     (endpoint.get
       .in("api" / "agents" / "stalls")
       .errorOut(Api.problemOut)
       .in(query[Option[Int]]("days"))
-      .out(jsonBody[Stalls.StallReport]))
-      .mapIn[Option[Stalls.Limit]]((refactorDecoded28: Option[Int]) =>
-        (refactorDecoded28).map(refactorElement35 => Stalls.Limit(refactorElement35))
-      )((refactorEncoded28: Option[Stalls.Limit]) =>
+      .out(jsonBody[Stall.StallReport]))
+      .mapIn[Option[Stall.Limit]]((refactorDecoded28: Option[Int]) =>
+        (refactorDecoded28).map(refactorElement35 => Stall.Limit(refactorElement35))
+      )((refactorEncoded28: Option[Stall.Limit]) =>
         (refactorEncoded28).map(refactorElement36 => (refactorElement36).value)
       )
 

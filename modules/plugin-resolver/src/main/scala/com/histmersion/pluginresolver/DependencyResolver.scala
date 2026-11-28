@@ -52,31 +52,28 @@ object DependencyResolver:
   private val Usage =
     "usage: pluginResolver resolve --kit <dir> --lib <dir> [--histmersion-repo <dir>] [--repo <url|dir>]… [--check] <plugin jar>…"
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def exitCode(args: List[DependencyResolver.ExitCodeArgs])(using console: Console): DependencyResolver.ExitCodeResult =
+  def exitCode(args: List[ExitCodeArgs])(using console: Console): ExitCodeResult =
     try run(args)(using console)
     catch
       case NonFatal(e) =>
         console.errorLine(s"pluginResolver: ${e.getClass.getSimpleName}: ${e.getMessage}")
-        DependencyResolver.ExitCodeResult(3)
+        ExitCodeResult(3)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def run(args: List[DependencyResolver.RunArgs])(using console: Console): DependencyResolver.RunResult = args match
+  def run(args: List[RunArgs])(using console: Console): RunResult = args match
     case refactorPattern :: rest if (refactorPattern.value == "resolve") =>
       parse(rest) match
-        case Left(e)  => (e.sentences :+ Usage).foreach(console.errorLine(_)); DependencyResolver.RunResult(1)
+        case Left(e)  => (e.sentences :+ Usage).foreach(console.errorLine(_)); RunResult(1)
         case Right(r) => resolve(r)(using console)
-    case _ => console.errorLine(Usage); DependencyResolver.RunResult(1)
+    case _ => console.errorLine(Usage); RunResult(1)
 
   /** Pure: the request the arguments make. */
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def parse(args: List[DependencyResolver.ParseArgs]): Either[Problems, ResolveRequest] =
+  def parse(args: List[ParseArgs]): Either[Problems, ResolveRequest] =
     @annotation.tailrec
     def loop(
-        rest: List[DependencyResolver.ParseLoopRest],
+        rest: List[ParseLoopRest],
         acc: ResolveRequest
     ): Either[Problems, ResolveRequest] = rest match
       case refactorPattern2 :: d :: t if (refactorPattern2.value == "--kit") =>
@@ -108,8 +105,7 @@ object DependencyResolver:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def resolve(r: ResolveRequest)(using console: Console): DependencyResolver.ResolveResult =
+  def resolve(r: ResolveRequest)(using console: Console): ResolveResult =
     val outcome = for
       server <- serverModules(r.kit)
       stored <- LibDirectory.storedRepositories(r.lib)
@@ -123,7 +119,7 @@ object DependencyResolver:
         .toLeft(())
     yield (server, stored)
     outcome match
-      case Left(e)                 => e.sentences.foreach(console.errorLine(_)); DependencyResolver.ResolveResult(3)
+      case Left(e)                 => e.sentences.foreach(console.errorLine(_)); ResolveResult(3)
       case Right((server, stored)) =>
         val named = (r.repositories ++ stored).distinct
         val remote = if named.nonEmpty then named else List(Coursier.central)
@@ -132,7 +128,7 @@ object DependencyResolver:
         try
           Coursier.pluginRepository(scratch, plugins) match
             case Left(e) =>
-              e.sentences.foreach(s => console.errorLine(s"refused: $s")); DependencyResolver.ResolveResult(2)
+              e.sentences.foreach(s => console.errorLine(s"refused: $s")); ResolveResult(2)
             case Right(roots) =>
               val local =
                 (Some(scratch) ++ r.histmersionRepo).map(d => RepositoryUrl.applyUnsafe(d.toUri.toString)).toList
@@ -142,7 +138,7 @@ object DependencyResolver:
                 case Right(deps) =>
                   if !(r.check).value then
                     LibDirectory.write(r.lib, deps, inputs(r.jars), (r.repositories ++ stored).distinct)
-                  DependencyResolver.ResolveResult(0)
+                  ResolveResult(0)
         finally deleteTree(scratch)
 
   private def resolveRoots(

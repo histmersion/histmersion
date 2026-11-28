@@ -1,5 +1,7 @@
 package com.histmersion
 package util.data.exchange
+
+import com.histmersion.util.text.Anchor
 import com.histmersion.util.problem.{Problem, Problems}
 import hearth.kindlings.optics.syntax.*
 
@@ -31,7 +33,6 @@ import com.histmersion.api.exchange.{Bundle, IssuePlace, MergeDecision, MergeIss
 import com.histmersion.Sha256
 import com.histmersion.api.library.{Citekey, Finding}
 import com.histmersion.api.research.ReviewGoal
-import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
@@ -156,7 +157,7 @@ object MergeState:
         .toMap,
       articleHistory = history,
       remembered = remembered,
-      chunkChars = TextAnchor.ChunkChars(chunkChars.value)
+      chunkChars = Anchor.ChunkChars(chunkChars.value)
     )
     rules.gather(es, localized, known, cfg)
 
@@ -245,7 +246,7 @@ object MergeState:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def bodies(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256])(using
       DbCon
-  ): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
+  ): Map[Bundle.Source.BodySha256, Anchor.Text] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -257,7 +258,7 @@ object MergeState:
             .run()
             .headOption
             .flatten
-            .map(b => s.bodySha256.get -> TextAnchor.Text(b))
+            .map(b => s.bodySha256.get -> Anchor.Text(b))
         }
         .toMap
       val there = wanted -- here.keySet
@@ -268,19 +269,19 @@ object MergeState:
   private def blobTexts(
       bundle: ByteSource,
       wanted: Set[Bundle.Source.BodySha256]
-  ): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
+  ): Map[Bundle.Source.BodySha256, Anchor.Text] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
-      def loop(acc: Map[Bundle.Source.BodySha256, TextAnchor.Text]): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
+      def loop(acc: Map[Bundle.Source.BodySha256, Anchor.Text]): Map[Bundle.Source.BodySha256, Anchor.Text] =
         if acc.size == wanted.size then acc
         else
           tar.next() match
             case Left(_) | Right(None) => acc
             case Right(Some(e))        =>
               Bundle.blobSha(e.name.value).map(s => Bundle.Source.BodySha256(s.value)).filter(wanted) match
-                case Some(sha) => loop(acc + (sha -> TextAnchor.Text(String(tar.readAll(), UTF_8))))
+                case Some(sha) => loop(acc + (sha -> Anchor.Text(String(tar.readAll(), UTF_8))))
                 case None      => loop(acc)
       loop(Map.empty)
     }

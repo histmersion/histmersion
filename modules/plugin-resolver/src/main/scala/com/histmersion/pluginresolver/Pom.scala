@@ -35,8 +35,7 @@ object Pom:
   val TextName: ElementName.type = ElementName
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def coordinates(xml: Pom.CoordinatesXml): Either[Problems, ModuleCoordinates] =
+  def coordinates(xml: CoordinatesXml): Either[Problems, ModuleCoordinates] =
     parse(xml).flatMap { project =>
       val parent = child(project, ElementName("parent"))
       def named(name: String, inherited: Boolean) =
@@ -52,15 +51,13 @@ object Pom:
     * it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds several, of the libraries
     * shaded into it: no POM can be told to be the plugin's then.
     */
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  def of(jar: Path): Option[Pom.CoordinatesXml] =
+  def of(jar: Path): Option[CoordinatesXml] =
     val beside = besideJar(jar)
-    if Files.isRegularFile(beside) then Some(Pom.CoordinatesXml(Files.readString(beside, UTF_8))) else embedded(jar)
+    if Files.isRegularFile(beside) then Some(CoordinatesXml(Files.readString(beside, UTF_8))) else embedded(jar)
 
   def besideJar(jar: Path): Path = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom")
 
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def embedded(jar: Path): Option[Pom.CoordinatesXml] =
+  private def embedded(jar: Path): Option[CoordinatesXml] =
     (Try {
       val zip = ZipFile(jar.toFile)
       try
@@ -76,8 +73,7 @@ object Pom:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
-  private def parse(xml: Pom.ParseXml): Either[Problem, Element] =
+  private def parse(xml: ParseXml): Either[Problem, Element] =
     Try {
       val factory = DocumentBuilderFactory.newInstance()
       // a POM is data from the network: no DOCTYPE, so no external entity is ever resolved

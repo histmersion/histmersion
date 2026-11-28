@@ -13,7 +13,6 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.{EventSummary, Period, Place, Year}
 import com.histmersion.api.Geo
 import com.histmersion.api.UiLabels
-import com.histmersion.api.Years
 import com.histmersion.api.MapStack
 import com.histmersion.api.catalogue.SiteTile
 import com.histmersion.api.Api
@@ -60,7 +59,7 @@ object PointKinds:
     override def classes(s: Spot): String =
       val n = s.items.size
       val span = if n == 1 then
-        for a <- s.items.head.periodStart; b <- s.items.head.periodEnd yield Years.Astronomical(b.value - a.value)
+        for a <- s.items.head.periodStart; b <- s.items.head.periodEnd yield Year.Astronomical(b.value - a.value)
       else None
       val ring = MapView.ringOf(DotCluster.Total(n), span).value
       val unstated = Certainty.markerClass(confOf(s))
@@ -68,7 +67,7 @@ object PointKinds:
         (if unstated.value.nonEmpty then s" ${unstated.value}" else "")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def fill(s: Spot, span: (Years.Astronomical, Years.Astronomical)): String =
+    def fill(s: Spot, span: (Year.Astronomical, Year.Astronomical)): String =
       val conf = confOf(s)
       if s.items.size > 1 then MapView.gradientBg(s.items, span, conf).value
       else MapView.colorFor(MapView.avgMid(s.items), span, conf).value
@@ -98,7 +97,7 @@ object PointKinds:
     override def title(s: Spot): Option[UiLabels.Text] = MapView.markerTitle(s.items).map(t => UiLabels.Text(t.value))
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def target(s: Spot, asOf: Option[Years.Astronomical]): Option[Preview.Target] =
+    def target(s: Spot, asOf: Option[Year.Astronomical]): Option[Preview.Target] =
       MapView.hoverSource(s.items).map(l => Preview.Target.Source(Preview.Target.Source.Citekey(l.value)))
 
     /** One finding: its popup; several: their list. */
@@ -152,7 +151,7 @@ object PointKinds:
     override def attrs(p: SitePoint): Html = p.known.fold(Html.empty)(t => markup""" data-site-type="${t.id}"""")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def fill(p: SitePoint, span: (Years.Astronomical, Years.Astronomical)): String =
+    def fill(p: SitePoint, span: (Year.Astronomical, Year.Astronomical)): String =
       MapView
         .viridisAt(
           MapView.Mid(p.mid.fold((span._1.value + span._2.value).toDouble / 2)(_.value)),
@@ -198,7 +197,7 @@ object PointKinds:
     def action(p: SitePoint): UiLabels.Text = UiLabels.Text("show only this place and pin its card")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def target(p: SitePoint, asOf: Option[Years.Astronomical]): Option[Preview.Target] =
+    def target(p: SitePoint, asOf: Option[Year.Astronomical]): Option[Preview.Target] =
       p.id.map(i => Preview.Target.Place(Pages.PlaceId(i.value), asOf))
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -260,7 +259,7 @@ object PointKinds:
     override def attrs(e: EventGeo): Html = markup""" data-id="${e.id}""""
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def fill(e: EventGeo, span: (Years.Astronomical, Years.Astronomical)): String =
+    def fill(e: EventGeo, span: (Year.Astronomical, Year.Astronomical)): String =
       Fmt.color(Fmt.ColorT(EventMarker.rampAt(e, (Year(span._1.value), Year(span._2.value))).value)).value
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -292,7 +291,7 @@ object PointKinds:
     def action(e: EventGeo): UiLabels.Text = UiLabels.Text("pin its card")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def target(e: EventGeo, asOf: Option[Years.Astronomical]): Option[Preview.Target] = Some(
+    def target(e: EventGeo, asOf: Option[Year.Astronomical]): Option[Preview.Target] = Some(
       Preview.Target.Event(Preview.Target.Event.Id(e.id.value))
     )
 
@@ -358,7 +357,7 @@ object PointKinds:
         .map(_.value)
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def fill(h: MediaGeoHit, span: (Years.Astronomical, Years.Astronomical)): String =
+    def fill(h: MediaGeoHit, span: (Year.Astronomical, Year.Astronomical)): String =
       mid(h).fold(s"var(${Palette.media(h.kind.getOrElse(MediaItem.Kind("scan")))})")(m =>
         MapView.viridisAt(MapView.Mid(m), span).value
       )
@@ -397,7 +396,7 @@ object PointKinds:
     def action(h: MediaGeoHit): UiLabels.Text = UiLabels.Text("open this picture")
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def target(h: MediaGeoHit, asOf: Option[Years.Astronomical]): Option[Preview.Target] =
+    def target(h: MediaGeoHit, asOf: Option[Year.Astronomical]): Option[Preview.Target] =
       h.citekey.map(c => Preview.Target.Source(Preview.Target.Source.Citekey(c.value)))
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

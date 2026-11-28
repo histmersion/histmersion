@@ -1,5 +1,9 @@
 package com.histmersion
 package db
+
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.problem.Text.sentences
 
 import com.histmersion.util.problem.Text.sentence
@@ -500,7 +504,7 @@ class MergeSuite extends DbSuite with Bounded:
         Goal.Put(Goal.Title("Goal created at work"), status = Goal.StatusValue("seeding"))
       )
     )
-    val _ = QueueRows.add(work, Queue.Kind.Tasks, Queue.QueueAdd(Queue.QueueItem.Text("Find the  Kuhrt reprint")))
+    val _ = QueueRows.add(work, api.automation.queue.Docket.Tasks, QueueAdd(QueueItem.Text("Find the  Kuhrt reprint")))
 
     // ── home ──
     put(
@@ -638,8 +642,9 @@ class MergeSuite extends DbSuite with Bounded:
         Goal.Put(Goal.Title("Goal created at home"), notes = Some(Goal.Notes("home's plan")))
       )
     )
-    val task = QueueRows.add(home, Queue.Kind.Tasks, Queue.QueueAdd(Queue.QueueItem.Text("Find the Kuhrt reprint")))
-    val _ = QueueRows.patch(home, task.id, Queue.QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
+    val task =
+      QueueRows.add(home, api.automation.queue.Docket.Tasks, QueueAdd(QueueItem.Text("Find the Kuhrt reprint")))
+    val _ = QueueRows.patch(home, task.id, QueuePatch(status = Some(QueueItem.Status(Queue.Done))))
     (work, home, sw, sh)
 
   /** kind, id letter, left label, right label, severity, conditional on. */

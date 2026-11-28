@@ -1,6 +1,8 @@
 package com.histmersion
 package db
 
+import com.histmersion.domain.catalogue.places.placereview.Remedy
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -11,7 +13,6 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.catalogue.places.PlaceReview.Proposal
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Finding, Source}
@@ -31,7 +32,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 class PlaceReviewSuite extends RegionCleanupFixtures:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def mine(ps: List[Proposal]) =
+  private def mine(ps: List[Remedy]) =
     ps.filter(p => p.id.value.startsWith("pleiades_99910") || p.id.value.startsWith("zzrc"))
 
   test("place-kind: a dry run lists people, polities, a settlement and a merge, and changes nothing"):
@@ -39,11 +40,11 @@ class PlaceReviewSuite extends RegionCleanupFixtures:
     val ps = mine(PlaceFixtures.proposals(ds))
     val byId = ps.map(p => (p.id.value: String) -> p).toMap
     assertEquals(byId.keySet, Set(Aiantis, Thess, Dup, Into, Peir))
-    assertEquals(byId(Aiantis).asInstanceOf[Proposal.Reclassify].to, Place.Kind.People)
-    assertEquals(byId(Thess).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Polity)
-    assertEquals(byId(Into).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Polity, "province-2 filed as a site")
-    assertEquals(byId(Peir).asInstanceOf[Proposal.Reclassify].to, Place.Kind.Site)
-    assertEquals(byId(Dup).asInstanceOf[Proposal.Merge].into, Into)
+    assertEquals(byId(Aiantis).asInstanceOf[Remedy.Reclassify].to, Place.Kind.People)
+    assertEquals(byId(Thess).asInstanceOf[Remedy.Reclassify].to, Place.Kind.Polity)
+    assertEquals(byId(Into).asInstanceOf[Remedy.Reclassify].to, Place.Kind.Polity, "province-2 filed as a site")
+    assertEquals(byId(Peir).asInstanceOf[Remedy.Reclassify].to, Place.Kind.Site)
+    assertEquals(byId(Dup).asInstanceOf[Remedy.Merge].into, Into)
     assert(byId(Aiantis).describe.value.startsWith(s"$Aiantis Zzrc Aiantis: region → people"), byId(Aiantis).describe)
     assertEquals(
       PlaceFixtures.get(ds, AiantisId).map(_.place.kind),

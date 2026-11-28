@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.automation.agents.Billing
+
 import com.histmersion.domain.automation.approvals.Decided
 import com.histmersion.domain.automation.managers.Zero
 import com.histmersion.server.agents.Codex

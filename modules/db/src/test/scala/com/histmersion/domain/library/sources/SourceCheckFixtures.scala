@@ -1,7 +1,10 @@
 package com.histmersion
 package domain.library.sources
 
-import com.histmersion.api.checks.Lint.{FormatChecker, LintReport, Rule}
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintReport
+
+import com.histmersion.api.checks.Lint.FormatChecker
 import com.histmersion.domain.research.articles.ArticleCheckFixtures
 import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.util.data.checks.CheckRun

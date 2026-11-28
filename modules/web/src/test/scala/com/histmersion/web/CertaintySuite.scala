@@ -1,7 +1,6 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.Years
 import com.histmersion.testsupport.ComparedByValue.markupText
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.library.Confidence
@@ -19,7 +18,7 @@ class CertaintySuite extends munit.FunSuite:
 
   override def beforeAll(): Unit = TestTokens.install()
 
-  private val span = (Years.Astronomical(-3500L), Years.Astronomical(-500L))
+  private val span = (Year.Astronomical(-3500L), Year.Astronomical(-500L))
   private def hit(conf: Option[Confidence]) =
     GeoHit(
       Citekey("zz2020_x"),

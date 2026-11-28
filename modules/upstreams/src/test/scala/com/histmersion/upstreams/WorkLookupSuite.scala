@@ -2,7 +2,7 @@ package com.histmersion
 package upstreams
 
 import com.histmersion.plugin.{Doi, WorkKey, Year}
-import com.histmersion.domain.library.acquisition.{WorkLookup, WorkRef}
+import com.histmersion.domain.library.acquisition.WorkRef
 
 /** What the acquisition chain is asked for one work. */
 class WorkLookupSuite extends munit.FunSuite:
@@ -16,7 +16,7 @@ class WorkLookupSuite extends munit.FunSuite:
       authors = List(WorkKey.Authors("A. Author"))
     )
     assertEquals(
-      WorkLookup.key(Some(Doi("10.1/x")), None, Some(ref)),
+      WorkRef.key(Some(Doi("10.1/x")), None, Some(ref)),
       WorkKey(
         doi = Some(Doi("10.1/x")),
         arxiv = Some(WorkKey.Arxiv("2101.00001")),
@@ -26,10 +26,10 @@ class WorkLookupSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      WorkLookup.key(None, Some(ArxivId("hep-th/9901001")), None),
+      WorkRef.key(None, Some(ArxivId("hep-th/9901001")), None),
       WorkKey(arxiv = Some(WorkKey.Arxiv("hep-th/9901001")))
     )
     assertEquals(
-      WorkLookup.key(Some(Doi("not a doi")), Some(ArxivId("2101.00001")), None),
+      WorkRef.key(Some(Doi("not a doi")), Some(ArxivId("2101.00001")), None),
       WorkKey(arxiv = Some(WorkKey.Arxiv("2101.00001")))
     )
