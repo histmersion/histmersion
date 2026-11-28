@@ -402,7 +402,7 @@ object CheckpointGolden:
         Some(Year(1987)),
         List(api.library.AuthorName("Smith, J.")),
         Some(Source.Venue("Antiquity")),
-        WorkRef.IsOa(true),
+        WorkRef.IsOa.OpenAccess,
         AcquisitionSweepRules.Candidate.Query("bronze age tin"),
         Some(WorkRef.AbstractText("An abstract."))
       ),
@@ -412,7 +412,7 @@ object CheckpointGolden:
         None,
         Nil,
         None,
-        WorkRef.IsOa(false),
+        WorkRef.IsOa.Closed,
         AcquisitionSweepRules.Candidate.Query(""),
         None
       )
