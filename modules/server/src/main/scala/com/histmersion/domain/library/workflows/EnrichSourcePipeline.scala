@@ -73,8 +73,10 @@ final class EnrichSourcePipeline(
     cfg: => AgentsConfig,
     lib: => LibraryAgentsConfig,
     upstream: () => AgentUpstream,
-    approvals: SourceProposals
+    approvals: SourceProposals,
+    records: EnrichRecords
 ) extends PipelineDef:
+  import records.given
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 

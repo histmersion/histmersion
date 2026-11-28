@@ -82,7 +82,7 @@ class AgentSchemaSuite extends munit.FunSuite:
       assert(s.contains("\"evidence\"") && s.contains("\"offset\"") && s.contains("\"citekey\""), s)
 
   test("#981: the findings answer carries placeKind, with the kinds the geocoder understands"):
-    val js = SttpAiJson.schema(ResponseSchema.derived[Findings]().schema).noSpaces
+    val js = SttpAiJson.schema(LibraryAnswers.findings.schema).noSpaces
     assert(js.contains("\"placeKind\""), js)
     assert(List("site (", "region (", "polity (", "water (").forall(js.contains), js)
 

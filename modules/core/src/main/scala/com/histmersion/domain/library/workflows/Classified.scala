@@ -1,11 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.library.Source
 import com.histmersion.domain.EnrichSource.Topic
 import com.histmersion.domain.EnrichSource.Region
@@ -21,7 +17,7 @@ final case class Classified(
     periodName: Option[StatedPeriod.Name],
     status: Source.Status,
     statusEvidence: Classified.StatusEvidence
-) derives JsonCodec
+)
 
 object Classified:
   type Summary = Summary.T

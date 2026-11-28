@@ -1,13 +1,9 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.catalogue.Geocode
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Year
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.domain.AgentVerify.*
 import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.EnrichSource.Tag
@@ -26,7 +22,7 @@ final case class VerifiedFinding(
     tags: List[Tag],
     confidence: VerifiedFinding.Confidence,
     placeKind: Option[KindHint] = None
-) derives JsonCodec:
+):
   def period: Option[Period] = (start, end) match
     case (Some(s), Some(e)) => Some(Period(s, e))
     case (Some(s), None)    => Some(Period(s, s))

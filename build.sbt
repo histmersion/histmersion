@@ -399,6 +399,7 @@ lazy val core = projectMatrix
   .in(file("modules/core"))
   .dependsOn(nonEmptyDerivation % Provided, lint)
   .dependsOn(values, api % "compile->compile;test->test")
+  .dependsOn(chimneyIron % Provided)
   // config for its tests only: the domain takes settings records of its own, which the server converts; the
   // upstreams' host rules for the tests that pass them in as the server does
   .dependsOn(config % "test->test", files, upstreams % "test->compile")
@@ -413,14 +414,13 @@ lazy val core = projectMatrix
       "com.github.plokhotnyuk.jsoniter-scala" %% "jsoniter-scala-core" % V.jsoniter,
       "com.kubuszok" %% "kindlings-jsoniter-derivation" % V.kindlings,
       "com.kubuszok" %% "kindlings-tapir-schema-derivation" % V.kindlings,
-      "io.github.iltotore" %% "iron" % V.iron
+      "io.github.iltotore" %% "iron" % V.iron,
+      "io.scalaland" %% "chimney" % V.chimney
     )
   )
   .settings(
     // the build's pure helper is tested with the other suites (BuildTestGroupsSuite)
-    Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala",
-    // the fixtures convert reference.conf's records into the domain's settings, as the server does
-    libraryDependencies += "io.scalaland" %% "chimney" % V.chimney % Test
+    Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala"
   )
   .jvmPlatform(scalaVersions = Seq(scala3))
 

@@ -1,11 +1,6 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
-import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.lint.tolerated
 import com.histmersion.lint.LintRule
 import com.histmersion.domain.library.workflows.FindingProposal
@@ -38,9 +33,6 @@ import com.histmersion.api.catalogue.geocode.KindHint
 
 @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Findings(findings: List[FindingProposal] = Nil)
-    derives JsonCodec,
-      KindlingsSchema,
-      com.histmersion.api.json.Schema
 
 object Findings:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

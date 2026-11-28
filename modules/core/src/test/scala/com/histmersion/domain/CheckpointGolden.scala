@@ -59,6 +59,14 @@ object CheckpointGolden:
       val decoder: JsonValueCodec[A]
   )
 
+  import com.histmersion.domain.library.workflows.EnrichSourceTransformers.given
+  import com.histmersion.domain.library.workflows.EnrichSourceTransformers
+
+  private given JsonValueCodec[Classification] = EnrichSourceTransformers.classificationAnswer
+  private given JsonValueCodec[Notes] = EnrichSourceTransformers.notesAnswer
+
+  import com.histmersion.testsupport.StoredCodecs.given
+
   private val findingInputs = List(
     Finding.Input(
       Finding.Claim("Tin reached the Aegean from Afghanistan."),

@@ -1,13 +1,9 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire]) derives JsonCodec
+final case class Closed(line: Closed.Line, lint: List[Closed.Lint], acquire: Option[Closed.Acquire])
 
 object Closed:
   type Line = Line.T

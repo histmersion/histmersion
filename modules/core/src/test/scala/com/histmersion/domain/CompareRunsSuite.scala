@@ -31,6 +31,11 @@ import com.histmersion.domain.EnrichSource.*
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.domain.library.workflows.EnrichComparison
+import com.histmersion.domain.library.workflows.EnrichSourceTransformers
+import com.histmersion.domain.library.workflows.EnrichSourceTransformers.given
+import com.histmersion.testsupport.StoredCodecs.given
+import com.histmersion.api.library.workflows as wire
+import io.scalaland.chimney.dsl.*
 import com.histmersion.domain.research.workflows.ReviewComparison
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Source
@@ -87,7 +92,7 @@ class CompareRunsSuite extends munit.FunSuite:
       runs,
       billing,
       runs.headOption.map(_.run.pipeline.value) match
-        case Some("enrich-source")  => EnrichComparison
+        case Some("enrich-source")  => EnrichComparison(EnrichSourceTransformers)
         case Some("review-article") => ReviewComparison
         case _                      => OutputComparison.none
     )
@@ -294,7 +299,11 @@ class CompareRunsSuite extends munit.FunSuite:
         output = Some(
           Step.Output(
             Json
-              .obj("findings" -> List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e"))).asJson)
+              .obj(
+                "findings" -> List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e")))
+                  .map(_.transformInto[wire.VerifiedFinding])
+                  .asJson
+              )
               .noSpaces
           )
         ),
@@ -310,7 +319,7 @@ class CompareRunsSuite extends munit.FunSuite:
         error = Some(Problem.Unclassified(Legacy.Text("the answer is not the JSON")))
       )
     )
-    assertEquals(EnrichComparison.quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
+    assertEquals(EnrichComparison(EnrichSourceTransformers).quoteCheck(steps), (2 + 1 + 3 + 2, 1 + 1 + 1 + 2))
 
   test("enrich-source: findings, places, dates, period, text lengths, and the claims only one run made"):
     def enrich(

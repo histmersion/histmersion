@@ -135,7 +135,13 @@ object CompareRuns:
     type Output = Output.T
     object Output extends Newtype[String, Pure]
 
-  final case class Run(run: RunHead, steps: List[Step])
+  final case class Run(run: RunHead, steps: List[Step]):
+    def stored[O](name: OutputName)(using port: automation.agents.Stored[O]): Option[O] =
+      steps
+        .filter(s => s.name == name && s.status == automation.Step.Status.Done.wire)
+        .lastOption
+        .flatMap(_.output)
+        .flatMap(o => port.read(automation.agents.Stored.Json(o.value)).toOption)
 
   // ── what a comparison says ───────────────────────────────────────────────────────────────────
 

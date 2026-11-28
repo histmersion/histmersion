@@ -1,11 +1,7 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.catalogue.Period
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.library.Source
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.library.Doi
@@ -43,7 +39,7 @@ final case class Loaded(
     windows: List[Frame],
     tags: List[Tag] = Nil,
     doi: Option[Doi] = None
-) derives JsonCodec
+)
 
 object Loaded:
   type Title = Title.T

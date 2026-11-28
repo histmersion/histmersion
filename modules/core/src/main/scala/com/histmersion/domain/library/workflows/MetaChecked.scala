@@ -1,17 +1,13 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.util.json.StoredIdCodecs.given
-import com.histmersion.api.given
-import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class MetaChecked(
     checked: MetaChecked.Checked,
     differences: List[MetaChecked.Differences],
     note: MetaChecked.Note = MetaChecked.Note("")
-) derives JsonCodec
+)
 
 object MetaChecked:
   type Checked = Checked.T

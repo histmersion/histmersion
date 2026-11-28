@@ -145,7 +145,7 @@ final class RunCtx private[automation] (
     * run, which is refused rather than misread.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def replay[O: JsonValueCodec](
+  private def replay[O: RunCtx.Stores](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name
   ): Option[Either[Halt, O]] =
@@ -160,8 +160,8 @@ final class RunCtx private[automation] (
           )
         )
       else
-        RawJson
-          .decode[O](json.value)
+        summon[RunCtx.Stores[O]]
+          .read(Stored.Json(json.value))
           .left
           .map(e =>
             Halt.Fail(
@@ -178,7 +178,7 @@ final class RunCtx private[automation] (
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  def code[O: JsonValueCodec](name: AgentRepo.StepRecord.Name)(body: => Either[Problems, O])(using
+  def code[O: RunCtx.Stores](name: AgentRepo.StepRecord.Name)(body: => Either[Problems, O])(using
       WritePermit
   ): Either[Halt, O] =
     val seq = claimSeq()
@@ -208,7 +208,7 @@ final class RunCtx private[automation] (
                     name,
                     StepKind.Code,
                     StepStatus.Done,
-                    Some(AgentRepo.StepRecord.Output(o.asJson.noSpaces)),
+                    Some(AgentRepo.StepRecord.Output(summon[RunCtx.Stores[O]].write(o).value)),
                     None,
                     None,
                     Usage.Zero,
@@ -371,7 +371,7 @@ final class RunCtx private[automation] (
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def notes: String = Prompt.notes(run.params.noteList.map(_.value))
 
-  def llm[A, O: JsonValueCodec](
+  def llm[A, O: RunCtx.Stores](
       name: AgentRepo.StepRecord.Name,
       agent: StepAgent,
       user: Prompt.UserText,
@@ -386,7 +386,7 @@ final class RunCtx private[automation] (
     * `max-turns` for a step whose work grows with its input (the fixer: one more turn per finding, see
     * [[Engine.stepTurns]]).
     */
-  def llmAt[A, O: JsonValueCodec](
+  def llmAt[A, O: RunCtx.Stores](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
       agent: StepAgent,
@@ -403,7 +403,7 @@ final class RunCtx private[automation] (
     * amends its answer without repeating its lookups, so the earlier attempts' calls count.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def llmAtSeen[A, O: JsonValueCodec](
+  def llmAtSeen[A, O: RunCtx.Stores](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
       agent: StepAgent,
@@ -475,7 +475,7 @@ final class RunCtx private[automation] (
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  private def attempts[A, O: JsonValueCodec](
+  private def attempts[A, O: RunCtx.Stores](
       seq: AgentRepo.StepRecord.Seq,
       name: AgentRepo.StepRecord.Name,
       agent: AgentDef,
@@ -675,7 +675,7 @@ final class RunCtx private[automation] (
                         prompt,
                         use,
                         billing,
-                        Some(o.asJson.noSpaces),
+                        Some(summon[RunCtx.Stores[O]].write(o).value),
                         None,
                         started,
                         msgs,
@@ -785,3 +785,18 @@ object RunCtx:
     yield Creator.Agent.Model(d, p, m)
   type LastAttempt = LastAttempt.T
   object LastAttempt extends Newtype[Boolean, Pure]
+
+  trait Stores[O]:
+    def write(o: O): Stored.Json
+    def read(json: Stored.Json): Either[Stored.Unread, O]
+
+  object Stores extends StoresByCodec:
+    given byPort: [O] => (port: Stored[O]) => Stores[O]:
+      def write(o: O): Stored.Json = port.write(o)
+      def read(json: Stored.Json): Either[Stored.Unread, O] = port.read(json)
+
+  trait StoresByCodec:
+    given byCodec: [O] => (codec: JsonValueCodec[O]) => Stores[O]:
+      def write(o: O): Stored.Json = Stored.Json(o.asJson.noSpaces)
+      def read(json: Stored.Json): Either[Stored.Unread, O] =
+        RawJson.decode[O](json.value).left.map(Stored.Unread(_))

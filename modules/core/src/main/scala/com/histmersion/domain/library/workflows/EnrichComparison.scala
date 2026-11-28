@@ -4,8 +4,7 @@ package domain.library.workflows
 import com.histmersion.domain.library.workflows.VerifiedFindings
 import com.histmersion.domain.library.workflows.Geocoded
 import com.histmersion.domain.library.workflows.Classified
-import com.histmersion.util.json.RawJson
-import com.histmersion.util.json.JsonCodec.given
+import com.histmersion.domain.automation.agents.Stored
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.{AgentVerify, CompareRuns}
@@ -19,7 +18,8 @@ import com.histmersion.lint.{tolerated, LintRule}
   * check, the places asked and resolved, the dated findings, the period, the lengths of the summary and the notes, and
   * the claims only one run made.
   */
-object EnrichComparison extends OutputComparison:
+final class EnrichComparison(records: EnrichRecords) extends OutputComparison:
+  import records.given
 
   /** A rejected findings answer's quote failures are counted from the verifier's own words. */
   private val QuoteFailure = "the quote is not in the text"
@@ -39,13 +39,13 @@ object EnrichComparison extends OutputComparison:
       rest match
         case Nil                                                              => (checked, passed)
         case s :: tail if s.status == domain.automation.Step.Status.Done.wire =>
-          s.output.flatMap(o => RawJson.decode[VerifiedFindings](o.value).toOption) match
+          s.output.flatMap(o => verifiedFindings.read(Stored.Json(o.value)).toOption) match
             case Some(v) =>
               val n = v.proposed.fold(v.findings.size)(_.value)
               loop(tail, checked + n, passed + n - v.quoteFailed.fold(0)(_.value))
             case None => loop(tail, checked, passed)
         case s :: tail =>
-          s.output.flatMap(o => RawJson.decode[domain.library.workflows.Findings](o.value).toOption) match
+          s.output.flatMap(o => findings.read(Stored.Json(o.value)).toOption) match
             case Some(f) =>
               val n = f.findings.size
               val fails =
@@ -62,15 +62,14 @@ object EnrichComparison extends OutputComparison:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claims(d: Run): List[String] =
-    CompareRuns
-      .output[Geocoded](d, CompareRuns.OutputName("geocode"))
+    d.stored[Geocoded](CompareRuns.OutputName("geocode"))
       .map(_.findings.map(_.claim.value))
       .getOrElse(
         d.steps
           .map(_.name)
           .distinct
           .filter(isFindings)
-          .flatMap(n => CompareRuns.output[VerifiedFindings](d, n).toList.flatMap(_.findings.map(_.claim.value)))
+          .flatMap(n => d.stored[VerifiedFindings](n).toList.flatMap(_.findings.map(_.claim.value)))
       )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -78,8 +77,8 @@ object EnrichComparison extends OutputComparison:
     val all = runs.map(d => claims(d).map(c => AgentVerify.normalise(AgentVerify.Text(c)) -> c))
     runs.zip(all).zipWithIndex.map { case ((d, mine), i) =>
       val others = all.patch(i, Nil, 1).flatten.map(_._1).toSet
-      val geo = CompareRuns.output[Geocoded](d, CompareRuns.OutputName("geocode"))
-      val cls = CompareRuns.output[Classified](d, CompareRuns.OutputName("classify"))
+      val geo = d.stored[Geocoded](CompareRuns.OutputName("geocode"))
+      val cls = d.stored[Classified](CompareRuns.OutputName("classify"))
       val (checked, passed) = quoteCheck(d.steps)
       EnrichSide(
         findings = EnrichSide.Findings(mine.size),
@@ -92,8 +91,7 @@ object EnrichComparison extends OutputComparison:
         periodStart = cls.flatMap(_.period).map(_.start),
         periodEnd = cls.flatMap(_.period).map(_.end),
         summaryChars = EnrichSide.SummaryChars(cls.fold(0)(_.summary.value.trim.length)),
-        notesChars =
-          EnrichSide.NotesChars(CompareRuns.output[String](d, CompareRuns.OutputName("notes")).fold(0)(_.trim.length)),
+        notesChars = EnrichSide.NotesChars(d.stored[String](CompareRuns.OutputName("notes")).fold(0)(_.trim.length)),
         uniqueClaims = mine.filterNot((n, _) => others.contains(n)).map(_._2).distinct.map(EnrichSide.UniqueClaims(_))
       )
     }

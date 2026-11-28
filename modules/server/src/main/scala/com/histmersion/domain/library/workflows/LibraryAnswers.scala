@@ -4,7 +4,12 @@ package domain.library.workflows
 import com.histmersion.domain.library.workflows.Classification
 import com.histmersion.domain.library.workflows.Findings
 import com.histmersion.domain.library.workflows.Notes
+import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
+import com.histmersion.api.library.workflows as wire
+import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
+import sttp.tapir.Schema
+import sttp.tapir.docs.apispec.schema.TapirSchemaToJsonSchema
 
 import com.histmersion.domain.EnrichSource
 import com.histmersion.api.VocabularyCodecs.given
@@ -21,13 +26,11 @@ object LibraryAnswers:
   type Name = Name.T
   object Name extends Newtype[String, Pure]
 
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val classification: ResponseSchema[Classification] =
-    ResponseSchema.derived[Classification]()
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val findings: ResponseSchema[Findings] = ResponseSchema.derived[Findings]()
-  @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val notes: ResponseSchema[Notes] = ResponseSchema.derived[Notes]()
+    answer[Classification, wire.Classification](EnrichSourceTransformers.classificationAnswer)
+  val findings: ResponseSchema[Findings] =
+    answer[Findings, wire.Findings](EnrichSourceTransformers.findingsAnswer)
+  val notes: ResponseSchema[Notes] = answer[Notes, wire.Notes](EnrichSourceTransformers.notesAnswer)
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] = ResponseSchema.derived[AcquisitionSweepRules.Ranking]()
 
@@ -38,3 +41,8 @@ object LibraryAnswers:
     Name("notes") -> notes,
     Name("ranking") -> ranking
   )
+
+  private def answer[D, W](codec: JsonValueCodec[D])(using schema: Schema[W]): ResponseSchema[D] =
+    ResponseSchema
+      .fromProduct((TapirSchemaToJsonSchema(schema, markOptionsAsNullable = true), SttpAiJson.codec(using codec), None))
+      .asInstanceOf[ResponseSchema[D]]

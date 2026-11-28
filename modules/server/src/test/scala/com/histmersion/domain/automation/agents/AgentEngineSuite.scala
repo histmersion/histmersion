@@ -1108,7 +1108,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
             AgentRepo.StepRecord.Name("notes"),
             StepAgent.EnrichNotes,
             Prompt.UserText("Write the notes."),
-            ResponseSchema.derived[Notes]()
+            LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes.value)))
           .map(PipelineDef.Summary(_))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
@@ -1169,7 +1169,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
             AgentRepo.StepRecord.Name("notes"),
             StepAgent.EnrichNotes,
             Prompt.UserText("Write the notes."),
-            ResponseSchema.derived[Notes]()
+            LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes.value)))
           .map(PipelineDef.Summary(_))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
