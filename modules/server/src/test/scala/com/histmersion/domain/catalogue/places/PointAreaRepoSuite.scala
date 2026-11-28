@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.checks.lint.Rule
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -217,7 +219,7 @@ class PointAreaRepoSuite extends DbSuite with db.Bounded:
   private val kinds =
     Gazetteer.DefaultPointAreaKinds.map(k => domain.catalogue.Place.Kind.Wire(k.value))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
+  private val rule = Rule.rule(Rule.Name(Lint.PlaceImportedPointArea)).get
   private lazy val geometry = PlaceGeometry(Transactor(ds))(using new SystemTimer)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def settings(batch: PointAreaRepo.Settings.Batch, budgetMs: PointAreaRepo.Settings.BudgetMs) =

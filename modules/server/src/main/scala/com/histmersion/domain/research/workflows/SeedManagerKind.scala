@@ -1,5 +1,19 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.domain.autopilotpolicy.PlannedFacts
+import com.histmersion.domain.autopilotpolicy.DraftFacts
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
@@ -19,12 +33,7 @@ import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.AutopilotPolicy
 import com.histmersion.domain.ManagerPolicy
-import com.histmersion.domain.AutopilotPolicy.DraftFacts
-import com.histmersion.domain.AutopilotPolicy.PlannedFacts
-import com.histmersion.domain.AutopilotPolicy.Verdict
 import com.histmersion.api.automation.Goal.Plans.DraftMode
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.{AgentsConfig, AgentSeedConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
 import com.histmersion.domain.SeedPlanDefaults
@@ -279,8 +288,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 DraftFacts.Cited(d.cited.distinct.size),
                 DraftFacts.SlugFree(!c.slugExists(ApprovalChecks.Slug(d.slug.value)))
               )
-              AutopilotPolicy.articlePublish(
-                facts,
+              facts.articlePublish(
                 AutopilotPolicy.MinSources(caps.publishMinSources.value),
                 AutopilotPolicy.ApprovedToday(
                   c.autoApprovedSince(Approval.Kind.ArticlePublish, day).size

@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.StepInfo
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.problem.Problem
@@ -8,7 +11,7 @@ import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.Paging
 import com.histmersion.api.automation.{ApprovalDigest, ListFilters}
-import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, StepInfo}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.domain.automation.AutomationState
@@ -100,7 +103,7 @@ trait ApprovalService:
   def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo]
 
   /** Every open one, light, oldest first. */
-  def openLight(): List[ApprovalDigest.Open]
+  def openLight(): List[api.automation.approvaldigest.Open]
   def openCount(kind: ApprovalKind): RowCount
 
   /** Open ones per subject. */
@@ -236,7 +239,7 @@ object ApprovalService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openOfKinds(kinds: List[ApprovalKind], limit: ApprovalQuery.Limit): List[ApprovalInfo] =
       db.read(AgentRepo.openOfKinds(kinds, PageSize.assume(limit.value)))
-    def openLight(): List[ApprovalDigest.Open] = db.read(AgentRepo.openLight())
+    def openLight(): List[api.automation.approvaldigest.Open] = db.read(AgentRepo.openLight())
     def openCount(kind: ApprovalKind): RowCount = db.read(AgentRepo.openCount(kind))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def openBySubject(): Map[ApprovalQuery.Subject, RowCount] =
@@ -497,17 +500,17 @@ object ApprovalService:
         .toList
         .map(info)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def openLight(): List[ApprovalDigest.Open] =
+    def openLight(): List[api.automation.approvaldigest.Open] =
       rows
         .filter(_.state.value == Open)
         .sortBy[Long](_.id.value)
         .toList
         .map(r =>
-          ApprovalDigest.Open(
-            ApprovalDigest.Open.Id(r.id.value),
-            ApprovalDigest.Open.Kind(r.kind.value),
-            r.subject.map(s => ApprovalDigest.Open.Subject(s.value)),
-            ApprovalDigest.Open.CreatedAt(AutomationState.text(r.createdAt).value)
+          api.automation.approvaldigest.Open(
+            api.automation.approvaldigest.Open.Id(r.id.value),
+            api.automation.approvaldigest.Open.Kind(r.kind.value),
+            r.subject.map(s => api.automation.approvaldigest.Open.Subject(s.value)),
+            api.automation.approvaldigest.Open.CreatedAt(AutomationState.text(r.createdAt).value)
           )
         )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

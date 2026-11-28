@@ -1,5 +1,18 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.reviewarticle.Finding
+import com.histmersion.domain.reviewarticle.Reviewer
+import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.api.automation.managers.RunMark
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.domain.reviewarticle.Check
+import com.histmersion.api.automation.managers.ManagerConfig
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -11,11 +24,9 @@ import com.histmersion.api.given
 
 import com.histmersion.domain.automation.Run.State as RunState
 import com.histmersion.domain.{ManagerDefaults, ManagerPolicy, ManagerRunDefaults, ReviewManagerDefaults}
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings}
 import com.histmersion.domain.research.workflows.ReviewManagerPolicy.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.ReviewArticle.*
-import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.domain.ReviewLedger.*
 
 import java.time.Instant
@@ -109,16 +120,16 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       case other => fail(other.toString)
 
   test("open MAJORs, under every limit: again after the cooldown, the run marked in the history"):
-    eval(st = ItemState(before = Some(Managers.ItemState.Before(5)))) match
+    eval(st = ItemState(before = Some(ItemState.Before(5)))) match
       case Next.Again(nb, st, note) =>
         assertEquals(nb, Some(now.plusSeconds(1800)))
         assertEquals(
           st.history,
           List(
             RunMark(
-              Agents.RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
-              Some(Managers.RunMark.Before(5)),
-              Managers.RunMark.After(2)
+              RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
+              Some(RunMark.Before(5)),
+              RunMark.After(2)
             )
           )
         )
@@ -131,15 +142,15 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val stalled = ItemState(
       history = List(
         RunMark(
-          Agents.RunInfo.Id("r1"),
-          Some(Managers.RunMark.Before(2)),
-          Managers.RunMark.After(2),
-          pairsBefore = Some(Managers.RunMark.PairsBefore(5)),
-          pairsAfter = Some(Managers.RunMark.PairsAfter(5))
+          RunInfo.Id("r1"),
+          Some(RunMark.Before(2)),
+          RunMark.After(2),
+          pairsBefore = Some(RunMark.PairsBefore(5)),
+          pairsAfter = Some(RunMark.PairsAfter(5))
         )
       ),
-      before = Some(Managers.ItemState.Before(2)),
-      pairsBefore = Some(Managers.ItemState.PairsBefore(5))
+      before = Some(ItemState.Before(2)),
+      pairsBefore = Some(ItemState.PairsBefore(5))
     )
     eval(
       st = stalled,
@@ -157,12 +168,12 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         assertEquals(
           st.history.last,
           RunMark(
-            Agents.RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
-            Some(Managers.RunMark.Before(2)),
-            Managers.RunMark.After(2),
-            churn = Managers.RunMark.Churn.Churn,
-            pairsBefore = Some(Managers.RunMark.PairsBefore(5)),
-            pairsAfter = Some(Managers.RunMark.PairsAfter(5))
+            RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
+            Some(RunMark.Before(2)),
+            RunMark.After(2),
+            churn = RunMark.Churn.Churn,
+            pairsBefore = Some(RunMark.PairsBefore(5)),
+            pairsAfter = Some(RunMark.PairsAfter(5))
           )
         )
       case other => fail(other.toString)
@@ -172,15 +183,15 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val going = ItemState(
       history = List(
         RunMark(
-          Agents.RunInfo.Id("r1"),
-          Some(Managers.RunMark.Before(2)),
-          Managers.RunMark.After(2),
-          pairsBefore = Some(Managers.RunMark.PairsBefore(9)),
-          pairsAfter = Some(Managers.RunMark.PairsAfter(6))
+          RunInfo.Id("r1"),
+          Some(RunMark.Before(2)),
+          RunMark.After(2),
+          pairsBefore = Some(RunMark.PairsBefore(9)),
+          pairsAfter = Some(RunMark.PairsAfter(6))
         )
       ),
-      before = Some(Managers.ItemState.Before(2)),
-      pairsBefore = Some(Managers.ItemState.PairsBefore(6))
+      before = Some(ItemState.Before(2)),
+      pairsBefore = Some(ItemState.PairsBefore(6))
     )
     eval(
       st = going,
@@ -198,8 +209,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     // one run is no window: the first run's churn never stops it
     assert(
       eval(
-        st =
-          ItemState(before = Some(Managers.ItemState.Before(2)), pairsBefore = Some(Managers.ItemState.PairsBefore(4))),
+        st = ItemState(before = Some(ItemState.Before(2)), pairsBefore = Some(ItemState.PairsBefore(4))),
         fs = facts(
           ReviewFacts.OpenMajors(2),
           onlyMissing = ReviewFacts.OnlyMissingCritiques(true),
@@ -211,7 +221,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     // counts unknown (runs evaluated before the checklist): no evidence of a stall
     assert(
       !pairsStalled(
-        List(RunMark(Agents.RunInfo.Id("r1")), RunMark(Agents.RunInfo.Id("r2"))),
+        List(RunMark(RunInfo.Id("r1")), RunMark(RunInfo.Id("r2"))),
         ReviewSettings.NoProgressRuns(2)
       )
     )
@@ -219,15 +229,15 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val flat = ItemState(
       history = List(
         RunMark(
-          Agents.RunInfo.Id("r1"),
-          Some(Managers.RunMark.Before(3)),
-          Managers.RunMark.After(3),
-          pairsBefore = Some(Managers.RunMark.PairsBefore(9)),
-          pairsAfter = Some(Managers.RunMark.PairsAfter(6))
+          RunInfo.Id("r1"),
+          Some(RunMark.Before(3)),
+          RunMark.After(3),
+          pairsBefore = Some(RunMark.PairsBefore(9)),
+          pairsAfter = Some(RunMark.PairsAfter(6))
         )
       ),
-      before = Some(Managers.ItemState.Before(3)),
-      pairsBefore = Some(Managers.ItemState.PairsBefore(6))
+      before = Some(ItemState.Before(3)),
+      pairsBefore = Some(ItemState.PairsBefore(6))
     )
     assert(
       eval(
@@ -263,8 +273,8 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     assert(stopped(eval(attempts = ManagerPolicy.Attempts(3))).contains("max-runs-per-article 3"))
     // two runs, open MAJORs 3 → 3 → 3: no progress over the window of 2
     val hist = ItemState(
-      history = List(RunMark(Agents.RunInfo.Id("r1"), Some(Managers.RunMark.Before(3)), Managers.RunMark.After(3))),
-      before = Some(Managers.ItemState.Before(3))
+      history = List(RunMark(RunInfo.Id("r1"), Some(RunMark.Before(3)), RunMark.After(3))),
+      before = Some(ItemState.Before(3))
     )
     assert(
       stopped(eval(st = hist, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(3))))
@@ -272,8 +282,8 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     )
     // 4 → 3 → 2: progress, so again
     val better = ItemState(
-      history = List(RunMark(Agents.RunInfo.Id("r1"), Some(Managers.RunMark.Before(4)), Managers.RunMark.After(3))),
-      before = Some(Managers.ItemState.Before(3))
+      history = List(RunMark(RunInfo.Id("r1"), Some(RunMark.Before(4)), RunMark.After(3))),
+      before = Some(ItemState.Before(3))
     )
     assert(
       eval(st = better, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(2)))
@@ -281,7 +291,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     )
     assert(
       !noProgress(
-        List(RunMark(Agents.RunInfo.Id("r1"), Some(Managers.RunMark.Before(3)), Managers.RunMark.After(3))),
+        List(RunMark(RunInfo.Id("r1"), Some(RunMark.Before(3)), RunMark.After(3))),
         ReviewSettings.NoProgressRuns(2)
       )
     ) // one run is no window of two
@@ -305,13 +315,13 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         assert(o.value.contains("3 failed runs") && t.value.contains("3 failed runs"), (o, t))
       case other => fail(other.toString)
     assertEquals(
-      ManagerPolicy
+      ReviewSettings
         .backoff(ReviewSettings.BackoffMinutes(15), ReviewSettings.MaxBackoffMinutes(360), Next.Retry.Failures(10))
         .toMinutes,
       360L
     )
     assertEquals(
-      ManagerPolicy
+      ReviewSettings
         .backoff(ReviewSettings.BackoffMinutes(15), ReviewSettings.MaxBackoffMinutes(360), Next.Retry.Failures(1))
         .toMinutes,
       15L
@@ -326,54 +336,55 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val run = Run.Id("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59")
     val sk = f(Finding.Id("S1"), Reviewer.Skeptic, MissingCritique)
     val sk2 = f(Finding.Id("S2"), Reviewer.Skeptic, MissingCritique)
-    val l1 = absorb(Ledger(ReviewLedger.Ledger.Slug("tin")), List(sk), run, ReviewLedger.Closure.Round(1))._1
-    val l2 = applyChecks(
-      applyFix(
-        l1,
-        Fix(
-          ReviewArticle.Fix.Body("b"),
+    val l1 = Ledger(Ledger.Slug("tin")).absorb(List(sk), run, Closure.Round(1))._1
+    val l2 = l1
+      .applyFix(
+        domain.reviewarticle.Fix(
+          domain.reviewarticle.Fix.Body("b"),
           Nil,
           List(Finding.Id("S1")),
           Nil,
           Nil,
           Nil,
-          ReviewArticle.Fix.Notes(""),
-          ReviewArticle.Fix.WordsBefore(1),
-          ReviewArticle.Fix.WordsAfter(1)
+          domain.reviewarticle.Fix.Notes(""),
+          domain.reviewarticle.Fix.WordsBefore(1),
+          domain.reviewarticle.Fix.WordsAfter(1)
         ),
         run,
         ReviewLedger.ApplyFixRound(1)
-      ),
-      Reviewer.Skeptic,
-      List(
-        Check(
-          ReviewArticle.Check.Id("S1"),
-          fixed = ReviewArticle.Check.Fixed(true),
-          ReviewArticle.Check.Quote("q"),
-          ReviewArticle.Check.Note("")
-        )
-      ),
-      run,
-      ReviewLedger.ApplyChecksRound(2)
-    )
-    val l3 = absorb(
-      l2,
-      List(
-        sk2
-          .modify(_.quote)
-          .setTo(Finding.Quote("another passage entirely"))
-          .modify(_.where)
-          .setTo(Finding.Where("elsewhere"))
-          .modify(_.problem)
-          .setTo(Finding.Problem("omits X's critique"))
-      ),
-      run,
-      ReviewLedger.Closure.Round(3)
-    )._1
+      )
+      .applyChecks(
+        Reviewer.Skeptic,
+        List(
+          Check(
+            Check.Id("S1"),
+            fixed = Check.Fixed(true),
+            Check.Quote("q"),
+            Check.Note("")
+          )
+        ),
+        run,
+        ReviewLedger.ApplyChecksRound(2)
+      )
+    val l3 = l2
+      .absorb(
+        List(
+          sk2
+            .modify(_.quote)
+            .setTo(Finding.Quote("another passage entirely"))
+            .modify(_.where)
+            .setTo(Finding.Where("elsewhere"))
+            .modify(_.problem)
+            .setTo(Finding.Problem("omits X's critique"))
+        ),
+        run,
+        Closure.Round(3)
+      )
+      ._1
     val fx = ReviewFacts.of(l3, Some(ReviewFacts.OpenPairs(4)))
     assertEquals((fx.openMajors, fx.onlyMissingCritiques, fx.openPairs), (1, true, Some(4)))
     // a rules MAJOR among them: not only missing critiques
-    val mixed = absorb(l3, List(f(Finding.Id("R1"), Reviewer.Rules)), run, ReviewLedger.Closure.Round(3))._1
+    val mixed = l3.absorb(List(f(Finding.Id("R1"), Reviewer.Rules)), run, Closure.Round(3))._1
     assert(!ReviewFacts.of(mixed).onlyMissingCritiques.value)
     // nothing open: not "only missing critiques" either
     assert(!ReviewFacts.of(l2).onlyMissingCritiques.value)
@@ -477,7 +488,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       ManagerRunDefaults(ManagerRunDefaults.MaxRuns(1)),
       ManagerRunDefaults(ManagerRunDefaults.MaxRuns(1))
     )
-    val rs = settings(ManagerConfig(maxRuns = Some(Managers.ManagerConfig.MaxRuns(3))), d, m)
+    val rs = settings(ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(3))), d, m)
     assertEquals((rs.maxRuns, rs.maxOpen, rs.rounds, rs.maxFailures), (3, 6, 3, 3))
     assertEquals(settings(ManagerConfig(), d, m).staleAfterDays, 90)
-    assertEquals(defaults(d, m).merge(ManagerConfig(rounds = Some(Managers.ManagerConfig.Rounds(5)))).rounds, Some(5))
+    assertEquals(defaults(d, m).merge(ManagerConfig(rounds = Some(ManagerConfig.Rounds(5)))).rounds, Some(5))

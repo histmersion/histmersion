@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.domain.catalogue.evidence.NearFinding
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.{Api, Write}
@@ -8,7 +10,6 @@ import com.histmersion.domain.media.{MediaStores, MediaStoreSuite}
 import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.api.media.{AssetKind, AssetPatch, MediaProvider}
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.catalogue.Year
@@ -262,7 +263,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
           .map(_.uid.value: String),
         List(p2)
       )
-      assertEquals(a.placeThumbs(Place.Id("zq_nowhere"), EventMatcher.NearFinding.Km(3.0), AssetService.Limit(4)), Nil)
+      assertEquals(a.placeThumbs(Place.Id("zq_nowhere"), NearFinding.Km(3.0), AssetService.Limit(4)), Nil)
   }
 
   stest("the list, its facets and the map's pictures: by provider, licence and text; in the span") { s =>

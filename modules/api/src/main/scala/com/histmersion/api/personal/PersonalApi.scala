@@ -1,5 +1,7 @@
 package com.histmersion
 package api.personal
+
+import com.histmersion.api.automation.activity.Show
 import com.histmersion.api.json.NewtypeCodecs.given
 
 import com.histmersion.api.Api
@@ -139,7 +141,7 @@ object PersonalApi:
       )
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val reading: PublicEndpoint[(Option[ItemKind.Wire], Option[Activity.Show.Wire], Option[Int]), Api.Error, List[
+  lazy val reading: PublicEndpoint[(Option[ItemKind.Wire], Option[Show.Wire], Option[Int]), Api.Error, List[
     ReadMark
   ], Any] =
     (endpoint.get
@@ -149,14 +151,14 @@ object PersonalApi:
       .in(limitQuery)
       .errorOut(Api.problemOut)
       .out(jsonBody[List[ReadMark]]))
-      .mapIn[(Option[ItemKind.Wire], Option[Activity.Show.Wire], Option[Int])](
+      .mapIn[(Option[ItemKind.Wire], Option[Show.Wire], Option[Int])](
         (refactorDecoded17: (Option[String], Option[String], Option[Int])) =>
           (
             ((refactorDecoded17)._1).map(refactorElement41 => ItemKind.Wire(refactorElement41)),
-            ((refactorDecoded17)._2).map(refactorElement42 => Activity.Show.Wire(refactorElement42)),
+            ((refactorDecoded17)._2).map(refactorElement42 => Show.Wire(refactorElement42)),
             ((refactorDecoded17)._3).map(refactorElement43 => (refactorElement43))
           )
-      )((refactorEncoded17: (Option[ItemKind.Wire], Option[Activity.Show.Wire], Option[Int])) =>
+      )((refactorEncoded17: (Option[ItemKind.Wire], Option[Show.Wire], Option[Int])) =>
         (
           ((refactorEncoded17)._1).map(refactorElement44 => (refactorElement44).value),
           ((refactorEncoded17)._2).map(refactorElement45 => (refactorElement45).value),

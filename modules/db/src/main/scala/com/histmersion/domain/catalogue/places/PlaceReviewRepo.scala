@@ -1,6 +1,11 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.domain.catalogue.places.placereview.Evidence
+import com.histmersion.domain.catalogue.places.placereview.LinkedItem
+import com.histmersion.domain.catalogue.places.placereview.Candidate
+import com.histmersion.domain.catalogue.places.placereview.Proposal
+
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -8,7 +13,6 @@ import com.histmersion.util.database.RangeSql
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.catalogue.places.PlaceReview.{Candidate, Evidence, LinkedItem, Proposal}
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.Geocode
@@ -104,9 +108,9 @@ private[places] object PlaceReviewRepo:
           ),
         descs.getOrElse(r.id, Nil)
       )
-      val cands = PlaceReview.duplicateOf(r.label).toList.flatMap { name =>
+      val cands = Evidence.duplicateOf(r.label).toList.flatMap { name =>
         // the name, or one of the alternatives a Pleiades title joins with '/' ("Peiros/Piros (river)")
-        val keys = PlaceReview.duplicateKeys(name)
+        val keys = Evidence.duplicateKeys(name)
         sql"""SELECT id, label, kind FROM places
               WHERE import_source IS NULL AND histmersion_place_key(label) = ANY($keys::text[])
                 AND label !~* '^withdrawn'
@@ -117,7 +121,7 @@ private[places] object PlaceReviewRepo:
 
   /** What `place-kind` lists, in place-id order. */
   def proposalsIn()(using DbCon): List[Proposal] =
-    evidenceIn().flatMap((e, cs) => PlaceReview.propose(e, cs))
+    evidenceIn().flatMap((e, cs) => e.propose(cs))
 
   def proposals()(using DbCon): List[Proposal] = proposalsIn()
 

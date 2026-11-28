@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -135,7 +137,7 @@ final class CurrencyCheckPipeline(
                 ctx,
                 goal,
                 doi,
-                Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value),
+                QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value),
                 queued
               ) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false

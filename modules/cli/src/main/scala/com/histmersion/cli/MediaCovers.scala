@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -78,7 +80,7 @@ object MediaCovers:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
-  def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairAcquire.RepairRequest.DryRun): Outcome =
+  def one(c: Client, ck: Citekey, book: Calibre.Book, dryRun: RepairRequest.DryRun): Outcome =
     CoverChoice.choose(
       book.cover.map(p => CoverChoice.Pick.Calibre.Path(p.value)),
       p => Files.isRegularFile(Path.of(p.value)),
@@ -127,7 +129,7 @@ object MediaCovers:
       cal: Calibre,
       only: Option[Citekey],
       refresh: MediaImportRequest.Refresh,
-      dryRun: RepairAcquire.RepairRequest.DryRun,
+      dryRun: RepairRequest.DryRun,
       limit: Option[Paging.Limit]
   ): Either[Cli.Error, (MediaCoversReport, List[(Citekey, MediaCoversRequest.Isbn)])] =
     if !cal.libraryExists then

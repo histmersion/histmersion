@@ -1,12 +1,14 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.raquo.laminar.api.L.*
 import com.histmersion.web.map.*
 import org.scalajs.dom
 
 import scala.scalajs.js
-import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy, EventTier, SiteTypes}
+import com.histmersion.api.catalogue.{EventSummary, EventTaxonomy, EventTier}
 import com.histmersion.api.Html
 import com.histmersion.api.Html.html as markup
 import com.histmersion.lint.{tolerated, LintRule}
@@ -86,7 +88,7 @@ object LayerFilters:
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val siteTypes: List[IconSelect.Opt] =
-    IconSelect.Opt(IconSelect.Opt.Value(""), IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteTypes.all
+    IconSelect.Opt(IconSelect.Opt.Value(""), IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteType.all
       .map(t =>
         IconSelect.Opt(
           IconSelect.Opt.Value(t.id.value),

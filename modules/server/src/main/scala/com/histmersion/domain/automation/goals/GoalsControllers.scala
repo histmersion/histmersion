@@ -9,7 +9,7 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Api
 import com.histmersion.api.automation.{Goal, GoalsExport, ItemStatus}
 import com.histmersion.api.Write
-import com.histmersion.api.aliases.{LabelRename, LabelRenames}
+import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.automation.Goal.Plans.{GoalLink, GoalView, LinkKind, Plan}
 import com.histmersion.domain.automation.worklists.{QueueItemId, QueueService}
 import com.histmersion.util.data.maintenance.WriteGate
@@ -84,10 +84,10 @@ final class GoalsControllers(
     maintenance.guard(WriteGate.OperationName("rename_goal")):
       val from = current(slug)
       for
-        valid <- LabelRenames.validate(
+        valid <- LabelRename.validate(
           Bundle.Kind.Goal,
-          LabelRenames.Label(from.value),
-          LabelRenames.Label(req.to.value)
+          LabelRename.Label(from.value),
+          LabelRename.Label(req.to.value)
         )
         to <- domain.automation.Goal.Slug
           .either(valid.value)

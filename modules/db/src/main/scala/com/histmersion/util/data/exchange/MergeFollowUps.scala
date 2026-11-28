@@ -1,6 +1,8 @@
 package com.histmersion
 package util.data.exchange
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.domain.{CreatedAt, MergePlanner}
 
 import com.augustnagro.magnum.DbCon
@@ -25,7 +27,7 @@ trait MergeFollowUps:
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
       dump: MergeFollowUps.DumpRecordRef
-  )(using DbCon, CreatedAt): (List[com.histmersion.api.exchange.Bundle.Article.Slug], Queue.QueueItem.Id)
+  )(using DbCon, CreatedAt): (List[com.histmersion.api.exchange.Bundle.Article.Slug], QueueItem.Id)
 
 object MergeFollowUps:
   type DumpRecordRef = DumpRecordRef.T

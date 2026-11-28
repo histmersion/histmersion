@@ -1,5 +1,12 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.DecisionRequest
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -190,7 +197,7 @@ object ApiIds:
   def approval(id: ApprovalInfo.Id): Approval.Id = Approval.Id.assume(id.value)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def manager(id: Managers.ManagerInfo.Id): ManagerLight.Id = ManagerLight.Id(id.value)
+  def manager(id: ManagerInfo.Id): ManagerLight.Id = ManagerLight.Id(id.value)
 
 /** The P3 pipelines that WAIT for a person, end to end against a `*_test` database with a scripted model: plan-goal
   * (nothing is created before the plan is approved; approval re-queues the run, which applies exactly the approved
@@ -221,7 +228,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
   private val EnrichSource = RunRequest.Pipeline("enrich-source")
   private val ZzTitle = RunRequest.Title("Zz tin")
   private val TinTopics = List(RunRequest.Topics("zzagent_tin"))
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

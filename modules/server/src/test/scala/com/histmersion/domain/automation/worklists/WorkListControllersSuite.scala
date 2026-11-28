@@ -1,10 +1,15 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueImport
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueuePatch}
 import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, Instant, ZoneOffset}
@@ -25,25 +30,25 @@ class WorkListControllersSuite extends munit.FunSuite:
   test("a log item with no topic joins the entry of the clock's UTC day; another list's stays without one"):
     val c = controllers()
     assertEquals(
-      c.addOverRest(WorkListControllers.ListName("log"), QueueAdd(Queue.QueueItem.Text("ran the lint"))).map(_.topic),
+      c.addOverRest(WorkListControllers.ListName("log"), QueueAdd(QueueItem.Text("ran the lint"))).map(_.topic),
       Right(Some("2026-10-30"))
     )
     assertEquals(
       c.addOverRest(
         WorkListControllers.ListName("log"),
-        QueueAdd(Queue.QueueItem.Text("named"), topic = Some(Queue.QueueItem.Topic("Later")))
+        QueueAdd(QueueItem.Text("named"), topic = Some(QueueItem.Topic("Later")))
       ).map(_.topic),
       Right(Some("Later"))
     )
     assertEquals(
-      c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("read Cline"))).map(_.topic),
+      c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(QueueItem.Text("read Cline"))).map(_.topic),
       Right(None)
     )
 
   test("an unknown list, an empty text, a bad status or instant are refused with today's messages"):
     val c = controllers()
     assertEquals(
-      c.addOverRest(WorkListControllers.ListName("notes"), QueueAdd(Queue.QueueItem.Text("x")))
+      c.addOverRest(WorkListControllers.ListName("notes"), QueueAdd(QueueItem.Text("x")))
         .left
         .map(_.problems.head)
         .left
@@ -51,7 +56,7 @@ class WorkListControllersSuite extends munit.FunSuite:
       Left("unknown queue list 'notes' — one of: acquire, tasks, log")
     )
     assertEquals(
-      c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("  ")))
+      c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(QueueItem.Text("  ")))
         .left
         .map(_.problems.head)
         .left
@@ -61,19 +66,19 @@ class WorkListControllersSuite extends munit.FunSuite:
     assert(
       c.addOverRest(
         WorkListControllers.ListName("tasks"),
-        QueueAdd(Queue.QueueItem.Text("x"), status = Some(Queue.QueueItem.Status("maybe")))
+        QueueAdd(QueueItem.Text("x"), status = Some(QueueItem.Status("maybe")))
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("unknown queue item status 'maybe'"))
     )
     assert(
       c.addOverRest(
         WorkListControllers.ListName("tasks"),
-        QueueAdd(Queue.QueueItem.Text("x"), createdAt = Some(Queue.QueueItem.CreatedAt("yesterday")))
+        QueueAdd(QueueItem.Text("x"), createdAt = Some(QueueItem.CreatedAt("yesterday")))
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("'yesterday' is not a queue item creation time"))
     )
     assertEquals(
-      c.patch(QueueItemId(42), QueuePatch(text = Some(Queue.QueueItem.Text(" "))))
+      c.patch(QueueItemId(42), QueuePatch(text = Some(QueueItem.Text(" "))))
         .left
         .map(_.problems.head)
         .left
@@ -89,21 +94,21 @@ class WorkListControllersSuite extends munit.FunSuite:
     val c = controllers()
     val byCli = c.addOverRest(
       WorkListControllers.ListName("tasks"),
-      QueueAdd(Queue.QueueItem.Text("from the cli"), via = Some(Creation.Cli))
+      QueueAdd(QueueItem.Text("from the cli"), via = Some(Creation.Cli))
     )
     assertEquals(byCli.map(i => (i.creator.flatMap(_.surface), i.actor)), Right((Some("cli"), Some("person"))))
     val byWeb = c.addOverRest(
       WorkListControllers.ListName("tasks"),
-      QueueAdd(Queue.QueueItem.Text("web"), via = Some(Creation.Web))
+      QueueAdd(QueueItem.Text("web"), via = Some(Creation.Web))
     )
     assertEquals(byWeb.map(_.creator.flatMap(_.surface)), Right(Some("web")))
-    val plain = c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("plain")))
+    val plain = c.addOverRest(WorkListControllers.ListName("tasks"), QueueAdd(QueueItem.Text("plain")))
     assertEquals(plain.map(_.creator.flatMap(_.surface)), Right(Some("rest")))
-    assert(c.addOverMcp(WorkListControllers.ListName("tasks"), QueueAdd(Queue.QueueItem.Text("anonymous"))).isLeft)
+    assert(c.addOverMcp(WorkListControllers.ListName("tasks"), QueueAdd(QueueItem.Text("anonymous"))).isLeft)
     val named = Creation.By(Some(Creation.Plugin("research")), Some(Creation.Workflow("trailhead")))
     val byAgent = c.addOverMcp(
       WorkListControllers.ListName("tasks"),
-      QueueAdd(Queue.QueueItem.Text("from an agent"), createdBy = Some(named))
+      QueueAdd(QueueItem.Text("from an agent"), createdBy = Some(named))
     )
     assertEquals(
       byAgent.map(i => (i.creator.flatMap(_.workflow), i.creator.flatMap(_.agent).map(_.kind), i.actor)),
@@ -113,7 +118,7 @@ class WorkListControllersSuite extends munit.FunSuite:
     assert(
       c.addOverRest(
         WorkListControllers.ListName("tasks"),
-        QueueAdd(Queue.QueueItem.Text("x"), createdBy = Some(partial))
+        QueueAdd(QueueItem.Text("x"), createdBy = Some(partial))
       ).isLeft
     )
     val added = plain.toOption.get
@@ -125,9 +130,9 @@ class WorkListControllersSuite extends munit.FunSuite:
 
   test("an import counts the items and the notes apart; the export renders what was imported"):
     val c = controllers()
-    val file = Queue.QueueItem.Text("# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n")
+    val file = QueueItem.Text("# TASKS\n\n## Backlog\n- [ ] read Cline\n- [x] read Kuhrt\n")
     val r =
-      c.importText(Kind.Label("tasks"), Queue.QueueImport(file))
+      c.importText(Kind.Label("tasks"), QueueImport(file))
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.list, r.items, r.replaced), ("tasks", 2, 0))
     assertEquals(c.exportText(Kind.Label("tasks")).map(_.value.contains("- [x] read Kuhrt")), Right(true))

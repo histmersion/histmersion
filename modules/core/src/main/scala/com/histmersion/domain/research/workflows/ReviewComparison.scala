@@ -1,10 +1,13 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.domain.reviewarticle.Merged
+import com.histmersion.domain.reviewarticle.Report
+import com.histmersion.domain.reviewarticle.Finding
 import com.histmersion.util.json.JsonCodec.given
 
 import com.histmersion.domain.{CompareRuns, ReviewArticle}
 import com.histmersion.domain.CompareRuns.{KindCount, MajorOverlap, ReviewerSide, ReviewSide, Run}
-import com.histmersion.domain.ReviewArticle.{Finding, Merged, Report}
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.util.text.ComparedText
 
@@ -45,7 +48,7 @@ object ReviewComparison extends OutputComparison:
       )
     ) ++ mech.toList.map(fs =>
       ReviewerSide(
-        ReviewerSide.Reviewer(ReviewArticle.Reviewer.Mechanical.wire.value),
+        ReviewerSide.Reviewer(domain.reviewarticle.Reviewer.Mechanical.wire.value),
         None,
         ReviewerSide.Majors(fs.count(_.major)),
         ReviewerSide.Minors(fs.count(!_.major))

@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
@@ -1213,14 +1215,14 @@ class MediaOracleSuite extends DbSuite:
     covers(
       "dry run",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun.DryRun,
+        dryRun = RepairRequest.DryRun.DryRun,
         illustrations = MediaCoversRequest.Illustrations.Skipped
       )
     )
     covers(
       "one with a cover",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+        dryRun = RepairRequest.DryRun.Apply,
         citekey = Some(Citekey("zqol2000_a")),
         illustrations = MediaCoversRequest.Illustrations.Skipped
       )
@@ -1228,7 +1230,7 @@ class MediaOracleSuite extends DbSuite:
     covers(
       "one without",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+        dryRun = RepairRequest.DryRun.Apply,
         citekey = Some(Citekey("zqol2000_b")),
         illustrations = MediaCoversRequest.Illustrations.Skipped
       )
@@ -1236,7 +1238,7 @@ class MediaOracleSuite extends DbSuite:
     covers(
       "an ISBN the request names",
       MediaCoversRequest(
-        dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+        dryRun = RepairRequest.DryRun.Apply,
         citekey = Some(Citekey("zqmt2020_x")),
         illustrations = MediaCoversRequest.Illustrations.Skipped,
         isbn = Some(MediaCoversRequest.Isbn("9780000000003"))

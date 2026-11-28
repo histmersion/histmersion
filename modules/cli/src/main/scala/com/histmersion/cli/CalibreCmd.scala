@@ -1,5 +1,9 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.cli.AllOrFirst.traverse
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -146,7 +150,7 @@ object CalibreCmd:
       format: Option[CollectionImportRequest.Format],
       noConvert: Boolean,
       following: Cli.Following,
-      item: Option[Queue.QueueItem.Id],
+      item: Option[QueueItem.Id],
       json: Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     s.importItem(
@@ -192,15 +196,15 @@ object CalibreCmd:
       format: Option[Calibre.Book.Format],
       noConvert: Boolean,
       following: Cli.Following,
-      item: Option[Queue.QueueItem.Id],
+      item: Option[QueueItem.Id],
       json: Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     for
       // checked BEFORE the record is written: a typo'd item must not leave a half-done import behind
       _ <- item.fold(Right(()))(i =>
-        c.queueList(Queue.Wire(Queue.Kind.Acquire.label.value), all = true)
+        c.queueList(Queue.Wire(Kind.Acquire.label.value), all = true)
           .flatMap(l =>
-            Queue
+            QueueItem
               .fulfillable(i, l.items.find(_.id == i))
               .left
               .map(e => Cli.Error(e))
@@ -271,12 +275,12 @@ object CalibreCmd:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def importCover(c: Client, ck: Citekey, book: Calibre.Book)(using console: Console): Unit =
-    MediaCovers.one(c, ck, book, dryRun = RepairAcquire.RepairRequest.DryRun.Apply) match
+    MediaCovers.one(c, ck, book, dryRun = RepairRequest.DryRun.Apply) match
       case MediaCovers.Outcome.Uploaded(_)             => Cli.out.println(s"Cover: from the Calibre library")
       case MediaCovers.Outcome.AskOpenLibrary(_, isbn) =>
         c.mediaCovers(
           MediaCoversRequest(
-            dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+            dryRun = RepairRequest.DryRun.Apply,
             citekey = Some(ck),
             illustrations = MediaCoversRequest.Illustrations.Skipped,
             isbn = Some(isbn)
@@ -869,7 +873,7 @@ object CalibreCmd:
                 format.map(CollectionImportRequest.Format(_)),
                 noConvert = noConvert,
                 following,
-                item.map(Queue.QueueItem.Id(_)),
+                item.map(QueueItem.Id(_)),
                 json
               )
             case None =>
@@ -880,7 +884,7 @@ object CalibreCmd:
                 format.map(Calibre.Book.Format(_)),
                 noConvert = noConvert,
                 following,
-                item.map(Queue.QueueItem.Id(_)),
+                item.map(QueueItem.Id(_)),
                 json
               )
         case Command.UpdateOne(ckText, json) =>

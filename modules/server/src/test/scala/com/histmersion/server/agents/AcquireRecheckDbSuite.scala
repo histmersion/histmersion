@@ -1,5 +1,11 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.domain.acquirerecheck.LastCheck
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.domain.acquirerecheck.Rationale
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -23,7 +29,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.library.Acquire.Checks.*
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
@@ -90,7 +95,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val baseCfg =
@@ -160,7 +165,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
 
   /** The fixture's legal ingest: what `answer` says for each DOI; records the DOI and the source it was asked into. */
   final private class RecheckUpstream extends AgentUpstream:
-    @volatile var generation = AcquireRecheck.LastCheck.Generation("g1")
+    @volatile var generation = LastCheck.Generation("g1")
     @volatile var answer: (Doi, Option[Citekey]) => Either[Problem, Ingest.Report] = (d, _) =>
       Left(
         noCopy(d)
@@ -202,13 +207,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
 
   private def doi(n: String) = s"10.5555/zzrecheck.$n"
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def checkItem(i: Queue.QueueItem.Id): AcquireAttemptRow.Id =
+  private def checkItem(i: QueueItem.Id): AcquireAttemptRow.Id =
     AcquireAttemptRow.Id(i.value)
 
-  private def lastOf(i: Queue.QueueItem.Id): Option[AcquireAttempt] =
+  private def lastOf(i: QueueItem.Id): Option[AcquireAttempt] =
     AcquisitionTesting.attempts(ds).of(List(checkItem(i))).get(checkItem(i)).flatMap(_.headOption)
 
-  private def checkedAgo(i: Queue.QueueItem.Id, at: Instant): Unit =
+  private def checkedAgo(i: QueueItem.Id, at: Instant): Unit =
     AcquisitionTesting
       .attempts(ds)
       .record(
@@ -216,7 +221,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         AcquireAttempt(
           at,
           AcquireAttempt.Trigger.Recheck,
-          AcquireRecheck.LastCheck.Generation("g1"),
+          LastCheck.Generation("g1"),
           AcquireAttempt.Outcome.NoCopy,
           Vector.empty,
           None
@@ -227,13 +232,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   private def jobKey(id: SpatialHierarchyResult.Job.Id): Job.Id =
     Job.Id.applyUnsafe(id.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def item(h: ServerWiring, n: String): Queue.QueueItem.Id =
+  private def item(h: ServerWiring, n: String): QueueItem.Id =
     h.workLists
       .addOverRest(
         WorkListControllers.ListName("acquire"),
         QueueAdd(
-          Queue.QueueItem.Text(s"Zzrecheck $n, A work — https://doi.org/${doi(n)}"),
-          topic = Some(Queue.QueueItem.Topic("zzrecheck"))
+          QueueItem.Text(s"Zzrecheck $n, A work — https://doi.org/${doi(n)}"),
+          topic = Some(QueueItem.Topic("zzrecheck"))
         )
       )
       .toOption
@@ -266,7 +271,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   private def passNow(a: AgentsControllers, in: RecheckRequest): Either[Api.Error, RecheckResult] =
     a.acquireRecheck.pass(in, Instant.now()).toRight(Api.Error(Problem.Unclassified(Legacy.Text("a pass is running"))))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def status(h: ServerWiring, id: Queue.QueueItem.Id): String =
+  private def status(h: ServerWiring, id: QueueItem.Id): String =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
       .toOption
@@ -309,7 +314,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val noDoi = h.workLists
       .addOverRest(
         WorkListControllers.ListName("acquire"),
-        QueueAdd(Queue.QueueItem.Text("Zzrecheck, a book with no DOI"))
+        QueueAdd(QueueItem.Text("Zzrecheck, a book with no DOI"))
       )
       .toOption
       .get
@@ -392,7 +397,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       a.acquireRecheck.run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun)).toOption.get.due,
       0
     )
-    up.generation = AcquireRecheck.LastCheck.Generation("g2") // a new fetcher, a new key
+    up.generation = LastCheck.Generation("g2") // a new fetcher, a new key
     val dry = a.acquireRecheck
       .run(RecheckRequest(dryRun = Acquire.Checks.RecheckRequest.DryRun.DryRun))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -423,15 +428,15 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val bare = add(
       WorkListControllers.ListName("acquire"),
       QueueAdd(
-        Queue.QueueItem.Text("Zzrecheck without an identifier"),
-        topic = Some(Queue.QueueItem.Topic("zzrecheck"))
+        QueueItem.Text("Zzrecheck without an identifier"),
+        topic = Some(QueueItem.Topic("zzrecheck"))
       )
     )
-    val mine = add(tasksList, QueueAdd(Queue.QueueItem.Text("zzrecheck: read the review")))
+    val mine = add(tasksList, QueueAdd(QueueItem.Text("zzrecheck: read the review")))
     val theirs = add(
       tasksList,
       QueueAdd(
-        Queue.QueueItem.Text("zzrecheck: enrich the source"),
+        QueueItem.Text("zzrecheck: enrich the source"),
         createdBy = Some(
           Creation.By(Some(Creation.Plugin("research")), Some(Creation.Workflow("review-article")))
         )
@@ -440,7 +445,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val view = OpenWorkView(a, a.acquireRecheck)
     def items(scope: OpenWork.Scope = OpenWork.Scope()) =
       view.state(scope.parsed).items
-    def verdict(id: Queue.QueueItem.Id) =
+    def verdict(id: QueueItem.Id) =
       items().collectFirst { case x: OpenWork.OpenItem.Acquisition if x.item == id => x.verdict }
     assert(verdict(one).exists(_.isInstanceOf[OpenWork.Verdict.Unchecked]), s"not checked yet: ${verdict(one)}")
     assertEquals(verdict(bare), Some(OpenWork.Verdict.NoIdentifier))
@@ -453,14 +458,14 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
       Vector((OpenWork.Terms.Fetcher("unpaywall"), OpenWork.Said.NotHeld))
     )
     assertEquals(history.attempts.map(_.trigger), Vector(OpenWork.Trigger.Recheck))
-    def task(id: Queue.QueueItem.Id) = items().collectFirst { case t: OpenWork.OpenItem.Task if t.item == id => t.who }
+    def task(id: QueueItem.Id) = items().collectFirst { case t: OpenWork.OpenItem.Task if t.item == id => t.who }
     assertEquals(task(mine), Some(OpenWork.Who.Owner))
     assertEquals(task(theirs), Some(OpenWork.Who.Agents))
     val owner = items(OpenWork.Scope(who = Some(OpenWork.Terms.Who("owner"))))
     assert(owner.forall(_.who == OpenWork.Who.Owner) && owner.nonEmpty)
     val tasks = items(OpenWork.Scope(kind = Some(OpenWork.Terms.Kind("task"))))
     assert(tasks.forall(_.kind == OpenWork.Kind.Task) && tasks.size >= 2)
-    assert(view.acquisition(Queue.QueueItem.Id(999999)).isLeft, "no such open item")
+    assert(view.acquisition(QueueItem.Id(999999)).isLeft, "no such open item")
 
   test("the caps: per pass, per day; a status line with what is due"):
     val (a, h, up) = setup(
@@ -657,13 +662,13 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
         .isEmpty,
       "no legal copy: no metadata-only source is created"
     )
-    val why = lastOf(closed).map(a => AcquireRecheck.Rationale.of(a).said).getOrElse("")
+    val why = lastOf(closed).map(a => Rationale.of(a).said).getOrElse("")
     assert(why.contains("no legal copy (unpaywall: no copy — no open-access location)"), why)
     assertEquals(
       lastOf(closed).map(_.answers.map(_.said)),
       Some(Vector(Problem.NotFound.Said.Miss(Problem.NotFound.Absence.NotHeld)))
     )
-    assertEquals(lastOf(oa).map(_.generation), Some(AcquireRecheck.LastCheck.Generation("real")))
+    assertEquals(lastOf(oa).map(_.generation), Some(LastCheck.Generation("real")))
 
   // ── the re-check job ───────────────────────────────────────────────────────────────────────────
 
@@ -728,7 +733,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     val _ = h.workLists
       .addOverRest(
         WorkListControllers.ListName("acquire"),
-        QueueAdd(Queue.QueueItem.Text("Zzrecheck, a book with no DOI"))
+        QueueAdd(QueueItem.Text("Zzrecheck, a book with no DOI"))
       )
       .toOption
       .get
@@ -793,10 +798,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(status(h, full), Queue.Done)
     val checks = AcquisitionTesting.attempts(ds).of(ids.map(checkItem)).view.mapValues(_.head).toMap
     assertEquals(
-      checks.values.flatMap(a => AcquireRecheck.Outcome.of(a.outcome)).map(_.wire.value).toList.sorted,
+      checks.values.flatMap(a => domain.acquirerecheck.Outcome.of(a.outcome)).map(_.wire.value).toList.sorted,
       List(Failed, Fetched, NoCopy, NoCopy, NoCopy, NoCopy)
     )
-    val throttled = AcquireRecheck.Rationale.of(checks(checkItem(ids(3)))).said
+    val throttled = Rationale.of(checks(checkItem(ids(3)))).said
     assert(throttled.contains("no answer (HTTP 429"), throttled)
     assertEquals(a.acquireRecheck.fetchedToday(Instant.now()), 1)
     assertEquals(

@@ -1,5 +1,16 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.QuotaRefresh
+import com.histmersion.api.automation.planquota.RefreshTrigger
+import com.histmersion.api.automation.planquota.Login
+import com.histmersion.api.automation.managers.ManagerItem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
@@ -44,7 +55,6 @@ import com.histmersion.util.system.JvmHome
 import com.histmersion.db.TestDb
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.automation.Agents
-import com.histmersion.api.automation.Managers.ManagerItem
 import com.histmersion.config.DbConfig
 import com.histmersion.config.ServerConfig
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -55,7 +65,6 @@ import com.histmersion.config.AgentEnrichConfig
 import com.histmersion.util.process.ProcessResult
 import com.histmersion.api.catalogue.Year
 import com.histmersion.config.ClaudePlanConfig
-import com.histmersion.domain.PlanReadSchedule
 import com.histmersion.config.QuotaConfig
 import com.histmersion.server.KeyedLoopback
 import com.histmersion.config.ClaudeCodeConfig
@@ -84,8 +93,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
 
   private val Ck = Citekey("zzrefresh2019_tin")
   private val CkTarget = RunRequest.Target("zzrefresh2019_tin")
-  private val Plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet"))
-  private val Paid = ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("zzPaid"))
+  private val Plan = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
+  private val Paid = ModelRef(ProviderKind.Anthropic, ModelRef.Model("zzPaid"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -249,13 +258,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         PoolId.ClaudePlan,
         List(
           Reading(
-            PlanQuota.Reading.Limit("claude"),
-            PlanQuota.Reading.Kind("five_hour"),
-            PlanQuota.Reading.UsedPct(70),
+            Reading.Limit("claude"),
+            Reading.Kind("five_hour"),
+            Reading.UsedPct(70),
             Some(Reading.ResetsAt(now() + 3 * 3600000L)),
-            rejected = PlanQuota.Reading.Rejected.Accepted,
+            rejected = Reading.Rejected.Accepted,
             Reading.ObservedAt(now() - 60 * Min),
-            PlanQuota.Source.Run
+            api.automation.planquota.Source.Run
           )
         )
       )
@@ -263,7 +272,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
 
   private def startAndRun(a: AgentsControllers): RunInfo =
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), CkTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), CkTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
@@ -309,19 +318,19 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       PoolId.ClaudePlan,
       List(
         Reading(
-          PlanQuota.Reading.Limit("claude"),
-          PlanQuota.Reading.Kind("five_hour"),
-          PlanQuota.Reading.UsedPct(90),
+          Reading.Limit("claude"),
+          Reading.Kind("five_hour"),
+          Reading.UsedPct(90),
           Some(Reading.ResetsAt(now() + 3600000L)),
-          PlanQuota.Reading.Rejected.Accepted,
+          Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
-          PlanQuota.Source.Run
+          api.automation.planquota.Source.Run
         )
       )
     )
     val run = startAndRun(a)
     assert(run.status.value == "paused" && run.error.exists(_.sentence.startsWith("plan-quota:")), run.error)
-    a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PlanQuota.PoolSet.Hold.Hold)))
+    a.setPool(PlanQuota.PoolIdText("claude-plan"), PoolSet(hold = Some(PoolSet.Hold.Hold)))
       .left
       .map(Api.Error(_))
     connect(ds)(sql"UPDATE plan_quota_readings SET observed_at = now() - interval '1 hour'".update.run())
@@ -388,7 +397,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     assertEquals(reads.probes.get(), 1)
     assertEquals(
       Transactor(ds).read(PlanQuotaRepo.readings(PoolId.ClaudePlan)).map(r => (r.kind, r.source)).toSet,
-      Set(("five_hour", PlanQuota.Source.Probe), ("seven_day", PlanQuota.Source.Probe))
+      Set(("five_hour", api.automation.planquota.Source.Probe), ("seven_day", api.automation.planquota.Source.Probe))
     )
     // refresh off: today's behaviour — usable, unknown, nothing read
     connect(ds)(sql"DELETE FROM plan_quota_readings".update.run())
@@ -416,17 +425,17 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), reads)
     val at = java.time.Instant.now()
     def onSchedule(
-        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn(true),
-        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted(true),
+        autopilotOn: ReadSchedule.AutopilotOn = ReadSchedule.AutopilotOn(true),
+        wanted: ReadSchedule.Wanted = ReadSchedule.Wanted(true),
         when: java.time.Instant = at
     ) =
       a.pools.refreshOnSchedule(PoolId.ClaudePlan, autopilotOn, wanted, when)
     assertEquals(
-      onSchedule(autopilotOn = PlanReadSchedule.AutopilotOn(false)).left.map(w => s"$w"),
+      onSchedule(autopilotOn = ReadSchedule.AutopilotOn(false)).left.map(w => s"$w"),
       Left("the autopilot is off")
     )
     assertEquals(
-      onSchedule(wanted = PlanReadSchedule.Wanted(false)).left.map(w => s"$w"),
+      onSchedule(wanted = ReadSchedule.Wanted(false)).left.map(w => s"$w"),
       Left("no queued work wants the pool")
     )
     assertEquals(reads.probes.get(), 0)
@@ -448,13 +457,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         PoolId.ClaudePlan,
         List(
           Reading(
-            PlanQuota.Reading.Limit("claude"),
-            PlanQuota.Reading.Kind("five_hour"),
-            PlanQuota.Reading.UsedPct(40),
+            Reading.Limit("claude"),
+            Reading.Kind("five_hour"),
+            Reading.UsedPct(40),
             Some(Reading.ResetsAt(now() + 3600000L)),
-            rejected = PlanQuota.Reading.Rejected.Accepted,
+            rejected = Reading.Rejected.Accepted,
             Reading.ObservedAt(at.plusSeconds(300 * 60).toEpochMilli),
-            PlanQuota.Source.Run
+            api.automation.planquota.Source.Run
           )
         )
       )
@@ -472,8 +481,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       a.pools
         .refreshOnSchedule(
           PoolId.ClaudePlan,
-          autopilotOn = PlanReadSchedule.AutopilotOn(true),
-          wanted = PlanReadSchedule.Wanted(true),
+          autopilotOn = ReadSchedule.AutopilotOn(true),
+          wanted = ReadSchedule.Wanted(true),
           java.time.Instant.now()
         )
         .left
@@ -495,8 +504,8 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       b.pools
         .refreshOnSchedule(
           PoolId.ClaudePlan,
-          autopilotOn = PlanReadSchedule.AutopilotOn(true),
-          wanted = PlanReadSchedule.Wanted(true),
+          autopilotOn = ReadSchedule.AutopilotOn(true),
+          wanted = ReadSchedule.Wanted(true),
           java.time.Instant.now()
         )
         .left
@@ -527,13 +536,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       PoolId.ClaudePlan,
       List(
         Reading(
-          PlanQuota.Reading.Limit("claude"),
-          PlanQuota.Reading.Kind("five_hour"),
-          PlanQuota.Reading.UsedPct(10),
+          Reading.Limit("claude"),
+          Reading.Kind("five_hour"),
+          Reading.UsedPct(10),
           Some(Reading.ResetsAt(now() + 3600000L)),
-          PlanQuota.Reading.Rejected.Accepted,
+          Reading.Rejected.Accepted,
           Reading.ObservedAt(now() - Min),
-          PlanQuota.Source.Run
+          api.automation.planquota.Source.Run
         )
       )
     )
@@ -559,13 +568,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
       PoolId.ClaudePlan,
       List(
         Reading(
-          PlanQuota.Reading.Limit("claude"),
-          PlanQuota.Reading.Kind("five_hour"),
-          PlanQuota.Reading.UsedPct(99),
+          Reading.Limit("claude"),
+          Reading.Kind("five_hour"),
+          Reading.UsedPct(99),
           Some(Reading.ResetsAt(now() + 3600000L)),
-          PlanQuota.Reading.Rejected.Accepted,
+          Reading.Rejected.Accepted,
           Reading.ObservedAt(now()),
-          PlanQuota.Source.Run
+          api.automation.planquota.Source.Run
         )
       )
     )
@@ -573,7 +582,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     // the person reset the plan: `agent quota refresh claude-plan` reads 0% used — the model is back
     Thread.sleep(5)
     val refreshed = a
-      .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
+      .refreshQuota(QuotaRefresh(Some(PoolId.Wire("claude-plan"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -628,7 +637,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     val entry = a.models.chains.find(_.role.value == "extractor").get.models.head
     assert(!entry.usable.usable && entry.problems.exists(_.sentence.contains("no login")), entry)
     val forced = a
-      .refreshQuota(QuotaRefresh(Some(PlanQuota.PoolId.Wire("claude-plan"))))
+      .refreshQuota(QuotaRefresh(Some(PoolId.Wire("claude-plan"))))
       .left
       .map(Api.Error(_))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -663,13 +672,13 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         PoolId.ChatgptPlan,
         List(
           Reading(
-            PlanQuota.Reading.Limit("codex"),
-            PlanQuota.Reading.Kind("300m"),
-            PlanQuota.Reading.UsedPct(72),
+            Reading.Limit("codex"),
+            Reading.Kind("300m"),
+            Reading.UsedPct(72),
             Some(Reading.ResetsAt(now() + 3600000L)),
-            rejected = PlanQuota.Reading.Rejected.Accepted,
+            rejected = Reading.Rejected.Accepted,
             Reading.ObservedAt(now() - 60 * Min),
-            PlanQuota.Source.AppServer
+            api.automation.planquota.Source.AppServer
           )
         )
       )
@@ -677,22 +686,22 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
     // no login in the runs' CODEX_HOME: unavailable, not read
     assert(
       pools
-        .unavailable(ModelRef(ProviderKind.Codex, Agents.ModelRef.Model("gpt-5")))
+        .unavailable(ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5")))
         .exists(_.sentence.contains("codex login"))
     )
     assertEquals(pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)._3, None)
     assertEquals(reads.codexReads.get(), 0)
     Files.writeString(home.resolve("auth.json"), "") // a stand-in: only its presence is looked at
     val _ = pools.login(PoolId.ChatgptPlan, force = PlanPools.Force(true))
-    assertEquals(pools.unavailable(ModelRef(ProviderKind.Codex, Agents.ModelRef.Model("gpt-5"))), None)
+    assertEquals(pools.unavailable(ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5"))), None)
     assert(!pools.verdict(PoolId.ChatgptPlan, None)._1.usable, "28% left, stale: needs 35%")
     val (v, states, r) = pools.decide(PoolId.ChatgptPlan, None, RefreshTrigger.Pick)
     assertEquals((v.usable, r.map(x => (x.mode, x.ok))), (true, Some(("app-server", true))))
     assertEquals(reads.codexReads.get(), 1)
-    assert(states.forall(s => !s.stale.stale && s.reading.source == PlanQuota.Source.AppServer), states)
+    assert(states.forall(s => !s.stale.stale && s.reading.source == api.automation.planquota.Source.AppServer), states)
     // opencode on the ChatGPT login signs in by itself: the codex login does not gate it
     assertEquals(
-      PlanPools.loginGates(PoolId.ChatgptPlan, ModelRef(ProviderKind.Opencode, Agents.ModelRef.Model("openai/gpt-5"))),
+      PlanPools.loginGates(PoolId.ChatgptPlan, ModelRef(ProviderKind.Opencode, ModelRef.Model("openai/gpt-5"))),
       false
     )
 
@@ -713,7 +722,7 @@ class PlanRefreshRunSuite extends DbSuite with RunTranscripts:
         .toOption
         .get
     )
-    val Codex = ModelRef(ProviderKind.Codex, Agents.ModelRef.Model("gpt-5"))
+    val Codex = ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-5"))
     // a read is due at every look (no reading yet, poll-seconds 1), and the extractor's chain draws on the ChatGPT plan
     val cfg = baseCfg
       .modify(_.agents)

@@ -1,5 +1,13 @@
 package com.histmersion
 package domain.automation.approvals
+
+import com.histmersion.api.automation.approvaldigest.Digest
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.approvaldigest.BulkResult
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.approvaldigest.BulkFailed
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -10,9 +18,8 @@ import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Agents.{ApprovalKind, Decision, DecisionRequest}
+import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.api.automation.ApprovalDigest.*
-import com.histmersion.api.automation.Queue.{QueueAdd, QueueItem}
 import com.histmersion.domain.automation.Approval as DomainApproval
 
 import java.time.Instant
@@ -75,7 +82,7 @@ final class ApprovalDigestService(
         .forall(_.isBefore(day))
     if !due then Nil
     else
-      val line = ApprovalDigest.line(digest(now))
+      val line = digest(now).line
       agents.autopilotRow.digested(now)
       agents.workLists.logLine(
         QueueAdd(QueueItem.Text(line.value.take(1000))),
@@ -90,14 +97,14 @@ final class ApprovalDigestService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decideAll(b: BulkDecide)(using Creator.New): Either[Api.Error, BulkResult] =
     for
-      d <- Decision
-        .parse(Decision.Wire(b.decision.value))
+      d <- api.automation.agents.Decision
+        .parse(api.automation.agents.Decision.Wire(b.decision.value))
         .toRight(
           Api.Error(
             Problem.Invalid.Unknown.here(
-              Problem.TypeName.of(Decision.Wire),
+              Problem.TypeName.of(api.automation.agents.Decision.Wire),
               Problem.Raw.of(b.decision),
-              Decision.values.toVector.map(d => Problem.Raw.of(d.wire))
+              api.automation.agents.Decision.values.toVector.map(d => Problem.Raw.of(d.wire))
             )
           )
         )
@@ -168,7 +175,9 @@ final class ApprovalDigestService(
             b.subject.map(s => s"about $s"),
             Option.when(b.ids.nonEmpty)(s"${b.ids.size} ids")
           ).flatten.mkString(", ")
-          val line = s"approvals ${if d == Decision.Approve then "approved" else "rejected"} in bulk by $by ($what): " +
+          val line = s"approvals ${
+              if d == api.automation.agents.Decision.Approve then "approved" else "rejected"
+            } in bulk by $by ($what): " +
             s"${ok.size} of ${ms.size}" + (if bad.nonEmpty then s", ${bad.size} refused" else "") + s"; $left open left"
           agents.workLists.logLine(
             QueueAdd(QueueItem.Text(line.take(1000))),

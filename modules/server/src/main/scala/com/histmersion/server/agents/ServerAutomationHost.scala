@@ -1,5 +1,11 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.domain.PlanAnswer
+import com.histmersion.api.checks.lint.LintFixResult
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
@@ -7,18 +13,15 @@ import com.histmersion.domain.research.Slug
 
 import com.histmersion.domain.library.workflows.{AgentUpstream, SourceProposals}
 
-import com.histmersion.api.research.Articles
 import com.histmersion.api.library.{Facet, Filter}
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.api.automation.{Goal, Queue}
-import com.histmersion.api.automation.Agents.{Pipeline, ProbeAnswer, Role, RunRequest}
+import com.histmersion.api.automation.Agents.{Pipeline, Role}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.domain.AgentVerify
 import com.histmersion.domain.automation.worklists.QueueItemId
 import com.histmersion.api.automation.TargetKind
-import com.histmersion.api.checks.Lint.LintFixResult
-import com.histmersion.domain.PlanGoal
 import com.histmersion.domain.automation.workflows.AutomationHost
 import com.histmersion.server.ServerWiring
 import io.scalaland.chimney.dsl.*
@@ -123,7 +126,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             req.tags.exists(_.value.trim.nonEmpty)
         for
           _ <- req.kind.fold[Either[Api.Error, Unit]](Right(()))(k =>
-            Articles.kindOf(Article.Kind.Wire(k.value)).left.map(Api.Error(_)).map(_ => ())
+            Article.kindOf(Article.Kind.Wire(k.value)).left.map(Api.Error(_)).map(_ => ())
           )
           _ <- Either.cond(
             exists || filter,
@@ -138,7 +141,7 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         yield ()
       case _ =>
         req.acquireItem.fold(Right(()))(id =>
-          Queue.fulfillable(id, h.queues.get(QueueItemId(id.value))).map(_ => ()).left.map(Api.Error(_))
+          QueueItem.fulfillable(id, h.queues.get(QueueItemId(id.value))).map(_ => ()).left.map(Api.Error(_))
         )
 
   def runRoles(p: Pipeline): List[Role] =
@@ -172,18 +175,18 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
   def sameTitle(answered: Title, record: Title): Boolean = AgentVerify.sameTitle(answered, record)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def workLookup: PlanGoal.Lookup = doi =>
+  def workLookup: PlanAnswer.Lookup = doi =>
     upstream()
       .meta(doi)
       .map(w =>
-        PlanGoal.Work(
-          w.title.map(t => PlanGoal.Work.Title(t.value)),
+        PlanAnswer.Work(
+          w.title.map(t => PlanAnswer.Work.Title(t.value)),
           w.year.map(y => Year(y.value.toInt)),
-          w.authors.map(a => PlanGoal.Work.Authors(a.value)),
+          w.authors.map(a => PlanAnswer.Work.Authors(a.value)),
           w.citekey.flatMap(c => Citekey.option(c.value)),
-          PlanGoal.Work.InDb(w.inDb.inDb),
-          PlanGoal.Work.IsOa(w.isOa.isOa),
-          PlanGoal.Work.IsRetracted(w.isRetracted.isRetracted)
+          PlanAnswer.Work.InDb(w.inDb.inDb),
+          PlanAnswer.Work.IsOa(w.isOa.isOa),
+          PlanAnswer.Work.IsRetracted(w.isRetracted.isRetracted)
         )
       )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

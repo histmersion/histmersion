@@ -1,11 +1,12 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.domain.compilearticle.SourceFact
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.domain.research.workflows.*
 
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.domain.CompileArticle.SourceFact
 import com.histmersion.api.research.DraftMode
 import com.histmersion.api.automation.ScheduleKind
 import com.histmersion.api.automation.Goal

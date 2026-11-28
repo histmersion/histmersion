@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.domain.catalogue.evidence.NearFinding
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.{Api, Write}
@@ -22,7 +24,6 @@ import com.histmersion.api.media.{
   MediaThumb
 }
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
@@ -217,7 +218,7 @@ final class AssetsControllers(
   def placeThumbs(placeId: Place.Id): List[MediaThumb] =
     assets.placeThumbs(
       placeId,
-      EventMatcher.NearFinding.Km(cfg().media.sameSiteKm.value),
+      NearFinding.Km(cfg().media.sameSiteKm.value),
       AssetService.Limit(AssetsControllers.CardPictures)
     )
 

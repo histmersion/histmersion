@@ -1,5 +1,17 @@
 package com.histmersion
 package domain
+
+import com.histmersion.domain.enrichsource.VerifiedFinding
+import com.histmersion.domain.enrichsource.FindingProposal
+import com.histmersion.domain.enrichsource.VerifiedFindings
+import com.histmersion.domain.enrichsource.GeocodeChoice
+import com.histmersion.domain.enrichsource.Classified
+import com.histmersion.domain.enrichsource.Geocoded
+import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.domain.reviewarticle.Reviewer
+import com.histmersion.domain.reviewarticle.Merged
+import com.histmersion.domain.reviewarticle.Report
+import com.histmersion.domain.reviewarticle.Verdict
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -17,7 +29,6 @@ import com.histmersion.config.given
 import com.histmersion.domain.CompareRuns.{ModelChoice, Run, RunHead, Step, Tokens}
 import com.histmersion.domain.EnrichSource.*
 import com.histmersion.domain.ReviewArticle.*
-import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.domain.automation.agents.OutputComparison
 import com.histmersion.domain.library.workflows.EnrichComparison
 import com.histmersion.domain.research.workflows.ReviewComparison
@@ -201,36 +212,39 @@ class CompareRunsSuite extends munit.FunSuite:
     None,
     None,
     Nil,
-    EnrichSource.VerifiedFinding.Confidence("high")
+    VerifiedFinding.Confidence("high")
   )
 
   test("the quote check reads accepted answers (their own counts) and rejected ones (the verifier's reasons)"):
-    val rejected = Findings(
-      List(
-        FindingProposal(
-          EnrichSource.FindingProposal.Claim("a"),
-          AgentProposals.Proposal.Quote("q1"),
-          None,
-          None,
-          None,
-          None,
-          None,
-          Nil,
-          Confidence.Wire("high")
-        ),
-        FindingProposal(
-          EnrichSource.FindingProposal.Claim("b"),
-          AgentProposals.Proposal.Quote("q2"),
-          None,
-          None,
-          None,
-          None,
-          None,
-          Nil,
-          Confidence.Wire("high")
+    val rejected = domain.enrichsource
+      .Findings(
+        List(
+          FindingProposal(
+            FindingProposal.Claim("a"),
+            Proposal.Quote("q1"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            Confidence.Wire("high")
+          ),
+          FindingProposal(
+            FindingProposal.Claim("b"),
+            Proposal.Quote("q2"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            Nil,
+            Confidence.Wire("high")
+          )
         )
       )
-    ).asJson.noSpaces
+      .asJson
+      .noSpaces
     val steps = List(
       step(
         4,
@@ -251,8 +265,8 @@ class CompareRunsSuite extends munit.FunSuite:
           Step.Output(
             VerifiedFindings(
               List(vf(VerifiedFinding.Claim("a"))),
-              Some(EnrichSource.VerifiedFindings.Proposed(1)),
-              Some(EnrichSource.VerifiedFindings.QuoteFailed(0))
+              Some(VerifiedFindings.Proposed(1)),
+              Some(VerifiedFindings.QuoteFailed(0))
             ).asJson.noSpaces
           )
         ),
@@ -266,8 +280,8 @@ class CompareRunsSuite extends munit.FunSuite:
           Step.Output(
             VerifiedFindings(
               List(vf(VerifiedFinding.Claim("c"))),
-              Some(EnrichSource.VerifiedFindings.Proposed(3)),
-              Some(EnrichSource.VerifiedFindings.QuoteFailed(2))
+              Some(VerifiedFindings.Proposed(3)),
+              Some(VerifiedFindings.QuoteFailed(2))
             ).asJson.noSpaces
           )
         ),
@@ -316,14 +330,14 @@ class CompareRunsSuite extends munit.FunSuite:
           output = Some(
             Step.Output(
               Classified(
-                EnrichSource.Classified.Summary("A summary."),
+                Classified.Summary("A summary."),
                 Nil,
                 Nil,
                 Nil,
                 Some(Period(Year(-1600), Year(-1200))),
                 None,
                 Source.Status.Current,
-                EnrichSource.Classified.StatusEvidence("")
+                Classified.StatusEvidence("")
               ).asJson.noSpaces
             )
           )
@@ -336,8 +350,8 @@ class CompareRunsSuite extends munit.FunSuite:
             Step.Output(
               VerifiedFindings(
                 claims.map(c => vf(VerifiedFinding.Claim(c.claim.value))),
-                Some(EnrichSource.VerifiedFindings.Proposed(claims.size)),
-                Some(EnrichSource.VerifiedFindings.QuoteFailed(0))
+                Some(VerifiedFindings.Proposed(claims.size)),
+                Some(VerifiedFindings.QuoteFailed(0))
               ).asJson.noSpaces
             )
           )
@@ -360,15 +374,15 @@ class CompareRunsSuite extends munit.FunSuite:
       ),
       List(
         GeocodeChoice(
-          EnrichSource.GeocodeChoice.Claim("Tin came by sea."),
-          EnrichSource.GeocodeChoice.Asked("Uluburun"),
+          GeocodeChoice.Claim("Tin came by sea."),
+          GeocodeChoice.Asked("Uluburun"),
           Some(Place.Id.assume("p1")),
-          Some(EnrichSource.GeocodeChoice.Label("Uluburun")),
+          Some(GeocodeChoice.Label("Uluburun")),
           None
         ),
         GeocodeChoice(
-          EnrichSource.GeocodeChoice.Claim("Copper came from Cyprus."),
-          EnrichSource.GeocodeChoice.Asked("Atlantis"),
+          GeocodeChoice.Claim("Copper came from Cyprus."),
+          GeocodeChoice.Asked("Atlantis"),
           None,
           None,
           None
@@ -477,62 +491,92 @@ class CompareRunsSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def f(
-      id: Finding.Id,
+      id: domain.reviewarticle.Finding.Id,
       sev: Severity,
-      where: Finding.Where,
-      problem: Finding.Problem,
-      quote: Finding.Quote = Finding.Quote(""),
-      kind: Finding.Kind = Finding.Kind("term")
+      where: domain.reviewarticle.Finding.Where,
+      problem: domain.reviewarticle.Finding.Problem,
+      quote: domain.reviewarticle.Finding.Quote = domain.reviewarticle.Finding.Quote(""),
+      kind: domain.reviewarticle.Finding.Kind = domain.reviewarticle.Finding.Kind("term")
   ) =
-    Finding(
+    domain.reviewarticle.Finding(
       id,
       Reviewer
-        .parse(if id.value.startsWith("R") then ReviewArticle.Reviewer.Wire("rules")
-        else if id.value.startsWith("S") then ReviewArticle.Reviewer.Wire("skeptic")
-        else ReviewArticle.Reviewer.Wire("cold-reader"))
+        .parse(if id.value.startsWith("R") then Reviewer.Wire("rules")
+        else if id.value.startsWith("S") then Reviewer.Wire("skeptic")
+        else Reviewer.Wire("cold-reader"))
         .get,
       sev,
       kind,
       where,
       quote,
       problem,
-      Finding.Fix("")
+      domain.reviewarticle.Finding.Fix("")
     )
 
   test("same major: the same where and a similar problem, or the same quoted passage"):
     assert(
       ReviewComparison.sameMajor(
-        f(Finding.Id("R1"), Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is not defined")),
-        f(Finding.Id("R2"), Severity.Major, Finding.Where("intro"), Finding.Problem("Tin is not defined at all"))
+        f(
+          domain.reviewarticle.Finding.Id("R1"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("Intro"),
+          domain.reviewarticle.Finding.Problem("tin is not defined")
+        ),
+        f(
+          domain.reviewarticle.Finding.Id("R2"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("intro"),
+          domain.reviewarticle.Finding.Problem("Tin is not defined at all")
+        )
       )
     )
     assert(
       !ReviewComparison.sameMajor(
-        f(Finding.Id("R1"), Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is not defined")),
-        f(Finding.Id("R2"), Severity.Major, Finding.Where("Dates"), Finding.Problem("tin is not defined"))
+        f(
+          domain.reviewarticle.Finding.Id("R1"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("Intro"),
+          domain.reviewarticle.Finding.Problem("tin is not defined")
+        ),
+        f(
+          domain.reviewarticle.Finding.Id("R2"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("Dates"),
+          domain.reviewarticle.Finding.Problem("tin is not defined")
+        )
       )
     )
     assert(
       !ReviewComparison.sameMajor(
-        f(Finding.Id("R1"), Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is not defined")),
-        f(Finding.Id("R2"), Severity.Major, Finding.Where("Intro"), Finding.Problem("the date is wrong"))
+        f(
+          domain.reviewarticle.Finding.Id("R1"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("Intro"),
+          domain.reviewarticle.Finding.Problem("tin is not defined")
+        ),
+        f(
+          domain.reviewarticle.Finding.Id("R2"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("Intro"),
+          domain.reviewarticle.Finding.Problem("the date is wrong")
+        )
       )
     )
     assert(
       ReviewComparison.sameMajor(
         f(
-          Finding.Id("S1"),
+          domain.reviewarticle.Finding.Id("S1"),
           Severity.Major,
-          Finding.Where("A"),
-          Finding.Problem("x"),
-          Finding.Quote("Its cargo dates to 1320")
+          domain.reviewarticle.Finding.Where("A"),
+          domain.reviewarticle.Finding.Problem("x"),
+          domain.reviewarticle.Finding.Quote("Its cargo dates to 1320")
         ),
         f(
-          Finding.Id("R4"),
+          domain.reviewarticle.Finding.Id("R4"),
           Severity.Major,
-          Finding.Where("B"),
-          Finding.Problem("y"),
-          Finding.Quote("its cargo dates to 1320")
+          domain.reviewarticle.Finding.Where("B"),
+          domain.reviewarticle.Finding.Problem("y"),
+          domain.reviewarticle.Finding.Quote("its cargo dates to 1320")
         )
       )
     )
@@ -540,10 +584,27 @@ class CompareRunsSuite extends munit.FunSuite:
     // one-to-one: a finding is matched once
     val pairs = ReviewComparison.overlap(
       List(
-        f(Finding.Id("R1"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here")),
-        f(Finding.Id("R2"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here"))
+        f(
+          domain.reviewarticle.Finding.Id("R1"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("I"),
+          domain.reviewarticle.Finding.Problem("tin undefined here")
+        ),
+        f(
+          domain.reviewarticle.Finding.Id("R2"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("I"),
+          domain.reviewarticle.Finding.Problem("tin undefined here")
+        )
       ),
-      List(f(Finding.Id("R9"), Severity.Major, Finding.Where("I"), Finding.Problem("tin undefined here")))
+      List(
+        f(
+          domain.reviewarticle.Finding.Id("R9"),
+          Severity.Major,
+          domain.reviewarticle.Finding.Where("I"),
+          domain.reviewarticle.Finding.Problem("tin undefined here")
+        )
+      )
     )
     assertEquals(pairs.map((a, b) => (a.id, b.id)), List(("R1", "R9")))
 
@@ -570,11 +631,11 @@ class CompareRunsSuite extends munit.FunSuite:
               Step.Output(
                 List(
                   f(
-                    Finding.Id("M1"),
+                    domain.reviewarticle.Finding.Id("M1"),
                     Severity.Minor,
-                    Finding.Where("Body"),
-                    Finding.Problem("no Disagreements"),
-                    kind = Finding.Kind("structure")
+                    domain.reviewarticle.Finding.Where("Body"),
+                    domain.reviewarticle.Finding.Problem("no Disagreements"),
+                    kind = domain.reviewarticle.Finding.Kind("structure")
                   )
                 ).asJson.noSpaces
               )
@@ -582,20 +643,30 @@ class CompareRunsSuite extends munit.FunSuite:
           )
         )
     )
-    val r1 = f(Finding.Id("R1"), Severity.Major, Finding.Where("Intro"), Finding.Problem("tin is not defined"))
-    val s1 = f(
-      Finding.Id("S1"),
+    val r1 = f(
+      domain.reviewarticle.Finding.Id("R1"),
       Severity.Major,
-      Finding.Where("Dates"),
-      Finding.Problem("the date is wrong"),
-      kind = Finding.Kind("date")
+      domain.reviewarticle.Finding.Where("Intro"),
+      domain.reviewarticle.Finding.Problem("tin is not defined")
     )
-    val c1 = f(Finding.Id("C1"), Severity.Minor, Finding.Where("Intro"), Finding.Problem("what is bronze"))
+    val s1 = f(
+      domain.reviewarticle.Finding.Id("S1"),
+      Severity.Major,
+      domain.reviewarticle.Finding.Where("Dates"),
+      domain.reviewarticle.Finding.Problem("the date is wrong"),
+      kind = domain.reviewarticle.Finding.Kind("date")
+    )
+    val c1 = f(
+      domain.reviewarticle.Finding.Id("C1"),
+      Severity.Minor,
+      domain.reviewarticle.Finding.Where("Intro"),
+      domain.reviewarticle.Finding.Problem("what is bronze")
+    )
     val a = review(
       RunHead.Id("a"),
       List(
-        Merged(ReviewArticle.Merged.Round(1), Verdict.Major, List(r1, s1, c1), None, Nil, Nil),
-        Merged(ReviewArticle.Merged.Round(2), Verdict.Pass, Nil, None, Nil, Nil)
+        Merged(Merged.Round(1), Verdict.Major, List(r1, s1, c1), None, Nil, Nil),
+        Merged(Merged.Round(2), Verdict.Pass, Nil, None, Nil, Nil)
       ),
       List(
         Report(Reviewer.Rules, Verdict.Major, List(r1)),
@@ -604,14 +675,14 @@ class CompareRunsSuite extends munit.FunSuite:
       )
     )
     val r1b = f(
-      Finding.Id("R1"),
+      domain.reviewarticle.Finding.Id("R1"),
       Severity.Major,
-      Finding.Where("intro"),
-      Finding.Problem("Tin is never defined, tin is not defined")
+      domain.reviewarticle.Finding.Where("intro"),
+      domain.reviewarticle.Finding.Problem("Tin is never defined, tin is not defined")
     )
     val b = review(
       RunHead.Id("b"),
-      List(Merged(ReviewArticle.Merged.Round(1), Verdict.Major, List(r1b), None, Nil, Nil)),
+      List(Merged(Merged.Round(1), Verdict.Major, List(r1b), None, Nil, Nil)),
       List(Report(Reviewer.Rules, Verdict.Major, List(r1b)))
     )
     val cmp = compare(List(a, b)).fold(p => fail(p.sentence), identity)

@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.data.DataOwner
@@ -20,13 +24,12 @@ object AssetsData:
   /** `media-licence`: a picture with no licence, or a provider's with no credit line. */
   final private class Licences(val owner: DataOwner) extends CheckRule:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    val rule: Rule = Lint
+    val rule: Rule = Rule
       .rule(Rule.Name(MediaLicenceRule))
       .getOrElse(Rule(Rule.Name(MediaLicenceRule), Rule.Description(MediaLicenceRule)))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(
-        rule,
+      rule.report(
         MediaRepo.licenceGaps().map((id, detail) => LintItem(Citekey(id.value), LintItem.Detail(detail.value))),
         ItemLimit(maxItems.value)
       )

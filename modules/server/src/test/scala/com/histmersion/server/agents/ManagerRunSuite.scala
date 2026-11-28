@@ -1,6 +1,24 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.domain.reviewarticle.Finding
+import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.managers.HintAdd
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.automation.Manager
@@ -22,7 +40,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.domain.ReviewArticle.{Finding, Reviewer, Severity}
 import com.histmersion.domain.ReviewLedger.*
 import com.histmersion.domain.automation.worklists.QueueRows
 import com.histmersion.domain.automation.agents.AgentRepo
@@ -93,7 +110,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   private val EvaluatedKind = ManagerEvent.Kind(Feed.Evaluated)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val HintKind = ManagerEvent.Kind(Feed.Hint)
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-15T12:00:00Z")
 
@@ -221,7 +238,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def finding(id: Finding.Id, r: Reviewer, kind: Finding.Kind = Finding.Kind("synth")) =
+  private def finding(id: Finding.Id, r: domain.reviewarticle.Reviewer, kind: Finding.Kind = Finding.Kind("synth")) =
     Finding(
       id,
       r,
@@ -242,7 +259,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       status: RunState = RunState.Done
   ): Unit =
     assert(TestRuns.transition(ds, ApiIds.run(run), RunState.Queued, RunState.Running).isDefined)
-    val l = absorb(Ledger(slug), majors, ApiIds.run(run), ReviewLedger.Closure.Round(1))._1
+    val l = Ledger(slug).absorb(majors, ApiIds.run(run), Closure.Round(1))._1
     ReviewLedgerFixtures.put(ds, l)
     assert(
       TestRuns
@@ -265,19 +282,23 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     activeReview(
       a,
       ManagerConfig(
-        maxRuns = Some(Managers.ManagerConfig.MaxRuns(2)),
-        maxRunsPerArticle = Some(Managers.ManagerConfig.MaxRunsPerArticle(3))
+        maxRuns = Some(ManagerConfig.MaxRuns(2)),
+        maxRunsPerArticle = Some(ManagerConfig.MaxRunsPerArticle(3))
       )
     )
     // m1 has open MAJORs (selected first), m2 was never reviewed
     ReviewLedgerFixtures.put(
       ds,
-      absorb(
-        Ledger(ReviewLedger.Ledger.Slug("zzagent_m1")),
-        List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("S1"), Reviewer.Skeptic)),
-        Run.Id.assume("old"),
-        ReviewLedger.Closure.Round(1)
-      )._1
+      Ledger(Ledger.Slug("zzagent_m1"))
+        .absorb(
+          List(
+            finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules),
+            finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic)
+          ),
+          Run.Id.assume("old"),
+          Closure.Round(1)
+        )
+        ._1
     )
     val out1 = a.managers.tick(t0)
     assert(out1.exists(_.value.contains("selected 2")), out1)
@@ -296,7 +317,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     assertEquals((r1.params.fix, r1.params.rounds), (Some(true), Some(3)))
     assertEquals(i1.state.before, Some(2))
     // m1: 2 → 1 → 0 over three runs; each Again waits for the cooldown
-    settle(r1.id, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R1"), Reviewer.Rules)))
+    settle(r1.id, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules)))
     a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_m1")).status, "pending")
     assertEquals(item(ManagerItem.Target("zzagent_m1")).notBefore, Some("2026-10-15T12:30:00Z"))
@@ -305,7 +326,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managers.tick(t0.plusSeconds(31 * 60))
     val run2 = item(ManagerItem.Target("zzagent_m1")).runId.get
     assertNotEquals(run2, r1.id)
-    settle(run2, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R2"), Reviewer.Rules)))
+    settle(run2, Ledger.Slug("zzagent_m1"), List(finding(Finding.Id("R2"), domain.reviewarticle.Reviewer.Rules)))
     a.managers.tick(t0.plusSeconds(32 * 60))
     a.managers.tick(t0.plusSeconds(70 * 60))
     val run3 = item(ManagerItem.Target("zzagent_m1")).runId.get
@@ -321,7 +342,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     settle(
       m2run,
       Ledger.Slug("zzagent_m2"),
-      List(finding(Finding.Id("S1"), Reviewer.Skeptic, Finding.Kind("missing-critique")))
+      List(finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic, Finding.Kind("missing-critique")))
     )
     a.managers.tick(t0.plusSeconds(72 * 60))
     assertEquals(item(ManagerItem.Target("zzagent_m2")).status, "pending")
@@ -335,7 +356,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     settle(
       m2run2,
       Ledger.Slug("zzagent_m2"),
-      List(finding(Finding.Id("S1"), Reviewer.Skeptic, Finding.Kind("missing-critique")))
+      List(finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic, Finding.Kind("missing-critique")))
     )
     a.managers.tick(t0.plusSeconds(104 * 60))
     val stopped = item(ManagerItem.Target("zzagent_m2"))
@@ -348,7 +369,8 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
       stopped.outcome.exists(o => o.value.contains("omission churn") && o.value.contains("task #")),
       stopped.outcome
     )
-    val tasks = QueueRows.list(ds, Queue.Kind.Tasks, all = false).filter(_.text.value.contains("zzagent_m2"))
+    val tasks =
+      QueueRows.list(ds, api.automation.queue.Kind.Tasks, all = false).filter(_.text.value.contains("zzagent_m2"))
     assertEquals(tasks.size, 1)
     assert(tasks.head.text.value.contains("review manager stopped: omission churn"), tasks.head.text)
     // the evaluation happened once per run, whatever the ticks
@@ -356,7 +378,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     assertEquals(events.count(e => e.kind == StoppedKind && e.itemId.contains(stopped.id)), 1)
     // re-open in one click: pending again, its runs counted from zero
     val re = a.managing
-      .patchItem(ReviewLight, Managers.ManagerItem.Ref("zzagent_m2"), ItemPatch(Managers.ItemPatch.Action("reopen")))
+      .patchItem(ReviewLight, ManagerItem.Ref("zzagent_m2"), ItemPatch(ItemPatch.Action("reopen")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((re.status, re.attempts, re.state.reopened), ("pending", 0, 1))
 
@@ -388,17 +410,17 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     activeReview(
       a,
       ManagerConfig(
-        maxRunsPerArticle = Some(Managers.ManagerConfig.MaxRunsPerArticle(4)),
-        noProgressRuns = Some(Managers.ManagerConfig.NoProgressRuns(2)),
-        cooldownMinutes = Some(Managers.ManagerConfig.CooldownMinutes(0))
+        maxRunsPerArticle = Some(ManagerConfig.MaxRunsPerArticle(4)),
+        noProgressRuns = Some(ManagerConfig.NoProgressRuns(2)),
+        cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))
       )
     )
     a.managing
-      .addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_m5")))
+      .addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_m5")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_m5")).state.pairsBefore, Some(2))
-    val sk = finding(Finding.Id("S1"), Reviewer.Skeptic, Finding.Kind("missing-critique"))
+    val sk = finding(Finding.Id("S1"), domain.reviewarticle.Reviewer.Skeptic, Finding.Kind("missing-critique"))
     settle(item(ManagerItem.Target("zzagent_m5")).runId.get, Ledger.Slug("zzagent_m5"), List(sk))
     // between the runs the article takes up one critique, in the paragraph that cites the source: 2 → 1
     val addressed = Article.Body(
@@ -440,34 +462,41 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     activeReview(
       a,
       ManagerConfig(
-        maxRunsPerArticle = Some(Managers.ManagerConfig.MaxRunsPerArticle(2)),
-        noProgressRuns = Some(Managers.ManagerConfig.NoProgressRuns(1)),
-        cooldownMinutes = Some(Managers.ManagerConfig.CooldownMinutes(0))
+        maxRunsPerArticle = Some(ManagerConfig.MaxRunsPerArticle(2)),
+        noProgressRuns = Some(ManagerConfig.NoProgressRuns(1)),
+        cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))
       )
     )
     a.managing
-      .addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_m3")))
+      .addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_m3")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing
-      .addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_m4")))
+      .addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_m4")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managers.tick(t0)
     // m3: no progress in one run (2 before, 2 after)
     ReviewLedgerFixtures.put(
       ds,
-      absorb(
-        Ledger(ReviewLedger.Ledger.Slug("zzagent_m3")),
-        List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("R2"), Reviewer.Rules)),
-        Run.Id.assume("x"),
-        ReviewLedger.Closure.Round(1)
-      )._1
+      Ledger(Ledger.Slug("zzagent_m3"))
+        .absorb(
+          List(
+            finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules),
+            finding(Finding.Id("R2"), domain.reviewarticle.Reviewer.Rules)
+          ),
+          Run.Id.assume("x"),
+          Closure.Round(1)
+        )
+        ._1
     )
     val m3 = item(ManagerItem.Target("zzagent_m3"))
     connect(ds)(sql"UPDATE manager_items SET state = '{\"before\":2}'::jsonb WHERE id = ${m3.id}".update.run())
     settle(
       m3.runId.get,
       Ledger.Slug("zzagent_m3"),
-      List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("R2"), Reviewer.Rules))
+      List(
+        finding(Finding.Id("R1"), domain.reviewarticle.Reviewer.Rules),
+        finding(Finding.Id("R2"), domain.reviewarticle.Reviewer.Rules)
+      )
     )
     // m4: fails three times
     settle(item(ManagerItem.Target("zzagent_m4")).runId.get, Ledger.Slug("zzagent_m4"), Nil, RunState.Failed)
@@ -487,7 +516,11 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managers.tick(t0.plusSeconds(47 * 60))
     val f3 = item(ManagerItem.Target("zzagent_m4"))
     assertEquals((f3.status, f3.failures), ("failed", 3))
-    assert(QueueRows.list(ds, Queue.Kind.Tasks, all = false).exists(_.text.value.contains("after 3 failed runs")))
+    assert(
+      QueueRows
+        .list(ds, api.automation.queue.Kind.Tasks, all = false)
+        .exists(_.text.value.contains("after 3 failed runs"))
+    )
 
   test("capacity: the global cap counts a person's runs; maxRuns; another writer on the article waits"):
     val (a, h) = handlers(
@@ -497,10 +530,10 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
         .setTo(baseCfg.agents.modify(_.maxConcurrentRuns).setTo(AgentsConfig.MaxConcurrentRuns(2)))
     );
     seed(h, Slug("zzagent_c1"), Slug("zzagent_c2"), Slug("zzagent_c3"))
-    activeReview(a, ManagerConfig(maxRuns = Some(Managers.ManagerConfig.MaxRuns(2))))
+    activeReview(a, ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(2))))
     // a person's run on c1 takes one of the two places and holds c1
     val mine = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("review-article"), Agents.RunRequest.Target("zzagent_c1")))
+      .startRun(RunRequest(RunRequest.Pipeline("review-article"), RunRequest.Target("zzagent_c1")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     List("zzagent_c1", "zzagent_c2", "zzagent_c3").foreach(s =>
       a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target(s)))
@@ -525,7 +558,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   test("pause stops new runs; pause with runs pauses them and resume brings them back; stop cancels"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, Slug("zzagent_p1"), Slug("zzagent_p2"))
     activeReview(a)
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_p1")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_p1")))
     a.managing.action(ReviewLight, ManagersControllers.Action("pause"), None)
     a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_p1")).status, "pending", "a paused manager starts nothing")
@@ -534,7 +567,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     val run = item(ManagerItem.Target("zzagent_p1")).runId.get
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
     val p = a.managing
-      .action(ReviewLight, ManagersControllers.Action("pause"), Some(Managers.ManagerInfo.PauseRuns.Pause))
+      .action(ReviewLight, ManagersControllers.Action("pause"), Some(ManagerInfo.PauseRuns.Pause))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(p.pauseRuns.pauseRuns)
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "paused")
@@ -543,7 +576,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     assertEquals(item(ManagerItem.Target("zzagent_p1")).status, "active")
     a.managing.action(ReviewLight, ManagersControllers.Action("resume"), None)
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_p2")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_p2")))
     val s = a.managing
       .action(ReviewLight, ManagersControllers.Action("stop"), None)
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -560,10 +593,10 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     activeReview(
       a,
       ManagerConfig(models =
-        Some(List(ModelOverride(Agents.ModelOverride.Role("skeptic"), Agents.ModelOverride.Model("local:unpriced"))))
+        Some(List(ModelOverride(ModelOverride.Role("skeptic"), ModelOverride.Model("local:unpriced"))))
       )
     )
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_s1")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_s1")))
     a.managers.tick(t0); a.managers.tick(t0)
     assertEquals(item(ManagerItem.Target("zzagent_s1")).status, "pending")
     val m = connect(ds)(ManagerRepo.get(Review)).get
@@ -579,22 +612,22 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   test("holds: until a date, until a source exists; released by the tick"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, Slug("zzagent_h1"), Slug("zzagent_h2"))
     activeReview(a)
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_h1")))
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_h2")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_h1")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_h2")))
     a.managing
       .patchItem(
         ReviewLight,
-        Managers.ManagerItem.Ref("zzagent_h1"),
-        ItemPatch(Managers.ItemPatch.Action("hold"), until = Some(Managers.ItemPatch.Until("2026-10-16")))
+        ManagerItem.Ref("zzagent_h1"),
+        ItemPatch(ItemPatch.Action("hold"), until = Some(ItemPatch.Until("2026-10-16")))
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.managing
       .patchItem(
         ReviewLight,
-        Managers.ManagerItem.Ref("zzagent_h2"),
+        ManagerItem.Ref("zzagent_h2"),
         ItemPatch(
-          Managers.ItemPatch.Action("hold"),
-          untilSource = Some(Managers.ItemPatch.UntilSource("zzagent2030_new"))
+          ItemPatch.Action("hold"),
+          untilSource = Some(ItemPatch.UntilSource("zzagent2030_new"))
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -617,7 +650,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     val c = PanelClient(Model)
     val (a, h) = handlers(c); seed(h, Slug("zzagent_k1"))
     activeReview(a)
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_k1")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_k1")))
     a.managers.tick(t0) // committed and submitted to an engine that never started: as if the process died
     val run = item(ManagerItem.Target("zzagent_k1")).runId.get
     // a fresh process: its engine re-enqueues the queued run, which passes at once
@@ -640,7 +673,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   test("crash: a manager's run running at boot is paused interrupted and resumes by itself"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, Slug("zzagent_b1"))
     activeReview(a)
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_b1")))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_b1")))
     a.managers.tick(t0)
     val run = item(ManagerItem.Target("zzagent_b1")).runId.get
     assert(TestRuns.transition(ds, ApiIds.run(run), RunState.Queued, RunState.Running).isDefined)
@@ -664,8 +697,8 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     activeReview(
       a,
       ManagerConfig(
-        maxRuns = Some(Managers.ManagerConfig.MaxRuns(2)),
-        cooldownMinutes = Some(Managers.ManagerConfig.CooldownMinutes(0))
+        maxRuns = Some(ManagerConfig.MaxRuns(2)),
+        cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))
       )
     )
     List("zzagent_r1", "zzagent_r2").foreach(s =>
@@ -806,18 +839,18 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   ):
     val c = PanelClient(Model)
     val (a, h) = handlers(c); seed(h, Slug("zzagent_n1"))
-    activeReview(a, ManagerConfig(rounds = Some(Managers.ManagerConfig.Rounds(2))))
-    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, Managers.EnqueueRequest.Target("zzagent_n1")))
+    activeReview(a, ManagerConfig(rounds = Some(ManagerConfig.Rounds(2))))
+    a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target("zzagent_n1")))
     val standing = a.managing
-      .addHint(ReviewLight, HintAdd(Managers.HintAdd.Text("Prefer the 2019 dating.")))
+      .addHint(ReviewLight, HintAdd(HintAdd.Text("Prefer the 2019 dating.")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val once = a.managing
       .addHint(
         ReviewLight,
         HintAdd(
-          Managers.HintAdd.Text("Check the tin isotopes this time."),
-          item = Some(Managers.HintAdd.Item("zzagent_n1")),
-          once = Some(Managers.HintAdd.Once.Once)
+          HintAdd.Text("Check the tin isotopes this time."),
+          item = Some(HintAdd.Item("zzagent_n1")),
+          once = Some(HintAdd.Once.Once)
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -864,18 +897,18 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     List("zzagent_e1", "zzagent_e2").foreach(s =>
       a.managing.addItem(
         ReviewLight,
-        EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target(s), Some(Managers.EnqueueRequest.Priority(0)))
+        EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target(s), Some(EnqueueRequest.Priority(0)))
       )
     )
     a.managing.addHint(
       ReviewLight,
       HintAdd(
-        Managers.HintAdd.Text("e3 first"),
+        HintAdd.Text("e3 first"),
         effect = Some(
           HintEffect(
             HintEffect.Verb.Prioritise.word,
-            targets = List(Managers.HintEffect.Targets("zzagent_e3")),
-            priority = Some(Managers.HintEffect.Priority(7))
+            targets = List(HintEffect.Targets("zzagent_e3")),
+            priority = Some(HintEffect.Priority(7))
           )
         )
       )
@@ -884,11 +917,11 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managing.addHint(
       ReviewLight,
       HintAdd(
-        Managers.HintAdd.Text("wait for the new edition"),
+        HintAdd.Text("wait for the new edition"),
         effect = Some(
           HintEffect(
             HintEffect.Verb.Hold.word,
-            targets = List(Managers.HintEffect.Targets("zzagent_e1")),
+            targets = List(HintEffect.Targets("zzagent_e1")),
             until = Some(HintEffect.Until("2027-01-01"))
           )
         )
@@ -899,7 +932,7 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
     a.managing.addHint(
       ReviewLight,
       HintAdd(
-        Managers.HintAdd.Text("not this one"),
+        HintAdd.Text("not this one"),
         effect = Some(HintEffect(HintEffect.Verb.Skip.word, tag = Some(SkipTag)))
       )
     )
@@ -909,9 +942,9 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
         .addHint(
           ReviewLight,
           HintAdd(
-            Managers.HintAdd.Text("x"),
+            HintAdd.Text("x"),
             effect = Some(
-              HintEffect(Managers.HintEffect.Action("frobnicate"), targets = List(Managers.HintEffect.Targets("a")))
+              HintEffect(HintEffect.Action("frobnicate"), targets = List(HintEffect.Targets("a")))
             )
           )
         )
@@ -922,13 +955,13 @@ class ManagerRunSuite extends DbSuite with RunTranscripts:
   test("the Review button: enqueue routes to the review manager (created paused), priority 10"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, Slug("zzagent_q1"))
     val i = a.managing
-      .enqueue(EnqueueRequest(Managers.EnqueueRequest.Kind("review"), Managers.EnqueueRequest.Target("zzagent_q1")))
+      .enqueue(EnqueueRequest(EnqueueRequest.Kind("review"), EnqueueRequest.Target("zzagent_q1")))
       .fold(e => fail(e.problems.sentences.mkString("; ")), _.items.head)
     assertEquals((i.managerId, i.priority, i.status, i.origin), (ReviewId, 10, "pending", "person"))
     assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("paused"))
     assert(
       a.managing
-        .enqueue(EnqueueRequest(Managers.EnqueueRequest.Kind("review"), Managers.EnqueueRequest.Target("zzagent_nope")))
+        .enqueue(EnqueueRequest(EnqueueRequest.Kind("review"), EnqueueRequest.Target("zzagent_nope")))
         .isLeft
     )
 

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.GenerateResult
 import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
@@ -7,7 +9,6 @@ import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.api.automation.Agents.GenerateResult
 import com.histmersion.util.storage.{ByteSource, Store}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
@@ -61,14 +62,14 @@ private[agents] object AgentTreeWriter:
       val files = (keep.flatMap(name => store.get(key(name)).map(blob => name -> Prompt.sha256(blob.text().value))) ++
         tree.toList.map((name, text) => name -> Prompt.sha256(text))).sortBy(_._1)
       val manifest = Json.obj(
-        "generator" -> AgentGenerator.PluginVersion.asJson,
+        "generator" -> AgentDefinitions.PluginVersion.asJson,
         "definitions" -> Json.fromString(sha.value),
         "generatedAt" -> java.time.Instant.now(clock).toString.asJson,
         "runtimes" -> runtimes.asJson,
         "files" -> Json.obj(files.map((name, sha) => name -> Json.fromString(sha.value))*)
       )
       store
-        .write(Manifest, ByteSource.Content(AgentGenerator.pretty(manifest).getBytes(UTF_8)))
+        .write(Manifest, ByteSource.Content(AgentDefinitions.pretty(manifest).getBytes(UTF_8)))
         .fold(error => throw Failed(error.message), _ => ())
       Right(
         GenerateResult(

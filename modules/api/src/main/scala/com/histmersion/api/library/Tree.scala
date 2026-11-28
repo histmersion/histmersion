@@ -1,5 +1,7 @@
 package com.histmersion
 package api.library
+
+import com.histmersion.api.library.tree.TreeRow
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
@@ -82,21 +84,6 @@ object Tree:
   val KindTime = "time"
   val KindRegion = "region"
   val KeyUnlocated = "unlocated"
-
-  @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
-  final case class TreeRow(
-      key: TreeRow.Key,
-      citekey: Citekey,
-      title: Title,
-      start: Option[Year] = None,
-      end: Option[Year] = None,
-      placeIds: List[RegionNode.Id] = Nil
-  ):
-    def toPeriodRow: Period.Row = Period.Row(start, end)
-
-  object TreeRow:
-    type Key = Key.T
-    object Key extends Newtype[String, Pure]
 
   def coversAsOf(p: Option[Period], asOf: Option[Year]): Boolean = (p, asOf) match
     case (None, _)                     => (true)

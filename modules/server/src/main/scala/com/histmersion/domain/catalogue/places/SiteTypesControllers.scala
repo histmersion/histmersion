@@ -1,7 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.catalogue.{CatalogRecord, EventCount, SiteTypes}
+import com.histmersion.api.catalogue.SiteType
+
+import com.histmersion.api.catalogue.{CatalogRecord, EventCount}
 import com.histmersion.api.jobs.{JobInfo, JobKinds}
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.{Caller, DeepTime}
@@ -41,12 +43,12 @@ final class SiteTypesControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def refineSiteTypes(caller: Caller, req: SiteTypes.Request)(using Creator.New): Either[Api.Error, JobInfo] =
+  def refineSiteTypes(caller: Caller, req: SiteType.Request)(using Creator.New): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
       JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.dryRun then " (dry run)" else ""}")
     ) { (_, progress) =>
-      Right(BackgroundJob.Outcome.Summary(SiteTypes.Report.summary(runSiteTypes(req, progress)).value))
+      Right(BackgroundJob.Outcome.Summary(SiteType.Report.summary(runSiteTypes(req, progress)).value))
     }
 
   /** The refinement itself, inside the job (under its unit's permit). */
@@ -56,13 +58,13 @@ final class SiteTypesControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit)(using WritePermit): SiteTypes.Report =
+  def runSiteTypes(req: SiteType.Request, progress: JobInfo.Progress => Unit)(using WritePermit): SiteType.Report =
     val started = DeepTime.SignedYear(clock.millis())
     val refresh = SiteTypeService.Refresh(req.refresh.refresh)
     if req.dryRun.dryRun then
-      SiteTypes.Report(
-        dryRun = SiteTypes.Report.DryRun.DryRun,
-        pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, None).value)
+      SiteType.Report(
+        dryRun = SiteType.Report.DryRun.DryRun,
+        pending = SiteType.Report.Pending(sites.countSitesToType(refresh, None).value)
       )
     else
       val c = polite(MediaConfig.RequestIntervalMs(ec.wikidata.apiIntervalMs.value))
@@ -85,7 +87,7 @@ final class SiteTypesControllers(
 
       /** The superclasses of `classes` within `depth` P279 steps, nearest first (cached per run). */
       def supers(classes: List[CatalogRecord.Wikidata.Class]): List[CatalogRecord.Wikidata.Class] =
-        val unknown = classes.filterNot(SiteTypes.wikidataClasses.contains)
+        val unknown = classes.filterNot(SiteType.wikidataClasses.contains)
         @tailrec def walk(
             steps: Int,
             frontier: List[CatalogRecord.Wikidata.Class],
@@ -102,35 +104,35 @@ final class SiteTypesControllers(
               .map(CatalogRecord.Wikidata.Class(_))
               .distinct
               .filterNot(acc.contains)
-            walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
+            walk(steps - 1, next.filterNot(SiteType.wikidataClasses.contains), acc ++ next)
         walk(math.max(0, ec.siteTypes.superclassDepth.value), unknown, Nil)
       def next(limit: Int) =
         PageSize.option(limit).fold(Nil)(size => sites.sitesToType(size, refresh, Some(started)))
       // `var`s: the walk
-      var report = SiteTypes.Report(dryRun = SiteTypes.Report.DryRun.Apply)
+      var report = SiteType.Report(dryRun = SiteType.Report.DryRun.Apply)
       var batch = next(math.min(ec.siteTypes.batch.value, cap))
       while batch.nonEmpty && report.asked.value < cap && !jobs.held do
         val p31 = claims(batch.map(_._2), EventProviders.WikidataProperty("P31"))
         val answered = batch.filter((_, q, _) => p31.contains(q.value))
         val types = answered.map { (pid, q, cls) =>
           val own = p31.getOrElse(q.value, Nil).map(CatalogRecord.Wikidata.Class(_))
-          pid -> SiteTypes.wikidata(own, supers(own), cls)
+          pid -> SiteType.wikidata(own, supers(own), cls)
         }
         sites.setSiteTypes(types)
         report = report.copy(
-          asked = SiteTypes.Report.Asked(report.asked.value + answered.size),
+          asked = SiteType.Report.Asked(report.asked.value + answered.size),
           typed = EventCount.add(report.typed, EventCount.of(types.flatMap(_._2).map(t => EventCount.Key(t.value)))),
-          untyped = SiteTypes.Report.Untyped(report.untyped.value + types.count(_._2.isEmpty)),
+          untyped = SiteType.Report.Untyped(report.untyped.value + types.count(_._2.isEmpty)),
           failed = report.failed ++ Option
-            .when(answered.isEmpty)(SiteTypes.Report.Failed(s"no answer for ${batch.head._2}…"))
+            .when(answered.isEmpty)(SiteType.Report.Failed(s"no answer for ${batch.head._2}…"))
             .toList
         )
         progress(JobInfo.Progress(s"${report.asked} site(s) asked · ${c.requests} request(s)"))
         batch = if answered.isEmpty then Nil
         else next(math.min(ec.siteTypes.batch.value, math.max(0, cap - report.asked.value)))
       report.copy(
-        pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, Some(started)).value),
-        requests = SiteTypes.Report.Requests(c.requests.value)
+        pending = SiteType.Report.Pending(sites.countSitesToType(refresh, Some(started)).value),
+        requests = SiteType.Report.Requests(c.requests.value)
       )
 
 object SiteTypesControllers:

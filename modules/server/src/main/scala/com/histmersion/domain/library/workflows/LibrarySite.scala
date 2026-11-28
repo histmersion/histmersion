@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.library.workflows
 
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
@@ -36,7 +39,7 @@ trait LibrarySite:
   def jobs: JobListing
 
   /** Where a place name is, for a finding of period `at` about a place of kind `hint` (the catalogue's geocoder). */
-  def geocode(name: LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution]
+  def geocode(name: LibrarySite.PlaceName, hint: KindHint, at: Option[Period]): Option[Resolution]
 
   /** The sources the body of article `slug` cites, as its links resolve (research's article); why not, when none. */
   def articleSources(slug: Slug): Either[Api.Error, List[Citekey]]

@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.listfilters.JobFilter
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.api.{Paging, Plural, Wording}
 import com.raquo.laminar.api.L.*
@@ -67,7 +69,7 @@ object JobsView:
   /** The jobs a whole filter shows, from the rows already loaded — the states and the kinds; the dates and the text are
     * left to the server's page.
     */
-  def visible(jobs: List[JobInfo], f: ListFilters.JobFilter): List[JobInfo] =
+  def visible(jobs: List[JobInfo], f: JobFilter): List[JobInfo] =
     val n = f.normalized
     jobs.filter(j => (n.status.isEmpty || n.status.contains(j.status)) && (n.kind.isEmpty || n.kind.contains(j.kind)))
 
@@ -79,13 +81,13 @@ object JobsView:
       since: Option[String],
       until: Option[String],
       subject: Option[String]
-  ): ListFilters.JobFilter =
-    ListFilters.JobFilter(
+  ): JobFilter =
+    JobFilter(
       status.toList.map(_.wire),
-      kinds.map(ListFilters.JobFilter.Kind(_)),
-      since.map(ListFilters.JobFilter.Since(_)),
-      until.map(ListFilters.JobFilter.Until(_)),
-      subject.map(ListFilters.JobFilter.Subject(_))
+      kinds.map(JobFilter.Kind(_)),
+      since.map(JobFilter.Since(_)),
+      until.map(JobFilter.Until(_)),
+      subject.map(JobFilter.Subject(_))
     )
 
   /** Did a job that ticks off an acquisition item finish since `before`? Then that list changed. */
@@ -166,7 +168,7 @@ object JobsView:
   private val filterFields: List[Field[?]] =
     List(UiState.jobStatus, UiState.jobKinds, UiState.jobSince, UiState.jobUntil, UiState.jobSubject)
 
-  private def currentFilter(): ListFilters.JobFilter =
+  private def currentFilter(): JobFilter =
     filterOf(
       UiState.jobStatus.now(),
       UiState.jobKinds.now(),
@@ -176,7 +178,7 @@ object JobsView:
     )
 
   /** The filter, as a signal, so a change restarts the list from the newest page. */
-  private val filterSignal: Signal[ListFilters.JobFilter] = UiState.signal.map(_ => currentFilter()).distinct
+  private val filterSignal: Signal[JobFilter] = UiState.signal.map(_ => currentFilter()).distinct
 
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -184,7 +186,7 @@ object JobsView:
     fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
     id = j => PolledList.ItemId(j.id.value),
     live = (rows, page) => live(rows, page),
-    after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire)
+    after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(api.automation.queue.Kind.Acquire)
   )
   private def listing = list.listing
 
@@ -322,7 +324,7 @@ object JobsView:
               cls := "muted job-item",
               " · for ",
               QueueItemLink(
-                Queue.Kind.Acquire,
+                api.automation.queue.Kind.Acquire,
                 Goal.Plans.GoalLink.QueueNumber(i.value),
                 title := (if j.succeeded then shown"acquisition item $i was ticked off by this job"
                           else shown"acquisition item $i is ticked off when this job succeeds"),

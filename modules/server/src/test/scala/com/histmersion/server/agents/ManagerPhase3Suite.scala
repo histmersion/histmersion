@@ -1,6 +1,24 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.agents.Origin
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -98,7 +116,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
   private val HintKind = ManagerEvent.Kind(Feed.Hint)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val StarvedKind = ManagerEvent.Kind(Feed.Starved)
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -234,7 +252,7 @@ class ManagerPhase3Suite extends DbSuite with RunTranscripts:
     connect(ds)(ManagerRepo.events(mid, None, PageSize(200))).filter(_.kind == kind)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def acquire(h: ServerWiring): List[Queue.QueueItem] =
+  private def acquire(h: ServerWiring): List[QueueItem] =
     h.workListView
       .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
       .toOption

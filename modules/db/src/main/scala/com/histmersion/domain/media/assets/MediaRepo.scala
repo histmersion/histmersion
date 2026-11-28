@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.media.assets
 
+import com.histmersion.domain.catalogue.evidence.NearFinding
+
 import com.histmersion.util.database.{literal, RangeSql}
 
 import com.histmersion.api.Api
@@ -25,7 +27,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.media.imports.Target
 import com.histmersion.domain.media.imports.MediaMatch
 import com.histmersion.domain.library.Citekey
-import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.api.ByteCount
 import com.histmersion.api.RowCount
@@ -259,7 +260,7 @@ private[assets] object MediaRepo:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def kmToDegrees(km: EventMatcher.NearFinding.Km): Degrees = Degrees(km.value.max(0) / 111.32)
+  def kmToDegrees(km: NearFinding.Km): Degrees = Degrees(km.value.max(0) / 111.32)
 
   /** A PLACE's pictures for its card (#1446): its own, and those stored for its equivalents —
     *   - any place with the same Wikidata item (the picture's `item`): Mycenae is `pleiades_570491` and a Wikidata
@@ -273,7 +274,7 @@ private[assets] object MediaRepo:
   @tolerated(LintRule.TotalOrder, "hits hold one row per asset: uid is unique in them")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def placeThumbsIn(placeId: Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit)(using
+  def placeThumbsIn(placeId: Place.Id, sameSiteKm: NearFinding.Km, limit: Limit)(using
       DbCon
   ): List[MediaThumb] =
     val deg = kmToDegrees(sameSiteKm)

@@ -1,6 +1,9 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Kind
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.LatinFold
@@ -57,12 +60,12 @@ object AcquireMatch:
 
   enum Decision:
     /** The item names the source's DOI: it is closed. */
-    case Close(item: Queue.QueueItem)
+    case Close(item: QueueItem)
 
     /** The item's text resembles the source: listed, never closed. `otherDoi` = the item names a DOI, and it is not the
       * source's (a preprint vs its published version, say).
       */
-    case Propose(item: Queue.QueueItem, score: Decision.Propose.Score, otherDoi: Option[Decision.Propose.OtherDoi])
+    case Propose(item: QueueItem, score: Decision.Propose.Score, otherDoi: Option[Decision.Propose.OtherDoi])
 
   object Decision:
     object Propose:
@@ -210,14 +213,14 @@ object AcquireMatch:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def decide(
-      items: List[Queue.QueueItem],
+      items: List[QueueItem],
       doi: Option[Doi],
       title: DecideTitle,
       authors: List[DecideAuthors],
       proposeAt: ProposeThreshold
   ): List[Decision] =
     val key = doi.flatMap(d => doiKeyOf(d.value))
-    val open = items.filter(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.QueueItem.Status(Queue.Open))
+    val open = items.filter(i => i.list == Kind.Acquire.label && i.status == QueueItem.Status(Queue.Open))
     val (closes, rest) =
       open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(w => s"$w").getOrElse("")).contains))
     val proposals = rest
@@ -236,7 +239,7 @@ object AcquireMatch:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def describe(d: Decision, closed: Queue.QueueItem.Id => Either[Problem, Unit] = _ => Right(())): Description = d match
+  def describe(d: Decision, closed: QueueItem.Id => Either[Problem, Unit] = _ => Right(())): Description = d match
     case Decision.Close(i) =>
       closed(i.id).fold(
         e => Description(s"acquisition item #${i.id} matches by DOI but was NOT ticked off: ${e.sentence}"),

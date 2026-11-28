@@ -1,7 +1,9 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.domain.automation.workflows.Pipelines
+import com.histmersion.api.automation.agents.Billing
+import com.histmersion.api.automation.agents.Usage
+
 import com.histmersion.server.agents.CliProcess
 
 import com.histmersion.config.*

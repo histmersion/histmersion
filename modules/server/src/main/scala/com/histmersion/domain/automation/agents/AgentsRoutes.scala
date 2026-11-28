@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.modelchains.AllowanceSet
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
@@ -41,7 +43,7 @@ object AgentsRoutes:
     AgentsApi.resetChain.serverLogic[Identity](role => a.resetChain(role).left.map(Api.Error(_))),
     AgentsApi.setAllowance.serverLogic[Identity](in => a.setAllowance(in).left.map(Api.Error(_))),
     AgentsApi.removeAllowance.serverLogic[Identity](target =>
-      a.removeAllowance(ModelChains.AllowanceSet.Target(target.value)).left.map(Api.Error(_))
+      a.removeAllowance(AllowanceSet.Target(target.value)).left.map(Api.Error(_))
     ),
     AgentsApi.doctor.serverLogicSuccess[Identity](offline =>
       a.doctor(AgentsControllers.Offline(offline.exists(_.online)))

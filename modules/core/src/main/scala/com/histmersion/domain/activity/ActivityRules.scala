@@ -1,9 +1,15 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.api.automation.activity.Entry
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.activity.EntryKind
+import com.histmersion.api.automation.activity.Writer
+import com.histmersion.api.automation.activity.Counts
+import com.histmersion.api.automation.activity.Page
+
 import com.histmersion.util.problem.Problem.{Invalid, Raw, TypeName}
 import com.histmersion.api.automation.{Activity, ListFilters}
-import com.histmersion.api.automation.Activity.{Entry, EntryKind, Show, Writer}
 
 import java.time.Instant
 import scala.annotation.tailrec
@@ -69,12 +75,12 @@ object ActivityRules:
 
   /** The page `q` asks for out of `entries` (any order), with the cursor of the next one. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def page(entries: List[Entry], q: ActivityQuery, counts: Activity.Counts): Activity.Page =
+  def page(entries: List[Entry], q: ActivityQuery, counts: Counts): Page =
     val kept = entries.filter(e => matches(q, e) && q.before.forall(after(_, e))).sorted(using newestFirst)
     val (rows, rest) = kept.splitAt(q.limit.value)
-    Activity.Page(
+    Page(
       rows,
-      Option.when(rest.nonEmpty)(rows.lastOption).flatten.map(e => Activity.Page.Next(cursorOf(e).wire.value)),
+      Option.when(rest.nonEmpty)(rows.lastOption).flatten.map(e => Page.Next(cursorOf(e).wire.value)),
       counts
     )
 
@@ -84,13 +90,13 @@ object ActivityRules:
 
   /** The chips' counts over `entries`: running now, and failed since `weekAgo`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def counts(entries: List[Entry], weekAgo: Instant): Activity.Counts =
-    @tailrec def loop(rest: List[Entry], running: Int, problems: Int): Activity.Counts = rest match
+  def counts(entries: List[Entry], weekAgo: Instant): Counts =
+    @tailrec def loop(rest: List[Entry], running: Int, problems: Int): Counts = rest match
       case e :: tail =>
         val run = isRunOrJob(e) && RunningStates.contains(e.state)
         val fail = isRunOrJob(e) && ProblemStates.contains(e.state) && !instantOf(e).isBefore(weekAgo)
         loop(tail, running + (if run then 1 else 0), problems + (if fail then 1 else 0))
-      case Nil => Activity.Counts(Activity.Counts.Running(running), Activity.Counts.ProblemsWeek(problems))
+      case Nil => Counts(Counts.Running(running), Counts.ProblemsWeek(problems))
     loop(entries, 0, 0)
 
   /** The query a client asked for, checked: `show` one of the chips' words, `since` a date, an instant or a time ago

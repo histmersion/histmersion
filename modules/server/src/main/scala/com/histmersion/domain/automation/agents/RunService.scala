@@ -1,5 +1,13 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.agents.MessageInfo
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.automation.Agents.*
@@ -129,7 +137,7 @@ object RunService:
       acquireItem: Option[SweepAcquireItem.Item],
       goal: Option[Goal.Slug],
       parent: Option[Run.Id],
-      origin: Origin,
+      origin: api.automation.agents.Origin,
       dryRun: DryRun,
       managerId: Option[ManagerLight.Id] = None,
       managerItem: Option[FocusRepo.WorkRow.Id] = None
@@ -197,7 +205,7 @@ object RunService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       db.read(
-        AgentRepo.forManager(Managers.ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit))
+        AgentRepo.forManager(ManagerInfo.Id(managerId.value), AgentRepo.ActiveOnly(active.value), size(limit))
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def unsettledOn(target: AgentsControllers.Target): Vector[RunInfo] =
@@ -269,14 +277,14 @@ object RunService:
         RunInfo.UpdatedAt(text(r.updatedAt)),
         RunInfo.TargetKind(r.row.targetKind.value),
         Jsonb.read[RunParams](Jsonb.JsonText(r.row.params.value)).getOrElse(RunParams()),
-        r.row.acquireItem.map(i => Queue.QueueItem.Id(i.value)),
+        r.row.acquireItem.map(i => QueueItem.Id(i.value)),
         r.row.goal.map(g => ApiGoal.Slug(g.value)),
         r.row.parent.map(p => RunInfo.Id(p.value)),
         Some(RunInfo.Origin(r.row.origin.value)),
         r.resumeAt.map(t => RunInfo.ResumeAt(text(t))),
         (if r.row.dryRun.value then RunInfo.DryRun.DryRun else RunInfo.DryRun.Apply),
-        r.row.managerId.map(m => Managers.ManagerInfo.Id(m.value)),
-        r.row.managerItem.map(i => Managers.ManagerItem.Id(i.value)),
+        r.row.managerId.map(m => ManagerInfo.Id(m.value)),
+        r.row.managerItem.map(i => api.automation.managers.ManagerItem.Id(i.value)),
         r.heartbeatAt.map(t => RunInfo.HeartbeatAt(text(t))),
         pausedFor = Option.when(status == RunState.Paused.wire)(Stopped.pausedFor(error)).flatten
       )

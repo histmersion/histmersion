@@ -1,6 +1,12 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+import com.histmersion.api.catalogue.geocode.Approximation
+import com.histmersion.api.checks.lint.Rule
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -16,7 +22,6 @@ import com.histmersion.domain.catalogue.places.GeocodeSettings
 import com.histmersion.api.{GeoPoint, Write}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.Geocode.{Approximation, KindHint}
 
 import com.augustnagro.magnum.*
 import scala.jdk.CollectionConverters.*
@@ -146,10 +151,10 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(name: String, at: Option[Period] = None) =
-    connect(ds)(PlaceFixtures.resolve(Geocode.Attempt.Name(name), KindHint.Unknown, at, settings.placeholderMin))
+    connect(ds)(PlaceFixtures.resolve(Attempt.Name(name), KindHint.Unknown, at, settings.placeholderMin))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def resolvesTo(name: String, ids: Set[String]): Geocode.Resolution =
+  private def resolvesTo(name: String, ids: Set[String]): Resolution =
     val r = resolve(name).getOrElse(fail(s"'$name' resolves to nothing"))
     assert(ids.contains(r.placeId.value), s"'$name' → ${r.describe}, expected one of $ids")
     r
@@ -353,7 +358,7 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
 
     val rep = SourceCheckFixtures.run(
       ds,
-      List(Lint.rule(Lint.Rule.Name(Lint.FindingUnplaced)).get),
+      List(Rule.rule(Rule.Name(Lint.FindingUnplaced)).get),
       Lint.ItemLimit(500),
       Lint.ItemLimit(3),
       (_, _, _) => Nil,

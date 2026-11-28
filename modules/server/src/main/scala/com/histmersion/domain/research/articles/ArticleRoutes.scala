@@ -4,7 +4,7 @@ package domain.research.articles
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.{Api, Write}
-import com.histmersion.api.research.{Article, Articles, ReviewGoal}
+import com.histmersion.api.research.{Article, ReviewGoal}
 import com.histmersion.domain.research.Slug
 import com.histmersion.api.Html.html
 import com.histmersion.server.{ArticleHtml, PageKind}
@@ -38,7 +38,7 @@ object ArticleRoutes:
   )
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def read(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
-    Slug.parse(slug.value).left.map(_ => Articles.notFound(Article.Slug(slug.value)))
+    Slug.parse(slug.value).left.map(_ => Article.notFound(Article.Slug(slug.value)))
 
   /** A slug a write names: one that is no slug is refused. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

@@ -1,5 +1,7 @@
 package com.histmersion
 package server.media
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -235,7 +237,7 @@ class MediaSourcesSuite extends DbSuite:
     val done = h.covers
       .covers(
         MediaCoversRequest(
-          dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+          dryRun = RepairRequest.DryRun.Apply,
           citekey = Some(ApiPaper),
           covers = MediaCoversRequest.Covers.Skipped
         )
@@ -250,7 +252,7 @@ class MediaSourcesSuite extends DbSuite:
     assertEquals((t.role, t.width, t.height), ("illustration", Some(330), Some(250)))
     assertEquals(AssetFixtures.thumb(ds, MediaItemRow.Uid(t.uid.value)).map(_._1), Some("image/jpeg"))
     assert(
-      h.covers.covers(MediaCoversRequest(dryRun = RepairAcquire.RepairRequest.DryRun.Apply)).isLeft,
+      h.covers.covers(MediaCoversRequest(dryRun = RepairRequest.DryRun.Apply)).isLeft,
       "a run over every source is a job"
     )
 
@@ -264,7 +266,7 @@ class MediaSourcesSuite extends DbSuite:
     val r = h.covers
       .covers(
         MediaCoversRequest(
-          dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+          dryRun = RepairRequest.DryRun.Apply,
           citekey = Some(ApiBook),
           illustrations = MediaCoversRequest.Illustrations.Skipped
         )
@@ -300,7 +302,7 @@ class MediaSourcesSuite extends DbSuite:
     val none = h.covers
       .covers(
         MediaCoversRequest(
-          dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+          dryRun = RepairRequest.DryRun.Apply,
           citekey = Some(ApiPaper),
           illustrations = MediaCoversRequest.Illustrations.Skipped,
           isbn = Some(MediaCoversRequest.Isbn("9780000000019"))

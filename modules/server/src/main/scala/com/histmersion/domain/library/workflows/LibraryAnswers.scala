@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.domain.enrichsource.Classification
+import com.histmersion.domain.enrichsource.Findings
+import com.histmersion.domain.enrichsource.Notes
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
 import com.histmersion.domain.EnrichSource
@@ -18,12 +22,12 @@ object LibraryAnswers:
   object Name extends Newtype[String, Pure]
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val classification: ResponseSchema[EnrichSource.Classification] =
-    ResponseSchema.derived[EnrichSource.Classification]()
+  val classification: ResponseSchema[Classification] =
+    ResponseSchema.derived[Classification]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val findings: ResponseSchema[EnrichSource.Findings] = ResponseSchema.derived[EnrichSource.Findings]()
+  val findings: ResponseSchema[Findings] = ResponseSchema.derived[Findings]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val notes: ResponseSchema[EnrichSource.Notes] = ResponseSchema.derived[EnrichSource.Notes]()
+  val notes: ResponseSchema[Notes] = ResponseSchema.derived[Notes]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] = ResponseSchema.derived[AcquisitionSweepRules.Ranking]()
 

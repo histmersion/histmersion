@@ -1,6 +1,9 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.Paging
 import com.histmersion.web.ListPaging.Listing
@@ -167,11 +170,11 @@ class ListPagingSuite extends munit.FunSuite:
     )
     assert(!JobsView.live(done, page(Paging.Page.Total(2), None, Paging.Page.CountState("done") -> Paging.Count(2))))
     assert(JobsView.live(List(job(Job.Id("q"), JobState.Queued)), Paging.Page.empty)) // no counts: the rows say
-    val run = Agents.RunInfo(
-      Agents.RunInfo.Id("r1"),
-      Agents.RunInfo.Pipeline("enrich-source"),
-      Agents.RunInfo.Target("a2020_b"),
-      Agents.RunInfo.Status("done")
+    val run = RunInfo(
+      RunInfo.Id("r1"),
+      RunInfo.Pipeline("enrich-source"),
+      RunInfo.Target("a2020_b"),
+      RunInfo.Status("done")
     )
     assert(
       RunsView.anyLive(
@@ -187,8 +190,8 @@ class ListPagingSuite extends munit.FunSuite:
     assert(
       !RunsView.anyLive(List(run), page(Paging.Page.Total(1), None, Paging.Page.CountState("done") -> Paging.Count(1)))
     )
-    assertEquals(ApprovalsView.qualifier(ListFilters.ApprovalFilter()).map(_.value), Some("open"))
+    assertEquals(ApprovalsView.qualifier(ApprovalFilter()).map(_.value), Some("open"))
     assertEquals(
-      ApprovalsView.qualifier(ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("all")))),
+      ApprovalsView.qualifier(ApprovalFilter(state = Some(Approval.State.Wire("all")))),
       None
     )

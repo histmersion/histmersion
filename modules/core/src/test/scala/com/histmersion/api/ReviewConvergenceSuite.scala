@@ -1,5 +1,24 @@
 package com.histmersion
 package api
+
+import com.histmersion.domain.reviewarticle.CritiqueRule
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.reviewarticle.Finding
+import com.histmersion.domain.reviewledger.Status
+import com.histmersion.domain.reviewledger.Entry
+import com.histmersion.domain.reviewledger.Closure
+import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.domain.reviewarticle.Verdict
+import com.histmersion.domain.reviewarticle.Reviewer
+import com.histmersion.domain.reviewarticle.Check
+import com.histmersion.domain.reviewarticle.BodyCorpus
+import com.histmersion.api.research.critiquepairing.Work
+import com.histmersion.domain.reviewarticle.FixGuards
+import com.histmersion.domain.reviewarticle.Merged
+import com.histmersion.domain.reviewarticle.FixerAnswer
+import com.histmersion.domain.reviewarticle.Snapshot
+import com.histmersion.domain.reviewarticle.WontFix
+import com.histmersion.domain.reviewarticle.SetAsideAnswer
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.Problem
@@ -16,7 +35,7 @@ import com.histmersion.domain.given
 
 import com.histmersion.domain.ReviewArticle.*
 import com.histmersion.domain.ReviewLedger.*
-import com.histmersion.api.research.{CritiquePair, CritiquePairing, CritiqueRef, Critiques, CritiqueSide, CritiqueState}
+import com.histmersion.api.research.{CritiquePair, CritiquePairing, CritiqueRef, CritiqueSide, CritiqueState}
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.domain.ReviewArticle
@@ -36,7 +55,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class ReviewConvergenceSuite extends munit.FunSuite:
 
-  private val minRatio = ReviewArticle.CritiqueRule.MinRatio(0.9)
+  private val minRatio = CritiqueRule.MinRatio(0.9)
 
   private def live(slug: String): Ledger =
     RawJson
@@ -48,7 +67,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assertEquals(a.entries.map(_.id).sorted, List("C12", "R8", "S3", "S4", "S5", "S6"))
     assert(a.entries.forall(e => e.notFixedCount.value == 0 && e.deferred.isEmpty))
     assertEquals(
-      a.entry(ReviewArticle.Finding.Id("S6")).flatMap(_.finding.pair).map(_.wire),
+      a.entry(Finding.Id("S6")).flatMap(_.finding.pair).map(_.wire),
       Some("kelly2021_gods>bachvarova2016_hittite")
     )
     // and round-trips with the new fields
@@ -81,19 +100,19 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       )
     val after = g // the final pass absorbed: S24/S31/S7 reopened, S35–S37 new
     val regression = (f: Finding) => f.id.value == "S37"
-    val (d, ids) = deferFinal(before, after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), regression)
+    val (d, ids) = before.deferFinal(after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), regression)
     assertEquals(ids.sorted, List("S35", "S36"))
     assertEquals(
       d.entries.filter(_.deferred.contains(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).map(_.id).sorted,
       List("S35", "S36")
     )
     // the run's verdict counts them as minor; the next run sees them as open MAJORs
-    val m = merged(d, ReviewLedger.Closure.Round(3), run = Some(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")))
+    val m = d.merged(Closure.Round(3), run = Some(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")))
     assertEquals(m.deferred.sorted, List("S35", "S36"))
     assert(!m.majors.exists(f => Set("S35", "S36")(f.id.value)))
     assertEquals(m.majors.map(_.id).sorted, List("S24", "S31", "S37", "S7"))
     assertEquals(
-      merged(d, ReviewLedger.Closure.Round(1), run = Some(Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3"))).majors.size,
+      d.merged(Closure.Round(1), run = Some(Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3"))).majors.size,
       6
     )
     assertEquals(d.openMajors.size, 6, "still open MAJOR in the ledger: the next run's work")
@@ -102,33 +121,29 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       .modify(_.entries)
       .setTo(
         before.entries :+ after
-          .entry(ReviewArticle.Finding.Id("S35"))
+          .entry(Finding.Id("S35"))
           .get
-          .copy(finding = after.entry(ReviewArticle.Finding.Id("S35")).get.finding.copy(severity = Severity.Minor))
+          .copy(finding = after.entry(Finding.Id("S35")).get.finding.copy(severity = Severity.Minor))
       )
     assertEquals(
-      deferFinal(minorBefore, after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)._2.sorted,
+      minorBefore.deferFinal(after, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)._2.sorted,
       List("S35", "S36", "S37")
     )
 
   test("a run whose only open MAJORs are deferred ends below MAJOR; its backlog item says they are deferred"):
     val g = live("gods_and_migrations")
     val only = g.modify(_.entries).setTo(g.entries.filter(e => Set("S35", "S36")(e.id.value)))
-    val (d, _) = deferFinal(
-      Ledger(ReviewLedger.Ledger.Slug("gods_and_migrations")),
-      only,
-      Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"),
-      _ => false
-    )
+    val (d, _) = Ledger(Ledger.Slug("gods_and_migrations"))
+      .deferFinal(only, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)
     assertEquals(
-      merged(d, ReviewLedger.Closure.Round(3), run = Some(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).verdict,
+      d.merged(Closure.Round(3), run = Some(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).verdict,
       Verdict.Minor
     )
-    val task = taskText(d, Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")).get
+    val task = d.taskText(Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")).get
     assert(task.value.startsWith("review-article [[gods_and_migrations]]: 2 open MAJORs — "), task)
     assert(task.value.contains("[new in the final pass: deferred to the next run]"), task)
     assert(
-      !taskText(d, Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3")).get.value.contains("deferred"),
+      !d.taskText(Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3")).get.value.contains("deferred"),
       "a later run's item does not repeat it"
     )
 
@@ -140,57 +155,64 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       state
     )
     val f = Finding(
-      ReviewArticle.Finding.Id("S24"),
+      Finding.Id("S24"),
       Reviewer.Skeptic,
       Severity.Major,
-      ReviewArticle.Finding.Kind("missing-critique"),
-      ReviewArticle.Finding.Where("w"),
-      ReviewArticle.Finding.Quote("Gray and Atkinson (2003) dated the first split"),
-      ReviewArticle.Finding.Problem("p"),
-      ReviewArticle.Finding.Fix("x"),
+      Finding.Kind("missing-critique"),
+      Finding.Where("w"),
+      Finding.Quote("Gray and Atkinson (2003) dated the first split"),
+      Finding.Problem("p"),
+      Finding.Fix("x"),
       pair = Some(CritiqueRef(Citekey("chang2015"), Citekey("gray2003_language")))
     )
     assert(
-      finalRegression(
-        f,
+      f.finalRegression(
         List(p(CritiqueState.Addressed)),
         List(p(CritiqueState.Open)),
-        ReviewArticle.Fix.Body(""),
+        domain.reviewarticle.Fix.Body(""),
         minRatio
       )
     )
     assert(
-      !finalRegression(
-        f,
+      !f.finalRegression(
         List(p(CritiqueState.Open)),
         List(p(CritiqueState.Open)),
-        ReviewArticle.Fix.Body(""),
+        domain.reviewarticle.Fix.Body(""),
         minRatio
       ),
       "open from the start: a discovery"
     )
     val fact = Finding(
-      ReviewArticle.Finding.Id("S9"),
+      Finding.Id("S9"),
       Reviewer.Skeptic,
       Severity.Major,
-      ReviewArticle.Finding.Kind("date"),
-      ReviewArticle.Finding.Where("w"),
-      ReviewArticle.Finding.Quote("dated to 1320 BCE by the cargo"),
-      ReviewArticle.Finding.Problem("p"),
-      ReviewArticle.Finding.Fix("x")
+      Finding.Kind("date"),
+      Finding.Where("w"),
+      Finding.Quote("dated to 1320 BCE by the cargo"),
+      Finding.Problem("p"),
+      Finding.Fix("x")
     )
     assert(
-      finalRegression(fact, Nil, Nil, ReviewArticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."), minRatio)
-    )
-    assert(!finalRegression(fact, Nil, Nil, ReviewArticle.Fix.Body("Another passage altogether, edited."), minRatio))
-    assert(
-      !finalRegression(
-        fact.modify(_.kind).setTo(ReviewArticle.Finding.Kind("lost")),
+      fact.finalRegression(
         Nil,
         Nil,
-        ReviewArticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
+        domain.reviewarticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
         minRatio
-      ),
+      )
+    )
+    assert(
+      !fact.finalRegression(Nil, Nil, domain.reviewarticle.Fix.Body("Another passage altogether, edited."), minRatio)
+    )
+    assert(
+      !fact
+        .modify(_.kind)
+        .setTo(Finding.Kind("lost"))
+        .finalRegression(
+          Nil,
+          Nil,
+          domain.reviewarticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."),
+          minRatio
+        ),
       "a reader's confusion in edited text is a discovery, not a factual regression"
     )
 
@@ -206,16 +228,16 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     val checks = List(
       Check(
-        ReviewArticle.Check.Id("S6"),
-        fixed = ReviewArticle.Check.Fixed(true),
-        ReviewArticle.Check.Quote("Gilan nevertheless identifies"),
-        ReviewArticle.Check.Note("Gilan's criticism is now described")
+        Check.Id("S6"),
+        fixed = Check.Fixed(true),
+        Check.Quote("Gilan nevertheless identifies"),
+        Check.Note("Gilan's criticism is now described")
       ),
       Check(
-        ReviewArticle.Check.Id("S4"),
-        fixed = ReviewArticle.Check.Fixed(true),
-        ReviewArticle.Check.Quote("q"),
-        ReviewArticle.Check.Note("n")
+        Check.Id("S4"),
+        fixed = Check.Fixed(true),
+        Check.Quote("q"),
+        Check.Note("n")
       )
     )
     val (held, ws) = holdPairChecks(checks, a.entries.map(_.finding), List(open))
@@ -234,115 +256,114 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       List(true, true)
     )
     // the ledger counts it as not fixed
-    val l = applyChecks(
-      a,
+    val l = a.applyChecks(
       Reviewer.Skeptic,
       held,
       ReviewLedger.ApplyChecksRun("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"),
       ReviewLedger.ApplyChecksRound(2)
     )
-    assertEquals(l.entry(ReviewArticle.Finding.Id("S6")).map(e => (e.status, e.notFixedCount)), Some((Status.Open, 1)))
-    assertEquals(l.entry(ReviewArticle.Finding.Id("S4")).map(_.status), Some(Status.Fixed))
+    assertEquals(l.entry(Finding.Id("S6")).map(e => (e.status, e.notFixedCount)), Some((Status.Open, 1)))
+    assertEquals(l.entry(Finding.Id("S4")).map(_.status), Some(Status.Fixed))
 
   // ── the regression guard ───────────────────────────────────────────────────────────────────────
 
-  private val tinBefore = ReviewArticle.Fix.Body(
+  private val tinBefore = domain.reviewarticle.Fix.Body(
     """Tin reached the Aegean by sea [[knapp2016_tin]]; [[zz2024_iso]] traces it to Central Asia.
       |
       |The date of the wreck is about 1320 BCE [[knapp2016_tin]].
       |""".stripMargin
   )
 
-  private def ledgerWith(es: Entry*) = Ledger(ReviewLedger.Ledger.Slug("tin"), es.toList)
+  private def ledgerWith(es: Entry*) = Ledger(Ledger.Slug("tin"), es.toList)
   private val pairFixed = Entry(
     Finding(
-      ReviewArticle.Finding.Id("S1"),
+      Finding.Id("S1"),
       Reviewer.Skeptic,
       Severity.Major,
-      ReviewArticle.Finding.Kind("missing-critique"),
-      ReviewArticle.Finding.Where("Intro"),
-      ReviewArticle.Finding.Quote("Tin reached the Aegean by sea"),
-      ReviewArticle.Finding.Problem("omits the isotope critique"),
-      ReviewArticle.Finding.Fix("cite it"),
+      Finding.Kind("missing-critique"),
+      Finding.Where("Intro"),
+      Finding.Quote("Tin reached the Aegean by sea"),
+      Finding.Problem("omits the isotope critique"),
+      Finding.Fix("cite it"),
       pair = Some(CritiqueRef(Citekey("zz2024_iso"), Citekey("knapp2016_tin")))
     ),
-    ReviewLedger.Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-    ReviewLedger.Entry.Round(1),
+    Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+    Entry.Round(1),
     Status.Fixed,
     closed = Some(
       Closure(
-        ReviewLedger.Closure.By("skeptic"),
-        ReviewLedger.Closure.Round(2),
-        ReviewLedger.Closure.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-        ReviewLedger.Closure.Note(""),
-        ReviewLedger.Closure.Quote("[[zz2024_iso]] traces it to Central Asia")
+        Closure.By("skeptic"),
+        Closure.Round(2),
+        Closure.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+        Closure.Note(""),
+        Closure.Quote("[[zz2024_iso]] traces it to Central Asia")
       )
     )
   )
   private val textFixed = Entry(
     Finding(
-      ReviewArticle.Finding.Id("R1"),
+      Finding.Id("R1"),
       Reviewer.Rules,
       Severity.Major,
-      ReviewArticle.Finding.Kind("date"),
-      ReviewArticle.Finding.Where("Disagreements"),
-      ReviewArticle.Finding.Quote("The date of the wreck is argued"),
-      ReviewArticle.Finding.Problem("no date"),
-      ReviewArticle.Finding.Fix("give the year")
+      Finding.Kind("date"),
+      Finding.Where("Disagreements"),
+      Finding.Quote("The date of the wreck is argued"),
+      Finding.Problem("no date"),
+      Finding.Fix("give the year")
     ),
-    ReviewLedger.Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-    ReviewLedger.Entry.Round(1),
+    Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+    Entry.Round(1),
     Status.Fixed,
     closed = Some(
       Closure(
-        ReviewLedger.Closure.By("rules"),
-        ReviewLedger.Closure.Round(2),
-        ReviewLedger.Closure.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-        ReviewLedger.Closure.Note(""),
-        ReviewLedger.Closure.Quote("The date of the wreck is about 1320 BCE [[knapp2016_tin]]")
+        Closure.By("rules"),
+        Closure.Round(2),
+        Closure.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+        Closure.Note(""),
+        Closure.Quote("The date of the wreck is about 1320 BCE [[knapp2016_tin]]")
       )
     )
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def together(b: ReviewArticle.Fix.Body, r: CritiqueRef) =
-    Critiques.together(b, r, t => Some(Citekey(t.value)))
+  private def together(b: domain.reviewarticle.Fix.Body, r: CritiqueRef) =
+    CritiquePair.together(b, r, t => Some(Citekey(t.value)))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def cites(b: ReviewArticle.Fix.Body, ck: domain.library.Citekey) =
+  private def cites(b: domain.reviewarticle.Fix.Body, ck: domain.library.Citekey) =
     AgentVerify.wikilinks(AgentVerify.Text(b.value)).exists(_.value == ck.value)
 
   test("guard: a closed pair split apart, a fixed text written back, a citation the fix rests on dropped"):
     val l = ledgerWith(pairFixed, textFixed)
-    assertEquals(guard(l, tinBefore, tinBefore, together, cites, minRatio), Nil)
-    val split = ReviewArticle.Fix.Body(
+    assertEquals(l.guard(tinBefore, tinBefore, together, cites, minRatio), Nil)
+    val split = domain.reviewarticle.Fix.Body(
       tinBefore.value
         .replace("; [[zz2024_iso]] traces it to Central Asia.", ".\n\nIt came from Central Asia [[zz2024_iso]].")
     )
-    assertEquals(guard(l, tinBefore, split, together, cites, minRatio).map(_.id), List("S1"))
+    assertEquals(l.guard(tinBefore, split, together, cites, minRatio).map(_.id), List("S1"))
     assert(
-      s"${guard(l, tinBefore, split, together, cites, minRatio).head.why}".contains("no longer cited in one paragraph")
+      s"${l.guard(tinBefore, split, together, cites, minRatio).head.why}".contains("no longer cited in one paragraph")
     )
-    val back = ReviewArticle.Fix.Body(
+    val back = domain.reviewarticle.Fix.Body(
       tinBefore.value.replace("The date of the wreck is about 1320 BCE", "The date of the wreck is argued")
     )
     assertEquals(
-      guard(l, tinBefore, back, together, cites, minRatio).map(r => (r.id, s"${r.why}".take(24))),
+      l.guard(tinBefore, back, together, cites, minRatio).map(r => (r.id, s"${r.why}".take(24))),
       List(("R1", "the text it fixed is bac"))
     )
-    val dropped = ReviewArticle.Fix.Body(
+    val dropped = domain.reviewarticle.Fix.Body(
       tinBefore.value
         .replace(" [[zz2024_iso]] traces it to Central Asia", " an isotope study traces it to Central Asia")
     )
-    val g = guard(l, tinBefore, dropped, together, cites, minRatio)
+    val g = l.guard(tinBefore, dropped, together, cites, minRatio)
     assertEquals(g.map(_.id), List("S1"))
     // open and set-aside findings are not guarded
     assertEquals(
-      guard(ledgerWith(pairFixed.modify(_.status).setTo(Status.Open)), tinBefore, split, together, cites, minRatio),
+      ledgerWith(pairFixed.modify(_.status).setTo(Status.Open)).guard(tinBefore, split, together, cites, minRatio),
       Nil
     )
 
   // ── the fixer's guards ─────────────────────────────────────────────────────────────────────────
 
-  private val body = ReviewArticle.Fix.Body(
+  private val body = domain.reviewarticle.Fix.Body(
     """Tin reached the Aegean by sea [[knapp2016_tin]].
       |
       |Kullmann answers West's reading of the cargo [[zz2015_kull]].
@@ -372,41 +393,41 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     Coverage.Edge(Citekey("zz2015_kull"), Coverage.Edge.Kind("challenges"), Citekey("zz2011_west")),
     Coverage.Edge(Citekey("zz2021_crit"), Coverage.Edge.Kind("challenges"), Citekey("zz2020_new"))
   )
-  private val works: Citekey => Option[CritiquePairing.Work] = Map(
-    Citekey("zz2011_west") -> CritiquePairing.Work(
+  private val works: Citekey => Option[Work] = Map(
+    Citekey("zz2011_west") -> Work(
       Citekey("zz2011_west"),
-      List(CritiquePairing.Work.Names("West")),
+      List(Work.Names("West")),
       Some(Year(2011))
     ),
-    Citekey("zz2015_kull") -> CritiquePairing.Work(
+    Citekey("zz2015_kull") -> Work(
       Citekey("zz2015_kull"),
-      List(CritiquePairing.Work.Names("Kullmann")),
+      List(Work.Names("Kullmann")),
       Some(Year(2015))
     )
   ).get
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val resolve = (t: Article.Link.Target) => Some(t.value).filter(keys).map(Citekey(_))
-  private def pairsOf(b: ReviewArticle.Fix.Body) = Critiques.build(b, resolve, edges, Nil)
+  private def pairsOf(b: domain.reviewarticle.Fix.Body) = CritiquePair.build(b, resolve, edges, Nil)
   private def guards(l: Ledger) = FixGuards(
     pairsOf,
-    (b0, b1) => guard(l, b0, b1, (b, r) => Critiques.find(pairsOf(b), r).exists(!_.open), cites, minRatio),
+    (b0, b1) => l.guard(b0, b1, (b, r) => CritiquePair.find(pairsOf(b), r).exists(!_.open), cites, minRatio),
     b => CritiquePairing.repair(b, CritiquePairing.hits(b, resolve, edges, works))
   )
 
   private def mcFinding(
-      id: ReviewArticle.Finding.Id,
+      id: Finding.Id,
       pair: CritiqueRef.Wire,
-      quote: ReviewArticle.Finding.Quote = ReviewArticle.Finding.Quote("Tin reached the Aegean by sea")
+      quote: Finding.Quote = Finding.Quote("Tin reached the Aegean by sea")
   ) =
     Finding(
       id,
       Reviewer.Skeptic,
       Severity.Major,
-      ReviewArticle.Finding.Kind("missing-critique"),
-      ReviewArticle.Finding.Where("Intro"),
+      Finding.Kind("missing-critique"),
+      Finding.Where("Intro"),
       quote,
-      ReviewArticle.Finding.Problem("omits a critique"),
-      ReviewArticle.Finding.Fix("cite the critic"),
+      Finding.Problem("omits a critique"),
+      Finding.Fix("cite the critic"),
       pair = CritiqueRef.parse(pair).toOption
     )
   private def edit(
@@ -415,13 +436,12 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       text: Article.Edits.EditAnswer.Text
   ) =
     Article.Edits.EditAnswer(Article.Edits.Op.parse(op).get, anchor, Some(text))
-  private def fix(m: Merged, a: FixerAnswer, last: LastRound, l: Ledger = Ledger(ReviewLedger.Ledger.Slug("tin"))) =
-    checkFix(
-      a,
+  private def fix(m: Merged, a: FixerAnswer, last: LastRound, l: Ledger = Ledger(Ledger.Slug("tin"))) =
+    a.checkFix(
       m,
       Slug("tin"),
       body,
-      ReviewArticle.Snapshot.Kind("concept"),
+      Snapshot.Kind("concept"),
       corpus,
       isKey,
       _ => None,
@@ -436,7 +456,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     "fixer: a missing critique listed as applied with its pair still apart goes back; on the last attempt it is not fixed, with why"
   ):
     val m = Merged(
-      ReviewArticle.Merged.Round(1),
+      Merged.Round(1),
       Verdict.Major,
       List(mcFinding(Finding.Id("S1"), CritiqueRef.Wire("zz2024_iso>knapp2016_tin"))),
       None,
@@ -452,10 +472,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
           Article.Edits.EditAnswer.Text("\n\nAn isotope study disagrees [[zz2024_iso]].")
         )
       ),
-      List(ReviewArticle.Finding.Id("S1")),
+      List(Finding.Id("S1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     val back = fix(m, apart, last = LastRound(false))
     assert(
@@ -475,7 +495,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         Nil,
         List(
           WontFix(
-            ReviewArticle.WontFix.Id("S1"),
+            WontFix.Id("S1"),
             ReviewArticle.Rationale(
               "listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph"
             )
@@ -485,17 +505,13 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     assert(ws.exists(_.contains("kept despite")), ws)
     // the ledger: not claimed, not fixed once more
-    val l = absorb(
-      Ledger(ReviewLedger.Ledger.Slug("tin")),
-      m.findings,
-      Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-      ReviewLedger.Closure.Round(1)
-    )._1
+    val l =
+      Ledger(Ledger.Slug("tin")).absorb(m.findings, Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"), Closure.Round(1))._1
     val after =
-      applyFix(l, kept, ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1))
+      l.applyFix(kept, ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1))
     assertEquals(
       after
-        .entry(ReviewArticle.Finding.Id("S1"))
+        .entry(Finding.Id("S1"))
         .map(e => (e.claimed, e.notFixedCount, e.notFixed.exists(_.value.contains("pass 1: listed as applied")))),
       Some((false, 1, true))
     )
@@ -509,10 +525,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
             .Text("Tin reached the Aegean by sea [[knapp2016_tin]]; an isotope study disagrees [[zz2024_iso]].")
         )
       ),
-      List(ReviewArticle.Finding.Id("S1")),
+      List(Finding.Id("S1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     assertEquals(fix(m, beside, last = LastRound(false)).map(_._1.applied), Right(List("S1")))
 
@@ -520,7 +536,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     "fixer: the pairing repair answers a named partner itself — the finding is 'repaired' and claimed for its re-check"
   ):
     val m = Merged(
-      ReviewArticle.Merged.Round(1),
+      Merged.Round(1),
       Verdict.Major,
       List(
         mcFinding(
@@ -534,7 +550,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil
     )
     // the fixer leaves it alone (it set nothing aside, applied nothing): the repair cites West where the paragraph names him
-    val nothing = FixerAnswer(Nil, Nil, Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
+    val nothing = FixerAnswer(Nil, Nil, Nil, Nil, FixerAnswer.Notes(""))
     val (f, _) = fix(m, nothing, last = LastRound(false)).toOption.get
     assert(
       f.body.value.contains("Kullmann answers West's reading of the cargo [[zz2015_kull]] [[zz2011_west]]."),
@@ -542,35 +558,28 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     assertEquals((f.repaired, f.notFixed), (List("S1"), Nil))
     assert(f.repairs.head.value.contains("cite [[zz2011_west]] there (fixable)"), f.repairs)
-    val l = applyFix(
-      absorb(
-        Ledger(ReviewLedger.Ledger.Slug("tin")),
-        m.findings,
-        Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-        ReviewLedger.Closure.Round(1)
-      )._1,
-      f,
-      ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-      ReviewLedger.ApplyFixRound(1)
-    )
-    assertEquals(l.entry(ReviewArticle.Finding.Id("S1")).map(_.claimed), Some(true))
+    val l = Ledger(Ledger.Slug("tin"))
+      .absorb(m.findings, Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"), Closure.Round(1))
+      ._1
+      .applyFix(f, ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1))
+    assertEquals(l.entry(Finding.Id("S1")).map(_.claimed), Some(true))
 
   test(
     "fixer: a citation the revision brings in whose recorded critique no paragraph discusses goes back; a pair-only set-aside answers it"
   ):
     val m = Merged(
-      ReviewArticle.Merged.Round(1),
+      Merged.Round(1),
       Verdict.Minor,
       List(
         Finding(
-          ReviewArticle.Finding.Id("R1"),
+          Finding.Id("R1"),
           Reviewer.Rules,
           Severity.Minor,
-          ReviewArticle.Finding.Kind("term"),
-          ReviewArticle.Finding.Where("Intro"),
-          ReviewArticle.Finding.Quote(""),
-          ReviewArticle.Finding.Problem("bronze undefined"),
-          ReviewArticle.Finding.Fix("define")
+          Finding.Kind("term"),
+          Finding.Where("Intro"),
+          Finding.Quote(""),
+          Finding.Problem("bronze undefined"),
+          Finding.Fix("define")
         )
       ),
       None,
@@ -584,7 +593,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         Article.Edits.EditAnswer.Text(" A newer study proposes Cornwall [[zz2020_new]].")
       )
     )
-    val bare = FixerAnswer(adds, List(ReviewArticle.Finding.Id("R1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
+    val bare = FixerAnswer(adds, List(Finding.Id("R1")), Nil, Nil, FixerAnswer.Notes(""))
     val back = fix(m, bare, last = LastRound(false))
     assert(
       back.left.exists(
@@ -601,7 +610,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       .setTo(
         List(
           SetAsideAnswer(
-            ReviewArticle.SetAsideAnswer.Id(""),
+            SetAsideAnswer.Id(""),
             Some(CritiqueRef.Wire("zz2021_crit>zz2020_new")),
             ReviewArticle.Rationale("The critique concerns its dating, not the ore source cited here.")
           )
@@ -618,33 +627,33 @@ class ReviewConvergenceSuite extends munit.FunSuite:
   test("fixer: edits that reopen a closed finding go back; on the last attempt they are dropped and the rest is kept"):
     val closed = Entry(
       Finding(
-        ReviewArticle.Finding.Id("R1"),
+        Finding.Id("R1"),
         Reviewer.Rules,
         Severity.Major,
-        ReviewArticle.Finding.Kind("date"),
-        ReviewArticle.Finding.Where("Disagreements"),
-        ReviewArticle.Finding.Quote("The date of the wreck is argued"),
-        ReviewArticle.Finding.Problem("no date"),
-        ReviewArticle.Finding.Fix("give the year")
+        Finding.Kind("date"),
+        Finding.Where("Disagreements"),
+        Finding.Quote("The date of the wreck is argued"),
+        Finding.Problem("no date"),
+        Finding.Fix("give the year")
       ),
-      ReviewLedger.Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-      ReviewLedger.Entry.Round(1),
+      Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
+      Entry.Round(1),
       Status.Fixed
     )
     val l = ledgerWith(closed)
     val m = Merged(
-      ReviewArticle.Merged.Round(2),
+      Merged.Round(2),
       Verdict.Minor,
       List(
         Finding(
-          ReviewArticle.Finding.Id("C1"),
+          Finding.Id("C1"),
           Reviewer.ColdReader,
           Severity.Minor,
-          ReviewArticle.Finding.Kind("term"),
-          ReviewArticle.Finding.Where("Intro"),
-          ReviewArticle.Finding.Quote(""),
-          ReviewArticle.Finding.Problem("tin undefined"),
-          ReviewArticle.Finding.Fix("define")
+          Finding.Kind("term"),
+          Finding.Where("Intro"),
+          Finding.Quote(""),
+          Finding.Problem("tin undefined"),
+          Finding.Fix("define")
         )
       ),
       None,
@@ -664,17 +673,16 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     val a = FixerAnswer(
       List(gloss, undo),
-      List(ReviewArticle.Finding.Id("C1")),
+      List(Finding.Id("C1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
-    val back = checkFix(
-      a,
+    val back = a.checkFix(
       m,
       Slug("tin"),
       body,
-      ReviewArticle.Snapshot.Kind("concept"),
+      Snapshot.Kind("concept"),
       corpus,
       isKey,
       _ => None,
@@ -690,58 +698,60 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       ),
       back
     )
-    val (f, ws) = checkFix(
-      a,
-      m,
-      Slug("tin"),
-      body,
-      ReviewArticle.Snapshot.Kind("concept"),
-      corpus,
-      isKey,
-      _ => None,
-      minRatio,
-      last = ReviewArticle.LastRound(true),
-      None,
-      pairsOf(body),
-      Some(guards(l))
-    ).toOption.get
+    val (f, ws) = a
+      .checkFix(
+        m,
+        Slug("tin"),
+        body,
+        Snapshot.Kind("concept"),
+        corpus,
+        isKey,
+        _ => None,
+        minRatio,
+        last = ReviewArticle.LastRound(true),
+        None,
+        pairsOf(body),
+        Some(guards(l))
+      )
+      .toOption
+      .get
     assert(f.body.value.contains("Tin, the scarce half of bronze") && f.body.value.contains("about 1320 BCE"), f.body)
     assert(ws.exists(_.contains("edit(s) 2 dropped: they reopened R1")), ws)
 
   test("fixer: every open finding it leaves unanswered is recorded not fixed, with why — never silently skipped"):
     val m = Merged(
-      ReviewArticle.Merged.Round(1),
+      Merged.Round(1),
       Verdict.Major,
       List(
         Finding(
-          ReviewArticle.Finding.Id("R1"),
+          Finding.Id("R1"),
           Reviewer.Rules,
           Severity.Major,
-          ReviewArticle.Finding.Kind("date"),
-          ReviewArticle.Finding.Where("Disagreements"),
-          ReviewArticle.Finding.Quote("The date of the wreck"),
-          ReviewArticle.Finding.Problem("no date"),
-          ReviewArticle.Finding.Fix("give the year")
+          Finding.Kind("date"),
+          Finding.Where("Disagreements"),
+          Finding.Quote("The date of the wreck"),
+          Finding.Problem("no date"),
+          Finding.Fix("give the year")
         ),
         Finding(
-          ReviewArticle.Finding.Id("C1"),
+          Finding.Id("C1"),
           Reviewer.ColdReader,
           Severity.Minor,
-          ReviewArticle.Finding.Kind("term"),
-          ReviewArticle.Finding.Where("Intro"),
-          ReviewArticle.Finding.Quote(""),
-          ReviewArticle.Finding.Problem("tin undefined"),
-          ReviewArticle.Finding.Fix("define")
+          Finding.Kind("term"),
+          Finding.Where("Intro"),
+          Finding.Quote(""),
+          Finding.Problem("tin undefined"),
+          Finding.Fix("define")
         ),
         Finding(
-          ReviewArticle.Finding.Id("C2"),
+          Finding.Id("C2"),
           Reviewer.ColdReader,
           Severity.Minor,
-          ReviewArticle.Finding.Kind("term"),
-          ReviewArticle.Finding.Where("Intro"),
-          ReviewArticle.Finding.Quote(""),
-          ReviewArticle.Finding.Problem("bronze undefined"),
-          ReviewArticle.Finding.Fix("define")
+          Finding.Kind("term"),
+          Finding.Where("Intro"),
+          Finding.Quote(""),
+          Finding.Problem("bronze undefined"),
+          Finding.Fix("define")
         )
       ),
       None,
@@ -756,10 +766,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
           Article.Edits.EditAnswer.Text("Tin, a metal, reached")
         )
       ),
-      List(ReviewArticle.Finding.Id("C1")),
+      List(Finding.Id("C1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     assert(
       fix(m, a, last = LastRound(false)).left
@@ -770,45 +780,38 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       f.notFixed,
       List(
         WontFix(
-          ReviewArticle.WontFix.Id("R1"),
+          WontFix.Id("R1"),
           ReviewArticle.Rationale("the fixer neither applied nor rejected it")
         ),
-        WontFix(ReviewArticle.WontFix.Id("C2"), ReviewArticle.Rationale("the fixer did not answer it"))
+        WontFix(WontFix.Id("C2"), ReviewArticle.Rationale("the fixer did not answer it"))
       )
     )
-    val l = applyFix(
-      absorb(
-        Ledger(ReviewLedger.Ledger.Slug("tin")),
-        m.findings,
-        Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-        ReviewLedger.Closure.Round(1)
-      )._1,
-      f,
-      ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
-      ReviewLedger.ApplyFixRound(1)
-    )
+    val l = Ledger(Ledger.Slug("tin"))
+      .absorb(m.findings, Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"), Closure.Round(1))
+      ._1
+      .applyFix(f, ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(1))
     assertEquals(
       l.entries.map(e => (e.id, e.claimed, e.notFixedCount)),
       List(("R1", false, 1), ("C1", true, 0), ("C2", false, 1))
     )
     assert(
-      notes(l)(ReviewArticle.Finding.Id("R1")).contains("pass 1: the fixer neither applied nor rejected it"),
-      notes(l)
+      l.notes(Finding.Id("R1")).contains("pass 1: the fixer neither applied nor rejected it"),
+      l.notes
     )
     // twice not fixed: stubborn, and the note says how often
     val twice =
-      applyFix(l, f, ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(2))
+      l.applyFix(f, ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), ReviewLedger.ApplyFixRound(2))
     assertEquals(
-      stubborn(
-        twice
-          .modify(_.entries)
-          .setTo(
-            twice.entries.map(e =>
-              e.modify(_.finding)
-                .setTo(e.finding.modify(_.pair).setTo(Some(CritiqueRef(Citekey("a2000_x"), Citekey("b2001_y")))))
-            )
+      twice
+        .modify(_.entries)
+        .setTo(
+          twice.entries.map(e =>
+            e.modify(_.finding)
+              .setTo(e.finding.modify(_.pair).setTo(Some(CritiqueRef(Citekey("a2000_x"), Citekey("b2001_y")))))
           )
-      ).map(_.id),
+        )
+        .stubborn()
+        .map(_.id),
       List("R1", "C2")
     )
-    assert(notes(twice)(ReviewArticle.Finding.Id("R1")).startsWith("not fixed yet (2 times)"), notes(twice))
+    assert(twice.notes(Finding.Id("R1")).startsWith("not fixed yet (2 times)"), twice.notes)

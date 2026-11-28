@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.server.markdownlint.Context
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -10,7 +12,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import MarkdownLint.{Context, Scan}
+import MarkdownLint.Scan
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatRule, FormatSeverity}
 import com.histmersion.api.research.CoverageSearch
 import com.histmersion.api.library.Source

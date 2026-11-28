@@ -27,7 +27,7 @@ object ArticleMarkdown:
     val line =
       metaLine(a.kind.value, a.regions.map(_.value), Year.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
     val head =
-      if Articles.heading(Article.Body(body)).isEmpty then
+      if Article.heading(Article.Body(body)).isEmpty then
         s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
       else if line.isEmpty then body
       else
@@ -90,7 +90,7 @@ object ArticleMarkdown:
       val line =
         metaLine(a.kind.value, a.regions.map(_.value), Year.period(a.periodStart, a.periodEnd), a.tags.map(_.value))
       val head =
-        if Articles.heading(Article.Body(body)).isEmpty then
+        if Article.heading(Article.Body(body)).isEmpty then
           s"# ${a.title}\n\n" + (if line.isEmpty then "" else s"$line\n\n") + body
         else if line.isEmpty then body
         else

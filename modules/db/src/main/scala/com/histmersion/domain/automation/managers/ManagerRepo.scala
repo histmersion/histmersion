@@ -1,12 +1,25 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ItemCounts
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ManagerHint
+
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 
-import com.histmersion.api.automation.Agents.{PauseReason, RunState}
+import com.histmersion.api.automation.Agents.RunState
 import com.histmersion.api.automation.AgentJobKinds
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Managers.*
@@ -347,7 +360,7 @@ object ManagerRepo:
       priority: ItemRow.Priority,
       attempts: ItemRow.Attempts,
       failures: ItemRow.Failures,
-      runId: Option[Agents.RunInfo.Id],
+      runId: Option[RunInfo.Id],
       evaluatedRun: Option[ItemRow.EvaluatedRun],
       notBefore: Option[ItemRow.NotBefore],
       hold: Option[Hold],
@@ -364,9 +377,9 @@ object ManagerRepo:
     export ManagerItem.{Kind, Target}
     export com.histmersion.api.automation.ItemStatus.Wire as Status
     export ManagerItem.{Attempts, Failures, Priority}
-    export Agents.RunInfo.Id as EvaluatedRun
+    export RunInfo.Id as EvaluatedRun
     export ManagerItem.{NotBefore, Outcome}
-    export com.histmersion.api.automation.Managers.ItemOrigin.Wire as Origin
+    export ItemOrigin.Wire as Origin
     export ManagerItem.{CreatedAt, UpdatedAt}
 
   private val itemSelect =
@@ -504,7 +517,7 @@ object ManagerRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def toEvaluate(managerId: ManagerRow.Id)(using
       DbCon
-  ): List[(ManagerItem, Option[(Agents.RunInfo.Status, Option[Problem])])] =
+  ): List[(ManagerItem, Option[(RunInfo.Status, Option[Problem])])] =
     val rows =
       sql"$itemSelect WHERE manager_id = $managerId AND status = 'active' ORDER BY id"
         .query[ItemRow]
@@ -515,7 +528,7 @@ object ManagerRepo:
       val run = i.runId.flatMap(r =>
         (
           sql"SELECT status, error FROM jobs WHERE id = $r"
-            .query[(Agents.RunInfo.Status, Option[NonEmptyVector[Problem]])]
+            .query[(RunInfo.Status, Option[NonEmptyVector[Problem]])]
             .run()
             .headOption
             .map((status, error) => (status, error.map(Problems.asOne)))
@@ -995,7 +1008,7 @@ object ManagerRepo:
   def eventIn(
       managerId: ManagerRow.Id,
       itemId: Option[ItemRow.Id],
-      runId: Option[Agents.RunInfo.Id],
+      runId: Option[RunInfo.Id],
       kind: ManagerRepo.EventInKind,
       text: ManagerRepo.EventInText
   )(using
@@ -1009,7 +1022,7 @@ object ManagerRepo:
   def event(
       managerId: ManagerRow.Id,
       itemId: Option[ItemRow.Id],
-      runId: Option[Agents.RunInfo.Id],
+      runId: Option[RunInfo.Id],
       kind: ManagerRepo.EventKind,
       text: ManagerRepo.EventText
   )(using DbCon): Unit =

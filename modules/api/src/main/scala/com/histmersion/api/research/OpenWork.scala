@@ -1,6 +1,10 @@
 package com.histmersion
 package api.research
 
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.RunInfo
+
 import com.histmersion.api.given
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.util.problem.Problem
@@ -202,10 +206,10 @@ object OpenWork:
       last.headOption.fold("")(p => s": ${p.sentence}")
 
   enum OpenItem derives CanEqual:
-    case Decision(approval: Agents.ApprovalInfo, actor: Who)
+    case Decision(approval: ApprovalInfo, actor: Who)
     case Acquisition(
-        item: Queue.QueueItem.Id,
-        text: Queue.QueueItem.Text,
+        item: QueueItem.Id,
+        text: QueueItem.Text,
         verdict: Verdict,
         last: Option[At],
         tries: Tries,
@@ -213,14 +217,14 @@ object OpenWork:
         goal: Option[Goal.Slug]
     )
     case Task(
-        item: Queue.QueueItem.Id,
-        text: Queue.QueueItem.Text,
+        item: QueueItem.Id,
+        text: QueueItem.Text,
         actor: Who,
         creator: Option[Creation],
         goal: Option[Goal.Slug]
     )
     case PausedRun(
-        run: Agents.RunInfo.Id,
+        run: RunInfo.Id,
         pipeline: Pipeline.Wire,
         cause: Option[Problem],
         resumes: Option[At],
@@ -277,7 +281,7 @@ object OpenWork:
     private def notRecorded: String = if creatorNotRecorded then " · creator not recorded" else ""
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    private def firstLine(text: Queue.QueueItem.Text): String = s"$text".linesIterator.nextOption().getOrElse("")
+    private def firstLine(text: QueueItem.Text): String = s"$text".linesIterator.nextOption().getOrElse("")
 
   final case class Totals(owner: Count, agents: Count) derives JsonCodec, KindlingsSchema, api.json.Schema:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -413,8 +417,8 @@ object OpenWork:
         answers.map(a => s"\n  - ${a.line}: ${a.why.sentence}").mkString
 
   final case class History(
-      item: Queue.QueueItem.Id,
-      text: Queue.QueueItem.Text,
+      item: QueueItem.Id,
+      text: QueueItem.Text,
       verdict: Verdict,
       attempts: Vector[Attempt]
   ) derives JsonCodec,

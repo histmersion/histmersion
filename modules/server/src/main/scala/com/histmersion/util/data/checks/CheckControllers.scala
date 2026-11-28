@@ -1,9 +1,12 @@
 package com.histmersion
 package util.data.checks
 
+import com.histmersion.api.checks.lint.LintReport
+import com.histmersion.api.checks.lint.LintFixResult
+
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
+import com.histmersion.api.checks.Lint.FormatChecker
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.WritePermit

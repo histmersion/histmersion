@@ -34,7 +34,7 @@ class UndatedCellsSuite extends munit.FunSuite:
     )
 
   test("a square of dated and undated sites counts both, and how many have no known date"):
-    val out = UndatedCells.merge(
+    val out = GridCell.merge(
       TileCoord.Z(3),
       List(cell(GridCell.Gx(5), GridCell.N(2), GridCell.One("a"), mid = Some(-500))),
       List(cell(GridCell.Gx(5), GridCell.N(3), GridCell.One("u")))
@@ -42,14 +42,14 @@ class UndatedCellsSuite extends munit.FunSuite:
     assertEquals(out.map(c => (c.key, c.n, c.undated, c.midLo)), List(("c3/5/7", 5, 3, Some(-500.0))))
 
   test("an undated site the span shows by its findings counts once, as dated"):
-    val out = UndatedCells.merge(
+    val out = GridCell.merge(
       TileCoord.Z(3),
       List(cell(GridCell.Gx(5), GridCell.N(1), GridCell.One("f"), dup = GridCell.Dup(1))),
       List(cell(GridCell.Gx(5), GridCell.N(1), GridCell.One("f")))
     )
     assertEquals(out.map(c => (c.key, c.n, c.undated, c.x)), List(("f", 1, 0, 100)))
     assertEquals(
-      UndatedCells.total(
+      GridCell.total(
         List(cell(GridCell.Gx(5), GridCell.N(1), GridCell.One("f"), dup = GridCell.Dup(1))),
         List(cell(GridCell.Gx(5), GridCell.N(1), GridCell.One("f")))
       ),
@@ -57,7 +57,7 @@ class UndatedCellsSuite extends munit.FunSuite:
     )
 
   test("squares of one kind only: a single undated site is itself, marked; several are a cell"):
-    val out = UndatedCells.merge(
+    val out = GridCell.merge(
       TileCoord.Z(2),
       List(cell(GridCell.Gx(1), GridCell.N(3), GridCell.One("d"))),
       List(
@@ -67,7 +67,7 @@ class UndatedCellsSuite extends munit.FunSuite:
     )
     assertEquals(out.map(c => (c.key, c.n, c.undated)), List(("c2/1/7", 3, 0), ("u1", 1, 1), ("c2/3/7", 4, 4)))
     assertEquals(
-      UndatedCells.total(
+      GridCell.total(
         List(cell(GridCell.Gx(1), GridCell.N(3), GridCell.One("d"))),
         List(
           cell(GridCell.Gx(2), GridCell.N(1), GridCell.One("u1")),

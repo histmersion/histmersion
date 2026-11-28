@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.library.tree.TreeRow
+
 import com.histmersion.api.library.Tree
 
 import com.histmersion.util.database.given
@@ -79,9 +81,9 @@ private[search] object AggregateRepo:
   ) derives DbCodec:
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-    def toRow: Tree.TreeRow =
-      Tree.TreeRow(
-        Tree.TreeRow.Key(key.value),
+    def toRow: TreeRow =
+      TreeRow(
+        TreeRow.Key(key.value),
         com.histmersion.api.library.Citekey(citekey.value),
         com.histmersion.api.library.Title(title.value),
         periodStart.map(y => y),
@@ -130,5 +132,5 @@ private[search] object AggregateRepo:
     * the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def treeRows(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
+  def treeRows(unit: Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[TreeRow] =
     treeRowsQuery(unit, filter, scope).query[TreeRowRaw].run().map(_.toRow)

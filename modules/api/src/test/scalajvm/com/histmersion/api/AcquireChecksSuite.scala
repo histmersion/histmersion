@@ -1,6 +1,9 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Kind
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -23,16 +26,16 @@ import com.histmersion.lint.{tolerated, LintRule}
 class AcquireChecksSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val item = Queue.QueueItem(
-    Queue.QueueItem.Id(7),
-    Queue.QueueItem.List("acquire"),
-    Queue.QueueItem.Text("Zz 2019, Tin — https://doi.org/10.1/zz"),
-    Some(Queue.QueueItem.Topic("tin")),
-    Queue.QueueItem.Status(Queue.Open)
+  private val item = QueueItem(
+    QueueItem.Id(7),
+    QueueItem.List("acquire"),
+    QueueItem.Text("Zz 2019, Tin — https://doi.org/10.1/zz"),
+    Some(QueueItem.Topic("tin")),
+    QueueItem.Status(Queue.Open)
   )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val check = AcquireCheck(
-    Queue.QueueItem.Id(7),
+    QueueItem.Id(7),
     Acquire.Checks.AcquireCheck.CheckedAt("2026-10-27T10:00:00Z"),
     Acquire.Checks.AcquireCheck.Outcome(NoCopy),
     Acquire.Checks.AcquireCheck.Said(
@@ -42,14 +45,14 @@ class AcquireChecksSuite extends munit.FunSuite:
   )
 
   test("`queue acquire` says under an item when it was last checked and what each fetcher answered"):
-    val md = QueueListing(Queue.Kind.Acquire.label, List(item), List(check)).markdown.map(_.value).getOrElse("")
+    val md = QueueListing(Kind.Acquire.label, List(item), List(check)).markdown.map(_.value).getOrElse("")
     assert(
       md.contains(
         "`#7`\n  - _checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)_"
       ),
       md
     )
-    assert(!Queue.markdown(Queue.Kind.Acquire, List(item)).value.contains("checked"), "an unchecked item says nothing")
+    assert(!Kind.Acquire.markdown(List(item)).value.contains("checked"), "an unchecked item says nothing")
 
   test("the status line: what is due, what it closed and found this week, today's tries, the next pass"):
     val s = RecheckStatus(

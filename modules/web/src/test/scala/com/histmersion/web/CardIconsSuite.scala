@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
@@ -8,7 +10,6 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.media.MediaRole
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.views.PlaceDetail
@@ -59,7 +60,7 @@ class CardIconsSuite extends munit.FunSuite:
 
   test("every icon a card or a marker can name is in the registry"):
     val names = Source.Kinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
-      Place.Kind.all.map(k => CardIcons.place(Place.Kind.Wire(k.value), None)) ++ SiteTypes.all.map(t =>
+      Place.Kind.all.map(k => CardIcons.place(Place.Kind.Wire(k.value), None)) ++ SiteType.all.map(t =>
         CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(Place.Entry.SiteType(t.id.value)))
       ) ++
       List(

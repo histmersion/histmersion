@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.automation.autopilot
 
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.{EngineStores, EngineStoreSuite}
@@ -38,7 +40,7 @@ abstract class AutopilotRowServiceContract extends EngineStoreSuite:
       (a(s).row().enabled, a(s).row().paused, a(s).row().lastEnsureAt),
       (false, List("seed:x", "watch:x"), None)
     )
-    a(s).unpaused(Managers.ManagerInfo.Id("seed:x"))
+    a(s).unpaused(ManagerInfo.Id("seed:x"))
     assertEquals(a(s).row().paused, List("watch:x"))
     a(s).ensured(t)
     a(s).ensureSoon()

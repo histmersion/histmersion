@@ -4,7 +4,6 @@ import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure

@@ -130,11 +130,11 @@ final class MapTileService(
     val dated = TileRepo.datedSites(c, window, siteType, modernFrom())
     val datedCounts = db.readToCompletion(TileRepo.gridCells(dated, c, grid))
     val undatedCounts = undatedSites.counted(c, grid, siteType)
-    if UndatedCells.total(datedCounts, undatedCounts).value <= grid.pointsAt(c).value then
+    if GridCell.total(datedCounts, undatedCounts).value <= grid.pointsAt(c).value then
       val datedItems = db.readToCompletion(TileRepo.items(dated, c))
       val shownByFindings = datedItems.filter(_.undated.value > 0).map(cell => TileRepo.SiteId(cell.key.value))
       datedItems.map(_.modify(_.undated).setTo(TileCell.Undated(0))) ++ undatedSites.items(c, siteType, shownByFindings)
-    else UndatedCells.merge(c.z, datedCounts, undatedCounts)
+    else GridCell.merge(c.z, datedCounts, undatedCounts)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): VectorTileWriter.VectorTile =
@@ -148,7 +148,7 @@ final class MapTileService(
           else db.readToCompletion(TileRepo.siteCells(c, grid, w, siteType, modernFrom()))
         val records =
           db.readToCompletion(TileRepo.sitesOf(cells.filter(_.isItem).map(cell => TileRepo.SiteId(cell.key.value))))
-        TileFeatures.of(c.z, cells, key => records.get(TileRepo.SiteId(key.value)), TileFeatures.site)
+        TileCell.of(c.z, cells, key => records.get(TileRepo.SiteId(key.value)), _.site(_))
       case TileLayer.Events =>
         val f = q.filter
         // an id that is no place id names a place no event is at: the tile is empty
@@ -176,7 +176,7 @@ final class MapTileService(
           else db.readToCompletion(TileRepo.eventCells(c, grid, where(f, p)))
         }
         val records = events.geoOf(cells.filter(_.isItem).map(cell => Event.Id.assume(cell.key.value)))
-        TileFeatures.of(c.z, cells, key => records.get(Event.Id.assume(key.value)), TileFeatures.event)
+        TileCell.of(c.z, cells, key => records.get(Event.Id.assume(key.value)), _.event(_))
       case TileLayer.Media =>
         val cells = db.readToCompletion(
           TileRepo.cells(
@@ -190,5 +190,5 @@ final class MapTileService(
           )
         )
         val drawn = media.features(cells.filter(_.isItem).map(cell => TileKey(cell.key.value)))
-        TileFeatures.of(c.z, cells, key => drawn.get(TileKey(key.value)), (cell, feature) => feature(cell))
+        TileCell.of(c.z, cells, key => drawn.get(TileKey(key.value)), (cell, feature) => feature(cell))
     VectorTileWriter.tile(Seq(VectorTileWriter.LayerName(layer.wire.value) -> points))

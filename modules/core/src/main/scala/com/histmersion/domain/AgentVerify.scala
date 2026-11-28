@@ -136,7 +136,7 @@ object AgentVerify:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def findQuote(quote: AgentProposals.Proposal.Quote, body: SourceBody, minRatio: MinRatio): QuoteMatch =
+  def findQuote(quote: domain.Proposal.Quote, body: SourceBody, minRatio: MinRatio): QuoteMatch =
     val q = normalised(quote.value)
     val b = normalised(body.value)
     if q.value.isEmpty then QuoteMatch.Missing(QuoteMatch.Missing.Best(0))

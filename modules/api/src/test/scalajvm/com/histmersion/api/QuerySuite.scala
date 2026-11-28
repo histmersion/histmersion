@@ -1,6 +1,11 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.SchemaTables
+import com.histmersion.api.library.query.SchemaTable
+import com.histmersion.api.library.query.SchemaColumn
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -45,40 +50,32 @@ class QuerySuite extends munit.FunSuite:
     assertEquals(markdownTable(Nil, Nil), "_(no columns)_")
 
   test("the result header carries the row count, the truncation flag and the timing"):
-    val md = Query.markdown(
-      QueryResult(
-        List(QueryResult.Columns("n")),
-        List(row("209")),
-        QueryResult.RowCount(1),
-        QueryResult.Truncated.Complete,
-        QueryResult.ElapsedMs(7)
-      )
-    )
+    val md = QueryResult(
+      List(QueryResult.Columns("n")),
+      List(row("209")),
+      QueryResult.RowCount(1),
+      QueryResult.Truncated.Complete,
+      QueryResult.ElapsedMs(7)
+    ).markdown
     assert(md.value.startsWith("### 1 row(s) · 7 ms"), md)
-    val cut = Query.markdown(
-      QueryResult(
-        List(QueryResult.Columns("n")),
-        List(row("1")),
-        QueryResult.RowCount(1),
-        QueryResult.Truncated.Truncated,
-        QueryResult.ElapsedMs(7)
-      )
-    )
+    val cut = QueryResult(
+      List(QueryResult.Columns("n")),
+      List(row("1")),
+      QueryResult.RowCount(1),
+      QueryResult.Truncated.Truncated,
+      QueryResult.ElapsedMs(7)
+    ).markdown
     assert(cut.value.contains("truncated by the row cap"), cut)
 
   test("an empty result says 'no rows' instead of rendering an empty table"):
     assert(
-      Query
-        .markdown(
-          QueryResult(
-            List(QueryResult.Columns("n")),
-            Nil,
-            QueryResult.RowCount(0),
-            QueryResult.Truncated.Complete,
-            QueryResult.ElapsedMs(1)
-          )
-        )
-        .value
+      QueryResult(
+        List(QueryResult.Columns("n")),
+        Nil,
+        QueryResult.RowCount(0),
+        QueryResult.Truncated.Complete,
+        QueryResult.ElapsedMs(1)
+      ).markdown.value
         .endsWith("_no rows_")
     )
 
@@ -108,7 +105,7 @@ class QuerySuite extends munit.FunSuite:
   )
 
   test("the tool description names the tables that actually exist, with their key columns"):
-    val d = Query.toolDescription(schema)
+    val d = schema.toolDescription
     assert(d.value.contains("sources(citekey, title)"), d)
     assert(d.value.contains("queue_items(id, list, text)"), d)
     assert(!d.value.contains("ocr_markdown"), "non-key columns stay out of the description")
@@ -116,15 +113,15 @@ class QuerySuite extends munit.FunSuite:
     assert(d.value.contains("BCE negative"), "the deep-time convention is stated where a model will read it")
 
   test("an unreadable schema still yields a usable description"):
-    val d = Query.toolDescription(SchemaTables(Nil))
+    val d = SchemaTables(Nil).toolDescription
     assert(d.value.contains("schema unavailable"), d)
     assert(d.value.contains("READ ONLY"), d)
 
   test("the schema listing renders every table with its columns and types"):
-    val md = Query.schemaMarkdown(schema)
+    val md = schema.schemaMarkdown
     assert(md.value.startsWith("### 2 table(s)"), md)
     assert(md.value.contains("- **sources** (table) — citekey text, title text, ocr_markdown text"), md)
-    assertEquals(Query.schemaMarkdown(SchemaTables(Nil)), "_(no tables)_")
+    assertEquals(SchemaTables(Nil).schemaMarkdown, "_(no tables)_")
 
   // ── the statement check (the critical read-only guard, layer 1) ──────────────────────────────
   // pgjdbc splits a `;`-separated batch and sends each part, so `SET TRANSACTION READ WRITE; DELETE

@@ -1,5 +1,7 @@
 package com.histmersion
 package api.catalogue
+
+import com.histmersion.api.catalogue.eventtaxonomy.KindCondition
 import com.histmersion.api.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.ItemKind
@@ -12,17 +14,8 @@ object EventTaxonomy:
   val Natural = "natural"
   val Human = "human"
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  val groups: List[Kind.Group] = List(Kind.Group(Natural), Kind.Group(Human))
-
-  final case class Kind(kind: EventSummary.Kind, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
-
-  object Kind:
-    type Group = Group.T
-    object Group extends Newtype[String, Pure]
-    type Label = Label.T
-    object Label extends Newtype[String, Pure]
-    type Icon = Icon.T
-    object Icon extends Newtype[String, Pure]
+  val groups: List[api.catalogue.eventtaxonomy.Kind.Group] =
+    List(api.catalogue.eventtaxonomy.Kind.Group(Natural), api.catalogue.eventtaxonomy.Kind.Group(Human))
 
   val Eruption = "eruption"
   val Earthquake = "earthquake"
@@ -52,41 +45,166 @@ object EventTaxonomy:
   val HumanGeneric = "event"
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  val kinds: List[Kind] = List(
-    Kind(EventSummary.Kind(Eruption), Kind.Group(Natural), Kind.Label("eruption"), Kind.Icon("mountain")),
-    Kind(EventSummary.Kind(Earthquake), Kind.Group(Natural), Kind.Label("earthquake"), Kind.Icon("activity")),
-    Kind(EventSummary.Kind(Tsunami), Kind.Group(Natural), Kind.Label("tsunami"), Kind.Icon("waves")),
-    Kind(EventSummary.Kind(Flood), Kind.Group(Natural), Kind.Label("flood"), Kind.Icon("droplets")),
-    Kind(EventSummary.Kind(Drought), Kind.Group(Natural), Kind.Label("drought"), Kind.Icon("sun")),
-    Kind(EventSummary.Kind(ClimateEvent), Kind.Group(Natural), Kind.Label("climate event"), Kind.Icon("thermometer")),
-    Kind(EventSummary.Kind(Epidemic), Kind.Group(Natural), Kind.Label("epidemic"), Kind.Icon("skull")),
-    Kind(EventSummary.Kind(Famine), Kind.Group(Natural), Kind.Label("famine"), Kind.Icon("wheat")),
-    Kind(
-      EventSummary.Kind(NaturalGeneric),
-      Kind.Group(Natural),
-      Kind.Label("natural disaster"),
-      Kind.Icon("cloud-lightning")
+  val kinds: List[api.catalogue.eventtaxonomy.Kind] = List(
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Eruption),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("eruption"),
+      api.catalogue.eventtaxonomy.Kind.Icon("mountain")
     ),
-    Kind(EventSummary.Kind(Battle), Kind.Group(Human), Kind.Label("battle"), Kind.Icon("swords")),
-    Kind(EventSummary.Kind(NavalBattle), Kind.Group(Human), Kind.Label("naval battle"), Kind.Icon("sailboat")),
-    Kind(EventSummary.Kind(Siege), Kind.Group(Human), Kind.Label("siege"), Kind.Icon("castle")),
-    Kind(EventSummary.Kind(War), Kind.Group(Human), Kind.Label("war"), Kind.Icon("shield")),
-    Kind(EventSummary.Kind(Revolt), Kind.Group(Human), Kind.Label("revolt"), Kind.Icon("megaphone")),
-    Kind(EventSummary.Kind(Treaty), Kind.Group(Human), Kind.Label("treaty"), Kind.Icon("scroll")),
-    Kind(EventSummary.Kind(PolityFormation), Kind.Group(Human), Kind.Label("polity formation"), Kind.Icon("crown")),
-    Kind(EventSummary.Kind(Collapse), Kind.Group(Human), Kind.Label("collapse"), Kind.Icon("trending-down")),
-    Kind(EventSummary.Kind(Destruction), Kind.Group(Human), Kind.Label("destruction"), Kind.Icon("flame")),
-    Kind(EventSummary.Kind(Migration), Kind.Group(Human), Kind.Label("migration"), Kind.Icon("footprints")),
-    Kind(EventSummary.Kind(Invasion), Kind.Group(Human), Kind.Label("invasion"), Kind.Icon("arrow-big-right")),
-    Kind(EventSummary.Kind(TechChange), Kind.Group(Human), Kind.Label("technological change"), Kind.Icon("lightbulb")),
-    Kind(EventSummary.Kind(CulturalShift), Kind.Group(Human), Kind.Label("cultural shift"), Kind.Icon("sparkles")),
-    Kind(EventSummary.Kind(Era), Kind.Group(Human), Kind.Label("era"), Kind.Icon("hourglass")),
-    Kind(EventSummary.Kind(Construction), Kind.Group(Human), Kind.Label("construction"), Kind.Icon("hammer")),
-    Kind(EventSummary.Kind(Founding), Kind.Group(Human), Kind.Label("founding"), Kind.Icon("flag")),
-    Kind(EventSummary.Kind(HumanGeneric), Kind.Group(Human), Kind.Label("event"), Kind.Icon("circle-dot"))
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Earthquake),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("earthquake"),
+      api.catalogue.eventtaxonomy.Kind.Icon("activity")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Tsunami),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("tsunami"),
+      api.catalogue.eventtaxonomy.Kind.Icon("waves")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Flood),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("flood"),
+      api.catalogue.eventtaxonomy.Kind.Icon("droplets")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Drought),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("drought"),
+      api.catalogue.eventtaxonomy.Kind.Icon("sun")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(ClimateEvent),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("climate event"),
+      api.catalogue.eventtaxonomy.Kind.Icon("thermometer")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Epidemic),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("epidemic"),
+      api.catalogue.eventtaxonomy.Kind.Icon("skull")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Famine),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("famine"),
+      api.catalogue.eventtaxonomy.Kind.Icon("wheat")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(NaturalGeneric),
+      api.catalogue.eventtaxonomy.Kind.Group(Natural),
+      api.catalogue.eventtaxonomy.Kind.Label("natural disaster"),
+      api.catalogue.eventtaxonomy.Kind.Icon("cloud-lightning")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Battle),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("battle"),
+      api.catalogue.eventtaxonomy.Kind.Icon("swords")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(NavalBattle),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("naval battle"),
+      api.catalogue.eventtaxonomy.Kind.Icon("sailboat")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Siege),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("siege"),
+      api.catalogue.eventtaxonomy.Kind.Icon("castle")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(War),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("war"),
+      api.catalogue.eventtaxonomy.Kind.Icon("shield")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Revolt),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("revolt"),
+      api.catalogue.eventtaxonomy.Kind.Icon("megaphone")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Treaty),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("treaty"),
+      api.catalogue.eventtaxonomy.Kind.Icon("scroll")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(PolityFormation),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("polity formation"),
+      api.catalogue.eventtaxonomy.Kind.Icon("crown")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Collapse),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("collapse"),
+      api.catalogue.eventtaxonomy.Kind.Icon("trending-down")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Destruction),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("destruction"),
+      api.catalogue.eventtaxonomy.Kind.Icon("flame")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Migration),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("migration"),
+      api.catalogue.eventtaxonomy.Kind.Icon("footprints")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Invasion),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("invasion"),
+      api.catalogue.eventtaxonomy.Kind.Icon("arrow-big-right")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(TechChange),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("technological change"),
+      api.catalogue.eventtaxonomy.Kind.Icon("lightbulb")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(CulturalShift),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("cultural shift"),
+      api.catalogue.eventtaxonomy.Kind.Icon("sparkles")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Era),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("era"),
+      api.catalogue.eventtaxonomy.Kind.Icon("hourglass")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Construction),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("construction"),
+      api.catalogue.eventtaxonomy.Kind.Icon("hammer")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(Founding),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("founding"),
+      api.catalogue.eventtaxonomy.Kind.Icon("flag")
+    ),
+    api.catalogue.eventtaxonomy.Kind(
+      EventSummary.Kind(HumanGeneric),
+      api.catalogue.eventtaxonomy.Kind.Group(Human),
+      api.catalogue.eventtaxonomy.Kind.Label("event"),
+      api.catalogue.eventtaxonomy.Kind.Icon("circle-dot")
+    )
   )
 
-  private val byKind: Map[EventSummary.Kind, Kind] = kinds.map(k => k.kind -> k).toMap
+  private val byKind: Map[EventSummary.Kind, api.catalogue.eventtaxonomy.Kind] = kinds.map(k => k.kind -> k).toMap
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val aliases: Map[EventSummary.Kind, EventSummary.Kind] = Map(
@@ -135,43 +253,29 @@ object EventTaxonomy:
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def of(kind: EventSummary.Kind): Kind =
+  def of(kind: EventSummary.Kind): api.catalogue.eventtaxonomy.Kind =
     val k = canonical(kind)
     byKind.getOrElse(
       k,
-      byKind(EventSummary.Kind(HumanGeneric)).copy(kind = k, label = Kind.Label((k).value.replace('_', ' ')))
+      byKind(EventSummary.Kind(HumanGeneric))
+        .copy(kind = k, label = api.catalogue.eventtaxonomy.Kind.Label((k).value.replace('_', ' ')))
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def group(kind: EventSummary.Kind): Kind.Group = of(kind).group
+  def group(kind: EventSummary.Kind): api.catalogue.eventtaxonomy.Kind.Group = of(kind).group
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def icon(kind: EventSummary.Kind): Kind.Icon = of(kind).icon
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def isNatural(kind: EventSummary.Kind): Boolean = group(kind) == Kind.Group(Natural)
-
+  def icon(kind: EventSummary.Kind): api.catalogue.eventtaxonomy.Kind.Icon = of(kind).icon
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def matches(filter: KindCondition.Filter, kind: EventSummary.Kind): Boolean =
-    val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
-    f.isEmpty || f == group(kind).value || canonical(EventSummary.Kind(f)) == canonical(kind)
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class KindCondition(kinds: List[EventSummary.Kind], negate: KindCondition.Negate)
-
-  object KindCondition:
-    type Filter = Filter.T
-    object Filter extends Newtype[String, Pure]
-    enum Negate derives CanEqual:
-      case Negate, Affirm
-    object Negate extends TwoStates[Negate]:
-      extension (negate: Negate) def negate: Boolean = negate == Negate
+  def isNatural(kind: EventSummary.Kind): Boolean = group(kind) == api.catalogue.eventtaxonomy.Kind.Group(Natural)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def condition(filter: Option[KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
-      val natural = (kinds.filter(_.group == Kind.Group(Natural)).map(_.kind) ++
-        aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Kind.Group(Natural)) => a }).distinct.sorted
+      val natural = (kinds.filter(_.group == api.catalogue.eventtaxonomy.Kind.Group(Natural)).map(_.kind) ++
+        aliases.collect {
+          case (a, v) if byKind.get(v).exists(_.group == api.catalogue.eventtaxonomy.Kind.Group(Natural)) => a
+        }).distinct.sorted
       if f == Natural then KindCondition(natural, negate = KindCondition.Negate.Affirm)
       else if f == Human then KindCondition(natural, negate = KindCondition.Negate.Negate)
       else

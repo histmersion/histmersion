@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.EventLead
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Api, Href}
@@ -14,7 +16,7 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.util.{Failure, Success}
 import com.histmersion.api.media.MediaRole
-import com.histmersion.api.catalogue.{Corrections, EventGeo, EventLeads, EventPrecision, EventTier, Place}
+import com.histmersion.api.catalogue.{EventGeo, EventPrecision, EventTier, Place}
 import com.histmersion.api.library.{DiscoverResult, Label, Source}
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.research.Article
@@ -461,7 +463,7 @@ object Preview:
           if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l
         )
         .toList ++
-      d.corrections.map(c => s"corrected by hand — ${Corrections.describe(c)}") ++
+      d.corrections.map(c => s"corrected by hand — ${c.describe}") ++
       Creation.line(d.creator, d.createdAt).toList).map(UiLabels.Text(_))
 
   /** Pure: an event card's sections (#1449), in the order a reader asks: who attests it, where it is written about,
@@ -519,7 +521,7 @@ object Preview:
           Item(
             Item.Text(
               s"${c.title} ${c.providerId}" +
-                EventLeads
+                EventLead
                   .size(
                     c.vei.map(v => LeadFacts.Vei(v.value)),
                     c.magnitude.map(m => LeadFacts.Magnitude(m.value))

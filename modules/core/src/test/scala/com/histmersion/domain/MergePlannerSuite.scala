@@ -1,5 +1,7 @@
 package com.histmersion
 package domain
+
+import com.histmersion.util.text.Anchor
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.problem.Text.sentence
@@ -38,7 +40,6 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.RegisteredPlanMatches
 import com.histmersion.api.library.Citekey
-import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.Bundle.uidEquality
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -507,8 +508,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       .modify(_.bodies)
       .setTo(
         Map(
-          Bundle.Source.BodySha256(BundleFormat.sha256Hex(workBody).value) -> TextAnchor.Text(workBody),
-          Bundle.Source.BodySha256(BundleFormat.sha256Hex(homeBody).value) -> TextAnchor.Text(homeBody)
+          Bundle.Source.BodySha256(BundleFormat.sha256Hex(workBody).value) -> Anchor.Text(workBody),
+          Bundle.Source.BodySha256(BundleFormat.sha256Hex(homeBody).value) -> Anchor.Text(homeBody)
         )
       )
     val r0 = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))

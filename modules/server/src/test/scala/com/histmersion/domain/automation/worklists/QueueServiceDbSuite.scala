@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
@@ -29,7 +33,7 @@ class QueueServiceDbSuite extends QueueServiceContract("db"):
 
   test("G94: writing over or removing a row that is gone answers false, never a success over nothing"):
     val ds = scratch("gone")
-    val item = QueueRows.add(ds, Queue.Kind.Tasks, Queue.QueueAdd(Queue.QueueItem.Text("x")))
+    val item = QueueRows.add(ds, Kind.Tasks, QueueAdd(QueueItem.Text("x")))
     assert(QueueRows.removeRow(ds, item.id), "the row was there")
     assert(!QueueRows.removeRow(ds, item.id), "the row is gone")
     assert(!QueueRows.writeOver(ds, item), "an update of the gone row writes nothing")
@@ -60,7 +64,7 @@ class QueueServiceDbSuite extends QueueServiceContract("db"):
 
   test("a stored creator this build cannot read is shown as it is, never as a default"):
     val ds = scratch("unreadable")
-    val item = QueueRows.add(ds, Queue.Kind.Tasks, Queue.QueueAdd(Queue.QueueItem.Text("x")))
+    val item = QueueRows.add(ds, Kind.Tasks, QueueAdd(QueueItem.Text("x")))
     connect(ds)(
       sql"""UPDATE queue_items SET creator = '{"kind": 7, "plugin": ["x"]}' WHERE id = ${item.id}""".update.run()
     ): Unit

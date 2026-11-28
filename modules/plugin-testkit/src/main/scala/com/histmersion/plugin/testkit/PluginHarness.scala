@@ -1,5 +1,7 @@
 package com.histmersion
 package plugin.testkit
+
+import com.histmersion.domain.library.acquisition.WorkRef
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.JsonCodec.given
@@ -34,7 +36,6 @@ import com.histmersion.pluginhost.{
   ReservedNames,
   SpiValues
 }
-import com.histmersion.domain.library.acquisition.WorkLookup
 import org.ekrich.config.{Config, ConfigFactory, ConfigValueFactory}
 
 import com.histmersion.plugin.testkit.internal.{Lines, Scrubber, TestVaults, Wire}
@@ -151,9 +152,9 @@ final class PluginHarness private (
           )
       )
     run(
-      WorkLookup
+      WorkRef
         .meta(host.acquire.upstreamSettings, json, hostLog.plugin)(Doi(clean))
-        .map(w => WorkLookup.key(Some(Doi(clean)), None, Some(w)))
+        .map(w => WorkRef.key(Some(Doi(clean)), None, Some(w)))
     )._1
 
   /** One fetch of `work` through the plugin's source fetchers, as the server's acquisition chain runs it. With

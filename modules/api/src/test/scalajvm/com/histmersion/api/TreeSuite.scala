@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.library.tree.TreeRow
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -9,7 +11,6 @@ import com.histmersion.api.library.Tree
 
 import com.histmersion.api.library.SearchMarkdown
 
-import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.api.catalogue.RegionNode
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Year
@@ -141,7 +142,7 @@ class TreeSuite extends munit.FunSuite:
   test("undated units never appear in a time level"):
     assertEquals(
       Tree.timeTree(
-        List(TreeRow(Tree.TreeRow.Key("u"), Citekey("u"), Title("U"))),
+        List(TreeRow(TreeRow.Key("u"), Citekey("u"), Title("U"))),
         Tree.TimeTreeFrom(-3500),
         Tree.TimeTreeTo(-500),
         Tree.TimeTreeDepth(2)
@@ -584,8 +585,8 @@ class TreeRootsSuite extends munit.FunSuite:
 
   test("ineligible nodes are dropped from the ROOTS, not from the tree"):
     val rows = List(
-      Tree.TreeRow(
-        Tree.TreeRow.Key("s1"),
+      TreeRow(
+        TreeRow.Key("s1"),
         Citekey("s1"),
         Title("S1"),
         Some(Year(-1500)),
@@ -606,16 +607,16 @@ class TreeRootsSuite extends munit.FunSuite:
 
   test("a place with two parents is drawn once, under the bigger, and says where else it sits"):
     val rows = List(
-      Tree.TreeRow(
-        Tree.TreeRow.Key("s1"),
+      TreeRow(
+        TreeRow.Key("s1"),
         Citekey("s1"),
         Title("S1"),
         Some(Year(-1500)),
         Some(Year(-1400)),
         List(RegionNode.Id("anatolia"))
       ),
-      Tree.TreeRow(
-        Tree.TreeRow.Key("s2"),
+      TreeRow(
+        TreeRow.Key("s2"),
         Citekey("s2"),
         Title("S2"),
         Some(Year(-1500)),
@@ -654,9 +655,7 @@ class TreeRootsSuite extends munit.FunSuite:
   test("a window of long-range sources does not nest into near-identical children"):
     // three sources each spanning the whole window: every finer bucket would carry all three
     val rows = (1 to 3)
-      .map(i =>
-        Tree.TreeRow(Tree.TreeRow.Key(s"s$i"), Citekey(s"s$i"), Title(s"S$i"), Some(Year(-3000)), Some(Year(-1000)))
-      )
+      .map(i => TreeRow(TreeRow.Key(s"s$i"), Citekey(s"s$i"), Title(s"S$i"), Some(Year(-3000)), Some(Year(-1000))))
       .toList
     val tree = Tree.timeTree(
       rows,
@@ -673,7 +672,7 @@ class TreeRootsSuite extends munit.FunSuite:
     // so every child holds one fifth of its parent — a split that genuinely separates the evidence
     val rows = (0 until 5).toList.map { i =>
       val s = -3000L + i * 200
-      Tree.TreeRow(Tree.TreeRow.Key(s"s$i"), Citekey(s"s$i"), Title(s"S$i"), Some(Year(s)), Some(Year(s + 50)))
+      TreeRow(TreeRow.Key(s"s$i"), Citekey(s"s$i"), Title(s"S$i"), Some(Year(s)), Some(Year(s + 50)))
     }
     val tree = Tree.timeTree(
       rows,

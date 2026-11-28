@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.corequota.State
+import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Window
+
 import com.histmersion.domain.CoreQuota
 
 import com.histmersion.util.database.given
@@ -20,7 +24,7 @@ private[acquisition] object UpstreamQuotaRepo:
   // Times cross as epoch milliseconds (no timestamp codec in the native image), a day as its ISO text.
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def load(upstream: ProviderKind.Wire)(using DbCon): Option[CoreQuota.State] =
+  def load(upstream: ProviderKind.Wire)(using DbCon): Option[State] =
     sql"""SELECT day::text, lookup_tokens, search_tokens, (extract(epoch FROM blocked_until) * 1000)::bigint, blocked_why,
                  rate_limit, rate_remaining, (extract(epoch FROM observed_at) * 1000)::bigint
           FROM upstream_quota WHERE upstream = $upstream"""
@@ -28,20 +32,20 @@ private[acquisition] object UpstreamQuotaRepo:
       .run()
       .headOption
       .map { (day, lookups, searches, until, why, limit, remaining, at) =>
-        CoreQuota.State(
+        State(
           LocalDate.parse(day),
-          CoreQuota.State.LookupTokens(lookups),
-          CoreQuota.State.SearchTokens(searches),
+          State.LookupTokens(lookups),
+          State.SearchTokens(searches),
           until.map(u =>
-            CoreQuota.Block(
+            Block(
               Instant.ofEpochMilli(u),
-              why.fold(CoreQuota.Block.Rationale.Unstated)(CoreQuota.Block.Rationale.read)
+              why.fold(Block.Rationale.Unstated)(Block.Rationale.read)
             )
           ),
           at.map(t =>
-            CoreQuota.Window(
-              limit.map(CoreQuota.Window.Limit(_)),
-              remaining.map(CoreQuota.Window.Remaining(_)),
+            Window(
+              limit.map(Window.Limit(_)),
+              remaining.map(Window.Remaining(_)),
               Instant.ofEpochMilli(t)
             )
           )
@@ -49,7 +53,7 @@ private[acquisition] object UpstreamQuotaRepo:
       }
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def save(upstream: ProviderKind.Wire, s: CoreQuota.State)(using DbCon): Unit =
+  def save(upstream: ProviderKind.Wire, s: State)(using DbCon): Unit =
     val day = s.day.toString
     val until = s.block.map(_.until.toEpochMilli.toDouble / 1000)
     val why = s.block.map(_.why.said)

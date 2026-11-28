@@ -1,6 +1,8 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.modelchains.Allowance
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -164,7 +166,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       Right(List("claude-code:sonnet", "local:qwen"))
     )
     assertEquals(
-      parseAllowances(Allowance.Spec(on.agents.allowances.value)).map(_.map(_.text)),
+      Allowance.parseAllowances(Allowance.Spec(on.agents.allowances.value)).map(_.map(_.text)),
       Right(List("2M tokens/5h, reserve 20%"))
     )
     assertEquals(on.agents.providers.claudeCode.command, "/opt/homebrew/bin/claude")

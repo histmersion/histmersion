@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.api.Dataset
@@ -53,14 +56,14 @@ final class GazetteerImports(
     GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
-  def sources(): List[Gazetteer.SourceInfo] = GazetteerLoad.list(db, settings)
+  def sources(): List[SourceInfo] = GazetteerLoad.list(db, settings)
 
   /** One external source imported (or, `apply = false`, dry-run); `note` reports progress on the job. */
   def load(
-      kind: Gazetteer.Kind,
+      kind: api.catalogue.gazetteer.Kind,
       apply: GazetteerLoad.LoadApply,
       note: JobInfo.Progress => Unit
-  )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
+  )(using WritePermit)(using Creator.New): Either[Problem, List[LoadCounts]] =
     given Creator.New = Creator.code(InTreeWorkflow.Catalogue, InTreeWorkflow.GazetteerImporting)
     GazetteerLoad.load(db, settings, kind, apply, note, download)
 

@@ -1,5 +1,8 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.catalogue.gazetteer.Kind
+import com.histmersion.api.automation.activity.Show
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.log.LogRoutes
 import com.histmersion.util.json.Cursor
@@ -224,7 +227,7 @@ final class HttpApi(
     () => h.bootstrap.gazetteerSources,
     (source, apply) =>
       h.bootstrap.loadGazetteer(
-        Gazetteer.Kind.Wire(source.value),
+        Kind.Wire(source.value),
         GazetteerLoad.LoadApply(apply.applies)
       )
   ) ++ PeriodsRoutes(h.periods) ++ List[ServerEndpoint[Any, Identity]](
@@ -287,7 +290,7 @@ final class HttpApi(
     Api.activity.serverLogic[Identity]((show, since, goal, limit, before) =>
       h.activity
         .page(
-          show.map(s => Activity.Show.Wire(s.value)),
+          show.map(s => Show.Wire(s.value)),
           since.map(s => ListFilters.TimeBound(s.value)),
           goal.map(g => ActivityQuery.Goal(g.value)),
           limit.map(l => ActivityQuery.Limit(l.value)),

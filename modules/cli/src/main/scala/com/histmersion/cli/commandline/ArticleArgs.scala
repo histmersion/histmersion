@@ -3,10 +3,10 @@ package cli
 package commandline
 
 import com.histmersion.api.Api
-import com.histmersion.api.aliases.{LabelRename, LabelRenames}
+import com.histmersion.api.aliases.LabelRename
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.library.Filter
-import com.histmersion.api.research.{Article, Articles, ReviewGoal}
+import com.histmersion.api.research.{Article, ReviewGoal}
 import com.histmersion.cli.CommandLine.{given, *}
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import org.rogach.scallop.*
@@ -54,7 +54,7 @@ object ArticleArgs extends CommandLine.Entry:
   final private class ArticleList()
       extends Leaf(Parent, "list", "List/search compiled articles (the filter flags select the sources they cite)"):
     private val query = arg[String]("query", required = false)
-    private val kind = value[Api.ArticleQuery.Kind]("kind", s"Article kind (${Articles.Kinds.mkString("|")})")
+    private val kind = value[Api.ArticleQuery.Kind]("kind", s"Article kind (${Article.Kinds.mkString("|")})")
     private val filter = filterFlags()
     private val asJson = json()
 
@@ -100,7 +100,7 @@ object ArticleArgs extends CommandLine.Entry:
       value[ArticlePatches.PatchJson]("json", "A whole ArticlePatch as JSON (the flags below override its parts)")
     private val title = value[Article.Title]("title", "New title")
     private val lede = value[Article.SummaryText]("summary", "New summary (the one-paragraph lede)")
-    private val kind = value[Article.Kind.Wire]("kind", s"New kind (${Articles.Kinds.mkString("|")})")
+    private val kind = value[Article.Kind.Wire]("kind", s"New kind (${Article.Kinds.mkString("|")})")
     private val bodyFile = value[ArticlePatches.TextFile]("body-file", "File whose Markdown REPLACES the body")
     private val appendFile =
       value[ArticlePatches.TextFile]("append-file", "File whose Markdown is APPENDED to the body")
@@ -281,13 +281,13 @@ object ArticleArgs extends CommandLine.Entry:
     def command: Either[Problem, Cli.Command] = Right(ArticleCommand.Version(slug(), id()))
 
   final private class ArticleRename() extends Leaf(Parent, "rename", LabelRenameCmd.help(Bundle.Kind.Article)):
-    private val from = arg[LabelRenames.Label]("old")
-    private val to = arg[LabelRenames.Label]("new")
+    private val from = arg[LabelRename.Label]("old")
+    private val to = arg[LabelRename.Label]("new")
     private val asJson = json()
 
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def command: Either[Problems, Cli.Command] =
-      LabelRenames
+      LabelRename
         .validate(Bundle.Kind.Article, from(), to())
         .left
         .map(_.problems)

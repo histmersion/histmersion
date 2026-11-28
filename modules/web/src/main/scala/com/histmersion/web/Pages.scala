@@ -1,6 +1,11 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.activity.Counts
+import com.histmersion.api.automation.activity.Entry
+
 import com.histmersion.api.Wording
 import com.histmersion.api.instance.UiNotices.Board
 import com.raquo.laminar.api.L.*
@@ -185,8 +190,8 @@ object Pages:
           if ui.agentsEnabled.agentsEnabled then ApprovalsView.pane
           else agentsOff(UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))
         case ResearchSection.Goals   => GoalsView.pane
-        case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal)
-        case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal)
+        case ResearchSection.Backlog => QueueView.pane(api.automation.queue.Kind.Tasks, goal)
+        case ResearchSection.Acquire => QueueView.pane(api.automation.queue.Kind.Acquire, goal)
         case ResearchSection.Models  =>
           if ui.agentsEnabled.agentsEnabled then ModelsView.pane
           else agentsOff(UiLabels.Text("No AI models are used: the research agents are off on this server."))
@@ -194,8 +199,8 @@ object Pages:
       section(Router.title(r), body)
     case Route.Activity(t) => section(UiLabels.Text("Activity"), activity(ui, t, goal))
     case Route.Goal(slug)  => item(r, GoalPage.pane(ui, slug))
-    case Route.Run(id)     => item(r, RunsView.runPane(Agents.RunInfo.Id(id.value)))
-    case Route.Manager(id) => item(r, ManagersView.managerPane(Managers.ManagerInfo.Id(id.value)))
+    case Route.Run(id)     => item(r, RunsView.runPane(RunInfo.Id(id.value)))
+    case Route.Manager(id) => item(r, ManagersView.managerPane(ManagerInfo.Id(id.value)))
     case Route.Job(id)     => item(r, jobPage(id))
     case _                 => notFound
 
@@ -216,7 +221,7 @@ object Pages:
     else
       div(
         cls := "activity-detail",
-        ActivityView.chips(ui, None, None, Val(Activity.Counts())),
+        ActivityView.chips(ui, None, None, Val(Counts())),
         p(
           cls := "muted",
           RouteLink(Route.Activity(ActivityTab.Everything), "← The whole activity list"),
@@ -226,7 +231,7 @@ object Pages:
           case ActivityTab.Runs =>
             if ui.agentsEnabled.agentsEnabled then RunsView.pane
             else agentsOff(UiLabels.Text("No agent runs: the research agents are off on this server."))
-          case ActivityTab.Worklog => QueueView.pane(Queue.Kind.Log)
+          case ActivityTab.Worklog => QueueView.pane(api.automation.queue.Kind.Log)
           case _                   => JobsView.pane
       )
 
@@ -295,12 +300,12 @@ object Pages:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def jobControls(j: JobInfo): HtmlElement =
-    val e = Activity.Entry(
-      Activity.Entry.Key(s"job:${j.id.value}"),
-      Activity.Entry.Kind("job"),
-      Activity.Entry.At(j.createdAt.value),
-      state = Activity.Entry.State(j.status.value),
-      what = Activity.Entry.What(j.kind.value),
+    val e = Entry(
+      Entry.Key(s"job:${j.id.value}"),
+      Entry.Kind("job"),
+      Entry.At(j.createdAt.value),
+      state = Entry.State(j.status.value),
+      what = Entry.What(j.kind.value),
       job = Some(j.id)
     )
     ActivityView.actions(e) match

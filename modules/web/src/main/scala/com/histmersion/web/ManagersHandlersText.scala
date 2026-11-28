@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.managers.ManagerConfig
+
 import com.histmersion.api.automation.Managers.*
 import com.raquo.laminar.api.L.*
 import org.scalajs.dom

@@ -1,5 +1,12 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.RefreshInfo
+import com.histmersion.api.automation.planquota.Rules
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Login
+import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -192,7 +199,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     def body(last: Option[RefreshGate.Instant]): Either[Problem, Int] =
       if throttled(
           last.map(l => RefreshInfo.LastAttempt(l.value)),
-          PlanQuota.Rules.MinGap(600000L),
+          Rules.MinGap(600000L),
           PlanQuota.Now(1000L)
         )
       then Left(Problem.Unclassified(Legacy.Text("throttled")))
@@ -232,7 +239,7 @@ class PlanRefreshSuite extends munit.FunSuite:
         AgentDoctor.Output("""{"loggedIn":true,"authMethod":"claude.ai","subscriptionType":"max"}"""),
         ClaudeCodeConfig.UseApiKey(false)
       ),
-      Login.Present(PlanQuota.Login.Present.Detail("logged in (claude.ai, plan max)"))
+      Login.Present(Login.Present.Detail("logged in (claude.ai, plan max)"))
     )
     assert(
       PlanPools
@@ -318,7 +325,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
 
   test("a held pool in the chain does not hide another pool's reset: the earliest one counts, the held one is named"):
-    import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+    import com.histmersion.api.automation.Agents.ProviderKind
     val (opus, gpt) = (
       ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("opus")),
       ModelRef(ProviderKind.Codex, ModelRef.Model("gpt-6-luna"))

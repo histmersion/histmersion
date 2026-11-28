@@ -1,6 +1,14 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.schedulerpolicy.Candidate
+import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.domain.schedulerpolicy.Settings
+import com.histmersion.domain.schedulerpolicy.Resources
+import com.histmersion.domain.schedulerpolicy.JobType
+import com.histmersion.domain.schedulerpolicy.Decision
+import com.histmersion.domain.schedulerpolicy.Scored
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -48,7 +56,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       prio,
       created,
       gathering,
-      SchedulerPolicy.Candidate.ItemPriority(0),
+      Candidate.ItemPriority(0),
       ago(waited),
       pools,
       block
@@ -58,7 +66,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
     "review=9, compile=8, extend=7, filter=6, propose=5, goal-plan=4, enrich=3, sweep=2, currency=1"
   )
   private def settings(
-      st: Strategy,
+      st: domain.schedulerpolicy.Strategy,
       aging: Settings.AgingHours = Settings.AgingHours(24),
       maxWait: Settings.MaxWaitHours = Settings.MaxWaitHours(72),
       minShare: Settings.MinShare = Settings.MinShare(0.0),
@@ -68,7 +76,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
     Settings(st, aging, maxWait, minShare, parseWeights(weights), typePrio, gathering)
 
   private def res(maxRuns: Resources.MaxRuns, recent: List[JobType] = Nil) =
-    Resources(maxRuns = maxRuns, occupied = SchedulerPolicy.Resources.Occupied(0), recent = recent)
+    Resources(maxRuns = maxRuns, occupied = Resources.Occupied(0), recent = recent)
   private val ok: Candidate => Either[Block.Refusal, Unit] = _ => Right(())
   private def ids(d: Decision) = d.started.map(_._1.c.id)
 
@@ -219,10 +227,10 @@ class SchedulerPolicySuite extends munit.FunSuite:
     )
 
   test("shareDue: only with enough starts, and only for a type absent from the window"):
-    assert(shareDue(JobType.Enrich, List.fill(10)(JobType.Review), Settings.MinShare(0.1)))
-    assert(!shareDue(JobType.Enrich, List.fill(9)(JobType.Review), Settings.MinShare(0.1)))
-    assert(!shareDue(JobType.Enrich, JobType.Enrich :: List.fill(9)(JobType.Review), Settings.MinShare(0.1)))
-    assert(!shareDue(JobType.Enrich, List.fill(10)(JobType.Review), Settings.MinShare(0.0)))
+    assert(JobType.Enrich.shareDue(List.fill(10)(JobType.Review), Settings.MinShare(0.1)))
+    assert(!JobType.Enrich.shareDue(List.fill(9)(JobType.Review), Settings.MinShare(0.1)))
+    assert(!JobType.Enrich.shareDue(JobType.Enrich :: List.fill(9)(JobType.Review), Settings.MinShare(0.1)))
+    assert(!JobType.Enrich.shareDue(List.fill(10)(JobType.Review), Settings.MinShare(0.0)))
 
   test("gathering places: a goal still gathering its sources gets its place before the strategy's order"):
     val cs = List(
@@ -281,10 +289,10 @@ class SchedulerPolicySuite extends munit.FunSuite:
       .setTo(Map(Candidate.Pools("chatgpt-plan") -> Resources.PoolUsedValue(2)))
     val d = run(cs, r, settings(GoalFirst), now)(ok)
     assertEquals(ids(d), List(2L))
-    assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(1)).map(_.code), Some(Code.Pool))
-    assert(d.waitOf(SchedulerPolicy.Candidate.Id(1)).exists(_.why.render.contains("chatgpt-plan")))
+    assertEquals(d.waitOf(Candidate.Id(1)).map(_.code), Some(Code.Pool))
+    assert(d.waitOf(Candidate.Id(1)).exists(_.why.render.contains("chatgpt-plan")))
     assertEquals(
-      d.waitOf(SchedulerPolicy.Candidate.Id(3)).map(w => (w.code, w.why)),
+      d.waitOf(Candidate.Id(3)).map(w => (w.code, w.why)),
       Some((Code.Blocked, Block.Why.Starved(Block.Chain("reviewer chain below its plan floor"))))
     )
 
@@ -301,8 +309,8 @@ class SchedulerPolicySuite extends munit.FunSuite:
       now
     )(ok)
     assertEquals(ids(d).toSet, Set(1L, 3L))
-    assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(2)).map(_.code), Some(Code.Pool))
-    assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(2)).map(_.behind), Some(List("#1 article-review t1")))
+    assertEquals(d.waitOf(Candidate.Id(2)).map(_.code), Some(Code.Pool))
+    assertEquals(d.waitOf(Candidate.Id(2)).map(_.behind), Some(List("#1 article-review t1")))
 
   test("only runs that run or are queued occupy places: occupied comes off maxRuns"):
     val cs = List(c(Candidate.Id(1)), c(Candidate.Id(2)), c(Candidate.Id(3)))
@@ -310,7 +318,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       ids(
         run(
           cs,
-          Resources(maxRuns = SchedulerPolicy.Resources.MaxRuns(4), occupied = SchedulerPolicy.Resources.Occupied(3)),
+          Resources(maxRuns = Resources.MaxRuns(4), occupied = Resources.Occupied(3)),
           settings(GoalFirst),
           now
         )(ok)
@@ -321,7 +329,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       ids(
         run(
           cs,
-          Resources(maxRuns = SchedulerPolicy.Resources.MaxRuns(4), occupied = SchedulerPolicy.Resources.Occupied(5)),
+          Resources(maxRuns = Resources.MaxRuns(4), occupied = Resources.Occupied(5)),
           settings(GoalFirst),
           now
         )(ok)
@@ -349,7 +357,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
         ok
       )
     assertEquals(ids(d), List(1L, 3L))
-    assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(2)).map(_.code), Some(Code.Manager))
+    assertEquals(d.waitOf(Candidate.Id(2)).map(_.code), Some(Code.Manager))
 
   test("stop (drain, a budget): nothing starts, everything waits with the reason, in order"):
     val cs = List(
@@ -377,7 +385,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       if x.id.value == 1 then Left(Block.Refusal.TargetWritten) else Right(())
     )
     assertEquals(ids(d), List(2L))
-    assertEquals(d.waitOf(SchedulerPolicy.Candidate.Id(1)).map(_.code), Some(Code.Busy))
+    assertEquals(d.waitOf(Candidate.Id(1)).map(_.code), Some(Code.Busy))
 
   test("order: the whole queue as it would start with unlimited room, deterministic"):
     val cs = List(
@@ -385,7 +393,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       c(Candidate.Id(2), goal = Some(Candidate.Goal("a")), created = day(1)),
       c(Candidate.Id(3), goal = Some(Candidate.Goal("a")), created = day(1))
     )
-      .map(score(_, settings(GoalFirst), now))
+      .map(_.score(settings(GoalFirst), now))
     val o1 = order(cs, res(Resources.MaxRuns(0)), settings(GoalFirst)).map(_._1.c.id)
     assertEquals(o1, List(2L, 3L, 1L))
     assertEquals(order(cs.reverse, res(Resources.MaxRuns(0)), settings(GoalFirst)).map(_._1.c.id), o1)
@@ -409,8 +417,8 @@ class SchedulerPolicySuite extends munit.FunSuite:
       List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review")
     )
     assertEquals(parseWeights("review=3, bogus=2, enrich = x, sweep=1"), Map(JobType.Review -> 3, JobType.Sweep -> 1))
-    assertEquals(hours(SchedulerPolicy.Scored.WaitedMinutes(95)), "1 h 35 min")
-    assertEquals(hours(SchedulerPolicy.Scored.WaitedMinutes(42)), "42 min")
+    assertEquals(Scored.hours(Scored.WaitedMinutes(95)), "1 h 35 min")
+    assertEquals(Scored.hours(Scored.WaitedMinutes(42)), "42 min")
 
   test("pools wanted: a waiting item's own pools, a quota-starved item's chain pools, none for another block"):
     val chains: Candidate => List[Candidate.Pools] =

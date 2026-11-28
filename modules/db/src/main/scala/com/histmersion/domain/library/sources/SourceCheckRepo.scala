@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.sources
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+
 import com.histmersion.api.library.CitationLint
 
 import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSettings}
@@ -235,7 +239,7 @@ private[sources] object SourceCheckRepo:
           .toList
           .flatMap(pairs)
           .map((ck, detail) => LintItem(Citekey(ck), LintItem.Detail(detail)))
-    Lint.report(r, items, maxItems)
+    r.report(items, maxItems)
 
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 

@@ -1,5 +1,7 @@
 package com.histmersion
 package api.catalogue
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Markdown.*
 import com.histmersion.api.automation.Creation
@@ -56,15 +58,14 @@ object PlacesMarkdown:
     else (s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): String =
+  def gazetteerSources(rows: List[SourceInfo]): String =
     if rows.isEmpty then ("_No external gazetteer sources: no pinned extracts and no LPF files._")
     else
       val head =
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
       val body = rows.map { r =>
-        val file = r.file.fold("—")(f =>
-          s"`$f`" + (if (r.present) == Gazetteer.SourceInfo.Present.Present then "" else " (missing)")
-        )
+        val file =
+          r.file.fold("—")(f => s"`$f`" + (if (r.present) == SourceInfo.Present.Present then "" else " (missing)"))
         val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.fold("")(_.value.take(10))})")
         val n = (x: Option[Int]) => x.fold("—")(_.toString)
         s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places.map(_.value))} | " +
@@ -178,7 +179,7 @@ object PlacesMarkdown:
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src = p.source.map(s => s"  \n**Source:** $s").getOrElse("") +
       d.siteType
-        .flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
+        .flatMap(t => SiteType.get(SiteType.Id(t.value)))
         .map(t => s"  \n**Site type:** ${t.label}")
         .getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +

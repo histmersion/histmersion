@@ -1,9 +1,9 @@
 package com.histmersion
 package domain.catalogue.events
+
+import com.histmersion.api.checks.lint.LintItem
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
-
-import com.histmersion.api.catalogue.Corrections
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given_DbCodec_List
@@ -70,13 +70,13 @@ private[events] object CorrectionRepo:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def reconcile(kind: Correction.TargetKind, id: Correction.TargetId, now: Map[Correction.Field, Json])(using
       DbCon
-  ): (Map[Correction.Field, Json], List[Corrections.Outcome]) =
+  ): (Map[Correction.Field, Json], List[Correction.Outcome]) =
     val applied =
       of(kind, id).filter(c => Correction.Status.applied.contains(Correction.Status.Applied(c.status.value)))
     val results = applied.flatMap { c =>
       now.get(c.field).map { up =>
-        val o = Corrections.reconcile(c.valueJson, c.upstreamValueJson, up)
-        val (st, upNow) = (Corrections.status(o), up.noSpaces)
+        val o = Correction.reconcile(c.valueJson, c.upstreamValueJson, up)
+        val (st, upNow) = (Correction.statusOf(o), up.noSpaces)
         Unused(
           sql"""UPDATE corrections SET status = $st, upstream_now = $upNow::jsonb, checked_at = now(),
                 updated_at = CASE WHEN status = $st THEN updated_at ELSE now() END WHERE id = ${c.id}""".update.run(),
@@ -85,7 +85,7 @@ private[events] object CorrectionRepo:
         (c, o)
       }
     }
-    val keep = results.collect { case (c, o) if o != Corrections.Outcome.Retire => c.field -> c.valueJson }.toMap
+    val keep = results.collect { case (c, o) if o != Correction.Outcome.Retire => c.field -> c.valueJson }.toMap
     (keep, results.map(_._2))
 
   /** `histmersion events corrections`: the corrections of `kind` (one target's with `id`), the ones in `status`
@@ -121,8 +121,8 @@ private[events] object CorrectionRepo:
   /** `lint --rule event-correction-conflict`: the events whose catalogue changed a field a person kept by hand, each
     * with what the person kept, what the catalogue said and what it says now.
     */
-  def conflictsIn()(using DbCon): List[(Correction.TargetId, Lint.LintItem.Detail)] =
-    sql"$ConflictsSql".query[(Correction.TargetId, Lint.LintItem.Detail)].run().toList
+  def conflictsIn()(using DbCon): List[(Correction.TargetId, LintItem.Detail)] =
+    sql"$ConflictsSql".query[(Correction.TargetId, LintItem.Detail)].run().toList
 
   private val ConflictsSql =
     sql"""SELECT c.target_id,

@@ -1,6 +1,8 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import hearth.kindlings.optics.syntax.*
@@ -20,7 +22,6 @@ import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.api.problem.StoredShapes
 import com.histmersion.api.problem.Answer.entry
 import com.histmersion.api.json.NewtypeCodecs.given
-import com.histmersion.api.automation.Managers.ManagerInfo
 import com.histmersion.domain.automation.managers.ManagerRepo
 import com.histmersion.config.DbConfig
 import com.histmersion.util.database.TestPermits.given

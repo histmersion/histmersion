@@ -1,9 +1,13 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.JobFilter
+
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.automation.{Goal, ListFilters}
-import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origin, Pipeline, RunState}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Pipeline, RunState}
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -24,7 +28,7 @@ object ListOpts:
     val runStatus: String =
       s"Only runs in these states: ${RunState.values.map(_.wire).mkString("|")} (waiting = for an approval)"
     val pipeline: String = s"Only these pipelines: ${Pipeline.values.map(_.wire).mkString("|")}"
-    val origin: String = s"Only runs started by: ${Origin.values.map(_.wire).mkString("|")}"
+    val origin: String = s"Only runs started by: ${api.automation.agents.Origin.values.map(_.wire).mkString("|")}"
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     val jobStatus: String =
       s"Only jobs in these states: ${JobState.values.map(_.wire).mkString("|")} (an agent run's too: ${RunState.values.map(_.wire.value).filterNot(JobState.values.map(_.wire.value).contains).mkString("|")})"
@@ -35,13 +39,13 @@ object ListOpts:
       subject: Option[String],
       goal: Option[String],
       decidedBy: List[String]
-  ): ListFilters.ApprovalFilter =
-    ListFilters.ApprovalFilter(
-      state.map(ListFilters.ApprovalFilter.State(_)),
-      kind.map(ListFilters.ApprovalFilter.Kind(_)),
-      subject.map(ListFilters.ApprovalFilter.Subject(_)),
+  ): ApprovalFilter =
+    ApprovalFilter(
+      state.map(ApprovalFilter.State(_)),
+      kind.map(ApprovalFilter.Kind(_)),
+      subject.map(ApprovalFilter.Subject(_)),
       goal.map(Goal.Slug(_)),
-      decidedBy.map(ListFilters.ApprovalFilter.DecidedBy(_))
+      decidedBy.map(ApprovalFilter.DecidedBy(_))
     )
 
   def runFilter(
@@ -55,18 +59,18 @@ object ListOpts:
       since: Option[String],
       until: Option[String],
       subject: Option[String]
-  ): ListFilters.RunFilter =
-    ListFilters.RunFilter(
-      status.map(ListFilters.RunFilter.Status(_)),
-      pipeline.map(ListFilters.RunFilter.Pipeline(_)),
-      manager.map(ListFilters.RunFilter.Manager(_)),
+  ): RunFilter =
+    RunFilter(
+      status.map(RunFilter.Status(_)),
+      pipeline.map(RunFilter.Pipeline(_)),
+      manager.map(RunFilter.Manager(_)),
       goal.map(Goal.Slug(_)),
-      model.map(ListFilters.RunFilter.Model(_)),
-      provider.map(ListFilters.RunFilter.Provider(_)),
-      origin.map(ListFilters.RunFilter.Origin(_)),
-      since.map(ListFilters.RunFilter.Since(_)),
-      until.map(ListFilters.RunFilter.Until(_)),
-      subject.map(ListFilters.RunFilter.Subject(_))
+      model.map(RunFilter.Model(_)),
+      provider.map(RunFilter.Provider(_)),
+      origin.map(RunFilter.Origin(_)),
+      since.map(RunFilter.Since(_)),
+      until.map(RunFilter.Until(_)),
+      subject.map(RunFilter.Subject(_))
     )
 
   def jobFilter(
@@ -75,11 +79,11 @@ object ListOpts:
       since: Option[String],
       until: Option[String],
       subject: Option[String]
-  ): ListFilters.JobFilter =
-    ListFilters.JobFilter(
-      status.map(ListFilters.JobFilter.Status(_)),
-      kind.map(ListFilters.JobFilter.Kind(_)),
-      since.map(ListFilters.JobFilter.Since(_)),
-      until.map(ListFilters.JobFilter.Until(_)),
-      subject.map(ListFilters.JobFilter.Subject(_))
+  ): JobFilter =
+    JobFilter(
+      status.map(JobFilter.Status(_)),
+      kind.map(JobFilter.Kind(_)),
+      since.map(JobFilter.Since(_)),
+      until.map(JobFilter.Until(_)),
+      subject.map(JobFilter.Subject(_))
     )

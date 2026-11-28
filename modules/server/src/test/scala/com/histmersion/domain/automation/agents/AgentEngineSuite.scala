@@ -1,5 +1,16 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.domain.enrichsource.Notes
+import com.histmersion.api.automation.agents.Origin
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -120,7 +131,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   private val ApiTarget = RunRequest.Target(Ck.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val RunTarget = AgentsControllers.Target(Ck.value)
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -223,7 +234,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
   private def startAndRun(
       a: AgentsControllers,
-      req: RunRequest = RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)
+      req: RunRequest = RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget)
   ): RunInfo =
     val run = a.startRun(req).fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
@@ -282,7 +293,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // 5 LLM calls of 1000 in / 100 out at 1 and 2 USD per Mtok
     assertEquals(
       run.usage,
-      Usage(Agents.Usage.Input(5000), Agents.Usage.Output(500), Agents.Usage.CacheRead(0), Agents.Usage.CacheWrite(0))
+      Usage(Usage.Input(5000), Usage.Output(500), Usage.CacheRead(0), Usage.CacheWrite(0))
     )
     assertEqualsDouble(run.costUsd.value, 5 * 0.0012, 1e-9)
     assert(steps.filter(_.kind.value == "llm").forall(_.promptHash.exists(_.value.length == 64)))
@@ -411,7 +422,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     val run = startAndRun(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, budgetUsd = Some(RunRequest.BudgetUsd(0.001)))
+      RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, budgetUsd = Some(RunRequest.BudgetUsd(0.001)))
     )
     assertEquals(run.status, "paused")
     assert(run.error.exists(_.sentence.startsWith("budget:")), run.error)
@@ -440,7 +451,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     seed(h)
     assert(
       off
-        .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+        .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("off"))
     )
@@ -448,27 +459,26 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(
       a.startRun(
         RunRequest(
-          Agents.RunRequest.Pipeline("enrich-source"),
+          RunRequest.Pipeline("enrich-source"),
           ApiTarget,
-          model = Some(Agents.RunRequest.Model("local:unpriced"))
+          model = Some(RunRequest.Model("local:unpriced"))
         )
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("has no price"))
     )
     assert(
-      a.startRun(RunRequest(Agents.RunRequest.Pipeline("summarise"), ApiTarget))
+      a.startRun(RunRequest(RunRequest.Pipeline("summarise"), ApiTarget))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("pipeline 'summarise'"))
     )
     assert(
-      a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), Agents.RunRequest.Target("zzagent_nope")))
-        .isLeft
+      a.startRun(RunRequest(RunRequest.Pipeline("enrich-source"), RunRequest.Target("zzagent_nope"))).isLeft
     )
 
   test("cancel a queued run; a finished run cannot be resumed or cancelled"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
-    val run = a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
+    val run = a.startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
     assertEquals(a.control(runId(run.id), Agents.Action("cancel"), None, None).map(_.status), Right("cancelled"))
     a.engine.execute(runId(run.id)) // a cancelled run is not picked up
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "cancelled")
@@ -500,7 +510,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   test("restart: a running agent run is paused as interrupted, and the OCR reconciliation leaves it alone"):
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
-    val run = a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
+    val run = a.startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
     assert(TestRuns.transition(ds, runId(run.id), RunState.Queued, RunState.Running).isDefined)
     Transactor(ds).write(JobRepo.failInterrupted())
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "running")
@@ -593,12 +603,12 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val item = h.workLists
       .addOverRest(
         WorkListControllers.ListName("acquire"),
-        Queue.QueueAdd(Queue.QueueItem.Text("zzagent: buy the tin book"))
+        QueueAdd(QueueItem.Text("zzagent: buy the tin book"))
       )
       .toOption
       .get
     val run =
-      startAndRun(a, RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(item.id)))
+      startAndRun(a, RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(item.id)))
     assertEquals(run.status, "done", run.error)
     assertEquals(run.acquireItem, Some(item.id))
     import scala.jdk.CollectionConverters.*
@@ -647,19 +657,19 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     assert(
-      a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, fix = Some(RunRequest.Fix.Fix)))
+      a.startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, fix = Some(RunRequest.Fix.Fix)))
         .left
         .exists(_.problems.sentences.mkString("; ").contains("review-article"))
     )
     assert(
       a.startRun(
-        RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, rounds = Some(RunRequest.Rounds(2)))
+        RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, rounds = Some(RunRequest.Rounds(2)))
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("review-article"))
     )
     assert(
       a.startRun(
-        RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(Queue.QueueItem.Id(-7)))
+        RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(QueueItem.Id(-7)))
       ).left
         .exists(_.problems.sentences.mkString("; ").contains("no queue item id '-7'"))
     )
@@ -668,11 +678,11 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     val p =
-      AgentProposals.Proposal(
+      Proposal(
         ApprovalKind.StatusChange,
         Ck,
         status = Some(Source.Status.Contested),
-        evidence = AgentProposals.Proposal.Evidence("e")
+        evidence = Proposal.Evidence("e")
       )
     val first = TestRuns.proposals(a, h, ds).propose(None, p)
     val id = first match
@@ -757,11 +767,11 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       .proposals(a, h, ds)
       .propose(
         None,
-        AgentProposals.Proposal(
+        Proposal(
           ApprovalKind.StatusChange,
           Ck,
           status = Some(Source.Status.Debunked),
-          evidence = AgentProposals.Proposal.Evidence("e")
+          evidence = Proposal.Evidence("e")
         )
       )
     assert(o.isInstanceOf[SourceProposals.Outcome.Applied], o)
@@ -816,7 +826,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c); seed(h)
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
@@ -857,7 +867,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val c = ScriptedClient(Model); happyScripts(c)
     val (a, h) = handlers(c); seed(h)
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
@@ -880,7 +890,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
   // ── #992: dry runs, a role's own model, the model that served, compare ──────────────────────────
 
-  private val Haiku = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("haiku-sim"))
+  private val Haiku = ModelRef(ProviderKind.Local, ModelRef.Model("haiku-sim"))
   private lazy val evalCfg =
     baseCfg
       .modify(_.agents)
@@ -941,7 +951,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val item = h.workLists
       .addOverRest(
         WorkListControllers.ListName("acquire"),
-        Queue.QueueAdd(Queue.QueueItem.Text("zzagent: buy the tin book"))
+        QueueAdd(QueueItem.Text("zzagent: buy the tin book"))
       )
       .toOption
       .get
@@ -949,10 +959,10 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val run = startAndRun(
       a,
       RunRequest(
-        Agents.RunRequest.Pipeline("enrich-source"),
+        RunRequest.Pipeline("enrich-source"),
         ApiTarget,
         acquireItem = Some(item.id),
-        dryRun = Some(Agents.RunRequest.DryRun.DryRun)
+        dryRun = Some(RunRequest.DryRun.DryRun)
       )
     )
     assertEquals(run.status, "done", run.error)
@@ -996,7 +1006,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val before = CorpusSnapshot.of(ds)
     val paused = startAndRun(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(Agents.RunRequest.DryRun.DryRun))
+      RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(RunRequest.DryRun.DryRun))
     )
     assertEquals(paused.status, "paused")
     assert(paused.dryRun.dryRun)
@@ -1018,7 +1028,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   test("a role's own model (--model-for) is checked before the run is queued"):
     val (a, h) = handlersFor(byModel(ScriptedClient(Model), ScriptedClient(Haiku))); seed(h)
     def refused(o: ModelOverride*) =
-      a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, modelFor = o.toList))
+      a.startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, modelFor = o.toList))
         .left
         .map(_.problems.sentences.mkString("; "))
     assert(
@@ -1031,11 +1041,11 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .exists(_.contains("--model-for: enrich-source uses no skeptic role (its roles: "))
     )
     assert(
-      refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("haiku"))).left
+      refused(ModelOverride(ModelOverride.Role("extractor"), ModelOverride.Model("haiku"))).left
         .exists(_.contains("'haiku' is not a model reference"))
     )
     assert(
-      refused(ModelOverride(Agents.ModelOverride.Role("extractor"), Agents.ModelOverride.Model("local:unpriced"))).left
+      refused(ModelOverride(ModelOverride.Role("extractor"), ModelOverride.Model("local:unpriced"))).left
         .exists(_.contains("has no price"))
     )
     assert(
@@ -1046,13 +1056,13 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .exists(_.contains("is given more than once"))
     )
     assertEquals(
-      ModelOverride.parse(Agents.ModelOverride.Wire("fixer")).left.map(_.sentence),
+      ModelOverride.parse(ModelOverride.Wire("fixer")).left.map(_.sentence),
       Left("'fixer' is not a model override (e.g. reviewer=claude-code:opus)")
     )
     val ok = a
       .startRun(
         RunRequest(
-          Agents.RunRequest.Pipeline("enrich-source"),
+          RunRequest.Pipeline("enrich-source"),
           ApiTarget,
           modelFor = List(ModelOverride(ModelOverride.Role("Extractor"), ModelOverride.Model(s" ${Haiku.wire} ")))
         )
@@ -1071,7 +1081,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         """"claude-haiku-5-5":{"inputTokens":90,"outputTokens":18}}}"""
     val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
-    val Plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("haiku"))
+    val Plan = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("haiku"))
     val client = ClaudeCodeClient(
       Plan,
       baseCfg.agents.providers.claudeCode.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)),
@@ -1086,7 +1096,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
@@ -1094,11 +1104,11 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx
-          .llm[EnrichSource.Notes, String](
+          .llm[Notes, String](
             AgentRepo.StepRecord.Name("notes"),
             StepAgent.EnrichNotes,
             Prompt.UserText("Write the notes."),
-            ResponseSchema.derived[EnrichSource.Notes]()
+            ResponseSchema.derived[Notes]()
           )((n, _) => Right(Checked(n.notes.value)))
           .map(PipelineDef.Summary(_))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
@@ -1133,7 +1143,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     )
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
-    val Plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("sonnet"))
+    val Plan = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
     val client = ClaudeCodeClient(
       Plan,
       baseCfg.agents.providers.claudeCode.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)),
@@ -1148,18 +1158,18 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         ctx
-          .llm[EnrichSource.Notes, String](
+          .llm[Notes, String](
             AgentRepo.StepRecord.Name("notes"),
             StepAgent.EnrichNotes,
             Prompt.UserText("Write the notes."),
-            ResponseSchema.derived[EnrichSource.Notes]()
+            ResponseSchema.derived[Notes]()
           )((n, _) => Right(Checked(n.notes.value)))
           .map(PipelineDef.Summary(_))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
@@ -1197,14 +1207,14 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     // two dry runs: neither changes what the other reads
     val r1 = startAndRun(
       a,
-      RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(Agents.RunRequest.DryRun.DryRun))
+      RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(RunRequest.DryRun.DryRun))
     )
     val r2 = startAndRun(
       a,
       RunRequest(
-        Agents.RunRequest.Pipeline("enrich-source"),
+        RunRequest.Pipeline("enrich-source"),
         ApiTarget,
-        dryRun = Some(Agents.RunRequest.DryRun.DryRun),
+        dryRun = Some(RunRequest.DryRun.DryRun),
         modelFor = List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku)))
       )
     )
@@ -1226,14 +1236,14 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
           (
             List("local:scripted"),
             List("price: 1/2 USD per million tokens"),
-            Usage(Agents.Usage.Input(2000), Agents.Usage.Output(200))
+            Usage(Usage.Input(2000), Usage.Output(200))
           )
         ),
         Some(
           (
             List("local:haiku-sim"),
             List("price: 3/4 USD per million tokens"),
-            Usage(Agents.Usage.Input(1000), Agents.Usage.Output(100))
+            Usage(Usage.Input(1000), Usage.Output(100))
           )
         )
       )
@@ -1310,7 +1320,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
       ctx
-        .llm[EnrichSource.Notes, String](
+        .llm[Notes, String](
           AgentRepo.StepRecord.Name("notes"),
           StepAgent.EnrichNotes,
           Prompt.UserText("Write the notes."),
@@ -1327,7 +1337,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       pipeline: PipelineDef
   ): (AgentsControllers, RunInfo.Id) =
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
-    val Plan = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("haiku"))
+    val Plan = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("haiku"))
     val client = ClaudeCodeClient(
       Plan,
       baseCfg.agents.providers.claudeCode.modify(_.command).setTo(ClaudeCodeConfig.Command(fake.script.toString)),
@@ -1344,7 +1354,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(pipeline, a.definitions)))
       .execute(runId(run.id))
@@ -1388,7 +1398,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     c.scripts ++= List(Seq(text("""{"notes": 5}""")), Seq(text(notesJson)))
     val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly(), a.definitions)))
       .execute(runId(run.id))
@@ -1411,13 +1421,13 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def run(ctx: RunCtx)(using WritePermit)(using Creator.New): Either[Halt, PipelineDef.Summary] =
         for
-          a <- ctx.llm[EnrichSource.Notes, String](
+          a <- ctx.llm[Notes, String](
             AgentRepo.StepRecord.Name("notes-1"),
             StepAgent.EnrichNotes,
             Prompt.UserText("Write the notes."),
             LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes.value)))
-          b <- ctx.llm[EnrichSource.Notes, String](
+          b <- ctx.llm[Notes, String](
             AgentRepo.StepRecord.Name("notes-2"),
             StepAgent.EnrichNotes,
             Prompt.UserText("Write the notes."),
@@ -1429,7 +1439,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val run =
       a.startRun(
         RunRequest(
-          Agents.RunRequest.Pipeline("enrich-source"),
+          RunRequest.Pipeline("enrich-source"),
           ApiTarget,
           budgetTokens = Some(RunRequest.BudgetTokens(400000L))
         )
@@ -1456,7 +1466,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     val run2 =
       a2.startRun(
         RunRequest(
-          Agents.RunRequest.Pipeline("enrich-source"),
+          RunRequest.Pipeline("enrich-source"),
           ApiTarget,
           budgetTokens = Some(RunRequest.BudgetTokens(300000L))
         )
@@ -1468,7 +1478,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
   test("#1461 a review-article run gets its pipeline's run-tokens default; another pipeline the global one"):
     val (a, h) = handlersFor((_, _) => Right(ScriptedClient(Model))); seed(h)
     val enrich = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(enrich.budgetTokens, 400000L)
     assertEquals(
@@ -1480,7 +1490,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
 
   test("restart: an interrupted run nobody watches resumes by itself; a person's run waits for them"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
-    val mine = a.startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
+    val mine = a.startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget)).toOption.get
     val sched = TestRuns.create(
       ds,
       Pipeline.EnrichSource,

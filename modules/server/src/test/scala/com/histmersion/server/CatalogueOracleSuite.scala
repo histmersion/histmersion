@@ -1,5 +1,10 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.catalogue.gazetteer.Extract
+import com.histmersion.api.catalogue.gazetteer.Manifest
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import hearth.kindlings.jsoniterjson.Json
@@ -1036,7 +1041,7 @@ class CatalogueOracleSuite extends DbSuite:
       | "relations":[{"relationType":"gvp:broaderPartitive","relationTo":"zzs_nowhere"}]}
       |]}""".stripMargin
 
-  private val FixtureSha = Gazetteer.Extract.Sha256("20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b")
+  private val FixtureSha = Extract.Sha256("20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b")
 
   private def copyFixture(name: String, to: Path): Unit =
     val in = getClass.getResourceAsStream(s"/gazetteer/$name")
@@ -1056,29 +1061,29 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = Files.writeString(d.resolve("places/regions.json"), seedRegions, UTF_8)
     val _ = Files.writeString(d.resolve("places/sites/sites.json"), seedSites, UTF_8)
     val pins = List(
-      Gazetteer.Extract(
-        Gazetteer.Extract.Name("geonames"),
-        Gazetteer.Extract.File("geonames-fixture.ndjson.gz"),
+      Extract(
+        Extract.Name("geonames"),
+        Extract.File("geonames-fixture.ndjson.gz"),
         FixtureSha,
-        Gazetteer.Extract.Bytes(438),
-        Gazetteer.Extract.Features(2),
-        Gazetteer.Extract.Version("fixture-1"),
-        Gazetteer.Extract.Title("GeoNames fixture"),
-        Gazetteer.Extract.Licence("CC BY 4.0"),
-        Some(Gazetteer.Extract.Attribution("GeoNames (geonames.org)"))
+        Extract.Bytes(438),
+        Extract.Features(2),
+        Extract.Version("fixture-1"),
+        Extract.Title("GeoNames fixture"),
+        Extract.Licence("CC BY 4.0"),
+        Some(Extract.Attribution("GeoNames (geonames.org)"))
       ),
-      Gazetteer.Extract(
-        Gazetteer.Extract.Name("tgn"),
-        Gazetteer.Extract.File("tgn-absent.ndjson.gz"),
-        Gazetteer.Extract.Sha256("0" * 64),
-        Gazetteer.Extract.Bytes(1),
-        Gazetteer.Extract.Features(1),
-        Gazetteer.Extract.Version("fixture-2"),
-        Gazetteer.Extract.Title("TGN fixture"),
-        Gazetteer.Extract.Licence("ODC-By 1.0")
+      Extract(
+        Extract.Name("tgn"),
+        Extract.File("tgn-absent.ndjson.gz"),
+        Extract.Sha256("0" * 64),
+        Extract.Bytes(1),
+        Extract.Features(1),
+        Extract.Version("fixture-2"),
+        Extract.Title("TGN fixture"),
+        Extract.Licence("ODC-By 1.0")
       )
     )
-    val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Gazetteer.Manifest(pins).asJson.spaces2, UTF_8)
+    val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Manifest(pins).asJson.spaces2, UTF_8)
     val extracts = tmp.resolve("gaz-extracts")
     Files.createDirectories(extracts)
     copyFixture("geonames-fixture.ndjson.gz", extracts.resolve("geonames-fixture.ndjson.gz"))
@@ -1153,14 +1158,14 @@ class CatalogueOracleSuite extends DbSuite:
     tools.foreach((n, a) => step(s"tool $n ${a.noSpaces}", tool(url, n, a)))
     // the geocoder, as the enrichment and the checks ask it
     val asks = List(
-      (Geocode.Attempt.Name("Zztell"), Geocode.KindHint.Site, Some(Period(Year(-1500), Year(-1400)))),
-      (Geocode.Attempt.Name("Zzhöyük"), Geocode.KindHint.Unknown, None),
-      (Geocode.Attempt.Name("Zzcrossing"), Geocode.KindHint.Site, None),
-      (Geocode.Attempt.Name("Zzvale"), Geocode.KindHint.Region, Some(Period(Year(-1300), Year(-1200)))),
-      (Geocode.Attempt.Name("Eastern Zzshore"), Geocode.KindHint.Region, None),
-      (Geocode.Attempt.Name("Zztell, Zzshore"), Geocode.KindHint.Site, None),
-      (Geocode.Attempt.Name("Zzgaz Hattusas"), Geocode.KindHint.Unknown, None),
-      (Geocode.Attempt.Name("Zznowhere"), Geocode.KindHint.Unknown, None)
+      (Attempt.Name("Zztell"), KindHint.Site, Some(Period(Year(-1500), Year(-1400)))),
+      (Attempt.Name("Zzhöyük"), KindHint.Unknown, None),
+      (Attempt.Name("Zzcrossing"), KindHint.Site, None),
+      (Attempt.Name("Zzvale"), KindHint.Region, Some(Period(Year(-1300), Year(-1200)))),
+      (Attempt.Name("Eastern Zzshore"), KindHint.Region, None),
+      (Attempt.Name("Zztell, Zzshore"), KindHint.Site, None),
+      (Attempt.Name("Zzgaz Hattusas"), KindHint.Unknown, None),
+      (Attempt.Name("Zznowhere"), KindHint.Unknown, None)
     )
     asks.foreach { (name, hint, at) =>
       val r = Geocoding(Transactor(ds)).resolve(name, hint, at, GeocodeSettings.PlaceholderMin(4))

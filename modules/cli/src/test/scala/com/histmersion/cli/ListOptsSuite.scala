@@ -1,9 +1,13 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.JobFilter
+import com.histmersion.api.automation.agents.Origin
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
-import com.histmersion.api.automation.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.automation.Agents
@@ -102,7 +106,7 @@ class ListOptsSuite extends munit.FunSuite:
           Some(Goal.Slug("g")),
           List(RunFilter.Model("codex:gpt-6")),
           List(RunFilter.Provider("codex")),
-          List(Agents.Origin.Wire("manager")),
+          List(Origin.Wire("manager")),
           Some(RunFilter.Since("7d")),
           Some(RunFilter.Until("2026-10-01")),
           Some(RunFilter.Subject("a2020"))

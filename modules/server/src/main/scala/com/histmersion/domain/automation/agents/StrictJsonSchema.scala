@@ -3,7 +3,7 @@ package domain.automation.agents
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.{Json, JsonObject}
 
-import com.histmersion.server.agents.{CliOutcomes, Codex}
+import com.histmersion.server.agents.Codex
 
 import com.histmersion.api.VocabularyCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure

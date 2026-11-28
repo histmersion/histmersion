@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.automation.autopilot
 
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.domain.automation.autopilot.AutopilotRepo
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.util.database.Transactor
@@ -34,7 +36,7 @@ trait AutopilotRowService:
   def linted(now: Instant)(using WritePermit): Unit
 
   /** A paused manager it resumed. */
-  def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit
+  def unpaused(managerId: ManagerInfo.Id)(using WritePermit): Unit
 
   /** A person's scheduler strategy: (name, by, at). */
   def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)]
@@ -68,7 +70,7 @@ object AutopilotRowService:
     def ensureSoon()(using WritePermit): Unit = db.write(AutopilotRepo.ensureSoon())
     def backedUp(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.backedUp(now))
     def linted(now: Instant)(using WritePermit): Unit = db.write(AutopilotRepo.linted(now))
-    def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit =
+    def unpaused(managerId: ManagerInfo.Id)(using WritePermit): Unit =
       db.write(AutopilotRepo.unpaused(managerId))
     def strategy(): Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
       db.read(AutopilotRepo.strategy())
@@ -140,7 +142,7 @@ object AutopilotRowService:
     def backedUp(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastBackupAt).setTo(Some(now)))
     def linted(now: Instant)(using WritePermit): Unit = always(_.modify(_.lastLintAt).setTo(Some(now)))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def unpaused(managerId: Managers.ManagerInfo.Id)(using WritePermit): Unit = always(
+    def unpaused(managerId: ManagerInfo.Id)(using WritePermit): Unit = always(
       _.modify(_.paused).using(_.filterNot(_.value == managerId.value))
     )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

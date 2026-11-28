@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.research.workflows
 
-import com.histmersion.api.automation.Agents.Origin
+import com.histmersion.api.automation.agents.Origin
+
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.{AgentsControllers, StepAgent}
 import com.histmersion.domain.automation.goals.ObjectiveProgress

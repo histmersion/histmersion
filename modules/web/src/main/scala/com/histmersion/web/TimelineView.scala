@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.catalogue.PresetRegion
+
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
@@ -11,7 +13,7 @@ import org.scalajs.dom
 import scala.compiletime.uninitialized
 import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PresetMenu, Year}
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, Year}
 import com.histmersion.api.instance.{TimeConfig, UiConfig}
 import com.histmersion.api.library.TimeBucket
 import com.histmersion.web.ui.Flash
@@ -711,7 +713,7 @@ object TimelineView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def presetGroup(g: PresetMenu.Group): HtmlElement =
+  private def presetGroup(g: PresetRegion.Group): HtmlElement =
     htmlTag[dom.HTMLElement]("details")(
       cls := "tl-preset-group",
       onMountCallback(ctx => if g.inView then ctx.thisNode.ref.setAttribute("open", "")),
@@ -723,7 +725,7 @@ object TimelineView:
       g.presets.map { p =>
         val years = shown"${Fmt.yr(p.period.start)}–${Fmt.yr(p.period.end)}"
         val where = p.region.getOrElse("")
-        val who = PresetMenu.source(p).getOrElse("")
+        val who = PresetRegion.source(p).getOrElse("")
         button(
           typ := "button",
           cls := "tl-preset-item",
@@ -731,7 +733,7 @@ object TimelineView:
             shown"${p.label}, $years",
             s"applies to: $where",
             s"defined by: $who",
-            PresetMenu.periodoId(p).fold("")(id => s"PeriodO $id")
+            PresetRegion.periodoId(p).fold("")(id => s"PeriodO $id")
           ).filter(_.nonEmpty).mkString("\n"),
           span(
             cls := "tl-preset-line",
@@ -802,7 +804,7 @@ object TimelineView:
           (a, b) => { setSpan(Year.Astronomical(a.value), Year.Astronomical(b.value)); showPresets.set(false) }
         ),
       children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
-        val groups = PresetMenu.groups(ps, view)
+        val groups = PresetRegion.groups(ps, view)
         if groups.isEmpty then List(div(cls := "tl-preset-loading", "no period presets available"))
         else
           div(

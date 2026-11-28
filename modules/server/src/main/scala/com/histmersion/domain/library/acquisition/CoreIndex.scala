@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.domain.corequota.Limits
+import com.histmersion.domain.corequota.Purpose
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.config.ApiKey
@@ -17,13 +20,12 @@ import com.histmersion.lint.{tolerated, LintRule}
   * `acquire.core.api-key` — and through the server's CORE budget, at most `acquire.core.search-daily-tokens` a day.
   */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
-final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, limits: CoreQuota.Limits)
-    extends ScholarlyIndex:
+final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, limits: Limits) extends ScholarlyIndex:
   val name = ScholarlyIndex.Name("core")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   override def unavailable: Option[Problem] =
-    budget.unavailable(limits, CoreQuota.Purpose.Search).map(r => Problem.Unclassified(Legacy.Text(r.describe.value)))
+    budget.unavailable(limits, Purpose.Search).map(r => Problem.Unclassified(Legacy.Text(r.describe.value)))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def search(query: Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
@@ -40,7 +42,7 @@ final class CoreIndex(api: CoreApi, key: Option[ApiKey], budget: CoreBudget, lim
             CoreApi.SearchWorksKey(k.value),
             CoreApi.SearchWorksQuery(s"(${query.value}) AND yearPublished>=${since.getYear}"),
             PageSize(math.max(1, math.min(limit.value, 100))),
-            UpstreamQuota.TakePurpose(CoreQuota.Purpose.Search.wire.value)
+            UpstreamQuota.TakePurpose(Purpose.Search.wire.value)
           )
           .left
           .map(f => f.message)

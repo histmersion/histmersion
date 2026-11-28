@@ -1,5 +1,9 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.problem.Problem
@@ -57,180 +61,24 @@ object ListFilters:
   def one(v: Option[Term]): Option[Term] =
     (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue2 => Term(refactorValue2))
 
-  private def many[A](vs: List[A], lower: Boolean = false)(text: A => String, make: String => A): List[A] =
+  private[automation] def many[A](vs: List[A], lower: Boolean = false)(text: A => String, make: String => A): List[A] =
     vs.flatMap(a => text(a).split(',').toList)
       .map(_.trim)
       .filter(_.nonEmpty)
       .distinct
       .map(s => make(if lower then s.toLowerCase else s))
 
-  private def single[A](v: Option[A], lower: Boolean = false)(text: A => String, make: String => A): Option[A] =
+  private[automation] def single[A](v: Option[A], lower: Boolean = false)(
+      text: A => String,
+      make: String => A
+  ): Option[A] =
     v.map(a => text(a).trim).filter(_.nonEmpty).map(s => make(if lower then s.toLowerCase else s))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def entry(key: String, v: Option[String]): (Term, Option[OptionLabel]) =
+  private[automation] def entry(key: String, v: Option[String]): (Term, Option[OptionLabel]) =
     Term(key) -> v.map(OptionLabel(_))
 
   export Approval.DecidedBy as DecidedBy
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class ApprovalFilter(
-      state: Option[ApprovalFilter.State] = None,
-      kind: List[ApprovalFilter.Kind] = Nil,
-      subject: Option[ApprovalFilter.Subject] = None,
-      goal: Option[Goal.Slug] = None,
-      decidedBy: List[ApprovalFilter.DecidedBy] = Nil
-  ) derives CanEqual:
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-    def normalized: ApprovalFilter =
-      ApprovalFilter(
-        single(state, true)(_.value, ApprovalFilter.State(_)),
-        many(kind, true)(_.value, ApprovalFilter.Kind(_)),
-        single(subject)(_.value, ApprovalFilter.Subject(_)),
-        single(goal)(_.value, Goal.Slug(_)),
-        many(decidedBy, true)(_.value, ApprovalFilter.DecidedBy(_))
-      )
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def qualifier: Option[Qualifier] =
-      val n = normalized
-      words(
-        n.state.orElse(Some(Agents.ApprovalState.Open.wire)).map(_.value).filter(_ != "all").toList,
-        (n.kind).map(refactorValue3 => (refactorValue3).value)
-      )
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def options: List[(Term, Option[OptionLabel])] =
-      val n = normalized
-      List(entry("state", n.state.map(_.value))) ++ n.kind.map(k => entry("kind", Some(k.value))) ++ List(
-        entry("subject", n.subject.map(_.value)),
-        entry("goal", n.goal.map(_.value))
-      ) ++
-        n.decidedBy.map(d => entry("decided-by", Some(d.value)))
-
-  object ApprovalFilter:
-
-    export Approval.State.Wire as State
-    export Approval.Kind.Wire as Kind
-    type Subject = Subject.T
-    object Subject extends Newtype[String, Pure]
-    export Approval.DecidedBy.Wire as DecidedBy
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class RunFilter(
-      status: List[RunFilter.Status] = Nil,
-      pipeline: List[RunFilter.Pipeline] = Nil,
-      manager: List[RunFilter.Manager] = Nil,
-      goal: Option[Goal.Slug] = None,
-      model: List[RunFilter.Model] = Nil,
-      provider: List[RunFilter.Provider] = Nil,
-      origin: List[RunFilter.Origin] = Nil,
-      since: Option[RunFilter.Since] = None,
-      until: Option[RunFilter.Until] = None,
-      subject: Option[RunFilter.Subject] = None
-  ):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def qualifier: Option[Qualifier] = {
-      val n = normalized;
-      words(
-        (n.status).map(refactorValue5 => (refactorValue5).value),
-        (n.pipeline).map(refactorValue27 => (refactorValue27).value)
-      )
-    }
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-    def normalized: RunFilter =
-      RunFilter(
-        many(status, true)(_.value, RunFilter.Status(_)),
-        many(pipeline, true)(_.value, RunFilter.Pipeline(_)),
-        many(manager)(_.value, RunFilter.Manager(_)),
-        single(goal)(_.value, Goal.Slug(_)),
-        many(model)(_.value, RunFilter.Model(_)),
-        many(provider, true)(_.value, RunFilter.Provider(_)),
-        many(origin, true)(_.value, RunFilter.Origin(_)),
-        single(since)(_.value, RunFilter.Since(_)),
-        single(until)(_.value, RunFilter.Until(_)),
-        single(subject)(_.value, RunFilter.Subject(_))
-      )
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def options: List[(Term, Option[OptionLabel])] =
-      val n = normalized
-      n.status.map(v => entry("status", Some(v.value))) ++ n.pipeline.map(v =>
-        entry("pipeline", Some(v.value))
-      ) ++ n.manager.map(v => entry("manager", Some(v.value))) ++
-        List(entry("goal", n.goal.map(_.value))) ++ n.model.map(v => entry("model", Some(v.value))) ++ n.provider.map(
-          v => entry("provider", Some(v.value))
-        ) ++
-        n.origin.map(v => entry("origin", Some(v.value))) ++ List(
-          entry("since", n.since.map(_.value)),
-          entry("until", n.until.map(_.value)),
-          entry("subject", n.subject.map(_.value))
-        )
-
-  object RunFilter:
-
-    type Status = Status.T
-    object Status extends Newtype[String, Pure]
-    export Agents.RunInfo.Pipeline
-    type Manager = Manager.T
-    object Manager extends Newtype[String, Pure]
-    type Model = Model.T
-    object Model extends Newtype[String, Pure]
-    type Provider = Provider.T
-    object Provider extends Newtype[String, Pure]
-    export Agents.Origin.Wire as Origin
-    type Since = Since.T
-    object Since extends Newtype[String, Pure]
-    type Until = Until.T
-    object Until extends Newtype[String, Pure]
-    type Subject = Subject.T
-    object Subject extends Newtype[String, Pure]
-
-  final case class JobFilter(
-      status: List[JobFilter.Status] = Nil,
-      kind: List[JobFilter.Kind] = Nil,
-      since: Option[JobFilter.Since] = None,
-      until: Option[JobFilter.Until] = None,
-      subject: Option[JobFilter.Subject] = None
-  ):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def qualifier: Option[Qualifier] = {
-      val n = normalized;
-      words(
-        (n.status).map(refactorValue14 => (refactorValue14).value),
-        (n.kind).map(refactorValue15 => (refactorValue15).value)
-      )
-    }
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-    def normalized: JobFilter =
-      JobFilter(
-        many(status, true)(_.value, JobFilter.Status(_)),
-        many(kind, true)(_.value, JobFilter.Kind(_)),
-        single(since)(_.value, JobFilter.Since(_)),
-        single(until)(_.value, JobFilter.Until(_)),
-        single(subject)(_.value, JobFilter.Subject(_))
-      )
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def options: List[(Term, Option[OptionLabel])] =
-      val n = normalized
-      n.status.map(v => entry("status", Some(v.value))) ++ n.kind.map(v => entry("kind", Some(v.value))) ++ List(
-        entry("since", n.since.map(_.value)),
-        entry("until", n.until.map(_.value)),
-        entry("subject", n.subject.map(_.value))
-      )
-
-  object JobFilter:
-
-    export JobState.Wire as Status
-    export JobKinds.Wire as Kind
-    type Since = Since.T
-    object Since extends Newtype[String, Pure]
-    type Until = Until.T
-    object Until extends Newtype[String, Pure]
-    type Subject = Subject.T
-    object Subject extends Newtype[String, Pure]
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val approvalQuery: EndpointInput[ApprovalFilter] =
@@ -276,7 +124,11 @@ object ListFilters:
       .and(query[Option[String]]("goal").description("one goal's runs"))
       .and(query[List[String]]("model").description("provider:model, as a step reported it"))
       .and(query[List[String]]("provider").description("codex, claude-code, …"))
-      .and(query[List[String]]("origin").description(s"any of: ${Agents.Origin.values.map(_.wire).mkString(", ")}"))
+      .and(
+        query[List[String]]("origin").description(
+          s"any of: ${api.automation.agents.Origin.values.map(_.wire).mkString(", ")}"
+        )
+      )
       .and(
         query[Option[String]]("since")
           .description("started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")

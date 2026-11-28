@@ -1,6 +1,18 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.goalfocus.Work
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.goalfocus.Facts
+import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.domain.goalfocus.Plan
+import com.histmersion.domain.goalfocus.Pick
+import com.histmersion.domain.goalfocus.Item
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.autopilot.FocusGoal
+import com.histmersion.api.automation.autopilot.FocusWaiting
+import com.histmersion.api.automation.autopilot.EngineStatus
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -11,7 +23,6 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.api.automation.Autopilot.{FocusGoal, FocusInfo, FocusWaiting}
 import com.histmersion.domain.GoalFocus.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
@@ -51,7 +62,7 @@ class GoalFocusSuite extends munit.FunSuite:
   ) =
     Facts(slug, parent, status, created, sources, articles, unreviewed, compile, work, stop, pinned, priority, active)
 
-  private val s3 = Settings(max = GoalFocus.Settings.Max(3), minSources = GoalFocus.Settings.MinSources(3))
+  private val s3 = Settings(max = Settings.Max(3), minSources = Settings.MinSources(3))
 
   private def active(p: Plan) = p.active.map(_.slug)
 
@@ -66,7 +77,10 @@ class GoalFocusSuite extends munit.FunSuite:
     )
     val p = select(goals, s3)
     assertEquals(active(p), List("review", "compile", "ready"))
-    assertEquals(p.active.map(_.stage), List(Stage.Reviewing, Stage.Compiling, Stage.Ready))
+    assertEquals(
+      p.active.map(_.stage),
+      List(domain.goalfocus.Stage.Reviewing, domain.goalfocus.Stage.Compiling, domain.goalfocus.Stage.Ready)
+    )
     assertEquals(p.queue.map(_.slug), List("gather"))
     assert(s"${p.active.head.why}".startsWith("reviewing: 1 of 2 articles still to pass review"), p.active.head.why)
     assert(s"${p.active(1).why}".contains("2 approved articles to compile"), p.active(1).why)
@@ -236,18 +250,18 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("waiting only for a person frees the slot; waiting for the autopilot's checks keeps it"):
     val person = Work(
-      GoalFocus.Work.ItemId(5),
+      Work.ItemId(5),
       ManagerItem.Kind(PlanGoalItem),
       ItemStatus.Wire("active"),
-      GoalFocus.Work.Target("x"),
+      Work.Target("x"),
       approval = Some(Work.Approval(41)),
       approvalByPerson = Work.ApprovalByPerson(true)
     )
     val auto = Work(
-      GoalFocus.Work.ItemId(6),
+      Work.ItemId(6),
       ManagerItem.Kind(ArticleCompile),
       ItemStatus.Wire("active"),
-      GoalFocus.Work.Target("y"),
+      Work.Target("y"),
       approval = Some(Work.Approval(42))
     )
     val goals =
@@ -373,55 +387,55 @@ class GoalFocusSuite extends munit.FunSuite:
 
   test("holds: a queued goal's pending model items are held; an active goal's focus holds released; in flight never"):
     val goals = List(g(Goal.Slug("on"), active = Facts.Active(true)), g(Goal.Slug("off")))
-    val plan = Plan(active = List(Pick(Goal.Slug("on"), Stage.Gathering, GoalFocus.Rationale(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("on"), domain.goalfocus.Stage.Gathering, GoalFocus.Rationale(""))))
     val items = List(
       Item(
-        GoalFocus.Work.ItemId(1),
+        Work.ItemId(1),
         ManagerItem.Kind(ProposeArticles),
         ItemStatus.Wire("pending"),
         List(Goal.Slug("off"))
       ),
       Item(
-        GoalFocus.Work.ItemId(2),
+        Work.ItemId(2),
         ManagerItem.Kind(AcquisitionSweep),
         ItemStatus.Wire("active"),
         List(Goal.Slug("off"))
       ),
       Item(
-        GoalFocus.Work.ItemId(3),
+        Work.ItemId(3),
         ManagerItem.Kind(ArticleCompile),
         ItemStatus.Wire("held"),
         List(Goal.Slug("on")),
         focusHeld = Work.FocusHeld(true)
       ),
       Item(
-        GoalFocus.Work.ItemId(4),
+        Work.ItemId(4),
         ManagerItem.Kind(CurrencyCheck),
         ItemStatus.Wire("pending"),
         List(Goal.Slug("off"))
       ),
       Item(
-        GoalFocus.Work.ItemId(5),
+        Work.ItemId(5),
         ManagerItem.Kind(PlanGoalItem),
         ItemStatus.Wire("pending"),
         List(Goal.Slug("off")),
-        person = GoalFocus.Work.Person(true)
+        person = Work.Person(true)
       ),
       Item(
-        GoalFocus.Work.ItemId(6),
+        Work.ItemId(6),
         ManagerItem.Kind(ArticleReview),
         ItemStatus.Wire("pending"),
         List(Goal.Slug("off"), Goal.Slug("on"))
       ),
-      Item(GoalFocus.Work.ItemId(7), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("pending"), Nil),
+      Item(Work.ItemId(7), ManagerItem.Kind(ArticleReview), ItemStatus.Wire("pending"), Nil),
       Item(
-        GoalFocus.Work.ItemId(8),
+        Work.ItemId(8),
         ManagerItem.Kind(ArticleReview),
         ItemStatus.Wire("held"),
         List(Goal.Slug("off")),
         focusHeld = Work.FocusHeld(true)
       ),
-      Item(GoalFocus.Work.ItemId(9), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("held"), List(Goal.Slug("on")))
+      Item(Work.ItemId(9), ManagerItem.Kind(ArticleCompile), ItemStatus.Wire("held"), List(Goal.Slug("on")))
     )
     val hs = holds(items, plan, goals)
     assertEquals(hs.hold.map(_._1), List(1L))
@@ -440,32 +454,32 @@ class GoalFocusSuite extends munit.FunSuite:
       g(Goal.Slug("p"), active = Facts.Active(true)),
       g(Goal.Slug("k"), Some(Goal.Slug("p")))
     )
-    val plan = Plan(active = List(Pick(Goal.Slug("p"), Stage.Gathering, GoalFocus.Rationale(""))))
+    val plan = Plan(active = List(Pick(Goal.Slug("p"), domain.goalfocus.Stage.Gathering, GoalFocus.Rationale(""))))
     val items = List(
       Item(
-        GoalFocus.Work.ItemId(1),
+        Work.ItemId(1),
         ManagerItem.Kind(AcquisitionSweep),
         ItemStatus.Wire("held"),
         List(Goal.Slug("fin")),
         focusHeld = Work.FocusHeld(true)
       ),
       Item(
-        GoalFocus.Work.ItemId(2),
+        Work.ItemId(2),
         ManagerItem.Kind(ArticleReview),
         ItemStatus.Wire("held"),
         List(Goal.Slug("k")),
-        person = GoalFocus.Work.Person(true),
-        focusHeld = GoalFocus.Work.FocusHeld(true)
+        person = Work.Person(true),
+        focusHeld = Work.FocusHeld(true)
       ),
       Item(
-        GoalFocus.Work.ItemId(3),
+        Work.ItemId(3),
         ManagerItem.Kind(ProposeArticles),
         ItemStatus.Wire("pending"),
         List(Goal.Slug("p"))
       ),
-      Item(GoalFocus.Work.ItemId(4), ManagerItem.Kind(PlanGoalItem), ItemStatus.Wire("pending"), List(Goal.Slug("p"))),
+      Item(Work.ItemId(4), ManagerItem.Kind(PlanGoalItem), ItemStatus.Wire("pending"), List(Goal.Slug("p"))),
       Item(
-        GoalFocus.Work.ItemId(5),
+        Work.ItemId(5),
         ManagerItem.Kind(OaIngest),
         ItemStatus.Wire("held"),
         List(Goal.Slug("k")),
@@ -538,30 +552,30 @@ class GoalFocusSuite extends munit.FunSuite:
   test("doing: runs in flight, the approvals waited for and who decides, the next item"):
     val ws = List(
       Work(
-        GoalFocus.Work.ItemId(1),
+        Work.ItemId(1),
         ManagerItem.Kind(ArticleCompile),
         ItemStatus.Wire("active"),
-        GoalFocus.Work.Target("x")
+        Work.Target("x")
       ),
       Work(
-        GoalFocus.Work.ItemId(2),
+        Work.ItemId(2),
         ManagerItem.Kind(PlanGoalItem),
         ItemStatus.Wire("active"),
-        GoalFocus.Work.Target("g"),
+        Work.Target("g"),
         approval = Some(Work.Approval(7)),
         approvalByPerson = Work.ApprovalByPerson(true)
       ),
       Work(
-        GoalFocus.Work.ItemId(3),
+        Work.ItemId(3),
         ManagerItem.Kind(ArticleReview),
         ItemStatus.Wire("pending"),
-        GoalFocus.Work.Target("y")
+        Work.Target("y")
       ),
       Work(
-        GoalFocus.Work.ItemId(4),
+        Work.ItemId(4),
         ManagerItem.Kind(ProposeArticles),
         ItemStatus.Wire("held"),
-        GoalFocus.Work.Target("g"),
+        Work.Target("g"),
         focusHeld = Work.FocusHeld(true)
       )
     )
@@ -746,11 +760,11 @@ class GoalFocusSuite extends munit.FunSuite:
     val why =
       "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
     val st =
-      Autopilot.EngineStatus(
-        on = Autopilot.EngineStatus.On.On,
-        agentsEnabled = Autopilot.EngineStatus.AgentSwitch.Enabled,
-        managersEnabled = Autopilot.EngineStatus.ManagingSwitch.Enabled,
-        goalPlansWait = Some(Autopilot.EngineStatus.GoalPlansWait(why))
+      EngineStatus(
+        on = EngineStatus.On.On,
+        agentsEnabled = EngineStatus.AgentSwitch.Enabled,
+        managersEnabled = EngineStatus.ManagingSwitch.Enabled,
+        goalPlansWait = Some(EngineStatus.GoalPlansWait(why))
       )
     assert(
       AutopilotMarkdown.status(st).contains(s"- **$why; a person may still approve a plan**"),

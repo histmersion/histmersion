@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.{CreatedAt, Creator}
 import com.histmersion.domain.library.sources.referrers.*
@@ -42,8 +46,8 @@ final class WorkListSourceReferrer extends SourceReferrer:
       SourceReferrers.Entry(
         QueueRepo
           .insert(
-            Queue.Kind.Log,
-            Queue.QueueAdd(Queue.QueueItem.Text(line.value), topic = Some(Queue.QueueItem.Topic(day.value))),
+            Kind.Log,
+            QueueAdd(QueueItem.Text(line.value), topic = Some(QueueItem.Topic(day.value))),
             Creator.New.Manual(Creator.Surface.Internal),
             summon[CreatedAt]
           )

@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.library.repairacquire.RepairRequest
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -120,7 +122,7 @@ class MediaProvidersSuite extends munit.FunSuite:
   test("the import report prints the counts per provider and licence as a table, refusals and failures after"):
     val r = MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),
-      dryRun = RepairAcquire.RepairRequest.DryRun.DryRun,
+      dryRun = RepairRequest.DryRun.DryRun,
       targets = MediaImportReport.Targets(20),
       items = MediaImportReport.Items(9),
       statements = MediaImportReport.Statements(19),
@@ -153,7 +155,7 @@ class MediaProvidersSuite extends munit.FunSuite:
       MediaMarkdown
         .mediaImportReport(
           r.modify(_.dryRun)
-            .setTo(RepairAcquire.RepairRequest.DryRun.Apply)
+            .setTo(RepairRequest.DryRun.Apply)
             .modify(_.stored)
             .setTo(MediaImportReport.Stored(2))
         )

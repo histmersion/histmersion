@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.acquirerecheck.LastCheck
+
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.problem.{Problem, Problems}
@@ -12,7 +14,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class AcquireAttempt(
     at: Instant,
     trigger: Trigger,
-    generation: AcquireRecheck.LastCheck.Generation,
+    generation: LastCheck.Generation,
     outcome: Outcome,
     answers: Vector[Problem.NotFound.Answer],
     oa: Option[Oa]

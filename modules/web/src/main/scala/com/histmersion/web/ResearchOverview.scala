@@ -1,10 +1,19 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.autopilot.GoalProgress
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.planquota.QuotaInfo
+import com.histmersion.api.automation.agentscheduler.PoolUse
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Wording
 import com.histmersion.api.UiLabels
-import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState, Decision}
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 
@@ -51,7 +60,7 @@ object ResearchOverview:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def progressOf(goal: Goal.Slug, managers: List[Managers.ManagerInfo]): Progress =
+  def progressOf(goal: Goal.Slug, managers: List[ManagerInfo]): Progress =
     val mine = managers.filter(_.goal.contains(goal))
     Progress(
       Progress.Done(mine.map(_.counts.done.value).sum),
@@ -65,9 +74,9 @@ object ResearchOverview:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def blocker(
-      g: Autopilot.GoalProgress,
-      focus: Option[Autopilot.FocusInfo],
-      managers: List[Managers.ManagerInfo]
+      g: GoalProgress,
+      focus: Option[FocusInfo],
+      managers: List[ManagerInfo]
   ): Option[UiLabels.Text] =
     focus
       .flatMap(_.waiting.find(_.slug == g.slug))
@@ -142,13 +151,13 @@ object ResearchOverview:
   /** The weekly limit left, per plan pool that reports one: `Claude plan: 61% of this week's limit left`. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def weekly(q: PlanQuota.QuotaInfo): List[UiLabels.Text] =
+  def weekly(q: QuotaInfo): List[UiLabels.Text] =
     q.plans.flatMap { p =>
       p.windows
         .find(w => w.kind.value.startsWith("seven_day") || w.limit.value.startsWith("seven_day"))
         .map(w =>
           UiLabels.Text(
-            s"${Option(p.title).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.pool(AgentScheduler.PoolUse.Pool(p.pool.value)))}: ${w.leftPct.value.round}% of this week's limit left"
+            s"${Option(p.title).filter(_.value.nonEmpty).map(_.value).getOrElse(Wording.pool(PoolUse.Pool(p.pool.value)))}: ${w.leftPct.value.round}% of this week's limit left"
           )
         )
     }
@@ -276,7 +285,7 @@ object ResearchOverview:
     val open = Var(Option.empty[List[ApprovalInfo]])
     def load(): Unit =
       ApiClient
-        .approvals(ListFilters.ApprovalFilter(), Some(Paging.Limit(200)))
+        .approvals(ApprovalFilter(), Some(Paging.Limit(200)))
         .onComplete(r => open.set(Some(r.toOption.fold(Nil)(_._1))))
     sectionTag(
       cls := "card research-decisions",
@@ -310,7 +319,7 @@ object ResearchOverview:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalsCard(
       status: Signal[Option[AutopilotStatus]],
-      managers: Signal[List[Managers.ManagerInfo]]
+      managers: Signal[List[ManagerInfo]]
   ): HtmlElement =
     sectionTag(
       cls := "card research-goals",
@@ -390,7 +399,7 @@ object ResearchOverview:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def pane(ui: UiConfig): HtmlElement =
     val status = Var(Option.empty[AutopilotStatus])
-    val managers = Var(List.empty[Managers.ManagerInfo])
+    val managers = Var(List.empty[ManagerInfo])
     div(
       cls := "research-overview",
       onMountCallback { _ =>

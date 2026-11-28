@@ -36,7 +36,7 @@ class PromptTrimSuite extends munit.FunSuite:
   private def headless(s: StepAgent) = d.system(agent(s), ToolStyle.Claude)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def interactive(s: StepAgent) =
-    AgentGenerator.interactiveAgent(agent(s)).getOrElse(fail(s"${s.wire}: not interactive"))
+    AgentDefinitions.interactiveAgent(agent(s)).getOrElse(fail(s"${s.wire}: not interactive"))
   private val Reviewers = List(StepAgent.RulesReviewer, StepAgent.Skeptic, StepAgent.Fixer)
   private val Panel = StepAgent.ColdReader :: Reviewers
 
@@ -76,7 +76,7 @@ class PromptTrimSuite extends munit.FunSuite:
       List(Problem.Config.Flaw.AudienceUnknown(Problem.Raw("people")))
     )
     assertEquals(
-      AgentGenerator.check(
+      AgentDefinitions.check(
         d,
         Generated.known(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)).map(_.value)
       ),

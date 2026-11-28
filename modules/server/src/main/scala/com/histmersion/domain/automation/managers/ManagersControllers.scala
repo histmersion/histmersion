@@ -1,5 +1,42 @@
 package com.histmersion
 package domain.automation.managers
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerDetail
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.managers.ItemPage
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.managers.EnqueueKind
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.api.automation.managers.HintProposal
+import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.automation.Stall
+import com.histmersion.api.automation.approvaldigest.Digest
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.approvaldigest.BulkResult
+import com.histmersion.api.automation.agentscheduler.WhyInfo
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.managers.EventPage
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -34,8 +71,7 @@ import com.histmersion.api.automation.{
   ApprovalDigest,
   Autopilot,
   ManagersMarkdown,
-  ModelChains,
-  Stalls
+  ModelChains
 }
 import com.histmersion.api.Api
 import com.histmersion.api.automation.Goal
@@ -868,9 +904,9 @@ final class ManagersControllers(
       i <- itemOf(m, ref)
       _ <- in.action.value.trim.toLowerCase match
         case "hold" =>
-          val h = Hold(
-            in.until.map(_.value.trim).filter(_.nonEmpty).map(Hold.Until(_)),
-            in.untilSource.map(_.value.trim).filter(_.nonEmpty).map(Hold.UntilSource(_)),
+          val h = api.automation.managers.Hold(
+            in.until.map(_.value.trim).filter(_.nonEmpty).map(api.automation.managers.Hold.Until(_)),
+            in.untilSource.map(_.value.trim).filter(_.nonEmpty).map(api.automation.managers.Hold.UntilSource(_)),
             Managers.Rationale(in.reason.fold("held by a person")(w => s"$w"))
           )
           for
@@ -881,7 +917,11 @@ final class ManagersControllers(
                 .toRight(
                   error(
                     Problem.Invalid.Unreadable
-                      .here(Problem.TypeName.of(Hold.Until), Problem.Raw.of(u), Vector(Problem.Raw("2026-11-01")))
+                      .here(
+                        Problem.TypeName.of(api.automation.managers.Hold.Until),
+                        Problem.Raw.of(u),
+                        Vector(Problem.Raw("2026-11-01"))
+                      )
                   )
                 )
             )
@@ -1047,7 +1087,7 @@ final class ManagersControllers(
         .map(_.value.trim)
         .filter(_.nonEmpty)
         .fold[Either[Api.Error, Option[ManagerItem]]](Right(None))(r => itemOf(m, ManagerItem.Ref(r)).map(Some(_)))
-      eff <- in.effect.fold[Either[Api.Error, Option[HintEffect]]](Right(None))(e =>
+      eff <- in.effect.fold[Either[Api.Error, Option[api.automation.managers.HintEffect]]](Right(None))(e =>
         checkEffect(m, e, item, propose).map(Some(_))
       )
       _ <- Either.cond(
@@ -1124,35 +1164,37 @@ final class ManagersControllers(
   )
   private def checkEffect(
       m: ManagerInfo,
-      e: HintEffect,
+      e: api.automation.managers.HintEffect,
       item: Option[ManagerItem],
       proposal: Boolean
-  ): Either[Api.Error, HintEffect] =
-    val allowed = if proposal then HintEffect.Verb.Proposable else HintEffect.Verb.Actions
-    val verb = HintEffect.Action.verb(e.action)
+  ): Either[Api.Error, api.automation.managers.HintEffect] =
+    val allowed = if proposal then api.automation.managers.HintEffect.Verb.Proposable
+    else api.automation.managers.HintEffect.Verb.Actions
+    val verb = api.automation.managers.HintEffect.Action.verb(e.action)
     def oneOf = allowed.map(_.word).mkString(", ")
     verb.filter(allowed.contains) match
       case None =>
         Left(
           error(
-            if !proposal && verb.contains(HintEffect.Verb.Config) then
+            if !proposal && verb.contains(api.automation.managers.HintEffect.Verb.Config) then
               Problem.Invalid.Broken.here(
                 Problem.Invalid.Rule.HintConfig(allowed.toVector.map(v => Problem.Raw.of(v.word)))
               )
             else
               Problem.Invalid.Unknown.here(
-                Problem.TypeName.of(HintEffect.Action),
+                Problem.TypeName.of(api.automation.managers.HintEffect.Action),
                 Problem.Raw.of(e.action),
                 allowed.toVector.map(v => Problem.Raw.of(v.word))
               )
           )
         )
-      case Some(HintEffect.Verb.Config) =>
+      case Some(api.automation.managers.HintEffect.Verb.Config) =>
         e.config
           .filter(c => ManagersMarkdown.configLine(c) != "the defaults")
           .toRight(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintSettings)))
           .flatMap(c =>
-            validate(kindOf(m), m.config.merge(c)).map(_ => e.modify(_.action).setTo(HintEffect.Verb.Config.word))
+            validate(kindOf(m), m.config.merge(c))
+              .map(_ => e.modify(_.action).setTo(api.automation.managers.HintEffect.Verb.Config.word))
           )
       case Some(_) if e.targets.isEmpty && e.tag.isEmpty && e.topic.isEmpty && e.goal.isEmpty && item.isEmpty =>
         Left(
@@ -1160,7 +1202,7 @@ final class ManagersControllers(
             Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintTargets)
           )
         )
-      case Some(HintEffect.Verb.Hold) if e.until.isEmpty && e.untilSource.isEmpty =>
+      case Some(api.automation.managers.HintEffect.Verb.Hold) if e.until.isEmpty && e.untilSource.isEmpty =>
         Left(
           Api.Error(
             Problem.Invalid.Broken.here(Problem.Invalid.Rule.HintUntil)
@@ -1170,7 +1212,7 @@ final class ManagersControllers(
         Left(
           error(
             Problem.Invalid.Unreadable.here(
-              Problem.TypeName.of(HintEffect.Until),
+              Problem.TypeName.of(api.automation.managers.HintEffect.Until),
               Problem.Raw(e.until.fold("")(_.value)),
               Vector(Problem.Raw("2026-11-01"))
             )
@@ -1181,7 +1223,9 @@ final class ManagersControllers(
           e.modify(_.action)
             .setTo(v.word)
             .modify(_.targets)
-            .setTo((e.targets ++ item.map(i => HintEffect.Targets(i.target.value)).toList).distinct)
+            .setTo(
+              (e.targets ++ item.map(i => api.automation.managers.HintEffect.Targets(i.target.value)).toList).distinct
+            )
         )
 
   /** A model's effect, recorded for a person: an open `hint-effect` approval about the manager. */
@@ -1194,7 +1238,7 @@ final class ManagersControllers(
       m: ManagerInfo,
       hintId: ManagerHint.Id,
       text: ManagerHint.Text,
-      e: HintEffect,
+      e: api.automation.managers.HintEffect,
       by: ManagerHint.Author
   )(using WritePermit)(using Creator.New): String =
     val a = agents.approvalStore.openSubject(
@@ -1247,8 +1291,8 @@ final class ManagersControllers(
         ht.itemId.flatMap(i => agents.managerStore.item(ManagerItem.Id(i.value))),
         proposal = true
       ).left.map(_.problems)
-      w <- HintEffect.Action.verb(e.action) match
-        case Some(HintEffect.Verb.Config) =>
+      w <- api.automation.managers.HintEffect.Action.verb(e.action) match
+        case Some(api.automation.managers.HintEffect.Verb.Config) =>
           val c = m.config.merge(e.config.getOrElse(ManagerConfig()))
           // a manager removed since it was read is not found, never settings written to nothing
           Option
@@ -1279,7 +1323,12 @@ final class ManagersControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def applyEffect(m: ManagerInfo, hintId: ManagerHint.Id, text: ManagerHint.Text, e: HintEffect)(using
+  private def applyEffect(
+      m: ManagerInfo,
+      hintId: ManagerHint.Id,
+      text: ManagerHint.Text,
+      e: api.automation.managers.HintEffect
+  )(using
       WritePermit
   ): String =
     // the named targets become items of the manager's default kind (a target that exists); the matched
@@ -1301,15 +1350,15 @@ final class ManagersControllers(
           .fold((Nil, Nil))(slug => Transactor(ds).read(ManagerRepo.articleFacets(slug)))
         ManagerPolicy.matches(
           e.modify(_.targets).setTo(Nil),
-          i.target.transformInto[ManagerPolicy.Candidate.Target],
+          i.target.transformInto[Candidate.Target],
           tags.map(t => ManagerPolicy.Tag(t.value)),
           Nil,
           goals
         )
       })
     }
-    val n = HintEffect.Action.verb(e.action) match
-      case Some(HintEffect.Verb.Prioritise) =>
+    val n = api.automation.managers.HintEffect.Action.verb(e.action) match
+      case Some(api.automation.managers.HintEffect.Verb.Prioritise) =>
         val p = e.priority.fold(ManagerSupervisor.HintPriority)(_.value)
         val added = named.filterNot(t => open.exists(_.target == t)).count { t =>
           agents.managerStore.upsert(m.id, kind, t, ItemOrigin.Hint, ManagerItem.Priority(p), reopen = true)
@@ -1324,12 +1373,12 @@ final class ManagersControllers(
           )
         )
         matched.size + added
-      case Some(HintEffect.Verb.Hold) =>
-        val hold = Hold(
-          e.until.map(u => Hold.Until(u.value)),
-          e.untilSource.map(u => Hold.UntilSource(u.value)),
+      case Some(api.automation.managers.HintEffect.Verb.Hold) =>
+        val hold = api.automation.managers.Hold(
+          e.until.map(u => api.automation.managers.Hold.Until(u.value)),
+          e.untilSource.map(u => api.automation.managers.Hold.UntilSource(u.value)),
           Managers.Rationale(s"hint #$hintId: ${text.value.take(200)}"),
-          Some(Hold.Hint(hintId.value))
+          Some(api.automation.managers.Hold.Hint(hintId.value))
         )
         val added = named.filterNot(t => open.exists(_.target == t)).flatMap { t =>
           val (id, _) =
@@ -1337,7 +1386,7 @@ final class ManagersControllers(
           agents.managerStore.item(id).filter(_.status == ItemStatus.Pending.wire)
         }
         (matched ++ added).count(i => Transactor(ds).write(ManagerRepo.hold(i.id, hold)))
-      case Some(HintEffect.Verb.Skip) =>
+      case Some(api.automation.managers.HintEffect.Verb.Skip) =>
         matched.count(i =>
           Transactor(ds).write(
             ManagerRepo.settle(
@@ -1548,43 +1597,43 @@ final class ManagersControllers(
   // ── the autopilot ──────────────────────────────────────────────────────────────────────────────
 
   /** `GET /api/agents/autopilot` — readable with agents off. */
-  def autopilot: Autopilot.EngineStatus = agents.autopilot.status()
+  def autopilot: EngineStatus = agents.autopilot.status()
 
   /** `GET /api/agents/autopilot/focus` — readable with agents off (what it would focus on). */
-  def focus: Autopilot.FocusInfo = agents.focus.info()
+  def focus: FocusInfo = agents.focus.info()
 
   /** `GET /api/agents/scheduler[?limit=]` — readable with agents off (a dry pass). */
-  def scheduler(limit: Option[PageSize]): AgentScheduler.SchedulerStatus = agents.scheduler.status(limit)
+  def scheduler(limit: Option[PageSize]): SchedulerStatus = agents.scheduler.status(limit)
 
   /** `POST /api/agents/scheduler {strategy}` — switch the strategy live. */
-  def setScheduler(in: AgentScheduler.SchedulerSet): Either[Api.Error, AgentScheduler.SchedulerStatus] =
+  def setScheduler(in: SchedulerSet): Either[Api.Error, SchedulerStatus] =
     held(WriteGate.OperationName("set_scheduler"))(agents.scheduler.set(in))
 
   /** `POST /api/agents/autopilot/drain {on}`. */
-  def drain(in: Autopilot.DrainSet): Either[Problems, Autopilot.EngineStatus] =
+  def drain(in: DrainSet): Either[Problems, EngineStatus] =
     Right(agents.maintenance.writing(agents.drain.set(in)))
 
   /** `GET /api/agents/stalls[?days=]` — readable with agents off. */
-  def stalls(days: Option[AgentAutopilotConfig.StallDays]): Stalls.StallReport = agents.scheduler.stalls(days)
+  def stalls(days: Option[AgentAutopilotConfig.StallDays]): Stall.StallReport = agents.scheduler.stalls(days)
 
   /** `GET /api/agents/approvals/digest`. */
-  def digest: ApprovalDigest.Digest = agents.digest.digest()
+  def digest: Digest = agents.digest.digest()
 
   /** `POST /api/agents/approvals/decide` — a whole group at once. */
-  def decideAll(in: ApprovalDigest.BulkDecide)(using Creator.New): Either[Api.Error, ApprovalDigest.BulkResult] =
+  def decideAll(in: BulkDecide)(using Creator.New): Either[Api.Error, BulkResult] =
     agents.digest.decideAll(in)
 
   /** `GET /api/agents/scheduler/why/{item}`. */
-  def schedulerWhy(item: ManagerItem.Ref): Either[Api.Error, AgentScheduler.WhyInfo] = agents.scheduler.why(item)
+  def schedulerWhy(item: ManagerItem.Ref): Either[Api.Error, WhyInfo] = agents.scheduler.why(item)
 
   /** `POST /api/agents/autopilot/focus {action, goal?, value?}` — pin, unpin, priority, max. */
-  def setFocus(in: Autopilot.FocusSet): Either[Api.Error, Autopilot.FocusInfo] =
+  def setFocus(in: FocusSet): Either[Api.Error, FocusInfo] =
     held(WriteGate.OperationName("set_focus"))(agents.focus.set(in))
 
   /** `POST /api/agents/autopilot/mode {mode}` — the three-way control ([[AgentMode]]): the autopilot and the drain
     * moved, in order, to what the mode stands for. Idempotent.
     */
-  def setMode(in: AgentMode.ModeSet)(using Creator.New): Either[Api.Error, Autopilot.EngineStatus] =
+  def setMode(in: AgentMode.ModeSet)(using Creator.New): Either[Api.Error, EngineStatus] =
     held(WriteGate.OperationName("set_mode"))(setModeHeld(in))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -1594,7 +1643,7 @@ final class ManagersControllers(
   )
   private def setModeHeld(
       in: AgentMode.ModeSet
-  )(using WritePermit)(using Creator.New): Either[Api.Error, Autopilot.EngineStatus] =
+  )(using WritePermit)(using Creator.New): Either[Api.Error, EngineStatus] =
     AgentMode
       .parse(in.mode)
       .toRight(
@@ -1615,23 +1664,23 @@ final class ManagersControllers(
             step match
               case AgentMode.Step.Autopilot(on) =>
                 agents.autopilot.set(
-                  Autopilot.AutopilotSet(
-                    (if on.on then Autopilot.AutopilotSet.On.On else Autopilot.AutopilotSet.On.Off),
-                    by.map(Autopilot.AutopilotSet.By(_))
+                  AutopilotSet(
+                    (if on.on then AutopilotSet.On.On else AutopilotSet.On.Off),
+                    by.map(AutopilotSet.By(_))
                   )
                 )
               case AgentMode.Step.Drain(on) =>
                 agents.drain.set(
-                  Autopilot.DrainSet(
-                    (if on.on then Autopilot.DrainSet.On.On else Autopilot.DrainSet.On.Off),
-                    by.map(Autopilot.DrainSet.By(_))
+                  DrainSet(
+                    (if on.on then DrainSet.On.On else DrainSet.On.Off),
+                    by.map(DrainSet.By(_))
                   )
                 )
           }
       }
 
   /** `POST /api/agents/autopilot {on}` — idempotent; the answer says what it did. */
-  def setAutopilot(in: Autopilot.AutopilotSet)(using Creator.New): Either[Problems, Autopilot.EngineStatus] =
+  def setAutopilot(in: AutopilotSet)(using Creator.New): Either[Problems, EngineStatus] =
     Right(agents.maintenance.writing(agents.autopilot.set(in)))
 
   // ── events ─────────────────────────────────────────────────────────────────────────────────────

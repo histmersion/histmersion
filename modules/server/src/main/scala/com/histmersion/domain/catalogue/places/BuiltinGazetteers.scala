@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.gazetteer.Kind
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.plugin.GazetteerSource
@@ -54,7 +56,7 @@ object BuiltinGazetteers:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val reserved: Set[Entry.Name] =
     names.toSet ++ Set(NaturalEarthLand.name, PeriodOFetch.name).map(Entry.Name(_)) ++
-      Gazetteer.Kind.values.map(k => Entry.Name(k.wire.value))
+      Kind.values.map(k => Entry.Name(k.wire.value))
 
   /** Pure: the registered sources that are not first-party, in registration order. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

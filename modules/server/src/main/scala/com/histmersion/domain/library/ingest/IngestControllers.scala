@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.util.problem.{External, Problem}
 import com.histmersion.util.problem.Text.sentence
 import io.scalaland.chimney.dsl.*
@@ -256,8 +258,8 @@ final class IngestControllers(
   )
   private def acquireItemOk(item: Option[Ingest.Params.AcquireItem]): Either[Api.Error, Unit] =
     item.fold(Right(()))(id =>
-      Queue
-        .fulfillable(Queue.QueueItem.Id(id.value), queues.get(QueueItemId(id.value)))
+      QueueItem
+        .fulfillable(QueueItem.Id(id.value), queues.get(QueueItemId(id.value)))
         .map(_ => ())
         .left
         .map(p => error(p))

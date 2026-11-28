@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.library.query.QueryRequest
+import com.histmersion.api.library.query.QueryResult
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.jsoniterderivation.JsoniterConfig
 import com.histmersion.domain.automation.agents.SttpAiJson.given
@@ -175,7 +178,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         "One read-only SQL SELECT on the corpus database (Postgres) — e.g. every cited source's status at once."
       ) { in =>
         site.query
-          .run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value)))
+          .run(QueryRequest(QueryRequest.Sql(in.sql.value)))
           .left
           .map(Api.Error(_))
           .fold(e => e.problems.sentences.mkString("; "), r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
@@ -203,9 +206,8 @@ object LibraryAgentTools:
     */
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def queryResult(
-      r: com.histmersion.api.library.Query.QueryResult,
+      r: QueryResult,
       maxRows: AgentToolsConfig.QueryMaxRows,
       max: ToolResultCap.CapMax
   ): String =
@@ -214,9 +216,9 @@ object LibraryAgentTools:
       r.modify(_.rows)
         .setTo(r.rows.take(rows))
         .modify(_.rowCount)
-        .setTo(com.histmersion.api.library.Query.QueryResult.RowCount(rows))
+        .setTo(QueryResult.RowCount(rows))
         .modify(_.truncated)
-        .setTo(com.histmersion.api.library.Query.QueryResult.Truncated.Truncated)
+        .setTo(QueryResult.Truncated.Truncated)
     else r
     val more = if shown.rows.size < r.rows.size then
       s"\n\n_…${r.rows.size - shown.rows.size}${
@@ -225,7 +227,7 @@ object LibraryAgentTools:
         "(`WHERE citekey IN (…)`, `LIMIT`), never a whole table_"
     else ""
     ToolResultCap.cap(
-      com.histmersion.api.library.Query.markdown(shown).value + more,
+      shown.markdown.value + more,
       max,
       "select fewer columns or rows (`WHERE … IN (…)`, `LIMIT`)"
     )

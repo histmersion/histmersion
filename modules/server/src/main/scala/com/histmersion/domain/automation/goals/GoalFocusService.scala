@@ -1,5 +1,24 @@
 package com.histmersion
 package domain.automation.goals
+
+import com.histmersion.domain.goalfocus.Settings
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.domain.goalfocus.Facts
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.domain.goalfocus.Work
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.domain.goalfocus.Plan
+import com.histmersion.domain.goalfocus.Item
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.domain.goalfocus.Pick
+import com.histmersion.api.automation.autopilot.FocusGoal
+import com.histmersion.api.automation.autopilot.FocusWaiting
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -16,12 +35,8 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.ApprovalKind
 import com.histmersion.api.automation.Autopilot.*
-import com.histmersion.domain.GoalFocus.Facts
-import com.histmersion.domain.GoalFocus.Plan
-import com.histmersion.domain.GoalFocus.Work
 import com.histmersion.api.automation.{Autopilot, Manager, Managers}
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
 
 import java.time.Instant
 import javax.sql.DataSource
@@ -61,11 +76,11 @@ final class GoalFocusService(
 
   /** The cap and where it comes from: a person's (`focus max`) or the config's. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def cap: (GoalFocus.Settings.Max, FocusInfo.MaxFrom) =
+  def cap: (Settings.Max, FocusInfo.MaxFrom) =
     Transactor(ds)
       .read(FocusRepo.maxOverride)
-      .fold((GoalFocus.Settings.Max(math.max(0, acfg.maxActiveGoals.value)), FocusInfo.MaxFrom("config")))(n =>
-        (GoalFocus.Settings.Max(math.max(0, n.value)), FocusInfo.MaxFrom("person"))
+      .fold((Settings.Max(math.max(0, acfg.maxActiveGoals.value)), FocusInfo.MaxFrom("config")))(n =>
+        (Settings.Max(math.max(0, n.value)), FocusInfo.MaxFrom("person"))
       )
 
   /** The focus is in force — never since the central scheduler (#3933, [[SchedulerService]]) admits the managers' work:
@@ -176,14 +191,14 @@ final class GoalFocusService(
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def settings(r: Read, max: GoalFocus.Settings.Max): GoalFocus.Settings =
-    GoalFocus.Settings(
+  private def settings(r: Read, max: Settings.Max): Settings =
+    Settings(
       max,
-      GoalFocus.Settings.MinSources(agents.sourcesToPlan.value),
-      plansByPerson = GoalFocus.Settings.PlansByPerson(
+      Settings.MinSources(agents.sourcesToPlan.value),
+      plansByPerson = Settings.PlansByPerson(
         !cfg.approvals.checked(domain.automation.Approval.Kind.GoalPlan)
       ),
-      GoalFocus.Settings.OpenPersonPlans(r.openPlans.value)
+      Settings.OpenPersonPlans(r.openPlans.value)
     )
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
@@ -245,7 +260,7 @@ final class GoalFocusService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def applyHolds(plan: Plan, r: Read)(using WritePermit): List[String] =
     val items = r.work.map(w =>
-      GoalFocus.Item(
+      Item(
         Work.ItemId(w.id.value),
         ManagerItem.Kind(w.kind.value),
         domain.automation.ItemStatus.Wire(w.status.value),
@@ -285,9 +300,9 @@ final class GoalFocusService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def fair(
       m: ManagerInfo,
-      due: List[ManagerPolicy.Candidate],
+      due: List[Candidate],
       pending: List[ManagerItem]
-  ): List[ManagerPolicy.Candidate] =
+  ): List[Candidate] =
     current match
       case Some(active) if m.id.value == EnrichId || m.id.value == ReviewId =>
         val link =
@@ -369,11 +384,11 @@ final class GoalFocusService(
     val plan =
       GoalFocus.select(
         r.facts,
-        settings(r, if max.value > 0 then max else GoalFocus.Settings.Max(acfg.maxActiveGoals.value))
+        settings(r, if max.value > 0 then max else Settings.Max(acfg.maxActiveGoals.value))
       )
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
-    def goal(p: GoalFocus.Pick, active: Boolean): FocusGoal =
+    def goal(p: Pick, active: Boolean): FocusGoal =
       val f = byGoal.get(p.slug)
       val ps = List(seed(p.slug), watch(p.slug)).flatMap(pace.get)
       val (open, done) = (f.fold(0)(_.work.size), ps.map(_._2.value).sum)
@@ -469,7 +484,7 @@ final class GoalFocusService(
         in.value match
           case Some(n) if n.value < 0 => Left(error("`max` is 0 (no cap) or more"))
           case v                      =>
-            Transactor(ds).write(FocusRepo.setMaxOverride(v.map(n => GoalFocus.Settings.Max(n.value))))
+            Transactor(ds).write(FocusRepo.setMaxOverride(v.map(n => Settings.Max(n.value))))
             Right(
               v.fold(s"cap back to agents.autopilot.max-active-goals (${acfg.maxActiveGoals.value}) (by $by)")(n =>
                 s"cap ${n.value}${if n.value == 0 then " (no cap)" else ""} (by $by)"
@@ -485,7 +500,7 @@ final class GoalFocusService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def log(line: String): Unit =
     agents.workLists.logLine(
-      QueueAdd(Queue.QueueItem.Text(line.take(1000))),
+      QueueAdd(QueueItem.Text(line.take(1000))),
       domain.automation.workflows.InTreeWorkflow.GoalFocus.creator
     )
     scribe.info(line)

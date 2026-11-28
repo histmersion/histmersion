@@ -1,6 +1,9 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.queue.Kind
+
 import com.histmersion.api.Html.Atoms
 import com.histmersion.api.automation.Queue
 
@@ -79,7 +82,7 @@ object Route:
   type RunId = RunId.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object RunId extends Newtype[String, Pure]:
-    def of(run: api.automation.Agents.RunInfo.Id): RunId = RunId(shown"$run")
+    def of(run: RunInfo.Id): RunId = RunId(shown"$run")
 
   /** The front page of each place. */
   object Goal:
@@ -225,11 +228,11 @@ object Route:
 
   /** The page of a list item: the list, scrolled to the item and marked (`?item=`). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def queueItem(kind: Queue.Kind, id: api.automation.Goal.Plans.GoalLink.QueueNumber): String =
+  def queueItem(kind: Kind, id: api.automation.Goal.Plans.GoalLink.QueueNumber): String =
     val list = kind match
-      case Queue.Kind.Acquire => Research(ResearchSection.Acquire)
-      case Queue.Kind.Tasks   => Research(ResearchSection.Backlog)
-      case Queue.Kind.Log     => Activity(ActivityTab.Worklog)
+      case Kind.Acquire => Research(ResearchSection.Acquire)
+      case Kind.Tasks   => Research(ResearchSection.Backlog)
+      case Kind.Log     => Activity(ActivityTab.Worklog)
     s"${list.path}?item=$id"
 
   /** Where an address of the old web UI goes now. */
@@ -248,7 +251,7 @@ object Route:
       case List("about") => Some(Settings(SettingsSection.About))
       case List("storage") | List("settings", "storage") | List("settings", "map-regions") =>
         Some(Settings(SettingsSection.Data))
-      case List(list) => Queue.Kind.values.find(_.label.value == list).flatMap(k => ofWindow(WindowKey.ofQueue(k)))
+      case List(list) => Kind.values.find(_.label.value == list).flatMap(k => ofWindow(WindowKey.ofQueue(k)))
       case _          => None
     val (toolWindows, items) = open.partition(ofWindow(_).isDefined)
     if byPath.isEmpty && toolWindows.isEmpty then None

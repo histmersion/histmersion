@@ -1,7 +1,10 @@
 package com.histmersion
 package domain.research.articles
 
-import com.histmersion.api.checks.Lint.{FormatChecker, LintRuleReport, Rule}
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+
+import com.histmersion.api.checks.Lint.FormatChecker
 import com.histmersion.util.data.checks.CheckRun
 import com.augustnagro.magnum.{DbCon, Frag}
 import com.histmersion.lint.{tolerated, LintRule}

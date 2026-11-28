@@ -1,5 +1,54 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.listfilters.JobFilter
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunDetail
+import com.histmersion.api.automation.agents.ModelsInfo
+import com.histmersion.api.automation.modelchains.RoleChain
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.modelchains.AllowanceStatus
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.planquota.QuotaInfo
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.QuotaRefreshed
+import com.histmersion.api.automation.planquota.QuotaRefresh
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.agentscheduler.WhyInfo
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.automation.Stall
+import com.histmersion.api.automation.approvaldigest.Digest
+import com.histmersion.api.automation.managers.ManagerDetail
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.managers.ItemPage
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.managers.EventPage
+import com.histmersion.api.automation.managers.EnqueueKind
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.managers.ManagerCreate
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 import com.histmersion.util.json.RawJson
@@ -37,8 +86,7 @@ import com.histmersion.api.automation.{
   ManagersApi,
   ModelChains,
   PlanQuota,
-  Queue,
-  Stalls
+  Queue
 }
 import com.histmersion.api.basemap.BasemapApi
 import com.histmersion.api.catalogue.{
@@ -253,25 +301,25 @@ object ApiClient:
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueList(list: Queue.Kind.Label, all: Boolean = false): Future[QueueListing] =
+  def queueList(list: api.automation.queue.Kind.Label, all: Boolean = false): Future[QueueListing] =
     call(OpsApi.queueList)((Queue.Wire(list.value), all, None, None))
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueForGoal(list: Queue.Kind.Label, goal: Goal.Slug, all: Boolean = false): Future[QueueListing] =
+  def queueForGoal(list: api.automation.queue.Kind.Label, goal: Goal.Slug, all: Boolean = false): Future[QueueListing] =
     call(OpsApi.queueList)((Queue.Wire(list.value), all, Some(Queue.Wire(goal.value)), None))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueOfJob(list: Queue.Kind.Label, job: JobInfo.Id): Future[QueueListing] =
+  def queueOfJob(list: api.automation.queue.Kind.Label, job: JobInfo.Id): Future[QueueListing] =
     call(OpsApi.queueList)((Queue.Wire(list.value), true, None, Some(Queue.Wire(job.value))))
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def activity(
-      show: Option[Activity.Show.Wire],
+      show: Option[Show.Wire],
       since: Option[Activity.Actor],
       goal: Option[Goal.Slug],
       limit: Option[Paging.Limit],
       before: Option[Paging.Cursor]
-  ): Future[Activity.Page] = call(Api.activity)(
+  ): Future[api.automation.activity.Page] = call(Api.activity)(
     (
       show.map(s => Activity.Kind(s.value)),
       since,
@@ -306,7 +354,7 @@ object ApiClient:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def removeNote(id: Note.Id): Future[Note] = call(PersonalApi.removeNote)(id)
   def readMarks(): Future[List[ReadMark]] =
-    call(PersonalApi.reading)((None, Some(Activity.Show.Wire("all")), Some(PersonalIds.MaxLimit)))
+    call(PersonalApi.reading)((None, Some(Show.Wire("all")), Some(PersonalIds.MaxLimit)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setRead(m: ReadMark.Set): Future[ReadMark] =
     call(PersonalApi.setRead)(m)
@@ -328,7 +376,7 @@ object ApiClient:
   def backups(): Future[List[Backup.Info]] = call(Api.backups)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def initData(fetch: Api.Fetching): Future[JobInfo] = call(Api.init)(fetch)
-  def placeSources(): Future[List[Gazetteer.SourceInfo]] = call(Api.placeSources)(())
+  def placeSources(): Future[List[SourceInfo]] = call(Api.placeSources)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def loadPlaces(source: Api.ExternalPlaces.Source): Future[JobInfo] = call(Api.loadPlaces)((source, Api.Apply.Apply))
   def eventCatalogues(): Future[List[CatalogProviderInfo]] = call(EventsApi.catalogues)(())
@@ -347,15 +395,15 @@ object ApiClient:
     call(AcquisitionWorkApi.acquireRecheck)(in)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queuePatch(id: Queue.QueueItem.Id, p: Queue.QueuePatch): Future[Queue.QueueItem] =
+  def queuePatch(id: QueueItem.Id, p: QueuePatch): Future[QueueItem] =
     call(OpsApi.queuePatch)((Queue.Id(id.value), p))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueAdd(list: Queue.Kind.Label, in: Queue.QueueAdd): Future[Queue.QueueItem] =
+  def queueAdd(list: api.automation.queue.Kind.Label, in: QueueAdd): Future[QueueItem] =
     call(OpsApi.queueAdd)((Queue.Wire(list.value), in))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def queueDelete(id: Queue.QueueItem.Id): Future[Queue.QueueItem] =
+  def queueDelete(id: QueueItem.Id): Future[QueueItem] =
     call(OpsApi.queueDelete)(Queue.Id(id.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -404,7 +452,7 @@ object ApiClient:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def jobs(
-      f: ListFilters.JobFilter,
+      f: JobFilter,
       limit: Option[Paging.Limit],
       before: Option[Paging.Cursor] = None,
       upTo: Option[Paging.Cursor] = None
@@ -427,74 +475,74 @@ object ApiClient:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def agentRuns(
-      f: ListFilters.RunFilter,
+      f: RunFilter,
       limit: Option[Paging.Limit],
       before: Option[Paging.Cursor] = None,
       upTo: Option[Paging.Cursor] = None
-  ): Future[(List[Agents.RunInfo], Paging.Page)] =
+  ): Future[(List[RunInfo], Paging.Page)] =
     call(AgentsApi.runs)(
-      (f, limit, before.map(c => Agents.RunInfo.Status(c.value)), upTo.map(c => Agents.RunInfo.Pipeline(c.value)))
+      (f, limit, before.map(c => RunInfo.Status(c.value)), upTo.map(c => RunInfo.Pipeline(c.value)))
     )
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def startRun(req: Agents.RunRequest): Future[Agents.RunInfo] = call(AgentsApi.startRun)(req)
+  def startRun(req: RunRequest): Future[RunInfo] = call(AgentsApi.startRun)(req)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def agentRun(id: Agents.RunInfo.Id): Future[Agents.RunDetail] = call(AgentsApi.run)(id)
+  def agentRun(id: RunInfo.Id): Future[RunDetail] = call(AgentsApi.run)(id)
 
   /** pause | resume | cancel; a resume may raise the run's cost cap (the way out of a budget pause). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def agentControl(
-      id: Agents.RunInfo.Id,
+      id: RunInfo.Id,
       action: Api.JobControl.Action,
-      budgetUsd: Option[Agents.RunRequest.BudgetUsd] = None
-  ): Future[Agents.RunInfo] =
+      budgetUsd: Option[RunRequest.BudgetUsd] = None
+  ): Future[RunInfo] =
     call(AgentsApi.control)((id, action, budgetUsd, None))
-  def agentModels: Future[Agents.ModelsInfo] = call(AgentsApi.models)(())
+  def agentModels: Future[ModelsInfo] = call(AgentsApi.models)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def setChain(
-      role: ModelChains.RoleChain.Role,
-      models: List[ModelChains.ChainSet.Models]
-  ): Future[ModelChains.RoleChain] =
-    call(AgentsApi.setChain)((AgentRole.Wire(role.value), ModelChains.ChainSet(models)))
+      role: RoleChain.Role,
+      models: List[ChainSet.Models]
+  ): Future[RoleChain] =
+    call(AgentsApi.setChain)((AgentRole.Wire(role.value), ChainSet(models)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def resetChain(role: ModelChains.RoleChain.Role): Future[ModelChains.RoleChain] =
+  def resetChain(role: RoleChain.Role): Future[RoleChain] =
     call(AgentsApi.resetChain)(AgentRole.Wire(role.value))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
+  def setAllowance(in: AllowanceSet): Future[AllowanceStatus] = call(AgentsApi.setAllowance)(in)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def removeAllowance(target: ModelChains.AllowanceStatus.Target): Future[Goal.Plans.Removed] =
+  def removeAllowance(target: AllowanceStatus.Target): Future[Goal.Plans.Removed] =
     call(AgentsApi.removeAllowance)(ReviewGoal.Slug(target.value))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def agentDoctor(offline: Agents.DoctorReport.Online): Future[Agents.DoctorReport] =
+  def agentDoctor(offline: DoctorReport.Online): Future[DoctorReport] =
     call(AgentsApi.doctor)(Some(offline))
-  def agentQuota: Future[PlanQuota.QuotaInfo] = call(AgentsApi.quota)(())
+  def agentQuota: Future[QuotaInfo] = call(AgentsApi.quota)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def setPool(pool: PlanQuota.PoolId.Wire, in: PlanQuota.PoolSet): Future[PlanQuota.PoolStatus] =
+  def setPool(pool: PoolId.Wire, in: PoolSet): Future[PoolStatus] =
     call(AgentsApi.setPool)((PlanQuota.PoolIdText(pool.value), in))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def refreshQuota(pool: PlanQuota.PoolId.Wire): Future[PlanQuota.QuotaRefreshed] =
-    call(AgentsApi.refreshQuota)(PlanQuota.QuotaRefresh(Some(pool)))
+  def refreshQuota(pool: PoolId.Wire): Future[QuotaRefreshed] =
+    call(AgentsApi.refreshQuota)(QuotaRefresh(Some(pool)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def approvals(
-      f: ListFilters.ApprovalFilter,
+      f: ApprovalFilter,
       limit: Option[Paging.Limit],
       before: Option[Paging.Cursor] = None,
       upTo: Option[Paging.Cursor] = None
-  ): Future[(List[Agents.ApprovalInfo], Paging.Page)] =
+  ): Future[(List[ApprovalInfo], Paging.Page)] =
     call(AgentsApi.approvals)(
       (f, limit, before.map(c => Approval.State.Wire(c.value)), upTo.map(c => Approval.Kind.Wire(c.value)))
     )
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def decide(
-      id: Agents.ApprovalInfo.Id,
-      d: Agents.Decision,
-      note: Option[Agents.DecisionRequest.Note]
-  ): Future[Agents.ApprovalInfo] =
-    call(AgentsApi.decide)((id, d.wire, Agents.DecisionRequest(note)))
+      id: ApprovalInfo.Id,
+      d: Decision,
+      note: Option[DecisionRequest.Note]
+  ): Future[ApprovalInfo] =
+    call(AgentsApi.decide)((id, d.wire, DecisionRequest(note)))
 
   // ── goals: the list, one goal's view, its links and schedules ───────────────────────────────────
 
@@ -632,106 +680,106 @@ object ApiClient:
 
   // ── process managers (docs/research-process-managers.md) ─────────────────────────────────────────
 
-  def managers: Future[List[Managers.ManagerInfo]] = call(ManagersApi.list)(())
+  def managers: Future[List[ManagerInfo]] = call(ManagersApi.list)(())
   def autopilot: Future[AutopilotStatus] = call(AutopilotApi.autopilot)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def setAutopilot(on: Autopilot.AutopilotSet.On): Future[AutopilotStatus] =
-    call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on, Some(Autopilot.AutopilotSet.By("web"))))
+  def setAutopilot(on: AutopilotSet.On): Future[AutopilotStatus] =
+    call(AutopilotApi.setAutopilot)(AutopilotSet(on, Some(AutopilotSet.By("web"))))
 
   /** The autopilot's focus: pin/unpin/priority a goal, or the cap (`max`; no value: the config's). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setFocus(
-      action: Autopilot.FocusSet.Action,
+      action: FocusSet.Action,
       goal: Option[Goal.Slug] = None,
-      value: Option[Autopilot.FocusSet.Value] = None
-  ): Future[Autopilot.FocusInfo] =
-    call(ManagersApi.setFocus)(Autopilot.FocusSet(action, goal, value, Some(Autopilot.FocusSet.By("web"))))
+      value: Option[FocusSet.Value] = None
+  ): Future[FocusInfo] =
+    call(ManagersApi.setFocus)(FocusSet(action, goal, value, Some(FocusSet.By("web"))))
 
   /** The central scheduler: its status and queue (`limit` waiting items), a live strategy switch, one item's why. */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def scheduler(limit: Option[Paging.Limit] = None): Future[AgentScheduler.SchedulerStatus] =
+  def scheduler(limit: Option[Paging.Limit] = None): Future[SchedulerStatus] =
     call(ManagersApi.scheduler)(limit.map(l => Managers.Scheduler.Limit(l.value)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def setScheduler(strategy: AgentScheduler.SchedulerSet.Strategy): Future[AgentScheduler.SchedulerStatus] =
-    call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(strategy, Some(AgentScheduler.SchedulerSet.By("web"))))
+  def setScheduler(strategy: SchedulerSet.Strategy): Future[SchedulerStatus] =
+    call(ManagersApi.setScheduler)(SchedulerSet(strategy, Some(SchedulerSet.By("web"))))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def schedulerWhy(item: Managers.ManagerInfo.Id): Future[AgentScheduler.WhyInfo] = call(ManagersApi.schedulerWhy)(item)
+  def schedulerWhy(item: ManagerInfo.Id): Future[WhyInfo] = call(ManagersApi.schedulerWhy)(item)
 
   /** Drain (nothing new starts while the runs in flight finish) or lift it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def drain(on: Autopilot.DrainSet.On): Future[AutopilotStatus] =
-    call(AutopilotApi.drain)(Autopilot.DrainSet(on, Some(Autopilot.DrainSet.By("web"))))
+  def drain(on: DrainSet.On): Future[AutopilotStatus] =
+    call(AutopilotApi.drain)(DrainSet(on, Some(DrainSet.By("web"))))
 
   /** The goals with no progress in `days` days, why, and what unblocks them. */
-  def stalls(days: Option[Stalls.Limit] = None): Future[Stalls.StallReport] = call(ManagersApi.stalls)(days)
+  def stalls(days: Option[Stall.Limit] = None): Future[Stall.StallReport] = call(ManagersApi.stalls)(days)
 
   /** Everything waiting for a person, by kind. */
-  def approvalDigest: Future[ApprovalDigest.Digest] = call(ManagersApi.digest)(())
+  def approvalDigest: Future[Digest] = call(ManagersApi.digest)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def manager(id: Managers.ManagerInfo.Id): Future[Managers.ManagerDetail] = call(ManagersApi.get)(id)
+  def manager(id: ManagerInfo.Id): Future[ManagerDetail] = call(ManagersApi.get)(id)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def managerUpdate(id: Managers.ManagerInfo.Id, in: Managers.ManagerUpdate): Future[Managers.ManagerInfo] =
+  def managerUpdate(id: ManagerInfo.Id, in: ManagerUpdate): Future[ManagerInfo] =
     call(ManagersApi.update)((id, in))
 
   /** pause | resume | stop; `runs` = a pause takes its runs in flight with it. */
   @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def managerAction(
-      id: Managers.ManagerInfo.Id,
+      id: ManagerInfo.Id,
       action: ManagersApi.Action,
       runs: Boolean = false
-  ): Future[Managers.ManagerInfo] =
+  ): Future[ManagerInfo] =
     call(ManagersApi.action)((id, action, Option.when(runs)(true)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def managerItems(
-      id: Managers.ManagerInfo.Id,
+      id: ManagerInfo.Id,
       status: Option[ItemStatus.Wire],
       offset: Offset,
       limit: Paging.Limit
-  ): Future[Managers.ItemPage] =
+  ): Future[ItemPage] =
     call(ManagersApi.items)(
-      (id, status, Some(Managers.ItemPage.Limit(offset.value)), Some(UnreadPage.Offset(limit.value)))
+      (id, status, Some(ItemPage.Limit(offset.value)), Some(UnreadPage.Offset(limit.value)))
     )
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def managerPatchItem(
-      id: Managers.ManagerInfo.Id,
-      item: Managers.ManagerItem.Id,
-      p: Managers.ItemPatch
-  ): Future[Managers.ManagerItem] =
-    call(ManagersApi.patchItem)((id, Managers.ManagerItem.Ref(item.value.toString), p))
+      id: ManagerInfo.Id,
+      item: ManagerItem.Id,
+      p: ItemPatch
+  ): Future[ManagerItem] =
+    call(ManagersApi.patchItem)((id, ManagerItem.Ref(item.value.toString), p))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def managerAddHint(id: Managers.ManagerInfo.Id, in: Managers.HintAdd): Future[Managers.ManagerHint] =
+  def managerAddHint(id: ManagerInfo.Id, in: HintAdd): Future[ManagerHint] =
     call(ManagersApi.addHint)((id, in))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def managerRemoveHint(id: Managers.ManagerInfo.Id, hint: Managers.ManagerHint.Id): Future[Goal.Plans.Removed] =
+  def managerRemoveHint(id: ManagerInfo.Id, hint: ManagerHint.Id): Future[Goal.Plans.Removed] =
     call(ManagersApi.removeHint)((id, hint))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def managerEvents(
-      id: Managers.ManagerInfo.Id,
-      before: Option[Managers.EventPage.Before],
+      id: ManagerInfo.Id,
+      before: Option[EventPage.Before],
       limit: Paging.Limit
-  ): Future[Managers.EventPage] =
-    call(ManagersApi.events)((id, before, Some(Managers.EventPage.Limit(limit.value))))
+  ): Future[EventPage] =
+    call(ManagersApi.events)((id, before, Some(EventPage.Limit(limit.value))))
 
   /** A page button — Review, Extend, Enrich (an article or a goal), Extend a goal (`seed`): the target goes to the
     * manager of its kind, first in line.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def enqueue(kind: Managers.EnqueueKind, target: Managers.EnqueueRequest.Target): Future[Managers.EnqueueResult] =
-    call(ManagersApi.enqueue)(Managers.EnqueueRequest(kind.wire, target, Some(Managers.EnqueueRequest.Priority(10))))
+  def enqueue(kind: EnqueueKind, target: EnqueueRequest.Target): Future[EnqueueResult] =
+    call(ManagersApi.enqueue)(EnqueueRequest(kind.wire, target, Some(EnqueueRequest.Priority(10))))
 
   /** The article window's Review button: the article goes to the review manager, first in line. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def enqueueReview(slug: Article.Slug): Future[Managers.EnqueueResult] =
-    enqueue(Managers.EnqueueKind.Review, Managers.EnqueueRequest.Target(slug.value))
+  def enqueueReview(slug: Article.Slug): Future[EnqueueResult] =
+    enqueue(EnqueueKind.Review, EnqueueRequest.Target(slug.value))
 
   /** A new manager (the New research area form's seeding manager); created paused. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def managerCreate(in: Managers.ManagerCreate): Future[Managers.ManagerInfo] = call(ManagersApi.create)(in)
+  def managerCreate(in: ManagerCreate): Future[ManagerInfo] = call(ManagersApi.create)(in)
 
   /** A page's HTML fragment, whatever the status (an error page is shown as it is). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

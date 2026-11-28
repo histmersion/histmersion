@@ -1,6 +1,20 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.EnqueueKind
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.domain.managerpolicy.CronStep
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.testsupport.ComparedByValue.given
@@ -31,69 +45,63 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-15T12:00:00Z")
   private val s = ReviewSettings(
-    maxRuns = ManagerPolicy.ReviewSettings.MaxRuns(2),
-    maxOpen = ManagerPolicy.ReviewSettings.MaxOpen(4),
-    rounds = ManagerPolicy.ReviewSettings.Rounds(3),
-    maxRunsPerArticle = ManagerPolicy.ReviewSettings.MaxRunsPerArticle(3),
-    noProgressRuns = ManagerPolicy.ReviewSettings.NoProgressRuns(2),
-    reopenLimit = ManagerPolicy.ReviewSettings.ReopenLimit(2),
-    cooldownMinutes = ManagerPolicy.ReviewSettings.CooldownMinutes(30),
-    lowWater = ManagerPolicy.ReviewSettings.LowWater(2),
-    refillBatch = ManagerPolicy.ReviewSettings.RefillBatch(10),
-    maxFailures = ManagerPolicy.ReviewSettings.MaxFailures(3),
-    backoffMinutes = ManagerPolicy.ReviewSettings.BackoffMinutes(15),
-    maxBackoffMinutes = ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360)
+    maxRuns = ReviewSettings.MaxRuns(2),
+    maxOpen = ReviewSettings.MaxOpen(4),
+    rounds = ReviewSettings.Rounds(3),
+    maxRunsPerArticle = ReviewSettings.MaxRunsPerArticle(3),
+    noProgressRuns = ReviewSettings.NoProgressRuns(2),
+    reopenLimit = ReviewSettings.ReopenLimit(2),
+    cooldownMinutes = ReviewSettings.CooldownMinutes(30),
+    lowWater = ReviewSettings.LowWater(2),
+    refillBatch = ReviewSettings.RefillBatch(10),
+    maxFailures = ReviewSettings.MaxFailures(3),
+    backoffMinutes = ReviewSettings.BackoffMinutes(15),
+    maxBackoffMinutes = ReviewSettings.MaxBackoffMinutes(360)
   )
 
   test("dispatch order: priority, then the earliest not-before, then the oldest"):
     val cs = List(
       Candidate(
-        ManagerPolicy.Candidate.Id(3),
-        ManagerPolicy.Candidate.Target("c"),
-        ManagerPolicy.Candidate.Priority(0),
+        Candidate.Id(3),
+        Candidate.Target("c"),
+        Candidate.Priority(0),
         None
       ),
       Candidate(
-        ManagerPolicy.Candidate.Id(1),
-        ManagerPolicy.Candidate.Target("a"),
-        ManagerPolicy.Candidate.Priority(0),
+        Candidate.Id(1),
+        Candidate.Target("a"),
+        Candidate.Priority(0),
         Some(now)
       ),
       Candidate(
-        ManagerPolicy.Candidate.Id(2),
-        ManagerPolicy.Candidate.Target("b"),
-        ManagerPolicy.Candidate.Priority(10),
+        Candidate.Id(2),
+        Candidate.Target("b"),
+        Candidate.Priority(10),
         None
       ),
       Candidate(
-        ManagerPolicy.Candidate.Id(4),
-        ManagerPolicy.Candidate.Target("d"),
-        ManagerPolicy.Candidate.Priority(0),
+        Candidate.Id(4),
+        Candidate.Target("d"),
+        Candidate.Priority(0),
         Some(now.minusSeconds(60))
       )
     )
     assertEquals(order(cs).map(_.target), List("b", "c", "d", "a"))
     assert(
-      !due(
-        Candidate(
-          ManagerPolicy.Candidate.Id(5),
-          ManagerPolicy.Candidate.Target("e"),
-          ManagerPolicy.Candidate.Priority(0),
-          Some(now.plusSeconds(1))
-        ),
-        now
-      )
+      !Candidate(
+        Candidate.Id(5),
+        Candidate.Target("e"),
+        Candidate.Priority(0),
+        Some(now.plusSeconds(1))
+      ).due(now)
     )
     assert(
-      due(
-        Candidate(
-          ManagerPolicy.Candidate.Id(5),
-          ManagerPolicy.Candidate.Target("e"),
-          ManagerPolicy.Candidate.Priority(0),
-          Some(now)
-        ),
-        now
-      )
+      Candidate(
+        Candidate.Id(5),
+        Candidate.Target("e"),
+        Candidate.Priority(0),
+        Some(now)
+      ).due(now)
     )
 
   test("capacity: the global room, the manager's runs and open runs, the pools"):
@@ -101,9 +109,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       capacity(
         ManagerPolicy.MaxConcurrent(4),
         ManagerPolicy.ActiveAll(1),
-        ManagerPolicy.ReviewSettings.MaxRuns(2),
+        ReviewSettings.MaxRuns(2),
         ManagerPolicy.MineRunning(0),
-        ManagerPolicy.ReviewSettings.MaxOpen(4),
+        ReviewSettings.MaxOpen(4),
         ManagerPolicy.MineOpen(0),
         None
       ),
@@ -113,9 +121,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       capacity(
         ManagerPolicy.MaxConcurrent(4),
         ManagerPolicy.ActiveAll(4),
-        ManagerPolicy.ReviewSettings.MaxRuns(2),
+        ReviewSettings.MaxRuns(2),
         ManagerPolicy.MineRunning(0),
-        ManagerPolicy.ReviewSettings.MaxOpen(4),
+        ReviewSettings.MaxOpen(4),
         ManagerPolicy.MineOpen(0),
         None
       ),
@@ -125,9 +133,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       capacity(
         ManagerPolicy.MaxConcurrent(4),
         ManagerPolicy.ActiveAll(1),
-        ManagerPolicy.ReviewSettings.MaxRuns(2),
+        ReviewSettings.MaxRuns(2),
         ManagerPolicy.MineRunning(1),
-        ManagerPolicy.ReviewSettings.MaxOpen(4),
+        ReviewSettings.MaxOpen(4),
         ManagerPolicy.MineOpen(1),
         None
       ),
@@ -137,9 +145,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       capacity(
         ManagerPolicy.MaxConcurrent(4),
         ManagerPolicy.ActiveAll(1),
-        ManagerPolicy.ReviewSettings.MaxRuns(2),
+        ReviewSettings.MaxRuns(2),
         ManagerPolicy.MineRunning(0),
-        ManagerPolicy.ReviewSettings.MaxOpen(4),
+        ReviewSettings.MaxOpen(4),
         ManagerPolicy.MineOpen(4),
         None
       ),
@@ -149,9 +157,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       capacity(
         ManagerPolicy.MaxConcurrent(4),
         ManagerPolicy.ActiveAll(0),
-        ManagerPolicy.ReviewSettings.MaxRuns(2),
+        ReviewSettings.MaxRuns(2),
         ManagerPolicy.MineRunning(0),
-        ManagerPolicy.ReviewSettings.MaxOpen(4),
+        ReviewSettings.MaxOpen(4),
         ManagerPolicy.MineOpen(0),
         Some(ManagerPolicy.PoolCap(1))
       ),
@@ -161,9 +169,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       capacity(
         ManagerPolicy.MaxConcurrent(1),
         ManagerPolicy.ActiveAll(3),
-        ManagerPolicy.ReviewSettings.MaxRuns(2),
+        ReviewSettings.MaxRuns(2),
         ManagerPolicy.MineRunning(0),
-        ManagerPolicy.ReviewSettings.MaxOpen(4),
+        ReviewSettings.MaxOpen(4),
         ManagerPolicy.MineOpen(0),
         None
       ),
@@ -183,19 +191,37 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(roundRobin(List(("a", ManagerPolicy.Quota(2), List(1, 2, 3))), ManagerPolicy.Room(0)), Nil)
 
   test("holds: a date that passed, a source that exists; neither waits for a person"):
-    assert(released(Hold(until = Some(Managers.Hold.Until("2026-10-15"))), now, _ => false))
-    assert(!released(Hold(until = Some(Managers.Hold.Until("2026-10-16T00:00:00Z"))), now, _ => false))
-    assert(released(Hold(untilSource = Some(Managers.Hold.UntilSource("10.1/x"))), now, _.value == "10.1/x"))
-    assert(!released(Hold(reason = Managers.Rationale("person")), now, _ => true))
+    assert(
+      released(
+        api.automation.managers.Hold(until = Some(api.automation.managers.Hold.Until("2026-10-15"))),
+        now,
+        _ => false
+      )
+    )
+    assert(
+      !released(
+        api.automation.managers.Hold(until = Some(api.automation.managers.Hold.Until("2026-10-16T00:00:00Z"))),
+        now,
+        _ => false
+      )
+    )
+    assert(
+      released(
+        api.automation.managers.Hold(untilSource = Some(api.automation.managers.Hold.UntilSource("10.1/x"))),
+        now,
+        _.value == "10.1/x"
+      )
+    )
+    assert(!released(api.automation.managers.Hold(reason = Managers.Rationale("person")), now, _ => true))
 
   test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
     val e = HintEffect(HintEffect.Verb.Prioritise.word, tag = Some(HintEffect.Tag("Tin Trade")))
-    assert(matches(e, ManagerPolicy.Candidate.Target("x"), List(ManagerPolicy.Tag("tin trade")), Nil, Nil))
-    assert(!matches(e, ManagerPolicy.Candidate.Target("x"), List(ManagerPolicy.Tag("copper")), Nil, Nil))
+    assert(matches(e, Candidate.Target("x"), List(ManagerPolicy.Tag("tin trade")), Nil, Nil))
+    assert(!matches(e, Candidate.Target("x"), List(ManagerPolicy.Tag("copper")), Nil, Nil))
     assert(
       matches(
-        HintEffect(HintEffect.Verb.Skip.word, targets = List(Managers.HintEffect.Targets("tin"))),
-        ManagerPolicy.Candidate.Target("TIN"),
+        HintEffect(HintEffect.Verb.Skip.word, targets = List(HintEffect.Targets("tin"))),
+        Candidate.Target("TIN"),
         Nil,
         Nil,
         Nil
@@ -204,38 +230,38 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(
       matches(
         HintEffect(HintEffect.Verb.Hold.word, goal = Some(Goal.Slug("g"))),
-        ManagerPolicy.Candidate.Target("x"),
+        Candidate.Target("x"),
         Nil,
         Nil,
         List(automation.Goal.Slug("g"))
       )
     )
     val hs = List(
-      ManagerHint(Managers.ManagerHint.Id(2), Managers.ManagerInfo.Id("review"), None, Managers.ManagerHint.Text("b")),
+      ManagerHint(ManagerHint.Id(2), ManagerInfo.Id("review"), None, ManagerHint.Text("b")),
       ManagerHint(
-        Managers.ManagerHint.Id(1),
-        Managers.ManagerInfo.Id("review"),
-        Some(Managers.ManagerHint.ItemId(7)),
-        Managers.ManagerHint.Text("a")
+        ManagerHint.Id(1),
+        ManagerInfo.Id("review"),
+        Some(ManagerHint.ItemId(7)),
+        ManagerHint.Text("a")
       ),
       ManagerHint(
-        Managers.ManagerHint.Id(3),
-        Managers.ManagerInfo.Id("review"),
-        Some(Managers.ManagerHint.ItemId(8)),
-        Managers.ManagerHint.Text("other item")
+        ManagerHint.Id(3),
+        ManagerInfo.Id("review"),
+        Some(ManagerHint.ItemId(8)),
+        ManagerHint.Text("other item")
       ),
       ManagerHint(
-        Managers.ManagerHint.Id(4),
-        Managers.ManagerInfo.Id("review"),
+        ManagerHint.Id(4),
+        ManagerInfo.Id("review"),
         None,
-        Managers.ManagerHint.Text("gone"),
-        retiredAt = Some(Managers.ManagerHint.RetiredAt("x"))
+        ManagerHint.Text("gone"),
+        retiredAt = Some(ManagerHint.RetiredAt("x"))
       )
     )
     assertEquals(notesFor(hs, Item.Id(7)).map(_.text), List("a", "b"))
 
   test("status line: paused, starved, at capacity, pending, idle"):
-    val chain = SchedulerPolicy.Block.Chain("skeptic chain below its plan floor")
+    val chain = Block.Chain("skeptic chain below its plan floor")
     assertEquals(
       statusNote(
         Manager.State.Paused,
@@ -250,7 +276,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(
       statusNote(
         Manager.State.Active,
-        Some(SchedulerPolicy.Block.Why.Starved(chain)),
+        Some(Block.Why.Starved(chain)),
         ManagerPolicy.Capacity(0),
         ManagerPolicy.PendingCount(3),
         ManagerPolicy.DueCount(3),
@@ -315,17 +341,17 @@ class ManagerPolicySuite extends munit.FunSuite:
   test("config: k=v pairs parse; a typo is an error; settings resolve over the defaults"):
     val c = ManagerConfig.parse(
       List(
-        Managers.ManagerConfig.Spec("max-runs=3"),
-        Managers.ManagerConfig.Spec("rounds=4"),
-        Managers.ManagerConfig.Spec("tags=a, b"),
-        Managers.ManagerConfig.Spec("models=fixer=claude-code:opus; skeptic=codex:gpt")
+        ManagerConfig.Spec("max-runs=3"),
+        ManagerConfig.Spec("rounds=4"),
+        ManagerConfig.Spec("tags=a, b"),
+        ManagerConfig.Spec("models=fixer=claude-code:opus; skeptic=codex:gpt")
       )
     )
     assertEquals(c.map(_.maxRuns), Right(Some(3)))
     assertEquals(c.map(_.includeTags), Right(Some(List("a", "b"))))
     assertEquals(c.map(_.models.map(_.map(_.role))), Right(Some(List("fixer", "skeptic"))))
-    assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("maxRun=3"))).isLeft)
-    assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("max-runs=x"))).isLeft)
+    assert(ManagerConfig.parse(List(ManagerConfig.Spec("maxRun=3"))).isLeft)
+    assert(ManagerConfig.parse(List(ManagerConfig.Spec("max-runs=x"))).isLeft)
 
   // ── phase 2 ───────────────────────────────────────────────────────────────────────────────────
 
@@ -335,16 +361,15 @@ class ManagerPolicySuite extends munit.FunSuite:
       Item.Kind.ArticleReview -> Candidate.Target("a"),
       Item.Kind.ArticleReview -> Candidate.Target("b")
     )
-    assert(waitsFor(Item.Kind.ArticleReview, ManagerPolicy.Candidate.Target("a"), open))
-    assert(!waitsFor(Item.Kind.ArticleReview, ManagerPolicy.Candidate.Target("b"), open))
-    assert(!waitsFor(Item.Kind.InferFilter, ManagerPolicy.Candidate.Target("a"), open))
+    assert(waitsFor(Item.Kind.ArticleReview, Candidate.Target("a"), open))
+    assert(!waitsFor(Item.Kind.ArticleReview, Candidate.Target("b"), open))
+    assert(!waitsFor(Item.Kind.InferFilter, Candidate.Target("a"), open))
 
   test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
     def ev(st: RunState, f: StepFacts, failures: Next.Retry.Failures = Next.Retry.Failures(0)) =
-      evaluateStep(
-        s,
+      s.evaluateStep(
         StepLabel(InferFilter),
-        ManagerPolicy.Candidate.Target("tin"),
+        Candidate.Target("tin"),
         failures,
         ItemState(),
         Run.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"),
@@ -396,7 +421,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(ReviewSettings.forKind(Manager.Kind.Enrich, ManagerConfig(), m).maxRuns, 4)
     assertEquals(
       ReviewSettings
-        .forKind(Manager.Kind.Seed, ManagerConfig(maxRuns = Some(Managers.ManagerConfig.MaxRuns(2))), m)
+        .forKind(Manager.Kind.Seed, ManagerConfig(maxRuns = Some(ManagerConfig.MaxRuns(2))), m)
         .maxRuns,
       2
     )
@@ -407,17 +432,17 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals((sd.maxRuns, sd.minSources, sd.maxArticles), (Some(1), Some(5), Some(6)))
     val c = ManagerConfig.parse(
       List(
-        Managers.ManagerConfig.Spec("stale-after-days=30"),
-        Managers.ManagerConfig.Spec("infer-filter=off"),
-        Managers.ManagerConfig.Spec("min-sources=3"),
-        Managers.ManagerConfig.Spec("max-articles=4")
+        ManagerConfig.Spec("stale-after-days=30"),
+        ManagerConfig.Spec("infer-filter=off"),
+        ManagerConfig.Spec("min-sources=3"),
+        ManagerConfig.Spec("max-articles=4")
       )
     )
     assertEquals(
       c.map(x => (x.staleAfterDays, x.inferFilter.map(_.inferFilter), x.minSources, x.maxArticles)),
       Right((Some(30), Some(false), Some(3), Some(4)))
     )
-    assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("infer-filter=maybe"))).isLeft)
+    assert(ManagerConfig.parse(List(ManagerConfig.Spec("infer-filter=maybe"))).isLeft)
 
   test("item kinds and the enqueue words"):
     assertEquals(
@@ -436,9 +461,9 @@ class ManagerPolicySuite extends munit.FunSuite:
       itemKindOf(api.automation.Manager.Kind.Enrich, api.ItemKind.Word("review")),
       None
     )
-    assertEquals(EnqueueKind.parse(Managers.EnqueueKind.Wire("source-enrich")), Some(EnqueueKind.Enrich))
-    assertEquals(EnqueueKind.parse(Managers.EnqueueKind.Wire("")), Some(EnqueueKind.Review))
-    assertEquals(EnqueueKind.parse(Managers.EnqueueKind.Wire("nope")), None)
+    assertEquals(EnqueueKind.parse(EnqueueKind.Wire("source-enrich")), Some(EnqueueKind.Enrich))
+    assertEquals(EnqueueKind.parse(EnqueueKind.Wire("")), Some(EnqueueKind.Review))
+    assertEquals(EnqueueKind.parse(EnqueueKind.Wire("nope")), None)
 
   // ── phase 3: the watcher and the cron ──────────────────────────────────────────────────────────
 
@@ -485,7 +510,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     assertEquals(watchId(Goal.Ref(" tin ")), "watch:tin")
     assertEquals(Sweep.of(ManagerConfig()), List(Sweep.Acquisition, Sweep.Currency))
-    assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List(Managers.Sweep.Wire("currency"))))), List(Sweep.Currency))
+    assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List(Sweep.Wire("currency"))))), List(Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(Nil))), Nil)
     assertEquals(ReviewSettings.forKind(Manager.Kind.Watch, ManagerConfig(), mcfg).maxRuns, 1)
     val d = watch.managerDefaults(mcfg)
@@ -495,9 +520,9 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     val c = ManagerConfig.parse(
       List(
-        Managers.ManagerConfig.Spec("sweeps=acquisition-sweep, currency"),
-        Managers.ManagerConfig.Spec("auto-ingest=on"),
-        Managers.ManagerConfig.Spec("auto-ingest-per-day=3")
+        ManagerConfig.Spec("sweeps=acquisition-sweep, currency"),
+        ManagerConfig.Spec("auto-ingest=on"),
+        ManagerConfig.Spec("auto-ingest-per-day=3")
       )
     )
     assertEquals(
@@ -506,7 +531,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
     assert(
       ManagerConfig
-        .parse(List(Managers.ManagerConfig.Spec("sweeps=weekly")))
+        .parse(List(ManagerConfig.Spec("sweeps=weekly")))
         .left
         .exists(_.exists {
           case Problem.Invalid.Unknown(_, raw, _, at) =>
@@ -514,34 +539,34 @@ class ManagerPolicySuite extends munit.FunSuite:
           case _ => false
         })
     )
-    assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
+    assert(ManagerConfig.parse(List(ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
 
   test("auto-ingest is opt-in: off by default; on, what is left of the daily cap (the watcher's own cap wins)"):
     assertEquals(watch.ingestAllowance(ManagerConfig(), WatchManagerDefaults.IngestedToday(0)), 0)
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Manual)),
+        ManagerConfig(autoIngest = Some(ManagerConfig.AutoIngest.Manual)),
         WatchManagerDefaults.IngestedToday(0)
       ),
       0
     )
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto)),
+        ManagerConfig(autoIngest = Some(ManagerConfig.AutoIngest.Auto)),
         WatchManagerDefaults.IngestedToday(0)
       ),
       5
     )
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto)),
+        ManagerConfig(autoIngest = Some(ManagerConfig.AutoIngest.Auto)),
         WatchManagerDefaults.IngestedToday(4)
       ),
       1
     )
     assertEquals(
       watch.ingestAllowance(
-        ManagerConfig(autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto)),
+        ManagerConfig(autoIngest = Some(ManagerConfig.AutoIngest.Auto)),
         WatchManagerDefaults.IngestedToday(9)
       ),
       0
@@ -549,8 +574,8 @@ class ManagerPolicySuite extends munit.FunSuite:
     assertEquals(
       watch.ingestAllowance(
         ManagerConfig(
-          autoIngest = Some(Managers.ManagerConfig.AutoIngest.Auto),
-          autoIngestPerDay = Some(Managers.ManagerConfig.AutoIngestPerDay(2))
+          autoIngest = Some(ManagerConfig.AutoIngest.Auto),
+          autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(2))
         ),
         WatchManagerDefaults.IngestedToday(1)
       ),
@@ -608,7 +633,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       Some(5.0)
     )
     assertEquals(
-      ManagerConfig.parse(List(Managers.ManagerConfig.Spec("daily-usd=1.5"))).map(_.dailyUsd),
+      ManagerConfig.parse(List(ManagerConfig.Spec("daily-usd=1.5"))).map(_.dailyUsd),
       Right(Some(1.5))
     )
-    assert(ManagerConfig.parse(List(Managers.ManagerConfig.Spec("daily-usd=-1"))).isLeft)
+    assert(ManagerConfig.parse(List(ManagerConfig.Spec("daily-usd=-1"))).isLeft)

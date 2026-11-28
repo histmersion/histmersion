@@ -1,6 +1,8 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.api.given
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -47,4 +49,4 @@ final class OpenWorkTools(view: OpenWorkView):
     )
 
 object OpenWorkTools:
-  final case class WhyInput(id: Queue.QueueItem.Id) derives JsonCodec, KindlingsSchema, api.json.Schema
+  final case class WhyInput(id: QueueItem.Id) derives JsonCodec, KindlingsSchema, api.json.Schema

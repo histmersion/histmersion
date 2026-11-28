@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.api.library.acquire.RetractionRow
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.testsupport.ComparedByValue.given
@@ -23,7 +25,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 abstract class AssessmentServiceContract extends AcquisitionStoreSuite:
 
   private def row(doi: Doi, reason: RetractionNotice.Account, date: RetractionNotice.Date) =
-    Acquire.RetractionRow(doi, Some(reason), Some(date), Some(RetractionNotice.Nature("Retraction")))
+    RetractionRow(doi, Some(reason), Some(date), Some(RetractionNotice.Nature("Retraction")))
 
   stest("the mirror is replaced whole; a DOI listed twice keeps its last row") { s =>
     assertEquals(s.assessments.retractionCount, 0)

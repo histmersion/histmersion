@@ -1,6 +1,11 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Goal.Plans.GoalSchedule

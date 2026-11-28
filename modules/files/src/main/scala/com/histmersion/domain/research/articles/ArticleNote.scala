@@ -9,7 +9,7 @@ import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
 import com.histmersion.api.catalogue.{Period, Year}
 import com.histmersion.api.library.Citekey
-import com.histmersion.api.research.{Article, Articles, Coverage}
+import com.histmersion.api.research.{Article, Coverage}
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
@@ -84,14 +84,14 @@ object ArticleNote:
       val slug = str(m, "slug").getOrElse(fallbackSlug.value).trim.toLowerCase
       Article(
         slug = Article.Slug(slug),
-        title = Article.Title(str(m, "title").orElse(Articles.heading(body).map(_.value)).getOrElse(slug)),
+        title = Article.Title(str(m, "title").orElse(Article.heading(body).map(_.value)).getOrElse(slug)),
         kind = Article.KindValue(
           str(m, "type").orElse(str(m, "kind")).getOrElse(fallbackKind.value).trim.toLowerCase
         ),
         body = body,
         summary = str(m, "summary")
           .orElse(str(m, "question"))
-          .orElse(Articles.lede(body).map(_.value))
+          .orElse(Article.lede(body).map(_.value))
           .map(Article.SummaryText(_)),
         tags = (list(m, "tags") ++ list(m, "topics") ++ list(m, "cultures"))
           .map(_.trim)

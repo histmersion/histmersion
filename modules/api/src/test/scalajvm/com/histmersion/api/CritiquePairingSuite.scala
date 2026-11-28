@@ -1,11 +1,14 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.research.critiquepairing.Work
+import com.histmersion.api.checks.lint.Rule
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.research.CritiquePairing.*
 import com.histmersion.api.checks.Lint
-import com.histmersion.api.research.{CritiquePair, Critiques, CritiqueSide, CritiqueState}
+import com.histmersion.api.research.{CritiquePair, CritiqueSide, CritiqueState}
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.library.{AuthorName, Citekey}
@@ -101,7 +104,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     assertEquals(fixed.value.linesIterator.size, excerpt.value.linesIterator.size)
     // nothing left to repair, and the three pairs are now addressed
     assertEquals(hits(fixed, resolve, edges, work), Nil)
-    val pairs = Critiques.build(fixed, resolve, edges, Nil)
+    val pairs = CritiquePair.build(fixed, resolve, edges, Nil)
     List(
       "bachvarova2016_hittite>latacz2004_troy",
       "kelly2021_gods>bachvarova2016_hittite",
@@ -149,7 +152,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     )
 
   test("instruction: where a critique the paragraph never names goes, and what to write there"):
-    val pairs = Critiques.build(excerpt, resolve, edges, Nil)
+    val pairs = CritiquePair.build(excerpt, resolve, edges, Nil)
     val lord = pairs.find(_.ref.wire.value == "ballesteros2024_naming>lord1960_singer").get
     val text = instruction(excerpt, lord, resolve).get
     assert(
@@ -210,4 +213,4 @@ class CritiquePairingSuite extends munit.FunSuite:
     assertEquals(items.map(_.citekey).distinct, List("achilles_origins"))
     assertEquals(items.size, 3)
     assert(items.forall(_.detail.value.contains("(fixable)")), items)
-    assert(Lint.rule(Lint.Rule.Name(Lint.ArticleCritiquePairing)).isDefined)
+    assert(Rule.rule(Rule.Name(Lint.ArticleCritiquePairing)).isDefined)

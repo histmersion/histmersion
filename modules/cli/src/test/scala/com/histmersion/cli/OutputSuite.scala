@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -22,14 +24,14 @@ class OutputSuite extends munit.FunSuite:
   private given console: util.console.Console = util.console.Console.standard
 
   test("render prints the DTO's own codec with --json, its Markdown without"):
-    val item = Queue.QueueItem(
-      Queue.QueueItem.Id(7),
-      Queue.QueueItem.List("tasks"),
-      Queue.QueueItem.Text("Read Cline"),
+    val item = QueueItem(
+      QueueItem.Id(7),
+      QueueItem.List("tasks"),
+      QueueItem.Text("Read Cline"),
       None,
-      Queue.QueueItem.Status("open"),
+      QueueItem.Status("open"),
       None,
-      Some(Queue.QueueItem.CreatedAt("2026-10-17T00:00:00Z")),
+      Some(QueueItem.CreatedAt("2026-10-17T00:00:00Z")),
       None
     )
     assertEquals(Output.render(json = Cli.JsonOutput.Text, item)(i => s"#${i.id}"), "#7")

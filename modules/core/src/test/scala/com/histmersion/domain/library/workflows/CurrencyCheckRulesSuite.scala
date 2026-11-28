@@ -10,7 +10,6 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.api.automation.Agents.ApprovalKind
-import com.histmersion.domain.AgentProposals.Proposal
 import CurrencyCheckRules.*
 import com.histmersion.api.library.FollowupRow
 import com.histmersion.api.library.Edge

@@ -1,5 +1,9 @@
 package com.histmersion
 package db
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
@@ -453,12 +457,11 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
           Managers.Kind.Watch,
           Some(Goal.Slug("zz_goal")),
           Managers.State.Paused,
-          Managers
-            .ManagerConfig(
-              sweeps = Some(List(Managers.Sweep.Wire("acquisition"))),
-              budgetUsd = Some(Managers.ManagerConfig.BudgetUsd(0.3))
-            ),
-          Some(Managers.ManagerInfo.Cron("@weekly")),
+          ManagerConfig(
+            sweeps = Some(List(Sweep.Wire("acquisition"))),
+            budgetUsd = Some(ManagerConfig.BudgetUsd(0.3))
+          ),
+          Some(ManagerInfo.Cron("@weekly")),
           None
         )
       )

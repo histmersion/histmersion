@@ -2,9 +2,10 @@ package com.histmersion
 package api
 package time
 
+import com.histmersion.api.automation.agents.RunInfo
+
 import scala.scalajs.js
 
-import com.histmersion.api.automation.Agents.RunInfo
 import com.histmersion.api.jobs.JobInfo
 
 class IsoLocalSuite extends munit.FunSuite:

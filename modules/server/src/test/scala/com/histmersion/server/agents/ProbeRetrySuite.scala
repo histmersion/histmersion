@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.ProbeRequest
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -61,7 +64,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
 
   private val Ck = Citekey("zzprobe1956_catalogue")
   private val ApiCk = api.library.Citekey("zzprobe1956_catalogue")
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("zzProbe"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("zzProbe"))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ProbeModel = ProbeRequest.Model(Model.wire.value)
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
@@ -162,7 +165,7 @@ class ProbeRetrySuite extends DbSuite with RunTranscripts:
 
   // ── #915: claude-code answering in prose ─────────────────────────────────────────────────────────
 
-  private val Haiku = ModelRef(ProviderKind.ClaudeCode, Agents.ModelRef.Model("haiku"))
+  private val Haiku = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("haiku"))
   private def result(text: String, structured: String) =
     s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${Json
         .fromString(text)

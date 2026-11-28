@@ -1,6 +1,13 @@
 package com.histmersion
 package api
 
+import com.histmersion.domain.enrichsource.Window
+import com.histmersion.domain.enrichsource.FindingGuards
+import com.histmersion.domain.enrichsource.StatedYear
+import com.histmersion.domain.enrichsource.FindingProposal
+import com.histmersion.domain.enrichsource.Findings
+import com.histmersion.api.catalogue.geocode.KindHint
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -14,7 +21,6 @@ import com.histmersion.domain.given
 import com.histmersion.domain.EnrichSource.*
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.domain.EnrichSource
-import com.histmersion.domain.AgentProposals
 import com.histmersion.domain.library.Confidence
 import com.histmersion.domain.AgentVerify
 import com.histmersion.api.catalogue.Year
@@ -32,7 +38,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       "The town was walled in the 11th century. Vesuvius buried Pompeii in 79 CE. " +
       "Rainfall rose sharply in the next period. The hoard was buried in the 15th c. by its owners."
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val window = Window(EnrichSource.Window.Index(1), None, EnrichSource.Window.Text(text))
+  private val window = Window(Window.Index(1), None, Window.Text(text))
 
   private val known = Set("Uluburun", "Pompeii")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -55,7 +61,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
   ) =
     FindingProposal(
       FindingProposal.Claim(claim),
-      AgentProposals.Proposal.Quote(quote),
+      Proposal.Quote(quote),
       place.map(FindingProposal.Place(_)),
       None,
       start,
@@ -79,8 +85,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       within: Option[Period] = None,
       last: Boolean = false
   ) =
-    checkFindings(
-      Findings(fs),
+    Findings(fs).checkFindings(
       window,
       EnrichSource.MinRatio(0.9),
       EnrichSource.CheckFindingsMaxAbsYear(3000000),
@@ -148,10 +153,10 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     )
 
   test("placement: the kind hint and the finding's period reach the gazetteer"):
-    var asked = List.empty[(String, Geocode.KindHint, Option[Period])] // records the calls for the assertion
+    var asked = List.empty[(String, KindHint, Option[Period])] // records the calls for the assertion
     val g = FindingGuards(
       FindingGuards.MinPlacedShare(0.5),
-      EnrichSource.FindingGuards.CenturyGapYears(500),
+      FindingGuards.CenturyGapYears(500),
       Nil,
       (n, k, at) => { asked = asked :+ (n.value, k, at); true }
     )
@@ -162,9 +167,9 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       Some(StatedYear(AgentVerify.ToSignedYearValue(1320), AgentVerify.YearUnit.Wire("BCE")))
     )
       .modify(_.placeKind)
-      .setTo(Some(Geocode.KindHint.Wire("site")))
+      .setTo(Some(KindHint.Wire("site")))
     assert(check(List(f), g).isRight)
-    assertEquals(asked, List(("Uluburun", Geocode.KindHint.Site, Some(Period(Year(-1320), Year(-1320))))))
+    assertEquals(asked, List(("Uluburun", KindHint.Site, Some(Period(Year(-1320), Year(-1320))))))
 
   // ── 2. centuries stored as years ──────────────────────────────────────────────────────────────
 
@@ -267,9 +272,9 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     assert(check(List(finding("Rainfall rose in this dated layer.", rain))).isRight)
     assert(check(List(finding("Rainfall rose.", "Rainfall rose sharply in the next period."))).isRight)
     assertEquals(
-      pointerPhrase(
-        EnrichSource.FindingProposal.Claim("See THE NEXT COLUMN."),
-        List(EnrichSource.FindingGuards.PointerPhrases("the next column"))
+      FindingProposal.pointerPhrase(
+        FindingProposal.Claim("See THE NEXT COLUMN."),
+        List(FindingGuards.PointerPhrases("the next column"))
       ),
       Some("the next column")
     )

@@ -1,5 +1,11 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.managers.OaWork
+import com.histmersion.api.automation.managers.ManagerEvent
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -11,7 +17,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.goals.FocusService
 import com.histmersion.domain.library.acquisition.CandidateService
 
@@ -112,7 +117,7 @@ final class SeedService(
       }
       if lines.nonEmpty then
         site.workLists.logLine(
-          QueueAdd(Queue.QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000))),
+          QueueAdd(QueueItem.Text(s"seed before the plan: ${lines.mkString("; ")}".take(1000))),
           InTreeWorkflow.Seed.creator
         )
       lines

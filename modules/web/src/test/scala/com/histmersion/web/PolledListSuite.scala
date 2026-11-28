@@ -1,5 +1,7 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.agents.RunInfo
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
@@ -189,5 +191,5 @@ class PolledListSuite extends munit.FunSuite:
   test("runs: the state a person reads, not the wire word"):
     assertEquals(RunsView.stateLabel(RunState.WaitingApproval), "Waiting for a decision")
     assertEquals(RunsView.stateLabel(RunState.Running), "Running")
-    assertEquals(RunsView.statusLabel(Agents.RunInfo.Status("waiting")), "Waiting for a decision")
-    assertEquals(RunsView.statusLabel(Agents.RunInfo.Status("nonsense")), "Nonsense")
+    assertEquals(RunsView.statusLabel(RunInfo.Status("waiting")), "Waiting for a decision")
+    assertEquals(RunsView.statusLabel(RunInfo.Status("nonsense")), "Nonsense")

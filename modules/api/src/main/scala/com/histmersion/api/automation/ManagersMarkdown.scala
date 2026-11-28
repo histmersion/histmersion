@@ -1,5 +1,17 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.managers.ItemCounts
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemPage
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.EventPage
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.managers.ManagerDetail
 import com.histmersion.util.problem.Text.sentence
 import scala.annotation.tailrec
 import com.histmersion.api.Plural

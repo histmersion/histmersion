@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.activity
+
+import com.histmersion.api.automation.activity.Entry
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Activity.{Entry, Show}
 
 import com.histmersion.util.database.NewtypeColumns.given
 

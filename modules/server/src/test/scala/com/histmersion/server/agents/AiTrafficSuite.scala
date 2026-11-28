@@ -1,5 +1,7 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -14,7 +16,7 @@ import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.server.ServerPlugins
 
-import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.config.{AppConfig, LoadedConfig}
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
 import org.ekrich.config.ConfigFactory

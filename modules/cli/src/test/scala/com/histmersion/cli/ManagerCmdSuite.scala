@@ -1,5 +1,10 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.library.repairacquire.RepairResult
+import com.histmersion.api.library.repairacquire.RepairRow
+import com.histmersion.api.automation.managers.ManagerInfo
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.util.problem.Text.sentence
@@ -54,7 +59,6 @@ class ManagerCmdSuite extends munit.FunSuite:
     assert(!parses("scheduler", "bogus"))
 
   test("autopilot focus: list, pin, unpin, priority, max parse into the request; a malformed one is a usage error"):
-    import com.histmersion.api.automation.Autopilot.FocusSet
     assertEquals(ManagerCmd.focusRequest(Nil), Right(None))
     assertEquals(ManagerCmd.focusRequest(List("list")), Right(None))
     assertEquals(
@@ -94,22 +98,22 @@ class ManagerCmdSuite extends munit.FunSuite:
     "autopilot repair-acquire [--dry-run] posts the request and prints what it did; an unknown verb is a usage error"
   ):
     val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
-    val answer = RepairAcquire.RepairResult(
-      dryRun = RepairAcquire.RepairResult.DryRun.DryRun,
-      moved = RepairAcquire.RepairResult.Moved(1),
-      untouched = RepairAcquire.RepairResult.Untouched(3),
+    val answer = RepairResult(
+      dryRun = RepairResult.DryRun.DryRun,
+      moved = RepairResult.Moved(1),
+      untouched = RepairResult.Untouched(3),
       rows = List(
-        RepairAcquire.RepairRow(
-          RepairAcquire.RepairRow.Item(7),
+        RepairRow(
+          RepairRow.Item(7),
           Doi("10.1/x"),
-          List(RepairAcquire.RepairRow.Goals("g")),
-          RepairAcquire.RepairRow.Watcher("watch:g"),
-          RepairAcquire.RepairRow.Action(RepairAcquire.Move),
-          RepairAcquire.RepairRow.Detail("legal open access")
+          List(RepairRow.Goals("g")),
+          RepairRow.Watcher("watch:g"),
+          RepairRow.Action(RepairAcquire.Move),
+          RepairRow.Detail("legal open access")
         )
       ),
-      backlog = Managers.ManagerInfo.Backlog(1),
-      backlogDays = Some(Managers.ManagerInfo.BacklogDays(1))
+      backlog = ManagerInfo.Backlog(1),
+      backlogDays = Some(ManagerInfo.BacklogDays(1))
     )
     val srv = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
     srv.createContext(

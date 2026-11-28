@@ -1,6 +1,11 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -63,7 +68,7 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
   private val Ck = Citekey("zzautoenrich2020_tin")
   private val IngestCk = api.library.Citekey("zzautoenrich2020_tin")
   private val RunTarget = RunInfo.Target("zzautoenrich2020_tin")
-  private val ItemTarget = Managers.ManagerItem.Target("zzautoenrich2020_tin")
+  private val ItemTarget = ManagerItem.Target("zzautoenrich2020_tin")
 
   private object Stub extends ConverterClient:
     def health = Right(ConverterClient.HealthSummary("ok"))
@@ -195,8 +200,8 @@ class AutoEnrichRunSuite extends DbSuite with RunTranscripts:
         .connect(ds)(
           ManagerRepo
             .itemFor(
-              Managers.ManagerInfo.Id(Managers.EnrichId),
-              Managers.ManagerItem.Kind(Managers.SourceEnrich),
+              ManagerInfo.Id(Managers.EnrichId),
+              ManagerItem.Kind(Managers.SourceEnrich),
               ItemTarget
             )
         )

@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.domain.acquirerecheck.LastCheck
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.{Creator, CreatorControllers}
 import com.histmersion.util.json.RawJson.*
@@ -19,7 +23,6 @@ import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.domain.library.Citekey
 
 import com.histmersion.pluginhost.{FetchChain, OaFetcher}
-import com.histmersion.domain.library.acquisition.WorkLookup
 
 import com.histmersion.api.Write
 import com.histmersion.config.*
@@ -737,20 +740,20 @@ final class AcquisitionControllers(
   )
   private def acquireOnce(
       doi: Doi,
-      text: Queue.QueueItem.Text,
+      text: QueueItem.Text,
       answers: List[FetchChain.Answer],
       work: Option[WorkRef],
       scripts: AcquireAttempt.Oa.Scripts,
       by: Creator.New
-  )(using WritePermit): (Queue.QueueItem.Id, Boolean) =
-    val (id, added) = queues.naming(Queue.Kind.Acquire, doi).headOption match
+  )(using WritePermit): (QueueItem.Id, Boolean) =
+    val (id, added) = queues.naming(api.automation.queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
         (
           queues
             .add(
-              Queue.Kind.Acquire,
-              Queue.QueueAdd(text, topic = Some(Queue.QueueItem.Topic(Acquire.BrowserDownloadTopic))),
+              api.automation.queue.Kind.Acquire,
+              QueueAdd(text, topic = Some(QueueItem.Topic(Acquire.BrowserDownloadTopic))),
               by
             )
             .id,
@@ -807,7 +810,7 @@ final class AcquisitionControllers(
 
     // ── the copy: the acquisition chain (the plugins' source fetchers, legal ones first; the legal
     //    ones alone for a watcher's auto-ingest and `--legal-only`) ──
-    val key = WorkLookup.key(
+    val key = com.histmersion.domain.library.acquisition.WorkRef.key(
       doi.map(d => plugin.Doi(d.value)),
       arxiv.map(a => upstreams.ArxivId(a.value)),
       work.map(_.upstream)
@@ -859,7 +862,7 @@ final class AcquisitionControllers(
       )
     browserOnly.foreach { b =>
       val (id, added) =
-        acquireOnce(b.doi, Queue.QueueItem.Text(b.text.value), answers, work, AcquireAttempt.Oa.Scripts.Refused, by)
+        acquireOnce(b.doi, QueueItem.Text(b.text.value), answers, work, AcquireAttempt.Oa.Scripts.Refused, by)
       if added then
         scribe.info(
           s"acquire: ${b.doi.value} is gold open access on ${b.publisher.value}, which refuses scripts: acquisition item #$id"
@@ -939,11 +942,11 @@ final class AcquisitionControllers(
             )
           do
             // an item already naming the DOI was reported just above
-            if queues.naming(Queue.Kind.Acquire, d).isEmpty then
+            if queues.naming(api.automation.queue.Kind.Acquire, d).isEmpty then
               val (id, _) =
                 acquireOnce(
                   d,
-                  Queue.QueueItem.Text(text.value),
+                  QueueItem.Text(text.value),
                   answers,
                   Some(w),
                   AcquireAttempt.Oa.Scripts.Allowed,
@@ -1013,7 +1016,7 @@ final class AcquisitionControllers(
       authors: List[AcquireMatch.DecideAuthors],
       jobId: Option[Job.Id]
   ): List[Ingest.Step] =
-    val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
+    val items = queues.list(api.automation.queue.Kind.Acquire, QueueScope.Open).toList
     AcquireMatch
       .decide(items, doi, title, authors, AcquireMatch.ProposeThreshold(acq.defaults.titleMatchAt.value))
       .map {
@@ -1206,7 +1209,7 @@ final class AcquisitionControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def fetcherGeneration: AcquireRecheck.LastCheck.Generation = AcquireRecheck.LastCheck.Generation(generation)
+  def fetcherGeneration: LastCheck.Generation = LastCheck.Generation(generation)
 
   def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest)(using
       Creator.New

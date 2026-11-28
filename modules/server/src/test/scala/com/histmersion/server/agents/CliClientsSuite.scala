@@ -1,6 +1,10 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.PoolId
+
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.util.problem.Text.sentence
@@ -12,8 +16,7 @@ import com.histmersion.domain.automation.agents.{LlmCall, ModelLimitReached, Run
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.{CodexConfig, OpencodeConfig}
-import com.histmersion.api.automation.Agents.{ModelRef, ProbeAnswer, ProviderKind}
-import com.histmersion.api.automation.PlanQuota.PoolId
+import com.histmersion.api.automation.Agents.ProviderKind
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.*
 
@@ -209,10 +212,10 @@ class CliClientsSuite extends munit.FunSuite:
     )
 
   test("the fence around a JSON answer is tolerated; plan limit wording is recognised"):
-    assertEquals(CliOutcomes.stripFence("```json\n{\"a\":1}\n```"), "{\"a\":1}")
-    assertEquals(CliOutcomes.stripFence("{\"a\":1}"), "{\"a\":1}")
+    assertEquals(CliOutcome.stripFence("```json\n{\"a\":1}\n```"), "{\"a\":1}")
+    assertEquals(CliOutcome.stripFence("{\"a\":1}"), "{\"a\":1}")
     assert(
-      CliOutcomes.isLimit(ClaudeCode.Limit.Sentence("You've hit your usage limit")) &&
-        !CliOutcomes.isLimit(ClaudeCode.Limit.Sentence("connection refused"))
+      CliOutcome.isLimit(ClaudeCode.Limit.Sentence("You've hit your usage limit")) &&
+        !CliOutcome.isLimit(ClaudeCode.Limit.Sentence("connection refused"))
     )
     assertEquals(PoolId.ChatgptPlan.wire, "chatgpt-plan")

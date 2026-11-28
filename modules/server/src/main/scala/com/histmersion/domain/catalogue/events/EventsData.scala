@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.util.data.DataOwner
@@ -29,13 +33,12 @@ object EventsData:
   final private class Conflicts(val owner: DataOwner) extends CheckRule:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     val rule: Rule =
-      Lint
+      Rule
         .rule(Rule.Name(EventCorrectionConflict))
         .getOrElse(Rule(Rule.Name(EventCorrectionConflict), Rule.Description(EventCorrectionConflict)))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(
-        rule,
+      rule.report(
         CorrectionRepo.conflictsIn().map((id, detail) => LintItem(Citekey(id.value), detail)),
         Lint.ItemLimit(maxItems.value)
       )

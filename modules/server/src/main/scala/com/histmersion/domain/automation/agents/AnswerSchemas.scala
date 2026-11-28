@@ -1,9 +1,11 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.domain.PlanAnswer
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
-import com.histmersion.domain.{HintProposals, PlanGoal}
-import com.histmersion.api.automation.Agents.ProbeAnswer
+import com.histmersion.domain.HintProposals
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -23,7 +25,7 @@ object AnswerSchemas:
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val probe: ResponseSchema[ProbeAnswer] = ResponseSchema.derived[ProbeAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val plan: ResponseSchema[PlanGoal.PlanAnswer] = ResponseSchema.derived[PlanGoal.PlanAnswer]()
+  val plan: ResponseSchema[PlanAnswer] = ResponseSchema.derived[PlanAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val hintEffect: ResponseSchema[HintProposals.HintAnswer] = ResponseSchema.derived[HintProposals.HintAnswer]()
 

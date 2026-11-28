@@ -1,12 +1,14 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerInfo
+
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.{Goal, Managers}
 import com.histmersion.api.automation.Goal.Plans.{GoalSchedule, GoalView, ScheduleKind}
-import com.histmersion.api.automation.Managers.ManagerItem
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** A goal page's pure parts: the plan's steps and marks, the schedule line, pausing, its filtered lists. */
@@ -21,9 +23,9 @@ class GoalPageSuite extends munit.FunSuite:
       kind: ManagerItem.Kind = ManagerItem.Kind("compile-article"),
       target: ManagerItem.Target = ManagerItem.Target("sea-peoples")
   ) =
-    Managers.ManagerItem(
+    ManagerItem(
       id,
-      Managers.ManagerInfo.Id("seed:g"),
+      ManagerInfo.Id("seed:g"),
       kind,
       target,
       status,
@@ -103,11 +105,11 @@ class GoalPageSuite extends munit.FunSuite:
       GoalPage.schedule(v, None, None, now).map(_.value),
       Some("checked for new publications 3 days ago · next check in 4 days")
     )
-    val watcher = Managers.ManagerInfo(
-      Managers.ManagerInfo.Id("watch:g"),
-      Managers.ManagerInfo.Kind("watch"),
+    val watcher = ManagerInfo(
+      ManagerInfo.Id("watch:g"),
+      ManagerInfo.Kind("watch"),
       goal = Some(Goal.Slug("g")),
-      nextTickAt = Some(Managers.ManagerInfo.NextTickAt("2026-10-31T13:00:00"))
+      nextTickAt = Some(ManagerInfo.NextTickAt("2026-10-31T13:00:00"))
     )
     assertEquals(
       GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now).map(_.value),
@@ -117,19 +119,19 @@ class GoalPageSuite extends munit.FunSuite:
 
   test("a goal is paused when every agent working for it is; its lists and sources are filtered to it"):
     val ms = List(
-      Managers.ManagerInfo(
-        Managers.ManagerInfo.Id("seed:g"),
-        Managers.ManagerInfo.Kind("seed"),
-        state = Managers.ManagerInfo.State("paused")
+      ManagerInfo(
+        ManagerInfo.Id("seed:g"),
+        ManagerInfo.Kind("seed"),
+        state = ManagerInfo.State("paused")
       ),
-      Managers.ManagerInfo(
-        Managers.ManagerInfo.Id("watch:g"),
-        Managers.ManagerInfo.Kind("watch"),
-        state = Managers.ManagerInfo.State("paused")
+      ManagerInfo(
+        ManagerInfo.Id("watch:g"),
+        ManagerInfo.Kind("watch"),
+        state = ManagerInfo.State("paused")
       )
     )
     assert(GoalPage.paused(ms))
-    assert(!GoalPage.paused(ms.updated(0, ms.head.copy(state = Managers.ManagerInfo.State("active")))))
+    assert(!GoalPage.paused(ms.updated(0, ms.head.copy(state = ManagerInfo.State("active")))))
     assert(!GoalPage.paused(Nil))
     assertEquals(
       GoalPage.listOf(ResearchSection.Backlog, Goal.Slug("bronze age")).value,

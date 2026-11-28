@@ -1,5 +1,24 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.managers.OaWork
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.domain.autopilotpolicy.Verdict
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.automation.Stall
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -16,7 +35,6 @@ import com.augustnagro.magnum.*
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.api.automation.Autopilot.{AutopilotSet, FocusSet}
 import com.histmersion.api.automation.Autopilot
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Managers.*
@@ -29,14 +47,7 @@ import com.histmersion.server.{Deps, ServerWiring}
 
 import java.time.Instant
 import com.histmersion.db.*
-import com.histmersion.api.automation.{
-  AgentScheduler,
-  AgentSchedulerMarkdown,
-  ApprovalDigest,
-  Queue,
-  Stalls,
-  StallsMarkdown
-}
+import com.histmersion.api.automation.{AgentScheduler, AgentSchedulerMarkdown, ApprovalDigest, Queue, StallsMarkdown}
 import com.histmersion.api.library.PdfInfo
 import com.histmersion.api.automation.Goal
 import com.histmersion.domain.automation.Goal as DomainGoal
@@ -87,7 +98,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val goals = (1 to 20).toList.map(i => DomainGoal.Slug.applyUnsafe(f"zzfocus-g$i%02d"))
   private def g(i: Int) = goals(i - 1)
@@ -397,11 +408,11 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     note(
       "why unknown",
       a.scheduler
-        .why(Managers.ManagerItem.Ref("zzfocus-nope"))
+        .why(ManagerItem.Ref("zzfocus-nope"))
         .fold(_.problems.sentences.mkString("; "), AgentSchedulerMarkdown.why)
     )
     assertEquals(running.code, AgentScheduler.Code.Running)
-    assert(a.scheduler.why(Managers.ManagerItem.Ref("zzfocus-nope")).isLeft)
+    assert(a.scheduler.why(ManagerItem.Ref("zzfocus-nope")).isLeft)
     // the status as Markdown names the strategy and the queue
     val md = AgentSchedulerMarkdown.status(st)
     assert(md.startsWith("# Scheduler: goal-first") && md.contains(s"1. #${first.item}"), md.take(600))
@@ -422,9 +433,9 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val sw =
       a.scheduler
         .set(
-          AgentScheduler.SchedulerSet(
-            AgentScheduler.SchedulerSet.Strategy("type-balanced"),
-            Some(AgentScheduler.SchedulerSet.By("test"))
+          SchedulerSet(
+            SchedulerSet.Strategy("type-balanced"),
+            Some(SchedulerSet.By("test"))
           )
         )
         .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -452,10 +463,10 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     note("scheduler status type-balanced", AgentSchedulerMarkdown.status(b.scheduler.status(Some(PageSize(500)))))
     // back to the config's
     assertEquals(
-      b.scheduler.set(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy("default"))).map(_.strategy),
+      b.scheduler.set(SchedulerSet(SchedulerSet.Strategy("default"))).map(_.strategy),
       Right("goal-first")
     )
-    assert(b.scheduler.set(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy("fastest"))).isLeft)
+    assert(b.scheduler.set(SchedulerSet(SchedulerSet.Strategy("fastest"))).isLeft)
 
   test("with agents idle the status is a dry pass: what one would start, nothing started"):
     val (a, h, up) = handlers(); seed(a, h, up)
@@ -506,9 +517,9 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     Clock().tick(a)
     val started = runs().map(r => (r.pipeline, r.target)).toSet
-    assert(started.contains((Agents.RunInfo.Pipeline("review-article"), ArtRunTarget)), started)
+    assert(started.contains((RunInfo.Pipeline("review-article"), ArtRunTarget)), started)
     assertEquals(started.size, 2)
-    val other = (started - ((Agents.RunInfo.Pipeline("review-article"), ArtRunTarget))).head
+    val other = (started - ((RunInfo.Pipeline("review-article"), ArtRunTarget))).head
     assert(other._2.value != g(5).value && other._2.value != g(10).value, s"a gathering goal's item, not $other")
     assert(
       a.scheduler.status().started.exists(s => s"${s.why}".contains("gathering share")),
@@ -530,13 +541,13 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     def judged(p: ApprovalInfo) =
       a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, now)
     assert(
-      judged(plan(g(7), 0)).isInstanceOf[AutopilotPolicy.Verdict.Approve],
+      judged(plan(g(7), 0)).isInstanceOf[Verdict.Approve],
       "not active in any focus: decided all the same"
     )
-    assert(judged(plan(g(1), 3)).isInstanceOf[AutopilotPolicy.Verdict.Approve])
+    assert(judged(plan(g(1), 3)).isInstanceOf[Verdict.Approve])
     judged(plan(g(1), 6)) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(s"$w".contains("limit on open sub-goals"), w)
-      case v                                => fail(v.toString)
+      case Verdict.Leave(w) => assert(s"$w".contains("limit on open sub-goals"), w)
+      case v                => fail(v.toString)
 
   test(
     "goal plans wait while too many planned goals are unfinished: no plan-goal run, none decided by code, a person still may"
@@ -578,8 +589,8 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     val _ = a.autoApprovals.sweep(Instant.now())
     assertEquals(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).map(_.state), Some("open"))
     a.autoApprovals.judge(TestRuns.approvals(ds).approval(ApiIds.approval(p.id)).get, None, None, Instant.now()) match
-      case AutopilotPolicy.Verdict.Leave(w) => assert(s"$w".contains("limit on unfinished goals"), w)
-      case v                                => fail(v.toString)
+      case Verdict.Leave(w) => assert(s"$w".contains("limit on unfinished goals"), w)
+      case v                => fail(v.toString)
     val d = a.digest.digest()
     assert(d.goalPlansWait.exists(_.value.contains("drop to 2")), d)
     assertEquals(d.kinds.find(_.kind.value == "goal-plan").map(_.decidedBy), Some(ApprovalDigest.Waits))
@@ -620,14 +631,14 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     assertEquals(QueueRepoLog.writers(ds, "approval digest: "), Set(("engine", "approval-digest")))
     // a whole kind at once: a dry run lists, then the decision
     assert(
-      a.digest.decideAll(ApprovalDigest.BulkDecide(ApprovalDigest.BulkDecide.Decision("approve"))).isLeft,
+      a.digest.decideAll(BulkDecide(BulkDecide.Decision("approve"))).isLeft,
       "never every open approval"
     )
     assert(
       a.digest
         .decideAll(
-          ApprovalDigest.BulkDecide(
-            ApprovalDigest.BulkDecide.Decision("approve"),
+          BulkDecide(
+            BulkDecide.Decision("approve"),
             kind = Some(api.automation.Approval.Kind.Wire("nope"))
           )
         )
@@ -635,10 +646,10 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     )
     val dry = a.digest
       .decideAll(
-        ApprovalDigest.BulkDecide(
-          ApprovalDigest.BulkDecide.Decision("reject"),
+        BulkDecide(
+          BulkDecide.Decision("reject"),
           kind = Some(api.automation.Approval.Kind.Wire("goal-plan")),
-          dryRun = ApprovalDigest.BulkDecide.DryRun.DryRun
+          dryRun = BulkDecide.DryRun.DryRun
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -649,11 +660,11 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     )
     val done = a.digest
       .decideAll(
-        ApprovalDigest.BulkDecide(
-          ApprovalDigest.BulkDecide.Decision("reject"),
+        BulkDecide(
+          BulkDecide.Decision("reject"),
           kind = Some(api.automation.Approval.Kind.Wire("goal-plan")),
-          subject = Some(ApprovalDigest.BulkDecide.Subject(g(2).value)),
-          by = Some(ApprovalDigest.BulkDecide.By("test"))
+          subject = Some(BulkDecide.Subject(g(2).value)),
+          by = Some(BulkDecide.By("test"))
         )
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
@@ -708,7 +719,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
   test("drain: nothing new starts, the runs in flight finish, drained once none runs; undrain and on lift it"):
     val (a, h, up) = handlers(); seed(a, h, up)
     on(a)
-    val drained = a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On, Some(Autopilot.DrainSet.By("test"))))
+    val drained = a.drain.set(DrainSet(on = DrainSet.On.On, Some(DrainSet.By("test"))))
     note("drain on, nothing running", a.autopilotPage(drained))
     assert(drained.drain.exists(_.drained.drained), drained.drain)
     val clock = Clock()
@@ -727,12 +738,12 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     note(
       "drain off",
       a.autopilotPage(
-        a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.Off, Some(Autopilot.DrainSet.By("test"))))
+        a.drain.set(DrainSet(on = DrainSet.On.Off, Some(DrainSet.By("test"))))
       )
     )
     clock.tick(a)
     assertEquals(runs().size, 3)
-    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On, Some(Autopilot.DrainSet.By("test"))))
+    a.drain.set(DrainSet(on = DrainSet.On.On, Some(DrainSet.By("test"))))
     clock.tick(a)
     val d = a.managing.autopilot.drain.getOrElse(fail("draining"))
     assertEquals((d.drained, d.inFlight), (false, 3))
@@ -761,13 +772,13 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     note("stalls", StallsMarkdown.report(r))
     assertEquals(r.goals, 20)
     assertEquals(r.stalled.size, 20, "days 0: every goal counts")
-    assertEquals(r.stalled.find(_.slug.value == g(4).value).map(_.code), Some(Stalls.Code.Person))
-    assert(r.stalled.exists(_.code.value == Stalls.Code.Queue), r.byReason)
+    assertEquals(r.stalled.find(_.slug.value == g(4).value).map(_.code), Some(Stall.Code.Person))
+    assert(r.stalled.exists(_.code.value == Stall.Code.Queue), r.byReason)
     assertEquals(a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(3))).stalled, Nil, "they all started today")
-    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On))
+    a.drain.set(DrainSet(on = DrainSet.On.On))
     note("stalls while draining", StallsMarkdown.report(a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(0)))))
     assert(
-      a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(0))).stalled.forall(_.code.value == Stalls.Code.Drain)
+      a.scheduler.stalls(Some(AgentAutopilotConfig.StallDays(0))).stalled.forall(_.code.value == Stall.Code.Drain)
     )
 
   test(
@@ -824,7 +835,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
       1
     )
     // draining: no seeding
-    a.drain.set(Autopilot.DrainSet(on = Autopilot.DrainSet.On.On))
+    a.drain.set(DrainSet(on = DrainSet.On.On))
     clock.tick(a)
     assertEquals(seeded.size, 4)
 
@@ -843,7 +854,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(a.autopilot.nextArticles(clock.now), Nil)
     // the article passes its review (a clean ledger, no review item open), and the proposal had settled days ago
-    ReviewLedgerFixtures.put(ds, ReviewLedger.Ledger(ReviewLedger.Ledger.Slug("zzfocus_art")))
+    ReviewLedgerFixtures.put(ds, Ledger(Ledger.Slug("zzfocus_art")))
     connect(ds)(ManagerRepo.itemFor(Review, ReviewKind, ArtItem))
       .foreach(i =>
         transact(ds)(
@@ -897,12 +908,12 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
 private object QueueRepoLog:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def has(ds: javax.sql.DataSource, prefix: String): Boolean =
-    QueueRows.list(ds, Queue.Kind.Log, all = true).exists(_.text.value.startsWith(prefix))
+    QueueRows.list(ds, api.automation.queue.Kind.Log, all = true).exists(_.text.value.startsWith(prefix))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def writers(ds: javax.sql.DataSource, prefix: String): Set[(String, String)] =
     QueueRows
-      .list(ds, Queue.Kind.Log, all = true)
+      .list(ds, api.automation.queue.Kind.Log, all = true)
       .filter(i => s"${i.text}".startsWith(prefix))
       .flatMap(_.creator)
       .map(c => (c.plugin.fold("")(p => s"$p"), c.workflow.fold("")(w => s"$w")))

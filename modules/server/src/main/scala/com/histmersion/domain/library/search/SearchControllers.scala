@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.search
+
+import com.histmersion.api.library.aggregate.Counting
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.api.library.Tree
@@ -164,7 +166,7 @@ final class SearchControllers(
     // by where the period begins. The rows query therefore still asks for sources.
     val starts = unit == Aggregate.UnitStarts
     val rowUnit = if starts then "sources" else unit
-    val counting = if starts then Aggregate.Counting.Starts else Aggregate.Counting.Overlap
+    val counting = if starts then Counting.Starts else Counting.Overlap
     val flat =
       if axes.headOption.contains(Tree.KindTime) then
         Aggregate.histogram(search.periods(AggregateRepo.Unit(rowUnit), window, scope), from, to, size, counting)

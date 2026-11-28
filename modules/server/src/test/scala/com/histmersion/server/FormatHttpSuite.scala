@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.checks.lint.LintReport
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.json.RawJson
 
@@ -156,7 +158,7 @@ class FormatHttpSuite extends DbSuite with db.Bounded:
       assert(pa.contains("## Formatting: 1 formatting problem") && pa.contains("heading-syntax"), pa)
 
       // the corpus rule sees it too
-      val corpus = decode[Lint.LintReport](get(s"$url/api/lint?rule=article-markdown")._2)
+      val corpus = decode[LintReport](get(s"$url/api/lint?rule=article-markdown")._2)
       assert(
         corpus.rules.head.items.exists(i => i.citekey.value == slug && i.detail.value.contains("heading-syntax")),
         corpus.toString

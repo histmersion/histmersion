@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
@@ -82,7 +85,7 @@ private[places] object GazetteerRepo:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def recordSource(
       key: GazetteerSourceRow.Key,
-      kind: Gazetteer.Kind,
+      kind: api.catalogue.gazetteer.Kind,
       title: GazetteerSourceRow.Title,
       version: GazetteerSourceRow.Version,
       sha256: Sha256,
@@ -156,8 +159,8 @@ private[places] object GazetteerRepo:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def session(
-      source: Gazetteer.SourceInfo.Key,
-      version: Gazetteer.LoadCounts.Version,
+      source: SourceInfo.Key,
+      version: LoadCounts.Version,
       windowYears: Gazetteer.ValidityWindowYears =
         Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
@@ -167,13 +170,13 @@ private[places] object GazetteerRepo:
     Session(source, version, windowYears, pointAreaKinds)
 
   final class Session private[GazetteerRepo] (
-      source: Gazetteer.SourceInfo.Key,
-      version: Gazetteer.LoadCounts.Version,
+      source: SourceInfo.Key,
+      version: LoadCounts.Version,
       windowYears: Gazetteer.ValidityWindowYears,
       pointAreaKinds: Set[Gazetteer.PointAreaKinds]
   )(using con: DbCon):
 
-    def writeBatch(records: List[GazRecord])(using Creator.New, CreatedAt): Gazetteer.LoadCounts = write(records)
+    def writeBatch(records: List[GazRecord])(using Creator.New, CreatedAt): LoadCounts = write(records)
 
     def recordSeen(records: List[GazRecord]): Unit =
       val refs = records.map(_.ref)
@@ -194,7 +197,7 @@ private[places] object GazetteerRepo:
     def deletePruneChunk(ids: List[domain.catalogue.Place.Id]): RowCount =
       PointAreaRepo.deletePlacesIn(ids)
 
-    def sweep(): Gazetteer.LoadCounts =
+    def sweep(): LoadCounts =
       val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
                         AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = n.import_ref)""".update.run()
       val links = sql"""DELETE FROM place_links l WHERE l.import_source = $source
@@ -203,18 +206,18 @@ private[places] object GazetteerRepo:
                         AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = d.import_ref)""".update.run()
       val places = sql"""DELETE FROM places p WHERE p.import_source = $source
                          AND NOT EXISTS (SELECT 1 FROM gaz_seen s WHERE s.ref = p.import_ref)""".update.run()
-      Gazetteer.LoadCounts(
+      LoadCounts(
         source,
         version,
-        namesRemoved = Gazetteer.LoadCounts.NamesRemoved(names.toLong),
-        linksRemoved = Gazetteer.LoadCounts.LinksRemoved(links.toLong),
-        placesRemoved = Gazetteer.LoadCounts.PlacesRemoved(places.toLong),
-        descriptionsRemoved = Gazetteer.LoadCounts.DescriptionsRemoved(descs.toLong)
+        namesRemoved = LoadCounts.NamesRemoved(names.toLong),
+        linksRemoved = LoadCounts.LinksRemoved(links.toLong),
+        placesRemoved = LoadCounts.PlacesRemoved(places.toLong),
+        descriptionsRemoved = LoadCounts.DescriptionsRemoved(descs.toLong)
       )
 
     @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-    private def write(rs: List[GazRecord])(using Creator.New, CreatedAt): Gazetteer.LoadCounts =
-      if rs.isEmpty then Gazetteer.LoadCounts(source, version)
+    private def write(rs: List[GazRecord])(using Creator.New, CreatedAt): LoadCounts =
+      if rs.isEmpty then LoadCounts(source, version)
       else
         val keys = Json.arr(
           rs.flatMap(_.identifiers)
@@ -257,7 +260,7 @@ private[places] object GazetteerRepo:
         // it (DOOMED: no record of the batch joins it, before or after) and every row it wrote anywhere
         // go now, in this batch (it still counts as seen, so the sweep has nothing left of it and a dry
         // run counts it once). A place a person's evidence names (an attestation, an asset link) stays.
-        val areas = rs.filter(Gazetteer.dropsPointArea(source, _, pointAreaKinds))
+        val areas = rs.filter(SourceInfo.dropsPointArea(source, _, pointAreaKinds))
         val doomed: Set[Place.Id] =
           val ids = areas.flatMap(r => own.get(r.ref)).map(_.id).distinct
           if ids.isEmpty then Set.empty
@@ -279,7 +282,7 @@ private[places] object GazetteerRepo:
             byId.get(r.placeId).filterNot(s => doomed.contains(s.id)),
             own.get(r.ref).filterNot(s => doomed.contains(s.id))
           )
-          if pl.isInstanceOf[Placement.Create] && Gazetteer.dropsPointArea(source, r, pointAreaKinds) then
+          if pl.isInstanceOf[Placement.Create] && SourceInfo.dropsPointArea(source, r, pointAreaKinds) then
             Left((r, stale.toList))
           else
             // what the store will say after this record: its links on its place, native where it made it
@@ -320,24 +323,24 @@ private[places] object GazetteerRepo:
         val (nAdd, nDel, nChg) = writeNames(placed.map((r, pl, _) => (r, pl.placeId)))
         val (lAdd, lDel, lChg) = writeLinks(placed.map((r, pl, _) => (r, pl.placeId)))
         val (dAdd, dDel, dChg) = writeDescriptions(placed.map((r, pl, _) => (r, pl.placeId)))
-        Gazetteer.LoadCounts(
+        LoadCounts(
           source,
           version,
-          records = Gazetteer.LoadCounts.Records(rs.size.toLong),
-          created = Gazetteer.LoadCounts.Created(created.value.toLong),
-          joined = Gazetteer.LoadCounts.Joined(placed.count(_._2.isInstanceOf[Placement.Join]).toLong),
-          placesChanged = Gazetteer.LoadCounts.PlacesChanged(changed.value.toLong),
-          namesAdded = Gazetteer.LoadCounts.NamesAdded(nAdd.value.toLong),
-          namesRemoved = Gazetteer.LoadCounts.NamesRemoved(nDel.value.toLong + dropNames),
-          namesChanged = Gazetteer.LoadCounts.NamesChanged(nChg.value.toLong),
-          linksAdded = Gazetteer.LoadCounts.LinksAdded(lAdd.value.toLong),
-          linksRemoved = Gazetteer.LoadCounts.LinksRemoved(lDel.value.toLong + dropLinks),
-          placesRemoved = Gazetteer.LoadCounts.PlacesRemoved(goneN.toLong),
-          descriptionsAdded = Gazetteer.LoadCounts.DescriptionsAdded(dAdd.value.toLong),
-          descriptionsRemoved = Gazetteer.LoadCounts.DescriptionsRemoved(dDel.value.toLong + dropDescs),
-          descriptionsChanged = Gazetteer.LoadCounts.DescriptionsChanged(dChg.value.toLong),
-          linksChanged = Gazetteer.LoadCounts.LinksChanged(lChg.value.toLong),
-          pointAreasSkipped = Gazetteer.LoadCounts.PointAreasSkipped(dropped.size.toLong)
+          records = LoadCounts.Records(rs.size.toLong),
+          created = LoadCounts.Created(created.value.toLong),
+          joined = LoadCounts.Joined(placed.count(_._2.isInstanceOf[Placement.Join]).toLong),
+          placesChanged = LoadCounts.PlacesChanged(changed.value.toLong),
+          namesAdded = LoadCounts.NamesAdded(nAdd.value.toLong),
+          namesRemoved = LoadCounts.NamesRemoved(nDel.value.toLong + dropNames),
+          namesChanged = LoadCounts.NamesChanged(nChg.value.toLong),
+          linksAdded = LoadCounts.LinksAdded(lAdd.value.toLong),
+          linksRemoved = LoadCounts.LinksRemoved(lDel.value.toLong + dropLinks),
+          placesRemoved = LoadCounts.PlacesRemoved(goneN.toLong),
+          descriptionsAdded = LoadCounts.DescriptionsAdded(dAdd.value.toLong),
+          descriptionsRemoved = LoadCounts.DescriptionsRemoved(dDel.value.toLong + dropDescs),
+          descriptionsChanged = LoadCounts.DescriptionsChanged(dChg.value.toLong),
+          linksChanged = LoadCounts.LinksChanged(lChg.value.toLong),
+          pointAreasSkipped = LoadCounts.PointAreasSkipped(dropped.size.toLong)
         )
 
     private def num(v: Option[Long]): Json = v.fold(Json.Null)(Json.fromLong)

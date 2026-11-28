@@ -1,5 +1,8 @@
 package com.histmersion
 package api.views
+
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.DrainSet
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.automation.{AgentMode, Autopilot, ManagersApi}
@@ -21,11 +24,11 @@ object AutopilotApi:
   lazy val autopilot: PublicEndpoint[Unit, Api.Error, AutopilotStatus, Any] =
     endpoint.get.in("api" / "agents" / "autopilot").errorOut(Api.problemOut).out(jsonBody[AutopilotStatus])
 
-  lazy val setAutopilot: PublicEndpoint[Autopilot.AutopilotSet, Api.Error, AutopilotStatus, Any] =
+  lazy val setAutopilot: PublicEndpoint[AutopilotSet, Api.Error, AutopilotStatus, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot")
       .errorOut(Api.problemOut)
-      .in(jsonBody[Autopilot.AutopilotSet])
+      .in(jsonBody[AutopilotSet])
       .out(jsonBody[AutopilotStatus])
 
   lazy val setMode: PublicEndpoint[AgentMode.ModeSet, Api.Error, AutopilotStatus, Any] =
@@ -35,11 +38,11 @@ object AutopilotApi:
       .in(jsonBody[AgentMode.ModeSet])
       .out(jsonBody[AutopilotStatus])
 
-  lazy val drain: PublicEndpoint[Autopilot.DrainSet, Api.Error, AutopilotStatus, Any] =
+  lazy val drain: PublicEndpoint[DrainSet, Api.Error, AutopilotStatus, Any] =
     endpoint.post
       .in("api" / "agents" / "autopilot" / "drain")
       .errorOut(Api.problemOut)
-      .in(jsonBody[Autopilot.DrainSet])
+      .in(jsonBody[DrainSet])
       .out(jsonBody[AutopilotStatus])
 
   /** The switches, after the managers' own endpoints in `Api.all`. */

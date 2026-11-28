@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.research
 
+import com.histmersion.domain.reviewledger.Ledger
+
 import com.histmersion.api.research.{Article, CritiqueReason}
-import com.histmersion.domain.ReviewLedger.Ledger
 
 import java.time.Instant
 import java.util.UUID

@@ -13,9 +13,7 @@ import com.histmersion.domain.automation.worklists.WorkListControllers
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.*
-import com.histmersion.domain.ManagerPolicy.{Next, ReviewSettings, StepFacts}
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.api.automation.Queue.QueueAdd
 import com.histmersion.domain.automation.managers.ManagerRepo
 
 import java.time.Instant

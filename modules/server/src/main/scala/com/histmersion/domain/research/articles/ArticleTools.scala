@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.research.articles
+
+import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -12,10 +14,9 @@ import com.histmersion.util.mcp.McpOut
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.ArticleMarkdown
-import com.histmersion.api.research.{Article, Articles}
+import com.histmersion.api.research.Article
 import com.histmersion.api.Write
 import com.histmersion.domain.research.Slug
 import io.github.iltotore.iron.constraint.any.Pure
@@ -36,7 +37,7 @@ object ArticleTools:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   private def readSlug(slug: Article.Slug): Either[Api.Error, Slug] =
-    Slug.parse(slug.value).left.map(_ => Articles.notFound(slug))
+    Slug.parse(slug.value).left.map(_ => Article.notFound(slug))
 
   /** A slug a tool writes: one that is no slug is refused. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -130,12 +131,10 @@ object ArticleTools:
             writeSlug(in.slug).flatMap(articles.put(_, in.article, in.strict)) match
               case Right(v) =>
                 ToolResult.text(
-                  Aliases
-                    .note(
-                      AliasKinds.ArticleRecords,
-                      Aliases.Id(in.slug.value.toLowerCase),
-                      Aliases.Id(v.article.slug.value)
-                    )(Aliases.Note(ArticleMarkdown.article(v)))
+                  AliasKinds.ArticleRecords
+                    .note(AliasKind.Id(in.slug.value.toLowerCase), AliasKind.Id(v.article.slug.value))(
+                      AliasKind.Note(ArticleMarkdown.article(v))
+                    )
                     .value
                 )
               case Left(e) => McpOut.error(e)
@@ -165,12 +164,10 @@ object ArticleTools:
             writeSlug(in.slug).flatMap(articles.patch(_, in.patch, in.strict)) match
               case Right(v) =>
                 ToolResult.text(
-                  Aliases
-                    .note(
-                      AliasKinds.ArticleRecords,
-                      Aliases.Id(in.slug.value.toLowerCase),
-                      Aliases.Id(v.article.slug.value)
-                    )(Aliases.Note(ArticleMarkdown.article(v)))
+                  AliasKinds.ArticleRecords
+                    .note(AliasKind.Id(in.slug.value.toLowerCase), AliasKind.Id(v.article.slug.value))(
+                      AliasKind.Note(ArticleMarkdown.article(v))
+                    )
                     .value
                 )
               case Left(e) => McpOut.error(e)

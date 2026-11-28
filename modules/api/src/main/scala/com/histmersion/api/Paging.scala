@@ -1,6 +1,8 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.activity.Counts
+
 import sttp.tapir.*
 import com.histmersion.api.automation.ListFilters
 import io.github.iltotore.iron.constraint.any.Pure
@@ -76,12 +78,12 @@ object Paging:
       Page(total, (last).map(refactorValue4 => Cursor((refactorValue4).value)), counts, facets.filter(_._2.nonEmpty))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def encodeCounts(counts: List[(Page.CountState, Count)]): Activity.Counts.Wire =
-    Activity.Counts.Wire(counts.map((s, n) => s"$s=$n").mkString(","))
+  def encodeCounts(counts: List[(Page.CountState, Count)]): Counts.Wire =
+    Counts.Wire(counts.map((s, n) => s"$s=$n").mkString(","))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def decodeCounts(s: Activity.Counts.Wire): List[(Page.CountState, Count)] =
+  def decodeCounts(s: Counts.Wire): List[(Page.CountState, Count)] =
     (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
       pair.split('=') match
         case Array(k, v) => v.trim.toIntOption.map(c => (Page.CountState(k.trim), Count(c)))
@@ -99,7 +101,7 @@ object Paging:
         Page(
           Page.Total(t.getOrElse(0)),
           (n.map(_.trim).filter(_.nonEmpty)).map(refactorValue19 => Cursor(refactorValue19)),
-          c.fold[List[(Page.CountState, Count)]](Nil)(h => decodeCounts(Activity.Counts.Wire(h))),
+          c.fold[List[(Page.CountState, Count)]](Nil)(h => decodeCounts(Counts.Wire(h))),
           f.fold[List[(Facet.Name, List[(Facet.Value, Facet.Count)])]](Nil)(h =>
             ListFilters
               .decodeFacets(ListFilters.EncodedFacets(h))

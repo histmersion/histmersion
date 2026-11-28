@@ -1,6 +1,11 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+import com.histmersion.api.checks.lint.LintItem
+import com.histmersion.api.checks.lint.LintFixResult
+
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.api.library.Citekey
@@ -30,7 +35,7 @@ object PlacesData:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def ruleOf(name: String): Rule =
-    Lint.rule(Rule.Name(name)).getOrElse(Rule(Rule.Name(name), Rule.Description(name)))
+    Rule.rule(Rule.Name(name)).getOrElse(Rule(Rule.Name(name), Rule.Description(name)))
 
   /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -52,8 +57,7 @@ object PlacesData:
     val rule: Rule = ruleOf(PlaceKindRule)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(
-        rule,
+      rule.report(
         PlaceReviewRepo.proposalsIn().map(p => LintItem(Citekey(p.id.value), LintItem.Detail(p.detail.value))),
         Lint.ItemLimit(maxItems.value)
       )
@@ -86,8 +90,7 @@ object PlacesData:
     val rule: Rule = ruleOf(PlaceGridPoint)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def report(context: CheckContext, maxItems: CheckRule.MaxItems)(using CheckRun)(using DbCon): LintRuleReport =
-      Lint.report(
-        rule,
+      rule.report(
         PlaceReviewRepo.relocationsIn().map(r => LintItem(Citekey(r.id.value), LintItem.Detail(r.detail.value))),
         Lint.ItemLimit(maxItems.value)
       )

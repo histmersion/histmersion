@@ -1,7 +1,18 @@
 package com.histmersion
 package domain.automation.managers
 
-import com.histmersion.api.automation.Agents.{JobKind, PauseReason, RunInfo}
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.managers.ItemCounts
+
+import com.histmersion.api.automation.Agents.JobKind
 import com.histmersion.domain.automation.agents.Halt.Stopped
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.automation.managers.ManagerRepo

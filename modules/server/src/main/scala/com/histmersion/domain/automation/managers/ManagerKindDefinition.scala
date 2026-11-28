@@ -1,18 +1,25 @@
 package com.histmersion
 package domain.automation.managers
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.domain.autopilotpolicy.Verdict
 import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunState}
+import com.histmersion.api.automation.Agents.{Pipeline, RunState}
 import com.histmersion.domain.{AutopilotPolicy, Creator}
 import com.histmersion.domain.automation.approvals.ApprovalChecks
-import com.histmersion.api.automation.Autopilot.EngineStatus
 import com.histmersion.api.automation.Managers
-import com.histmersion.api.automation.Managers.{Kind, ManagerConfig, ManagerInfo, ManagerItem}
+import com.histmersion.api.automation.Managers.Kind
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.IngestBacklog
 import com.histmersion.domain.ManagerDefaults
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 
 import java.time.Instant
 import scala.collection.mutable.Builder
@@ -123,7 +130,7 @@ trait ManagerKindDefinition:
   def target(
       m: ManagerInfo,
       itemKind: ManagerContext.ItemKind,
-      raw: Managers.ManagerItem.Target
+      raw: ManagerItem.Target
   ): Either[Api.Error, ManagerContext.ItemTarget]
 
   /** A person added (or brought back) an item: what goes with it (the review kind: an infer-filter item first). */
@@ -139,7 +146,7 @@ trait ManagerKindDefinition:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expand(
       c: ManagerContext,
-      raw: Managers.ManagerItem.Target
+      raw: ManagerItem.Target
   ): Either[Api.Error, (List[ManagerContext.ItemTarget], List[ManagerKindDefinition.ExpandSkipped])] = Right(
     (List(ManagerContext.ItemTarget(raw.value)), Nil)
   )
@@ -161,7 +168,7 @@ trait ManagerKindDefinition:
       run: Option[RunInfo],
       mgr: Option[ManagerInfo],
       now: Instant
-  ): Option[AutopilotPolicy.Verdict] = None
+  ): Option[Verdict] = None
 
   /** Whether a job of this kind's domain is in flight that a drain waits for. */
   def busy: Boolean = false

@@ -1,6 +1,8 @@
 package com.histmersion
 package db
 
+import com.histmersion.domain.catalogue.places.placereview.Proposal
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -11,7 +13,6 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.api.catalogue.{Latitude, Longitude}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.domain.catalogue.places.PlaceReview.Proposal
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Finding, Source}

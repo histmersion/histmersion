@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.api.automation.activity.Page
+import com.histmersion.api.automation.activity.Entry
+
 import com.histmersion.api.automation.Activity
 
 import com.augustnagro.magnum.connect
@@ -16,7 +19,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @movesTo(FeaturePlace.AutomationActivity)
 trait ActivityService:
   /** One page of `q`; the chips' counts are measured at `now`. */
-  def page(q: ActivityQuery, now: Instant): Activity.Page
+  def page(q: ActivityQuery, now: Instant): Page
 
 object ActivityService:
   /** How far back the problems the chip counts go. */
@@ -26,20 +29,20 @@ object ActivityService:
 
   final private class Implementation(ds: DataSource) extends ActivityService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def page(q: ActivityQuery, now: Instant): Activity.Page =
+    def page(q: ActivityQuery, now: Instant): Page =
       connect(ds):
         val (entries, next) = ActivityRepo.page(q)
-        Activity.Page(
+        Page(
           entries,
-          next.map(w => Activity.Page.Next(w.value)),
+          next.map(w => Page.Next(w.value)),
           ActivityRepo.counts(now.minus(ProblemsWindow))
         )
 
   /** The same list over entries held in memory (tests): written with [[add]], as the store's tables write them.
     */
-  final class InMemory(entries: AtomicReference[List[Activity.Entry]] = AtomicReference(Nil)) extends ActivityService:
-    def add(e: Activity.Entry): Unit = entries.updateAndGet(e :: _): Unit
+  final class InMemory(entries: AtomicReference[List[Entry]] = AtomicReference(Nil)) extends ActivityService:
+    def add(e: Entry): Unit = entries.updateAndGet(e :: _): Unit
 
-    def page(q: ActivityQuery, now: Instant): Activity.Page =
+    def page(q: ActivityQuery, now: Instant): Page =
       val all = entries.get
       ActivityRules.page(all, q, ActivityRules.counts(all, now.minus(ProblemsWindow)))

@@ -1,13 +1,20 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.geocode.Candidate
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+import com.histmersion.api.catalogue.geocode.Approximation
+import com.histmersion.api.catalogue.geocode.Move
+import com.histmersion.api.catalogue.geocode.Placement
+
 import com.histmersion.util.database.given
 
 import com.histmersion.util.database.RangeSql
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.Geocode.{Attempt, Candidate, KindHint, Move, Placement, Resolution}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
@@ -92,7 +99,7 @@ private[places] object Geocoder:
   def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: GeocodeSettings.PlaceholderMin)(
       using DbCon
   ): Option[Resolution] =
-    Geocode
+    Attempt
       .attempts(name)
       .iterator
       .flatMap(a => attempt(Resolution.Asked(name.value.trim), a, hint, at, placeholderMin))
@@ -109,7 +116,7 @@ private[places] object Geocoder:
       DbCon
   ): Option[Resolution] =
     // the place a qualifier names ("…, Croatia"), or that stands in for an unknown one, is an AREA
-    val h = if a.approx.exists(_.isInstanceOf[Geocode.Approximation.OnlyWithin]) then KindHint.Region else hint
+    val h = if a.approx.exists(_.isInstanceOf[Approximation.OnlyWithin]) then KindHint.Region else hint
     chosen(asked, a, h, at, min).map(toward(_, a))
 
   /** A dropped compass qualifier ("Eastern Mediterranean") moves the point into that part of the shape
@@ -119,7 +126,7 @@ private[places] object Geocoder:
   @tolerated(LintRule.Copy, "pending G19 (lenses instead of .copy)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   private def toward(r: Resolution, a: Attempt)(using DbCon): Resolution =
-    a.approx.collect { case Geocode.Approximation.Qualifier(d) => d }.flatMap(Geocode.compassBox) match
+    a.approx.collect { case Approximation.Qualifier(d) => d }.flatMap(Approximation.compassBox) match
       case None                       => r
       case Some((fx0, fy0, fx1, fy1)) =>
         sql"""WITH g AS (
@@ -148,12 +155,12 @@ private[places] object Geocoder:
   ): Option[Resolution] =
     val pm = Geocode.Placeholder.Min(min.value)
     a.within match
-      case None     => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, None), h, at, pm), pm)
+      case None     => Resolution.choose(asked, a, Geocode.rank(candidates(a.key, None), h, at, pm), pm)
       case Some(in) =>
         Geocode
           .rank(candidates(Geocode.key(in.value), None).filter(_.dimension.value == 2), KindHint.Region, at, pm)
           .headOption
-          .flatMap(w => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, Some(w.id)), h, at, pm), pm))
+          .flatMap(w => Resolution.choose(asked, a, Geocode.rank(candidates(a.key, Some(w.id)), h, at, pm), pm))
 
   // ── the repair ─────────────────────────────────────────────────────────────────────────────────
 
@@ -254,7 +261,7 @@ private[places] object Geocoder:
             )
           )
       }
-      .filter(m => Geocode.worthMoving(m, Geocode.Move.MinKm(s.repairKm.value)))
+      .filter(m => m.worthMoving(Move.MinKm(s.repairKm.value)))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def moves(s: GeocodeSettings)(using DbCon): List[Move] = movesIn(s)

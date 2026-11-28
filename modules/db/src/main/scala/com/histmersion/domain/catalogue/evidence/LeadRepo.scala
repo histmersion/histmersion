@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.domain.catalogue.events.Placement
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
@@ -19,7 +21,6 @@ import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
-import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.DeepTime
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
@@ -57,8 +58,8 @@ private[evidence] object LeadRepo:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def nearFindings(id: Event.Id, km: CatalogMerge.Tolerance.Km, years: CatalogMerge.Tolerance.Years, limit: PageSize)(
-      using DbCon
+  def nearFindings(id: Event.Id, km: Placement.Tolerance.Km, years: Placement.Tolerance.Years, limit: PageSize)(using
+      DbCon
   ): List[EventFindingRef] =
     sql"""WITH ev AS (
               SELECT ${EventSql.AnchorSql} AS pt, e.outer_span AS span
@@ -99,8 +100,8 @@ private[evidence] object LeadRepo:
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def leadRows(
       where: Frag,
-      km: CatalogMerge.Tolerance.Km,
-      years: CatalogMerge.Tolerance.Years,
+      km: Placement.Tolerance.Km,
+      years: Placement.Tolerance.Years,
       limit: PageSize,
       offset: Offset
   )(using DbCon): (RowCount, List[LeadRow]) =
@@ -135,7 +136,7 @@ private[evidence] object LeadRepo:
   def articleCandidates(
       citekeys: List[domain.library.Citekey],
       period: Option[(DeepTime.SignedYear, DeepTime.SignedYear)],
-      km: CatalogMerge.Tolerance.Km,
+      km: Placement.Tolerance.Km,
       minVei: CatalogRecord.Vei,
       minMagnitude: CatalogRecord.Magnitude,
       limit: PageSize

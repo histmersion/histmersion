@@ -1,8 +1,12 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+
 import com.histmersion.api.Api
-import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalState, RunInfo}
+import com.histmersion.api.automation.Agents.ApprovalState
 import com.histmersion.api.automation.{Goal, Pipeline, Queue}
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.OpenWork
@@ -32,9 +36,9 @@ final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckServi
         (if wanted.forall(_ == OpenWork.Kind.Run) then runs(now) else Vector.empty)
     OpenWork.State.of(p.goal.fold(items)(g => items.filter(concerns(_, g))), p, Terms.At.of(now))
 
-  def acquisition(id: Queue.QueueItem.Id): Either[Api.Error, OpenWork.History] =
+  def acquisition(id: QueueItem.Id): Either[Api.Error, OpenWork.History] =
     val judged = recheck.verdict(id, Instant.now(agents.clock))
-    Queue
+    QueueItem
       .fulfillable(id, judged.map(_.item))
       .left
       .map(Api.Error(_))
@@ -79,7 +83,7 @@ final class OpenWorkView(agents: AgentsControllers, recheck: AcquireRecheckServi
 
   private def tasks: Vector[OpenItem] =
     agents.queues
-      .list(Queue.Kind.Tasks, QueueScope.Open)
+      .list(api.automation.queue.Kind.Tasks, QueueScope.Open)
       .toVector
       .map(i =>
         OpenItem.Task(

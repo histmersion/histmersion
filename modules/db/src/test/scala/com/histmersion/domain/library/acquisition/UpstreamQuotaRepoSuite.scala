@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.corequota.State
+import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Window
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -41,15 +45,15 @@ class UpstreamQuotaRepoSuite extends DbSuite:
 
   test("a budget is read back as it was saved; the next save replaces it"):
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), None)
-    val s = CoreQuota.State(
+    val s = State(
       LocalDate.of(2026, 10, 26),
-      CoreQuota.State.LookupTokens(12),
-      CoreQuota.State.SearchTokens(34),
-      Some(CoreQuota.Block(Instant.parse("2026-10-26T18:52:11Z"), CoreQuota.Block.Rationale.Throttled)),
+      State.LookupTokens(12),
+      State.SearchTokens(34),
+      Some(Block(Instant.parse("2026-10-26T18:52:11Z"), Block.Rationale.Throttled)),
       Some(
-        CoreQuota.Window(
-          Some(CoreQuota.Window.Limit(25)),
-          Some(CoreQuota.Window.Remaining(0)),
+        Window(
+          Some(Window.Limit(25)),
+          Some(Window.Remaining(0)),
           Instant.parse("2026-10-26T18:50:00Z")
         )
       )
@@ -59,6 +63,6 @@ class UpstreamQuotaRepoSuite extends DbSuite:
     )
     // the recent call slots are not kept
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(s))
-    val next = CoreQuota.State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = CoreQuota.State.LookupTokens(1))
+    val next = State.fresh(LocalDate.of(2026, 10, 27)).copy(lookupTokens = State.LookupTokens(1))
     transact(ds)(UpstreamQuotaRepo.save(UpKind, next))
     assertEquals(connect(ds)(UpstreamQuotaRepo.load(UpKind)), Some(next))

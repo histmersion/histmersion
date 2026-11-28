@@ -1,5 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -158,8 +162,8 @@ class CandidateSearchSuite extends DbSuite:
     )
     QueueRows.add(
       ds,
-      Queue.Kind.Acquire,
-      Queue.QueueAdd(Queue.QueueItem.Text("zzcand queued https://doi.org/10.5555/zzcand.queued"))
+      Kind.Acquire,
+      QueueAdd(QueueItem.Text("zzcand queued https://doi.org/10.5555/zzcand.queued"))
     )
     val oa = FakeIndex(
       ScholarlyIndex.Name("openalex"),

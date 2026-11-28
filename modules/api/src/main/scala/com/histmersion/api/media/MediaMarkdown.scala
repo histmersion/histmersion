@@ -1,5 +1,7 @@
 package com.histmersion
 package api.media
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{OffsetPage, Plural}
@@ -12,7 +14,7 @@ import com.histmersion.api.catalogue.Year
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object MediaMarkdown:
 
-  export RepairAcquire.RepairRequest.DryRun as MediaSamplesDryRun
+  export RepairRequest.DryRun as MediaSamplesDryRun
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -66,7 +68,7 @@ object MediaMarkdown:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.SilentCompare, "pending G53 (no comparison of unrelated types)")
   def mediaImportReport(r: MediaImportReport): String =
-    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then "dry run — nothing stored" else "stored"
+    val mode = if (r.dryRun) == RepairRequest.DryRun.DryRun then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
     else
       r.byLicence
@@ -74,7 +76,7 @@ object MediaMarkdown:
         .mkString("| licence | files | allowed |\n|---|---|---|\n", "\n", "")
     val rejected = if r.rejected.isEmpty then ""
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
-    val done = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then ""
+    val done = if (r.dryRun) == RepairRequest.DryRun.DryRun then ""
     else
       s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(Plural.Count(r.categories.value.toLong), Plural.Noun.Singular("category"), Plural.Noun.Plural("categories"))}"
     val revoked = if r.revoked.isEmpty then ""
@@ -119,8 +121,8 @@ object MediaMarkdown:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mediaCoversReport(r: MediaCoversReport): String =
-    val mode = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then "dry run — nothing stored" else "stored"
-    val verb = if (r.dryRun) == RepairAcquire.RepairRequest.DryRun.DryRun then "would link" else "linked"
+    val mode = if (r.dryRun) == RepairRequest.DryRun.DryRun then "dry run — nothing stored" else "stored"
+    val verb = if (r.dryRun) == RepairRequest.DryRun.DryRun then "would link" else "linked"
     val lines = if r.lines.isEmpty then ""
     else
       "\n\n" + r.lines

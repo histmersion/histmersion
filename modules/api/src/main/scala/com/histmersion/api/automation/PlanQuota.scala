@@ -1,6 +1,18 @@
 package com.histmersion
 package api.automation
 
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.planquota.RefreshInfo
+import com.histmersion.api.automation.planquota.Rules
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.Logins
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.Verdict
+import com.histmersion.api.automation.planquota.WindowState
+import com.histmersion.api.automation.planquota.RefreshNeed
+
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Problems.traverseAll
 import com.histmersion.util.problem.Text.sentence
@@ -37,53 +49,18 @@ object PlanQuota:
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type VerdictNow = Now
   val VerdictNow: Now.type = Now
-  export ModelChains.ChainEntry.Model as VerdictModel
+  export ChainEntry.Model as VerdictModel
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RefreshNeedNow = Now
   val RefreshNeedNow: Now.type = Now
-  export ModelChains.ChainEntry.Model as RefreshNeedModel
+  export ChainEntry.Model as RefreshNeedModel
   export RefreshInfo.LastAttempt as RefreshDecisionLastAttempt
   export Rules.MinGap as RefreshDecisionMinGapMs
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
   type RefreshDecisionNow = Now
   val RefreshDecisionNow: Now.type = Now
 
-  import Agents.{ModelRef, ProviderKind}
-
-  enum PoolId(val wire: PoolId.Wire, val title: PoolId.Title) derives CanEqual:
-    case ClaudePlan extends PoolId(PoolId.Wire("claude-plan"), PoolId.Title("Claude plan"))
-    case ChatgptPlan extends PoolId(PoolId.Wire("chatgpt-plan"), PoolId.Title("ChatGPT plan"))
-
-  object PoolId:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-    type Title = Title.T
-    object Title extends Newtype[String, Pure]:
-      given Display[T] = Display(_.value)
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Option[PoolId] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
-
-  /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
-  final case class Logins(
-      claudeCodeApiKey: Logins.ClaudeCodeApiKey = Logins.ClaudeCodeApiKey.Login,
-      codexApiKey: Logins.CodexApiKey = Logins.CodexApiKey.Login,
-      opencodeChatgpt: Logins.OpencodeChatgpt = Logins.OpencodeChatgpt.Other
-  )
-
-  object Logins:
-    enum ClaudeCodeApiKey derives CanEqual:
-      case ApiKey, Login
-    object ClaudeCodeApiKey extends TwoStates[ClaudeCodeApiKey]:
-      extension (claudeCodeApiKey: ClaudeCodeApiKey) def claudeCodeApiKey: Boolean = claudeCodeApiKey == ApiKey
-    enum CodexApiKey derives CanEqual:
-      case ApiKey, Login
-    object CodexApiKey extends TwoStates[CodexApiKey]:
-      extension (codexApiKey: CodexApiKey) def codexApiKey: Boolean = codexApiKey == ApiKey
-    enum OpencodeChatgpt derives CanEqual:
-      case Chatgpt, Other
-    object OpencodeChatgpt extends TwoStates[OpencodeChatgpt]:
-      extension (opencodeChatgpt: OpencodeChatgpt) def opencodeChatgpt: Boolean = opencodeChatgpt == Chatgpt
+  import Agents.ProviderKind
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -100,159 +77,8 @@ object PlanQuota:
   def paid(m: ModelRef, logins: Logins): Boolean =
     (m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty)
 
-  enum Source(val wire: Source.Wire) derives CanEqual:
-    case Run extends Source(Source.Wire("run"))
-
-    case Mod extends Source(Source.Wire("mod"))
-
-    case Interactive extends Source(Source.Wire("interactive"))
-
-    case AppServer extends Source(Source.Wire("app-server"))
-
-    case Limit extends Source(Source.Wire("limit"))
-
-    case Probe extends Source(Source.Wire("probe"))
-
-  object Source:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Option[Source] = values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
-
-  /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
-  final case class Reading(
-      limit: Reading.Limit,
-      kind: Reading.Kind,
-      usedPct: Reading.UsedPct,
-      resetsAt: Option[Reading.ResetsAt],
-      rejected: Reading.Rejected,
-      observedAt: Reading.ObservedAt,
-      source: Source,
-      model: Option[Reading.Model] = None
-  )
-
-  object Reading:
-    type Limit = Limit.T
-    object Limit extends Newtype[String, Pure]
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
-    type UsedPct = UsedPct.T
-    object UsedPct extends Newtype[Double, Pure]
-    type ResetsAt = ResetsAt.T
-    object ResetsAt extends Newtype[Long, Pure]
-    enum Rejected derives CanEqual:
-      case Rejected, Accepted
-    object Rejected extends TwoStates[Rejected]:
-      extension (rejected: Rejected) def rejected: Boolean = rejected == Rejected
-    type ObservedAt = ObservedAt.T
-    object ObservedAt extends Newtype[Long, Pure]
-    export ModelChains.ChainEntry.Model
-
-  final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def text: Floors.Wire = Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def of(limit: Floors.OfLimit, kind: Floors.OfKind, default: Rules.DefaultFloor): Floors.Floor =
-      byKind.get(Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(Floors.ByKindKey(kind.value))).getOrElse(default)
-
-  object Floors:
-    type Floor = Floor.T
-    object Floor extends Newtype[Int, Pure]
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-    export Reading.{Kind as OfKind, Limit as OfLimit}
-
-    type ByKindKey = ByKindKey.T
-    object ByKindKey extends Newtype[String, Pure]
-    @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")
-    type ByKindValue = Floor
-    val ByKindValue: Floor.type = Floor
-
-    val Empty: Floors = Floors(Map.empty)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Either[Problems, Floors] =
-      val items = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty)
-      items
-        .traverseAll { i =>
-          val at = Vector(Problem.Field(s"$i"))
-          i.indexOf('=') match
-            case -1 => Left(Problem.Invalid.Missing(Problem.Field("percent"), at))
-            case n  =>
-              val (k, v) = (i.substring(0, n).trim, i.substring(n + 1).trim.stripSuffix("%").trim)
-              val floor = v.toIntOption
-                .filter(p => p >= 0 && p <= 100)
-                .toRight(
-                  Problem.Invalid.OutOfRange(
-                    Problem.TypeName.of(Floor),
-                    Problem.Raw(s"$v"),
-                    Problem.Invalid.Bounds(Some(Problem.Raw("0")), Some(Problem.Raw("100"))),
-                    at
-                  )
-                )
-              val window = Either.cond(
-                k.nonEmpty && !k.exists(_.isWhitespace),
-                ByKindKey(k),
-                Problem.Invalid.Missing(Problem.Field("window"), at)
-              )
-              (window, floor).allOrProblems.map((key, percent) => key -> Floor(percent))
-        }
-        .map(pairs => Floors(pairs.toMap))
-
-  final case class Rules(
-      floors: Floors,
-      defaultFloor: Rules.DefaultFloor,
-      staleMs: Rules.StaleMs,
-      marginPct: Rules.MarginPct
-  )
-
-  object Rules:
-    type MinGap = MinGap.T
-    object MinGap extends Newtype[Long, Pure]
-    export Floors.Floor as DefaultFloor
-    type StaleMs = StaleMs.T
-    object StaleMs extends Newtype[Long, Pure]
-    type MarginPct = MarginPct.T
-    object MarginPct extends Newtype[Int, Pure]
-
-  final case class WindowState(
-      reading: Reading,
-      floor: WindowState.Floor,
-      leftPct: WindowState.LeftPct,
-      stale: WindowState.Stale,
-      usable: WindowState.Usable,
-      why: Option[Rationale]
-  )
-
-  object WindowState:
-    export Floors.Floor
-    export WindowStatus.LeftPct
-    enum Stale derives CanEqual:
-      case Stale, Fresh
-    object Stale extends TwoStates[Stale]:
-      extension (stale: Stale) def stale: Boolean = stale == Stale
-    enum Usable derives CanEqual:
-      case Usable, Unusable
-    object Usable extends TwoStates[Usable]:
-      extension (usable: Usable) def usable: Boolean = usable == Usable
-
-  enum Verdict:
-    case Usable(note: Option[Usable.Note])
-
-    case Blocked(reason: Rationale, until: Option[Blocked.Until])
-
-    def usable: Boolean = (this.isInstanceOf[Usable])
-
-  object Verdict:
-    object Usable:
-      type Note = Note.T
-      object Note extends Newtype[String, Pure]
-
-    object Blocked:
-      export Reading.ResetsAt as Until
-
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def current(readings: List[Reading], now: Now, model: Option[ModelChains.ChainEntry.Model] = None): List[Reading] =
+  def current(readings: List[Reading], now: Now, model: Option[ChainEntry.Model] = None): List[Reading] =
     readings
       .filter(r => r.resetsAt.forall(_.value > now.value))
       .filter(r => r.model.isEmpty || model.isEmpty || r.model == model)
@@ -261,31 +87,6 @@ object PlanQuota:
       .map(_.maxBy(_.observedAt))
       .toList
       .sortBy(r => (r.limit, r.kind))
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def windowState(r: Reading, rules: Rules, now: WindowStateNow): WindowState =
-    val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
-    val left = (100.0 - (r.usedPct).value).max(0)
-    val stale = now.value - r.observedAt.value > rules.staleMs.value
-    val pct = (d: Double) =>
-      java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
-    val why =
-      if (r.rejected) == Reading.Rejected.Rejected then Some(s"${r.kind}: the provider refuses it")
-      else if !stale && left <= floor.value then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
-      else if stale && left < floor.value + rules.marginPct.value then
-        Some(
-          s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
-        )
-      else None
-    WindowState(
-      r,
-      floor,
-      WindowStatus.LeftPct(left),
-      (if stale then WindowState.Stale.Stale else WindowState.Stale.Fresh),
-      (if why.isEmpty then WindowState.Usable.Usable else WindowState.Usable.Unusable),
-      why.map(w => Rationale(s"$w"))
-    )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
@@ -297,7 +98,7 @@ object PlanQuota:
       now: VerdictNow,
       model: Option[PlanQuota.VerdictModel] = None
   ): (Verdict, List[WindowState]) =
-    val states = current(readings, now, model).map(windowState(_, rules, now))
+    val states = current(readings, now, model).map(_.windowState(rules, now))
     val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable.Usable)))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
@@ -317,50 +118,6 @@ object PlanQuota:
           case None => Verdict.Usable(None)
     (v, states)
 
-  enum RefreshMode(val wire: RefreshMode.Wire) derives CanEqual:
-    case Auto extends RefreshMode(RefreshMode.Wire("auto"))
-    case Probe extends RefreshMode(RefreshMode.Wire("probe"))
-    case Off extends RefreshMode(RefreshMode.Wire("off"))
-
-  object RefreshMode:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def parse(s: Wire): Option[RefreshMode] =
-      values.find(_.wire == Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
-
-  enum Login:
-    case Present(detail: Present.Detail)
-    case Missing(why: Rationale)
-    case Unknown(why: Rationale)
-
-  object Login:
-    object Present:
-      export Agents.DoctorCheck.Detail
-
-  enum RefreshNeed(val text: RefreshNeed.Text):
-    case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))
-
-    case NoReading extends RefreshNeed(RefreshNeed.Text("no reading yet"))
-
-  object RefreshNeed:
-    type Text = Text.T
-    object Text extends Newtype[String, Pure]
-
-  enum RefreshTrigger(val wire: RefreshTrigger.Wire):
-    case Pick extends RefreshTrigger(RefreshTrigger.Wire("pick"))
-
-    case Paused extends RefreshTrigger(RefreshTrigger.Wire("paused-run"))
-
-    case Command extends RefreshTrigger(RefreshTrigger.Wire("command"))
-
-    case Schedule extends RefreshTrigger(RefreshTrigger.Wire("schedule"))
-
-  object RefreshTrigger:
-    type Wire = Wire.T
-    object Wire extends Newtype[String, Pure]
-
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def refreshNeed(
@@ -373,7 +130,7 @@ object PlanQuota:
   ): Option[RefreshNeed] =
     if ((held) == PoolStatus.Held.Held) || refusal.exists(_._2.forall(_.value > now.value)) then None
     else
-      val states = current(readings, now, model).map(windowState(_, rules, now))
+      val states = current(readings, now, model).map(_.windowState(rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
         val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == WindowState.Usable.Usable)))
@@ -394,7 +151,7 @@ object PlanQuota:
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   def refreshDecision(
       need: Option[RefreshNeed],
-      login: Login,
+      login: api.automation.planquota.Login,
       enabled: Boolean,
       lastAttempt: Option[PlanQuota.RefreshDecisionLastAttempt],
       minGapMs: PlanQuota.RefreshDecisionMinGapMs,
@@ -403,264 +160,9 @@ object PlanQuota:
   ): Either[Rationale, Option[RefreshNeed]] =
     login match
       case _ if !(enabled)                                          => Left(Rationale("refresh is off for this pool"))
-      case Login.Missing(why)                                       => Left(Rationale(s"no login: $why"))
+      case api.automation.planquota.Login.Missing(why)              => Left(Rationale(s"no login: $why"))
       case _ if (force)                                             => Right(need)
       case _ if need.isEmpty                                        => Left(Rationale("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
         Left(Rationale("a fresh reading was taken (or tried) less than stale-minutes ago"))
       case _ => Right(need)
-
-  final case class WindowStatus(
-      limit: WindowStatus.Limit,
-      kind: WindowStatus.Kind,
-      usedPct: WindowStatus.UsedPct,
-      leftPct: WindowStatus.LeftPct,
-      floor: WindowStatus.Floor,
-      usable: WindowStatus.Usable,
-      stale: WindowStatus.Stale,
-      resetsAt: Option[WindowStatus.ResetsAt],
-      observedAt: WindowStatus.ObservedAt,
-      ageSeconds: WindowStatus.AgeSeconds,
-      source: WindowStatus.Source,
-      why: Option[Rationale] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object WindowStatus:
-    export Reading.Limit
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
-    export Reading.UsedPct
-    type LeftPct = LeftPct.T
-    object LeftPct extends Newtype[Double, Pure]
-    export Floors.Floor
-    enum Usable derives CanEqual:
-      case Usable, Unusable
-    object Usable extends TwoStates[Usable]:
-      extension (usable: Usable) def usable: Boolean = usable == Usable
-    enum Stale derives CanEqual:
-      case Stale, Fresh
-    object Stale extends TwoStates[Stale]:
-      extension (stale: Stale) def stale: Boolean = stale == Stale
-    type ResetsAt = ResetsAt.T
-    object ResetsAt extends Newtype[String, Pure]
-    type ObservedAt = ObservedAt.T
-    object ObservedAt extends Newtype[String, Pure]
-    type AgeSeconds = AgeSeconds.T
-    object AgeSeconds extends Newtype[Long, Pure]
-    type Source = Source.T
-    object Source extends Newtype[String, Pure]
-
-  final case class PoolStatus(
-      pool: PoolStatus.Pool,
-      title: PoolStatus.Title,
-      kind: PoolStatus.Kind,
-      covers: List[PoolStatus.Covers],
-      floors: PoolStatus.Floors,
-      floorsSource: PoolStatus.FloorsSource,
-      held: PoolStatus.Held,
-      usable: PoolStatus.Usable,
-      reason: Option[Rationale],
-      until: Option[PoolStatus.Until],
-      maxCallsInFlight: PoolStatus.MaxCallsInFlight,
-      windows: List[WindowStatus],
-      planType: Option[PoolStatus.PlanType] = None,
-      note: Option[PoolStatus.Note] = None,
-      available: PoolStatus.Available = PoolStatus.Available.Available,
-      login: Option[PoolStatus.Login] = None,
-      refresh: Option[PoolStatus.Refresh] = None,
-      refreshesToday: PoolStatus.RefreshesToday = PoolStatus.RefreshesToday(0),
-      lastRefresh: Option[RefreshInfo] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object PoolStatus:
-    export PoolId.{Title, Wire as Pool}
-    type Kind = Kind.T
-    object Kind extends Newtype[String, Pure]
-    type Covers = Covers.T
-    object Covers extends Newtype[String, Pure]
-    type Floors = Floors.T
-    object Floors extends Newtype[String, Pure]:
-      given Display[T] = Display(_.value)
-    type FloorsSource = FloorsSource.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object FloorsSource extends Newtype[String, Pure]
-    enum Held derives CanEqual:
-      case Held, Released
-    object Held extends TwoStates[Held]:
-      extension (held: Held) def held: Boolean = held == Held
-    enum Usable derives CanEqual:
-      case Usable, Unusable
-    object Usable extends TwoStates[Usable]:
-      extension (usable: Usable) def usable: Boolean = usable == Usable
-    type Until = Until.T
-    object Until extends Newtype[String, Pure]
-    type MaxCallsInFlight = MaxCallsInFlight.T
-    object MaxCallsInFlight extends Newtype[Int, Pure]
-    type PlanType = PlanType.T
-    object PlanType extends Newtype[String, Pure]
-    type Note = Note.T
-    object Note extends Newtype[String, Pure]:
-      given Display[T] = Display(_.value)
-    enum Available derives CanEqual:
-      case Available, Unavailable
-    object Available extends TwoStates[Available]:
-      extension (available: Available) def available: Boolean = available == Available
-    type Login = Login.T
-    object Login extends Newtype[String, Pure]
-    type Refresh = Refresh.T
-    object Refresh extends Newtype[String, Pure]
-    type RefreshesToday = RefreshesToday.T
-    object RefreshesToday extends Newtype[Int, Pure]
-
-  final case class RefreshInfo(
-      at: RefreshInfo.At,
-      mode: RefreshInfo.Mode,
-      trigger: RefreshInfo.Trigger,
-      ok: RefreshInfo.Ok,
-      detail: RefreshInfo.Detail
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object RefreshInfo:
-    type LastAttempt = LastAttempt.T
-    object LastAttempt extends Newtype[Long, Pure]
-    type At = At.T
-    object At extends Newtype[String, Pure]
-    export RefreshMode.Wire as Mode
-    export RefreshTrigger.Wire as Trigger
-    enum Ok derives CanEqual:
-      case Ok, Failed
-    object Ok extends TwoStates[Ok]:
-      extension (ok: Ok) def ok: Boolean = ok == Ok
-    type Detail = Detail.T
-    object Detail extends Newtype[String, Pure]
-
-  final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object QuotaRefresh:
-    export PoolId.Wire as Pool
-
-  final case class PoolRefreshed(
-      pool: PoolRefreshed.Pool,
-      refreshed: PoolRefreshed.Refreshed,
-      detail: PoolRefreshed.Detail,
-      status: PoolStatus
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object PoolRefreshed:
-    export PoolId.Wire as Pool
-    enum Refreshed derives CanEqual:
-      case Refreshed, Unchanged
-    object Refreshed extends TwoStates[Refreshed]:
-      extension (refreshed: Refreshed) def refreshed: Boolean = refreshed == Refreshed
-    type Detail = Detail.T
-    object Detail extends Newtype[String, Pure]
-
-  final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object QuotaRefreshed:
-    type Lifted = Lifted.T
-    object Lifted extends Newtype[String, Pure]
-
-  final case class QuotaInfo(
-      plans: List[PoolStatus],
-      metered: List[ModelChains.AllowanceStatus],
-      fallthrough: List[QuotaInfo.Fallthrough],
-      now: QuotaInfo.Now,
-      cooldowns: List[Cooldown] = Nil
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object QuotaInfo:
-    type Fallthrough = Fallthrough.T
-    object Fallthrough extends Newtype[String, Pure]
-    type Now = Now.T
-    object Now extends Newtype[String, Pure]
-
-  final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Rationale)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object Cooldown:
-    export ModelChains.ChainEntry.Model
-    type Until = Until.T
-    object Until extends Newtype[String, Pure]
-
-  final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object PoolSet:
-    enum Hold derives CanEqual:
-      case Hold, Release
-    object Hold extends TwoStates[Hold]:
-      extension (hold: Hold) def hold: Boolean = hold == Hold
-    type Floors = Floors.T
-    object Floors extends Newtype[String, Pure]
-
-  final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object FallthroughSet:
-    enum Fallthrough derives CanEqual:
-      case Fallthrough, Stop
-    object Fallthrough extends TwoStates[Fallthrough]:
-      extension (fallthrough: Fallthrough) def fallthrough: Boolean = fallthrough == Fallthrough
-
-  /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
-  final case class ModWindow(
-      kind: ModWindow.Kind,
-      percentUsed: ModWindow.PercentUsed,
-      resetsAt: Option[ModWindow.ResetsAt] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object ModWindow:
-    export WindowStatus.Kind
-    export Reading.UsedPct as PercentUsed
-    type ResetsAt = ResetsAt.T
-    object ResetsAt extends Newtype[String, Pure]
-
-  final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object ModReport:
-    type Source = Source.T
-    object Source extends Newtype[String, Pure]
-
-  final case class GuardAnswer(
-      allow: GuardAnswer.Allow,
-      reason: Option[Rationale] = None,
-      resetsAt: Option[GuardAnswer.ResetsAt] = None
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object GuardAnswer:
-    enum Allow derives CanEqual:
-      case Allow, Deny
-    object Allow extends TwoStates[Allow]:
-      extension (allow: Allow) def allow: Boolean = allow == Allow
-    type ResetsAt = ResetsAt.T
-    object ResetsAt extends Newtype[String, Pure]

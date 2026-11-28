@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.checks.lint.Rule
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -22,7 +24,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 class PointAreasSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
+  private val rule = Rule.rule(Rule.Name(Lint.PlaceImportedPointArea)).get
 
   test("Dating: an unknown start is end-only, an open range undated, anything else dated"):
     assertEquals(Dating.of(startUnknown = true, lowerInf = false, upperInf = false), Dating.EndOnly)

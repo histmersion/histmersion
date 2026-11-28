@@ -2,7 +2,6 @@ package com.histmersion
 package domain.automation.agents
 
 import com.histmersion.domain.automation.agents.VerbatimFailure
-import com.histmersion.api.automation.Agents.ModelRef
 import com.histmersion.plugin.*
 import com.histmersion.pluginhost.PluginAi
 import sttp.ai.core.agent.*

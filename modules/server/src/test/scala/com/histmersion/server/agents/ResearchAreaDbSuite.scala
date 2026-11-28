@@ -1,6 +1,10 @@
 package com.histmersion
 package server.agents
 
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerConfig
+
 import com.histmersion.util.problem.Text.sentences
 
 import hearth.kindlings.optics.syntax.*
@@ -40,7 +44,7 @@ class ResearchAreaDbSuite extends DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Area = DomainGoal.Slug("zzarea-tin")
   private val AreaSlug = Goal.Slug("zzarea-tin")
   private val Seed = ManagerInfo.Id("seed:zzarea-tin")

@@ -1,11 +1,13 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.domain.automation.agents.PoolSink
 
 import com.histmersion.config.AppConfig
-import com.histmersion.api.automation.PlanQuota.{PoolId, Reading}
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*

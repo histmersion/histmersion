@@ -12,7 +12,6 @@ import java.nio.file.{Files, Path}
 import com.histmersion.domain.catalogue.places.PlaceSeed
 import com.histmersion.api.catalogue.{EventsApi, Lpf}
 import com.histmersion.api.catalogue.{Latitude, Longitude, Place, Year}
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.util.console.Console
 import com.histmersion.api.SpatialHierarchyResult
 import com.histmersion.cli.CommandLine.{given, *}

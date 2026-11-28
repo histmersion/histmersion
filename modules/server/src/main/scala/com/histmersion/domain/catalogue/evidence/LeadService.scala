@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.evidence
 
+import com.histmersion.domain.catalogue.events.Placement
+
 import com.histmersion.api.TimeSpan
 import com.histmersion.api.catalogue.{
   ArticleEventLead,
@@ -12,7 +14,6 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.domain.DeepTime.SignedYear
 import com.histmersion.domain.catalogue.Event
-import com.histmersion.domain.catalogue.events.CatalogMerge as CM
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.domain.catalogue.events.{EventSelection, EventSourceFilter}
 import com.histmersion.util.database.Transactor
@@ -36,21 +37,26 @@ trait LeadService:
   def attestingSources(id: Event.Id): List[EventSourceRef]
 
   /** The dated, placed findings within `km` and `years` of an event, nearest in time then space first. */
-  def nearFindings(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years, limit: PageSize): List[EventFindingRef]
+  def nearFindings(
+      id: Event.Id,
+      km: Placement.Tolerance.Km,
+      years: Placement.Tolerance.Years,
+      limit: PageSize
+  ): List[EventFindingRef]
 
   /** The facts of the leads of the events `selection` selects, the catalogue's and the largest first, one page; and how
     * many it selects.
     */
   def leads(
       selection: EventSelection,
-      km: CM.Tolerance.Km,
-      years: CM.Tolerance.Years,
+      km: Placement.Tolerance.Km,
+      years: Placement.Tolerance.Years,
       limit: PageSize,
       offset: Offset
   ): (RowCount, List[LeadRow])
 
   /** The facts of one event's lead. */
-  def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow]
+  def leadOf(id: Event.Id, km: Placement.Tolerance.Km, years: Placement.Tolerance.Years): List[LeadRow]
 
   /** Catalogue events overlapping `period` within `km` of a dated finding of `citekeys` of that period, large enough
     * (`minVei`, `minMagnitude`) or a war, with how many of those findings are near each.
@@ -58,7 +64,7 @@ trait LeadService:
   def articleCandidates(
       citekeys: List[Citekey],
       period: Option[(SignedYear, SignedYear)],
-      km: CM.Tolerance.Km,
+      km: Placement.Tolerance.Km,
       minVei: CatalogRecord.Vei,
       minMagnitude: CatalogRecord.Magnitude,
       limit: PageSize
@@ -86,20 +92,20 @@ object LeadService:
     def attestingSources(id: Event.Id): List[EventSourceRef] = db.read(LeadRepo.attestingSources(id))
     def nearFindings(
         id: Event.Id,
-        km: CM.Tolerance.Km,
-        years: CM.Tolerance.Years,
+        km: Placement.Tolerance.Km,
+        years: Placement.Tolerance.Years,
         limit: PageSize
     ): List[EventFindingRef] =
       db.read(LeadRepo.nearFindings(id, km, years, limit))
     def leads(
         selection: EventSelection,
-        km: CM.Tolerance.Km,
-        years: CM.Tolerance.Years,
+        km: Placement.Tolerance.Km,
+        years: Placement.Tolerance.Years,
         limit: PageSize,
         offset: Offset
     ): (RowCount, List[LeadRow]) =
       db.read(LeadRepo.leadRows(selection.sql(related), km, years, limit, offset))
-    def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] =
+    def leadOf(id: Event.Id, km: Placement.Tolerance.Km, years: Placement.Tolerance.Years): List[LeadRow] =
       db.read(
         LeadRepo
           .leadRows(sql"e.id = $id", km, years, PageSize(1), Offset.Start)
@@ -107,7 +113,7 @@ object LeadService:
     def articleCandidates(
         citekeys: List[Citekey],
         period: Option[(SignedYear, SignedYear)],
-        km: CM.Tolerance.Km,
+        km: Placement.Tolerance.Km,
         minVei: CatalogRecord.Vei,
         minMagnitude: CatalogRecord.Magnitude,
         limit: PageSize
@@ -159,8 +165,8 @@ object LeadService:
 
     def nearFindings(
         id: Event.Id,
-        km: CM.Tolerance.Km,
-        years: CM.Tolerance.Years,
+        km: Placement.Tolerance.Km,
+        years: Placement.Tolerance.Years,
         limit: PageSize
     ): List[EventFindingRef] = Nil
 
@@ -194,8 +200,8 @@ object LeadService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def leads(
         selection: EventSelection,
-        km: CM.Tolerance.Km,
-        years: CM.Tolerance.Years,
+        km: Placement.Tolerance.Km,
+        years: Placement.Tolerance.Years,
         limit: PageSize,
         offset: Offset
     ): (RowCount, List[LeadRow]) =
@@ -215,13 +221,13 @@ object LeadService:
         rows.slice(offset.value.max(0), offset.value.max(0) + limit.value.max(1))
       )
 
-    def leadOf(id: Event.Id, km: CM.Tolerance.Km, years: CM.Tolerance.Years): List[LeadRow] =
+    def leadOf(id: Event.Id, km: Placement.Tolerance.Km, years: Placement.Tolerance.Years): List[LeadRow] =
       factsOf(state.get, id).toList
 
     def articleCandidates(
         citekeys: List[Citekey],
         period: Option[(SignedYear, SignedYear)],
-        km: CM.Tolerance.Km,
+        km: Placement.Tolerance.Km,
         minVei: CatalogRecord.Vei,
         minMagnitude: CatalogRecord.Magnitude,
         limit: PageSize

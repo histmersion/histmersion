@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.corequota.State
+import com.histmersion.domain.corequota.Block
+import com.histmersion.domain.corequota.Window
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.CoreQuota
@@ -17,15 +21,15 @@ abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
 
   stest("a budget is read back as it was saved but its call slots; the next save replaces it") { s =>
     assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), None)
-    val st = CoreQuota.State(
+    val st = State(
       LocalDate.of(2026, 10, 26),
-      CoreQuota.State.LookupTokens(5),
-      CoreQuota.State.SearchTokens(2),
-      Some(CoreQuota.Block(Instant.parse("2026-10-26T19:00:00Z"), CoreQuota.Block.Rationale.Throttled)),
+      State.LookupTokens(5),
+      State.SearchTokens(2),
+      Some(Block(Instant.parse("2026-10-26T19:00:00Z"), Block.Rationale.Throttled)),
       Some(
-        CoreQuota.Window(
-          Some(CoreQuota.Window.Limit(25)),
-          Some(CoreQuota.Window.Remaining(3)),
+        Window(
+          Some(Window.Limit(25)),
+          Some(Window.Remaining(3)),
           Instant.parse("2026-10-26T18:50:00Z")
         )
       )
@@ -35,10 +39,10 @@ abstract class UpstreamQuotaServiceContract extends AcquisitionStoreSuite:
       st.modify(_.recent).setTo(Vector(Instant.parse("2026-10-26T18:49:59Z")))
     )
     assertEquals(s.quotas.load(UpstreamQuotaService.Upstream("zq")), Some(st))
-    val next = CoreQuota.State(
+    val next = State(
       LocalDate.of(2026, 10, 27),
-      CoreQuota.State.LookupTokens(0),
-      CoreQuota.State.SearchTokens(0),
+      State.LookupTokens(0),
+      State.SearchTokens(0),
       None,
       None
     )

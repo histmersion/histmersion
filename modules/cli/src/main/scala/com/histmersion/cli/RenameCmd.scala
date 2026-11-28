@@ -12,7 +12,6 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Rename
 import com.histmersion.api.library.Source
 import com.histmersion.util.console.Console
@@ -30,7 +29,7 @@ object RenameCmd:
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   val Help: String =
-    s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${Aliases.rule(AliasKinds.SourceRecords)}"
+    s"Give a source a new citekey — findings, links in articles/notes and every table follow. ${AliasKinds.SourceRecords.rule}"
 
   private def plainName(name: String): Boolean =
     name.nonEmpty && !name.exists(c => c == '/' || c == '\\') && !name.startsWith(".")

@@ -1,11 +1,17 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueImport
+import com.histmersion.api.checks.lint.LintReport
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
-import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueuePatch}
 
 import java.nio.file.{Files, Path}
 import com.histmersion.api.automation.{GoalsExport, Queue}
@@ -35,17 +41,17 @@ object Ops:
   /** What `histmersion queue …` was asked to do. */
   enum QueueCmd extends Cli.Command:
     @tolerated(LintRule.BooleanParam, "pending ADR 0027 (a state is an enum, not a Boolean)")
-    case Show(list: Queue.Kind.Label, all: Boolean, json: Cli.JsonOutput)
+    case Show(list: Kind.Label, all: Boolean, json: Cli.JsonOutput)
     case Add(
-        list: Queue.Kind.Label,
-        text: Queue.QueueItem.Text,
-        topic: Option[Queue.QueueItem.Topic],
+        list: Kind.Label,
+        text: QueueItem.Text,
+        topic: Option[QueueItem.Topic],
         reason: Option[Queue.Rationale],
         by: AgentIdentity,
         json: Cli.JsonOutput
     )
     case Done(id: Queue.Id, json: Cli.JsonOutput)
-    case Edit(id: Queue.Id, text: Queue.QueueItem.Text, json: Cli.JsonOutput)
+    case Edit(id: Queue.Id, text: QueueItem.Text, json: Cli.JsonOutput)
     case Patch(id: Queue.Id, actor: Option[Creation.Actor], json: Cli.JsonOutput)
     case Rm(id: Queue.Id, json: Cli.JsonOutput)
     case Export(dir: String)
@@ -76,9 +82,7 @@ object Ops:
   def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[String]] =
     val _ = Files.createDirectories(dir)
     val files: List[(String, () => Either[Cli.Error, String])] =
-      Queue.Kind.values.toList.map(k =>
-        k.file.value -> (() => c.queueExport(Queue.Wire(k.label.value)).map(_.value))
-      ) :+
+      Kind.values.toList.map(k => k.file.value -> (() => c.queueExport(Queue.Wire(k.label.value)).map(_.value))) :+
         (GoalsExport.File -> (() => c.goalsExport.map(_.value)))
     files.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
       acc.flatMap { done =>
@@ -98,7 +102,7 @@ object Ops:
   def readMeta(c: Client, dir: Path, replace: Api.Overwrite): Either[Cli.Error, List[String]] =
     if !Files.isDirectory(dir) then Left(Cli.Error(Problem.Unclassified(Legacy.Text(s"not a directory: $dir"))))
     else
-      Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
+      Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
           val f = dir.resolve(kind.file.value)
           if !Files.isRegularFile(f) then Right(done :+ shown"${kind.file}: absent, skipped")
@@ -106,7 +110,7 @@ object Ops:
             c.queueImport(
               Queue.Wire(kind.label.value),
               QueueImport(
-                Queue.QueueItem.Text(Files.readString(f)),
+                QueueItem.Text(Files.readString(f)),
                 (if replace.overwrites then QueueImport.Replace.Replace else QueueImport.Replace.Merge)
               )
             ).map(r => done :+ s"${kind.file}: ${r.items} item(s), ${r.notes} note block(s), ${r.replaced} replaced")
@@ -133,7 +137,7 @@ object Ops:
       placed: Option[Int] = None,
       places: Option[List[String]] = None,
       areas: Int = 0
-  ): Either[Cli.Error, List[Lint.LintReport.Fixed]] =
+  ): Either[Cli.Error, List[LintReport.Fixed]] =
     c.lintFix(rules.map(Lint.Wire(_))) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -181,7 +185,7 @@ object Ops:
                        s", ${r.pointAreasRemaining} left (named by evidence, or changing — run again)"
                      else "")
                 )
-                .toList).map(Lint.LintReport.Fixed(_))
+                .toList).map(LintReport.Fixed(_))
           )
 
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written
@@ -229,7 +233,7 @@ object Ops:
           )
         // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
         case QueueCmd.Done(id, json) =>
-          c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
+          c.queuePatch(id, QueuePatch(status = Some(QueueItem.Status(Queue.Done))))
             .map(i => Output.emit(json, i)(i => shown"done #${i.id}: ${i.text}"))
         case QueueCmd.Edit(id, text, json) =>
           c.queuePatch(id, QueuePatch(text = Some(text)))
@@ -297,8 +301,8 @@ object Ops:
                 rep <- c.lint(rules.map(Lint.Wire(_)))
               yield
                 val full = rep.modify(_.fixed).setTo(fixed)
-                Output.emit(json, full)(Lint.markdown(_).value)
+                Output.emit(json, full)(_.markdown.value)
         case Command.Query(sql, json) =>
-          c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(Query.markdown(_).value))
+          c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(_.markdown.value))
         case Command.Schema(json) =>
-          c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown(_).value))
+          c.schemaTables.map(s => Output.emit(json, s)(_.schemaMarkdown.value))

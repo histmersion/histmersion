@@ -1,9 +1,27 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.modelchains.ChainEntry
+import com.histmersion.api.automation.modelchains.LimitSpec
+import com.histmersion.api.automation.modelchains.Limit
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.modelchains.LimitStatus
+import com.histmersion.api.automation.planquota.WindowStatus
+import com.histmersion.api.automation.modelchains.AllowanceStatus
+import com.histmersion.api.automation.agents.ModelsInfo
+import com.histmersion.api.automation.planquota.QuotaInfo
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.modelchains.RoleChain
+import com.histmersion.api.automation.modelchains.SettingSource
+import com.histmersion.api.automation.modelchains.Measure
+import com.histmersion.api.automation.agents.CheckLevel
+import com.histmersion.api.automation.agents.DoctorCheck
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Wording
-import com.histmersion.api.automation.Agents.{CheckLevel, DoctorReport, ModelsInfo}
 import com.histmersion.api.automation.ModelChains.*
 import com.raquo.laminar.api.L.*
 
@@ -62,7 +80,7 @@ object ModelsView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def windowBar(w: PlanQuota.WindowStatus): (Int, Int) =
+  def windowBar(w: WindowStatus): (Int, Int) =
     (math.max(0, math.min(100, math.round(w.usedPct.value).toInt)), math.max(0, math.min(100, 100 - w.floor.value)))
 
   /** How old a reading is, in words. */
@@ -82,7 +100,7 @@ object ModelsView:
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   def pane: HtmlElement =
     val info = Var(Option.empty[ModelsInfo])
-    val quota = Var(Option.empty[PlanQuota.QuotaInfo])
+    val quota = Var(Option.empty[QuotaInfo])
     val doctor = Var(Option.empty[DoctorReport])
     val failure = Var(Option.empty[String])
     val busy = Var(false)
@@ -105,7 +123,7 @@ object ModelsView:
     def check(offline: Boolean): Unit =
       busy.set(true)
       ApiClient
-        .agentDoctor((if offline then Agents.DoctorReport.Online.Online else Agents.DoctorReport.Online.Offline))
+        .agentDoctor((if offline then DoctorReport.Online.Online else DoctorReport.Online.Offline))
         .onComplete { r =>
           busy.set(false)
           r.fold(e => failure.set(Some(e.getMessage)), d => doctor.set(Some(d)))
@@ -177,7 +195,7 @@ object ModelsView:
   /** `five_hour=25, seven_day=40` → `5-hour limit 25 %, this week's limit 40 %`: the floors as limits. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def floorsText(floors: PlanQuota.PoolStatus.Floors): String =
+  def floorsText(floors: PoolStatus.Floors): String =
     floors.value
       .split(",")
       .toList
@@ -186,7 +204,7 @@ object ModelsView:
       .map { f =>
         f.split("=", 2) match
           case Array(k, v) =>
-            s"${Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(k.trim)).toLowerCase} ${v.trim.stripSuffix("%")} %"
+            s"${Wording.allowanceWindow(WindowStatus.Kind(k.trim)).toLowerCase} ${v.trim.stripSuffix("%")} %"
           case _ => f
       }
       .mkString(", ")
@@ -195,7 +213,7 @@ object ModelsView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
+  private def plansBlock(q: QuotaInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
       cls := "plan-pools",
       h4("Subscription plans"),
@@ -247,8 +265,8 @@ object ModelsView:
                           ApiClient
                             .setPool(
                               pl.pool,
-                              PlanQuota.PoolSet(hold = Some((if !pl.held.held then PlanQuota.PoolSet.Hold.Hold
-                                                             else PlanQuota.PoolSet.Hold.Release)))
+                              PoolSet(hold = Some((if !pl.held.held then PoolSet.Hold.Hold
+                                                   else PoolSet.Hold.Release)))
                             )
                         )
                       )
@@ -258,7 +276,7 @@ object ModelsView:
                       typ := "button",
                       cls := "link-btn",
                       disabled <-- busy,
-                      title := (if pl.pool == PlanQuota.PoolId.ClaudePlan.wire then
+                      title := (if pl.pool == PoolId.ClaudePlan.wire then
                                   "read the plan now (one minimal claude -p turn)"
                                 else "read the plan now (codex app-server; spends nothing)"),
                       "refresh",
@@ -427,7 +445,7 @@ object ModelsView:
           span(
             cls := "allowance-name",
             title := l.limit,
-            Wording.allowanceWindow(PlanQuota.WindowStatus.Kind(l.limit.value))
+            Wording.allowanceWindow(WindowStatus.Kind(l.limit.value))
           ),
           div(
             cls := s"allowance-bar ${if l.usable.usable then "" else "is-over"}",
@@ -515,7 +533,7 @@ object ModelsView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def doctorBlock(d: DoctorReport): HtmlElement =
     def level(l: CheckLevel) = span(cls := s"doctor-level level-${l.wire}", l.wire)
-    def checks(cs: List[Agents.DoctorCheck]) =
+    def checks(cs: List[DoctorCheck]) =
       ul(cls := "doctor-checks", cs.map(c => li(level(c.level), s" ${c.name}: ${c.detail}")))
     div(
       cls := "doctor",

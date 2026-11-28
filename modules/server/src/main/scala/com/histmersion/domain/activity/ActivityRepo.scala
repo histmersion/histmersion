@@ -1,8 +1,11 @@
 package com.histmersion
 package domain.activity
 
+import com.histmersion.api.automation.activity.Show
+import com.histmersion.api.automation.activity.Entry
+import com.histmersion.api.automation.activity.Counts
+
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Activity.{Entry, Show}
 
 import com.augustnagro.magnum.*
 
@@ -91,7 +94,7 @@ private[activity] object ActivityRepo:
 
   /** The runs and jobs running now, and those started since `weekAgo` that failed. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def counts(weekAgo: Instant)(using DbCon): Activity.Counts =
+  def counts(weekAgo: Instant)(using DbCon): Counts =
     val sql = sql"""SELECT count(*) FILTER (WHERE status IN (${listed(ActivityRules.RunningStates)})),
                                 count(*) FILTER (WHERE status IN (${listed(
         ActivityRules.ProblemStates
@@ -101,6 +104,4 @@ private[activity] object ActivityRepo:
       .query[(Long, Long)]
       .run()
       .headOption
-      .fold(Activity.Counts())((r, p) =>
-        Activity.Counts(Activity.Counts.Running(r.toInt), Activity.Counts.ProblemsWeek(p.toInt))
-      )
+      .fold(Counts())((r, p) => Counts(Counts.Running(r.toInt), Counts.ProblemsWeek(p.toInt)))

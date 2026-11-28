@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.personal
 
+import com.histmersion.api.automation.activity.Show
+
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -157,8 +159,8 @@ class PersonalControllersSuite extends munit.FunSuite:
         .map(m => (m.read, m.title)),
       Right((true, "Zz"))
     )
-    assertEquals(c.readMarks(me, None, Some(Activity.Show.Wire("opened")), None).map(_.size), Right(0))
-    assert(c.readMarks(me, None, Some(Activity.Show.Wire("nope")), None).isLeft)
+    assertEquals(c.readMarks(me, None, Some(Show.Wire("opened")), None).map(_.size), Right(0))
+    assert(c.readMarks(me, None, Some(Show.Wire("nope")), None).isLeft)
     assertEquals(c.opened(me, ReadOpened(ItemKind.Article, ItemKey("a"))).map(_.openedAt.isDefined), Right(true))
     assertEquals(c.unread(me, Some(ItemKind.Wire("goal")), None, None).isLeft, true)
     assertEquals(c.unread(me, None, None, Some(UnreadPage.Offset(-3))).map(p => (p.total, p.offset)), Right((0, 0)))

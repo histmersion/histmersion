@@ -1,6 +1,15 @@
 package com.histmersion
 package domain.research.articles
 
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.server.markdownlint.Context
+import com.histmersion.domain.reviewarticle.BodyCorpus
+import com.histmersion.domain.reviewarticle.Fix
+import com.histmersion.domain.reviewarticle.Snapshot
+import com.histmersion.api.research.critiquepairing.Hit
+import com.histmersion.api.research.critiquepairing.Mention
+import com.histmersion.api.research.critiquepairing.Work
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
 import hearth.kindlings.optics.syntax.*
@@ -26,20 +35,18 @@ import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.server.{LinkTarget, MarkdownLint}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
-import com.histmersion.api.aliases.{LabelRename, LabelRenamed, LabelRenames}
+import com.histmersion.api.aliases.{LabelRename, LabelRenamed}
 import com.histmersion.api.catalogue.{ArticleEventLead, Period}
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatReport, FormatSeverity}
 import com.histmersion.api.library.{Filter, SeedResult}
 import com.histmersion.api.research.{
   Article,
-  Articles,
   Backlink,
   Coverage,
   CoverageSearch,
   CritiquePair,
   CritiquePairing,
   CritiqueReason,
-  Critiques,
   ResolvedArticle
 }
 import com.histmersion.api.library.Source
@@ -71,7 +78,7 @@ final class ArticlesControllers(
     sources: SourcesControllers,
     sourceStore: SourceService,
     filters: SearchFilters,
-    ledgers: Slug => Either[Problem, Option[ReviewLedger.Ledger]],
+    ledgers: Slug => Either[Problem, Option[Ledger]],
     articleLeads: (ArticleEventLead.Body, List[Citekey], Option[Period]) => List[ArticleEventLead],
     note: Slug => Either[Api.Error, domain.research.Article.Note],
     current: (AliasKind, AliasTable.Id) => AliasTable.Id,
@@ -90,7 +97,7 @@ final class ArticlesControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  private def notFound(slug: Slug): Api.Error = Articles.notFound(Article.Slug(slug.value))
+  private def notFound(slug: Slug): Api.Error = Article.notFound(Article.Slug(slug.value))
 
   /** The slug of an article read back from the store. */
   @tolerated(
@@ -177,7 +184,7 @@ final class ArticlesControllers(
         val (body, fb) = MarkdownLint.fix(
           MarkdownLint.Scan.Text(a.body.value),
           FormatField.Body,
-          MarkdownLint.Context(article = MarkdownLint.Context.Article(true))
+          Context(article = Context.Article(true))
         )
         val (summary, fs) =
           a.summary
@@ -229,14 +236,14 @@ final class ArticlesControllers(
   )
   def bodyCorpus(
       texts: List[domain.research.Article.Body],
-      generated: ReviewArticle.BodyCorpus.Generated = ReviewArticle.BodyCorpus.Generated(false)
-  ): ReviewArticle.BodyCorpus =
+      generated: BodyCorpus.Generated = BodyCorpus.Generated(false)
+  ): BodyCorpus =
     val links = pageLinks(
       MarkdownLint
         .lookups(texts.map(t => MarkdownLint.Scan.Text(t.value)))
         .map(t => t)
     )
-    ReviewArticle.BodyCorpus(
+    BodyCorpus(
       t => links(WikiLinks.Occurrence.Target(t.value)).exists(_.isInstanceOf[Source.Ref]),
       t => links(WikiLinks.Occurrence.Target(t.value)).isDefined,
       text =>
@@ -278,12 +285,12 @@ final class ArticlesControllers(
           Right(
             ReviewArticle.checkBody(
               stored.fold(slug)(slugOf),
-              ReviewArticle.Fix.Body(before),
-              ReviewArticle.Snapshot.Kind(kind),
+              Fix.Body(before),
+              Snapshot.Kind(kind),
               draft,
               bodyCorpus(
                 texts.map(domain.research.Article.Body(_)),
-                ReviewArticle.BodyCorpus.Generated(generated)
+                BodyCorpus.Generated(generated)
               )
             )
           )
@@ -490,20 +497,20 @@ final class ArticlesControllers(
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def pairing(
       body: Article.Body
-  ): (List[CritiquePairing.Hit], CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey]) =
+  ): (List[Hit], Mention.Key => Option[com.histmersion.api.library.Citekey]) =
     val links = bodyLinks(body)
     val cited = citedOf(body, links)
     val edges = coverageReads.edgesTouching(cited, disagreementKinds)
     val works = sourceStore
       .refs(edges.flatMap(e => List(e.from, e.to)).distinct.map(ck => Citekey.assume(ck.value)))
-      .map(r => r.citekey -> CritiquePairing.Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
+      .map(r => r.citekey -> Work(r.citekey, CritiquePairing.names(r.citekey, r.authors), r.year))
       .toMap
-    val resolve: CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey] =
+    val resolve: Mention.Key => Option[com.histmersion.api.library.Citekey] =
       t => links(t).collect { case r: Source.Ref => r.citekey }
     (CritiquePairing.hits(body, resolve, edges, works.get), resolve)
 
   /** [[pairing]]'s mechanical repair: the body with each named partner's citekey appended, and the hits applied. */
-  def repairPairing(body: Article.Body): (Article.Body, List[CritiquePairing.Hit]) =
+  def repairPairing(body: Article.Body): (Article.Body, List[Hit]) =
     CritiquePairing.repair(body, pairing(body)._1)
 
   /** What filter `af` returns from the live corpus: its source count, which of `citekeys` it returns, and up to `cap`
@@ -572,7 +579,7 @@ final class ArticlesControllers(
       .load(store.canonical(slug))
       .map(a =>
         ReviewManagerPolicy.OpenPairs(
-          Critiques.toRule(critiques(slugOf(a), a.body)).size
+          CritiquePair.toRule(critiques(slugOf(a), a.body)).size
         )
       )
 
@@ -592,7 +599,7 @@ final class ArticlesControllers(
         .refs(edges.flatMap(e => List(e.from, e.to)).distinct.map(ck => Citekey.assume(ck.value)))
         .map(r => r.citekey -> (r.title, r.year))
         .toMap
-      Critiques.build(
+      CritiquePair.build(
         body,
         t => links(t).collect { case r: Source.Ref => r.citekey },
         edges,
@@ -677,7 +684,7 @@ final class ArticlesControllers(
   )(using Creator.New): Either[Api.Error, Article.View] =
     maintenance.guard(WriteGate.OperationName("put_article")):
       // an OLD slug follows the alias: the put replaces the renamed article
-      Articles
+      Article
         .applyPut(
           Article.Slug(currentSlug(slug).value),
           in.modify(_.reasons).setTo(canonicalReasons(in.reasons))
@@ -707,8 +714,8 @@ final class ArticlesControllers(
               store
                 .load(s)
                 .fold(Right(()))(cur =>
-                  Articles
-                    .applyPatch(cur, p)
+                  cur
+                    .applyPatch(p)
                     .fold(
                       _ => Right(()),
                       next =>
@@ -746,10 +753,10 @@ final class ArticlesControllers(
     maintenance.guard(WriteGate.OperationName("rename_article")):
       val from = currentSlug(slug)
       for
-        label <- LabelRenames.validate(
+        label <- LabelRename.validate(
           Bundle.Kind.Article,
-          LabelRenames.Label(from.value),
-          LabelRenames.Label(req.to.value)
+          LabelRename.Label(from.value),
+          LabelRename.Label(req.to.value)
         )
         to <- Slug.parse(label.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
         rewritten <- store.rename(from, to, Caller.Local)
@@ -827,7 +834,7 @@ final class ArticlesControllers(
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def importNow(req: Article.Import)(using WritePermit)(using Creator.New): Either[Api.Error, SeedResult] =
     val fallbackSlug = Article.Slug(req.slug.map(_.value.trim).filter(_.nonEmpty).getOrElse(""))
-    val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Articles.Kinds.head))
+    val fallbackKind = Article.Kind.Wire(req.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse(Article.Kinds.head))
     ArticleNote.parse(req.text.value, fallbackSlug, fallbackKind) match
       case None         => Left(Api.Error(Problem.Invalid.Broken.here(Problem.Invalid.Rule.Frontmatter)))
       case Some(parsed) =>
@@ -856,7 +863,7 @@ final class ArticlesControllers(
                 SeedResult(SeedResult.Imported(0), Nil, SeedResult.EdgesResolved(0), List(SeedResult.Skipped(s.value)))
               )
             else
-              Articles
+              Article
                 .kindOf(parsed.kind)
                 .left
                 .map(m => error(m, Write.CodeInvalid))

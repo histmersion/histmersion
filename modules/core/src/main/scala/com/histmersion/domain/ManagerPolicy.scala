@@ -1,6 +1,15 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.managerpolicy.CronStep
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.schedulerpolicy.Block
+import com.histmersion.domain.managerpolicy.Candidate
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.api.automation.managers.Hold
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ManagerHint
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
@@ -96,109 +105,6 @@ object ManagerPolicy:
   private[domain] def counted(n: Int, singular: String): Plural.Phrase =
     Plural.count(Plural.Count(n.toLong), Plural.CountSingular(singular))
 
-  /** A manager's settings in effect (the saved config over `agents.managers.<kind>`). The review manager uses them all;
-    * the enrich and seeding managers their run limits, failures and backoff (their items run once each: no rounds, no
-    * refill).
-    */
-
-  final case class ReviewSettings(
-      maxRuns: ReviewSettings.MaxRuns,
-      maxOpen: ReviewSettings.MaxOpen,
-      rounds: ReviewSettings.Rounds,
-      maxRunsPerArticle: ReviewSettings.MaxRunsPerArticle,
-      noProgressRuns: ReviewSettings.NoProgressRuns,
-      reopenLimit: ReviewSettings.ReopenLimit,
-      cooldownMinutes: ReviewSettings.CooldownMinutes,
-      lowWater: ReviewSettings.LowWater,
-      refillBatch: ReviewSettings.RefillBatch,
-      maxFailures: ReviewSettings.MaxFailures,
-      backoffMinutes: ReviewSettings.BackoffMinutes,
-      maxBackoffMinutes: ReviewSettings.MaxBackoffMinutes,
-      staleAfterDays: ReviewSettings.StaleAfterDays = ReviewSettings.StaleAfterDays(0),
-      inferFilter: ReviewSettings.InferFilter = ReviewSettings.InferFilter(false)
-  )
-
-  object ReviewSettings:
-    /** The settings of a manager of kind `k`. */
-    type MaxRuns = MaxRuns.T
-    object MaxRuns extends Newtype[Int, Pure]
-    type MaxOpen = MaxOpen.T
-    object MaxOpen extends Newtype[Int, Pure]
-    type Rounds = Rounds.T
-    object Rounds extends Newtype[Int, Pure]
-    type MaxRunsPerArticle = MaxRunsPerArticle.T
-    @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-    object MaxRunsPerArticle extends Newtype[Int, Pure]
-    type NoProgressRuns = NoProgressRuns.T
-    object NoProgressRuns extends Newtype[Int, Pure]
-    type ReopenLimit = ReopenLimit.T
-    object ReopenLimit extends Newtype[Int, Pure]
-    type CooldownMinutes = CooldownMinutes.T
-    object CooldownMinutes extends Newtype[Int, Pure]
-    type LowWater = LowWater.T
-    object LowWater extends Newtype[Int, Pure]
-    type RefillBatch = RefillBatch.T
-    object RefillBatch extends Newtype[Int, Pure]
-    type MaxFailures = MaxFailures.T
-    object MaxFailures extends Newtype[Int, Pure]
-    type BackoffMinutes = BackoffMinutes.T
-    object BackoffMinutes extends Newtype[Int, Pure]
-    type MaxBackoffMinutes = MaxBackoffMinutes.T
-    object MaxBackoffMinutes extends Newtype[Int, Pure]
-    type StaleAfterDays = StaleAfterDays.T
-    object StaleAfterDays extends Newtype[Int, Pure]
-    type InferFilter = InferFilter.T
-    object InferFilter extends Newtype[Boolean, Pure]
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
-      val maxRuns = math.max(0, c.maxRuns.fold(simple(k, m).maxRuns.value)(_.value))
-      ReviewSettings(
-        MaxRuns(maxRuns),
-        MaxOpen(math.max(maxRuns, c.maxOpen.fold(2 * maxRuns)(_.value))),
-        Rounds(1),
-        MaxRunsPerArticle(1),
-        NoProgressRuns(1),
-        ReopenLimit(1),
-        CooldownMinutes(math.max(0, c.cooldownMinutes.fold(0)(_.value))),
-        LowWater(0),
-        RefillBatch(0),
-        MaxFailures(math.max(1, c.maxFailures.fold(m.maxFailures.value)(_.value))),
-        BackoffMinutes(math.max(1, m.backoffMinutes.value)),
-        MaxBackoffMinutes(math.max(1, m.maxBackoffMinutes.value))
-      )
-
-    private def simple(k: Manager.Kind, m: ManagerDefaults): ManagerRunDefaults = k match
-      case Manager.Kind.Review => m.review
-      case Manager.Kind.Enrich => m.enrich
-      case Manager.Kind.Watch  => m.watch
-      case _                   => m.seed
-
-    /** The defaults of a manager of kind `k` (a kind whose defaults say more builds them itself). */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def defaultsFor(k: Manager.Kind, m: ManagerDefaults): ManagerConfig =
-      val s = simple(k, m)
-      ManagerConfig(
-        maxRuns = Some(ManagerConfig.MaxRuns(s.maxRuns.value)),
-        maxOpen = Some(ManagerConfig.MaxOpen(2 * s.maxRuns.value)),
-        maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
-        dailyUsd = dailyCap(ManagerConfig(), m)
-      )
-
-  // ── the cron (phase 3) ─────────────────────────────────────────────────────────────────────────
-
-  /** What a manager's cron does at a tick. */
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  enum CronStep:
-    /** Nothing: no cron, or not due yet. */
-    case Idle
-
-    /** Not scheduled yet: record its first firing, fire nothing. */
-    case Schedule(next: Option[Instant])
-
-    /** Due: fire now, then next at `next` (None: it never fires again). */
-    case Fire(next: Option[Instant])
-
   /** An active manager's cron at `now`, given when it was due (`nextTick`). A firing missed while the manager was
     * paused (or the server down) fires ONCE when it is next looked at, never once per missed time.
     */
@@ -239,136 +145,20 @@ object ManagerPolicy:
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[SchedulerPolicy.Block.Why] =
+  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[Block.Why] =
     cap
       .filter(c => spentToday >= BigDecimal(c.value))
       .map(c =>
-        SchedulerPolicy.Block.Why.Budget(
-          SchedulerPolicy.Block.SpendCap.Manager(
-            SchedulerPolicy.Block.Usd(spentToday),
-            SchedulerPolicy.Block.Usd(BigDecimal(c.value))
+        Block.Why.Budget(
+          Block.SpendCap.Manager(
+            Block.Usd(spentToday),
+            Block.Usd(BigDecimal(c.value))
           )
         )
       )
 
   /** The start of `now`'s UTC day (what a daily cap counts from). */
   def dayStart(now: Instant): Instant = now.truncatedTo(java.time.temporal.ChronoUnit.DAYS)
-
-  /** What the next step of an item is, once its run settled. */
-  enum Next:
-    /** Run it again (not before `notBefore`). */
-    case Again(notBefore: Option[Instant], state: ItemState, note: Item.Note)
-
-    /** It reached its end. */
-    case Done(outcome: Item.Outcome, state: ItemState)
-
-    /** It stops here; `task` is the backlog line a person acts on (None: nothing to act on). */
-    case Stop(outcome: Item.Outcome, task: Option[Item.Task], state: ItemState)
-
-    /** Its run failed: try again after the backoff (`failures` counted). */
-    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Item.Note)
-
-    /** Its run left a proposal for a person (approval `approval`): the item is held until it is decided, then settled
-      * with the decision — never run again for it.
-      */
-    case Wait(approval: ApprovalId, note: Item.Note)
-
-  object Next:
-    object Retry:
-      type Failures = Failures.T
-      object Failures extends Newtype[Int, Pure]
-
-  /** `base · 2^(failures-1)` minutes, at most `max`. */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def backoff(
-      baseMinutes: ReviewSettings.BackoffMinutes,
-      maxMinutes: ReviewSettings.MaxBackoffMinutes,
-      failures: Next.Retry.Failures
-  ): Duration =
-    val exp = math.min(30, math.max(0, failures.value - 1))
-    val mins = math.min(maxMinutes.value.toLong, baseMinutes.value.toLong * (1L << exp))
-    Duration.ofMinutes(math.max(1L, mins))
-
-  // ── the one-run items (infer-filter, extend, enrich, propose, compile) ───────────────────────────
-
-  /** What a DONE run of a one-run item left, as the supervisor reads it: its work is finished (with the outcome), it
-    * waits for a person's decision on approval `id`, or it ended without doing its work (`task`: what a person should
-    * look at, if anything).
-    */
-  enum StepFacts:
-    case Finished(outcome: Item.Outcome)
-    case Waiting(approval: ApprovalId, what: Item.Note)
-    case NotDone(outcome: Item.Outcome, task: Option[Item.Task])
-
-    /** Its work was refused by a check that a new run may pass (a draft the autopilot's checks rejected): run it again
-      * after the backoff, counted as a failure, stopped with a task after `maxFailures`.
-      */
-    case Redo(outcome: Item.Outcome)
-
-  /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`: done → finished, held
-    * for an approval, or stopped; failed → retried after the backoff, stopped with a task after `maxFailures`;
-    * cancelled → stopped. `facts` are read only for a done run.
-    */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def evaluateStep(
-      s: ReviewSettings,
-      label: StepLabel,
-      target: Candidate.Target,
-      failures: Next.Retry.Failures,
-      state: ItemState,
-      run: Run.Id,
-      status: Run.State,
-      error: Option[Problem],
-      facts: => StepFacts,
-      now: Instant
-  ): Next =
-    status match
-      case Run.State.Done =>
-        facts match
-          case StepFacts.Finished(o)      => Next.Done(o, state)
-          case StepFacts.Waiting(id, w)   => Next.Wait(id, w)
-          case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(t => Item.Task(t.value.take(2000))), state)
-          case StepFacts.Redo(o)          =>
-            val n = failures.value + 1
-            if n >= s.maxFailures.value then
-              Next.Stop(
-                Item.Outcome(s"stopped: $o (${counted(n, "attempt")})"),
-                Some(
-                  Item.Task(
-                    s"$label manager item stopped [[$target]]: $o, ${counted(n, "attempt")} (agent run ${run.value.take(8)})"
-                      .take(2000)
-                  )
-                ),
-                state
-              )
-            else
-              Next.Retry(
-                now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
-                Next.Retry.Failures(n),
-                Item.Note(s"$o ($n of ${s.maxFailures}); again")
-              )
-      case Run.State.Cancelled => Next.Stop(Item.Outcome("stopped: its run was cancelled"), None, state)
-      case _                   =>
-        val n = failures.value + 1
-        val why = error.map(_.sentence).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
-        if n >= s.maxFailures.value then
-          Next.Stop(
-            Item.Outcome(s"stopped: ${counted(n, "failed run")}$why"),
-            Some(
-              Item.Task(
-                s"$label manager item stopped [[$target]] after ${counted(n, "failed run")}$why (agent run ${run.value.take(8)})"
-              )
-            ),
-            state
-          )
-        else
-          Next.Retry(
-            now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
-            Next.Retry.Failures(n),
-            Item.Note(s"run failed ($n of ${s.maxFailures})$why")
-          )
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -400,28 +190,6 @@ object ManagerPolicy:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def blocks(kind: Item.Kind, pipeline: Pipeline.Wire, unsettled: Seq[Pipeline.Wire]): Boolean =
     if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
-
-  // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
-
-  /** What dispatch needs of an item. */
-  final case class Candidate(
-      id: Candidate.Id,
-      target: Candidate.Target,
-      priority: Candidate.Priority,
-      notBefore: Option[Instant]
-  )
-
-  object Candidate:
-    type Id = Id.T
-    object Id extends Newtype[Long, Pure]
-    type Target = Target.T
-    object Target extends Newtype[String, Pure]
-    type Priority = Priority.T
-    object Priority extends Newtype[Int, Pure]
-
-  /** May it start now? */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def due(c: Candidate, now: Instant): Boolean = c.notBefore.forall(!_.isAfter(now))
 
   /** The dispatch order within one manager: priority (highest first), then the earliest `notBefore` (none first), then
     * the oldest.
@@ -501,7 +269,7 @@ object ManagerPolicy:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def statusNote(
       state: Manager.State,
-      held: Option[SchedulerPolicy.Block.Why],
+      held: Option[Block.Why],
       capacity: Capacity,
       pending: PendingCount,
       due: DueCount,
@@ -514,10 +282,10 @@ object ManagerPolicy:
       Status(Kind.Paused, if inFlight.value > 0 then s" (${counted(inFlight.value, "run")} in flight)" else "")
     else
       held match
-        case Some(SchedulerPolicy.Block.Why.Budget(cap))    => Status(Kind.Budget, cap.render)
-        case Some(SchedulerPolicy.Block.Why.Starved(chain)) => Status(Kind.Starved, s"$chain")
-        case Some(other)                                    => Status.parse(other.render)
-        case None                                           =>
+        case Some(Block.Why.Budget(cap))    => Status(Kind.Budget, cap.render)
+        case Some(Block.Why.Starved(chain)) => Status(Kind.Starved, s"$chain")
+        case Some(other)                    => Status.parse(other.render)
+        case None                           =>
           if pending.value == 0 && inFlight.value == 0 then Status(Kind.Idle)
           else if due.value > 0 && capacity.value == 0 then
             Status(Kind.AtCapacity, s" (${counted(inFlight.value, "run")} in flight, $pending pending)")

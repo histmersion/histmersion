@@ -1,5 +1,8 @@
 package com.histmersion
 package web.settings
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.Kind
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -57,7 +60,7 @@ object DataSection:
     // one request per panel: a server restarted while the page is open shows as unreachable, never as empty panels
     val aboutReq = Request[About]()
     val basemapReq = Request[Basemap.Status]()
-    val sourcesReq = Request[List[Gazetteer.SourceInfo]]()
+    val sourcesReq = Request[List[SourceInfo]]()
     val catsReq = Request[List[CatalogProviderInfo]]()
     val mediaReq = Request[List[MediaProvider.Info]]()
     val about = aboutReq.signal.map(_.shown)
@@ -129,7 +132,7 @@ object DataSection:
             )
           ),
           children <-- sources.map(
-            _.filter(_.kind != Gazetteer.Kind.Lpf).map(s =>
+            _.filter(_.kind != Kind.Lpf).map(s =>
               row(
                 s.title.value,
                 (s.licence.map(_.value).toList ++ s.places

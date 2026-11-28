@@ -1,6 +1,10 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+import com.histmersion.api.catalogue.geocode.Attempt
+
 import com.histmersion.api.catalogue.{Geocode, Period}
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.domain.automation.worklists.{QueueService, WorkListControllers}
@@ -37,8 +41,8 @@ final class LibraryWorkflowSite(h: ServerWiring, deps: Deps) extends LibrarySite
   def jobs: JobListing = h.jobs
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def geocode(name: LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
-    h.geocode(Geocode.Attempt.Name(name.value), hint, at)
+  def geocode(name: LibrarySite.PlaceName, hint: KindHint, at: Option[Period]): Option[Resolution] =
+    h.geocode(Attempt.Name(name.value), hint, at)
 
   def articleSources(slug: Slug): Either[Api.Error, List[Citekey]] =
     h.research.articles.get(slug).map(v => h.research.articles.citedSources(v.article.body))

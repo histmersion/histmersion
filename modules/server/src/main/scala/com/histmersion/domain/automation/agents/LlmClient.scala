@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.Usage
 import com.github.plokhotnyuk.jsoniter_scala.core.{writeToString, JsonValueCodec}
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -11,7 +14,7 @@ import com.histmersion.pluginhost.HostAiHttp
 
 import com.histmersion.config.AgentsConfig
 import com.histmersion.api.automation.Agents
-import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.ProviderKind
 import sttp.ai.core.agent.*
 import sttp.ai.core.model.{AIModel, Capability}
 import sttp.shared.Identity
@@ -103,12 +106,12 @@ object LlmClient:
 
   /** sttp-ai's usage → ours. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def usage(u: TokenUsage): Agents.Usage =
-    Agents.Usage(
-      Agents.Usage.Input(u.inputTokens.value),
-      Agents.Usage.Output(u.outputTokens.value),
-      Agents.Usage.CacheRead(u.cachedInputTokens.value),
-      Agents.Usage.CacheWrite(u.cacheWriteInputTokens.value)
+  def usage(u: TokenUsage): Usage =
+    Usage(
+      Usage.Input(u.inputTokens.value),
+      Usage.Output(u.outputTokens.value),
+      Usage.CacheRead(u.cachedInputTokens.value),
+      Usage.CacheWrite(u.cacheWriteInputTokens.value)
     )
 
   /** The model the provider reported serving a step (#992): the id each call's response named (an API response's

@@ -1,5 +1,12 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.CheckLevel
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.modelchains.ChainEntry
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
@@ -224,7 +231,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         .isRight
     )
     val run = a
-      .startRun(RunRequest(Agents.RunRequest.Pipeline("enrich-source"), ApiTarget))
+      .startRun(RunRequest(RunRequest.Pipeline("enrich-source"), ApiTarget))
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     a.engine.execute(runId(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
@@ -255,7 +262,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assert(llm.forall(s => s.status.value == "done" && s.model.contains("hello-ai:echo")), llm.toString)
     assertEquals(llm.flatMap(_.actualModel).distinct, List("echo-scripted"), "the model the provider said served")
     // classify: the facets call ran in the host, then the answer — two turns, each counted
-    assertEquals(llm.head.usage, Usage(Agents.Usage.Input(200), Agents.Usage.Output(40)))
+    assertEquals(llm.head.usage, Usage(Usage.Input(200), Usage.Output(40)))
     assert(
       connect(ds)(AgentRepo.messages(jobId(run.id))).exists(m =>
         m.toolName.contains("facets") && m.role.value == "tool"
@@ -304,8 +311,8 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     assert(
       a.setChain(
         Agents.Role.Wire("extractor"),
-        ModelChains.ChainSet(
-          List(ModelChains.ChainEntry.Model("hello-ai:echo"), ModelChains.ChainEntry.Model("local:x"))
+        ChainSet(
+          List(ChainEntry.Model("hello-ai:echo"), ChainEntry.Model("local:x"))
         )
       ).left
         .map(Api.Error(_))
@@ -317,7 +324,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
       gone
         .setChain(
           Agents.Role.Wire("extractor"),
-          ModelChains.ChainSet(List(ModelChains.ChainEntry.Model("hello-ai:echo")))
+          ChainSet(List(ChainEntry.Model("hello-ai:echo")))
         )
         .left
         .map(Api.Error(_))

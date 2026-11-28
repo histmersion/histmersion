@@ -1,9 +1,11 @@
 package com.histmersion
 package domain
 
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.reviewledger.Entry
+
 import com.histmersion.api.Plural
 import com.histmersion.api.research.{ReviewApproval, ReviewBadge, ReviewFinding, ReviewRound, ReviewState}
-import com.histmersion.domain.ReviewLedger.{Entry, Ledger}
 import com.histmersion.domain.automation.ItemStatus
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.domain.automation.Run

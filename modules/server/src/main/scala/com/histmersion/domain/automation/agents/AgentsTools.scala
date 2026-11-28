@@ -1,5 +1,34 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.approvaldigest.Open
+import com.histmersion.api.automation.planquota.QuotaRefresh
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.FallthroughSet
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.modelchains.Allowance
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.managers.HintEffect
 import com.histmersion.util.mcp.ChimpJson
 import com.histmersion.util.mcp.ChimpJson.given
 import com.histmersion.util.json.RawJson.*
@@ -8,7 +37,7 @@ import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.problem.Text.sentence
 
-import com.histmersion.domain.automation.workflows.{InTreeWorkflow, Pipelines}
+import com.histmersion.domain.automation.workflows.InTreeWorkflow
 
 import chimp.server.*
 import com.histmersion.util.json.JsonCodec
@@ -21,7 +50,6 @@ import com.histmersion.domain.automation.Approval as DomainApproval
 import com.histmersion.domain.automation.goals.BGoalLinkRow
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.automation.Agents.{DecisionRequest, RunRequest}
 import com.histmersion.util.mcp.{McpConfig, McpEdge, McpOut}
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.{
@@ -74,7 +102,7 @@ object AgentsTools:
   def apply(
       a: AgentsControllers,
       repairAcquire: RepairAcquire => Either[Api.Error, String],
-      autopilotPage: Autopilot.EngineStatus => String
+      autopilotPage: EngineStatus => String
   ) =
     given Creator.New = Creator.New.Unattributed(Creator.Surface.Mcp)
     val start =
@@ -88,7 +116,7 @@ object AgentsTools:
         .input[RunInput]
         .handle { in =>
           CreatorControllers.mcp(in) {
-            in.modelFor.map(m => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(m))).partitionMap(identity) match
+            in.modelFor.map(m => ModelOverride.parse(ModelOverride.Wire(m))).partitionMap(identity) match
               case (Nil, over) =>
                 a.startRun(
                   RunRequest(
@@ -99,7 +127,7 @@ object AgentsTools:
                     None,
                     Option.when(in.fix)(RunRequest.Fix.Fix),
                     in.rounds.map(RunRequest.Rounds(_)),
-                    in.acquireItem.map(Queue.QueueItem.Id(_)),
+                    in.acquireItem.map(QueueItem.Id(_)),
                     in.title.map(RunRequest.Title(_)),
                     in.kind.map(RunRequest.Kind(_)),
                     in.query.map(RunRequest.Query(_)),
@@ -142,7 +170,7 @@ object AgentsTools:
                   AgentsMarkdown.runs(
                     rs,
                     page,
-                    f.qualifier.map(q => Agents.RunInfo.Status(q.value)),
+                    f.qualifier.map(q => RunInfo.Status(q.value)),
                     Paging
                       .olderLine(
                         page,
@@ -216,18 +244,17 @@ object AgentsTools:
                 McpOut.of(
                   a.managing
                     .decideAll(
-                      ApprovalDigest
-                        .BulkDecide(
-                          ApprovalDigest.BulkDecide.Decision(in.decision),
-                          in.kind.map(ApprovalDigest.BulkDecide.Kind(_)),
-                          in.subject.map(ApprovalDigest.BulkDecide.Subject(_)),
-                          in.ids.map(ApprovalDigest.Open.Id(_)),
-                          in.note.map(ApprovalDigest.BulkDecide.Note(_)),
-                          (if in.dryRun then ApprovalDigest.BulkDecide.DryRun.DryRun
-                           else ApprovalDigest.BulkDecide.DryRun.Apply),
-                          in.limit.map(ApprovalDigest.BulkDecide.Limit(_)),
-                          Some(ApprovalDigest.BulkDecide.By("mcp"))
-                        )
+                      BulkDecide(
+                        BulkDecide.Decision(in.decision),
+                        in.kind.map(BulkDecide.Kind(_)),
+                        in.subject.map(BulkDecide.Subject(_)),
+                        in.ids.map(Open.Id(_)),
+                        in.note.map(BulkDecide.Note(_)),
+                        (if in.dryRun then BulkDecide.DryRun.DryRun
+                         else BulkDecide.DryRun.Apply),
+                        in.limit.map(BulkDecide.Limit(_)),
+                        Some(BulkDecide.By("mcp"))
+                      )
                     )
                 )(ApprovalDigestMarkdown.bulk)
           }
@@ -363,7 +390,7 @@ object AgentsTools:
         .handle { in =>
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
             case _ if in.refresh =>
-              a.refreshQuota(PlanQuota.QuotaRefresh(in.pool.map(PlanQuota.QuotaRefresh.Pool(_))))
+              a.refreshQuota(QuotaRefresh(in.pool.map(QuotaRefresh.Pool(_))))
                 .left
                 .map(Api.Error(_))
                 .map(AgentsMarkdown.refreshed)
@@ -381,9 +408,9 @@ object AgentsTools:
               else
                 a.setPool(
                   PlanQuota.PoolIdText(in.pool.get.trim),
-                  PlanQuota.PoolSet(
-                    in.hold.map((if _ then PlanQuota.PoolSet.Hold.Hold else PlanQuota.PoolSet.Hold.Release)),
-                    in.floors.map(PlanQuota.PoolSet.Floors(_))
+                  PoolSet(
+                    in.hold.map((if _ then PoolSet.Hold.Hold else PoolSet.Hold.Release)),
+                    in.floors.map(PoolSet.Floors(_))
                   )
                 ).left
                   .map(Api.Error(_))
@@ -391,8 +418,8 @@ object AgentsTools:
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(
                 AgentRole.Wire(r),
-                PlanQuota.FallthroughSet((if in.fallthrough.get then PlanQuota.FallthroughSet.Fallthrough.Fallthrough
-                                          else PlanQuota.FallthroughSet.Fallthrough.Stop))
+                FallthroughSet((if in.fallthrough.get then FallthroughSet.Fallthrough.Fallthrough
+                                else FallthroughSet.Fallthrough.Stop))
               ).left
                 .map(Api.Error(_))
                 .map(AgentsMarkdown.quota)
@@ -401,25 +428,27 @@ object AgentsTools:
             case (Some(r), None) =>
               a.setChain(
                 AgentRole.Wire(r),
-                ModelChains.ChainSet(in.models.map(ModelChains.ChainSet.Models(_)))
+                ChainSet(in.models.map(ChainSet.Models(_)))
               ).left
                 .map(Api.Error(_))
                 .map(AgentsMarkdown.roleChain)
             case (None, Some(t)) if in.reset =>
-              a.removeAllowance(ModelChains.AllowanceSet.Target(t))
+              a.removeAllowance(AllowanceSet.Target(t))
                 .left
                 .map(Api.Error(_))
                 .map(x =>
                   if x.removed.removed then s"The saved allowance of $t is removed." else s"No saved allowance for $t."
                 )
             case (None, Some(t)) =>
-              in.limits.map(l => ModelChains.Limit.parse(ModelChains.Limit.Spec(l))).partitionMap(identity) match
+              in.limits
+                .map(l => api.automation.modelchains.Limit.parse(api.automation.modelchains.Limit.Spec(l)))
+                .partitionMap(identity) match
                 case (Nil, ls) =>
                   a.setAllowance(
-                    ModelChains.AllowanceSet(
-                      ModelChains.AllowanceSet.Target(t),
+                    AllowanceSet(
+                      AllowanceSet.Target(t),
                       ls.map(_.spec),
-                      ModelChains.Allowance.ReservePct(in.reservePct)
+                      Allowance.ReservePct(in.reservePct)
                     )
                   ).left
                     .map(Api.Error(_))
@@ -488,15 +517,15 @@ object AgentsTools:
                 m.action(
                   id,
                   ManagersControllers.Action("pause"),
-                  Some((if in.runs then Managers.ManagerInfo.PauseRuns.Pause else Managers.ManagerInfo.PauseRuns.Run))
+                  Some((if in.runs then ManagerInfo.PauseRuns.Pause else ManagerInfo.PauseRuns.Run))
                 ).map(ManagersMarkdown.line)
               case "resume" => m.action(id, ManagersControllers.Action("resume"), None).map(ManagersMarkdown.line)
               case "create" =>
                 m.create(
-                  Managers.ManagerCreate(
-                    Managers.ManagerCreate.Kind(in.kind.getOrElse("")),
+                  ManagerCreate(
+                    ManagerCreate.Kind(in.kind.getOrElse("")),
                     in.goal.map(Goal.Slug(_)),
-                    cron = in.cron.map(Managers.ManagerCreate.Cron(_))
+                    cron = in.cron.map(ManagerCreate.Cron(_))
                   )
                 ).map(ManagersMarkdown.line)
               case "enqueue" =>
@@ -505,18 +534,18 @@ object AgentsTools:
                     if in.id.exists(_.trim.nonEmpty) then
                       m.addItem(
                         id,
-                        Managers.EnqueueRequest(
-                          Managers.EnqueueRequest.Kind(in.kind.getOrElse("")),
-                          Managers.EnqueueRequest.Target(t),
-                          in.priority.map(Managers.EnqueueRequest.Priority(_))
+                        EnqueueRequest(
+                          EnqueueRequest.Kind(in.kind.getOrElse("")),
+                          EnqueueRequest.Target(t),
+                          in.priority.map(EnqueueRequest.Priority(_))
                         )
-                      ).map(i => Managers.EnqueueResult(Managers.ManagerInfo.Id(id.value), List(i)))
+                      ).map(i => EnqueueResult(ManagerInfo.Id(id.value), List(i)))
                     else
                       m.enqueue(
-                        Managers.EnqueueRequest(
-                          Managers.EnqueueRequest.Kind(in.kind.getOrElse("review")),
-                          Managers.EnqueueRequest.Target(t),
-                          in.priority.map(Managers.EnqueueRequest.Priority(_))
+                        EnqueueRequest(
+                          EnqueueRequest.Kind(in.kind.getOrElse("review")),
+                          EnqueueRequest.Target(t),
+                          in.priority.map(EnqueueRequest.Priority(_))
                         )
                       )
                   )
@@ -526,11 +555,11 @@ object AgentsTools:
                   .flatMap(t =>
                     m.patchItem(
                       id,
-                      Managers.ManagerItem.Ref(t),
-                      Managers.ItemPatch(
-                        Managers.ItemPatch.Action("hold"),
-                        until = in.until.map(Managers.ItemPatch.Until(_)),
-                        untilSource = in.untilSource.map(Managers.ItemPatch.UntilSource(_)),
+                      ManagerItem.Ref(t),
+                      ItemPatch(
+                        ItemPatch.Action("hold"),
+                        until = in.until.map(ItemPatch.Until(_)),
+                        untilSource = in.untilSource.map(ItemPatch.UntilSource(_)),
                         reason = in.text.map(text => Managers.Rationale(s"$text"))
                       )
                     )
@@ -544,16 +573,16 @@ object AgentsTools:
                   .flatMap(t =>
                     m.addHint(
                       id,
-                      Managers.HintAdd(
-                        Managers.HintAdd.Text(t),
-                        in.item.map(Managers.HintAdd.Item(_)),
-                        Some((if in.once then Managers.HintAdd.Once.Once else Managers.HintAdd.Once.Standing)),
+                      HintAdd(
+                        HintAdd.Text(t),
+                        in.item.map(HintAdd.Item(_)),
+                        Some((if in.once then HintAdd.Once.Once else HintAdd.Once.Standing)),
                         in.effect,
-                        Some(Managers.HintAdd.Author("mcp")),
-                        propose = Some((if in.effect.isDefined then Managers.HintAdd.Propose.Propose
-                                        else Managers.HintAdd.Propose.Direct)),
-                        suggest = Some((if in.suggest then Managers.HintAdd.Suggest.Suggest
-                                        else Managers.HintAdd.Suggest.Direct))
+                        Some(HintAdd.Author("mcp")),
+                        propose = Some((if in.effect.isDefined then HintAdd.Propose.Propose
+                                        else HintAdd.Propose.Direct)),
+                        suggest = Some((if in.suggest then HintAdd.Suggest.Suggest
+                                        else HintAdd.Suggest.Direct))
                       )
                     )
                   )
@@ -563,9 +592,9 @@ object AgentsTools:
                   case None    => Right(autopilotPage(m.autopilot))
                   case Some(b) =>
                     m.setAutopilot(
-                      Autopilot.AutopilotSet(
-                        (if b then Autopilot.AutopilotSet.On.On else Autopilot.AutopilotSet.On.Off),
-                        Some(Autopilot.AutopilotSet.By("mcp"))
+                      AutopilotSet(
+                        (if b then AutopilotSet.On.On else AutopilotSet.On.Off),
+                        Some(AutopilotSet.By("mcp"))
                       )
                     ).left
                       .map(Api.Error(_))
@@ -574,9 +603,9 @@ object AgentsTools:
                 repairAcquire(RepairAcquire(in.dryRun))
               case "drain" =>
                 m.drain(
-                  Autopilot.DrainSet(
-                    (if in.on.getOrElse(true) then Autopilot.DrainSet.On.On else Autopilot.DrainSet.On.Off),
-                    Some(Autopilot.DrainSet.By("mcp"))
+                  DrainSet(
+                    (if in.on.getOrElse(true) then DrainSet.On.On else DrainSet.On.Off),
+                    Some(DrainSet.By("mcp"))
                   )
                 ).left
                   .map(Api.Error(_))
@@ -604,11 +633,11 @@ object AgentsTools:
                   case None    => Right(AutopilotMarkdown.focus(m.focus))
                   case Some(v) =>
                     m.setFocus(
-                      Autopilot.FocusSet(
-                        Autopilot.FocusSet.Action(v),
+                      FocusSet(
+                        FocusSet.Action(v),
                         in.goal.map(Goal.Slug(_)),
-                        in.value.map(Autopilot.FocusSet.Value(_)),
-                        Some(Autopilot.FocusSet.By("mcp"))
+                        in.value.map(FocusSet.Value(_)),
+                        Some(FocusSet.By("mcp"))
                       )
                     ).map(AutopilotMarkdown.focus)
               case other =>
@@ -672,7 +701,7 @@ object AgentsTools:
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .toRight(Api.Error(Problem.Invalid.Missing(Problem.Field("item"), Vector(Problem.Field("why")))))
-                .flatMap(i => m.schedulerWhy(Managers.ManagerItem.Ref(i)))
+                .flatMap(i => m.schedulerWhy(ManagerItem.Ref(i)))
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
@@ -683,9 +712,9 @@ object AgentsTools:
                 )
                 .flatMap(n =>
                   m.setScheduler(
-                    AgentScheduler.SchedulerSet(
-                      AgentScheduler.SchedulerSet.Strategy(n),
-                      Some(AgentScheduler.SchedulerSet.By("mcp"))
+                    SchedulerSet(
+                      SchedulerSet.Strategy(n),
+                      Some(SchedulerSet.By("mcp"))
                     )
                   )
                 )
@@ -897,18 +926,18 @@ object AgentsTools:
   ) derives JsonCodec:
     /** The listing's filter ([[ListFilters.RunFilter]]): `status` and `manager` may be comma-separated. */
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def filter: ListFilters.RunFilter =
-      ListFilters.RunFilter(
-        status.toList.map(ListFilters.RunFilter.Status(_)),
-        pipeline.map(ListFilters.RunFilter.Pipeline(_)),
-        manager.toList.map(ListFilters.RunFilter.Manager(_)),
+    def filter: RunFilter =
+      RunFilter(
+        status.toList.map(RunFilter.Status(_)),
+        pipeline.map(RunFilter.Pipeline(_)),
+        manager.toList.map(RunFilter.Manager(_)),
         goal.map(Goal.Slug(_)),
-        model.map(ListFilters.RunFilter.Model(_)),
-        provider.map(ListFilters.RunFilter.Provider(_)),
-        origin.map(ListFilters.RunFilter.Origin(_)),
-        since.map(ListFilters.RunFilter.Since(_)),
-        until.map(ListFilters.RunFilter.Until(_)),
-        subject.map(ListFilters.RunFilter.Subject(_))
+        model.map(RunFilter.Model(_)),
+        provider.map(RunFilter.Provider(_)),
+        origin.map(RunFilter.Origin(_)),
+        since.map(RunFilter.Since(_)),
+        until.map(RunFilter.Until(_)),
+        subject.map(RunFilter.Subject(_))
       )
   object RunsInput:
 
@@ -928,7 +957,9 @@ object AgentsTools:
         _.description(s"List only runs of these pipelines (${Agents.Pipeline.values.map(_.wire).mkString(", ")})")
       )
       .modify(_.origin)(
-        _.description(s"List only runs started by these (${Agents.Origin.values.map(_.wire).mkString(", ")})")
+        _.description(
+          s"List only runs started by these (${api.automation.agents.Origin.values.map(_.wire).mkString(", ")})"
+        )
       )
       .modify(_.model)(_.description("List only runs a step of which used one of these provider:model"))
       .modify(_.provider)(
@@ -1005,12 +1036,12 @@ object AgentsTools:
       digest: Boolean = false
   ) derives JsonCodec:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(
-      state.map(ListFilters.ApprovalFilter.State(_)),
-      kind.map(ListFilters.ApprovalFilter.Kind(_)),
-      subject.map(ListFilters.ApprovalFilter.Subject(_)),
+    def filter: ApprovalFilter = ApprovalFilter(
+      state.map(ApprovalFilter.State(_)),
+      kind.map(ApprovalFilter.Kind(_)),
+      subject.map(ApprovalFilter.Subject(_)),
       goal.map(Goal.Slug(_)),
-      decidedBy.map(ListFilters.ApprovalFilter.DecidedBy(_))
+      decidedBy.map(ApprovalFilter.DecidedBy(_))
     )
   object ApprovalsInput:
 
@@ -1102,7 +1133,7 @@ object AgentsTools:
       kind: Option[String] = None,
       goal: Option[String] = None,
       cron: Option[String] = None,
-      effect: Option[Managers.HintEffect] = None,
+      effect: Option[HintEffect] = None,
       suggest: Boolean = false,
       on: Option[Boolean] = None,
       dryRun: Boolean = false,

@@ -1,5 +1,14 @@
 package com.histmersion
 package domain.automation.agents
+
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.planquota.RefreshTrigger
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.api.automation.agents.Usage
+import com.histmersion.api.automation.agents.Billing
 import com.histmersion.util.problem.{External, Problem, ProblemLog}
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.util.log.TraceScope
@@ -8,7 +17,6 @@ import hearth.kindlings.optics.syntax.*
 
 import io.scalaland.chimney.dsl.*
 
-import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.server.agents.CliProcess
 
 import com.histmersion.api.Write
@@ -244,7 +252,7 @@ final class Engine(
           Halt.Fail(Problem.Run.Stopped(Problem.Run.Stop.Stalled(step, minutes, Problem.Count(n.toLong))))
         else
           Halt.Pause(
-            PauseReason.Stalled,
+            api.automation.agents.PauseReason.Stalled,
             Problem.Run.Stopped(
               Problem.Run.Stop.Silent(step, minutes, Problem.Count(n.toLong), Problem.Count.of(cfg.watchdog.maxStalls))
             ),
@@ -366,7 +374,7 @@ final class Engine(
       .toList
       .map { (id, pipeline, _, error, resumes) =>
         val at = resumes.flatMap(_.instant)
-        val byItself = at.isDefined || error.exists(Stopped.of(_).pausedOn(PauseReason.PlanQuota))
+        val byItself = at.isDefined || error.exists(Stopped.of(_).pausedOn(api.automation.agents.PauseReason.PlanQuota))
         Paused(id, pipeline, error, at, if byItself then Actor.Agents else Actor.Person)
       }
 
@@ -375,7 +383,7 @@ final class Engine(
     agents.jobRuns
       .pausedWaiting(jobKind, rowStatus(RunState.Paused), now)
       .toList
-      .filter((_, _, _, error, _) => error.exists(Stopped.of(_).pausedOn(PauseReason.PlanQuota)))
+      .filter((_, _, _, error, _) => error.exists(Stopped.of(_).pausedOn(api.automation.agents.PauseReason.PlanQuota)))
       .flatMap { (id, pipeline, model, error, _) =>
         val roles = error
           .flatMap(ModelPicker.pausedRole)
@@ -394,7 +402,7 @@ final class Engine(
               r,
               modelOf(r),
               PlanQuotaRepo.EpochMillis(now.toEpochMilli),
-              Some(PlanQuota.RefreshTrigger.Paused),
+              Some(RefreshTrigger.Paused),
               n => notes += s"${r.wire}: $n"
             )
             .isRight
@@ -530,7 +538,7 @@ final class Engine(
                     .now(agents.clock)
                     .plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes.value).toLong * 60L)
                 )
-                Left(Halt.Pause(PauseReason.Interrupted, Problem.Run.Interrupted, at))
+                Left(Halt.Pause(api.automation.agents.PauseReason.Interrupted, Problem.Run.Interrupted, at))
               case e: Exception =>
                 Left(Halt.Fail(ProblemLog.unexpected(e, Problem.Where(s"agent run $id"))))
             finally
@@ -594,7 +602,9 @@ final class Engine(
     if (scheduled || ingested) && !run.dryRun.dryRun then
       val why = settled match
         case Left(Halt.Fail(m)) => Some(s"failed: ${m.sentence.take(300)}")
-        case Left(Halt.Pause(r, _, _)) if ingested && (r == PauseReason.Allowance || r == PauseReason.PlanQuota) => None
+        case Left(Halt.Pause(r, _, _))
+            if ingested && (r == api.automation.agents.PauseReason.Allowance || r == api.automation.agents.PauseReason.PlanQuota) =>
+          None
         case Left(Halt.Pause(r, d, _)) => Some(s"paused (${r.wire}): ${d.sentence.take(300)}")
         case _                         => None
       why.foreach { w =>
@@ -603,11 +613,11 @@ final class Engine(
             s"scheduled ${run.pipeline}${run.goal.fold("")(g => s" for goal $g")} (agent run ${run.id.value.take(8)}) $w"
           else s"${run.pipeline} of [[${run.target}]] queued by its import (agent run ${run.id.value.take(8)}) $w"
         val _ = agents.queues.add(
-          Queue.Kind.Tasks,
-          Queue.QueueAdd(
-            Queue.QueueItem.Text(text),
-            topic = Some(Queue.QueueItem.Topic(if scheduled then "agent schedules" else "auto-enrich")),
-            goal = Pipelines.goalOf(run).map(g => Goal.Slug(g.value)),
+          api.automation.queue.Kind.Tasks,
+          QueueAdd(
+            QueueItem.Text(text),
+            topic = Some(QueueItem.Topic(if scheduled then "agent schedules" else "auto-enrich")),
+            goal = PipelineDef.goalOf(run).map(g => Goal.Slug(g.value)),
             job = Some(SpatialHierarchyResult.Job.Id(run.id.value))
           ),
           domain.automation.workflows.InTreeWorkflow.RunNotices.creator
@@ -623,7 +633,12 @@ final class Engine(
     Option(running.get(id)) match
       case Some(c) if c.cancel => Left(Halt.Cancel)
       case Some(c) if c.pause  =>
-        Left(Halt.Pause(PauseReason.Requested, Problem.Run.Paused(Problem.Run.PauseReason.Requested, None)))
+        Left(
+          Halt.Pause(
+            api.automation.agents.PauseReason.Requested,
+            Problem.Run.Paused(Problem.Run.PauseReason.Requested, None)
+          )
+        )
       case _ => Right(())
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
@@ -638,7 +653,7 @@ final class Engine(
         if r.costUsd.value >= r.budgetUsd.value then
           Left(
             Halt.Pause(
-              PauseReason.Budget,
+              api.automation.agents.PauseReason.Budget,
               Problem.Run.Stopped(
                 Problem.Run.Stop.Over(
                   Problem.Run.Spending.Usd(
@@ -652,7 +667,7 @@ final class Engine(
         else if r.usage.budgeted(weight).value >= r.budgetTokens.value then
           Left(
             Halt.Pause(
-              PauseReason.Budget,
+              api.automation.agents.PauseReason.Budget,
               Problem.Run.Stopped(
                 Problem.Run.Stop.Over(
                   Problem.Run.Spending.Tokens(
@@ -667,7 +682,7 @@ final class Engine(
         else if day >= BigDecimal(cfg.budgets.dailyUsd.value) then
           Left(
             Halt.Pause(
-              PauseReason.Budget,
+              api.automation.agents.PauseReason.Budget,
               Problem.Run.Stopped(
                 Problem.Run.Stop
                   .Over(Problem.Run.Spending.Capped(Problem.Run.Cap.Daily, Problem.Raw.of(cfg.budgets.dailyUsd)))
@@ -677,7 +692,7 @@ final class Engine(
         else if month >= BigDecimal(cfg.budgets.monthlyUsd.value) then
           Left(
             Halt.Pause(
-              PauseReason.Budget,
+              api.automation.agents.PauseReason.Budget,
               Problem.Run.Stopped(
                 Problem.Run.Stop
                   .Over(Problem.Run.Spending.Capped(Problem.Run.Cap.Monthly, Problem.Raw.of(cfg.budgets.monthlyUsd)))
@@ -717,7 +732,7 @@ final class Engine(
             id,
             RunState.Queued,
             RunState.Paused,
-            error = Some(Stopped.Paused(PauseReason.Requested, Problem.Run.Unstarted).problem)
+            error = Some(Stopped.Paused(api.automation.agents.PauseReason.Requested, Problem.Run.Unstarted).problem)
           )
             .toRight(conflict(Problem.Run.Stopped(Problem.Run.Stop.MovedOn(Problem.Raw.of(id)))))
             .flatMap(_ => get(id))

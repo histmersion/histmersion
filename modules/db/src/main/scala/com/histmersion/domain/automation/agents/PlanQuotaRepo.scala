@@ -1,10 +1,13 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
+import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.RefreshInfo
+
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.nonempty.NonEmptyVector
-
-import com.histmersion.api.automation.PlanQuota.{PoolId, Reading, RefreshInfo, Source}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given

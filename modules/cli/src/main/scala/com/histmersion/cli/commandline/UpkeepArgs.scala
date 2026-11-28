@@ -1,12 +1,14 @@
 package com.histmersion
 package cli
 package commandline
+
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.nonempty.NonEmptyVector
 
 import com.histmersion.util.problem.{Legacy, Problem}
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.*
-import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueuePatch}
 import java.nio.file.{Files, Path}
 import com.histmersion.api.automation.{GoalsExport, Queue}
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, FormatReport, Lint}
@@ -105,13 +107,13 @@ object UpkeepArgs:
 
   final private class GroupQueue() extends Group("histmersion", "queue", QueueEntry.help):
     holds(
-      (Queue.Kind.values.toList.map(k => LeafList(k.label)) ++
+      (Kind.values.toList.map(k => LeafList(k.label)) ++
         List(LeafDone(), LeafEdit(), LeafPatch(), LeafRm(), LeafExport(), LeafImport()))*
     )
 
   /** `queue <list> [--all]` shows it; `queue <list> add …` and `queue acquire recheck …` are its subcommands. */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  final private class LeafList(list: Queue.Kind.Label)
+  final private class LeafList(list: Kind.Label)
       extends Leaf(QueueParent, list.value, s"Show the ${list.value} list (add: put an item on it)"):
     private val all_ = flag(
       "all",
@@ -119,14 +121,14 @@ object UpkeepArgs:
     )
     private val json_ = json()
     holds(
-      LeafAdd(list) :: (if list == Queue.Kind.Acquire.label then List(LeafRecheck(), LeafWhy()) else Nil)*
+      LeafAdd(list) :: (if list == Kind.Acquire.label then List(LeafRecheck(), LeafWhy()) else Nil)*
     )
 
     @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
     def command: Either[Problem, Cli.Command] = Right(Ops.QueueCmd.Show(list, all_.getOrElse(false), json_()))
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  final private class LeafAdd(list: Queue.Kind.Label)
+  final private class LeafAdd(list: Kind.Label)
       extends Leaf(s"$QueueParent ${list.value}", "add", s"Add an item to the ${list.value} list"):
     private val text_ = arg[String]("text")
     private val topic_ = value[String]("topic", "Group the added item under this heading")
@@ -155,8 +157,8 @@ object UpkeepArgs:
         Right(
           Ops.QueueCmd.Add(
             list,
-            Queue.QueueItem.Text(text_()),
-            topic_.toOption.map(Queue.QueueItem.Topic(_)),
+            QueueItem.Text(text_()),
+            topic_.toOption.map(QueueItem.Topic(_)),
             reason_.toOption.map(t => Queue.Rationale(t)),
             AgentIdentity(
               byPlugin_.toOption,
@@ -212,7 +214,7 @@ object UpkeepArgs:
         "why",
         "Why an acquisition item is where it is: its verdict and what each provider answered at each attempt"
       ):
-    private val id_ = arg[Queue.QueueItem.Id]("id")
+    private val id_ = arg[QueueItem.Id]("id")
     private val json_ = json()
 
     def command: Either[Problem, Cli.Command] = Right(StateCmd.Command.Why(id_(), json_()))
@@ -230,7 +232,7 @@ object UpkeepArgs:
 
     def command: Either[Problem, Cli.Command] =
       if text_().trim.isEmpty then Left(Problem.Invalid.Missing.here(Problem.Field("text")))
-      else Right(Ops.QueueCmd.Edit(id_(), Queue.QueueItem.Text(text_()), json_()))
+      else Right(Ops.QueueCmd.Edit(id_(), QueueItem.Text(text_()), json_()))
 
   final private class LeafPatch() extends Leaf(QueueParent, "patch", "Change who acts on an item"):
     private val id_ = arg[Queue.Id]("id")

@@ -1,7 +1,9 @@
 package com.histmersion
 package web
 
-import com.histmersion.api.catalogue.{EventTaxonomy, SiteTypes}
+import com.histmersion.api.catalogue.SiteType
+
+import com.histmersion.api.catalogue.EventTaxonomy
 import com.histmersion.api.research.Article
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
@@ -69,7 +71,7 @@ object CardIcons:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def place(kind: Place.Kind.Wire, siteType: Option[Place.Entry.SiteType]): Glyphs.Name =
-    val typed = siteType.flatMap(t => SiteTypes.icon(SiteTypes.SiteType.Id(t.value))).map(_.value)
+    val typed = siteType.flatMap(t => SiteType.icon(api.catalogue.SiteType.Id(t.value))).map(_.value)
     Glyphs.Name(kind.value match
       case Place.Kind.Site                       => typed.getOrElse(GenericPlace)
       case Place.Kind.Feature                    => typed.getOrElse(Feature)
@@ -80,10 +82,12 @@ object CardIcons:
   /** Pure: a site's MARKER icon — its type's, the exclamation mark when the type is unknown. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def siteMarker(siteType: Option[Place.Entry.SiteType]): Glyphs.Name =
-    Glyphs.Name(siteType.flatMap(t => SiteTypes.icon(SiteTypes.SiteType.Id(t.value))).map(_.value).getOrElse(Unknown))
+    Glyphs.Name(
+      siteType.flatMap(t => SiteType.icon(api.catalogue.SiteType.Id(t.value))).map(_.value).getOrElse(Unknown)
+    )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  def event(kind: EventSummary.Kind): EventTaxonomy.Kind.Icon = EventTaxonomy.icon(kind)
+  def event(kind: EventSummary.Kind): api.catalogue.eventtaxonomy.Kind.Icon = EventTaxonomy.icon(kind)
 
   /** Pure: a card icon's markup, for the cards built as HTML (a popup): the same element, class and size as
     * [[Preview.cardView]]'s.

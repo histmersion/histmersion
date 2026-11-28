@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.library.collections
+
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -323,7 +326,7 @@ object CollectionsService:
         _ <- req.acquireItem.fold(Right(()))(i =>
           library
             .queueItem(CollectionLibrary.QueueItemId(i.value))
-            .flatMap(found => Queue.fulfillable(Queue.QueueItem.Id(i.value), found).left.map(usageOf).map(_ => ()))
+            .flatMap(found => QueueItem.fulfillable(QueueItem.Id(i.value), found).left.map(usageOf).map(_ => ()))
         )
         item <- c
           .item(CollectionId(req.id.value))
@@ -459,7 +462,7 @@ object CollectionsService:
             case Some(CoverChoice.Pick.OpenLibrary(kind, isbn)) if kind.value == "isbn" =>
               library.openLibraryCover(
                 MediaCoversRequest(
-                  dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+                  dryRun = RepairRequest.DryRun.Apply,
                   citekey = Some(apiKey(ck)),
                   illustrations = MediaCoversRequest.Illustrations.Skipped,
                   isbn = Some(MediaCoversRequest.Isbn(isbn.value))

@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.domain.Proposal
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.problem.{Legacy, Problem, Problems}
 import com.histmersion.util.problem.Text.{sentence, sentences}
@@ -9,9 +11,6 @@ import io.scalaland.chimney.dsl.*
 import com.histmersion.api.automation.Agents.ApprovalState
 import com.histmersion.api.automation.ListFilters
 import com.histmersion.config.AgentsConfig
-import com.histmersion.domain.AgentProposals
-import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.domain.AgentProposals.{Route, Unneeded}
 import com.histmersion.domain.automation.agents.*
 
 import com.histmersion.api.automation.Approval
@@ -85,18 +84,17 @@ final class SourceProposals(
   def propose(runId: Option[Run.Id], p: Proposal)(using WritePermit)(using Creator.New): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
-    AgentProposals.route(
-      p,
+    p.route(
       now.transformInto[Option[Source.Status]],
       cfg.approvals.statusMode.transformInto[Approval.Mode],
       cfg.approvals.edgeMode.transformInto[Approval.Mode]
     ) match
-      case Route.Skip(why) =>
+      case Proposal.Route.Skip(why) =>
         val said = why match
-          case Unneeded.Already(status)    => s"already ${status.fold("?")(_.wire)}"
-          case Unneeded.NotSourceChange(k) => s"${k.wire} is not a source change"
+          case Proposal.Unneeded.Already(status)    => s"already ${status.fold("?")(_.wire)}"
+          case Proposal.Unneeded.NotSourceChange(k) => s"${k.wire} is not a source change"
         Outcome.Skipped(Problem.Unclassified(Legacy.Text(s"${p.describe} ($said)")))
-      case Route.Apply =>
+      case Proposal.Route.Apply =>
         apply(p) match
           case Left(m) =>
             Outcome.Failed(Problem.Unclassified(Legacy.Text(s"${p.describe}: ${m.sentences.mkString("; ")}")))
@@ -112,7 +110,7 @@ final class SourceProposals(
               Unused.Why.Reported
             )
             Outcome.Applied(w)
-      case Route.Ask =>
+      case Proposal.Route.Ask =>
         record(runId, p, now, ApprovalState.Open, None) match
           case Some(a) => Outcome.Recorded(Outcome.Recorded.Id(a.id.value), Outcome.Recorded.What(p.describe.value))
           case None    => Outcome.AlreadyOpen(Outcome.AlreadyOpen.What(p.describe.value))

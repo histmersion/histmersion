@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.activity.Show
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
@@ -36,7 +38,7 @@ object ActivityCmd:
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Activity(kind, running, since, goal, limit, before, json) =>
-          val show = if running then Some(Activity.Show.Running.wire.value) else kind
+          val show = if running then Some(Show.Running.wire.value) else kind
           val opts = List("kind" -> show, "since" -> since, "goal" -> goal, "limit" -> limit.map(_.toString))
           c.call(Api.activity)(
             (

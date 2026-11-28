@@ -1,10 +1,15 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.StepInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.agents.RunRequest
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.{Plural, UiLabels, Wording}
 import com.histmersion.api.automation.Goal.Plans.{GoalView, LinkKind, ScheduleKind}
-import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -71,9 +76,9 @@ object GoalPage:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
-  def stepName(i: ManagerItem): Agents.StepInfo.Name =
+  def stepName(i: ManagerItem): StepInfo.Name =
     val what = UiLabels.label(Wording.Id(i.kind.value)).value
-    Agents.StepInfo.Name(
+    StepInfo.Name(
       if i.target.value.isEmpty || i.target.value == i.managerId.value then what
       else s"$what — ${Wording.value(i.target.value)}"
     )
@@ -159,8 +164,8 @@ object GoalPage:
 
     def load(): Unit =
       view.ask(ApiClient.goalView(slug))
-      tasks.ask(ApiClient.queueForGoal(Queue.Kind.Tasks.label, slug))
-      toAcquire.ask(ApiClient.queueForGoal(Queue.Kind.Acquire.label, slug))
+      tasks.ask(ApiClient.queueForGoal(Kind.Tasks.label, slug))
+      toAcquire.ask(ApiClient.queueForGoal(Kind.Acquire.label, slug))
       if ui.agentsEnabled.agentsEnabled then
         agents.ask(ApiClient.managers.flatMap { all =>
           val mine = all.filter(_.goal.contains(slug))
@@ -172,9 +177,9 @@ object GoalPage:
     def checkNow(): Unit = write { () =>
       ApiClient
         .startRun(
-          Agents.RunRequest(
-            Agents.RunRequest.Pipeline(Agents.Pipeline.CurrencyCheck.wire.value),
-            Agents.RunRequest.Target(slug.value)
+          RunRequest(
+            RunRequest.Pipeline(Agents.Pipeline.CurrencyCheck.wire.value),
+            RunRequest.Target(slug.value)
           )
         )
         .onComplete {
@@ -361,7 +366,7 @@ object GoalPage:
         else
           ol(
             cls := "goal-steps-list",
-            steps(is).take(StepLimit).zipWithIndex.map((i, n) => step(i, Agents.StepInfo.Seq(n + 1)))
+            steps(is).take(StepLimit).zipWithIndex.map((i, n) => step(i, StepInfo.Seq(n + 1)))
           )
       }
     )
@@ -369,7 +374,7 @@ object GoalPage:
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def step(i: ManagerItem, n: Agents.StepInfo.Seq): HtmlElement =
+  private def step(i: ManagerItem, n: StepInfo.Seq): HtmlElement =
     val mark = markOf(i)
     val busy = Var(false)
     li(

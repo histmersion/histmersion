@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.automation.Queue.*
 import com.histmersion.domain.{CreatedAt, Creator, Scheduling}

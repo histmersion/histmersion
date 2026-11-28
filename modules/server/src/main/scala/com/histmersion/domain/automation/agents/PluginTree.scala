@@ -22,7 +22,7 @@ object PluginTree:
         as <- defs.agents
         fs <- defs.fragments
         ss <- defs.skills
-      yield AgentGenerator.repoPlugin(AgentGenerator.Defs(as, fs, ss))
+      yield AgentDefinitions.repoPlugin(AgentDefinitions.Defs(as, fs, ss))
     files.map(_.map((path, text) => SafePath.Candidate(path) -> text))
 
   val Owned: List[Owned] = List(OwnedValue("plugin/agents"), OwnedValue("plugin/skills"))

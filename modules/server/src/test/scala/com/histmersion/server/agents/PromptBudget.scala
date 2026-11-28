@@ -1,5 +1,7 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.domain.automation.agents.AgentDefinitions
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -95,7 +97,7 @@ object PromptBudget:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def rows(d: AgentGenerator.Defs): List[Row] =
+  def rows(d: AgentDefinitions.Defs): List[Row] =
     d.agents.sortBy(_.name.value).map { a =>
       Row(
         a.name,
@@ -122,17 +124,17 @@ object PromptBudget:
   /** The files `export` writes, relative to its directory. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def exportTree(d: AgentGenerator.Defs): Map[String, String] =
+  def exportTree(d: AgentDefinitions.Defs): Map[String, String] =
     val settings = GenSettings(
       GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
       None,
       GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
       claudeMod = GenSettings.ClaudeMod(false),
       interactiveMod = GenSettings.InteractiveMod(false),
-      GenSettings.Version(AgentGenerator.PluginVersion)
+      GenSettings.Version(AgentDefinitions.PluginVersion)
     )
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
-    AgentGenerator.claudeCode(d, settings) ++
+    AgentDefinitions.claudeCode(d, settings) ++
       runs.map(a => s"mcp-tools/${a.name}.json" -> Json.obj("tools" -> a.tools.map(_.toolJson).asJson).spaces2) ++
       runs.flatMap(a =>
         answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s).value)
@@ -150,11 +152,11 @@ object PromptBudget:
           GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
           claudeMod = GenSettings.ClaudeMod(false),
           interactiveMod = GenSettings.InteractiveMod(false),
-          GenSettings.Version(AgentGenerator.PluginVersion),
+          GenSettings.Version(AgentDefinitions.PluginVersion),
           codexToolOutputTokens = GenSettings.CodexToolOutputTokens(6000),
           codexLeanBase = GenSettings.CodexLeanBase(true)
         )
-        AgentGenerator.codex(d, s).foreach { (rel, text) =>
+        AgentDefinitions.codex(d, s).foreach { (rel, text) =>
           val p = root.resolve(rel)
           Files.createDirectories(p.getParent)
           Files.writeString(p, text)

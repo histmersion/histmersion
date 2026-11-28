@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+
 import com.histmersion.util.database.given
 import com.histmersion.util.database.NewtypeColumns.given
 
@@ -136,7 +139,7 @@ private[places] object FindingPlaceRepo:
 
   final private case class Placeholder(
       id: Placeholder.Id,
-      name: Option[Geocode.Attempt.Name],
+      name: Option[Attempt.Name],
       from: Option[Year],
       to: Option[Year],
       citekey: Citekey,
@@ -181,7 +184,7 @@ private[places] object FindingPlaceRepo:
       .toList
       .flatMap { case ((name, at), fs) =>
         Geocoder
-          .resolveIn(name, Geocode.KindHint.Region, at, DefaultPlaceholderMin)
+          .resolveIn(name, KindHint.Region, at, DefaultPlaceholderMin)
           .toList
           .flatMap(r => fs.map((_, f) => f.id -> BPlaceRow.Id(r.placeId.value)))
       }
@@ -344,7 +347,7 @@ private[places] object FindingPlaceRepo:
 
   final private case class Named(
       id: Placeholder.Id,
-      name: Geocode.Attempt.Name,
+      name: Attempt.Name,
       from: Option[Year],
       to: Option[Year]
   ) derives DbCodec
@@ -371,7 +374,7 @@ private[places] object FindingPlaceRepo:
         .map(_.name)
         .distinct
         .map(n =>
-          n -> Geocode.attempts(n).flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList).distinct
+          n -> Attempt.attempts(n).flatMap(a => a.key :: a.within.map(w => Geocode.key(w.value)).toList).distinct
         )
         .toMap
       val allKeys = keysOf.values.flatten.toList.distinct
@@ -390,7 +393,7 @@ private[places] object FindingPlaceRepo:
       val resolved =
         wanted.groupBy(f => (f.name, Geocode.periodOf(f.from, f.to))).toList.flatMap { case ((name, at), fs) =>
           Geocoder
-            .resolveIn(name, Geocode.KindHint.Unknown, at, DefaultPlaceholderMin)
+            .resolveIn(name, KindHint.Unknown, at, DefaultPlaceholderMin)
             .toList
             .flatMap(r => fs.map(f => (f.id, r.placeId)))
         }

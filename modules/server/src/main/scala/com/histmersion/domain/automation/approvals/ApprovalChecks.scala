@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.approvals
 
-import com.histmersion.api.automation.Agents.ApprovalInfo
+import com.histmersion.api.automation.agents.ApprovalInfo
+
 import com.histmersion.config.AgentsConfig
 
 import java.time.Instant

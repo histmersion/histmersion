@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.acquirerecheck.Outcome
+import com.histmersion.domain.acquirerecheck.Held
+import com.histmersion.api.automation.queue.Kind
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.domain.AcquireRecheck
 import com.histmersion.domain.automation.worklists.{QueueScope, QueueService}
@@ -24,9 +28,9 @@ trait AcquireCheckService:
 
   def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using WritePermit): Unit
 
-  def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount]
+  def countSince(since: Instant): Map[Outcome.Wire, RowCount]
 
-  def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held]
+  def heldByDoi(dois: List[Doi]): Map[Doi, Held]
 
 object AcquireCheckService:
   def apply(db: Transactor): AcquireCheckService = Implementation(db)
@@ -39,9 +43,9 @@ object AcquireCheckService:
         WritePermit
     ): Unit =
       db.write(AcquireCheckRepo.record(item, attempt, kept))
-    def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
+    def countSince(since: Instant): Map[Outcome.Wire, RowCount] =
       db.read(AcquireCheckRepo.countSince(since))
-    def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held] = db.read(AcquireCheckRepo.heldByDoi(dois))
+    def heldByDoi(dois: List[Doi]): Map[Doi, Held] = db.read(AcquireCheckRepo.heldByDoi(dois))
 
   final class InMemory(state: AtomicReference[AcquisitionState], queues: QueueService, sources: SourceService)
       extends AcquireCheckService:
@@ -49,7 +53,7 @@ object AcquireCheckService:
       val wanted = items.toSet
       state.get.attempts.filter((k, as) => wanted(k) && as.nonEmpty)
     def open: Map[AcquireAttemptRow.Id, List[AcquireAttempt]] =
-      of(queues.list(Queue.Kind.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireAttemptRow.Id]))
+      of(queues.list(Kind.Acquire, QueueScope.Open).map(_.id.transformInto[AcquireAttemptRow.Id]))
     def record(item: AcquireAttemptRow.Id, attempt: AcquireAttempt, kept: AcquireAttempt.Kept)(using
         WritePermit
     ): Unit =
@@ -59,16 +63,16 @@ object AcquireCheckService:
         )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def countSince(since: Instant): Map[AcquireRecheck.Outcome.Wire, RowCount] =
+    def countSince(since: Instant): Map[Outcome.Wire, RowCount] =
       state.get.attempts.values.flatten
         .filter(a => !a.at.isBefore(since))
-        .flatMap(a => AcquireRecheck.Outcome.of(a.outcome).map(_.wire))
+        .flatMap(a => Outcome.of(a.outcome).map(_.wire))
         .groupBy(identity)
         .view
         .mapValues(ws => RowCount(ws.size))
         .toMap
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def heldByDoi(dois: List[Doi]): Map[Doi, AcquireRecheck.Held] =
+    def heldByDoi(dois: List[Doi]): Map[Doi, Held] =
       val wanted = dois.map(_.value.trim.toLowerCase).filter(_.nonEmpty).toSet
       sources.doiIndex
         .filter((d, _) => wanted(d.value))
@@ -77,5 +81,5 @@ object AcquireCheckService:
             .filter(c => sources.load(c).exists(_.doi.exists(_.value.toLowerCase == d.value)))
             .minBy[String](_.value)
           val has = sources.load(ck).exists(_.ocrMarkdown.exists(_.value.nonEmpty)) || sources.original(ck).isDefined
-          d -> AcquireRecheck.Held(ck, AcquireRecheck.Held.HasOriginal(has))
+          d -> Held(ck, Held.HasOriginal(has))
         }

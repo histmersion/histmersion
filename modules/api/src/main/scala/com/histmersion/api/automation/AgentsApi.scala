@@ -1,5 +1,32 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.agents.ModelsInfo
+import com.histmersion.api.automation.modelchains.ChainSet
+import com.histmersion.api.automation.modelchains.RoleChain
+import com.histmersion.api.automation.modelchains.AllowanceSet
+import com.histmersion.api.automation.modelchains.AllowanceStatus
+import com.histmersion.api.automation.agents.DoctorReport
+import com.histmersion.api.automation.agents.ProbeRequest
+import com.histmersion.api.automation.agents.ProbeResult
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.agents.RunDetail
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.agents.GenerateRequest
+import com.histmersion.api.automation.agents.GenerateResult
+import com.histmersion.api.automation.planquota.QuotaInfo
+import com.histmersion.api.automation.planquota.PoolSet
+import com.histmersion.api.automation.planquota.PoolStatus
+import com.histmersion.api.automation.planquota.FallthroughSet
+import com.histmersion.api.automation.planquota.QuotaRefresh
+import com.histmersion.api.automation.planquota.QuotaRefreshed
+import com.histmersion.api.automation.planquota.ModReport
+import com.histmersion.api.automation.planquota.GuardAnswer
 import com.histmersion.api.json.NewtypeCodecs.given
 import sttp.tapir.*
 import com.histmersion.api.json.TapirJson.*
@@ -35,28 +62,26 @@ object AgentsApi:
     base.get.in("models").out(jsonBody[ModelsInfo])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val setChain: PublicEndpoint[(AgentRole.Wire, ModelChains.ChainSet), Api.Error, ModelChains.RoleChain, Any] =
+  lazy val setChain: PublicEndpoint[(AgentRole.Wire, ChainSet), Api.Error, RoleChain, Any] =
     (writeBase.put
       .in("models" / path[String]("role"))
-      .in(jsonBody[ModelChains.ChainSet])
-      .out(jsonBody[ModelChains.RoleChain]))
-      .mapIn[(AgentRole.Wire, ModelChains.ChainSet)]((refactorDecoded: (String, ModelChains.ChainSet)) =>
+      .in(jsonBody[ChainSet])
+      .out(jsonBody[RoleChain]))
+      .mapIn[(AgentRole.Wire, ChainSet)]((refactorDecoded: (String, ChainSet)) =>
         (AgentRole.Wire((refactorDecoded)._1), (refactorDecoded)._2)
-      )((refactorEncoded: (AgentRole.Wire, ModelChains.ChainSet)) =>
-        (((refactorEncoded)._1).value, (refactorEncoded)._2)
-      )
+      )((refactorEncoded: (AgentRole.Wire, ChainSet)) => (((refactorEncoded)._1).value, (refactorEncoded)._2))
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val resetChain: PublicEndpoint[AgentRole.Wire, Api.Error, ModelChains.RoleChain, Any] =
+  lazy val resetChain: PublicEndpoint[AgentRole.Wire, Api.Error, RoleChain, Any] =
     (writeBase.delete
       .in("models" / path[String]("role"))
-      .out(jsonBody[ModelChains.RoleChain]))
+      .out(jsonBody[RoleChain]))
       .mapIn[AgentRole.Wire]((refactorDecoded19: String) => AgentRole.Wire(refactorDecoded19))(
         (refactorEncoded19: AgentRole.Wire) => (refactorEncoded19).value
       )
 
-  lazy val setAllowance: PublicEndpoint[ModelChains.AllowanceSet, Api.Error, ModelChains.AllowanceStatus, Any] =
-    writeBase.put.in("allowances").in(jsonBody[ModelChains.AllowanceSet]).out(jsonBody[ModelChains.AllowanceStatus])
+  lazy val setAllowance: PublicEndpoint[AllowanceSet, Api.Error, AllowanceStatus, Any] =
+    writeBase.put.in("allowances").in(jsonBody[AllowanceSet]).out(jsonBody[AllowanceStatus])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val removeAllowance: PublicEndpoint[ReviewGoal.Slug, Api.Error, Goal.Plans.Removed, Any] =
@@ -92,7 +117,7 @@ object AgentsApi:
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val runs: PublicEndpoint[
-    (ListFilters.RunFilter, Option[Paging.Limit], Option[RunInfo.Status], Option[RunInfo.Pipeline]),
+    (RunFilter, Option[Paging.Limit], Option[RunInfo.Status], Option[RunInfo.Pipeline]),
     Api.Error,
     (List[RunInfo], Paging.Page),
     Any
@@ -105,8 +130,8 @@ object AgentsApi:
       .in(query[Option[String]]("upTo"))
       .out(jsonBody[List[RunInfo]])
       .out(Paging.headers))
-      .mapIn[(ListFilters.RunFilter, Option[Paging.Limit], Option[RunInfo.Status], Option[RunInfo.Pipeline])](
-        (refactorDecoded5: (ListFilters.RunFilter, Option[Int], Option[String], Option[String])) =>
+      .mapIn[(RunFilter, Option[Paging.Limit], Option[RunInfo.Status], Option[RunInfo.Pipeline])](
+        (refactorDecoded5: (RunFilter, Option[Int], Option[String], Option[String])) =>
           (
             (refactorDecoded5)._1,
             ((refactorDecoded5)._2).map(refactorElement3 => Paging.Limit(refactorElement3)),
@@ -115,7 +140,7 @@ object AgentsApi:
           )
       )(
         (refactorEncoded5: (
-            ListFilters.RunFilter,
+            RunFilter,
             Option[Paging.Limit],
             Option[RunInfo.Status],
             Option[RunInfo.Pipeline]
@@ -184,7 +209,7 @@ object AgentsApi:
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   lazy val approvals: PublicEndpoint[
-    (ListFilters.ApprovalFilter, Option[Paging.Limit], Option[Approval.State.Wire], Option[Approval.Kind.Wire]),
+    (ApprovalFilter, Option[Paging.Limit], Option[Approval.State.Wire], Option[Approval.Kind.Wire]),
     Api.Error,
     (List[ApprovalInfo], Paging.Page),
     Any
@@ -199,8 +224,8 @@ object AgentsApi:
       .out(jsonBody[List[ApprovalInfo]])
       .out(Paging.headers))
       .mapIn[
-        (ListFilters.ApprovalFilter, Option[Paging.Limit], Option[Approval.State.Wire], Option[Approval.Kind.Wire])
-      ]((refactorDecoded26: (ListFilters.ApprovalFilter, Option[Int], Option[String], Option[String])) =>
+        (ApprovalFilter, Option[Paging.Limit], Option[Approval.State.Wire], Option[Approval.Kind.Wire])
+      ]((refactorDecoded26: (ApprovalFilter, Option[Int], Option[String], Option[String])) =>
         (
           (refactorDecoded26)._1,
           ((refactorDecoded26)._2).map(refactorElement35 => Paging.Limit(refactorElement35)),
@@ -209,7 +234,7 @@ object AgentsApi:
         )
       )(
         (refactorEncoded26: (
-            ListFilters.ApprovalFilter,
+            ApprovalFilter,
             Option[Paging.Limit],
             Option[Approval.State.Wire],
             Option[Approval.Kind.Wire]
@@ -317,40 +342,38 @@ object AgentsApi:
   lazy val generate: PublicEndpoint[GenerateRequest, Api.Error, GenerateResult, Any] =
     writeBase.post.in("generate").in(jsonBody[GenerateRequest]).out(jsonBody[GenerateResult])
 
-  lazy val quota: PublicEndpoint[Unit, Api.Error, PlanQuota.QuotaInfo, Any] =
-    base.get.in("quota").out(jsonBody[PlanQuota.QuotaInfo])
+  lazy val quota: PublicEndpoint[Unit, Api.Error, QuotaInfo, Any] =
+    base.get.in("quota").out(jsonBody[QuotaInfo])
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val setPool: PublicEndpoint[(PlanQuota.PoolIdText, PlanQuota.PoolSet), Api.Error, PlanQuota.PoolStatus, Any] =
+  lazy val setPool: PublicEndpoint[(PlanQuota.PoolIdText, PoolSet), Api.Error, PoolStatus, Any] =
     (writeBase.put
       .in("quota" / path[String]("pool"))
-      .in(jsonBody[PlanQuota.PoolSet])
-      .out(jsonBody[PlanQuota.PoolStatus]))
-      .mapIn[(PlanQuota.PoolIdText, PlanQuota.PoolSet)]((refactorDecoded33: (String, PlanQuota.PoolSet)) =>
+      .in(jsonBody[PoolSet])
+      .out(jsonBody[PoolStatus]))
+      .mapIn[(PlanQuota.PoolIdText, PoolSet)]((refactorDecoded33: (String, PoolSet)) =>
         (PlanQuota.PoolIdText((refactorDecoded33)._1), (refactorDecoded33)._2)
-      )((refactorEncoded33: (PlanQuota.PoolIdText, PlanQuota.PoolSet)) =>
+      )((refactorEncoded33: (PlanQuota.PoolIdText, PoolSet)) =>
         (((refactorEncoded33)._1).value, (refactorEncoded33)._2)
       )
 
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  lazy val setFallthrough
-      : PublicEndpoint[(PlanQuota.PoolIdText, PlanQuota.FallthroughSet), Api.Error, PlanQuota.QuotaInfo, Any] =
+  lazy val setFallthrough: PublicEndpoint[(PlanQuota.PoolIdText, FallthroughSet), Api.Error, QuotaInfo, Any] =
     (writeBase.put
       .in("quota" / "fallthrough" / path[String]("role"))
-      .in(jsonBody[PlanQuota.FallthroughSet])
-      .out(jsonBody[PlanQuota.QuotaInfo]))
-      .mapIn[(PlanQuota.PoolIdText, PlanQuota.FallthroughSet)](
-        (refactorDecoded34: (String, PlanQuota.FallthroughSet)) =>
-          (PlanQuota.PoolIdText((refactorDecoded34)._1), (refactorDecoded34)._2)
-      )((refactorEncoded34: (PlanQuota.PoolIdText, PlanQuota.FallthroughSet)) =>
+      .in(jsonBody[FallthroughSet])
+      .out(jsonBody[QuotaInfo]))
+      .mapIn[(PlanQuota.PoolIdText, FallthroughSet)]((refactorDecoded34: (String, FallthroughSet)) =>
+        (PlanQuota.PoolIdText((refactorDecoded34)._1), (refactorDecoded34)._2)
+      )((refactorEncoded34: (PlanQuota.PoolIdText, FallthroughSet)) =>
         (((refactorEncoded34)._1).value, (refactorEncoded34)._2)
       )
 
-  lazy val refreshQuota: PublicEndpoint[PlanQuota.QuotaRefresh, Api.Error, PlanQuota.QuotaRefreshed, Any] =
-    writeBase.post.in("quota" / "refresh").in(jsonBody[PlanQuota.QuotaRefresh]).out(jsonBody[PlanQuota.QuotaRefreshed])
+  lazy val refreshQuota: PublicEndpoint[QuotaRefresh, Api.Error, QuotaRefreshed, Any] =
+    writeBase.post.in("quota" / "refresh").in(jsonBody[QuotaRefresh]).out(jsonBody[QuotaRefreshed])
 
-  lazy val claudeGuard: PublicEndpoint[PlanQuota.ModReport, Api.Error, PlanQuota.GuardAnswer, Any] =
-    writeBase.post.in("quota" / "claude").in(jsonBody[PlanQuota.ModReport]).out(jsonBody[PlanQuota.GuardAnswer])
+  lazy val claudeGuard: PublicEndpoint[ModReport, Api.Error, GuardAnswer, Any] =
+    writeBase.post.in("quota" / "claude").in(jsonBody[ModReport]).out(jsonBody[GuardAnswer])
 
   lazy val all: List[AnyEndpoint] = List(
     generate,

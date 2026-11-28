@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.Kind
 import com.histmersion.util.problem.{DecodeFailures, Legacy, Problem, Raised}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.access.{AccessGate, AccessPolicy, Admission, SecurityHeaders}
@@ -384,7 +386,7 @@ object Composition:
       def queueItem(id: CollectionLibrary.QueueItemId) =
         h.workListView
           .list(
-            WorkListControllers.KindOfList(Queue.Kind.Acquire.label.value),
+            WorkListControllers.KindOfList(Kind.Acquire.label.value),
             all = WorkListView.IncludeAll(true)
           )
           .map(_.items.find(_.id.value == id.value))
@@ -452,7 +454,7 @@ object Composition:
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")
     // CORE's search with the key the oa-core plugin resolved (its secret reference), on the same budget
     val coreKey = Plugins.coreKey(plugins, cfg.core.key.map(k => Plugins.CoreKey(k.value)))
-    val (indexes, alerts) = Indexes.of(cfg, http, coreKey, core)
+    val (indexes, alerts) = ScholarlyIndex.of(cfg, http, coreKey, core)
     val generation = FetcherGeneration.of(chain.plan, plugins.report.plugins, cfg.contact.isDefined, coreKey.isDefined)
     AcquireClients(
       openalex,

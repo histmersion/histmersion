@@ -1,6 +1,11 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Approximation
+import com.histmersion.api.checks.lint.Rule
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -13,7 +18,6 @@ import com.histmersion.domain.catalogue.places.{FindingPlacement, GeocodeSetting
 import com.histmersion.api.{GeoPoint, LatinFold}
 import com.histmersion.config.*
 import com.histmersion.domain.*
-import com.histmersion.api.catalogue.Geocode.{Approximation, Attempt, KindHint}
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.NewtypeColumns.given
@@ -350,7 +354,7 @@ class GeocoderSuite extends DbSuite with Bounded:
     // the lint rule lists the same moves, under the source
     val rep = SourceCheckFixtures.run(
       ds,
-      List(Lint.rule(Lint.Rule.Name(Lint.FindingGeocode)).get),
+      List(Rule.rule(Rule.Name(Lint.FindingGeocode)).get),
       Lint.ItemLimit(500),
       Lint.ItemLimit(3),
       (_, _, _) => Nil,

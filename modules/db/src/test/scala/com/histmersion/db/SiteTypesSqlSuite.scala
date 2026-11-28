@@ -1,5 +1,7 @@
 package com.histmersion
 package db
+
+import com.histmersion.api.catalogue.SiteType
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
@@ -12,9 +14,8 @@ import com.histmersion.domain.catalogue.places.SiteTypesSql
 import com.histmersion.config.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.catalogue.{Place, SiteTypes}
+import com.histmersion.api.catalogue.Place
 import com.histmersion.api.catalogue.CatalogRecord.Wikidata
-import com.histmersion.api.catalogue.SiteTypes.{Geonames, Pleiades, SiteType}
 import com.histmersion.util.database.given
 import com.histmersion.config.DbConfig
 import com.histmersion.lint.{tolerated, LintRule}
@@ -63,50 +64,50 @@ class SiteTypesSqlSuite extends DbSuite:
   private def same(
       kind: Place.Kind.Wire,
       stored: Option[SiteType.Id] = None,
-      ft: Option[Pleiades.FeatureType] = None,
-      fcode: Option[Geonames.Fcode] = None,
+      ft: Option[SiteType.Pleiades.FeatureType] = None,
+      fcode: Option[SiteType.Geonames.Fcode] = None,
       cls: Option[Wikidata.Class] = None,
       p31: List[Wikidata.Class] = Nil
   )(using munit.Location): Unit =
     val json = Option.when(p31.nonEmpty)(Json.arr(p31.map(c => Json.fromString(c.value))*))
     assertEquals(
       sqlType(kind.value, stored.map(_.value), ft.map(_.value), fcode.map(_.value), cls.map(_.value), json),
-      SiteTypes.of(
+      SiteType.of(
         Place.Id("x"),
         kind,
         stored,
         ft,
         fcode,
         cls,
-        SiteTypes.p31Of(json.map(j => Wikidata.P31Json(j.noSpaces)))
+        SiteType.p31Of(json.map(j => Wikidata.P31Json(j.noSpaces)))
       ),
       s"$kind $stored $ft $fcode $cls $p31"
     )
 
   test("every Pleiades feature type, alone and with a variant suffix"):
-    SiteTypes.pleiadesTypes.keys.foreach { k =>
-      same(site, ft = Some(k)); same(site, ft = Some(Pleiades.FeatureType(s"$k-2")))
+    SiteType.pleiadesTypes.keys.foreach { k =>
+      same(site, ft = Some(k)); same(site, ft = Some(SiteType.Pleiades.FeatureType(s"$k-2")))
     }
 
   test("several Pleiades types: the most specific wins, spaces and case do not matter"):
-    same(site, ft = Some(Pleiades.FeatureType("settlement,temple-2")))
-    same(site, ft = Some(Pleiades.FeatureType(" Fort , settlement , tomb")))
-    same(site, ft = Some(Pleiades.FeatureType("unknown,province")))
-    same(site, ft = Some(Pleiades.FeatureType("settlement-modern")))
-    same(site, ft = Some(Pleiades.FeatureType("")))
+    same(site, ft = Some(SiteType.Pleiades.FeatureType("settlement,temple-2")))
+    same(site, ft = Some(SiteType.Pleiades.FeatureType(" Fort , settlement , tomb")))
+    same(site, ft = Some(SiteType.Pleiades.FeatureType("unknown,province")))
+    same(site, ft = Some(SiteType.Pleiades.FeatureType("settlement-modern")))
+    same(site, ft = Some(SiteType.Pleiades.FeatureType("")))
 
   test("every GeoNames code, any populated place, and the Wikidata classes"):
-    SiteTypes.geonamesCodes.keys.foreach(c => same(site, fcode = Some(c)))
-    List("P.PPL", "P.PPLA", "s.ruin", "S.HTL").foreach(c => same(site, fcode = Some(Geonames.Fcode(c))))
-    SiteTypes.wikidataClasses.keys.foreach(c => same(site, cls = Some(c)))
+    SiteType.geonamesCodes.keys.foreach(c => same(site, fcode = Some(c)))
+    List("P.PPL", "P.PPLA", "s.ruin", "S.HTL").foreach(c => same(site, fcode = Some(SiteType.Geonames.Fcode(c))))
+    SiteType.wikidataClasses.keys.foreach(c => same(site, cls = Some(c)))
     same(site, cls = Some(q("Q1")))
 
   test("a Wikidata item's own P31 classes: each alone, several (the most specific wins), before the class"):
-    SiteTypes.wikidataClasses.keys.foreach(c => same(site, p31 = List(c)))
+    SiteType.wikidataClasses.keys.foreach(c => same(site, p31 = List(c)))
     same(site, p31 = List(q("Q16970"), q("Q2031836")))
     same(site, p31 = List(q("Q12518"), q("Q839954")), cls = Some(q("Q839954")))
     same(site, p31 = List(q("Q1"), q("Q2")), cls = Some(q("Q486972")))
-    same(site, p31 = List(q("Q23413")), fcode = Some(Geonames.Fcode("S.TMB")))
+    same(site, p31 = List(q("Q23413")), fcode = Some(SiteType.Geonames.Fcode("S.TMB")))
     same(polity, p31 = List(q("Q23413")))
     // a p31 that is no array counts as none
     assertEquals(
@@ -115,10 +116,10 @@ class SiteTypesSqlSuite extends DbSuite:
     )
 
   test("the stored type first, then Pleiades, GeoNames, Wikidata; only a site or a feature has one"):
-    same(site, stored = Some(SiteType.Id("palace")), ft = Some(Pleiades.FeatureType("settlement")))
-    same(site, stored = Some(SiteType.Id("nonsense")), ft = Some(Pleiades.FeatureType("settlement")))
-    same(site, ft = Some(Pleiades.FeatureType("tomb")), fcode = Some(Geonames.Fcode("S.CSTL")))
-    same(site, fcode = Some(Geonames.Fcode("S.CSTL")), cls = Some(q("Q44539")))
-    same(feature, ft = Some(Pleiades.FeatureType("cave")))
-    same(polity, ft = Some(Pleiades.FeatureType("settlement")))
+    same(site, stored = Some(SiteType.Id("palace")), ft = Some(SiteType.Pleiades.FeatureType("settlement")))
+    same(site, stored = Some(SiteType.Id("nonsense")), ft = Some(SiteType.Pleiades.FeatureType("settlement")))
+    same(site, ft = Some(SiteType.Pleiades.FeatureType("tomb")), fcode = Some(SiteType.Geonames.Fcode("S.CSTL")))
+    same(site, fcode = Some(SiteType.Geonames.Fcode("S.CSTL")), cls = Some(q("Q44539")))
+    same(feature, ft = Some(SiteType.Pleiades.FeatureType("cave")))
+    same(polity, ft = Some(SiteType.Pleiades.FeatureType("settlement")))
     same(site)

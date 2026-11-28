@@ -1,6 +1,8 @@
 package com.histmersion
 package server.media
 
+import com.histmersion.api.library.repairacquire.RepairRequest
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -26,7 +28,7 @@ class MediaImportProgressSuite extends munit.FunSuite:
   private val r =
     MediaImportReport(
       MediaItem.Provider(MediaProvider.Commons),
-      dryRun = RepairAcquire.RepairRequest.DryRun.Apply,
+      dryRun = RepairRequest.DryRun.Apply,
       targets = MediaImportReport.Targets(100),
       stored = MediaImportReport.Stored(80),
       linked = MediaImportReport.Linked(82),

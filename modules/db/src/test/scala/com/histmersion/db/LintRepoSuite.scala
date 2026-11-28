@@ -1,6 +1,9 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintItem
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -132,11 +135,11 @@ class LintRepoSuite extends DbSuite:
     else Nil
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def run(rule: Lint.Rule.Name): List[LintItem] =
+  private def run(rule: Rule.Name): List[LintItem] =
     val rep =
       SourceCheckFixtures.run(
         ds,
-        List(Lint.rule(rule).get),
+        List(Rule.rule(rule).get),
         Lint.ItemLimit(cfg.lint.maxItems.value),
         Lint.ItemLimit(cfg.lint.suggestions.value),
         checker,
@@ -145,20 +148,20 @@ class LintRepoSuite extends DbSuite:
     rep.rules.head.items.filter(i => i.citekey.value.startsWith(Prefix))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def keys(rule: Lint.Rule.Name): List[String] = run(rule).map(_.citekey.value).distinct
+  private def keys(rule: Rule.Name): List[String] = run(rule).map(_.citekey.value).distinct
 
   /** The rules the catalogue and the media register themselves (`domain.catalogue.CatalogueData`,
     * `domain.media.MediaData`): their own suites run them.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val OwnRules: Set[Lint.Rule.Name] =
+  private val OwnRules: Set[Rule.Name] =
     Set(
       Lint.PlaceKindRule,
       Lint.PlaceGridPoint,
       Lint.PlaceImportedPointArea,
       Lint.EventCorrectionConflict,
       Lint.MediaLicenceRule
-    ).map(Lint.Rule.Name(_))
+    ).map(Rule.Name(_))
 
   test("every rule of the data management's has SQL behind it"):
     Lint.names.filterNot(OwnRules).foreach(n => assert(SourceCheckFixtures.sqlOf(n).nonEmpty, s"$n has no statement"))
@@ -199,14 +202,14 @@ class LintRepoSuite extends DbSuite:
       )
     )
     List(NoFindings, NoPeriod, NoRegions, EmptySummary, UnassessedStatus).foreach { rule =>
-      assertEquals(keys(Lint.Rule.Name(rule)), List(Prefix + "bare"), s"$rule")
+      assertEquals(keys(Rule.Name(rule)), List(Prefix + "bare"), s"$rule")
     }
 
   test("no-findings carries the title, so the report is actionable without a second lookup"):
     put(source(Prefix + "bare", findings = Nil))
     assert(
-      run(Lint.Rule.Name(NoFindings)).head.detail.value.contains("Fixture"),
-      run(Lint.Rule.Name(NoFindings)).head.detail
+      run(Rule.Name(NoFindings)).head.detail.value.contains("Fixture"),
+      run(Rule.Name(NoFindings)).head.detail
     )
 
   test("dangling-edges finds targets that are not citekeys and suggests the closest"):
@@ -221,7 +224,7 @@ class LintRepoSuite extends DbSuite:
       )
     ) // dead
     put(source(Prefix + "target_full"))
-    val items = run(Lint.Rule.Name(DanglingEdges))
+    val items = run(Rule.Name(DanglingEdges))
     assertEquals(items.size, 2)
     assert(items.exists(_.detail.value.contains(s"cites → ${Prefix}target")), items.toString)
     assert(items.exists(_.detail.value.contains(s"closest: ${Prefix}target_full")), items.toString)
@@ -232,11 +235,11 @@ class LintRepoSuite extends DbSuite:
       source(Prefix + "src", edges = List(Edge(Citekey(Prefix + "src"), Citekey(Prefix + "target"), Edge.Kind.Cites)))
     )
     put(source(Prefix + "target_full"))
-    assertEquals(run(Lint.Rule.Name(UnresolvedShortCitekeys)).size, 1)
-    assert(run(Lint.Rule.Name(UnresolvedShortCitekeys)).head.detail.value.contains("resolves to"))
+    assertEquals(run(Rule.Name(UnresolvedShortCitekeys)).size, 1)
+    assert(run(Rule.Name(UnresolvedShortCitekeys)).head.detail.value.contains("resolves to"))
     val _ = SourceFixtures.resolveEdges(ds)
-    assertEquals(run(Lint.Rule.Name(UnresolvedShortCitekeys)), Nil)
-    assertEquals(run(Lint.Rule.Name(DanglingEdges)), Nil)
+    assertEquals(run(Rule.Name(UnresolvedShortCitekeys)), Nil)
+    assertEquals(run(Rule.Name(DanglingEdges)), Nil)
 
   test("orphan-sources: no edges in, no edges out"):
     put(source(Prefix + "lonely"))
@@ -246,31 +249,31 @@ class LintRepoSuite extends DbSuite:
         edges = List(Edge(Citekey(Prefix + "linked"), Citekey(Prefix + "lonely"), Edge.Kind.Cites))
       )
     )
-    val ks = keys(Lint.Rule.Name(OrphanSources))
+    val ks = keys(Rule.Name(OrphanSources))
     assert(!ks.contains(Prefix + "lonely"), "an incoming edge is enough")
     assert(!ks.contains(Prefix + "linked"), "an outgoing edge is enough")
     put(source(Prefix + "island"))
-    assert(keys(Lint.Rule.Name(OrphanSources)).contains(Prefix + "island"))
+    assert(keys(Rule.Name(OrphanSources)).contains(Prefix + "island"))
 
   test("duplicate-doi flags every member of the group"):
     put(source(Prefix + "a", doi = Some("10.1234/SHARED")))
     put(source(Prefix + "b", doi = Some(" 10.1234/shared ")))
     put(source(Prefix + "c", doi = Some("10.1234/unique")))
-    assertEquals(keys(Lint.Rule.Name(DuplicateDoi)), List(Prefix + "a", Prefix + "b"))
+    assertEquals(keys(Rule.Name(DuplicateDoi)), List(Prefix + "a", Prefix + "b"))
 
   test("duplicate-sha256 reports nothing while the column is unpopulated, and finds a pair when set"):
     put(source(Prefix + "a"))
     put(source(Prefix + "b"))
-    assertEquals(keys(Lint.Rule.Name(DuplicateSha256)), Nil)
+    assertEquals(keys(Rule.Name(DuplicateSha256)), Nil)
     connect(ds):
       sql"UPDATE sources SET sha256 = 'deadbeef' WHERE citekey LIKE ${Prefix + "%"}".update.run()
-    assertEquals(keys(Lint.Rule.Name(DuplicateSha256)), List(Prefix + "a", Prefix + "b"))
+    assertEquals(keys(Rule.Name(DuplicateSha256)), List(Prefix + "a", Prefix + "b"))
 
   test("stale-chunks: a body with no chunks, cleared by the fix"):
     put(source(Prefix + "body", body = Some(Source.OcrMarkdown("# Heading\n\n" + "sea peoples pottery. " * 200))))
-    assertEquals(keys(Lint.Rule.Name(StaleChunks)), Nil, "upsert indexes as it writes")
+    assertEquals(keys(Rule.Name(StaleChunks)), Nil, "upsert indexes as it writes")
     connect(ds)(sql"DELETE FROM source_chunks WHERE citekey = ${Prefix + "body"}".update.run())
-    assertEquals(keys(Lint.Rule.Name(StaleChunks)), List(Prefix + "body"))
+    assertEquals(keys(Rule.Name(StaleChunks)), List(Prefix + "body"))
     // NB: `reindexStale` is corpus-wide, so it also sweeps whatever other suites left stale in this
     // shared test database. That is exactly why it is best-effort per source; the assertion is about
     // THIS suite's fixture.
@@ -280,7 +283,7 @@ class LintRepoSuite extends DbSuite:
       SourceRepairs.MaxChars(cfg.limits.reindexChars.value)
     )
     assert(r.chunks.value > 0, s"reindexStale wrote no chunks: $r")
-    assertEquals(keys(Lint.Rule.Name(StaleChunks)), Nil)
+    assertEquals(keys(Rule.Name(StaleChunks)), Nil)
 
   test("reindexStale reports nothing left once it has swept everything stale"):
     val _ = SourceCheckFixtures.reindexStale(
@@ -319,18 +322,18 @@ class LintRepoSuite extends DbSuite:
         )
       )
     )
-    assertEquals(run(Lint.Rule.Name(UndatedFindings)).map(_.detail.value).filter(_.startsWith(s"$ck#0")).size, 1)
-    assertEquals(run(Lint.Rule.Name(UnlocatedFindings)).map(_.detail.value).filter(_.startsWith(s"$ck#1")).size, 1)
-    assert(!run(Lint.Rule.Name(UnlocatedFindings)).exists(_.detail.value.startsWith(s"$ck#2")))
+    assertEquals(run(Rule.Name(UndatedFindings)).map(_.detail.value).filter(_.startsWith(s"$ck#0")).size, 1)
+    assertEquals(run(Rule.Name(UnlocatedFindings)).map(_.detail.value).filter(_.startsWith(s"$ck#1")).size, 1)
+    assert(!run(Rule.Name(UnlocatedFindings)).exists(_.detail.value.startsWith(s"$ck#2")))
     // a region name alone is enough to be located
-    assert(!run(Lint.Rule.Name(UnlocatedFindings)).exists(_.detail.value.startsWith(s"$ck#0")))
+    assert(!run(Rule.Name(UnlocatedFindings)).exists(_.detail.value.startsWith(s"$ck#0")))
 
   test("the item cap trims the list but never the count"):
     (1 to 5).foreach(i => put(source(s"${Prefix}many$i", findings = Nil)))
     val rep =
       SourceCheckFixtures.run(
         ds,
-        List(Lint.rule(Lint.Rule.Name(NoFindings)).get),
+        List(Rule.rule(Rule.Name(NoFindings)).get),
         maxItems = Lint.ItemLimit(2),
         suggestions = Lint.ItemLimit(3),
         format = checker,
@@ -363,12 +366,12 @@ class LintRepoSuite extends DbSuite:
         .setTo(Some(Source.Notes("clean")))
     )
     try
-      val art = run(Lint.Rule.Name(ArticleFormat))
+      val art = run(Rule.Name(ArticleFormat))
       assertEquals(art.map(_.citekey), List(slug))
       assert(art.head.detail.value.startsWith("body L1:"), art.head.detail)
       assert(art.head.detail.value.contains("emphasis"), art.head.detail)
       assert(art.head.detail.value.contains("`article`"), "the body is checked AS an article: " + art.head.detail)
-      val notes = run(Lint.Rule.Name(NoteFormat))
+      val notes = run(Rule.Name(NoteFormat))
       assertEquals(notes.map(_.citekey), List(Prefix + "fmt_note"))
       assert(notes.head.detail.value.startsWith("summary L1:3"), notes.head.detail)
       assert(notes.head.detail.value.contains("`not an article`"), notes.head.detail)

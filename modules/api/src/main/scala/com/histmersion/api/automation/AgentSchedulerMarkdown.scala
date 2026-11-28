@@ -1,6 +1,10 @@
 package com.histmersion
 package api.automation
 
+import com.histmersion.api.automation.agentscheduler.Waiting
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.WhyInfo
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.api.Plural
 import com.histmersion.api.given

@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.checks.{FormatField, FormatIssue, FormatMarkdown, FormatSeverity}
 import com.histmersion.api.library.Label
 import com.histmersion.api.media.AssetLinks
-import com.histmersion.api.research.{ArticleMarkdown, Articles, Backlink, CitedSource, ReviewBadge, ReviewGoal}
+import com.histmersion.api.research.{ArticleMarkdown, Backlink, CitedSource, ReviewBadge, ReviewGoal}
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.text.WikiLinks
 import com.histmersion.api.library.Source
@@ -239,7 +239,7 @@ object Pages:
   def article(p: ArticlePage, links: WikiLinks.Occurrence.Target => Option[LinkTarget]): Html =
     val a = p.article
     val body0 = a.body.value.trim
-    val heading = Articles.heading(Article.Body(body0))
+    val heading = Article.heading(Article.Body(body0))
     // the `# Title` line is rendered here, so the meta line can sit right under it
     val body1 = if heading.isEmpty then body0 else body0.linesIterator.dropWhile(_.trim.isEmpty).drop(1).mkString("\n")
     // item 23: a trailing hand-written "## Sources" list duplicates the generated footer

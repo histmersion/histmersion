@@ -1,6 +1,8 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.server.markdownlint.Context
+
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatReport}
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.research.articles.ArticlesControllers
@@ -22,7 +24,7 @@ final class FormatView(articles: => ArticlesControllers, sources: => SourcesCont
         MarkdownLint.fix(
           MarkdownLint.Scan.Text(in.text.value),
           in.field,
-          MarkdownLint.Context(article = MarkdownLint.Context.Article(in.field == FormatField.Body))
+          Context(article = Context.Article(in.field == FormatField.Body))
         )
       else (MarkdownLint.Scan.Text(in.text.value), Nil)
     val issues = in.field match

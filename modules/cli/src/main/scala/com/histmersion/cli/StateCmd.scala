@@ -1,6 +1,8 @@
 package com.histmersion
 package cli
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.research.{OpenWork, ResearchApi}
 import com.histmersion.util.console.Console
@@ -9,7 +11,7 @@ object StateCmd:
 
   enum Command extends Cli.Command:
     case State(scope: OpenWork.Scope, json: Cli.JsonOutput)
-    case Why(item: Queue.QueueItem.Id, json: Cli.JsonOutput)
+    case Why(item: QueueItem.Id, json: Cli.JsonOutput)
 
     def run(c: Client)(using Console): Either[Cli.Error, Unit] = Perform(c)(this)
 

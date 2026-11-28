@@ -1,17 +1,11 @@
 package com.histmersion
 package domain.catalogue.events
+
+import com.histmersion.api.catalogue.EventPatch
 import com.histmersion.util.json.RawJson.*
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{
-  CatalogRecord,
-  Corrections,
-  EventCatalogueRef,
-  EventEntry,
-  EventFields,
-  EventSummary,
-  EventTaxonomy
-}
+import com.histmersion.api.catalogue.{CatalogRecord, EventCatalogueRef, EventEntry, EventSummary, EventTaxonomy}
 import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.database.Jsonb
@@ -87,7 +81,7 @@ private[events] object EventImportRepo:
     * `event_catalogue` under its key.
     */
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
-  def save(placed: List[(CatalogRecord, CatalogMerge.Placement)])(using
+  def save(placed: List[(CatalogRecord, Placement)])(using
       DbCon
   )(using
       Creator.New,
@@ -114,7 +108,7 @@ private[events] object EventImportRepo:
         counts = counts + refresh(eventId, r, names, wd)
         updated += 1
       group.head._2 match
-        case CatalogMerge.Placement.New(_, _) =>
+        case Placement.New(_, _) =>
           val creator = recs.find(r => CatalogRecord.eventId(r).value == eventId.value).getOrElse(recs.head)
           catalogue match
             case None =>
@@ -122,7 +116,7 @@ private[events] object EventImportRepo:
               created += 1
             case Some(Some(p)) => ownerIn(p).fold(fill(eventId, names, wd))(refreshFrom)
             case Some(None)    => fill(eventId, names, wd)
-        case CatalogMerge.Placement.Existing(_, _) =>
+        case Placement.Existing(_, _) =>
           catalogue.flatten match
             case Some(p) => ownerIn(p).fold(fill(eventId, names, wd))(refreshFrom)
             case None    => fill(eventId, names, wd)
@@ -141,20 +135,20 @@ private[events] object EventImportRepo:
     val (keep, outcomes) = CorrectionRepo.reconcile(
       Correction.TargetKind(Correction.Target.Event),
       Correction.TargetId(id.value),
-      EventFields.upstream(r).map((f, v) => Correction.Field(f) -> v)
+      EventPatch.upstream(r).map((f, v) => Correction.Field(f) -> v)
     )
     def text(f: String): Option[Option[String]] = keep.get(Correction.Field(f)).map(_.asString)
-    val label: String = text(EventFields.Label).flatten.getOrElse(r.label.value)
+    val label: String = text(EventPatch.Label).flatten.getOrElse(r.label.value)
     val kind: String =
-      text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind.summary).value)
-    val hist: String = text(EventFields.Historicity).flatten.getOrElse(r.historicity.value)
-    val desc: Option[String] = text(EventFields.Description).getOrElse(r.description.map(_.value))
-    val spanKept = keep.contains(Correction.Field(EventFields.Span))
-    val ts = keep.get(Correction.Field(EventFields.Span)).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
+      text(EventPatch.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind.summary).value)
+    val hist: String = text(EventPatch.Historicity).flatten.getOrElse(r.historicity.value)
+    val desc: Option[String] = text(EventPatch.Description).getOrElse(r.description.map(_.value))
+    val spanKept = keep.contains(Correction.Field(EventPatch.Span))
+    val ts = keep.get(Correction.Field(EventPatch.Span)).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
     val (central, pm, method) = if spanKept then (None, None, None) else (r.central, r.plusMinus, r.datingMethod)
-    val geom: Option[String] = keep.get(Correction.Field(EventFields.Geometry)) match
+    val geom: Option[String] = keep.get(Correction.Field(EventPatch.GeometryKey)) match
       case Some(g) => Option.when(!g.isNull)(g.noSpaces)
-      case None    => for la <- r.lat; lo <- r.lon yield EventFields.point(la, lo).noSpaces
+      case None    => for la <- r.lat; lo <- r.lon yield EventPatch.point(la, lo).noSpaces
     Unused(
       sql"""UPDATE events SET label = $label, kind = $kind,
           not_before = ${ts.notBefore}, begin_by = ${ts.beginBy}, end_from = ${ts.endFrom}, not_after = ${ts.notAfter},
@@ -166,7 +160,7 @@ private[events] object EventImportRepo:
         WHERE id = $id""".update.run(),
       Unused.Why.Held
     )
-    Corrections.counts(outcomes)
+    Correction.counts(outcomes)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")

@@ -38,22 +38,23 @@ final class MediaMapLayer(assets: AssetService) extends MapLayer:
     TilePoint(
       c.x,
       c.y,
-      F.text(P.Key, c.key.value) ++ F.text(P.Uid, h.uid.value) ++ F.text(P.Citekey, h.citekey.map(_.value)) ++ F
-        .text(P.AssetName, h.assetName.value) ++
-        F.text(P.Kind, h.kind.map(_.value)) ++ F.whole(
+      TileCell.text(P.Key, c.key.value) ++ TileCell.text(P.Uid, h.uid.value) ++ TileCell
+        .text(P.Citekey, h.citekey.map(_.value)) ++ TileCell.text(P.AssetName, h.assetName.value) ++
+        TileCell.text(P.Kind, h.kind.map(_.value)) ++ TileCell.whole(
           P.PeriodStart,
           h.periodStart.map(y => TileValue.Whole.Value(y.value))
-        ) ++ F.whole(P.PeriodEnd, h.periodEnd.map(y => TileValue.Whole.Value(y.value))) ++ F.text(
+        ) ++ TileCell.whole(P.PeriodEnd, h.periodEnd.map(y => TileValue.Whole.Value(y.value))) ++ TileCell.text(
           P.Caption,
           h.caption.map(_.value)
         ) ++
-        F.text(P.Provider, h.provider.map(_.value)) ++ F.text(P.License, h.license.map(_.value)) ++ F
-          .text(P.Credit, h.credit.map(_.value)) ++ F.text(
+        TileCell.text(P.Provider, h.provider.map(_.value)) ++ TileCell
+          .text(P.License, h.license.map(_.value)) ++ TileCell.text(P.Credit, h.credit.map(_.value)) ++ TileCell.text(
           P.ThumbUrl,
           h.thumbUrl.map(_.value)
         ) ++
         // its full size is this server's own `/media/{uid}/file`, which the map makes from the uid (not sent per picture)
-        F.text(P.SourceUrl, h.sourceUrl.map(_.value)) ++ F.text(P.LicenseUrl, h.licenseUrl.map(_.value)) ++ F.text(
+        TileCell.text(P.SourceUrl, h.sourceUrl.map(_.value)) ++ TileCell
+          .text(P.LicenseUrl, h.licenseUrl.map(_.value)) ++ TileCell.text(
           P.Author,
           h.author.map(_.value)
         )

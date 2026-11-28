@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.corequota.Purpose
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.plugin.Header
 
@@ -30,7 +32,7 @@ class CoreQuotaLendSuite extends munit.FunSuite:
     val b = budget(AtomicReference(t0))
     val lent = CoreQuotaLend(b, limits)
     assertEquals(lent.take(UpstreamQuota.TakePurpose("lookup")), Right(()))
-    assertEquals(b.take(limits, CoreQuota.Purpose.Search), Right(()))
+    assertEquals(b.take(limits, Purpose.Search), Right(()))
     assertEquals(lent.take(UpstreamQuota.TakePurpose("search")), Right(()))
     assertEquals((b.state.lookupTokens, b.state.searchTokens), (1, 2))
 
@@ -55,7 +57,7 @@ class CoreQuotaLendSuite extends munit.FunSuite:
         .left
         .exists(_.sentence.contains("CORE asked to wait until 2026-10-26T18:52:11Z (HTTP 429)"))
     )
-    assert(b.unavailable(limits, CoreQuota.Purpose.Search).isDefined, "the host's search is blocked too")
+    assert(b.unavailable(limits, Purpose.Search).isDefined, "the host's search is blocked too")
     now.set(t0.plusSeconds(300))
     assertEquals(lent.take(UpstreamQuota.TakePurpose("lookup")), Right(()))
 

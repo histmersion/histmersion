@@ -1,6 +1,9 @@
 package com.histmersion
 package api.checks
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintItem
+
 import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.json.JsonCodec
@@ -43,106 +46,6 @@ object Lint:
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class LintItem(citekey: Citekey, detail: LintItem.Detail)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object LintItem:
-    type Detail = Detail.T
-    object Detail extends Newtype[String, Pure]:
-      private val FillerMark = "filler: "
-
-      /** The detail of an article with banned filler: the first matches, and how many more. */
-      def filler(matches: List[String]): Detail =
-        Detail(s"$FillerMark${matches.take(3).mkString(", ")}${
-            if matches.sizeIs > 3 then s" (+${matches.size - 3} more)" else ""
-          }")
-
-      extension (d: Detail)
-        /** The matches of a filler detail, as [[filler]] wrote them. */
-        def fillerMatches: String = d.value.stripPrefix(FillerMark)
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class LintRuleReport(
-      rule: LintRuleReport.Rule,
-      description: LintRuleReport.Description,
-      count: LintRuleReport.Count,
-      items: List[LintItem]
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object LintRuleReport:
-    export Lint.Rule.{Description, Name as Rule}
-    type Count = Count.T
-    object Count extends Newtype[Int, Pure]
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
-      derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema:
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def total: IssueCount = IssueCount(rules.map(r => (r.count).value).sum)
-
-  object LintReport:
-
-    type Fixed = Fixed.T
-    object Fixed extends Newtype[String, Pure]
-
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  final case class LintFixResult(
-      applied: List[LintFixResult.Applied],
-      edgesResolved: LintFixResult.EdgesResolved,
-      sourcesReindexed: LintFixResult.SourcesReindexed,
-      chunksWritten: LintFixResult.ChunksWritten,
-      remaining: LintFixResult.Remaining,
-      findingsRegeocoded: LintFixResult.FindingsRegeocoded = LintFixResult.FindingsRegeocoded(0),
-      findingsPlaced: LintFixResult.FindingsPlaced = LintFixResult.FindingsPlaced(0),
-      placesReclassified: LintFixResult.PlacesReclassified = LintFixResult.PlacesReclassified(0),
-      placesMerged: LintFixResult.PlacesMerged = LintFixResult.PlacesMerged(0),
-      placesRelocated: LintFixResult.PlacesRelocated = LintFixResult.PlacesRelocated(0),
-      pointAreasRemoved: LintFixResult.PointAreasRemoved = LintFixResult.PointAreasRemoved(0),
-      pointAreasRemaining: LintFixResult.PointAreasRemaining = LintFixResult.PointAreasRemaining(0)
-  ) derives JsonCodec,
-        KindlingsSchema,
-        api.json.Schema
-
-  object LintFixResult:
-    type Applied = Applied.T
-    object Applied extends Newtype[String, Pure]
-    type EdgesResolved = EdgesResolved.T
-    object EdgesResolved extends Newtype[Int, Pure]
-    type SourcesReindexed = SourcesReindexed.T
-    object SourcesReindexed extends Newtype[Int, Pure]
-    type ChunksWritten = ChunksWritten.T
-    object ChunksWritten extends Newtype[Int, Pure]
-    export ReindexResult.Remaining
-    type FindingsRegeocoded = FindingsRegeocoded.T
-    object FindingsRegeocoded extends Newtype[Int, Pure]
-    type FindingsPlaced = FindingsPlaced.T
-    object FindingsPlaced extends Newtype[Int, Pure]
-    type PlacesReclassified = PlacesReclassified.T
-    object PlacesReclassified extends Newtype[Int, Pure]
-    type PlacesMerged = PlacesMerged.T
-    object PlacesMerged extends Newtype[Int, Pure]
-    type PlacesRelocated = PlacesRelocated.T
-    object PlacesRelocated extends Newtype[Int, Pure]
-    type PointAreasRemoved = PointAreasRemoved.T
-    object PointAreasRemoved extends Newtype[Int, Pure]
-    type PointAreasRemaining = PointAreasRemaining.T
-    object PointAreasRemaining extends Newtype[Int, Pure]
-
-  final case class Rule(name: Rule.Name, description: Rule.Description)
-
-  object Rule:
-    type Name = Name.T
-    object Name extends Newtype[String, Pure]
-    type Description = Description.T
-    object Description extends Newtype[String, Pure]
-
   val DanglingEdges = "dangling-edges"
   val UnresolvedShortCitekeys = "unresolved-short-citekeys"
   val NoFindings = "no-findings"
@@ -179,147 +82,177 @@ object Lint:
   val EventCorrectionConflict = "event-correction-conflict"
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  val all: List[Rule] = List(
-    Rule(
-      Rule.Name(DanglingEdges),
-      Rule.Description(
+  val all: List[api.checks.lint.Rule] = List(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(DanglingEdges),
+      api.checks.lint.Rule.Description(
         "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"
       )
     ),
-    Rule(
-      Rule.Name(UnresolvedShortCitekeys),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(UnresolvedShortCitekeys),
+      api.checks.lint.Rule.Description(
         "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones"
       )
     ),
-    Rule(Rule.Name(NoFindings), Rule.Description("sources with no findings mined out of them yet (un-enriched)")),
-    Rule(Rule.Name(NoPeriod), Rule.Description("sources with no deep-time period, so they appear on no timeline")),
-    Rule(Rule.Name(NoRegions), Rule.Description("sources with no regions, so they appear in no region tree")),
-    Rule(Rule.Name(EmptySummary), Rule.Description("sources whose summary is missing or blank")),
-    Rule(Rule.Name(UnassessedStatus), Rule.Description("sources still at status=unassessed")),
-    Rule(Rule.Name(DuplicateDoi), Rule.Description("the same DOI stored under more than one citekey")),
-    Rule(
-      Rule.Name(DuplicateSha256),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(NoFindings),
+      api.checks.lint.Rule.Description("sources with no findings mined out of them yet (un-enriched)")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(NoPeriod),
+      api.checks.lint.Rule.Description("sources with no deep-time period, so they appear on no timeline")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(NoRegions),
+      api.checks.lint.Rule.Description("sources with no regions, so they appear in no region tree")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(EmptySummary),
+      api.checks.lint.Rule.Description("sources whose summary is missing or blank")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(UnassessedStatus),
+      api.checks.lint.Rule.Description("sources still at status=unassessed")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(DuplicateDoi),
+      api.checks.lint.Rule.Description("the same DOI stored under more than one citekey")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(DuplicateSha256),
+      api.checks.lint.Rule.Description(
         "the same file hash stored under more than one citekey (skipped while the column is unpopulated)"
       )
     ),
-    Rule(
-      Rule.Name(OrphanSources),
-      Rule.Description("sources with no incoming and no outgoing edges — cited by nothing, citing nothing")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(OrphanSources),
+      api.checks.lint.Rule
+        .Description("sources with no incoming and no outgoing edges — cited by nothing, citing nothing")
     ),
-    Rule(
-      Rule.Name(StaleChunks),
-      Rule.Description("sources that have a body but no full-text chunks — `lint --fix` reindexes them")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(StaleChunks),
+      api.checks.lint.Rule.Description("sources that have a body but no full-text chunks — `lint --fix` reindexes them")
     ),
-    Rule(
-      Rule.Name(UndatedFindings),
-      Rule.Description("findings with no period, so they are invisible to every time filter")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(UndatedFindings),
+      api.checks.lint.Rule.Description("findings with no period, so they are invisible to every time filter")
     ),
-    Rule(
-      Rule.Name(UnlocatedFindings),
-      Rule.Description("findings with neither coordinates nor a region — invisible on the map")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(UnlocatedFindings),
+      api.checks.lint.Rule.Description("findings with neither coordinates nor a region — invisible on the map")
     ),
-    Rule(
-      Rule.Name(LegacyFigureLinks),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(LegacyFigureLinks),
+      api.checks.lint.Rule.Description(
         "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them"
       )
     ),
-    Rule(
-      Rule.Name(DanglingArticleLinks),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(DanglingArticleLinks),
+      api.checks.lint.Rule.Description(
         "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it"
       )
     ),
-    Rule(Rule.Name(NonCanonicalTag), Rule.Description("tags not in lowercase_snake_case (the canonical form)")),
-    Rule(Rule.Name(MissingYear), Rule.Description("sources with no publication year — rendered as n.d.")),
-    Rule(
-      Rule.Name(YearCitekeyMismatch),
-      Rule.Description("the four-digit year in the citekey does not match the stored publication year")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(NonCanonicalTag),
+      api.checks.lint.Rule.Description("tags not in lowercase_snake_case (the canonical form)")
     ),
-    Rule(
-      Rule.Name(AuthorPipe),
-      Rule.Description("author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(MissingYear),
+      api.checks.lint.Rule.Description("sources with no publication year — rendered as n.d.")
     ),
-    Rule(
-      Rule.Name(ArticleFiller),
-      Rule.Description("articles whose body contains banned filler phrases from the writing guide")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(YearCitekeyMismatch),
+      api.checks.lint.Rule.Description("the four-digit year in the citekey does not match the stored publication year")
     ),
-    Rule(Rule.Name(ArticleUncitedParagraph), Rule.Description("article body paragraphs with no [[citekey]] citation")),
-    Rule(
-      Rule.Name(ArticleThinSummary),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(AuthorPipe),
+      api.checks.lint.Rule
+        .Description("author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(ArticleFiller),
+      api.checks.lint.Rule.Description("articles whose body contains banned filler phrases from the writing guide")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(ArticleUncitedParagraph),
+      api.checks.lint.Rule.Description("article body paragraphs with no [[citekey]] citation")
+    ),
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(ArticleThinSummary),
+      api.checks.lint.Rule.Description(
         s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful"
       )
     ),
-    Rule(
-      Rule.Name(ArticleCritiquePairing),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(ArticleCritiquePairing),
+      api.checks.lint.Rule.Description(
         "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work"
       )
     ),
-    Rule(
-      Rule.Name(SupersededWithoutEdge),
-      Rule.Description("sources with status=superseded but no superseded_by edge — set the edge or change the status")
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(SupersededWithoutEdge),
+      api.checks.lint.Rule
+        .Description("sources with status=superseded but no superseded_by edge — set the edge or change the status")
     ),
-    Rule(
-      Rule.Name(ArticleFormat),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(ArticleFormat),
+      api.checks.lint.Rule.Description(
         "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"
       )
     ),
-    Rule(
-      Rule.Name(NoteFormat),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(NoteFormat),
+      api.checks.lint.Rule.Description(
         "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)"
       )
     ),
-    Rule(
-      Rule.Name(FindingGeocode),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(FindingGeocode),
+      api.checks.lint.Rule.Description(
         "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them"
       )
     ),
-    Rule(
-      Rule.Name(FindingUnplaced),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(FindingUnplaced),
+      api.checks.lint.Rule.Description(
         "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched"
       )
     ),
-    Rule(
-      Rule.Name(PlaceKindRule),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(PlaceKindRule),
+      api.checks.lint.Rule.Description(
         "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places"
       )
     ),
-    Rule(
-      Rule.Name(PlaceGridPoint),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(PlaceGridPoint),
+      api.checks.lint.Rule.Description(
         "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places"
       )
     ),
-    Rule(
-      Rule.Name(PlaceImportedPointArea),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(PlaceImportedPointArea),
+      api.checks.lint.Rule.Description(
         "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again"
       )
     ),
-    Rule(
-      Rule.Name(FindingPlaceholder),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(FindingPlaceholder),
+      api.checks.lint.Rule.Description(
         "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point"
       )
     ),
-    Rule(
-      Rule.Name(MediaLicenceRule),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(MediaLicenceRule),
+      api.checks.lint.Rule.Description(
         "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported"
       )
     ),
-    Rule(
-      Rule.Name(EventCorrectionConflict),
-      Rule.Description(
+    api.checks.lint.Rule(
+      api.checks.lint.Rule.Name(EventCorrectionConflict),
+      api.checks.lint.Rule.Description(
         "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)"
       )
     )
@@ -327,29 +260,26 @@ object Lint:
 
   val MinSummaryChars = 80
 
-  val names: List[Rule.Name] = all.map(_.name)
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def rule(name: Rule.Name): Option[Rule] = all.find(_.name == Rule.Name((name).value.trim.toLowerCase))
+  val names: List[api.checks.lint.Rule.Name] = all.map(_.name)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def select(requested: List[Rule.Name]): Either[Problem, List[Rule]] =
+  def select(requested: List[api.checks.lint.Rule.Name]): Either[Problem, List[api.checks.lint.Rule]] =
     val wanted = requested.map((_).value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(all)
     else
-      val unknown = wanted.filter(w => rule(Rule.Name(w)).isEmpty)
+      val unknown = wanted.filter(w => Rule.rule(api.checks.lint.Rule.Name(w)).isEmpty)
       if unknown.nonEmpty then
         Left(
           Problem.Invalid.Unknown.here(
-            Problem.TypeName.of(Rule.Name),
+            Problem.TypeName.of(api.checks.lint.Rule.Name),
             Problem.Raw(s"${unknown.mkString(", ")}"),
             names.toVector.map(n => Problem.Raw(s"$n"))
           )
         )
       else
         Right(wanted.flatMap {
-          val refactorFunction = rule; (refactorValue) => refactorFunction(Rule.Name(refactorValue))
+          val refactorFunction = Rule.rule;
+          (refactorValue) => refactorFunction(api.checks.lint.Rule.Name(refactorValue))
         }.distinct)
 
   def blank(s: Option[String]): Boolean = (s.forall((_).trim.isEmpty))
@@ -534,26 +464,3 @@ object Lint:
         check((text).value, field, field == FormatField.Body)
           .map(i => LintItem(id, LintItem.Detail(FormatMarkdown.line(i).value)))
     }
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def report(r: Rule, items: List[LintItem], maxItems: ItemLimit): LintRuleReport =
-    LintRuleReport(r.name, r.description, LintRuleReport.Count(items.size), items.take(math.max(0, (maxItems).value)))
-
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def markdown(rep: LintReport): Markdown =
-    val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
-    val (clean, dirty) = rep.rules.partition(_.count == LintRuleReport.Count(0))
-    val head =
-      if dirty.isEmpty then s"### Lint: clean (${rep.rules.size} rule(s) checked)"
-      else s"### Lint: ${rep.total} finding(s) across ${dirty.size} of ${rep.rules.size} rule(s)"
-    val blocks = dirty.map { r =>
-      val items = r.items.map(i => s"- **${i.citekey}** — ${i.detail}")
-      val more = if (r.count).value > r.items.size then s"\n- _… and ${(r.count).value - r.items.size} more_" else ""
-      s"\n\n#### ${r.rule} (${r.count})\n_${r.description}_\n\n${items.mkString("\n")}$more"
-    }
-    val cleanLine =
-      if clean.isEmpty then ""
-      else s"\n\n_clean: ${clean.map(_.rule).mkString(", ")}_"
-    Markdown(s"$fixed$head${blocks.mkString}$cleanLine")

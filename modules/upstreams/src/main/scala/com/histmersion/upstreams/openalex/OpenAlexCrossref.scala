@@ -7,7 +7,7 @@ import hearth.kindlings.jsoniterjson.Json
 
 import com.histmersion.util.problem.{Problem, Problems}
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.domain.library.acquisition.{RefRow, UpdateNotice, WorkLookup, WorkRef}
+import com.histmersion.domain.library.acquisition.{RefRow, UpdateNotice, WorkRef}
 import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.settings.UpstreamSettings
@@ -53,7 +53,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
         "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
         "sort" -> order,
         "filter" -> s"from_publication_date:$from-01-01,type:article|book|book-chapter",
-        "select" -> WorkLookup.WorkFields.value,
+        "select" -> WorkRef.WorkFields.value,
         mailto
       )
     )
@@ -94,9 +94,9 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .map(AcquireParse.crossrefWorks)
 
   /** OpenAlex first (richer, keyless), Crossref as the fallback — [[WorkLookup.meta]]. */
-  def meta(doi: Doi): Either[Problem, WorkRef] = WorkLookup.meta(cfg, getJson(_), log)(doi)
+  def meta(doi: Doi): Either[Problem, WorkRef] = WorkRef.meta(cfg, getJson(_), log)(doi)
 
-  private def crossrefWork(doi: Doi): Either[Problem, Json] = getJson(WorkLookup.crossrefUrl(cfg, doi))
+  private def crossrefWork(doi: Doi): Either[Problem, Json] = getJson(WorkRef.crossrefUrl(cfg, doi))
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to
     * titles when the publisher deposited none.
@@ -109,7 +109,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def openalexReferences(doi: Doi): Either[Problem, List[RefRow]] =
-    getJson(Url(WorkLookup.workUrl(cfg, doi), Url.UrlPath(""), "select" -> "referenced_works", mailto))
+    getJson(Url(WorkRef.workUrl(cfg, doi), Url.UrlPath(""), "select" -> "referenced_works", mailto))
       .map(j => AcquireParse.openalexWork(j).referencedWorks.take(100))
       .map { ids =>
         ids.grouped(50).toList.flatMap { chunk =>
@@ -136,7 +136,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   /** The raw OpenAlex record, for the citation counts an assessment reports and the open locations a fetcher reads. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def raw(doi: Doi): Either[Problem, Json] =
-    getJson(Url(WorkLookup.workUrl(cfg, doi), Url.UrlPath(""), "select" -> WorkLookup.WorkFields.value, mailto))
+    getJson(Url(WorkRef.workUrl(cfg, doi), Url.UrlPath(""), "select" -> WorkRef.WorkFields.value, mailto))
 
 object OpenAlexCrossref:
   type ReferenceSource = ReferenceSource.T

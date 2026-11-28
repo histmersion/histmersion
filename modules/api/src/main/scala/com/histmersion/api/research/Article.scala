@@ -1,5 +1,12 @@
 package com.histmersion
 package api.research
+
+import com.histmersion.api.checks.lint.LintItem
+import com.histmersion.api.research.critiquepairing.Mention
+import com.histmersion.api.research.critiquepairing.Work
+import com.histmersion.api.Write
+import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Year
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 import com.histmersion.util.problem.Problem
@@ -293,7 +300,7 @@ object Article:
           s"disagreement edges touching the cited sources: ${c.edges.map(e => s"[[${e.from}]] ${e.kind} [[${e.to}]]").mkString("; ")}"
       val parts =
         s"${escape(c.filterLine.value)} → ${c.total}" :: statuses ++ searches ++ outside ++ scala.List(edges) ++
-          Critiques.methodPart(c.critiques).toList
+          CritiquePair.methodPart(c.critiques).toList
       Method(s"_Method: ${parts.mkString("; ")}._")
 
     private def orList(xs: scala.List[String]): String = xs match
@@ -349,7 +356,7 @@ object Article:
               s"- ${Plural.count(Plural.Count((d.citekeys.size).toLong), Plural.Noun.Singular("source"))} $what: ${d.citekeys.map(ck => s"[[$ck]]").mkString(", ")}"
             }
             .mkString("\n")
-      val critiques = Critiques.markdown(c.critiques)
+      val critiques = CritiquePair.markdown(c.critiques)
       Markdown(
         s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
           s"${
@@ -1009,16 +1016,13 @@ object Article:
           val why =
             if s.isEmpty then Some("no summary")
             else
-              Articles
-                .summaryOf(Some(SummaryText(s)))
-                .left
-                .toOption
+              summaryOf(Some(SummaryText(s))).left.toOption
                 .map(_ => s"stand-in summary: \"$s\"")
                 .orElse(Option.when(s.length < MinSummaryChars)(s"only ${s.length} chars: \"$s\""))
           why.map(w =>
             LintItem(
               Citekey((slug).value),
-              api.checks.Lint.LintItem.Detail(w)
+              LintItem.Detail(w)
             )
           )
         }
@@ -1034,7 +1038,7 @@ object Article:
             Some(
               LintItem(
                 Citekey((slug).value),
-                api.checks.Lint.LintItem.Detail.filler(matches)
+                LintItem.Detail.filler(matches)
               )
             )
         }
@@ -1054,7 +1058,7 @@ object Article:
             Some(
               LintItem(
                 Citekey((slug).value),
-                api.checks.Lint.LintItem
+                LintItem
                   .Detail(s"${uncited.size} paragraph(s) with no [[citekey]]: \"${(uncited.head).value.take(60)}…\"")
               )
             )
@@ -1064,9 +1068,9 @@ object Article:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def articleCritiquePairing(
         articles: scala.List[(Slug, Body)],
-        resolve: CritiquePairing.Mention.Key => Option[Citekey],
+        resolve: Mention.Key => Option[Citekey],
         edges: scala.List[api.research.Coverage.Edge],
-        work: Citekey => Option[CritiquePairing.Work]
+        work: Citekey => Option[Work]
     ): scala.List[LintItem] =
       articles
         .flatMap((slug, body) =>
@@ -1075,7 +1079,7 @@ object Article:
             .map(h =>
               LintItem(
                 Citekey((slug).value),
-                api.checks.Lint.LintItem.Detail(h.line)
+                LintItem.Detail(h.line)
               )
             )
         )
@@ -1459,3 +1463,242 @@ object Article:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def heading(body: Body): Option[Heading] =
+    ((body).value.linesIterator
+      .map(_.trim)
+      .find(_.nonEmpty)
+      .filter(_.startsWith("# "))
+      .map(_.drop(2).trim)
+      .filter(_.nonEmpty))
+      .map(refactorValue3 => Heading(refactorValue3))
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def lede(body: Body): Option[SummaryText] =
+    val lines = (body).value.linesIterator.toList.dropWhile(_.trim.isEmpty)
+    val rest0 = lines.headOption.filter(_.trim.startsWith("# ")).fold(lines)(_ => lines.tail)
+    val rest = rest0.dropWhile(_.trim.isEmpty) match
+      case h :: tail if LedeHeadings.contains(h.trim.toLowerCase) => tail
+      case other                                                  => other
+    val para = rest.dropWhile(_.trim.isEmpty).takeWhile(_.trim.nonEmpty)
+    val text = para.map(_.trim).mkString(" ").trim
+    val plain = scala
+      .List("**", "__", "*", "_")
+      .foldLeft(text) { (s, mark) =>
+        if s.length > 2 * mark.length && s.startsWith(mark) && s.endsWith(mark) then
+          s.drop(mark.length).dropRight(mark.length)
+        else s
+      }
+      .trim
+    (Option(plain)
+      .filter(s => s.nonEmpty && !s.startsWith("#") && !s.startsWith("!")))
+      .map(refactorValue4 => SummaryText(refactorValue4))
+
+  private val LedeHeadings = Set("## summary", "## lede", "## abstract")
+
+  private val StandIns =
+    Set("placeholder", "todo", "tbd", "tba", "fixme", "xxx", "summary", "tk", "na", "n a", "none", "wip")
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def summaryOf(raw: Option[SummaryText]): Either[Problem, Option[SummaryText]] =
+    raw.map((_).value.trim).filter(_.nonEmpty) match
+      case None    => Right(None)
+      case Some(s) =>
+        val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
+        if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
+          Left(Problem.Content.Proposal(Problem.Content.Requirement.StandIn, Problem.Where("summary")))
+        else Right(Some(SummaryText(s)))
+
+  val Kinds = scala.List("concept", "myth", "culture", "region", "timeline", "report", "index")
+
+  private val KindPattern = """^[a-z][a-z0-9_-]*$""".r
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def notFound(slug: Slug): Api.Error =
+    Api.Error(
+      Problem.NotFound.Entity(Problem.TypeName.of(Slug), Problem.Raw(s"$slug")),
+      Some(Api.Error.Code(Write.CodeNotFound))
+    )
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def kindOf(raw: Kind.Wire): Either[Problem, Kind.Wire] =
+    val k = (raw).value.trim.toLowerCase
+    if KindPattern.matches(k) then Right(Kind.Wire(k))
+    else
+      Left(
+        Problem.Invalid.Unreadable(
+          Problem.TypeName.of(Kind.Wire),
+          Problem.Raw(s"$raw"),
+          Kinds.toVector.map(k => Problem.Raw(s"$k")),
+          Vector(Problem.Field("kind"))
+        )
+      )
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def kindOfDir(dirName: String): Kind.Wire =
+    val d = (dirName).trim.toLowerCase
+    if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then Kind.Wire(d.dropRight(1))
+    else Kind.Wire(d)
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def dirOfKind(kind: Kind.Wire): String = ((kind).value.trim.toLowerCase)
+
+  private val SlugPattern = """^[a-z0-9][a-z0-9_.-]{0,120}$""".r
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def slugOf(raw: Slug): Either[Problem, Slug] =
+    val s = (raw).value.trim.toLowerCase
+    if SlugPattern.matches(s) then Right(Slug(s))
+    else
+      Left(
+        Problem.Invalid.Unreadable(
+          Problem.TypeName.of(Slug),
+          Problem.Raw(s"$raw"),
+          Vector(Problem.Raw("sea_peoples")),
+          Vector(Problem.Field("slug"))
+        )
+      )
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def applyPut(slug: Slug, p: Put): Either[Problem, Article] =
+    for
+      s <- slugOf(slug)
+      k <- kindOf(p.kind)
+      _ <-
+        if p.title.value.trim.nonEmpty then Right(())
+        else Left(Problem.Invalid.Missing.here(Problem.Field("title")))
+      period <- periodOf(p.periodStart, p.periodEnd)
+      summary <- summaryOf(p.summary)
+      filter <- p.filter.fold[Either[Problem, Option[Filter]]](Right(None))(f => Filter.normalise(f))
+      reasons <- api.research.Coverage.Reason.merge(Map.empty, p.reasons)
+    yield Article(
+      slug = s,
+      title = Title(p.title.value.trim),
+      kind = k,
+      body = Coverage.stripGenerated(p.body),
+      summary = summary.orElse(lede(p.body)),
+      tags = p.tags.map(t => Tags(t.value.trim)).filter(_.value.nonEmpty).distinct,
+      regions = p.regions.map(r => Regions(r.value.trim)).filter(_.value.nonEmpty).distinct,
+      period = period,
+      filter = filter,
+      reasons = reasons
+    )
+
+  extension (existing: Article)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    def precondition(patch: Patch): Either[Problem, Unit] =
+      patch.ifUpdatedAt match
+        case None       => Right(())
+        case Some(want) =>
+          val actual = existing.updatedAt.getOrElse(UpdatedAt(""))
+          if want == actual then Right(())
+          else
+            Left(
+              Problem.Conflict.Stale(
+                Problem.TypeName.of(Slug),
+                Problem.Raw(s"${existing.slug}"),
+                Problem.Conflict.Stamp(s"$want"),
+                Problem.Conflict.Stamp(s"$actual")
+              )
+            )
+
+  extension (existing: Article)
+    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    def applyPatch(patch: Patch): Either[Problem, Article] =
+      for
+        _ <- existing.precondition(patch)
+        kind <- patch.kind.fold[Either[Problem, KindValue]](Right(existing.kind))(kindOf)
+        period <- patch.period.fold[Either[Problem, Option[api.catalogue.Period]]](Right(existing.period))(p =>
+          periodOf(Some(p.start), Some(p.end))
+        )
+        body <- bodyOf(existing.body, patch)
+        summary <- summaryOf(patch.summary)
+        filter <- patch.filter.fold[Either[Problem, Option[Filter]]](Right(existing.filter))(f => Filter.normalise(f))
+        reasons <- api.research.Coverage.Reason
+          .merge(existing.reasons, patch.reasons)
+      yield existing
+        .modify(_.title)
+        .setTo(patch.title.map(t => Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title))
+        .modify(_.kind)
+        .setTo(kind)
+        .modify(_.body)
+        .setTo(body)
+        .modify(_.summary)
+        .setTo(summary.orElse(existing.summary))
+        .modify(_.tags)
+        .setTo(
+          patch.tags.fold(existing.tags)(lp =>
+            Write.applyList(existing.tags.map(t => Write.ListItem(t.value)), lp).map(i => Tags(i.value))
+          )
+        )
+        .modify(_.regions)
+        .setTo(
+          patch.regions
+            .getOrElse(existing.regions)
+            .map(r => Regions(r.value.trim))
+            .filter(_.value.nonEmpty)
+            .distinct
+        )
+        .modify(_.period)
+        .setTo(period)
+        .modify(_.filter)
+        .setTo(filter)
+        .modify(_.reasons)
+        .setTo(reasons)
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  private def bodyOf(current: Body, patch: Patch): Either[Problem, Body] =
+    val base = patch.body.map(Coverage.stripGenerated).getOrElse(current)
+    patch.append.map(a => Coverage.stripGenerated(Body(a.value)).value.trim).filter(_.nonEmpty) match
+      case None    => Right(base)
+      case Some(a) =>
+        patch.section.map(_.value.trim).filter(_.nonEmpty) match
+          case None    => Right(Body(if base.value.trim.isEmpty then a else s"${base.value.stripTrailing}\n\n$a"))
+          case Some(s) => appendUnderSection(base, Section(s), Prose(a))
+
+  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+  def appendUnderSection(
+      body: Body,
+      section: Section,
+      text: Prose
+  ): Either[Problem, Body] =
+    val sNorm = (section).value.replaceAll("^#+\\s*", "").trim.toLowerCase
+    val lines = (body).value.split("\n", -1).toList
+    val idx = lines.indexWhere { line =>
+      val t = line.trim
+      t.startsWith("#") && t.replaceAll("^#+\\s*", "").trim.toLowerCase == sNorm
+    }
+    if idx < 0 then Left(Problem.NotFound.Entity(Problem.TypeName.of(Section), Problem.Raw(s"$section")))
+    else
+      val level = lines(idx).trim.takeWhile(_ == '#').length
+      val rest = lines.drop(idx + 1)
+      val nextIdx = rest.indexWhere { line =>
+        val t = line.trim
+        t.startsWith("#") && t.takeWhile(_ == '#').length <= level
+      }
+      val insertAt = if nextIdx < 0 then lines.length else idx + 1 + nextIdx
+      val before = lines.take(insertAt)
+      val after = lines.drop(insertAt)
+      val result = (before.mkString("\n").stripTrailing + "\n\n" + (text).value.trim +
+        (if after.isEmpty then "" else "\n\n" + after.mkString("\n")))
+      Right(Body(result))
+
+  private def periodOf(start: Option[Year], end: Option[Year]): Either[Problem, Option[api.catalogue.Period]] =
+    (start, end) match
+      case (Some(a), Some(b)) if a <= b => Right(Some(api.catalogue.Period(a, b)))
+      case (Some(a), Some(b))           =>
+        Left(
+          Problem.Invalid.Inconsistent.here(
+            NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")),
+            Problem.Invalid.Exclusion.Ordered
+          )
+        )
+      case (None, None) => Right(None)
+      case _            =>
+        Left(
+          Problem.Invalid.Inconsistent.here(
+            NonEmptyVector.of(Problem.Field("periodStart"), Problem.Field("periodEnd")),
+            Problem.Invalid.Exclusion.Together
+          )
+        )

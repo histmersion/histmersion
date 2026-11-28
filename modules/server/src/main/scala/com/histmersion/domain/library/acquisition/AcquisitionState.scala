@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.api.library.acquire.RetractionRow
+import com.histmersion.domain.corequota.State
+
 import com.histmersion.api.library.Acquire
 import com.histmersion.domain.CoreQuota
 import com.histmersion.api.library.Source
@@ -14,14 +17,14 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 final case class AcquisitionState(
-    retractions: Map[AcquisitionState.RetractionsKey, Acquire.RetractionRow],
+    retractions: Map[AcquisitionState.RetractionsKey, RetractionRow],
     assessments: Map[AcquisitionState.AssessmentsKey, (AssessmentRecord, AssessmentService.CheckedAt)],
     candidates: List[Source.Candidate],
     watches: Map[
       (CandidateWatch.Goal, CandidateWatch.Kind, CandidateWatch.Subject, CandidateWatch.Index),
       CandidateWatch
     ],
-    quotas: Map[AcquisitionState.QuotasKey, CoreQuota.State],
+    quotas: Map[AcquisitionState.QuotasKey, State],
     attempts: Map[AcquireAttemptRow.Id, List[AcquireAttempt]]
 )
 

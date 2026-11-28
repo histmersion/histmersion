@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.automation.agents
 
+import com.histmersion.api.automation.planquota.Logins
+import com.histmersion.domain.PlanAnswer
+
 import com.histmersion.server.agents.{ClaudeCode, Codex, Opencode}
 
 import com.histmersion.api.automation.PlanQuota
@@ -11,7 +14,7 @@ import com.histmersion.config.{
   AgentsConfig,
   ScheduledRefresh
 }
-import com.histmersion.domain.{ApprovalModes, PlanGoal, ReadSchedule}
+import com.histmersion.domain.{ApprovalModes, ReadSchedule}
 import com.histmersion.domain.automation.{AgentRole, ProviderKind}
 
 import java.time.Duration
@@ -66,23 +69,23 @@ extension (c: AgentsConfig)
 
   /** How the command-line providers are signed in — which models draw on a plan pool. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def logins: PlanQuota.Logins =
-    PlanQuota.Logins(
-      (if c.providers.claudeCode.useApiKey.value then PlanQuota.Logins.ClaudeCodeApiKey.ApiKey
-       else PlanQuota.Logins.ClaudeCodeApiKey.Login),
-      (if c.providers.codex.useApiKey.value then PlanQuota.Logins.CodexApiKey.ApiKey
-       else PlanQuota.Logins.CodexApiKey.Login),
-      (if c.providers.opencode.chatgptLogin.value then PlanQuota.Logins.OpencodeChatgpt.Chatgpt
-       else PlanQuota.Logins.OpencodeChatgpt.Other)
+  def logins: Logins =
+    Logins(
+      (if c.providers.claudeCode.useApiKey.value then Logins.ClaudeCodeApiKey.ApiKey
+       else Logins.ClaudeCodeApiKey.Login),
+      (if c.providers.codex.useApiKey.value then Logins.CodexApiKey.ApiKey
+       else Logins.CodexApiKey.Login),
+      (if c.providers.opencode.chatgptLogin.value then Logins.OpencodeChatgpt.Chatgpt
+       else Logins.OpencodeChatgpt.Other)
     )
 
 extension (c: AgentPlanConfig)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def caps: PlanGoal.Caps = PlanGoal.Caps(
-    PlanGoal.Caps.SubGoals(c.maxSubGoals.value),
-    PlanGoal.Caps.Queries(c.maxQueries.value),
-    PlanGoal.Caps.Works(c.maxWorks.value),
-    PlanGoal.Caps.QueryChars(c.queryChars.value)
+  def caps: PlanAnswer.Caps = PlanAnswer.Caps(
+    PlanAnswer.Caps.SubGoals(c.maxSubGoals.value),
+    PlanAnswer.Caps.Queries(c.maxQueries.value),
+    PlanAnswer.Caps.Works(c.maxWorks.value),
+    PlanAnswer.Caps.QueryChars(c.queryChars.value)
   )
 
 extension (s: ScheduledRefresh)

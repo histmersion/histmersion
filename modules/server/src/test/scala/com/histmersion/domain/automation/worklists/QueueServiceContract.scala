@@ -1,5 +1,10 @@
 package com.histmersion
 package domain.automation.worklists
+
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -89,10 +94,10 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def importFile(q: QueueService, kind: Kind, text: Queue.FileText): (Int, Int) =
-    val c = q.replace(kind, Queue.parse(kind, text), ImportMode.Replace, ByPerson)
+    val c = q.replace(kind, kind.parse(text), ImportMode.Replace, ByPerson)
     (c.written.value, c.removed.value)
 
-  private def exported(q: QueueService, kind: Kind) = Queue.render(kind, q.list(kind, QueueScope.All))
+  private def exported(q: QueueService, kind: Kind) = kind.render(q.list(kind, QueueScope.All))
   private def open(q: QueueService, kind: Kind) = q.list(kind, QueueScope.Open)
   private def every(q: QueueService, kind: Kind) = q.list(kind, QueueScope.All)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -233,7 +238,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
   qtest("an append import adds instead") { q =>
     val _ = importFile(q, Kind.Acquire, acquireFile)
     val before = every(q, Kind.Acquire).size
-    val c = q.replace(Kind.Acquire, Queue.parse(Kind.Acquire, acquireFile), ImportMode.Append, ByPerson)
+    val c = q.replace(Kind.Acquire, Kind.Acquire.parse(acquireFile), ImportMode.Append, ByPerson)
     assertEquals(c.removed, 0)
     assertEquals(every(q, Kind.Acquire).size, before * 2)
   }
@@ -265,7 +270,7 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
     )
     assertEquals((added.goal, added.createdBy, added.closedBy), (Some("zz-links-goal"), Some("zz-run-1"), None))
     val done =
-      q.patch(id(added), Queue.fulfil(added, Citekey("drake2012"), Some(QueueItem.ClosedBy("zz-job-9"))))
+      q.patch(id(added), added.fulfil(Citekey("drake2012"), Some(QueueItem.ClosedBy("zz-job-9"))))
         .fold(e => fail(e.problem.sentence), identity)
     assertEquals((done.status, done.closedBy, done.createdBy), (Done, Some("zz-job-9"), Some("zz-run-1")))
     assertEquals(q.patch(id(added), QueuePatch(status = Some(status(Open)))).map(_.closedBy), Right(None))

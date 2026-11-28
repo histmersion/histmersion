@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.collections
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.{
   ArchiveFile,
@@ -33,7 +35,7 @@ trait CollectionLibrary:
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult]
   def gaps(limit: Option[CollectionLibrary.Limit]): CalibreGaps
   def original(citekey: Citekey): Either[Api.Error, StoredOriginal]
-  def queueItem(id: CollectionLibrary.QueueItemId): Either[Api.Error, Option[Queue.QueueItem]]
+  def queueItem(id: CollectionLibrary.QueueItemId): Either[Api.Error, Option[QueueItem]]
   def ingest(params: Ingest.Params, bytes: CollectionLibrary.Bytes)(using
       Creator.New
   ): Either[Api.Error, Ingest.Accepted]

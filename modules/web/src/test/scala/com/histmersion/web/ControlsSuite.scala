@@ -3,7 +3,7 @@ package web
 
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.BBox
-import com.histmersion.api.catalogue.{HistoricalPeriod, Latitude, Longitude, Period, PresetMenu, PresetRegion, Year}
+import com.histmersion.api.catalogue.{HistoricalPeriod, Latitude, Longitude, Period, PresetRegion, Year}
 import com.histmersion.api.UiLabels
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -100,22 +100,22 @@ class ControlsSuite extends munit.FunSuite:
   )
 
   test("presets are grouped by region, each region oldest first; a period without a heading is not offered"):
-    val gs = PresetMenu.groups(presets)
+    val gs = PresetRegion.groups(presets)
     assertEquals(gs.map(_.region), List(PresetRegion.Aegean, PresetRegion.LevantMesopotamia, PresetRegion.Scandinavia))
     assertEquals(gs.last.presets.map(_.label.value), List("Neolithic", "Bronze Age"))
     assert(!gs.flatMap(_.presets).exists(_.id.value == "p5"))
 
   test("the same age is a different span in each region, and each row says where and who"):
-    val bronze = PresetMenu.groups(presets).flatMap(_.presets).filter(_.label.value == "Bronze Age")
+    val bronze = PresetRegion.groups(presets).flatMap(_.presets).filter(_.label.value == "Bronze Age")
     assertEquals(
       bronze.map(p => p.region.get.value -> p.period.start.value).toSet,
       Set("Greece" -> -3200L, "Levant" -> -3600L, "Denmark" -> -1700L)
     )
-    bronze.foreach(p => assertEquals(PresetMenu.source(p).map(_.value), Some("Some authority (2021)")))
+    bronze.foreach(p => assertEquals(PresetRegion.source(p).map(_.value), Some("Some authority (2021)")))
 
   test("looking at Denmark puts Scandinavia first, and only it is unfolded"):
     val denmark = BBox(Longitude(8.0), Latitude(54.6), Longitude(12.7), Latitude(57.8))
-    val gs = PresetMenu.groups(presets, Some(denmark))
+    val gs = PresetRegion.groups(presets, Some(denmark))
     assertEquals(gs.head.region, PresetRegion.Scandinavia)
     assertEquals(gs.filter(_.inView).map(_.region), List(PresetRegion.Scandinavia))
     assertEquals(gs.tail.map(_.region), List(PresetRegion.Aegean, PresetRegion.LevantMesopotamia))

@@ -1,6 +1,9 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.ManagerConfig
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
@@ -10,7 +13,6 @@ import com.histmersion.api.given
 import com.histmersion.config.given
 
 import com.histmersion.domain.HintProposals.*
-import com.histmersion.api.automation.Managers.HintEffect
 import com.histmersion.api.automation.Managers
 import com.histmersion.lint.{tolerated, LintRule}
 
@@ -174,9 +176,9 @@ class HintProposalsSuite extends munit.FunSuite:
       ).map(_._1.flatMap(_.config)),
       Right(
         Some(
-          Managers.ManagerConfig(
-            maxRuns = Some(Managers.ManagerConfig.MaxRuns(1)),
-            cooldownMinutes = Some(Managers.ManagerConfig.CooldownMinutes(60))
+          ManagerConfig(
+            maxRuns = Some(ManagerConfig.MaxRuns(1)),
+            cooldownMinutes = Some(ManagerConfig.CooldownMinutes(60))
           )
         )
       )

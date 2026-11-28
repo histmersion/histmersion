@@ -1,5 +1,10 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.planquota.Source
+import com.histmersion.api.automation.planquota.PoolId
+import com.histmersion.api.automation.planquota.Reading
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.util.json.RawJson.*
@@ -12,14 +17,14 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.{ClaudeCodeConfig, ClaudePlanConfig}
-import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.ProviderKind
 import sttp.ai.core.agent.*
+import com.histmersion.server.agents.CliOutcome.finishEquality
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.system.JvmHome
 import com.histmersion.api.automation.PlanQuota
 import com.histmersion.domain.automation.agents.AgentRepo
 import com.histmersion.config.ServerConfig
-import com.histmersion.server.agents.CliOutcomes.finishEquality
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
@@ -107,7 +112,7 @@ object ClaudeCode:
           "--plugin-dir",
           dir.value,
           "--agent",
-          s"${AgentGenerator.HeadlessPlugin}:${name.value}",
+          s"${AgentDefinitions.HeadlessPlugin}:${name.value}",
           "--settings",
           settings.value
         )
@@ -121,7 +126,7 @@ object ClaudeCode:
       "--model",
       model.value,
       "--max-turns",
-      AgentGenerator.claudeTurns(maxTurns).value.toString,
+      AgentDefinitions.claudeTurns(maxTurns).value.toString,
       "--no-session-persistence",
       "--setting-sources",
       ""
@@ -137,7 +142,7 @@ object ClaudeCode:
         "dontAsk"
       ) ++
       mcpFile.toList.flatMap(f => List("--mcp-config", f.toString)) ++
-      List("--allowedTools", (offered.map(toolId) ++ web :+ AgentGenerator.ClaudeAnswerTool).mkString(",")) ++
+      List("--allowedTools", (offered.map(toolId) ++ web :+ AgentDefinitions.ClaudeAnswerTool).mkString(",")) ++
       (if mcpFile.nonEmpty && denied.nonEmpty then List("--disallowedTools", denied.map(toolId).mkString(","))
        else Nil) ++
       cfg.extraArgs.value.trim.split("\\s+").toList.filter(_.nonEmpty)).map(Argument(_))
@@ -168,8 +173,8 @@ object ClaudeCode:
     val _ = env.put("CLAUDE_CODE_MAX_OUTPUT_TOKENS", math.max(1, maxTokens.value).toString)
     val _ = env.put("DISABLE_AUTOUPDATER", "1")
     val _ = env.put("ENABLE_CLAUDEAI_MCP_SERVERS", "false")
-    val _ = env.put(AgentGenerator.QuotaUrlEnv, quotaUrl.value)
-    token.foreach(t => env.put(AgentGenerator.TokenEnv, t.value))
+    val _ = env.put(AgentDefinitions.QuotaUrlEnv, quotaUrl.value)
+    token.foreach(t => env.put(AgentDefinitions.TokenEnv, t.value))
 
   // ── the probe (docs/research-plan-quotas.md §8) ─────────────────────────────────────────────────
 
@@ -219,8 +224,8 @@ object ClaudeCode:
       env: java.util.Map[String, String]
   )(using JvmHome): Unit =
     environment(cfg, LlmCall.MaxTokens(maxTokens.value), None, GenSettings.QuotaUrl(""), env)
-    val _ = env.remove(AgentGenerator.QuotaUrlEnv)
-    val _ = env.remove(AgentGenerator.TokenEnv)
+    val _ = env.remove(AgentDefinitions.QuotaUrlEnv)
+    val _ = env.remove(AgentDefinitions.TokenEnv)
 
   /** A `rate_limit_event` line as it arrives: recorded in the Claude plan pool; when the pool is now below its floor
     * (or held) the answer says why, and the process is stopped.
@@ -240,10 +245,10 @@ object ClaudeCode:
           val rs = j.cursor
             .downField("rate_limit_info")
             .focus
-            .map(PlanPools.claudeReadings(_, PlanQuota.Source.Run, PlanQuota.Now(now)))
+            .map(PlanPools.claudeReadings(_, Source.Run, PlanQuota.Now(now)))
             .getOrElse(Nil)
-          pools.record(PlanQuota.PoolId.ClaudePlan, rs)
-          pools.blocked(PlanQuota.PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(s"${b._1}"))
+          pools.record(PoolId.ClaudePlan, rs)
+          pools.blocked(PoolId.ClaudePlan, None).map(b => CliProcess.Run.Stopped(s"${b._1}"))
         }
 
   /** A turn the quota-guard mod aborted: not an error result, but `terminal_reason: "aborted_streaming"` with an empty
@@ -312,7 +317,7 @@ object ClaudeCode:
       usage: TokenUsage,
       modelId: Option[ModelRef.Model],
       mcpProblem: Option[Problem],
-      readings: List[PlanQuota.Reading] = Nil,
+      readings: List[Reading] = Nil,
       served: List[(ModelRef.Model, TokenUsage)] = Nil,
       firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
   )
@@ -367,7 +372,7 @@ object ClaudeCode:
     var served: List[(ModelRef.Model, TokenUsage)] = Nil
     var mcpProblem: Option[Problem] = None
     var firstCall: Option[AgentRepo.StepRecord.FirstCallTokens] = None
-    val readings = List.newBuilder[PlanQuota.Reading]
+    val readings = List.newBuilder[Reading]
     val now = System.currentTimeMillis()
     def strip(n: String) = n.stripPrefix(s"mcp__${McpServer}__")
     events.foreach { e =>
@@ -414,7 +419,7 @@ object ClaudeCode:
         case "rate_limit_event" =>
           c.downField("rate_limit_info")
             .focus
-            .foreach(i => readings ++= PlanPools.claudeReadings(i, PlanQuota.Source.Run, PlanQuota.Now(now)))
+            .foreach(i => readings ++= PlanPools.claudeReadings(i, Source.Run, PlanQuota.Now(now)))
         // a model that backgrounds a subagent makes TWO result events: the last one is the answer (§3a)
         case "result" =>
           val modelUsage = c.downField("modelUsage").focus.flatMap(_.asObject).toList.flatMap(_.toList)
@@ -547,7 +552,7 @@ object ClaudeCode:
                 finish,
                 Option
                   .when(finish == FinishReason.NaturalStop)(
-                    CliOutcomes.textProblem(CliOutcomes.TextProblemText(r.text.value))
+                    CliOutcome.textProblem(CliOutcome.TextProblemText(r.text.value))
                   )
                   .flatten
               )

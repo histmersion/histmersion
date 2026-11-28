@@ -1,5 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
+
+import com.histmersion.api.catalogue.eventtaxonomy.KindCondition
+import com.histmersion.api.catalogue.EventLead
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
@@ -13,10 +16,8 @@ import com.histmersion.api.catalogue.{
   Attestation,
   CatalogRecord,
   EventCatalogueRef,
-  EventFields,
   EventGeo,
   EventGeometry,
-  EventLeads,
   EventList,
   EventPatch,
   EventPrecision,
@@ -202,7 +203,7 @@ object EventService:
         containsText(Some(e.label.value), t) || containsText(e.description.map(_.value), t)
       ) &&
       EventTaxonomy
-        .condition(clean(sel.kind.map(_.value)).map(EventTaxonomy.KindCondition.Filter(_)))
+        .condition(clean(sel.kind.map(_.value)).map(KindCondition.Filter(_)))
         .forall(c => c.kinds.contains(EventSummary.Kind(e.kind.value)) != c.negate.negate) &&
       clean(sel.historicity.map(_.value)).map(_.toLowerCase).forall(_ == e.historicity.value) &&
       sel.placeId.forall(p => e.placeId.contains(p))
@@ -249,7 +250,7 @@ object EventService:
           sum.parentId.map(p => EventGeo.ParentId(p.value)),
           None,
           EventGeo.Tier(sum.tier.value),
-          EventLeads
+          EventLead
             .size(vei.map(LeadFacts.Vei(_)), magnitude.map(LeadFacts.Magnitude(_)))
             .map(EventGeo.Size(_)),
           sum.precision,
@@ -367,7 +368,7 @@ object EventService:
         rec <- recs.find(_.key == key)
       yield cat -> rec
       upstream.fold(s) { (provider, rec) =>
-        val up = EventFields.upstream(rec)
+        val up = EventPatch.upstream(rec)
         @tailrec def loop(rest: List[(String, Json)], acc: CatalogueState): CatalogueState = rest match
           case (f, v) :: tail => loop(tail, up.get(f).fold(acc)(u => corrected(acc, provider, id, f, v, u)))
           case Nil            => acc
@@ -439,7 +440,7 @@ object EventService:
           o.modify(_.edges).using(_.filterNot(g => g.srcId.value == id.value || g.dstId.value == id.value))
         )
         val written = if before.isDefined then cleared.map(o => if o.id == id then e else o) else cleared :+ e
-        withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
+        withCorrections(s.modify(_.events).setTo(written), id, EventPatch.ofPut(in))
       }
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -497,7 +498,7 @@ object EventService:
               if own.id == id then kept.modify(_.edges).using(_ ++ es) else kept
             }
           }
-          withCorrections(s.modify(_.events).setTo(edited), id, EventFields.ofPatch(p))
+          withCorrections(s.modify(_.events).setTo(edited), id, p.ofPatch)
         }
         Right(())
 

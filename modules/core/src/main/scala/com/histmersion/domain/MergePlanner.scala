@@ -23,7 +23,6 @@ import com.histmersion.util.data.exchange.SourceFate
 import com.histmersion.util.data.exchange.SourcePair
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.Plural
-import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.{
   IssueCondition,
   IssueDetail,
@@ -163,7 +162,7 @@ object MergePlanner:
       aliasTombstones: Map[Citekey, Input.AliasTombstonesValue] = Map.empty,
       /** OCR bodies (sha256 → text) of the pairs whose attestations must be re-anchored ([[bodiesWanted]]).
         */
-      bodies: Map[Bundle.Source.BodySha256, TextAnchor.Text] = Map.empty,
+      bodies: Map[Bundle.Source.BodySha256, Anchor.Text] = Map.empty,
       /** This collection's recorded versions of its articles (article uid → (sha256, body)), newest first: where a
         * common base for a three-way merge is looked for.
         */
@@ -171,7 +170,7 @@ object MergePlanner:
       /** Decisions an earlier `merge apply` carried out, by issue id (`merge_decisions`). */
       remembered: Map[MergeIssue.Id, MergeDecision] = Map.empty,
       /** `limits.chunk-chars`: to place a re-anchored attestation in its FTS chunk (0 leaves it unplaced). */
-      chunkChars: TextAnchor.ChunkChars = TextAnchor.ChunkChars(0),
+      chunkChars: Anchor.ChunkChars = Anchor.ChunkChars(0),
       /** A bundle place (by uid) whose id is not here, but whose label and geometry name a place here (the database
         * compares the geometries): that place's id.
         */
@@ -966,7 +965,7 @@ object MergePlanner:
     // an acquire/tasks item with the same text here is the same item
     val queueClaimed = scala.collection.mutable.Set.empty[UUID]
     localized.queue
-      .filter(q => writesInitially(q.uid) && q.list != Queue.Kind.Log.label)
+      .filter(q => writesInitially(q.uid) && q.list != api.automation.queue.Kind.Log.label)
       .sortBy(_.uid.toString)
       .foreach { q =>
         in.local.queue

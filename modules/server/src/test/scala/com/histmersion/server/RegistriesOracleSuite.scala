@@ -1,13 +1,14 @@
 package com.histmersion
 package server
 
+import com.histmersion.api.aliases.AliasKind
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.Wording
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Path}
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.{JobActions, JobDetail, JobInfo}
 import com.histmersion.api.maintenance.VacuumPlan
@@ -109,7 +110,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
     val lines = Deps.aliasTables.tables.map { t =>
       val k = t.kind
       s"${k.noun}\t${k.idWord}\t${t.table}.${t.idColumn}\t${t.aliasTable}.alias -> ${t.targetColumn}\n" +
-        s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, Aliases.Id("old_one"), Aliases.Id("new_one")).getOrElse("-")}"
+        s"  rule\t${k.rule}\n  followed\t${k.followed(AliasKind.Id("old_one"), AliasKind.Id("new_one")).getOrElse("-")}"
     }
     val bundles =
       Bundle.Kind.values.toList.map(b => s"bundle $b\t${AliasKinds.of(b).fold("-")(_.noun)}")

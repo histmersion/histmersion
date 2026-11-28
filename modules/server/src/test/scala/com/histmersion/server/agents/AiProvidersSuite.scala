@@ -1,5 +1,9 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.ProbeAnswer
+import com.histmersion.api.automation.agents.Price
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
@@ -271,32 +275,32 @@ class AiProvidersSuite extends munit.FunSuite:
     val reg = providersOf(ServerPlugins.offline.registries.aiProviders)
     val f = LlmClient.factory(rt(), () => reg, AiHttp.Offline)
     assert(
-      f(app.agents, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen"))).exists(_.isInstanceOf[PluginAiClient])
+      f(app.agents, ModelRef(ProviderKind.Local, ModelRef.Model("qwen"))).exists(_.isInstanceOf[PluginAiClient])
     )
     // the HTTP providers' own checks over the settings the host supplied them (no key in reference.conf), as they read
     assertEquals(
-      f(app.agents, ModelRef(ProviderKind.Anthropic, Agents.ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
+      f(app.agents, ModelRef(ProviderKind.Anthropic, ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
       Some("histmersion.agents.providers.anthropic.api-key reads ANTHROPIC_API_KEY, which is not set")
     )
     assertEquals(
-      f(app.agents, ModelRef(ProviderKind.OpenAI, Agents.ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
+      f(app.agents, ModelRef(ProviderKind.OpenAI, ModelRef.Model("m/x"))).left.toOption.map(_.sentence),
       Some("histmersion.agents.providers.openai.api-key reads OPENAI_API_KEY, which is not set")
     )
     // the command-line runtimes: exactly what the host's own factory says
     BuiltinAi.runtimes.foreach { k =>
-      val r = ModelRef(k, Agents.ModelRef.Model("m/x"))
+      val r = ModelRef(k, ModelRef.Model("m/x"))
       assertEquals(f(app.agents, r).left.toOption, LlmClient.host(rt())(app.agents, r).left.toOption, k.wire)
     }
     val off = LlmClient.factory(rt(), () => reg - util.plugins.Plugin.Id("local"), AiHttp.Offline)
     assertEquals(
-      off(app.agents, ModelRef(ProviderKind.Local, Agents.ModelRef.Model("qwen"))).left.toOption.map(_.sentence),
+      off(app.agents, ModelRef(ProviderKind.Local, ModelRef.Model("qwen"))).left.toOption.map(_.sentence),
       Some("local:qwen: the local provider is switched off (histmersion.plugins.ai-local.enabled = false)")
     )
 
   test("the factory: a plugin provider becomes its client; its own check and the loopback rule apply"):
     val ref = ModelRef(
       ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
-      Agents.ModelRef.Model("pro")
+      ModelRef.Model("pro")
     )
     def f(p: AiProvider, host: String = "127.0.0.1") =
       LlmClient.factory(
@@ -331,7 +335,7 @@ class AiProvidersSuite extends munit.FunSuite:
   private val ping = AgentTool.fromFunction[Ping]("ping", "answers pong")(p => s"pong ${p.word}")
   private val ref = ModelRef(
     ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
-    Agents.ModelRef.Model("pro")
+    ModelRef.Model("pro")
   )
   private def call(
       tools: List[AgentTool[sttp.shared.Identity, ?]] = List(ping),
@@ -642,7 +646,7 @@ class AiProvidersSuite extends munit.FunSuite:
   test("billing and quota: a plugin provider's model is metered, on no plan pool"):
     val m = ModelRef(
       ProviderKind.Plugin(api.automation.ProviderKind.Plugin.Name("gemini")),
-      Agents.ModelRef.Model("pro")
+      ModelRef.Model("pro")
     )
     assertEquals(PlanQuota.poolOf(m, app.agents.logins), None)
-    assert(Prices.billing(Map(Agents.ModelRef.Model("pro") -> Price(BigDecimal(0), BigDecimal(0))), m, None).isRight)
+    assert(Prices.billing(Map(ModelRef.Model("pro") -> Price(BigDecimal(0), BigDecimal(0))), m, None).isRight)

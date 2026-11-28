@@ -1,5 +1,7 @@
 package com.histmersion
 package cli
+
+import com.histmersion.api.automation.listfilters.JobFilter
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.problem.{Legacy, Problem}
 
@@ -116,7 +118,7 @@ object IngestCmd:
     case Assets(ck: String)
     case Jobs(
         id: Option[String],
-        filter: ListFilters.JobFilter,
+        filter: JobFilter,
         limit: Option[Int],
         before: Option[String],
         json: Cli.JsonOutput

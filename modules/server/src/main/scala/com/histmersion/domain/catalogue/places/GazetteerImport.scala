@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
+import com.histmersion.api.catalogue.gazetteer.LoadCounts
+
 import com.augustnagro.magnum.DbCon
 import com.histmersion.api.catalogue.{Gazetteer, GazRecord}
 import com.histmersion.util.database.Transactor
@@ -19,8 +22,8 @@ private[places] object GazetteerImport:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def session(
-      source: Gazetteer.SourceInfo.Key,
-      version: Gazetteer.LoadCounts.Version,
+      source: SourceInfo.Key,
+      version: LoadCounts.Version,
       apply: Boolean,
       clock: Clock,
       windowYears: Gazetteer.ValidityWindowYears =
@@ -42,16 +45,16 @@ private[places] object GazetteerImport:
       if apply then transactions.write(work) else transactions.rollback(work)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def batch(records: List[GazRecord])(using WritePermit)(using Creator.New): Gazetteer.LoadCounts =
+    def batch(records: List[GazRecord])(using WritePermit)(using Creator.New): LoadCounts =
       @tailrec def dedupe(
           rest: List[GazRecord],
           ok: Vector[GazRecord],
-          duplicates: List[Gazetteer.LoadCounts.Skipped]
-      ): (Vector[GazRecord], List[Gazetteer.LoadCounts.Skipped]) =
+          duplicates: List[LoadCounts.Skipped]
+      ): (Vector[GazRecord], List[LoadCounts.Skipped]) =
         rest match
           case Nil                                              => (ok, duplicates)
           case record :: tail if ok.exists(_.ref == record.ref) =>
-            dedupe(tail, ok, duplicates :+ Gazetteer.LoadCounts.Skipped(s"${record.ref}: repeated"))
+            dedupe(tail, ok, duplicates :+ LoadCounts.Skipped(s"${record.ref}: repeated"))
           case record :: tail => dedupe(tail, ok :+ record, duplicates)
       val (unique, duplicates) = dedupe(records, Vector.empty, Nil)
       val rows = unique.toList
@@ -70,7 +73,7 @@ private[places] object GazetteerImport:
           count + transactions.write(repo.deletePruneChunk(chunk)).value
         })
 
-    def sweep()(using WritePermit): Gazetteer.LoadCounts = write(repo.sweep())
+    def sweep()(using WritePermit): LoadCounts = write(repo.sweep())
 
   object Session:
     type Pruned = Pruned.T

@@ -1,12 +1,13 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.managers.HintEffect
+
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*
 
-import com.histmersion.api.automation.Managers.HintEffect
-import com.histmersion.api.automation.Managers.HintEffect.{Action, Verb}
+import com.histmersion.api.automation.managers.HintEffect.{Action, Verb}
 
 class HintVerbSuite extends munit.FunSuite:
 

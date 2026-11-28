@@ -1,6 +1,9 @@
 package com.histmersion
 package server
 
+import com.histmersion.domain.corequota.Purpose
+import com.histmersion.domain.corequota.Refusal
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -55,7 +58,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
         val url = s"http://127.0.0.1:${s.port}"
         assert(!get(s"$url/api/about").contains("\"upstreams\":[{"), "nothing shown before CORE was asked")
         val until = now.get.plusSeconds(3600).truncatedTo(java.time.temporal.ChronoUnit.SECONDS)
-        assert(first.take(limits, CoreQuota.Purpose.Search).isRight)
+        assert(first.take(limits, Purpose.Search).isRight)
         first.observe(
           limits,
           CoreQuota.StatusCode(429),
@@ -80,6 +83,6 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
         .start()
       try
         assertEquals(second.state.searchTokens, 1)
-        assert(second.unavailable(limits, CoreQuota.Purpose.Lookup).exists(_.isInstanceOf[CoreQuota.Refusal.Blocked]))
+        assert(second.unavailable(limits, Purpose.Lookup).exists(_.isInstanceOf[Refusal.Blocked]))
       finally s.stop()
     }

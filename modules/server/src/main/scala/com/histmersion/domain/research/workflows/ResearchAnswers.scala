@@ -1,8 +1,18 @@
 package com.histmersion
 package domain.research.workflows
+
+import com.histmersion.domain.compilearticle.ExtractAnswer
+import com.histmersion.domain.compilearticle.DraftAnswer
+import com.histmersion.domain.reviewarticle.RulesAnswer
+import com.histmersion.domain.reviewarticle.ColdReaderAnswer
+import com.histmersion.domain.reviewarticle.SkepticAnswer
+import com.histmersion.domain.reviewarticle.RecheckAnswer
+import com.histmersion.domain.reviewarticle.FixerAnswer
+import com.histmersion.domain.FilterAnswer
+import com.histmersion.domain.ArticlesAnswer
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 
-import com.histmersion.domain.{CompileArticle, FilterInference, PlanArticles, ReviewArticle}
+import com.histmersion.domain.{CompileArticle, ReviewArticle}
 import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.ResponseSchema
 import io.github.iltotore.iron.constraint.any.Pure
@@ -17,24 +27,24 @@ object ResearchAnswers:
   object AnswerKind extends Newtype[String, Pure]
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val extract: ResponseSchema[CompileArticle.ExtractAnswer] = ResponseSchema.derived[CompileArticle.ExtractAnswer]()
+  val extract: ResponseSchema[ExtractAnswer] = ResponseSchema.derived[ExtractAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val draft: ResponseSchema[CompileArticle.DraftAnswer] = ResponseSchema.derived[CompileArticle.DraftAnswer]()
+  val draft: ResponseSchema[DraftAnswer] = ResponseSchema.derived[DraftAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val rules: ResponseSchema[ReviewArticle.RulesAnswer] = ResponseSchema.derived[ReviewArticle.RulesAnswer]()
+  val rules: ResponseSchema[RulesAnswer] = ResponseSchema.derived[RulesAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val coldReader: ResponseSchema[ReviewArticle.ColdReaderAnswer] =
-    ResponseSchema.derived[ReviewArticle.ColdReaderAnswer]()
+  val coldReader: ResponseSchema[ColdReaderAnswer] =
+    ResponseSchema.derived[ColdReaderAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val skeptic: ResponseSchema[ReviewArticle.SkepticAnswer] = ResponseSchema.derived[ReviewArticle.SkepticAnswer]()
+  val skeptic: ResponseSchema[SkepticAnswer] = ResponseSchema.derived[SkepticAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val recheck: ResponseSchema[ReviewArticle.RecheckAnswer] = ResponseSchema.derived[ReviewArticle.RecheckAnswer]()
+  val recheck: ResponseSchema[RecheckAnswer] = ResponseSchema.derived[RecheckAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val fixer: ResponseSchema[ReviewArticle.FixerAnswer] = ResponseSchema.derived[ReviewArticle.FixerAnswer]()
+  val fixer: ResponseSchema[FixerAnswer] = ResponseSchema.derived[FixerAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val filter: ResponseSchema[FilterInference.FilterAnswer] = ResponseSchema.derived[FilterInference.FilterAnswer]()
+  val filter: ResponseSchema[FilterAnswer] = ResponseSchema.derived[FilterAnswer]()
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
-  val articles: ResponseSchema[PlanArticles.ArticlesAnswer] = ResponseSchema.derived[PlanArticles.ArticlesAnswer]()
+  val articles: ResponseSchema[ArticlesAnswer] = ResponseSchema.derived[ArticlesAnswer]()
 
   /** Its step schemas, by name. */
   val all: List[(AnswerKind, ResponseSchema[?])] = List(

@@ -1,6 +1,10 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintItem
+import com.histmersion.api.checks.lint.LintReport
+
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.testsupport.ComparedByValue.given
 
@@ -171,26 +175,25 @@ class LintSuite extends munit.FunSuite:
   // ── report assembly and rendering ────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val rule = Lint.rule(Lint.Rule.Name(NoFindings)).get
+  private val rule = Rule.rule(Rule.Name(NoFindings)).get
 
   test("count is the true total; items are capped"):
     val items = (1 to 10).toList.map(i => LintItem(Citekey(s"s$i"), LintItem.Detail("no findings")))
-    val r = Lint.report(rule, items, ItemLimit(3))
+    val r = rule.report(items, ItemLimit(3))
     assertEquals(r.count, 10)
     assertEquals(r.items.size, 3)
 
   test("Markdown groups by rule, shows counts and folds the clean rules into one line"):
     val rep = LintReport(
       List(
-        Lint.report(
-          rule,
+        rule.report(
           List(LintItem(Citekey("a"), LintItem.Detail("x")), LintItem(Citekey("b"), LintItem.Detail("y"))),
           ItemLimit(1)
         ),
-        Lint.report(Lint.rule(Lint.Rule.Name(NoPeriod)).get, Nil, ItemLimit(50))
+        Rule.rule(Rule.Name(NoPeriod)).get.report(Nil, ItemLimit(50))
       )
     )
-    val md = Lint.markdown(rep)
+    val md = rep.markdown
     assert(md.value.contains("### Lint: 2 finding(s) across 1 of 2 rule(s)"), md)
     assert(md.value.contains("#### no-findings (2)"), md)
     assert(md.value.contains("- **a** — x"), md)
@@ -198,12 +201,12 @@ class LintSuite extends munit.FunSuite:
     assert(md.value.contains("_clean: no-period_"), md)
 
   test("a clean corpus says so"):
-    val md = Lint.markdown(LintReport(List(Lint.report(rule, Nil, ItemLimit(50)))))
+    val md = LintReport(List(rule.report(Nil, ItemLimit(50)))).markdown
     assert(md.value.startsWith("### Lint: clean (1 rule(s) checked)"), md)
 
   test("applied fixes are reported above the verdict"):
     val md =
-      Lint.markdown(LintReport(List(Lint.report(rule, Nil, ItemLimit(50))), List(LintReport.Fixed("resolve-edges: 3"))))
+      LintReport(List(rule.report(Nil, ItemLimit(50))), List(LintReport.Fixed("resolve-edges: 3"))).markdown
     assert(md.value.startsWith("- fixed: resolve-edges: 3"), md)
 
   // ── wave 3 rules ─────────────────────────────────────────────────────────────────────────────
@@ -407,4 +410,4 @@ class LintSuite extends munit.FunSuite:
     assert(items.head.detail.value.contains("fix: trim"))
     // blank texts are not checked at all; only a body is checked as an article
     assertEquals(seen.result().toSet, Set((FormatField.Body, true), (FormatField.Summary, false)))
-    assert(Lint.rule(Lint.Rule.Name(ArticleFormat)).nonEmpty && Lint.rule(Lint.Rule.Name(NoteFormat)).nonEmpty)
+    assert(Rule.rule(Rule.Name(ArticleFormat)).nonEmpty && Rule.rule(Rule.Name(NoteFormat)).nonEmpty)

@@ -28,9 +28,9 @@ object Generated:
       .map(t => ToolName.either(t).fold(m => throw AssertionError(m), identity))
       .toSet ++ ToolboxOrder.names
 
-  def defs(): AgentGenerator.Defs =
+  def defs(): AgentDefinitions.Defs =
     val d = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
-    AgentGenerator.Defs(
+    AgentDefinitions.Defs(
       d.agents.fold(m => throw AssertionError(m), identity),
       d.fragments.fold(m => throw AssertionError(m), identity),
       d.skills.fold(m => throw AssertionError(m), identity)

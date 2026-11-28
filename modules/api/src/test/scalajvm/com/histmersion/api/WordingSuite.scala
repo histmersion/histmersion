@@ -1,6 +1,10 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.planquota.WindowStatus
+import com.histmersion.api.automation.agentscheduler.StrategyLine
+import com.histmersion.api.automation.agentscheduler.PoolUse
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -91,18 +95,18 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.runState(Run.State.WaitingApproval), "Waiting for a decision")
 
   test("allowance windows read as the limit they are"):
-    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("seven_day")), "This week's limit")
-    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("five_hour")), "5-hour limit")
-    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("10080m")), "This week's limit")
-    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("codex/300m")), "5-hour limit")
-    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("seven_day_opus")), "This week's limit (Opus)")
-    assertEquals(Wording.allowanceWindow(PlanQuota.WindowStatus.Kind("90m")), "90-minute limit")
+    assertEquals(Wording.allowanceWindow(WindowStatus.Kind("seven_day")), "This week's limit")
+    assertEquals(Wording.allowanceWindow(WindowStatus.Kind("five_hour")), "5-hour limit")
+    assertEquals(Wording.allowanceWindow(WindowStatus.Kind("10080m")), "This week's limit")
+    assertEquals(Wording.allowanceWindow(WindowStatus.Kind("codex/300m")), "5-hour limit")
+    assertEquals(Wording.allowanceWindow(WindowStatus.Kind("seven_day_opus")), "This week's limit (Opus)")
+    assertEquals(Wording.allowanceWindow(WindowStatus.Kind("90m")), "90-minute limit")
 
   test("the scheduler, the agents' state and pools are plain words"):
-    assertEquals(Wording.strategies(AgentScheduler.StrategyLine.Name("type-balanced")), "Balance the kinds of work")
-    assertEquals(Wording.strategies(AgentScheduler.StrategyLine.Name("goal-first")), "One goal at a time")
-    assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("claude-plan")), "Claude plan")
-    assertEquals(Wording.pool(AgentScheduler.PoolUse.Pool("chatgpt-plan")), "ChatGPT plan")
+    assertEquals(Wording.strategies(StrategyLine.Name("type-balanced")), "Balance the kinds of work")
+    assertEquals(Wording.strategies(StrategyLine.Name("goal-first")), "One goal at a time")
+    assertEquals(Wording.pool(PoolUse.Pool("claude-plan")), "Claude plan")
+    assertEquals(Wording.pool(PoolUse.Pool("chatgpt-plan")), "ChatGPT plan")
     assertEquals(
       Wording.agentsState(autopilotOn = AgentMode.Step.Autopilot.On.On, draining = AgentMode.Step.Drain.On.Off),
       "Agents: working"

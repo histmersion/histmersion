@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.automation.approvals
+
+import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.domain.automation.Approval
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}

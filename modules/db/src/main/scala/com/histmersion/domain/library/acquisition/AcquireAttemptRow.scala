@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.acquirerecheck.LastCheck
+
 import com.histmersion.domain.AcquireRecheck
 
 import java.time.Instant
@@ -10,14 +12,14 @@ object AcquireAttemptRow:
   type Id = Id.T
   object Id extends Newtype[Int, Pure]
 
-  val LegacyWire: AcquireRecheck.Outcome.Wire = AcquireRecheck.Outcome.Wire("legacy")
+  val LegacyWire: domain.acquirerecheck.Outcome.Wire = domain.acquirerecheck.Outcome.Wire("legacy")
   val NoNote: AcquireAttempt.Outcome.LegacyNote = AcquireAttempt.Outcome.LegacyNote("")
 
   def unreadable(at: Instant): AcquireAttempt =
     AcquireAttempt(
       at,
       AcquireAttempt.Trigger.Legacy,
-      AcquireRecheck.LastCheck.Generation("unreadable"),
+      LastCheck.Generation("unreadable"),
       AcquireAttempt.Outcome.Legacy(
         AcquireAttempt.Outcome.LegacyNote("this attempt was stored in a shape this version cannot read"),
         AcquireAttempt.Tries.One

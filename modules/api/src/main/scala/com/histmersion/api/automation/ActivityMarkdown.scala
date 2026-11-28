@@ -1,7 +1,10 @@
 package com.histmersion
 package api.automation
+
+import com.histmersion.api.automation.activity.Entry
+import com.histmersion.api.automation.activity.EntryKind
+import com.histmersion.api.automation.activity.Page
 import com.histmersion.util.problem.Text.sentence
-import com.histmersion.api.automation.Activity.{Entry, EntryKind, Page}
 import com.histmersion.api.Wording
 import com.histmersion.api.jobs.{JobKinds, JobState}
 import com.histmersion.api.given

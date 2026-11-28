@@ -1,5 +1,9 @@
 package com.histmersion
 package server
+
+import com.histmersion.server.markdownlint.Context
+import com.histmersion.server.markdownlint.Finding
+import com.histmersion.server.markdownlint.Edit
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import scala.annotation.tailrec
@@ -54,35 +58,9 @@ import com.histmersion.lint.{tolerated, LintRule}
 @movesTo(FeaturePlace.ResearchArticlesLint)
 object MarkdownLint:
 
-  /** What the check knows beyond the text.
-    *
-    * @param article
-    *   an article body: its `# Title` is expected, and the page builds the "Sources cited" list itself
-    * @param resolves
-    *   does a `[[target]]` resolve to a source or an article? `None` = do not check (the corpus-wide lint leaves that
-    *   to `dangling-article-links`)
-    * @param isCitekey
-    *   is this token a stored citekey? `None` = do not look for bare citekeys
-    */
-  final case class Context(
-      article: Context.Article = Context.Article(false),
-      resolves: Option[WikiLinks.Occurrence.Target => Boolean] = None,
-      isCitekey: Option[WikiLinks.Occurrence.Target => Boolean] = None
-  )
-
-  object Context:
-    type Article = Article.T
-    object Article extends Newtype[Boolean, Pure]
-
   /** One applied repair, as the line that reports it. */
   type Repair = Repair.T
   object Repair extends Newtype[String, Pure]
-
-  /** One text replacement on the STORED text: `[start, end)` becomes `replacement`. */
-  final case class Edit(start: Int, end: Int, replacement: String)
-
-  /** An issue and the edits that repair it (empty = not mechanically fixable). */
-  final case class Finding(issue: FormatIssue, edits: List[Edit])
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def issues(text: Scan.Text, field: FormatField, ctx: Context = Context()): List[FormatIssue] =

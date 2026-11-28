@@ -1,6 +1,9 @@
 package com.histmersion
 package domain.library.ingest
 
+import com.histmersion.api.automation.agents.PauseReason
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -37,7 +40,6 @@ import scala.jdk.OptionConverters.*
 import scala.util.control.NonFatal
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.jobs.JobState
-import com.histmersion.api.automation.Agents.PauseReason
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.media.AssetInput
 import com.histmersion.api.ocr.ConvertedDoc
@@ -348,16 +350,12 @@ final class IngestQueue(
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
     try
-      queues.get(QueueItemId(id.value)).filter(_.status == Queue.QueueItem.Status(Queue.Open)) match
+      queues.get(QueueItemId(id.value)).filter(_.status == QueueItem.Status(Queue.Open)) match
         case None       => s"acquisition item $id was no longer open"
         case Some(item) =>
           queues.patch(
             QueueItemId(id.value),
-            Queue.fulfil(
-              item,
-              com.histmersion.api.library.Citekey(citekey.value),
-              Some(Queue.QueueItem.ClosedBy(jobId.value))
-            )
+            item.fulfil(com.histmersion.api.library.Citekey(citekey.value), Some(QueueItem.ClosedBy(jobId.value)))
           ) match
             case Right(_) => s"ticked off acquisition item $id"
             case Left(e)  => warning(e.problem.sentence)
@@ -375,7 +373,7 @@ final class IngestQueue(
   private def matchAcquisitions(citekey: Citekey, jobId: Job.Id)(using WritePermit): List[String] =
     try
       sources.load(citekey).toList.flatMap { s =>
-        val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
+        val items = queues.list(api.automation.queue.Kind.Acquire, QueueScope.Open).toList
         AcquireMatch
           .decide(
             items,
@@ -394,7 +392,7 @@ final class IngestQueue(
                     .get(itemId)
                     .toRight(QueueError.NotFound(itemId).problem)
                     .flatMap(item =>
-                      val open = Queue.QueueItem.Status(Queue.Open)
+                      val open = QueueItem.Status(Queue.Open)
                       if item.status == open then Right(item)
                       else
                         Left(
@@ -410,10 +408,9 @@ final class IngestQueue(
                       queues
                         .patch(
                           itemId,
-                          Queue.fulfil(
-                            item,
+                          item.fulfil(
                             com.histmersion.api.library.Citekey(citekey.value),
-                            Some(Queue.QueueItem.ClosedBy(jobId.value))
+                            Some(QueueItem.ClosedBy(jobId.value))
                           )
                         )
                         .left

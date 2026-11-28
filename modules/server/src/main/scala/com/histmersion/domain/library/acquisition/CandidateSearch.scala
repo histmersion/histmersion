@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library.acquisition
+
+import com.histmersion.api.automation.queue.Kind
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
@@ -184,7 +186,7 @@ final class CandidateSearch(
         }
         // known already: the corpus, the acquisition list (open or done)
         val corpus = sources.doiIndex.keySet
-        val queued = queues.list(Queue.Kind.Acquire, QueueScope.All).flatMap(i => Scheduling.dois(i.text.value)).toSet
+        val queued = queues.list(Kind.Acquire, QueueScope.All).flatMap(i => Scheduling.dois(i.text.value)).toSet
         val (fresh, skipped) = CandidateDedupe.dedupe(found, corpus ++ queued)
         val earlier = candidates.dois(goal)
         val again = fresh.count((k, _, _) => earlier.contains(k))

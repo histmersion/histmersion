@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 
@@ -161,29 +163,29 @@ class WireSnapshotSuite extends munit.FunSuite:
     Some(Confidence.Low)
   )
   private val gazetteers = List(
-    Gazetteer.SourceInfo(
-      Gazetteer.SourceInfo.Key("zq-gaz"),
-      Gazetteer.Kind.Lpf,
-      Gazetteer.SourceInfo.Title("Zq gazetteer"),
-      Some(Gazetteer.SourceInfo.File("zq.lpf.json")),
-      present = Gazetteer.SourceInfo.Present.Present,
-      Some(Gazetteer.SourceInfo.PinnedVersion("1.0")),
-      importedVersion = Some(Gazetteer.SourceInfo.ImportedVersion("0.9")),
-      importedAt = Some(Gazetteer.SourceInfo.ImportedAt("2026-01-02T03:04:05Z")),
-      places = Some(Gazetteer.SourceInfo.Places(12)),
-      names = Some(Gazetteer.SourceInfo.Names(30)),
-      links = Some(Gazetteer.SourceInfo.Links(4)),
-      licence = Some(Gazetteer.SourceInfo.Licence("CC-BY-4.0")),
-      citation = Some(Gazetteer.SourceInfo.Citation("Zq et al.")),
+    SourceInfo(
+      SourceInfo.Key("zq-gaz"),
+      api.catalogue.gazetteer.Kind.Lpf,
+      SourceInfo.Title("Zq gazetteer"),
+      Some(SourceInfo.File("zq.lpf.json")),
+      present = SourceInfo.Present.Present,
+      Some(SourceInfo.PinnedVersion("1.0")),
+      importedVersion = Some(SourceInfo.ImportedVersion("0.9")),
+      importedAt = Some(SourceInfo.ImportedAt("2026-01-02T03:04:05Z")),
+      places = Some(SourceInfo.Places(12)),
+      names = Some(SourceInfo.Names(30)),
+      links = Some(SourceInfo.Links(4)),
+      licence = Some(SourceInfo.Licence("CC-BY-4.0")),
+      citation = Some(SourceInfo.Citation("Zq et al.")),
       periodStart = Some(Year(-3000)),
       periodEnd = Some(Year(-500))
     ),
-    Gazetteer.SourceInfo(
-      Gazetteer.SourceInfo.Key("zq-missing"),
-      Gazetteer.Kind.Geonames,
-      Gazetteer.SourceInfo.Title("Zq missing"),
+    SourceInfo(
+      SourceInfo.Key("zq-missing"),
+      api.catalogue.gazetteer.Kind.Geonames,
+      SourceInfo.Title("Zq missing"),
       None,
-      present = Gazetteer.SourceInfo.Present.Absent,
+      present = SourceInfo.Present.Absent,
       None
     )
   )

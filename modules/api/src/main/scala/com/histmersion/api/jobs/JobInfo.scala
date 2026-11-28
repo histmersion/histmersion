@@ -1,6 +1,8 @@
 package com.histmersion
 package api.jobs
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentences
 import com.histmersion.util.nonempty.NonEmptyVector
@@ -31,7 +33,7 @@ final case class JobInfo(
     sha256: Option[Sha256] = None,
     createdAt: JobInfo.CreatedAt = JobInfo.CreatedAt(""),
     updatedAt: JobInfo.UpdatedAt = JobInfo.UpdatedAt(""),
-    acquireItem: Option[Queue.QueueItem.Id] = None,
+    acquireItem: Option[QueueItem.Id] = None,
     detail: Option[JobDetail] = None
 ) derives JsonCodec,
       KindlingsSchema,

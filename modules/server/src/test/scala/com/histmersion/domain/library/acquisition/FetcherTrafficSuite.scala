@@ -142,7 +142,7 @@ class FetcherTrafficSuite extends munit.FunSuite:
       wire.out.clear()
       val host = new SttpHttp(PolicyHttp.acquisition(l.config, wire))
       val (indexes, _) =
-        Indexes.of(cfg, host, Plugins.coreKey(g, cfg.core.key.map(k => Plugins.CoreKey(k.value))), core)
+        ScholarlyIndex.of(cfg, host, Plugins.coreKey(g, cfg.core.key.map(k => Plugins.CoreKey(k.value))), core)
       val got = indexes
         .find(_.name.value == "core")
         .map(_.search(Search.Query("bronze age"), LocalDate.of(2026, 1, 1), ScholarlyIndex.Limit(5)))

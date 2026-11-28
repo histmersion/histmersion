@@ -287,21 +287,14 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
-    CliOutcomes
-      .result(
-        CliOutcome(
-          Vector.empty,
-          Vector.empty,
-          Some(CliOutcome.FinalText(answer.noSpaces)),
-          TokenUsage.Zero,
-          None,
-          CliOutcome.Turns(1)
-        ),
-        LlmCall.User("u"),
-        s,
-        None
-      )
-      .finalAnswer
+    CliOutcome(
+      Vector.empty,
+      Vector.empty,
+      Some(CliOutcome.FinalText(answer.noSpaces)),
+      TokenUsage.Zero,
+      None,
+      CliOutcome.Turns(1)
+    ).result(LlmCall.User("u"), s, None).finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):
     for (name, s) <- allSchemas do

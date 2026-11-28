@@ -1,5 +1,7 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
@@ -584,7 +586,7 @@ class WriteSuite extends munit.FunSuite:
     assert(RawJson.decode[Goal.Patch]("""{"state":"done"}""").isLeft)
     assert(RawJson.decode[EventPatch]("""{"name":"x"}""").isLeft)
     assert(RawJson.decode[Attestation.Patch]("""{"quoted":"x"}""").isLeft)
-    assert(RawJson.decode[Queue.QueuePatch]("""{"done":true}""").isLeft)
+    assert(RawJson.decode[QueuePatch]("""{"done":true}""").isLeft)
 
   test("strict: what the encoders write decodes again (the CLI and the web UI never send a refused key)"):
     import com.histmersion.util.json.RawJson.*

@@ -1,11 +1,12 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.catalogue.CatalogueStoreSuite
 import com.histmersion.domain.catalogue.Place
-import com.histmersion.api.catalogue.SiteTypes
 import com.histmersion.domain.DeepTime
 import com.histmersion.util.database.TestPermits.given
 import com.histmersion.lint.{tolerated, LintRule}
@@ -30,7 +31,7 @@ abstract class SiteTypeServiceContract extends CatalogueStoreSuite:
       List("wikidata_q1")
     )
     assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh(false), None), 2)
-    t.setSiteTypes(List(Place.Id("wikidata_q1") -> Some(SiteTypes.SiteType.Id("palace"))))
+    t.setSiteTypes(List(Place.Id("wikidata_q1") -> Some(SiteType.Id("palace"))))
     assertEquals(
       t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh(false), None).map(_._1),
       List("wikidata_q2")

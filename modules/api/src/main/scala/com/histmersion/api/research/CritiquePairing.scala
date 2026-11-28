@@ -1,9 +1,12 @@
 package com.histmersion
 package api.research
+
+import com.histmersion.api.research.critiquepairing.Work
+import com.histmersion.api.research.critiquepairing.Mention
+import com.histmersion.api.research.critiquepairing.Hit
 import scala.annotation.tailrec
 import com.histmersion.util.json.JsonCodec
 import com.histmersion.api.LatinFold
-import com.histmersion.api.library.Hit
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
@@ -20,47 +23,6 @@ object CritiquePairing:
     object Near extends Newtype[Int, Pure]
     type Text = Text.T
     object Text extends Newtype[String, Pure]
-
-  final case class Work(citekey: Citekey, names: List[Work.Names], year: Option[Year])
-
-  object Work:
-    type Names = Names.T
-    object Names extends Newtype[String, Pure]
-
-  final case class Hit(
-      unit: Hit.Unit,
-      from: Hit.From,
-      to: Hit.To,
-      where: Hit.Where,
-      cited: Citekey,
-      missing: Citekey,
-      edges: List[Hit.Edges],
-      named: Hit.Named,
-      mechanical: Hit.Mechanical
-  ) derives JsonCodec:
-    def ref: CritiqueRef = CritiqueRef(cited, missing)
-
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def line: String =
-      (s"paragraph \"$where\" names $named and cites [[$cited]] (${edges.mkString("; ")}) but not [[$missing]] — " +
-        (if (mechanical).mechanical then s"cite [[$missing]] there (fixable)"
-         else
-           s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)"))
-
-  object Hit:
-
-    type Unit = Unit.T
-    object Unit extends Newtype[Int, Pure]
-    export Critiques.Block.{From, To}
-    type Where = Where.T
-    object Where extends Newtype[String, Pure]
-    type Edges = Edges.T
-    object Edges extends Newtype[String, Pure]
-    export Work.Names as Named
-    enum Mechanical derives CanEqual:
-      case Mechanical, Judged
-    object Mechanical extends TwoStates[Mechanical]:
-      extension (mechanical: Mechanical) def mechanical: Boolean = mechanical == Mechanical
 
   private def letters(s: String): String =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
@@ -91,12 +53,6 @@ object CritiquePairing:
 
   private def prose(text: String): String = (LinkRe.replaceAllIn((text), " "))
 
-  enum Mention derives CanEqual:
-    case Strong, Weak, Conflict
-
-  object Mention:
-    export WikiLinks.Occurrence.Target as Key
-
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def mention(text: String, name: Work.Names, year: Option[Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
@@ -111,7 +67,7 @@ object CritiquePairing:
       else Some(Mention.Weak)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  private def targetsOf(u: Critiques.Block): List[WikiLinks.Occurrence.Target] =
+  private def targetsOf(u: CritiquePair.Block): List[WikiLinks.Occurrence.Target] =
     Article.Links.targets(u.text)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -126,8 +82,8 @@ object CritiquePairing:
       edges: List[Coverage.Edge],
       work: Citekey => Option[Work]
   ): List[Hit] =
-    val es = edges.filter(e => Critiques.Kinds.contains(e.kind) && e.from != e.to)
-    val blocks = Critiques.units(body)
+    val es = edges.filter(e => CritiquePair.DisagreementKinds.contains(e.kind) && e.from != e.to)
+    val blocks = CritiquePair.units(body)
     val citedAnywhere = blocks.flatMap(u => targetsOf(u).flatMap(resolve)).toSet
     blocks.zipWithIndex.flatMap { (u, i) =>
       val cited = targetsOf(u).flatMap(resolve).distinct
@@ -212,8 +168,8 @@ object CritiquePairing:
   ): Option[Instruction.Text] =
     val crit = p.criticised.citekey
     val critic = p.critic.citekey
-    val us = Critiques.units(body).zipWithIndex
-    def cites(u: Critiques.Block) = targetsOf(u).flatMap(resolve).contains(crit)
+    val us = CritiquePair.units(body).zipWithIndex
+    def cites(u: CritiquePair.Block) = targetsOf(u).flatMap(resolve).contains(crit)
     near.flatMap(n => us.find((u, i) => i == n.value && cites(u))).orElse(us.find((u, _) => cites(u))).map { (u, _) =>
       val head = words(prose(u.text.value)).take(10).mkString(" ")
       Instruction.Text(

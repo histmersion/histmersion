@@ -1,5 +1,24 @@
 package com.histmersion
 package domain
+
+import com.histmersion.domain.enrichsource.Classified
+import com.histmersion.domain.enrichsource.StatedPeriod
+import com.histmersion.domain.enrichsource.Findings
+import com.histmersion.domain.enrichsource.FindingProposal
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.domain.enrichsource.StatedYear
+import com.histmersion.domain.enrichsource.VerifiedFindings
+import com.histmersion.domain.enrichsource.VerifiedFinding
+import com.histmersion.domain.enrichsource.Geocoded
+import com.histmersion.domain.enrichsource.GeocodeChoice
+import com.histmersion.domain.reviewarticle.Reviewer
+import com.histmersion.domain.reviewarticle.Severity
+import com.histmersion.domain.reviewarticle.Report
+import com.histmersion.domain.reviewarticle.ColdReaderAnswer
+import com.histmersion.domain.reviewarticle.Check
+import com.histmersion.domain.reviewarticle.SpotCheck
+import com.histmersion.domain.reviewarticle.Merged
+import com.histmersion.domain.enrichsource.Loaded
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -9,18 +28,6 @@ import com.histmersion.api.ListPatch
 import com.histmersion.api.research.{CritiqueReason, CritiqueRef}
 import com.histmersion.api.library.{EdgesPatch, FindingsPatch, MetadataField, MetadataPatch, WorkRef}
 import com.histmersion.api.catalogue.{Geocode, Period}
-import com.histmersion.domain.AgentProposals.Proposal
-import com.histmersion.domain.EnrichSource.{
-  Classified,
-  FindingProposal,
-  Findings,
-  GeocodeChoice,
-  Geocoded,
-  StatedYear,
-  VerifiedFinding,
-  VerifiedFindings
-}
-import com.histmersion.domain.ReviewArticle.{Check, Evidence, Merged, Report, Reviewer, Severity, SpotCheck, Verdict}
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
@@ -129,7 +136,7 @@ object CheckpointGolden:
       evidence = Proposal.Evidence("Doe shows the route is later."),
       quote = Some(Proposal.Quote("the route is later"))
     ) ::
-      AgentProposals.EdgeKinds.map(k =>
+      Proposal.EdgeKinds.map(k =>
         Proposal(
           Approval.Kind.Edge,
           library.Citekey("doe2001_tin"),
@@ -154,7 +161,7 @@ object CheckpointGolden:
       List(EnrichSource.Region("Aegean")),
       List(EnrichSource.Tag("tin")),
       Some(Period(Year(-2500), Year(-2000))),
-      Some(EnrichSource.StatedPeriod.Name("Early Bronze Age")),
+      Some(StatedPeriod.Name("Early Bronze Age")),
       Source.Status.Current,
       Classified.StatusEvidence("It is cited as current.")
     ) ::
@@ -172,7 +179,7 @@ object CheckpointGolden:
             FindingProposal.Claim("Tin came from the east."),
             Proposal.Quote("tin came from the east"),
             Some(FindingProposal.Place("Troy")),
-            Some(Geocode.KindHint.Wire("site")),
+            Some(KindHint.Wire("site")),
             Some(StatedYear(AgentVerify.ToSignedYearValue(2500), AgentVerify.YearUnit.Wire("BCE"))),
             Some(StatedYear(AgentVerify.ToSignedYearValue(2000), AgentVerify.YearUnit.Wire("BCE"))),
             Some(FindingProposal.PeriodName("EBA")),
@@ -211,7 +218,7 @@ object CheckpointGolden:
           Nil,
           VerifiedFinding.Confidence("low")
         ) ::
-          Geocode.KindHint.values.toList.map(k =>
+          KindHint.values.toList.map(k =>
             VerifiedFinding(
               VerifiedFinding.Claim("Tin came from the east."),
               VerifiedFinding.Quote("tin came from the east"),
@@ -254,41 +261,46 @@ object CheckpointGolden:
 
   private val evidence =
     List(
-      Evidence(
+      domain.reviewarticle.Evidence(
         library.Citekey("smith1987_tin"),
         Some(Offset(120)),
-        Evidence.Quote("the route is later"),
-        Evidence.Ratio(0.97)
+        domain.reviewarticle.Evidence.Quote("the route is later"),
+        domain.reviewarticle.Evidence.Ratio(0.97)
       ),
-      Evidence(library.Citekey("doe2001_tin"), None, Evidence.Quote("q"), Evidence.Ratio(1.0))
+      domain.reviewarticle.Evidence(
+        library.Citekey("doe2001_tin"),
+        None,
+        domain.reviewarticle.Evidence.Quote("q"),
+        domain.reviewarticle.Evidence.Ratio(1.0)
+      )
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  val reviewFindings: Golden[ReviewArticle.Finding] = Golden(
+  val reviewFindings: Golden[domain.reviewarticle.Finding] = Golden(
     "review-finding.ndjson",
-    ReviewArticle.Finding(
-      ReviewArticle.Finding.Id("S1"),
+    domain.reviewarticle.Finding(
+      domain.reviewarticle.Finding.Id("S1"),
       Reviewer.Skeptic,
       Severity.Major,
-      ReviewArticle.Finding.Kind("missing-critique"),
-      ReviewArticle.Finding.Where("## Origins"),
-      ReviewArticle.Finding.Quote("tin came"),
-      ReviewArticle.Finding.Problem("The critique is not cited."),
-      ReviewArticle.Finding.Fix("Cite it."),
+      domain.reviewarticle.Finding.Kind("missing-critique"),
+      domain.reviewarticle.Finding.Where("## Origins"),
+      domain.reviewarticle.Finding.Quote("tin came"),
+      domain.reviewarticle.Finding.Problem("The critique is not cited."),
+      domain.reviewarticle.Finding.Fix("Cite it."),
       evidence,
-      escalated = ReviewArticle.Finding.Escalated(true),
+      escalated = domain.reviewarticle.Finding.Escalated(true),
       pair = Some(CritiqueRef(Citekey("doe2001_tin"), Citekey("smith1987_tin")))
     ) ::
       (for r <- Reviewer.values.toList; s <- Severity.values.toList
-      yield ReviewArticle.Finding(
-        ReviewArticle.Finding.Id(s"${r.prefix}1"),
+      yield domain.reviewarticle.Finding(
+        domain.reviewarticle.Finding.Id(s"${r.prefix}1"),
         r,
         s,
-        ReviewArticle.Finding.Kind("style"),
-        ReviewArticle.Finding.Where(""),
-        ReviewArticle.Finding.Quote(""),
-        ReviewArticle.Finding.Problem("A problem."),
-        ReviewArticle.Finding.Fix("")
+        domain.reviewarticle.Finding.Kind("style"),
+        domain.reviewarticle.Finding.Where(""),
+        domain.reviewarticle.Finding.Quote(""),
+        domain.reviewarticle.Finding.Problem("A problem."),
+        domain.reviewarticle.Finding.Fix("")
       ))
   )
 
@@ -296,9 +308,9 @@ object CheckpointGolden:
     "review-report.ndjson",
     Report(
       Reviewer.Rules,
-      Verdict.Major,
+      domain.reviewarticle.Verdict.Major,
       reviewFindings.values.take(2),
-      Some(ReviewArticle.ColdReaderAnswer.ExplainBack("It says the route is later.")),
+      Some(ColdReaderAnswer.ExplainBack("It says the route is later.")),
       List(ReviewArticle.ExplainSlotsValue("disagreement")),
       proposals.values.take(2),
       List(Check(Check.Id("R1"), fixed = Check.Fixed(true), Check.Quote("a quote"), Check.Note("fixed in ## Origins"))),
@@ -326,21 +338,21 @@ object CheckpointGolden:
         )
       )
     ) ::
-      Verdict.values.toList.map(v => Report(Reviewer.ColdReader, v, Nil))
+      domain.reviewarticle.Verdict.values.toList.map(v => Report(Reviewer.ColdReader, v, Nil))
   )
 
   val merged: Golden[Merged] = Golden(
     "review-merged.ndjson",
     Merged(
       Merged.Round(2),
-      Verdict.Major,
+      domain.reviewarticle.Verdict.Major,
       reviewFindings.values.take(3),
-      Some(ReviewArticle.ColdReaderAnswer.ExplainBack("Explained back.")),
+      Some(ColdReaderAnswer.ExplainBack("Explained back.")),
       List(ReviewArticle.ExplainSlotsValue("open")),
       proposals.values.take(1),
-      List(ReviewArticle.Finding.Id("S1"))
+      List(domain.reviewarticle.Finding.Id("S1"))
     ) ::
-      Verdict.values.toList.map(v => Merged(Merged.Round(1), v, Nil, None, Nil, Nil))
+      domain.reviewarticle.Verdict.values.toList.map(v => Merged(Merged.Round(1), v, Nil, None, Nil, Nil))
   )
 
   val workRefs: Golden[WorkRef] = Golden(
@@ -389,22 +401,22 @@ object CheckpointGolden:
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 private object EnrichSourceSamples:
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
-  private val loaded = EnrichSource.Loaded(
+  private val loaded = Loaded(
     library.Citekey("smith1987_tin"),
-    EnrichSource.Loaded.Title("Tin"),
+    Loaded.Title("Tin"),
     List(AuthorName("Smith, J.")),
     Some(com.histmersion.Year(1987)),
     None,
     Source.Status.Wire("unassessed"),
-    hasSummary = EnrichSource.Loaded.HasSummary(false),
-    hasNotes = EnrichSource.Loaded.HasNotes(false),
-    hasPeriod = EnrichSource.Loaded.HasPeriod(false),
+    hasSummary = Loaded.HasSummary(false),
+    hasNotes = Loaded.HasNotes(false),
+    hasPeriod = Loaded.HasPeriod(false),
     None,
     List(EnrichSource.Topic("trade")),
     Nil,
     Nil,
     Some(Source.UpdatedAt("2026-10-25T10:00:00Z")),
-    EnrichSource.Loaded.Head("head"),
+    Loaded.Head("head"),
     Nil,
     List(EnrichSource.Tag("tin"))
   )
@@ -420,34 +432,28 @@ private object EnrichSourceSamples:
   )
 
   val patches: List[Source.Patch] = List(
-    EnrichSource
+    loaded
       .patch(
-        loaded,
         classified,
         List(Finding.Input(Finding.Claim("A claim."), lon = Some(Longitude(1.0)), lat = Some(Latitude(2.0)))),
         Some(EnrichSource.PatchNotes("Notes."))
       )
       ._1,
-    EnrichSource
-      .patch(
-        loaded
-          .modify(_.status)
-          .setTo(Source.Status.Wire("current"))
-          .modify(_.hasSummary)
-          .setTo(EnrichSource.Loaded.HasSummary(true))
-          .modify(_.hasNotes)
-          .setTo(EnrichSource.Loaded.HasNotes(true))
-          .modify(_.hasPeriod)
-          .setTo(EnrichSource.Loaded.HasPeriod(true))
-          .modify(_.topics)
-          .setTo(List(EnrichSource.Topic("bronze_age")))
-          .modify(_.regions)
-          .setTo(List(EnrichSource.Region("Aegean")))
-          .modify(_.tags)
-          .setTo(List(EnrichSource.Tag("tin"), EnrichSource.Tag("trade"))),
-        classified.modify(_.status).setTo(Source.Status.Contested),
-        Nil,
-        None
-      )
+    loaded
+      .modify(_.status)
+      .setTo(Source.Status.Wire("current"))
+      .modify(_.hasSummary)
+      .setTo(Loaded.HasSummary(true))
+      .modify(_.hasNotes)
+      .setTo(Loaded.HasNotes(true))
+      .modify(_.hasPeriod)
+      .setTo(Loaded.HasPeriod(true))
+      .modify(_.topics)
+      .setTo(List(EnrichSource.Topic("bronze_age")))
+      .modify(_.regions)
+      .setTo(List(EnrichSource.Region("Aegean")))
+      .modify(_.tags)
+      .setTo(List(EnrichSource.Tag("tin"), EnrichSource.Tag("trade")))
+      .patch(classified.modify(_.status).setTo(Source.Status.Contested), Nil, None)
       ._1
   )

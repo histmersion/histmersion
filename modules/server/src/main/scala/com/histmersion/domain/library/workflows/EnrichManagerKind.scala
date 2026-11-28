@@ -1,5 +1,15 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.domain.PriorRun
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.Origin
+import com.histmersion.api.automation.managers.ItemOrigin
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.util.problem.ProblemLog
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -16,9 +26,6 @@ import com.histmersion.domain.library.Citekey
 import com.histmersion.api.Write
 import com.histmersion.api.automation.Agents.*
 import com.histmersion.api.automation.Managers.*
-import com.histmersion.domain.AutoEnrich
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.AgentsConfig
 import com.histmersion.domain.ManagerDefaults
 
@@ -137,27 +144,27 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Rationale] =
+  private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[PriorRun.Rationale] =
     site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption match
-      case None      => Some(AutoEnrich.Rationale.NoSource)
+      case None      => Some(PriorRun.Rationale.NoSource)
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
-        AutoEnrich.enrichedBy(
-          AutoEnrich.FindingCount(src.findings.size),
-          src.source.notes.map(n => AutoEnrich.Notes(n.value)),
+        PriorRun.enrichedBy(
+          PriorRun.FindingCount(src.findings.size),
+          src.source.notes.map(n => PriorRun.Notes(n.value)),
           runs
         )
 
   /** The earlier non-dry `enrich-source` runs of a source, as [[AutoEnrich]] reads them. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def priorRuns(c: ManagerContext, ck: Citekey): List[AutoEnrich.PriorRun] =
+  private def priorRuns(c: ManagerContext, ck: Citekey): List[PriorRun] =
     c.runsFor(Pipeline.EnrichSource, ManagerContext.ItemTarget(ck.value))
       .toList
       .filterNot(_.dryRun.dryRun)
       .flatMap(r =>
         Run.State
           .parse(Run.State.Wire(r.status.value))
-          .map(AutoEnrich.PriorRun(AutoEnrich.PriorRun.Id.assume(r.id.value), _))
+          .map(PriorRun(PriorRun.Id.assume(r.id.value), _))
       )
 
   // ── auto-enrich ────────────────────────────────────────────────────────────────────────────────
@@ -169,24 +176,24 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
-  def autoEnrich(citekey: Citekey)(using WritePermit)(using Creator.New): Option[AutoEnrich.Note] =
+  def autoEnrich(citekey: Citekey)(using WritePermit)(using Creator.New): Option[PriorRun.Note] =
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
         site.sources.get(citekey, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)) match
-          case Left(e)    => Some(AutoEnrich.notQueued(e.problems))
+          case Left(e)    => Some(PriorRun.notQueued(e.problems))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
             // a dry run wrote nothing: it neither enriched the source nor stands for a run that will
             val runs = priorRuns(a.managers, ck)
-            AutoEnrich.decide(
+            PriorRun.decide(
               cfg.enabled.value,
               cfg.autoEnrich.value,
-              AutoEnrich.FindingCount(src.findings.size),
-              src.source.notes.map(n => AutoEnrich.Notes(n.value)),
+              PriorRun.FindingCount(src.findings.size),
+              src.source.notes.map(n => PriorRun.Notes(n.value)),
               runs
             ) match
-              case Left(skip)                              => AutoEnrich.note(skip)
+              case Left(skip)                              => PriorRun.note(skip)
               case Right(()) if cfg.managers.enabled.value => Some(ingested(a.managers, ck))
               case Right(())                               =>
                 Some(
@@ -195,15 +202,15 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     Origin.FromIngest,
                     None
                   ).fold(
-                    e => AutoEnrich.notQueued(e.problems),
-                    r => AutoEnrich.queued(Run.Id.assume(r.id.value))
+                    e => PriorRun.notQueued(e.problems),
+                    r => PriorRun.queued(Run.Id.assume(r.id.value))
                   )
                 )
       }
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
-        Some(AutoEnrich.notQueued(ProblemLog.unexpected(e, Problem.Where(s"the auto-enrich of $citekey"))))
+        Some(PriorRun.notQueued(ProblemLog.unexpected(e, Problem.Where(s"the auto-enrich of $citekey"))))
 
   private val autoEnrichLock = new Object
 
@@ -211,7 +218,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     * Answers the ingest job's progress note.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit)(using Creator.New): AutoEnrich.Note =
+  private def ingested(c: ManagerContext, citekey: Citekey)(using WritePermit)(using Creator.New): PriorRun.Note =
     val enrichId = ManagerLight.Id(EnrichId)
     Unused(c.ensure(Kind.Review, ManagerLight.Id(ReviewId), None), Unused.Why.Idempotent)
     Unused(c.ensure(Kind.Enrich, enrichId, None), Unused.Why.Idempotent)
@@ -231,8 +238,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       ManagerContext.EventText(s"$citekey ${if isNew then "enqueued" else "enqueued again"} by an ingest")
     )
     c.nudge()
-    AutoEnrich.managed(
-      AutoEnrich.ItemId(itemId.value),
+    PriorRun.managed(
+      PriorRun.ItemId(itemId.value),
       Manager.State.Wire(c.state(enrichId).fold(State.Paused.wire.value)(_.value))
     )
 
@@ -266,9 +273,9 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
             // a person's Enrich enriches again; an ingest's or a selection's skips an enriched source
             val enriched = Option
               .when(item.origin != ItemOrigin.Person.wire)(
-                AutoEnrich.enrichedBy(
-                  AutoEnrich.FindingCount(src.findings.size),
-                  src.source.notes.map(n => AutoEnrich.Notes(n.value)),
+                PriorRun.enrichedBy(
+                  PriorRun.FindingCount(src.findings.size),
+                  src.source.notes.map(n => PriorRun.Notes(n.value)),
                   runs
                 )
               )

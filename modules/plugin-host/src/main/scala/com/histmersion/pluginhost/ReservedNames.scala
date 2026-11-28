@@ -1,6 +1,8 @@
 package com.histmersion
 package pluginhost
 
+import com.histmersion.api.catalogue.gazetteer.Kind
+
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.catalogue.Gazetteer
 import com.histmersion.lint.{tolerated, LintRule}
@@ -96,7 +98,7 @@ object ReservedNames:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val gazetteerSources: Set[Name] =
     Set("cliopatria", "awmc", "chronontology", "land", "periodo").map(Name(_)) ++
-      Gazetteer.Kind.values.map(k => Name(k.wire.value)).toSet
+      Kind.values.map(k => Name(k.wire.value)).toSet
 
   /** Histmersion's own source collections: the Calibre library and archive.org. */
   val sourceCollections: Set[Name] = Set(Name("calibre"), Name("archive-org"))

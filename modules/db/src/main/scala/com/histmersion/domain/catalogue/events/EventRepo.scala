@@ -10,7 +10,6 @@ import com.histmersion.api.catalogue.EventEntry
 import com.histmersion.api.Write
 import com.histmersion.api.catalogue.{
   EventEdge,
-  EventFields,
   EventList,
   EventParticipant,
   EventPatch,
@@ -248,7 +247,7 @@ private[events] object EventRepo:
   private def recordCorrections(id: BEventRow.Id, fields: Map[String, Json])(using DbCon)(using Creator.New): Unit =
     if fields.nonEmpty then
       EventImportRepo.upstreamOf(Event.Id.assume(id.value)).foreach { (provider, rec) =>
-        val up = EventFields.upstream(rec)
+        val up = EventPatch.upstream(rec)
         fields.foreach((f, v) =>
           up.get(f)
             .foreach(u =>
@@ -323,7 +322,7 @@ private[events] object EventRepo:
             central = CASE WHEN $sameSpan THEN events.central END,
             plus_minus = CASE WHEN $sameSpan THEN events.plus_minus END,
             dating_method = CASE WHEN $sameSpan THEN events.dating_method END""".update.run()
-    recordCorrections(id, EventFields.ofPut(in))
+    recordCorrections(id, EventPatch.ofPut(in))
 
     Unused(sql"DELETE FROM event_datings WHERE event_id = $id".update.run(), Unused.Why.Idempotent)
     Unused(sql"DELETE FROM event_edges WHERE src_id = $id OR dst_id = $id".update.run(), Unused.Why.Idempotent)
@@ -434,7 +433,7 @@ private[events] object EventRepo:
           Unused.Why.Held
         )
       )
-      recordCorrections(id, EventFields.ofPatch(p))
+      recordCorrections(id, p.ofPatch)
       Right(())
 
   /** Rename an event: the id moves with one UPDATE (its datings, participants, edges and children cascade), and the

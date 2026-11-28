@@ -1,6 +1,12 @@
 package com.histmersion
 package domain.library.acquisition
 
+import com.histmersion.domain.corequota.Grant
+import com.histmersion.domain.corequota.State
+import com.histmersion.domain.corequota.Limits
+import com.histmersion.domain.corequota.Purpose
+import com.histmersion.domain.corequota.Refusal
+
 import com.histmersion.config.CoreServiceConfig
 import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.HostServices
@@ -18,17 +24,17 @@ import com.histmersion.lint.{tolerated, LintRule}
   * `sleep` are parameters so a test does not wait.
   */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Unit = ms => Thread.sleep(ms.value)):
+final class CoreBudget(clock: () => Instant, sleep: Grant.WaitMs => Unit = ms => Thread.sleep(ms.value)):
 
   private val lock = Object()
-  private val current = AtomicReference(CoreQuota.State.fresh(CoreQuota.day(clock())))
+  private val current = AtomicReference(State.fresh(CoreQuota.day(clock())))
   private val store = AtomicReference[Option[CoreQuotaStore]](None)
 
   /** The state now. */
-  def state: CoreQuota.State = current.get
+  def state: State = current.get
 
   /** This budget as the plugin SPI lends it (`ctx.quota("core")`), under `limits`. */
-  def lend(limits: CoreQuota.Limits): UpstreamQuota =
+  def lend(limits: Limits): UpstreamQuota =
     CoreQuotaLend(this, limits)
 
   /** Keep the budget in `s` from now on, starting from what it holds: the same day's spending and a block that has not
@@ -38,12 +44,12 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def persistTo(s: CoreQuotaStore): Unit = lock.synchronized {
     val now = clock()
-    val saved = attempt("read")(s.load()).flatten.map(CoreQuota.onDay(_, now))
-    val mine = CoreQuota.onDay(current.get, now)
+    val saved = attempt("read")(s.load()).flatten.map(_.onDay(now))
+    val mine = current.get.onDay(now)
     val merged = saved.fold(mine) { o =>
       mine.copy(
-        lookupTokens = CoreQuota.State.LookupTokens(mine.lookupTokens.value.max(o.lookupTokens.value)),
-        searchTokens = CoreQuota.State.SearchTokens(mine.searchTokens.value.max(o.searchTokens.value)),
+        lookupTokens = State.LookupTokens(mine.lookupTokens.value.max(o.lookupTokens.value)),
+        searchTokens = State.SearchTokens(mine.searchTokens.value.max(o.searchTokens.value)),
         block = (mine.block.toList ++ o.block.toList).maxByOption(_.until.toEpochMilli),
         window = mine.window.orElse(o.window)
       )
@@ -57,10 +63,10 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
   /** Why a call for `purpose` would not be made now — CORE asked to wait, or the day's budget is spent; `None` when it
     * may go (pacing aside: a slot comes within a minute). Nothing is counted.
     */
-  def unavailable(limits: CoreQuota.Limits, purpose: CoreQuota.Purpose): Option[CoreQuota.Refusal] =
-    CoreQuota.reserve(current.get, limits, purpose, clock()).left.toOption.filter {
-      case CoreQuota.Refusal.Paced(_) => false
-      case _                          => true
+  def unavailable(limits: Limits, purpose: Purpose): Option[Refusal] =
+    current.get.reserve(limits, purpose, clock()).left.toOption.filter {
+      case Refusal.Paced(_) => false
+      case _                => true
     }
 
   /** Take one call's share for `purpose`: `Left` when the call is not made (nothing is counted then). The call is
@@ -68,9 +74,9 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
     * answered.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def take(limits: CoreQuota.Limits, purpose: CoreQuota.Purpose): Either[CoreQuota.Refusal, Unit] =
+  def take(limits: Limits, purpose: Purpose): Either[Refusal, Unit] =
     val granted = lock.synchronized {
-      CoreQuota.reserve(current.get, limits, purpose, clock()).map { g =>
+      current.get.reserve(limits, purpose, clock()).map { g =>
         current.set(g.state)
         save(g.state)
         g.waitMs
@@ -80,17 +86,17 @@ final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Un
 
   /** What CORE answered a call taken: a 429 and its rate-limit headers (names in lower case) block or pace it. */
   def observe(
-      limits: CoreQuota.Limits,
+      limits: Limits,
       code: CoreQuota.StatusCode,
       headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]
   ): Unit =
     lock.synchronized {
-      val next = CoreQuota.observe(current.get, limits, code, headers, clock())
+      val next = current.get.observe(limits, code, headers, clock())
       current.set(next)
       save(next)
     }
 
-  private def save(s: CoreQuota.State): Unit =
+  private def save(s: State): Unit =
     store.get.foreach(st => attempt("write")(st.save(s)))
 
   private def attempt[A](what: String)(a: => A): Option[A] =
@@ -106,18 +112,18 @@ object CoreBudget:
 
   /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def quotas(core: CoreBudget, limits: CoreQuota.Limits): HostServices.Quotas =
+  def quotas(core: CoreBudget, limits: Limits): HostServices.Quotas =
     name => if name == Upstream.value then core.lend(limits) else UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def limits(c: CoreServiceConfig): CoreQuota.Limits =
-    CoreQuota.Limits(
-      CoreQuota.Limits.PerMinute(c.perMinute.value),
-      CoreQuota.Limits.DailyTokens(c.dailyTokens.value),
-      CoreQuota.Limits.SearchDailyTokens(c.searchDailyTokens.value),
-      CoreQuota.Limits.LookupCost(c.lookupCost.value),
-      CoreQuota.Limits.SearchCost(c.searchCost.value),
-      CoreQuota.Limits.ExhaustedPauseSeconds(c.exhaustedPauseSeconds.value),
-      CoreQuota.Limits.MaxWaitSeconds(c.maxWaitSeconds.value)
+  def limits(c: CoreServiceConfig): Limits =
+    Limits(
+      Limits.PerMinute(c.perMinute.value),
+      Limits.DailyTokens(c.dailyTokens.value),
+      Limits.SearchDailyTokens(c.searchDailyTokens.value),
+      Limits.LookupCost(c.lookupCost.value),
+      Limits.SearchCost(c.searchCost.value),
+      Limits.ExhaustedPauseSeconds(c.exhaustedPauseSeconds.value),
+      Limits.MaxWaitSeconds(c.maxWaitSeconds.value)
     )

@@ -1,5 +1,8 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.planquota.ModWindow
+import com.histmersion.api.automation.planquota.Source
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson
 import com.histmersion.util.json.RawJson.*

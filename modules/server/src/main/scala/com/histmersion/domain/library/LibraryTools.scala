@@ -1,5 +1,7 @@
 package com.histmersion
 package domain.library
+
+import com.histmersion.api.aliases.AliasKind
 import com.histmersion.util.mcp.ChimpJson.given
 
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -22,7 +24,6 @@ import com.histmersion.util.mcp.McpOut
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
-import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.library.{Citekey as ApiCitekey, Filter, PassagesMarkdown}
 import com.histmersion.api.library.Rename
@@ -286,9 +287,9 @@ object LibraryTools:
             sources.put(in.citekey, in.source, SourcesControllers.PutStrict(in.strict.value)) match
               case Right(sw) =>
                 ToolResult.text(
-                  Aliases
-                    .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
-                      Aliases.Note(
+                  AliasKinds.SourceRecords
+                    .note(AliasKind.Id(in.citekey.value), AliasKind.Id(sw.source.citekey.value))(
+                      AliasKind.Note(
                         SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
                           .notice(sw.formatting)
                       )
@@ -321,9 +322,9 @@ object LibraryTools:
             sources.patch(in.citekey, in.patch, SourcesControllers.PatchStrict(in.strict.value)) match
               case Right(sw) =>
                 ToolResult.text(
-                  Aliases
-                    .note(AliasKinds.SourceRecords, Aliases.Id(in.citekey.value), Aliases.Id(sw.source.citekey.value))(
-                      Aliases.Note(
+                  AliasKinds.SourceRecords
+                    .note(AliasKind.Id(in.citekey.value), AliasKind.Id(sw.source.citekey.value))(
+                      AliasKind.Note(
                         SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown
                           .notice(sw.formatting)
                       )
@@ -342,7 +343,7 @@ object LibraryTools:
             "the findings are renumbered '<new>#<n>', every table that stores the citekey follows, and " +
             "every [[old]] link (labels and anchors kept, short forms like [[beckman2025]] included) " +
             "is rewritten in article bodies — each rewrite recorded as an article version — and in " +
-            s"source notes/summaries. ${Aliases.rule(AliasKinds.SourceRecords)} (get_source, neighbors, graph, " +
+            s"source notes/summaries. ${AliasKinds.SourceRecords.rule} (get_source, neighbors, graph, " +
             "export_source, /source/<old> and [[old]] included.) Refused when the " +
             "new citekey is taken (by a source, or as an old citekey of another source) or is not " +
             "link-shaped. Use it only to fix an identifier; to change metadata (year, title) use " +

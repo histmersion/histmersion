@@ -1,6 +1,8 @@
 package com.histmersion
 package domain
 
+import com.histmersion.api.catalogue.eventtaxonomy.KindCondition
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -20,7 +22,6 @@ import com.histmersion.domain.catalogue.events.EventProviders
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Year
-import com.histmersion.domain.catalogue.events.CatalogMerge
 import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.StoredEvent
 import com.histmersion.api.catalogue.EventEntry
@@ -96,20 +97,20 @@ class EventCatalogSuite extends munit.FunSuite:
     )
 
   test("a kind filter: a group selects its kinds (human = every non-natural one), a kind its aliases"):
-    val nat = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("natural"))).get
+    val nat = EventTaxonomy.condition(Some(KindCondition.Filter("natural"))).get
     assert(!nat.negate.negate && nat.kinds.contains("eruption") && nat.kinds.contains("plague"))
-    val hum = EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("human"))).get
+    val hum = EventTaxonomy.condition(Some(KindCondition.Filter("human"))).get
     assert(hum.negate.negate && hum.kinds == nat.kinds)
     assertEquals(
-      EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet,
+      EventTaxonomy.condition(Some(KindCondition.Filter("revolt"))).get.kinds.toSet,
       Set("revolt", "rebellion", "uprising")
     )
-    assertEquals(EventTaxonomy.condition(Some(EventTaxonomy.KindCondition.Filter(" "))), None)
+    assertEquals(EventTaxonomy.condition(Some(KindCondition.Filter(" "))), None)
     assert(
-      EventTaxonomy.matches(
-        EventTaxonomy.KindCondition.Filter("natural"),
+      KindCondition.matches(
+        KindCondition.Filter("natural"),
         EventSummary.Kind("tsunami")
-      ) && !EventTaxonomy.matches(EventTaxonomy.KindCondition.Filter("human"), EventSummary.Kind("tsunami"))
+      ) && !KindCondition.matches(KindCondition.Filter("human"), EventSummary.Kind("tsunami"))
     )
 
   test("thresholds: all inside the region, large ones outside, nothing without a position"):
@@ -197,7 +198,7 @@ class EventCatalogSuite extends munit.FunSuite:
 
   // ── merging ─────────────────────────────────────────────────────────────────────────────────
 
-  private val tol = CatalogMerge.Tolerance(CatalogMerge.Tolerance.Km(60), CatalogMerge.Tolerance.Years(30))
+  private val tol = Placement.Tolerance(Placement.Tolerance.Km(60), Placement.Tolerance.Years(30))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def rec(
       p: CatalogRecord.Provider,
@@ -250,9 +251,9 @@ class EventCatalogSuite extends munit.FunSuite:
       Longitude(25.396),
       group = Some(CatalogRecord.Group("volcano:212040"))
     )
-    val placed = CatalogMerge.place(List(a, b, c), Nil, tol)
+    val placed = Placement.place(List(a, b, c), Nil, tol)
     assertEquals(placed.map(_._2.eventId), List("gvp_1", "gvp_2", "gvp_1"))
-    assert(placed(2)._2.isInstanceOf[CatalogMerge.Placement.New])
+    assert(placed(2)._2.isInstanceOf[Placement.New])
 
   test("merge: a stored event is matched by key, by Wikidata item, or by kind+time+space — never by another kind"):
     val compiled = StoredEvent(
@@ -286,7 +287,7 @@ class EventCatalogSuite extends munit.FunSuite:
       catalogue = StoredEvent.Catalogue(true)
     )
     val stored = List(compiled, battle, known)
-    val placed = CatalogMerge.place(
+    val placed = Placement.place(
       List(
         rec(
           CatalogRecord.Provider("gvp"),
@@ -326,7 +327,7 @@ class EventCatalogSuite extends munit.FunSuite:
       tol
     )
     assertEquals(placed.map(_._2.eventId), List("thera_eruption", "alesia", "gvp_9", "noaa_earthquake_5"))
-    assert(placed.take(3).forall(_._2.isInstanceOf[CatalogMerge.Placement.Existing]))
+    assert(placed.take(3).forall(_._2.isInstanceOf[Placement.Existing]))
 
   test("merge: a stored event that a record of the SAME catalogue made is no match for another of its records"):
     val g1 = StoredEvent(
@@ -339,7 +340,7 @@ class EventCatalogSuite extends munit.FunSuite:
       Set(CatalogRecord.Provider("gvp") -> CatalogRecord.ProviderId("1")),
       catalogue = StoredEvent.Catalogue(true)
     )
-    val placed = CatalogMerge.place(
+    val placed = Placement.place(
       List(
         rec(
           CatalogRecord.Provider("gvp"),

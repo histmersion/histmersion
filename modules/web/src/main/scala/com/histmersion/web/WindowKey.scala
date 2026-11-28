@@ -1,6 +1,10 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.queue.Kind
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.personal.ItemKey
 import com.histmersion.api.UiLabels
@@ -159,25 +163,25 @@ object WindowKey:
     val Citekey: api.library.Citekey.type = api.library.Citekey
 
   object Run:
-    export api.automation.Agents.RunInfo.Id
+    export RunInfo.Id
 
   object Goal:
     export api.automation.Goal.Slug
 
   object Manager:
-    export api.automation.Managers.ManagerInfo.Id
+    export ManagerInfo.Id
 
   /** The window of each bookkeeping list, and back. */
-  def ofQueue(kind: Queue.Kind): WindowKey = kind match
-    case Queue.Kind.Acquire => Acquire
-    case Queue.Kind.Tasks   => Tasks
-    case Queue.Kind.Log     => Log
+  def ofQueue(kind: Kind): WindowKey = kind match
+    case Kind.Acquire => Acquire
+    case Kind.Tasks   => Tasks
+    case Kind.Log     => Log
 
   /** The bookkeeping list a window shows, if it shows one. */
-  def queueOf(key: WindowKey): Option[Queue.Kind] = key match
-    case Acquire => Some(Queue.Kind.Acquire)
-    case Tasks   => Some(Queue.Kind.Tasks)
-    case Log     => Some(Queue.Kind.Log)
+  def queueOf(key: WindowKey): Option[Kind] = key match
+    case Acquire => Some(Kind.Acquire)
+    case Tasks   => Some(Kind.Tasks)
+    case Log     => Some(Kind.Log)
     case _       => None
 
   private val Keyed = "^(source|article|graph|edit|run|goal|manager):(.+)$".r

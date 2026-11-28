@@ -12,12 +12,10 @@ import com.histmersion.api.catalogue.{Event, EventCorrection, EventSummary}
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.{
-  Corrections,
   EventCandidatesRequest,
   EventGeometry,
   EventImportReport,
   EventImportRequest,
-  EventLeads,
   EventLinksMarkdown,
   EventLinksRequest,
   EventPatch,

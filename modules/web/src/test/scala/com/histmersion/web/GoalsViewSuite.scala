@@ -1,11 +1,13 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.agents.RunInfo
+
 import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Goal
-import com.histmersion.api.automation.Agents.ApprovalInfo
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Citekey
@@ -39,7 +41,7 @@ class GoalsViewSuite extends munit.FunSuite:
   test("the open plan of a goal"):
     val open = ApprovalInfo(
       ApprovalInfo.Id(1),
-      Some(Agents.RunInfo.Id("r")),
+      Some(RunInfo.Id("r")),
       ApprovalInfo.Kind("goal-plan"),
       Citekey(""),
       subject = Some(ApprovalInfo.Subject("a"))

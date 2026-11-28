@@ -1,5 +1,10 @@
 package com.histmersion
 package domain.activity
+
+import com.histmersion.api.automation.activity.Entry
+import com.histmersion.api.automation.activity.Page
+import com.histmersion.api.automation.activity.Counts
+import com.histmersion.api.automation.activity.Show
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.{sentence, sentences}
 
@@ -8,7 +13,6 @@ import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Activity
-import com.histmersion.api.automation.Activity.{Entry, Show}
 
 import java.time.Instant
 import com.histmersion.api.automation.Goal
@@ -79,17 +83,17 @@ class ActivityRulesSuite extends munit.FunSuite:
     )
   )
 
-  private def keys(p: Activity.Page) = p.entries.map(_.key)
+  private def keys(p: Page) = p.entries.map(_.key)
 
   test("newest first; entries of one instant by key, descending"):
     assertEquals(
-      keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())),
+      keys(ActivityRules.page(entries, ActivityQuery(), Counts())),
       List("run:r1", "job:j1", "log:12", "log:11", "log:10", "decision:5", "job:j0")
     )
 
   test("pages follow on without a gap or a repeat, also inside one instant"):
     def walk(q: ActivityQuery, acc: List[Entry.Key]): List[Entry.Key] =
-      val p = ActivityRules.page(entries, q, Activity.Counts())
+      val p = ActivityRules.page(entries, q, Counts())
       p.next match
         case Some(c) =>
           walk(
@@ -101,17 +105,17 @@ class ActivityRulesSuite extends munit.FunSuite:
     for size <- 1 to 4 do
       assertEquals(
         walk(ActivityQuery(limit = ActivityQuery.Limit(size)), Nil),
-        keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())),
+        keys(ActivityRules.page(entries, ActivityQuery(), Counts())),
         s"page size $size"
       )
     assertEquals(
-      ActivityRules.page(entries, ActivityQuery(limit = ActivityQuery.Limit(7)), Activity.Counts()).next,
+      ActivityRules.page(entries, ActivityQuery(limit = ActivityQuery.Limit(7)), Counts()).next,
       None,
       "the last page has no next"
     )
 
   test("each chip shows what it names"):
-    def shown(s: Show) = keys(ActivityRules.page(entries, ActivityQuery(show = s), Activity.Counts())).toSet
+    def shown(s: Show) = keys(ActivityRules.page(entries, ActivityQuery(show = s), Counts())).toSet
     assertEquals(shown(Show.Running), Set("run:r1"))
     assertEquals(shown(Show.Agents), Set("run:r1", "log:10"))
     assertEquals(shown(Show.Jobs), Set("job:j1", "job:j0", "log:11"))
@@ -121,18 +125,18 @@ class ActivityRulesSuite extends munit.FunSuite:
 
   test("a goal's slice and a time bound"):
     assertEquals(
-      keys(ActivityRules.page(entries, ActivityQuery(goal = Some(ActivityQuery.Goal("g1"))), Activity.Counts())),
+      keys(ActivityRules.page(entries, ActivityQuery(goal = Some(ActivityQuery.Goal("g1"))), Counts())),
       List("run:r1", "log:10", "decision:5")
     )
     assertEquals(
-      keys(ActivityRules.page(entries, ActivityQuery(since = Some(now.minusSeconds(150))), Activity.Counts())),
+      keys(ActivityRules.page(entries, ActivityQuery(since = Some(now.minusSeconds(150))), Counts())),
       List("run:r1", "job:j1")
     )
 
   test("the counts: running now, and the problems of the last 7 days only"):
     assertEquals(
       ActivityRules.counts(entries, now.minusSeconds(7 * 86400)),
-      Activity.Counts(running = Activity.Counts.Running(1), problemsWeek = Activity.Counts.ProblemsWeek(1))
+      Counts(running = Counts.Running(1), problemsWeek = Counts.ProblemsWeek(1))
     )
 
   test("a cursor round-trips; a bad one is refused"):

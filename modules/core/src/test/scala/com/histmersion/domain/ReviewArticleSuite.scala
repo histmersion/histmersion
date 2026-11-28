@@ -1,5 +1,32 @@
 package com.histmersion
 package domain
+
+import com.histmersion.domain.reviewarticle.FindingAnswer
+import com.histmersion.domain.reviewarticle.Snapshot
+import com.histmersion.domain.reviewarticle.Reviewer
+import com.histmersion.domain.reviewarticle.RulesAnswer
+import com.histmersion.domain.reviewarticle.ColdReaderAnswer
+import com.histmersion.domain.reviewarticle.ReaderFindingAnswer
+import com.histmersion.domain.reviewarticle.Finding
+import com.histmersion.domain.reviewarticle.SkepticAnswer
+import com.histmersion.domain.reviewarticle.Report
+import com.histmersion.domain.reviewarticle.Merged
+import com.histmersion.domain.reviewarticle.BodyCorpus
+import com.histmersion.domain.reviewarticle.FixerAnswer
+import com.histmersion.domain.reviewarticle.RejectionAnswer
+import com.histmersion.domain.reviewarticle.EvidenceAnswer
+import com.histmersion.domain.reviewarticle.Outcome
+import com.histmersion.domain.reviewarticle.Prior
+import com.histmersion.domain.reviewarticle.CheckAnswer
+import com.histmersion.domain.reviewarticle.Check
+import com.histmersion.domain.reviewarticle.RecheckAnswer
+import com.histmersion.domain.reviewarticle.Recheck
+import com.histmersion.domain.reviewarticle.WontFixAnswer
+import com.histmersion.domain.reviewarticle.WontFix
+import com.histmersion.domain.reviewledger.Ledger
+import com.histmersion.domain.reviewledger.Entry
+import com.histmersion.domain.reviewarticle.SpotCheckAnswer
+import com.histmersion.domain.reviewarticle.SpotRule
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 import com.histmersion.util.json.RawJson
@@ -14,9 +41,7 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.domain.AgentProposals.ProposalAnswer
 import com.histmersion.domain.ReviewArticle.*
-import com.histmersion.domain.ReviewArticle.Finding
 import com.histmersion.api.research.{CitedSource, Coverage}
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Citekey as ApiCitekey
@@ -72,12 +97,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     FindingAnswer(sev, FindingAnswer.Kind("synth"), where, quote, problem, FindingAnswer.Fix("fix it"))
 
   test("mechanical: a clean article has no findings"):
-    assertEquals(mechanical(Slug("a"), ReviewArticle.Snapshot.Kind("concept"), Article.Body(Good), isTarget), Nil)
+    assertEquals(mechanical(Slug("a"), Snapshot.Kind("concept"), Article.Body(Good), isTarget), Nil)
 
   test("mechanical: uncited paragraph, escaped links, Sources cited, missing sections, dangling link, filler"):
     val body =
       "It is important to note that tin moved.\n\nSee \\[\\[x\\]\\] and [[nobody2020_x]].\n\n## Sources cited\n\n- a\n"
-    val fs = mechanical(Slug("a"), ReviewArticle.Snapshot.Kind("concept"), Article.Body(body), isTarget)
+    val fs = mechanical(Slug("a"), Snapshot.Kind("concept"), Article.Body(body), isTarget)
     assert(fs.forall(_.reviewer == Reviewer.Mechanical))
     assertEquals(fs.map(_.id), fs.indices.map(i => s"M${i + 1}").toList)
     val problems = fs.map(_.problem.value)
@@ -89,14 +114,14 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(problems.exists(_.contains("'unresolved' or 'open questions'")), problems)
     assert(problems.exists(_.contains("[[nobody2020_x]] is neither")), problems)
     // filler is minor; a missing section is major
-    assert(fs.find(_.problem.value.contains("filler")).exists(_.severity == Severity.Minor))
+    assert(fs.find(_.problem.value.contains("filler")).exists(_.severity == domain.reviewarticle.Severity.Minor))
     assert(fs.find(_.problem.value.contains("'not used'")).exists(_.major))
 
   test("mechanical: an index article needs no section set; a link to an article is not a citation"):
     assertEquals(
       mechanical(
         Slug("i"),
-        ReviewArticle.Snapshot.Kind("index"),
+        Snapshot.Kind("index"),
         ReviewArticle.MechanicalBody("See [[knapp2016_tin]]."),
         isTarget
       ),
@@ -105,7 +130,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     // the lint rule's own test: a target shaped like a citekey (a year or an underscore) cites
     val fs = mechanical(
       Slug("a"),
-      ReviewArticle.Snapshot.Kind("index"),
+      Snapshot.Kind("index"),
       ReviewArticle.MechanicalBody("See [[atlantis]]."),
       isTarget
     )
@@ -113,86 +138,97 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   test("a reviewer's findings get code ids; a bad severity is sent back, then dropped on the last attempt"):
     val a = RulesAnswer(
-      ReviewArticle.RulesAnswer.Verdict("MAJOR"),
+      RulesAnswer.Verdict("MAJOR"),
       List(
         fa(FindingAnswer.Severity("major"), FindingAnswer.Where("Intro"), FindingAnswer.Problem("bridge claim")),
         fa(FindingAnswer.Severity("severe"), FindingAnswer.Where("x"), FindingAnswer.Problem("y"))
       ),
-      ReviewArticle.RulesAnswer.Filter("f"),
+      RulesAnswer.Filter("f"),
       Nil,
       Nil
     )
     assert(
-      checkRules(a, last = ReviewArticle.CheckRulesLast(false)).left.exists(_.exists(_.sentence.contains("'severe'")))
+      a.checkRules(last = ReviewArticle.CheckRulesLast(false)).left.exists(_.exists(_.sentence.contains("'severe'")))
     )
-    val (r, ws) = checkRules(a, last = ReviewArticle.CheckRulesLast(true)).toOption.get
-    assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", Severity.Major)))
-    assertEquals(r.verdict, Verdict.Major)
+    val (r, ws) = a.checkRules(last = ReviewArticle.CheckRulesLast(true)).toOption.get
+    assertEquals(r.findings.map(f => (f.id, f.severity)), List(("R1", domain.reviewarticle.Severity.Major)))
+    assertEquals(r.verdict, domain.reviewarticle.Verdict.Major)
     assert(ws.exists(_.contains("dropped")), ws)
 
   test("a verdict worse than the findings is a finding left out; a milder one is corrected"):
     val tooBad = RulesAnswer(
-      ReviewArticle.RulesAnswer.Verdict("MAJOR"),
+      RulesAnswer.Verdict("MAJOR"),
       List(fa(FindingAnswer.Severity("minor"), FindingAnswer.Where("x"), FindingAnswer.Problem("y"))),
-      ReviewArticle.RulesAnswer.Filter("f"),
+      RulesAnswer.Filter("f"),
       Nil,
       Nil
     )
     assert(
-      checkRules(tooBad, last = ReviewArticle.CheckRulesLast(false)).left
+      tooBad
+        .checkRules(last = ReviewArticle.CheckRulesLast(false))
+        .left
         .exists(_.exists(_.sentence.contains("no finding is major")))
     )
-    assertEquals(checkRules(tooBad, last = ReviewArticle.CheckRulesLast(true)).map(_._1.verdict), Right(Verdict.Minor))
+    assertEquals(
+      tooBad.checkRules(last = ReviewArticle.CheckRulesLast(true)).map(_._1.verdict),
+      Right(domain.reviewarticle.Verdict.Minor)
+    )
     val tooMild = RulesAnswer(
-      ReviewArticle.RulesAnswer.Verdict("PASS"),
+      RulesAnswer.Verdict("PASS"),
       List(fa(FindingAnswer.Severity("major"), FindingAnswer.Where("x"), FindingAnswer.Problem("y"))),
-      ReviewArticle.RulesAnswer.Filter("f"),
+      RulesAnswer.Filter("f"),
       Nil,
       Nil
     )
     assertEquals(
-      checkRules(tooMild, last = ReviewArticle.CheckRulesLast(false)).map(_._1.verdict),
-      Right(Verdict.Major)
+      tooMild.checkRules(last = ReviewArticle.CheckRulesLast(false)).map(_._1.verdict),
+      Right(domain.reviewarticle.Verdict.Major)
     )
 
   test("cold reader: code adds an empty explain-back slot as MAJOR and more than 8 undefined terms as a MINOR count"):
     val a = ColdReaderAnswer(
-      ReviewArticle.ColdReaderAnswer.Verdict("MINOR"),
-      ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
+      ColdReaderAnswer.Verdict("MINOR"),
+      ColdReaderAnswer.ExplainBack("It is about tin."),
       List(ReviewArticle.ExplainSlotsValue("disagreement")),
       List(
         ReaderFindingAnswer(
-          ReviewArticle.ReaderFindingAnswer.Severity("minor"),
-          ReviewArticle.ReaderFindingAnswer.Kind("term"),
-          ReviewArticle.ReaderFindingAnswer.Where("Intro"),
-          ReviewArticle.ReaderFindingAnswer.Quote(""),
-          ReviewArticle.ReaderFindingAnswer.Problem("term X"),
-          ReviewArticle.ReaderFindingAnswer.Fix("define it")
+          ReaderFindingAnswer.Severity("minor"),
+          ReaderFindingAnswer.Kind("term"),
+          ReaderFindingAnswer.Where("Intro"),
+          ReaderFindingAnswer.Quote(""),
+          ReaderFindingAnswer.Problem("term X"),
+          ReaderFindingAnswer.Fix("define it")
         )
       ),
-      ReviewArticle.ColdReaderAnswer.TermsUndefined(9),
-      ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
+      ColdReaderAnswer.TermsUndefined(9),
+      ColdReaderAnswer.OpaqueSentences(0)
     )
-    val (r, _) = checkColdReader(a, last = ReviewArticle.CheckColdReaderLast(false)).toOption.get
-    assertEquals(r.verdict, Verdict.Major)
+    val (r, _) = a.checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get
+    assertEquals(r.verdict, domain.reviewarticle.Verdict.Major)
     assertEquals(r.findings.map(_.id), List("C1", "C2", "C3"))
     assert(r.findings.exists(f => f.major && f.problem.value.contains("'disagreement'")))
     assertEquals(
       r.findings.filter(TermCount.is).map(f => (f.severity, f.kind, f.problem)),
-      List((Severity.Minor, "term-count", "9 terms undefined (count only; the individual findings carry the severity)"))
+      List(
+        (
+          domain.reviewarticle.Severity.Minor,
+          "term-count",
+          "9 terms undefined (count only; the individual findings carry the severity)"
+        )
+      )
     )
     assertEquals(r.emptySlots, List("disagreement"))
     assert(
-      checkColdReader(
-        a.modify(_.explainBack).setTo(ColdReaderAnswer.ExplainBack(" ")),
-        last = ReviewArticle.CheckColdReaderLast(false)
-      ).isLeft
+      a.modify(_.explainBack)
+        .setTo(ColdReaderAnswer.ExplainBack(" "))
+        .checkColdReader(last = ReviewArticle.CheckColdReaderLast(false))
+        .isLeft
     )
     assert(
-      checkColdReader(
-        a.modify(_.emptySlots).setTo(List(ExplainSlotsValue("why"))),
-        last = ReviewArticle.CheckColdReaderLast(false)
-      ).isLeft
+      a.modify(_.emptySlots)
+        .setTo(List(ExplainSlotsValue("why")))
+        .checkColdReader(last = ReviewArticle.CheckColdReaderLast(false))
+        .isLeft
     )
 
   test("#1461 cold reader: 'none…' and blank empty slots mean none; prose naming a slot is that slot"):
@@ -224,118 +260,106 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     assertEquals(emptySlotsOf(List(ReviewArticle.ExplainSlotsValue("why"))), (Nil, List("why")))
     val a = ColdReaderAnswer(
-      ReviewArticle.ColdReaderAnswer.Verdict("PASS"),
-      ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
+      ColdReaderAnswer.Verdict("PASS"),
+      ColdReaderAnswer.ExplainBack("It is about tin."),
       List(none),
       Nil,
-      ReviewArticle.ColdReaderAnswer.TermsUndefined(0),
-      ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
+      ColdReaderAnswer.TermsUndefined(0),
+      ColdReaderAnswer.OpaqueSentences(0)
     )
     val (r, warnings) =
-      checkColdReader(a, last = ReviewArticle.CheckColdReaderLast(false)).fold(ps => fail(ps.mkString("; ")), identity)
-    assertEquals((r.verdict, r.emptySlots, r.findings), (Verdict.Pass, Nil, Nil))
+      a.checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).fold(ps => fail(ps.mkString("; ")), identity)
+    assertEquals((r.verdict, r.emptySlots, r.findings), (domain.reviewarticle.Verdict.Pass, Nil, Nil))
     assertEquals(warnings, Nil)
 
   test("cold reader: the term count is MINOR at any count, and none at 8 or fewer"):
     def countOf(n: ColdReaderAnswer.TermsUndefined) =
-      checkColdReader(
-        ColdReaderAnswer(
-          ReviewArticle.ColdReaderAnswer.Verdict("PASS"),
-          ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
-          Nil,
-          Nil,
-          n,
-          ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
-        ),
-        last = ReviewArticle.CheckColdReaderLast(false)
-      ).toOption.get._1.findings
+      ColdReaderAnswer(
+        ColdReaderAnswer.Verdict("PASS"),
+        ColdReaderAnswer.ExplainBack("It is about tin."),
+        Nil,
+        Nil,
+        n,
+        ColdReaderAnswer.OpaqueSentences(0)
+      ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get._1.findings
     assertEquals(countOf(ColdReaderAnswer.TermsUndefined(8)), Nil)
     for n <- List(9, 27, 500).map(ColdReaderAnswer.TermsUndefined(_)) do
       assertEquals(
         countOf(n).map(f => (f.severity, f.problem.value.takeWhile(_ != ' '))),
-        List((Severity.Minor, n.toString)),
+        List((domain.reviewarticle.Severity.Minor, n.toString)),
         n
       )
 
   test("cold reader: an article whose only MAJOR was the term count is MINOR, and PASS without it"):
     val named = List(
       ReaderFindingAnswer(
-        ReviewArticle.ReaderFindingAnswer.Severity("minor"),
-        ReviewArticle.ReaderFindingAnswer.Kind("term"),
-        ReviewArticle.ReaderFindingAnswer.Where("Intro"),
-        ReviewArticle.ReaderFindingAnswer.Quote("Hittite"),
-        ReviewArticle.ReaderFindingAnswer.Problem("Hittite is not defined"),
-        ReviewArticle.ReaderFindingAnswer.Fix("define it")
+        ReaderFindingAnswer.Severity("minor"),
+        ReaderFindingAnswer.Kind("term"),
+        ReaderFindingAnswer.Where("Intro"),
+        ReaderFindingAnswer.Quote("Hittite"),
+        ReaderFindingAnswer.Problem("Hittite is not defined"),
+        ReaderFindingAnswer.Fix("define it")
       )
     )
     // the reader's instructions may still call the count major: the stated verdict is corrected, not sent back
     val (r, ws) =
-      checkColdReader(
-        ColdReaderAnswer(
-          ReviewArticle.ColdReaderAnswer.Verdict("MAJOR"),
-          ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
-          Nil,
-          named,
-          ReviewArticle.ColdReaderAnswer.TermsUndefined(27),
-          ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
-        ),
-        last = ReviewArticle.CheckColdReaderLast(false)
-      ).toOption.get
-    assertEquals(r.verdict, Verdict.Minor)
+      ColdReaderAnswer(
+        ColdReaderAnswer.Verdict("MAJOR"),
+        ColdReaderAnswer.ExplainBack("It is about tin."),
+        Nil,
+        named,
+        ColdReaderAnswer.TermsUndefined(27),
+        ColdReaderAnswer.OpaqueSentences(0)
+      ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get
+    assertEquals(r.verdict, domain.reviewarticle.Verdict.Minor)
     assertEquals(ws, Nil)
-    assertEquals(r.findings.map(_.severity), List(Severity.Minor, Severity.Minor))
-    assertEquals(merge(ReviewArticle.MergeRound(1), Nil, List(r), Nil).verdict, Verdict.Minor)
     assertEquals(
-      checkColdReader(
-        ColdReaderAnswer(
-          ReviewArticle.ColdReaderAnswer.Verdict("PASS"),
-          ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
-          Nil,
-          Nil,
-          ReviewArticle.ColdReaderAnswer.TermsUndefined(3),
-          ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
-        ),
-        last = ReviewArticle.CheckColdReaderLast(false)
-      ).map(_._1.verdict),
-      Right(Verdict.Pass)
+      r.findings.map(_.severity),
+      List(domain.reviewarticle.Severity.Minor, domain.reviewarticle.Severity.Minor)
+    )
+    assertEquals(merge(ReviewArticle.MergeRound(1), Nil, List(r), Nil).verdict, domain.reviewarticle.Verdict.Minor)
+    assertEquals(
+      ColdReaderAnswer(
+        ColdReaderAnswer.Verdict("PASS"),
+        ColdReaderAnswer.ExplainBack("It is about tin."),
+        Nil,
+        Nil,
+        ColdReaderAnswer.TermsUndefined(3),
+        ColdReaderAnswer.OpaqueSentences(0)
+      ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).map(_._1.verdict),
+      Right(domain.reviewarticle.Verdict.Pass)
     )
     // a named term the reader marks MAJOR keeps its severity
-    val major = checkColdReader(
-      ColdReaderAnswer(
-        ReviewArticle.ColdReaderAnswer.Verdict("MAJOR"),
-        ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
-        Nil,
-        named.map(_.modify(_.severity).setTo(ReaderFindingAnswer.Severity("major"))),
-        ReviewArticle.ColdReaderAnswer.TermsUndefined(27),
-        ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
-      ),
-      last = ReviewArticle.CheckColdReaderLast(false)
-    ).toOption.get._1
-    assertEquals(major.verdict, Verdict.Major)
+    val major = ColdReaderAnswer(
+      ColdReaderAnswer.Verdict("MAJOR"),
+      ColdReaderAnswer.ExplainBack("It is about tin."),
+      Nil,
+      named.map(_.modify(_.severity).setTo(ReaderFindingAnswer.Severity("major"))),
+      ColdReaderAnswer.TermsUndefined(27),
+      ColdReaderAnswer.OpaqueSentences(0)
+    ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).toOption.get._1
+    assertEquals(major.verdict, domain.reviewarticle.Verdict.Major)
     assertEquals(
       major.findings.map(f => (f.kind, f.severity)),
-      List(("term", Severity.Major), ("term-count", Severity.Minor))
+      List(("term", domain.reviewarticle.Severity.Major), ("term-count", domain.reviewarticle.Severity.Minor))
     )
     // a MAJOR verdict with no major finding and no count is still a finding left out
     assert(
-      checkColdReader(
-        ColdReaderAnswer(
-          ReviewArticle.ColdReaderAnswer.Verdict("MAJOR"),
-          ReviewArticle.ColdReaderAnswer.ExplainBack("It is about tin."),
-          Nil,
-          named,
-          ReviewArticle.ColdReaderAnswer.TermsUndefined(3),
-          ReviewArticle.ColdReaderAnswer.OpaqueSentences(0)
-        ),
-        last = ReviewArticle.CheckColdReaderLast(false)
-      ).isLeft
+      ColdReaderAnswer(
+        ColdReaderAnswer.Verdict("MAJOR"),
+        ColdReaderAnswer.ExplainBack("It is about tin."),
+        Nil,
+        named,
+        ColdReaderAnswer.TermsUndefined(3),
+        ColdReaderAnswer.OpaqueSentences(0)
+      ).checkColdReader(last = ReviewArticle.CheckColdReaderLast(false)).isLeft
     )
 
   test("TermCount.is: the count finding, and the MAJOR one earlier runs stored; nothing else"):
     val legacy = Finding(
       Finding.Id("C4"),
       Reviewer.ColdReader,
-      Severity.Major,
+      domain.reviewarticle.Severity.Major,
       Finding.Kind("term"),
       Finding.Where("explain-back"),
       Finding.Quote(""),
@@ -349,7 +373,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           .modify(_.kind)
           .setTo(Finding.Kind("term-count"))
           .modify(_.problem)
-          .setTo(TermCount.problem(ReviewArticle.ColdReaderAnswer.TermsUndefined(12)))
+          .setTo(TermCount.problem(ColdReaderAnswer.TermsUndefined(12)))
       )
     )
     assert(!TermCount.is(legacy.modify(_.reviewer).setTo(Reviewer.Rules)))
@@ -358,37 +382,31 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(!TermCount.is(legacy.modify(_.quote).setTo(Finding.Quote("27 terms"))))
 
   test("skeptic: proposals are verified — quote in the record, vocabulary, citekeys — the rest dropped"):
-    val ok = ProposalAnswer(
-      ProposalAnswer.Kind("status"),
-      ProposalAnswer.Citekey("knapp2016_tin"),
+    val ok = Proposal.ProposalAnswer(
+      Proposal.ProposalAnswer.Kind("status"),
+      Proposal.ProposalAnswer.Citekey("knapp2016_tin"),
       Some(library.Source.Status.Wire("contested")),
       None,
       None,
-      ProposalAnswer.Evidence("a rebuttal"),
-      ProposalAnswer.Quote("ten tons of copper and one ton of tin")
+      Proposal.ProposalAnswer.Evidence("a rebuttal"),
+      Proposal.ProposalAnswer.Quote("ten tons of copper and one ton of tin")
     )
-    val bad = ProposalAnswer(
-      ProposalAnswer.Kind("status"),
-      ProposalAnswer.Citekey("knapp2016_tin"),
+    val bad = Proposal.ProposalAnswer(
+      Proposal.ProposalAnswer.Kind("status"),
+      Proposal.ProposalAnswer.Citekey("knapp2016_tin"),
       Some(library.Source.Status.Wire("contested")),
       None,
       None,
-      ProposalAnswer.Evidence("a rebuttal"),
-      ProposalAnswer.Quote("Cornish tin went east every summer")
+      Proposal.ProposalAnswer.Evidence("a rebuttal"),
+      Proposal.ProposalAnswer.Quote("Cornish tin went east every summer")
     )
     val (r, ws) =
-      checkSkeptic(
-        SkepticAnswer(
-          ReviewArticle.SkepticAnswer.Verdict("PASS"),
-          Nil,
-          List(ok, bad),
-          ReviewArticle.SkepticAnswer.ClaimsChecked(3)
-        ),
-        last = ReviewArticle.CheckSkepticLast(false),
-        isCk,
-        record.get,
-        minRatio
-      ).toOption.get
+      SkepticAnswer(
+        SkepticAnswer.Verdict("PASS"),
+        Nil,
+        List(ok, bad),
+        SkepticAnswer.ClaimsChecked(3)
+      ).checkSkeptic(last = ReviewArticle.CheckSkepticLast(false), isCk, record.get, minRatio).toOption.get
     assertEquals(r.proposals.map(_.status), List(Some(Source.Status.Contested)))
     assert(ws.exists(_.contains("not in the record")), ws)
 
@@ -396,7 +414,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val m1 = Finding(
       Finding.Id("M1"),
       Reviewer.Mechanical,
-      Severity.Minor,
+      domain.reviewarticle.Severity.Minor,
       Finding.Kind("language"),
       Finding.Where("body"),
       Finding.Quote(""),
@@ -405,12 +423,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val rule = Report(
       Reviewer.Rules,
-      Verdict.Minor,
+      domain.reviewarticle.Verdict.Minor,
       List(
         Finding(
           Finding.Id("R1"),
           Reviewer.Rules,
-          Severity.Minor,
+          domain.reviewarticle.Severity.Minor,
           Finding.Kind("x"),
           Finding.Where("Intro"),
           Finding.Quote("q"),
@@ -421,12 +439,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val cold = Report(
       Reviewer.ColdReader,
-      Verdict.Minor,
+      domain.reviewarticle.Verdict.Minor,
       List(
         Finding(
           Finding.Id("C1"),
           Reviewer.ColdReader,
-          Severity.Minor,
+          domain.reviewarticle.Severity.Minor,
           Finding.Kind("term"),
           Finding.Where("Intro"),
           Finding.Quote("q"),
@@ -437,12 +455,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val skep = Report(
       Reviewer.Skeptic,
-      Verdict.Major,
+      domain.reviewarticle.Verdict.Major,
       List(
         Finding(
           Finding.Id("S1"),
           Reviewer.Skeptic,
-          Severity.Major,
+          domain.reviewarticle.Severity.Major,
           Finding.Kind("date"),
           Finding.Where("Intro"),
           Finding.Quote("q"),
@@ -452,7 +470,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     )
     val m = merge(ReviewArticle.MergeRound(1), List(m1), List(skep, cold, rule), Nil)
-    assertEquals(m.verdict, Verdict.Major)
+    assertEquals(m.verdict, domain.reviewarticle.Verdict.Major)
     assertEquals(m.findings.map(_.id), List("M1", "R1", "C1", "S1"))
     val dup = rule
       .modify(_.findings)
@@ -467,7 +485,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val before = Finding(
       Finding.Id("S2"),
       Reviewer.Skeptic,
-      Severity.Major,
+      domain.reviewarticle.Severity.Major,
       Finding.Kind("date"),
       Finding.Where("Dates"),
       Finding.Quote("1320 BCE"),
@@ -486,20 +504,23 @@ class ReviewArticleSuite extends munit.FunSuite:
     val m = merge(
       ReviewArticle.MergeRound(2),
       Nil,
-      List(Report(Reviewer.Skeptic, Verdict.Major, List(again)), Report(Reviewer.Rules, Verdict.Major, List(other))),
+      List(
+        Report(Reviewer.Skeptic, domain.reviewarticle.Verdict.Major, List(again)),
+        Report(Reviewer.Rules, domain.reviewarticle.Verdict.Major, List(other))
+      ),
       List(before)
     )
     assertEquals(m.escalated.map(_.id), List("S1"))
 
   test("gate and rounds"):
     val major = Merged(
-      ReviewArticle.Merged.Round(1),
-      Verdict.Major,
+      Merged.Round(1),
+      domain.reviewarticle.Verdict.Major,
       List(
         Finding(
           Finding.Id("S1"),
           Reviewer.Skeptic,
-          Severity.Major,
+          domain.reviewarticle.Severity.Major,
           Finding.Kind(""),
           Finding.Where(""),
           Finding.Quote(""),
@@ -513,13 +534,13 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val minor = major
       .modify(_.verdict)
-      .setTo(Verdict.Minor)
+      .setTo(domain.reviewarticle.Verdict.Minor)
       .modify(_.findings)
-      .setTo(major.findings.map(_.modify(_.severity).setTo(Severity.Minor)))
-    assert(done(minor, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
-    assert(!done(major, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
-    assert(done(major, ReviewArticle.Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(false)))
-    assert(done(major, ReviewArticle.Merged.Round(3), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
+      .setTo(major.findings.map(_.modify(_.severity).setTo(domain.reviewarticle.Severity.Minor)))
+    assert(minor.done(Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
+    assert(!major.done(Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
+    assert(major.done(Merged.Round(1), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(false)))
+    assert(major.done(Merged.Round(3), ReviewArticle.RoundCount(3), fix = ReviewArticle.FixRun(true)))
     assertEquals(
       rounds(None, ReviewArticle.DefaultRounds(3), ReviewArticle.RoundCap(5), fix = ReviewArticle.FixRun(true)),
       3
@@ -554,13 +575,13 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
 
   private val merged = Merged(
-    ReviewArticle.Merged.Round(1),
-    Verdict.Major,
+    Merged.Round(1),
+    domain.reviewarticle.Verdict.Major,
     List(
       Finding(
         Finding.Id("S1"),
         Reviewer.Skeptic,
-        Severity.Major,
+        domain.reviewarticle.Severity.Major,
         Finding.Kind("date"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -570,7 +591,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding(
         Finding.Id("C1"),
         Reviewer.ColdReader,
-        Severity.Major,
+        domain.reviewarticle.Severity.Major,
         Finding.Kind("term"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -580,7 +601,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding(
         Finding.Id("R1"),
         Reviewer.Rules,
-        Severity.Minor,
+        domain.reviewarticle.Severity.Minor,
         Finding.Kind("language"),
         Finding.Where("Intro"),
         Finding.Quote(""),
@@ -619,18 +640,9 @@ class ReviewArticleSuite extends munit.FunSuite:
         else Nil
     )
   private def fix(a: FixerAnswer, last: LastRound, before: Article.Body = Article.Body(Good)) =
-    checkFix(
-      a,
-      merged,
-      Slug("tin"),
-      before,
-      ReviewArticle.Snapshot.Kind("concept"),
-      corpus,
-      isCk,
-      record.get,
-      minRatio,
-      last
-    ).left.map(_.map(_.sentence))
+    a.checkFix(merged, Slug("tin"), before, Snapshot.Kind("concept"), corpus, isCk, record.get, minRatio, last)
+      .left
+      .map(_.map(_.sentence))
 
   test("fixer: edits applied to the reviewed body, every major decided and a quoted rejection pass"):
     val a = FixerAnswer(
@@ -638,14 +650,14 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("C1")),
       List(
         RejectionAnswer(
-          ReviewArticle.RejectionAnswer.Id("S1"),
+          RejectionAnswer.Id("S1"),
           ReviewArticle.Rationale("the record says so"),
-          ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
-          ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
+          RejectionAnswer.Citekey("knapp2016_tin"),
+          RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
       ),
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     val (f, ws) = fix(a, last = LastRound(false)).toOption.get
     assertEquals(f.body, Good.replace("Tin reached", "Tin, the scarce half of bronze, reached"))
@@ -666,20 +678,20 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil,
       List(
         RejectionAnswer(
-          ReviewArticle.RejectionAnswer.Id("S1"),
+          RejectionAnswer.Id("S1"),
           ReviewArticle.Rationale("no"),
-          ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
-          ReviewArticle.RejectionAnswer.Quote("the ship sank in a storm off Lycia in 1320 BCE")
+          RejectionAnswer.Citekey("knapp2016_tin"),
+          RejectionAnswer.Quote("the ship sank in a storm off Lycia in 1320 BCE")
         ),
         RejectionAnswer(
-          ReviewArticle.RejectionAnswer.Id("C1"),
+          RejectionAnswer.Id("C1"),
           ReviewArticle.Rationale("it is clear"),
-          ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
-          ReviewArticle.RejectionAnswer.Quote("ten tons of copper")
+          RejectionAnswer.Citekey("knapp2016_tin"),
+          RejectionAnswer.Quote("ten tons of copper")
         )
       ),
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     val ps = fix(a, last = LastRound(false)).left.toOption.get
     assert(ps.exists(_.contains("rejection of S1: the quote is not in the record")), ps)
@@ -697,7 +709,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("S1"), Finding.Id("C1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     val ps2 = fix(bad, last = LastRound(false)).left.toOption.get
     assert(ps2.exists(p => p.startsWith("edit 1 (insertAfter") && p.contains("ghost2020_x")), ps2)
@@ -708,11 +720,11 @@ class ReviewArticleSuite extends munit.FunSuite:
       ),
       ps2
     )
-    val undecided = FixerAnswer(List(gloss), List(Finding.Id("C1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
+    val undecided = FixerAnswer(List(gloss), List(Finding.Id("C1")), Nil, Nil, FixerAnswer.Notes(""))
     assert(
       fix(undecided, last = LastRound(false)).left.exists(_.exists(_.contains("S1 is neither applied nor rejected")))
     )
-    val idle = FixerAnswer(Nil, List(Finding.Id("C1"), Finding.Id("S1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes(""))
+    val idle = FixerAnswer(Nil, List(Finding.Id("C1"), Finding.Id("S1")), Nil, Nil, FixerAnswer.Notes(""))
     assert(fix(idle, last = LastRound(false)).left.exists(_.exists(_.contains("no edit changed the article"))))
 
   test("fixer: an uncited paragraph and a formatting error the edits introduce are sent back"):
@@ -727,7 +739,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("C1"), Finding.Id("S1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     val ps = fix(a, last = LastRound(false)).left.toOption.get
     assert(ps.exists(_.contains("no [[citekey]]")), ps)
@@ -741,7 +753,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           List(Finding.Id("C1"), Finding.Id("S1")),
           Nil,
           Nil,
-          ReviewArticle.FixerAnswer.Notes("")
+          FixerAnswer.Notes("")
         ),
         last = LastRound(false),
         Article.Body(had)
@@ -755,14 +767,14 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("C1")),
       List(
         RejectionAnswer(
-          ReviewArticle.RejectionAnswer.Id("S1"),
+          RejectionAnswer.Id("S1"),
           ReviewArticle.Rationale("no"),
-          ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
-          ReviewArticle.RejectionAnswer.Quote("nothing like this is in it")
+          RejectionAnswer.Citekey("knapp2016_tin"),
+          RejectionAnswer.Quote("nothing like this is in it")
         )
       ),
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     assert(fix(a, last = LastRound(false)).isLeft)
     val (f, ws) = fix(a, last = LastRound(true)).toOption.get
@@ -781,7 +793,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("C1"), Finding.Id("S1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     val (f, ws) = fix(a, last = LastRound(true)).toOption.get
     assert(!f.body.value.contains("ghost2020_x"), f.body)
@@ -795,12 +807,12 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("C1"), Finding.Id("S1")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     assert(fix(empty, last = LastRound(true)).isLeft)
     val withGhost = Good + "\nOld [[ghost2020_x]] link [[knapp2016_tin]].\n"
     val (f, ws) = fix(
-      FixerAnswer(List(gloss), List(Finding.Id("C1"), Finding.Id("S1")), Nil, Nil, ReviewArticle.FixerAnswer.Notes("")),
+      FixerAnswer(List(gloss), List(Finding.Id("C1"), Finding.Id("S1")), Nil, Nil, FixerAnswer.Notes("")),
       last = LastRound(true),
       Article.Body(withGhost)
     ).toOption.get
@@ -811,8 +823,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     val c =
       checkBody(
         Slug("tin"),
-        ReviewArticle.Fix.Body(""),
-        ReviewArticle.Snapshot.Kind("concept"),
+        domain.reviewarticle.Fix.Body(""),
+        Snapshot.Kind("concept"),
         Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text("Tin [[ghost2020_x]].\n\n## Sources cited\n")),
         corpus
       )
@@ -823,8 +835,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val ok = checkBody(
       Slug("tin"),
-      ReviewArticle.Fix.Body(""),
-      ReviewArticle.Snapshot.Kind("concept"),
+      domain.reviewarticle.Fix.Body(""),
+      Snapshot.Kind("concept"),
       Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text(Good)),
       corpus
     )
@@ -833,8 +845,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(
       checkBody(
         Slug("tin"),
-        ReviewArticle.Fix.Body(""),
-        ReviewArticle.Snapshot.Kind("index"),
+        domain.reviewarticle.Fix.Body(""),
+        Snapshot.Kind("index"),
         Article.Edits.Draft.Body(Article.Edits.Draft.Body.Text("More tin [[knapp2016_tin]].")),
         corpus
       ).problems,
@@ -887,7 +899,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(
       mechanical(
         Slug("a"),
-        ReviewArticle.Snapshot.Kind("concept"),
+        Snapshot.Kind("concept"),
         Article.Body(Generated),
         isTarget,
         generated = ReviewArticle.MechanicalGenerated(true)
@@ -895,14 +907,14 @@ class ReviewArticleSuite extends munit.FunSuite:
       Nil
     )
     assert(
-      mechanical(Slug("a"), ReviewArticle.Snapshot.Kind("concept"), Article.Body(Generated), isTarget)
+      mechanical(Slug("a"), Snapshot.Kind("concept"), Article.Body(Generated), isTarget)
         .exists(_.problem.value.contains("'not used'")),
       "without a filter it is still required"
     )
     val written =
       mechanical(
         Slug("a"),
-        ReviewArticle.Snapshot.Kind("concept"),
+        Snapshot.Kind("concept"),
         Article.Body(Good + "\n_Method: search {topics:[tin]} → 3._\n"),
         isTarget,
         generated = ReviewArticle.MechanicalGenerated(true)
@@ -915,10 +927,13 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
 
   test("coverageDrift (#958): an unplaced source is MAJOR, stale reasons minor; ids follow the mechanical ones"):
-    val fs = coverageDrift(cov, ReviewArticle.Merged.Round(4))
+    val fs = coverageDrift(cov, Merged.Round(4))
     assertEquals(
       fs.map(f => (f.id, f.severity, f.kind)),
-      List(("M4", Severity.Major, CoverageKind), ("M5", Severity.Minor, CoverageKind))
+      List(
+        ("M4", domain.reviewarticle.Severity.Major, CoverageKind),
+        ("M5", domain.reviewarticle.Severity.Minor, CoverageKind)
+      )
     )
     assertEquals(fs.head.problem, "1 source the filter returns is neither cited nor given a reason: [[iso2024_new]]")
     assert(fs(1).problem.value.contains("[[knapp2016_tin]]"), fs(1).problem)
@@ -927,7 +942,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val c = checkBody(
       Slug("tin"),
       Article.Body(Generated),
-      ReviewArticle.Snapshot.Kind("concept"),
+      Snapshot.Kind("concept"),
       Article.Edits.Draft.Edits(
         List(
           edit(
@@ -942,27 +957,27 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(c.problems.exists(_.sentence.startsWith("a hand-written Not used section")), c.problems)
 
   private val unplaced = Merged(
-    ReviewArticle.Merged.Round(1),
-    Verdict.Major,
-    coverageDrift(cov, ReviewArticle.Merged.Round(1)),
+    Merged.Round(1),
+    domain.reviewarticle.Verdict.Major,
+    coverageDrift(cov, Merged.Round(1)),
     None,
     Nil,
     Nil
   )
   private def fixCov(a: FixerAnswer, last: LastRound = LastRound(false), c: Option[Coverage] = Some(cov)) =
-    checkFix(
-      a,
+    a.checkFix(
       unplaced,
       Slug("tin"),
       Article.Body(Generated),
-      ReviewArticle.Snapshot.Kind("concept"),
+      Snapshot.Kind("concept"),
       corpus.modify(_.isCitekey).setTo(ckCov).modify(_.generated).setTo(BodyCorpus.Generated(true)),
       ckCov,
       record.get,
       minRatio,
       last,
       c
-    ).left.map(_.map(_.sentence))
+    ).left
+      .map(_.map(_.sentence))
 
   test("fixer (#958): an unplaced source is answered with a reason — no edit needed; the reasons are checked"):
     val ok = FixerAnswer(
@@ -970,7 +985,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("M1"), Finding.Id("M2")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes(""),
+      FixerAnswer.Notes(""),
       List(
         Coverage.Reason(
           api.library.Citekey("[[iso2024_new]]"),
@@ -997,7 +1012,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("M1"), Finding.Id("M2")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes(""),
+      FixerAnswer.Notes(""),
       List(
         Coverage.Reason(
           api.library.Citekey("knapp2016_tin"),
@@ -1032,7 +1047,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("M1"), Finding.Id("M2")),
       Nil,
       Nil,
-      ReviewArticle.FixerAnswer.Notes(""),
+      FixerAnswer.Notes(""),
       List(Coverage.Reason(api.library.Citekey("knapp2016_tin"), Coverage.Rationale("")))
     )
     assert(fixCov(cite).isRight, fixCov(cite))
@@ -1042,43 +1057,37 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("evidence: verified against the record, dropped with a warning when not there, kept by the merge"):
     val ev = evidenceCheck(isCk, record.get, minRatio)
     val f = FindingAnswer(
-      ReviewArticle.FindingAnswer.Severity("major"),
-      ReviewArticle.FindingAnswer.Kind("contradictory"),
-      ReviewArticle.FindingAnswer.Where("Intro"),
-      ReviewArticle.FindingAnswer.Quote("by sea"),
-      ReviewArticle.FindingAnswer.Problem("the record says otherwise"),
-      ReviewArticle.FindingAnswer.Fix("fix"),
+      FindingAnswer.Severity("major"),
+      FindingAnswer.Kind("contradictory"),
+      FindingAnswer.Where("Intro"),
+      FindingAnswer.Quote("by sea"),
+      FindingAnswer.Problem("the record says otherwise"),
+      FindingAnswer.Fix("fix"),
       List(
         EvidenceAnswer(
-          ReviewArticle.EvidenceAnswer.Citekey("knapp2016_tin"),
-          Some(ReviewArticle.EvidenceAnswer.Offset(120)),
-          ReviewArticle.EvidenceAnswer.Quote("carried ten tons of copper and one ton of tin")
+          EvidenceAnswer.Citekey("knapp2016_tin"),
+          Some(EvidenceAnswer.Offset(120)),
+          EvidenceAnswer.Quote("carried ten tons of copper and one ton of tin")
         ),
         EvidenceAnswer(
-          ReviewArticle.EvidenceAnswer.Citekey("knapp2016_tin"),
+          EvidenceAnswer.Citekey("knapp2016_tin"),
           None,
-          ReviewArticle.EvidenceAnswer.Quote("the cargo was Cornish")
+          EvidenceAnswer.Quote("the cargo was Cornish")
         ),
         EvidenceAnswer(
-          ReviewArticle.EvidenceAnswer.Citekey("ghost2020_x"),
+          EvidenceAnswer.Citekey("ghost2020_x"),
           None,
-          ReviewArticle.EvidenceAnswer.Quote("anything at all here")
+          EvidenceAnswer.Quote("anything at all here")
         )
       )
     )
     val (r, ws) =
-      checkSkeptic(
-        SkepticAnswer(
-          ReviewArticle.SkepticAnswer.Verdict("MAJOR"),
-          List(f),
-          Nil,
-          ReviewArticle.SkepticAnswer.ClaimsChecked(1)
-        ),
-        last = ReviewArticle.CheckSkepticLast(false),
-        isCk,
-        record.get,
-        minRatio
-      ).toOption.get
+      SkepticAnswer(
+        SkepticAnswer.Verdict("MAJOR"),
+        List(f),
+        Nil,
+        SkepticAnswer.ClaimsChecked(1)
+      ).checkSkeptic(last = ReviewArticle.CheckSkepticLast(false), isCk, record.get, minRatio).toOption.get
     assertEquals(
       r.findings.head.evidence.map(e => (e.citekey, e.offset, e.ratio)),
       List(("knapp2016_tin", Some(120), 1.0))
@@ -1091,28 +1100,29 @@ class ReviewArticleSuite extends munit.FunSuite:
       ws
     )
     // the rules reviewer's evidence is checked the same way; a missing check drops it
-    val (rr, _) = checkRules(
-      RulesAnswer(ReviewArticle.RulesAnswer.Verdict("MAJOR"), List(f), ReviewArticle.RulesAnswer.Filter("f"), Nil, Nil),
-      last = ReviewArticle.CheckRulesLast(false),
-      ev
-    ).toOption.get
+    val (rr, _) = RulesAnswer(RulesAnswer.Verdict("MAJOR"), List(f), RulesAnswer.Filter("f"), Nil, Nil)
+      .checkRules(last = ReviewArticle.CheckRulesLast(false), ev)
+      .toOption
+      .get
     assertEquals(rr.findings.head.evidence.size, 1)
     assertEquals(
-      checkRules(
-        RulesAnswer(
-          ReviewArticle.RulesAnswer.Verdict("MAJOR"),
-          List(f),
-          ReviewArticle.RulesAnswer.Filter("f"),
-          Nil,
-          Nil
-        ),
-        last = ReviewArticle.CheckRulesLast(false)
-      ).toOption.get._1.findings.head.evidence,
+      RulesAnswer(
+        RulesAnswer.Verdict("MAJOR"),
+        List(f),
+        RulesAnswer.Filter("f"),
+        Nil,
+        Nil
+      ).checkRules(last = ReviewArticle.CheckRulesLast(false)).toOption.get._1.findings.head.evidence,
       Nil
     )
     // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
     val e2 =
-      Evidence(Citekey("knapp2016_tin"), None, ReviewArticle.Evidence.Quote("one ton of tin"), Evidence.Ratio(1.0))
+      domain.reviewarticle.Evidence(
+        Citekey("knapp2016_tin"),
+        None,
+        domain.reviewarticle.Evidence.Quote("one ton of tin"),
+        domain.reviewarticle.Evidence.Ratio(1.0)
+      )
     val dup = rr.findings.head.copy(id = Finding.Id("R9"), evidence = List(e2))
     val m = merge(ReviewArticle.MergeRound(1), Nil, List(rr, rr.modify(_.findings).setTo(List(dup))), Nil)
     assertEquals(m.findings.map(_.id), List("R1"))
@@ -1120,7 +1130,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       m.findings.head.evidence.map(_.quote),
       List("carried ten tons of copper and one ton of tin", "one ton of tin")
     )
-    val text = findingsText(m)
+    val text = m.findingsText()
     assert(
       text.contains("\n  evidence: [[knapp2016_tin]] @120: \"carried ten tons of copper and one ton of tin\""),
       text
@@ -1145,7 +1155,7 @@ class ReviewArticleSuite extends munit.FunSuite:
             Finding(
               Finding.Id("C2"),
               Reviewer.ColdReader,
-              Severity.Minor,
+              domain.reviewarticle.Severity.Minor,
               Finding.Kind("term"),
               Finding.Where("x"),
               Finding.Quote(""),
@@ -1161,7 +1171,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding(
         Finding.Id("S1"),
         Reviewer.Skeptic,
-        Severity.Major,
+        domain.reviewarticle.Severity.Major,
         Finding.Kind("date"),
         Finding.Where("Dates"),
         Finding.Quote(""),
@@ -1170,26 +1180,32 @@ class ReviewArticleSuite extends munit.FunSuite:
         escalated = Finding.Escalated(true)
       )
     )
-    val m = Merged(ReviewArticle.Merged.Round(2), Verdict.Major, open, None, Nil, Nil)
+    val m = Merged(Merged.Round(2), domain.reviewarticle.Verdict.Major, open, None, Nil, Nil)
     val o = Outcome(
-      ReviewArticle.Outcome.Slug("sea_peoples"),
-      ReviewArticle.Outcome.Rounds(2),
-      Verdict.Major,
+      Outcome.Slug("sea_peoples"),
+      Outcome.Rounds(2),
+      domain.reviewarticle.Verdict.Major,
       open,
-      ReviewArticle.Outcome.Applied(3),
-      ReviewArticle.Outcome.Rejected(1),
-      fixed = ReviewArticle.Outcome.Fixed(true),
-      ReviewArticle.Outcome.Approvals(0)
+      Outcome.Applied(3),
+      Outcome.Rejected(1),
+      fixed = Outcome.Fixed(true),
+      Outcome.Approvals(0)
     )
     assertEquals(
-      logLine(o, m, Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb")),
+      o.logLine(m, Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb")),
       "review-article [[sea_peoples]]: round 2 → MAJOR (R:0 C:0 S:1 M:0), fixer applied 3 / rejected 1 (agent run abcdef01)"
     )
 
   test("verdicts order PASS < MINOR < MAJOR and parse in any case"):
-    assertEquals(Verdict.worst(List(Verdict.Minor, Verdict.Pass)), Verdict.Minor)
-    assertEquals(Verdict.parse(ReviewArticle.Verdict.Wire("major")), Some(Verdict.Major))
-    assertEquals(Verdict.of(Nil), Verdict.Pass)
+    assertEquals(
+      domain.reviewarticle.Verdict.worst(List(domain.reviewarticle.Verdict.Minor, domain.reviewarticle.Verdict.Pass)),
+      domain.reviewarticle.Verdict.Minor
+    )
+    assertEquals(
+      domain.reviewarticle.Verdict.parse(domain.reviewarticle.Verdict.Wire("major")),
+      Some(domain.reviewarticle.Verdict.Major)
+    )
+    assertEquals(domain.reviewarticle.Verdict.of(Nil), domain.reviewarticle.Verdict.Pass)
 
   // ── the review ledger: checks, the verification pass, declining a minor ──────────────────────────
 
@@ -1197,7 +1213,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   private val askedTin = Finding(
     Finding.Id("R1"),
     Reviewer.Rules,
-    Severity.Major,
+    domain.reviewarticle.Severity.Major,
     Finding.Kind("term"),
     Finding.Where("Intro"),
     Finding.Quote("Tin reached the Aegean by sea"),
@@ -1208,7 +1224,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     Finding(
       Finding.Id("R4"),
       Reviewer.Rules,
-      Severity.Major,
+      domain.reviewarticle.Severity.Major,
       Finding.Kind("date"),
       Finding.Where("Disagreements"),
       Finding.Quote("Two dates are argued"),
@@ -1220,33 +1236,33 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("checks: one per finding asked about, each id one of them, each quote in the CURRENT article"):
     val ok = List(
       CheckAnswer(
-        ReviewArticle.CheckAnswer.Id("R1"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(true),
-        ReviewArticle.CheckAnswer.Quote("Tin, the scarce half of bronze"),
-        ReviewArticle.CheckAnswer.Note("glossed")
+        CheckAnswer.Id("R1"),
+        fixed = CheckAnswer.Fixed(true),
+        CheckAnswer.Quote("Tin, the scarce half of bronze"),
+        CheckAnswer.Note("glossed")
       ),
       CheckAnswer(
-        ReviewArticle.CheckAnswer.Id("R4"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(false),
-        ReviewArticle.CheckAnswer.Quote("Two dates are argued"),
-        ReviewArticle.CheckAnswer.Note("still undated")
+        CheckAnswer.Id("R4"),
+        fixed = CheckAnswer.Fixed(false),
+        CheckAnswer.Quote("Two dates are argued"),
+        CheckAnswer.Note("still undated")
       )
     )
     assertEquals(
-      checkChecks(Reviewer.Rules, prior, ok, last = ReviewArticle.LastRound(false)),
+      Reviewer.Rules.checkChecks(prior, ok, last = ReviewArticle.LastRound(false)),
       (
         List(
           Check(
-            ReviewArticle.Check.Id("R1"),
-            ReviewArticle.Check.Fixed(true),
-            ReviewArticle.Check.Quote("Tin, the scarce half of bronze"),
-            ReviewArticle.Check.Note("glossed")
+            Check.Id("R1"),
+            Check.Fixed(true),
+            Check.Quote("Tin, the scarce half of bronze"),
+            Check.Note("glossed")
           ),
           Check(
-            ReviewArticle.Check.Id("R4"),
-            ReviewArticle.Check.Fixed(false),
-            ReviewArticle.Check.Quote("Two dates are argued"),
-            ReviewArticle.Check.Note("still undated")
+            Check.Id("R4"),
+            Check.Fixed(false),
+            Check.Quote("Two dates are argued"),
+            Check.Note("still undated")
           )
         ),
         Nil,
@@ -1255,25 +1271,25 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val bad = List(
       CheckAnswer(
-        ReviewArticle.CheckAnswer.Id("R1"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(true),
-        ReviewArticle.CheckAnswer.Quote("Tin, the precious half of bronze"),
-        ReviewArticle.CheckAnswer.Note("")
+        CheckAnswer.Id("R1"),
+        fixed = CheckAnswer.Fixed(true),
+        CheckAnswer.Quote("Tin, the precious half of bronze"),
+        CheckAnswer.Note("")
       ),
       CheckAnswer(
-        ReviewArticle.CheckAnswer.Id("S2"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(true),
-        ReviewArticle.CheckAnswer.Quote("x"),
-        ReviewArticle.CheckAnswer.Note("")
+        CheckAnswer.Id("S2"),
+        fixed = CheckAnswer.Fixed(true),
+        CheckAnswer.Quote("x"),
+        CheckAnswer.Note("")
       ),
       CheckAnswer(
-        ReviewArticle.CheckAnswer.Id("R4"),
-        fixed = ReviewArticle.CheckAnswer.Fixed(false),
-        ReviewArticle.CheckAnswer.Quote(""),
-        ReviewArticle.CheckAnswer.Note("")
+        CheckAnswer.Id("R4"),
+        fixed = CheckAnswer.Fixed(false),
+        CheckAnswer.Quote(""),
+        CheckAnswer.Note("")
       )
     )
-    val (cs, problems, ws) = checkChecks(Reviewer.Rules, prior, bad, last = ReviewArticle.LastRound(false))
+    val (cs, problems, ws) = Reviewer.Rules.checkChecks(prior, bad, last = ReviewArticle.LastRound(false))
     val ps = problems.map(_.sentence)
     assertEquals((cs, ws), (Nil, Nil))
     assert(ps.exists(_.startsWith("check of R1: the quote is not in the current article")), ps)
@@ -1284,7 +1300,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ps
     )
     // the last attempt keeps what passed; the rest stays open, with a warning
-    val (cs2, ps2, ws2) = checkChecks(Reviewer.Rules, prior, ok.take(1), last = ReviewArticle.LastRound(true))
+    val (cs2, ps2, ws2) = Reviewer.Rules.checkChecks(prior, ok.take(1), last = ReviewArticle.LastRound(true))
     assertEquals((cs2.map(_.id), ps2), (List("R1"), Nil))
     assertEquals(ws2, List("rules: R4: no check — say whether it is fixed (left open)"))
 
@@ -1297,26 +1313,27 @@ class ReviewArticleSuite extends munit.FunSuite:
       minRatio
     )
     assertEquals(
-      checkChecks(
-        Reviewer.Rules,
-        gone,
-        List(
-          CheckAnswer(
-            ReviewArticle.CheckAnswer.Id("R4"),
-            fixed = ReviewArticle.CheckAnswer.Fixed(true),
-            ReviewArticle.CheckAnswer.Quote(""),
-            ReviewArticle.CheckAnswer.Note("deleted")
-          )
-        ),
-        last = ReviewArticle.LastRound(false)
-      )._1
+      Reviewer.Rules
+        .checkChecks(
+          gone,
+          List(
+            CheckAnswer(
+              CheckAnswer.Id("R4"),
+              fixed = CheckAnswer.Fixed(true),
+              CheckAnswer.Quote(""),
+              CheckAnswer.Note("deleted")
+            )
+          ),
+          last = ReviewArticle.LastRound(false)
+        )
+        ._1
         .map(_.id),
       List("R4")
     )
     val count = Finding(
       Finding.Id("C3"),
       Reviewer.ColdReader,
-      Severity.Major,
+      domain.reviewarticle.Severity.Major,
       Finding.Kind("term"),
       Finding.Where("explain-back"),
       Finding.Quote(""),
@@ -1324,72 +1341,70 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding.Fix("")
     )
     assertEquals(
-      checkChecks(
-        Reviewer.ColdReader,
-        Prior(List(count), Article.Body(Good), minRatio),
-        List(
-          CheckAnswer(
-            ReviewArticle.CheckAnswer.Id("C3"),
-            fixed = ReviewArticle.CheckAnswer.Fixed(false),
-            ReviewArticle.CheckAnswer.Quote(""),
-            ReviewArticle.CheckAnswer.Note("still 12")
-          )
-        ),
-        last = ReviewArticle.LastRound(false)
-      )._2,
+      Reviewer.ColdReader
+        .checkChecks(
+          Prior(List(count), Article.Body(Good), minRatio),
+          List(
+            CheckAnswer(
+              CheckAnswer.Id("C3"),
+              fixed = CheckAnswer.Fixed(false),
+              CheckAnswer.Quote(""),
+              CheckAnswer.Note("still 12")
+            )
+          ),
+          last = ReviewArticle.LastRound(false)
+        )
+        ._2,
       Nil
     )
 
   test("a full panel's answer carries checks only when the ledger asked; they are verified like the findings"):
     val withChecks = RulesAnswer(
-      ReviewArticle.RulesAnswer.Verdict("PASS"),
+      RulesAnswer.Verdict("PASS"),
       Nil,
-      ReviewArticle.RulesAnswer.Filter("f"),
+      RulesAnswer.Filter("f"),
       checks = List(
         CheckAnswer(
-          ReviewArticle.CheckAnswer.Id("R1"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(true),
-          ReviewArticle.CheckAnswer.Quote("Tin, the scarce half of bronze"),
-          ReviewArticle.CheckAnswer.Note("")
+          CheckAnswer.Id("R1"),
+          fixed = CheckAnswer.Fixed(true),
+          CheckAnswer.Quote("Tin, the scarce half of bronze"),
+          CheckAnswer.Note("")
         )
       )
     )
     assertEquals(
-      checkRules(
-        withChecks,
-        last = ReviewArticle.CheckRulesLast(false),
-        prior = Some(Prior(List(askedTin), revised, minRatio))
-      )
+      withChecks
+        .checkRules(last = ReviewArticle.CheckRulesLast(false), prior = Some(Prior(List(askedTin), revised, minRatio)))
         .map(_._1.checks.map(_.id)),
       Right(List("R1"))
     )
     assert(
-      checkRules(
-        withChecks.modify(_.checks).setTo(Nil),
-        last = ReviewArticle.CheckRulesLast(false),
-        prior = Some(Prior(List(askedTin), revised, minRatio))
-      ).isLeft,
+      withChecks
+        .modify(_.checks)
+        .setTo(Nil)
+        .checkRules(last = ReviewArticle.CheckRulesLast(false), prior = Some(Prior(List(askedTin), revised, minRatio)))
+        .isLeft,
       "an open finding of its own must be checked"
     )
     assertEquals(
-      checkRules(withChecks, last = ReviewArticle.CheckRulesLast(false), prior = None).map(_._1.checks),
+      withChecks.checkRules(last = ReviewArticle.CheckRulesLast(false), prior = None).map(_._1.checks),
       Right(Nil),
       "no ledger: no checks"
     )
     val reader = ColdReaderAnswer(
-      ReviewArticle.ColdReaderAnswer.Verdict("PASS"),
-      ReviewArticle.ColdReaderAnswer.ExplainBack("It asks. It answers. They disagree. It is open. Done."),
+      ColdReaderAnswer.Verdict("PASS"),
+      ColdReaderAnswer.ExplainBack("It asks. It answers. They disagree. It is open. Done."),
       Nil,
       Nil,
-      ReviewArticle.ColdReaderAnswer.TermsUndefined(0),
-      ReviewArticle.ColdReaderAnswer.OpaqueSentences(0),
+      ColdReaderAnswer.TermsUndefined(0),
+      ColdReaderAnswer.OpaqueSentences(0),
       None,
       List(
         CheckAnswer(
-          ReviewArticle.CheckAnswer.Id("C1"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(true),
-          ReviewArticle.CheckAnswer.Quote("the scarce half of bronze"),
-          ReviewArticle.CheckAnswer.Note("")
+          CheckAnswer.Id("C1"),
+          fixed = CheckAnswer.Fixed(true),
+          CheckAnswer.Quote("the scarce half of bronze"),
+          CheckAnswer.Note("")
         )
       )
     )
@@ -1399,7 +1414,7 @@ class ReviewArticleSuite extends munit.FunSuite:
           Finding(
             Finding.Id("C1"),
             Reviewer.ColdReader,
-            Severity.Major,
+            domain.reviewarticle.Severity.Major,
             Finding.Kind("term"),
             Finding.Where("Intro"),
             Finding.Quote("Tin reached"),
@@ -1412,7 +1427,8 @@ class ReviewArticleSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      checkColdReader(reader, last = ReviewArticle.CheckColdReaderLast(false), readerPrior)
+      reader
+        .checkColdReader(last = ReviewArticle.CheckColdReaderLast(false), readerPrior)
         .map(_._1.checks.map(_.fixed)),
       Right(List(true))
     )
@@ -1420,11 +1436,16 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("scope: inside the edited passages anything stands; outside, a MAJOR only as a factual error with evidence"):
     val edited = Article.Body("Tin, the scarce half of bronze, reached the Aegean by sea [[knapp2016_tin]].")
     val ev =
-      Evidence(Citekey("knapp2016_tin"), None, ReviewArticle.Evidence.Quote("ten tons of copper"), Evidence.Ratio(1.0))
+      domain.reviewarticle.Evidence(
+        Citekey("knapp2016_tin"),
+        None,
+        domain.reviewarticle.Evidence.Quote("ten tons of copper"),
+        domain.reviewarticle.Evidence.Ratio(1.0)
+      )
     val inside = Finding(
       Finding.Id("S1"),
       Reviewer.Skeptic,
-      Severity.Major,
+      domain.reviewarticle.Severity.Major,
       Finding.Kind("synth"),
       Finding.Where("Intro"),
       Finding.Quote("the scarce half of bronze"),
@@ -1432,109 +1453,115 @@ class ReviewArticleSuite extends munit.FunSuite:
       Finding.Fix("")
     )
     val outside = inside.modify(_.quote).setTo(Finding.Quote("Two dates are argued"))
-    assertEquals(scope(inside, edited, minRatio), (inside, None))
+    assertEquals(inside.scope(edited, minRatio), (inside, None))
     assertEquals(
-      scope(
-        outside.modify(_.kind).setTo(Finding.Kind("contradictory")).modify(_.evidence).setTo(List(ev)),
-        edited,
-        minRatio
-      )._2,
+      outside
+        .modify(_.kind)
+        .setTo(Finding.Kind("contradictory"))
+        .modify(_.evidence)
+        .setTo(List(ev))
+        .scope(edited, minRatio)
+        ._2,
       None
     )
-    val (down, w) = scope(outside, edited, minRatio)
-    assertEquals(down.severity, Severity.Minor)
+    val (down, w) = outside.scope(edited, minRatio)
+    assertEquals(down.severity, domain.reviewarticle.Severity.Minor)
     assert(w.exists(_.contains("\"a bridge claim\" is outside the edited passages")), w)
     assertEquals(
-      scope(outside.modify(_.kind).setTo(Finding.Kind("date")), edited, minRatio)._1.severity,
-      Severity.Minor,
+      outside.modify(_.kind).setTo(Finding.Kind("date")).scope(edited, minRatio)._1.severity,
+      domain.reviewarticle.Severity.Minor,
       "a factual kind still needs its evidence"
     )
-    assertEquals(scope(outside.modify(_.severity).setTo(Severity.Minor), edited, minRatio)._2, None)
+    assertEquals(outside.modify(_.severity).setTo(domain.reviewarticle.Severity.Minor).scope(edited, minRatio)._2, None)
 
   test("checkRecheck: checks, scoped findings with verified evidence, at most three lessons"):
     val ev = evidenceCheck(isCk, record.get, minRatio)
     val a = RecheckAnswer(
       List(
         CheckAnswer(
-          ReviewArticle.CheckAnswer.Id("R1"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(true),
-          ReviewArticle.CheckAnswer.Quote("Tin, the scarce half of bronze"),
-          ReviewArticle.CheckAnswer.Note("")
+          CheckAnswer.Id("R1"),
+          fixed = CheckAnswer.Fixed(true),
+          CheckAnswer.Quote("Tin, the scarce half of bronze"),
+          CheckAnswer.Note("")
         ),
         CheckAnswer(
-          ReviewArticle.CheckAnswer.Id("R4"),
-          fixed = ReviewArticle.CheckAnswer.Fixed(false),
-          ReviewArticle.CheckAnswer.Quote("Two dates are argued"),
-          ReviewArticle.CheckAnswer.Note("still undated")
+          CheckAnswer.Id("R4"),
+          fixed = CheckAnswer.Fixed(false),
+          CheckAnswer.Quote("Two dates are argued"),
+          CheckAnswer.Note("still undated")
         )
       ),
       List(
         FindingAnswer(
-          ReviewArticle.FindingAnswer.Severity("major"),
-          ReviewArticle.FindingAnswer.Kind("recall"),
-          ReviewArticle.FindingAnswer.Where("Open questions"),
-          ReviewArticle.FindingAnswer.Quote("The source of the tin is open"),
-          ReviewArticle.FindingAnswer.Problem("the record names the source"),
-          ReviewArticle.FindingAnswer.Fix("say it"),
+          FindingAnswer.Severity("major"),
+          FindingAnswer.Kind("recall"),
+          FindingAnswer.Where("Open questions"),
+          FindingAnswer.Quote("The source of the tin is open"),
+          FindingAnswer.Problem("the record names the source"),
+          FindingAnswer.Fix("say it"),
           List(
             EvidenceAnswer(
-              ReviewArticle.EvidenceAnswer.Citekey("knapp2016_tin"),
+              EvidenceAnswer.Citekey("knapp2016_tin"),
               None,
-              ReviewArticle.EvidenceAnswer.Quote("one ton of tin")
+              EvidenceAnswer.Quote("one ton of tin")
             )
           )
         ),
         FindingAnswer(
-          ReviewArticle.FindingAnswer.Severity("major"),
-          ReviewArticle.FindingAnswer.Kind("weight"),
-          ReviewArticle.FindingAnswer.Where("Open questions"),
-          ReviewArticle.FindingAnswer.Quote("The source of the tin is open"),
-          ReviewArticle.FindingAnswer.Problem("too short"),
-          ReviewArticle.FindingAnswer.Fix("expand")
+          FindingAnswer.Severity("major"),
+          FindingAnswer.Kind("weight"),
+          FindingAnswer.Where("Open questions"),
+          FindingAnswer.Quote("The source of the tin is open"),
+          FindingAnswer.Problem("too short"),
+          FindingAnswer.Fix("expand")
         )
       ),
       List(
-        ReviewArticle.Recheck.Lessons("one"),
-        ReviewArticle.Recheck.Lessons("two"),
-        ReviewArticle.Recheck.Lessons("three"),
-        ReviewArticle.Recheck.Lessons("four")
+        Recheck.Lessons("one"),
+        Recheck.Lessons("two"),
+        Recheck.Lessons("three"),
+        Recheck.Lessons("four")
       )
     )
     val (rc, ws) =
-      checkRecheck(
-        Reviewer.Rules,
-        a,
-        prior,
-        ReviewArticle.CheckRecheckEdited("Tin, the scarce half of bronze"),
-        ev,
-        last = ReviewArticle.CheckRecheckLast(false)
-      ).toOption.get
+      Reviewer.Rules
+        .checkRecheck(
+          a,
+          prior,
+          ReviewArticle.CheckRecheckEdited("Tin, the scarce half of bronze"),
+          ev,
+          last = ReviewArticle.CheckRecheckLast(false)
+        )
+        .toOption
+        .get
     assertEquals(rc.checks.map(c => (c.id, c.fixed)), List(("R1", true), ("R4", false)))
     assertEquals(
       rc.findings.map(f => (f.kind, f.severity)),
-      List(("recall", Severity.Major), ("weight", Severity.Minor))
+      List(("recall", domain.reviewarticle.Severity.Major), ("weight", domain.reviewarticle.Severity.Minor))
     )
     assertEquals(rc.lessons, List("one", "two", "three"))
     assert(ws.exists(_.contains("\"too short\" is outside the edited passages")), ws)
     assert(
-      checkRecheck(
-        Reviewer.Rules,
-        a.modify(_.checks).setTo(Nil),
-        prior,
-        ReviewArticle.CheckRecheckEdited(""),
-        ev,
-        last = ReviewArticle.CheckRecheckLast(false)
-      ).isLeft
+      Reviewer.Rules
+        .checkRecheck(
+          a.modify(_.checks).setTo(Nil),
+          prior,
+          ReviewArticle.CheckRecheckEdited(""),
+          ev,
+          last = ReviewArticle.CheckRecheckLast(false)
+        )
+        .isLeft
     )
     assert(
-      checkRecheck(
-        Reviewer.Rules,
-        RecheckAnswer(),
-        prior,
-        ReviewArticle.CheckRecheckEdited(""),
-        ev,
-        last = ReviewArticle.CheckRecheckLast(true)
-      ).isRight,
+      Reviewer.Rules
+        .checkRecheck(
+          RecheckAnswer(),
+          prior,
+          ReviewArticle.CheckRecheckEdited(""),
+          ev,
+          last = ReviewArticle.CheckRecheckLast(true)
+        )
+        .isRight,
       "the last attempt keeps what passed"
     )
 
@@ -1544,29 +1571,29 @@ class ReviewArticleSuite extends munit.FunSuite:
       List(Finding.Id("C1")),
       List(
         RejectionAnswer(
-          ReviewArticle.RejectionAnswer.Id("S1"),
+          RejectionAnswer.Id("S1"),
           ReviewArticle.Rationale("the record says so"),
-          ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
-          ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
+          RejectionAnswer.Citekey("knapp2016_tin"),
+          RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
       ),
       Nil,
-      ReviewArticle.FixerAnswer.Notes(""),
+      FixerAnswer.Notes(""),
       wontFix = List(
-        WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))
+        WontFixAnswer(WontFixAnswer.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))
       )
     )
     assertEquals(
       fix(ok, last = LastRound(false)).map(_._1.wontFix),
-      Right(List(WontFix(ReviewArticle.WontFix.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))))
+      Right(List(WontFix(WontFix.Id("R1"), ReviewArticle.Rationale("wordy, but exact"))))
     )
     val bad = ok
       .modify(_.wontFix)
       .setTo(
         List(
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("S1"), ReviewArticle.Rationale("no")),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R9"), ReviewArticle.Rationale("x")),
-          WontFixAnswer(ReviewArticle.WontFixAnswer.Id("R1"), ReviewArticle.Rationale(" "))
+          WontFixAnswer(WontFixAnswer.Id("S1"), ReviewArticle.Rationale("no")),
+          WontFixAnswer(WontFixAnswer.Id("R9"), ReviewArticle.Rationale("x")),
+          WontFixAnswer(WontFixAnswer.Id("R1"), ReviewArticle.Rationale(" "))
         )
       )
     val ps = fix(bad, last = LastRound(false)).left.toOption.get
@@ -1579,7 +1606,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val cover = Finding(
       Finding.Id("R8"),
       Reviewer.Rules,
-      Severity.Major,
+      domain.reviewarticle.Severity.Major,
       Finding.Kind("coverage"),
       Finding.Where("Not used"),
       Finding.Quote(""),
@@ -1588,32 +1615,32 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     val m = merged.modify(_.findings).setTo(merged.findings :+ cover)
     def run(a: FixerAnswer, c: Option[Coverage]) =
-      checkFix(
-        a,
+      a.checkFix(
         m,
         Slug("tin"),
         Article.Body(Good),
-        ReviewArticle.Snapshot.Kind("concept"),
+        Snapshot.Kind("concept"),
         corpus,
         isCk,
         record.get,
         minRatio,
         ReviewArticle.LastRound(false),
         c
-      ).left.map(_.map(_.sentence))
+      ).left
+        .map(_.map(_.sentence))
     val base = FixerAnswer(
       List(gloss),
       List(Finding.Id("C1")),
       List(
         RejectionAnswer(
-          ReviewArticle.RejectionAnswer.Id("S1"),
+          RejectionAnswer.Id("S1"),
           ReviewArticle.Rationale("the record says so"),
-          ReviewArticle.RejectionAnswer.Citekey("knapp2016_tin"),
-          ReviewArticle.RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
+          RejectionAnswer.Citekey("knapp2016_tin"),
+          RejectionAnswer.Quote("carried ten tons of copper and one ton of tin")
         )
       ),
       Nil,
-      ReviewArticle.FixerAnswer.Notes("")
+      FixerAnswer.Notes("")
     )
     // left out: sent back, told how to answer it
     val missing = run(base, None).left.toOption.get
@@ -1628,26 +1655,25 @@ class ReviewArticleSuite extends munit.FunSuite:
       .setTo(
         List(
           WontFixAnswer(
-            ReviewArticle.WontFixAnswer.Id("R8"),
+            WontFixAnswer.Id("R8"),
             ReviewArticle.Rationale("recording the filter is not an edit")
           )
         )
       )
     assertEquals(run(declined, None).map(_._1.wontFix.map(_.id)), Right(List("R8")))
-    assert(needsFilter(cover, None) && !needsFilter(cover, Some(cov)) && !needsFilter(merged.findings.head, None))
+    assert(cover.needsFilter(None) && !cover.needsFilter(Some(cov)) && !merged.findings.head.needsFilter(None))
     // the ledger keeps a declined MAJOR open, and not claimed
-    val led = ReviewLedger.Ledger(
-      ReviewLedger.Ledger.Slug("tin"),
+    val led = Ledger(
+      Ledger.Slug("tin"),
       m.findings.map(
-        ReviewLedger.Entry(
+        Entry(
           _,
-          ReviewLedger.Entry.Run("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
-          ReviewLedger.Entry.Round(1)
+          Entry.Run("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
+          Entry.Round(1)
         )
       )
     )
-    val after = ReviewLedger.applyFix(
-      led,
+    val after = led.applyFix(
       run(declined, None).toOption.get._1,
       ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"),
       ReviewLedger.ApplyFixRound(1)
@@ -1696,16 +1722,16 @@ class ReviewArticleSuite extends munit.FunSuite:
   private def read(ck: String, tool: ToolUse.Tool = ToolUse.Tool("get_source")) =
     AgentVerify.ToolUse(tool, ToolUse.Input(s"""{"citekey":"$ck","section":"findings"}"""))
   private val spotTin = SpotCheckAnswer(
-    ReviewArticle.SpotCheckAnswer.Citekey("knapp2016_tin"),
-    ReviewArticle.SpotCheckAnswer.Claim("Tin reached the Aegean by sea"),
-    ReviewArticle.SpotCheckAnswer.Verdict("attributable"),
-    ReviewArticle.SpotCheckAnswer.RecordQuote("The Uluburun ship carried ten tons of copper and one ton of tin.")
+    SpotCheckAnswer.Citekey("knapp2016_tin"),
+    SpotCheckAnswer.Claim("Tin reached the Aegean by sea"),
+    SpotCheckAnswer.Verdict("attributable"),
+    SpotCheckAnswer.RecordQuote("The Uluburun ship carried ten tons of copper and one ton of tin.")
   )
   private val spotIso = SpotCheckAnswer(
-    ReviewArticle.SpotCheckAnswer.Citekey("tin2024_iso"),
-    ReviewArticle.SpotCheckAnswer.Claim("The tin came from Central Asia"),
-    ReviewArticle.SpotCheckAnswer.Verdict("attributable"),
-    ReviewArticle.SpotCheckAnswer.RecordQuote("the tin of the Uluburun cargo came from Central Asia")
+    SpotCheckAnswer.Citekey("tin2024_iso"),
+    SpotCheckAnswer.Claim("The tin came from Central Asia"),
+    SpotCheckAnswer.Verdict("attributable"),
+    SpotCheckAnswer.RecordQuote("the tin of the Uluburun cargo came from Central Asia")
   )
   private def rule(calls: List[AgentVerify.ToolUse], required: SpotRule.Required = SpotRule.Required(2)) =
     SpotRule(required, cited2, spotBody, calls, minRatio)
@@ -1786,7 +1812,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     def problem(a: SpotCheckAnswer) =
       checkSpotChecks(
         List(a),
-        rule(calls, required = ReviewArticle.SpotRule.Required(1)),
+        rule(calls, required = SpotRule.Required(1)),
         spotEv,
         last = ReviewArticle.CheckSpotChecksLast(false)
       )._2.drop(1).head.sentence
@@ -1824,26 +1850,25 @@ class ReviewArticleSuite extends munit.FunSuite:
 
   test("checkRules: spot-checks are enforced only when a rule is given, and land in the report"):
     val a = RulesAnswer(
-      ReviewArticle.RulesAnswer.Verdict("PASS"),
+      RulesAnswer.Verdict("PASS"),
       Nil,
-      ReviewArticle.RulesAnswer.Filter("f"),
+      RulesAnswer.Filter("f"),
       spotChecks = List(spotTin, spotIso)
     )
     assert(
-      checkRules(a.modify(_.spotChecks).setTo(Nil), last = ReviewArticle.CheckRulesLast(false)).isRight,
+      a.modify(_.spotChecks).setTo(Nil).checkRules(last = ReviewArticle.CheckRulesLast(false)).isRight,
       "no rule: nothing required (a verification pass, a test)"
     )
-    val missing = checkRules(a, last = ReviewArticle.CheckRulesLast(false), spotEv, spots = Some(rule(Nil)))
+    val missing = a.checkRules(last = ReviewArticle.CheckRulesLast(false), spotEv, spots = Some(rule(Nil)))
     assert(missing.left.exists(_.head.sentence.startsWith("spot-checks: 0 of the 2")), missing)
-    val done = checkRules(
-      a,
+    val done = a.checkRules(
       last = ReviewArticle.CheckRulesLast(false),
       spotEv,
       spots = Some(rule(List(read("knapp2016_tin"), read("tin2024_iso"))))
     )
     assertEquals(done.map(_._1.spotChecks.map(_.citekey)), Right(List("knapp2016_tin", "tin2024_iso")))
     // the last attempt keeps the answer, the shortfall a warning
-    val kept = checkRules(a, last = ReviewArticle.CheckRulesLast(true), spotEv, spots = Some(rule(Nil)))
+    val kept = a.checkRules(last = ReviewArticle.CheckRulesLast(true), spotEv, spots = Some(rule(Nil)))
     assert(kept.exists(_._2.exists(_.startsWith("rules: unverified — spot-checks: 0 of the 2"))), kept)
 
   test("a Report checkpointed before spot-checks existed still decodes"):
@@ -1862,7 +1887,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   private val storedSentences: List[Finding.Problem] =
     mechanical(
       Slug("a"),
-      ReviewArticle.Snapshot.Kind("concept"),
+      Snapshot.Kind("concept"),
       Article.Body("Tin moved.\n\nSee [[nobody2020_x]].\n\n## Sources cited\n\n- a\n"),
       isTarget
     ).map(_.problem) ++ List(
@@ -1893,7 +1918,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     storedSentences.foreach(p => assertEquals(Finding.Problem.of(p.cause), p, p))
 
   test("the sentences the pipeline acts on read as their causes; any other sentence is Other"):
-    import Finding.Problem.Cause
+    import com.histmersion.domain.reviewarticle.Finding.Problem.Cause
     assertEquals(Finding.Problem("a paragraph with no [[citekey]]").cause, Cause.UncitedParagraph)
     assertEquals(
       Finding.Problem("a hand-written Sources cited section (the page generates it)").cause,

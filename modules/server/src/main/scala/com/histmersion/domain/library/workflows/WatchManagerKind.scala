@@ -1,5 +1,16 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunParams
 import com.histmersion.domain.automation.workflows.InTreeWorkflow
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.RawJson.*
@@ -20,8 +31,6 @@ import com.histmersion.api.automation.Managers.*
 import com.histmersion.domain.IngestBacklog
 import com.histmersion.domain.ManagerPolicy
 import com.histmersion.domain.WatchManagerDefaults
-import com.histmersion.domain.ManagerPolicy.ReviewSettings
-import com.histmersion.domain.ManagerPolicy.StepFacts
 import com.histmersion.config.{AgentsConfig, LibraryAgentsConfig}
 import com.histmersion.domain.ManagerDefaults
 
@@ -204,12 +213,12 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
 
   /** The ingest backlog's size (the page adds the upstreams' quotas and the acquisition list's re-check). */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  override def status(st: Autopilot.EngineStatus, now: Instant): Autopilot.EngineStatus =
+  override def status(st: EngineStatus, now: Instant): EngineStatus =
     val backlog = work.oaBacklog.snapshot(now)
     st.modify(_.backlog)
-      .setTo(Autopilot.EngineStatus.Backlog(backlog.total.value))
+      .setTo(EngineStatus.Backlog(backlog.total.value))
       .modify(_.backlogDays)
-      .setTo(backlog.totalDays.map(d => Autopilot.EngineStatus.BacklogDays(d.value)))
+      .setTo(backlog.totalDays.map(d => EngineStatus.BacklogDays(d.value)))
 
   /** The metered upstreams' budgets the autopilot's page shows. */
   def upstreams(now: Instant): List[UpstreamQuota] = site.upstreamQuotas(now)

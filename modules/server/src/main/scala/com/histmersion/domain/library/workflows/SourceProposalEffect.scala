@@ -1,9 +1,10 @@
 package com.histmersion
 package domain.library.workflows
+
+import com.histmersion.domain.Proposal
 import com.histmersion.util.problem.{Problem, Problems}
 
 import com.histmersion.util.database.Jsonb
-import com.histmersion.domain.AgentProposals.Proposal
 import com.histmersion.domain.automation.approvals.ProposalEffect
 import com.histmersion.domain.library.sources.SourcesControllers
 import com.histmersion.domain.automation.approvals.ApprovalEffects

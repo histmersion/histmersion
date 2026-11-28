@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.automation.agents
 
-import com.histmersion.api.automation.Agents.ModelRef
+import com.histmersion.api.automation.agents.ModelRef
+
 import com.histmersion.api.automation.ProviderKind
 import com.histmersion.domain.Creator
 import com.histmersion.domain.automation.workflows.WorkflowDefinition

@@ -1,6 +1,9 @@
 package com.histmersion
 package api.automation
 
+import com.histmersion.api.automation.approvaldigest.Digest
+import com.histmersion.api.automation.approvaldigest.BulkResult
+
 import com.histmersion.util.problem.Text.sentences
 import com.histmersion.api.Plural
 import com.histmersion.api.given

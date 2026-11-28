@@ -1,5 +1,9 @@
 package com.histmersion
 package api
+
+import com.histmersion.api.automation.activity.Counts
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.ApprovalInfo
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.Cursor
 
@@ -7,7 +11,6 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.api.automation.Agents.{ApprovalInfo, RunInfo}
 import com.histmersion.api.automation.AgentsMarkdown
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.library.{Ingest, IngestMarkdown}
@@ -74,9 +77,9 @@ class PagingSuite extends munit.FunSuite:
     )
     assertEquals(Paging.decodeCounts(Paging.encodeCounts(counts)), counts)
     assertEquals(Paging.encodeCounts(Nil), "")
-    assertEquals(Paging.decodeCounts(Activity.Counts.Wire("")), Nil)
+    assertEquals(Paging.decodeCounts(Counts.Wire("")), Nil)
     assertEquals(
-      Paging.decodeCounts(Activity.Counts.Wire(" done = 4 ,junk,x=y,running=1")),
+      Paging.decodeCounts(Counts.Wire(" done = 4 ,junk,x=y,running=1")),
       List("done" -> 4, "running" -> 1)
     )
 

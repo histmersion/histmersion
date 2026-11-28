@@ -15,7 +15,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 @movesTo(FeaturePlace.AutomationActivity)
 final case class ActivityQuery(
-    show: Activity.Show = Activity.Show.Everything,
+    show: api.automation.activity.Show = api.automation.activity.Show.Everything,
     since: Option[Instant] = None,
     goal: Option[ActivityQuery.Goal] = None,
     limit: ActivityQuery.Limit = ActivityQuery.Limit(Activity.DefaultLimit),

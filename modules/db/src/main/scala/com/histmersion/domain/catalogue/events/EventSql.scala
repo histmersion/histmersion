@@ -1,6 +1,8 @@
 package com.histmersion
 package domain.catalogue.events
 
+import com.histmersion.api.catalogue.eventtaxonomy.KindCondition
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.BBox
@@ -39,7 +41,7 @@ object EventSql:
     * answer before the exact geography distance is computed (a `::geography` cast cannot use it).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def boxAround(pt: Frag, km: CatalogMerge.Tolerance.Km): Frag =
+  def boxAround(pt: Frag, km: Placement.Tolerance.Km): Frag =
     val dy = (km.value / 111.32).literal
     sql"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
 
@@ -94,7 +96,7 @@ object EventSql:
       val c = LikePattern.contains(t)
       ps += sql"(e.label ILIKE $c ESCAPE '\\' OR e.description ILIKE $c ESCAPE '\\')"
     }
-    EventTaxonomy.condition(clean(kind.map(_.value)).map(k => EventTaxonomy.KindCondition.Filter(k))).foreach { c =>
+    EventTaxonomy.condition(clean(kind.map(_.value)).map(k => KindCondition.Filter(k))).foreach { c =>
       ps += (if c.negate.negate then sql"NOT (e.kind = ANY(${c.kinds}::text[]))"
              else sql"e.kind = ANY(${c.kinds}::text[])")
     }

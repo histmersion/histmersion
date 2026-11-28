@@ -1,7 +1,8 @@
 package com.histmersion
 package domain.catalogue.places
 
-import com.histmersion.api.catalogue.SiteTypes
+import com.histmersion.api.catalogue.SiteType
+
 import com.histmersion.domain.catalogue.Place
 import com.histmersion.util.database.joined
 import com.augustnagro.magnum.{sql, Frag, SqlLiteral}
@@ -26,34 +27,34 @@ object SiteTypesSql:
   private def list(xs: Iterable[String]): Frag = xs.map(quote).toSeq.joined(sql", ")
 
   /** The preference [[SiteTypes]] picks a type by when a place lists several. */
-  private val preference: List[SiteTypes.SiteType.Id] = SiteTypes.preference
+  private val preference: List[SiteType.Id] = SiteType.preference
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def expr(a: Frag): Frag =
-    val stored = sql"CASE WHEN $a.site_type IN (${list(SiteTypes.all.map(_.id.value))}) THEN $a.site_type END"
+    val stored = sql"CASE WHEN $a.site_type IN (${list(SiteType.all.map(_.id.value))}) THEN $a.site_type END"
     // the feature types as a list: lower case, each without its `-2` variant suffix
     val types =
       sql"regexp_split_to_array(btrim(regexp_replace(lower($a.properties->>'feature_types'), '-[0-9]+\\s*(,|$$)', '\\1', 'g')), '\\s*,\\s*')"
-    val byType = SiteTypes.pleiadesTypes.toList.groupMap(_._2)(_._1)
+    val byType = SiteType.pleiadesTypes.toList.groupMap(_._2)(_._1)
     val pleiadesWhens = preference.flatMap(t =>
       byType.get(t).map(ks => sql"WHEN ft.v && ARRAY[${list(ks.map(_.value).sorted)}] THEN ${quote(t.value)}")
     )
     val pleiades = sql"(SELECT CASE ${pleiadesWhens.joined(sql" ")} END FROM (SELECT $types AS v) ft)"
     val fcode = sql"upper(btrim($a.properties->>'fcode'))"
-    val geonamesWhens = SiteTypes.geonamesCodes.toList
+    val geonamesWhens = SiteType.geonamesCodes.toList
       .sortBy(_._1.value)
       .map((c, t) => sql"WHEN ${quote(c.value)} THEN ${quote(t.value)}")
     val geonames =
-      sql"CASE $fcode ${geonamesWhens.joined(sql" ")} ELSE CASE WHEN $fcode LIKE 'P.%' THEN ${quote(SiteTypes.Settlement)} END END"
+      sql"CASE $fcode ${geonamesWhens.joined(sql" ")} ELSE CASE WHEN $fcode LIKE 'P.%' THEN ${quote(SiteType.Settlement)} END END"
     // the item's own P31 classes: a JSON array in `properties.p31` (anything else counts as none)
     val p31 =
       sql"ARRAY(SELECT btrim(x) FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof($a.properties->'p31') = 'array' THEN $a.properties->'p31' ELSE '[]'::jsonb END) x)"
-    val byClass = SiteTypes.wikidataClasses.toList.groupMap(_._2)(_._1)
+    val byClass = SiteType.wikidataClasses.toList.groupMap(_._2)(_._1)
     val ownWhens = preference.flatMap(t =>
       byClass.get(t).map(ks => sql"WHEN w.v && ARRAY[${list(ks.map(_.value).sorted)}] THEN ${quote(t.value)}")
     )
     val own = sql"(SELECT CASE ${ownWhens.joined(sql" ")} END FROM (SELECT $p31 AS v) w)"
-    val wikidataWhens = SiteTypes.wikidataClasses.toList
+    val wikidataWhens = SiteType.wikidataClasses.toList
       .sortBy(_._1.value)
       .map((c, t) => sql"WHEN ${quote(c.value)} THEN ${quote(t.value)}")
     val wikidata = sql"CASE btrim($a.properties->>'class') ${wikidataWhens.joined(sql" ")} END"

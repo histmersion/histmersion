@@ -9,7 +9,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
-import com.histmersion.api.research.{Articles, CoverageSearch, DriftKind}
+import com.histmersion.api.research.{CoverageSearch, DriftKind}
 import com.histmersion.api.library.{Citekey, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
@@ -397,7 +397,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
     assert(Article.Coverage.hasMethodLine("x\n_Method: y._") && !Article.Coverage.hasMethodLine("the _Method_ is"))
 
   test("the article model: put and patch carry the filter and reasons; an empty filter clears it"):
-    val put = Articles
+    val put = Article
       .applyPut(
         Article.Slug("tin"),
         Article.Put(
@@ -412,9 +412,8 @@ class ArticleCoverageSuite extends munit.FunSuite:
       .get
     assertEquals(put.filter, Some(Article.Filter(tags = List(Filter.Tags("tin")))))
     assertEquals(put.reasons.view.mapValues(w => s"$w").toMap, Map("b2020_iso" -> "about Egypt"))
-    val kept = Articles
+    val kept = put
       .applyPatch(
-        put,
         Article.Patch(summary =
           Some(Article.SummaryText("A summary of where the tin of the Aegean came from, by sea."))
         )
@@ -422,9 +421,8 @@ class ArticleCoverageSuite extends munit.FunSuite:
       .toOption
       .get
     assertEquals((kept.filter, kept.reasons), (put.filter, put.reasons), "a patch that names neither leaves them")
-    val more = Articles
+    val more = put
       .applyPatch(
-        put,
         Article.Patch(reasons =
           List(
             Coverage.Reason(Citekey("c2001_old"), Coverage.Rationale("older")),
@@ -435,11 +433,9 @@ class ArticleCoverageSuite extends munit.FunSuite:
       .toOption
       .get
     assertEquals(more.reasons.view.mapValues(w => s"$w").toMap, Map("c2001_old" -> "older"))
-    assertEquals(Articles.applyPatch(put, Article.Patch(filter = Some(Article.Filter()))).toOption.get.filter, None)
+    assertEquals(put.applyPatch(Article.Patch(filter = Some(Article.Filter()))).toOption.get.filter, None)
     assert(
-      Articles
-        .applyPatch(put, Article.Patch(filter = Some(Article.Filter(status = List(Filter.Status("nope"))))))
-        .isLeft
+      put.applyPatch(Article.Patch(filter = Some(Article.Filter(status = List(Filter.Status("nope")))))).isLeft
     )
     assertEquals(
       Article.Put.of(more).reasons,
@@ -449,7 +445,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("an exported note sent back as a body: the generated block never enters the store"):
     val exported = "# T\n\nBody [[a2019_tin]].\n\n" + Article.Coverage.exported(cov())
     assertEquals(
-      Articles
+      Article
         .applyPut(
           Article.Slug("t"),
           Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body(exported))
@@ -459,12 +455,12 @@ class ArticleCoverageSuite extends munit.FunSuite:
         .body,
       "# T\n\nBody [[a2019_tin]]."
     )
-    val a = Articles
+    val a = Article
       .applyPut(Article.Slug("t"), Article.Put(Article.Title("T"), Article.Kind.Wire("concept"), Article.Body("# T")))
       .toOption
       .get
     assertEquals(
-      Articles.applyPatch(a, Article.Patch(body = Some(Article.Body(exported)))).toOption.get.body,
+      a.applyPatch(Article.Patch(body = Some(Article.Body(exported)))).toOption.get.body,
       "# T\n\nBody [[a2019_tin]]."
     )
 

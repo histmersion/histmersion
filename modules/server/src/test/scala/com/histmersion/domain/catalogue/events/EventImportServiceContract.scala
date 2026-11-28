@@ -44,9 +44,9 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
     )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def placeNew(r: CatalogRecord) =
-    r -> CatalogMerge.Placement.New(
+    r -> Placement.New(
       Event.Id.applyUnsafe(CatalogRecord.eventId(r).value),
-      CatalogMerge.Rationale("new")
+      Placement.Rationale("new")
     )
 
   stest("a record makes its event, writing it again refreshes it, an event made by hand is only filled") { s =>
@@ -71,8 +71,8 @@ abstract class EventImportServiceContract extends CatalogueStoreSuite:
     val filled =
       im.save(
         List(
-          record(CatalogRecord.ProviderId("2"), CatalogRecord.Label("Zz other name")) -> CatalogMerge.Placement
-            .Existing(Event.Id("zz_hand"), CatalogMerge.Rationale("matched"))
+          record(CatalogRecord.ProviderId("2"), CatalogRecord.Label("Zz other name")) -> Placement
+            .Existing(Event.Id("zz_hand"), Placement.Rationale("matched"))
         )
       )
     assertEquals((filled.created, filled.updated), (0, 0))

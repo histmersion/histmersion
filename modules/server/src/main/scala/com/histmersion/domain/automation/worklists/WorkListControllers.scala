@@ -1,6 +1,13 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
+import com.histmersion.api.automation.queue.QueueImport
+import com.histmersion.api.automation.queue.QueueImported
+
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentences
 import io.scalaland.chimney.dsl.*
@@ -8,7 +15,6 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Write
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueImport, QueueImported, QueueItem, QueuePatch}
 import com.histmersion.util.data.maintenance.WriteGate
 
 import java.time.{Clock, LocalDate}
@@ -98,7 +104,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def exportText(list: Kind.Label): Either[Api.Error, Queue.Markdown] =
-    kindOf(WorkListControllers.KindOfList(list.value)).map(k => Queue.render(k, queues.list(k, QueueScope.All)))
+    kindOf(WorkListControllers.KindOfList(list.value)).map(k => k.render(queues.list(k, QueueScope.All)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
@@ -109,7 +115,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
   def importText(list: Kind.Label, req: QueueImport): Either[Api.Error, QueueImported] =
     maintenance.guard(WriteGate.OperationName("queue/import")):
       kindOf(WorkListControllers.KindOfList(list.value)).map { k =>
-        val rows = Queue.parse(k, Queue.FileText(req.text.value))
+        val rows = k.parse(Queue.FileText(req.text.value))
         val counts = queues.replace(k, rows, ImportMode.of(req.replace.replace), Imported)
         val notes = rows.count(_.status.exists(_.value == Queue.Note))
         QueueImported(
@@ -122,7 +128,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
 
   /** Every list at once — what `histmersion export <dir>` writes alongside the source notes. */
   def files(): List[(Kind.File, Queue.Markdown)] =
-    Kind.values.toList.map(k => k.file -> Queue.render(k, queues.list(k, QueueScope.All)))
+    Kind.values.toList.map(k => k.file -> k.render(queues.list(k, QueueScope.All)))
 
 object WorkListControllers:
   type ListName = ListName.T

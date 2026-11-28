@@ -1,12 +1,15 @@
 package com.histmersion
 package domain.catalogue.places
 
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.exchange.Bundle
 
 import com.histmersion.api.aliases.LabelRename
-import com.histmersion.api.aliases.LabelRenames
 import com.histmersion.api.aliases.LabelRenamed
 import com.histmersion.api.aliases.AliasKinds
 
@@ -76,7 +79,7 @@ final class PlacesControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  def geocode(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+  def geocode(name: Attempt.Name, hint: KindHint, at: Option[Period]): Option[Resolution] =
     geocoder.resolve(name, hint, at, GeocodeSettings.PlaceholderMin(cfg().places.geocodePlaceholderMin.value))
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
@@ -335,8 +338,8 @@ final class PlacesControllers(
       Caller.Local,
       id,
       from =>
-        LabelRenames
-          .validate(Bundle.Kind.Place, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
+        LabelRename
+          .validate(Bundle.Kind.Place, LabelRename.Label(from.value), LabelRename.Label(req.to.value))
           .flatMap(to =>
             Place.Id
               .checked(to.value)

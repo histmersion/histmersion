@@ -1,8 +1,12 @@
 package com.histmersion
 package domain.automation.worklists
 
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueuePatch
+
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.api.automation.Goal.Plans.GoalLink
 import com.histmersion.util.database.Transactor
 import com.histmersion.domain.{CreatedAt, Creator}
@@ -77,7 +81,7 @@ object QueueService:
       val rid = QueueRepo.QueueItemId(id.value)
       // a row removed between the read and the write is not found, never a success over nothing
       QueueRepo.get(rid).toRight(QueueError.NotFound(id)).flatMap { cur =>
-        if QueueRepo.update(Queue.applyPatch(cur, p)) then QueueRepo.get(rid).toRight(QueueError.NotFound(id))
+        if QueueRepo.update(cur.applyPatch(p)) then QueueRepo.get(rid).toRight(QueueError.NotFound(id))
         else Left(QueueError.NotFound(id))
       }
 
@@ -116,7 +120,7 @@ object QueueService:
       state.updateAndGet(_.added(list, item, creator, now)).items.last
 
     def patch(id: QueueItemId, p: QueuePatch)(using WritePermit): Either[QueueError, QueueItem] =
-      val after = state.updateAndGet(s => s.get(id).fold(s)(cur => s.updated(Queue.applyPatch(cur, p), now)))
+      val after = state.updateAndGet(s => s.get(id).fold(s)(cur => s.updated(cur.applyPatch(p), now)))
       after.get(id).toRight(QueueError.NotFound(id))
 
     def delete(id: QueueItemId)(using WritePermit): Either[QueueError, QueueItem] =

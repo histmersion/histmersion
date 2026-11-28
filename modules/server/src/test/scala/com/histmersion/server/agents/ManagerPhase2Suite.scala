@@ -1,5 +1,18 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.agents.ModelRef
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerUpdate
+import com.histmersion.api.automation.agents.DecisionRequest
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.managers.ManagerCreate
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ItemState
 import com.histmersion.util.json.RawJson.*
 import hearth.kindlings.jsoniterjson.Json
 
@@ -91,7 +104,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
   private val CompileKind = ManagerItem.Kind(ArticleCompile)
   private val EnrichKind = ManagerItem.Kind(SourceEnrich)
   private val ExtendKind = ManagerItem.Kind(ArticleExtend)
-  private val Model = ModelRef(ProviderKind.Local, Agents.ModelRef.Model("scripted"))
+  private val Model = ModelRef(ProviderKind.Local, ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-17T12:00:00Z")
 
@@ -616,7 +629,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
         ItemOrigin.Person,
         ManagerRepo.ItemRow.Priority(10),
         reopen = false,
-        ItemState(filterHits = Some(Managers.ItemState.FilterHits(1)))
+        ItemState(filterHits = Some(ItemState.FilterHits(1)))
       )
     )
     connect(ds)(

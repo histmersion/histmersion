@@ -1,12 +1,16 @@
 package com.histmersion
 package domain.automation.worklists
+
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.api.automation.queue.QueueAdd
+import com.histmersion.api.automation.queue.QueueItem
+import com.histmersion.api.automation.queue.QueuePatch
 import com.histmersion.util.problem.{Legacy, Problem}
 
 import com.histmersion.db.*
 
 import com.histmersion.api.Write
 import com.histmersion.api.automation.Queue
-import com.histmersion.api.automation.Queue.{Kind, QueueAdd, QueueItem, QueuePatch}
 import com.histmersion.domain.automation.worklists.QueueRepo
 
 import com.augustnagro.magnum.*
@@ -56,7 +60,7 @@ object QueueRows:
   def patch(ds: DataSource, id: QueueItem.Id, p: QueuePatch): Either[Api.Error, QueueItem] =
     transact(ds):
       QueueRepo.get(repoId(id)).toRight(notFound(id)).map { cur =>
-        QueueRepo.update(Queue.applyPatch(cur, p))
+        QueueRepo.update(cur.applyPatch(p))
         QueueRepo.get(repoId(id)).get
       }
 

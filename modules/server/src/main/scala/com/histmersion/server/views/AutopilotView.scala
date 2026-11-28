@@ -1,6 +1,10 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.DrainSet
+
 import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.api.automation.{AgentMode, Autopilot}
 import com.histmersion.api.views.AutopilotStatus
@@ -23,7 +27,7 @@ final class AutopilotView(
     recheck: Instant => Acquire.Checks.RecheckStatus,
     clock: Clock
 ):
-  def page(st: Autopilot.EngineStatus): AutopilotStatus =
+  def page(st: EngineStatus): AutopilotStatus =
     val now = Instant.now(clock)
     st.into[AutopilotStatus]
       .withFieldConst(_.upstreams, upstreams(now))
@@ -32,10 +36,10 @@ final class AutopilotView(
 
   def autopilot: AutopilotStatus = page(managers.autopilot)
 
-  def setAutopilot(in: Autopilot.AutopilotSet)(using Creator.New): Either[Problems, AutopilotStatus] =
+  def setAutopilot(in: AutopilotSet)(using Creator.New): Either[Problems, AutopilotStatus] =
     managers.setAutopilot(in).map(page)
 
   def setMode(in: AgentMode.ModeSet)(using Creator.New): Either[Api.Error, AutopilotStatus] =
     managers.setMode(in).map(page)
 
-  def drain(in: Autopilot.DrainSet): Either[Problems, AutopilotStatus] = managers.drain(in).map(page)
+  def drain(in: DrainSet): Either[Problems, AutopilotStatus] = managers.drain(in).map(page)

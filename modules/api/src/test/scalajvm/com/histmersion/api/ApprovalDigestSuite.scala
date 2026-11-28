@@ -1,6 +1,13 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.automation.approvaldigest.Open
+import com.histmersion.api.automation.approvaldigest.SubjectCount
+import com.histmersion.api.automation.approvaldigest.BulkDecide
+import com.histmersion.api.automation.approvaldigest.Digest
+import com.histmersion.api.automation.approvaldigest.BulkResult
+import com.histmersion.api.automation.approvaldigest.BulkFailed
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.nonempty.NonEmptyVector
 import com.histmersion.testsupport.ComparedByValue.given
@@ -79,10 +86,10 @@ class ApprovalDigestSuite extends munit.FunSuite:
       group(open, _ => false),
       heldForPerson = Digest.HeldForPerson(2)
     )
-    val l = line(d)
+    val l = d.line
     assert(l.value.startsWith("approval digest: 5 approvals wait for a person — goal-plan 3 (oldest 2026-10-20)"), l)
     assert(l.value.contains("2 manager items held for a person") && l.value.contains("decide-all approve --kind"), l)
-    assertEquals(line(Digest(Digest.At("t"))), "approval digest: nothing waits for a person")
+    assertEquals(Digest(Digest.At("t")).line, "approval digest: nothing waits for a person")
     val md = ApprovalDigestMarkdown.digest(d)
     assert(
       md.startsWith("# Waiting for a person (2026-10-24 07:05 UTC)") && md.contains(
@@ -139,7 +146,7 @@ class ApprovalDigestSuite extends munit.FunSuite:
     assertEquals(gs.map(g => g.kind -> g.decidedBy).toMap.get(Approval.Kind.Wire("article-publish")), Some("checked"))
     val d =
       Digest(Digest.At("2026-10-24T07:05:00Z"), Digest.Total(5), gs, goalPlansWait = Some(Digest.GoalPlansWait(why)))
-    val l = line(d)
+    val l = d.line
     assert(
       l.value.contains("goal-plan 3 (oldest 2026-10-20), waiting: nobody needs to decide them now") && l.value.contains(
         s"; $why"

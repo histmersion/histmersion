@@ -1,6 +1,8 @@
 package com.histmersion
 package db
 
+import com.histmersion.api.library.tree.TreeRow
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -18,7 +20,6 @@ import com.histmersion.api.GeoPoint
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.domain.catalogue.Place.Id as PlaceId
-import com.histmersion.api.library.Tree.TreeRow
 import com.histmersion.api.library.Confidence
 import com.histmersion.util.database.Migrate
 import com.histmersion.api.catalogue.{Period, Place}

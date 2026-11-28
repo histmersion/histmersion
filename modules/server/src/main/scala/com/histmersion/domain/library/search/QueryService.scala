@@ -1,8 +1,9 @@
 package com.histmersion
 package domain.library.search
-import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.library.Query.{QueryResult, SchemaTable}
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.SchemaTable
+import com.histmersion.util.problem.Problem
 
 import com.histmersion.util.database.Transactor
 

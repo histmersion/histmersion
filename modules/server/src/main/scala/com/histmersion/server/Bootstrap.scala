@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.catalogue.gazetteer.SourceInfo
 import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.problem.{Legacy, Problem}
 import io.scalaland.chimney.dsl.*
@@ -128,7 +130,7 @@ final class Bootstrap(
   // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
-  def gazetteerSources: List[Gazetteer.SourceInfo] =
+  def gazetteerSources: List[SourceInfo] =
     gazetteerImports.sources()
 
   /** `POST /api/places/load?source=&apply=` — one external source as an init job: a dry run that reports what it would
@@ -136,11 +138,11 @@ final class Bootstrap(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
-  def loadGazetteer(source: Gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply)(using
+  def loadGazetteer(source: api.catalogue.gazetteer.Kind.Wire, apply: GazetteerLoad.LoadApply)(using
       Creator.New
   ): Either[Api.Error, JobInfo] =
     maintenance.guard(WriteGate.OperationName("places/load")):
-      Gazetteer.Kind
+      api.catalogue.gazetteer.Kind
         .parse(source)
         .toRight(
           Api.Error(
@@ -258,7 +260,7 @@ final class Bootstrap(
       check: Boolean = false,
       note: JobInfo.Progress => Unit = _ => ()
   )(using WritePermit)(using Creator.New): Either[String, String] =
-    val gazetteer = Gazetteer.Kind.parse(Gazetteer.Kind.Wire(name))
+    val gazetteer = api.catalogue.gazetteer.Kind.parse(api.catalogue.gazetteer.Kind.Wire(name))
     if check && gazetteer.isEmpty then Left(s"'$name' has no dry run (only ${GazetteerLoad.names.mkString(", ")})")
     else
       gazetteer match

@@ -1,6 +1,10 @@
 package com.histmersion
 package server.views
 
+import com.histmersion.api.automation.queue.Kind
+import com.histmersion.domain.acquirerecheck.Rationale
+import com.histmersion.api.automation.queue.GoalRef
+
 import io.scalaland.chimney.dsl.*
 import WorkListView.given
 import io.scalaland.chimney.Transformer
@@ -8,9 +12,7 @@ import com.histmersion.domain.AcquireRecheck
 
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.views.QueueListing
-import com.histmersion.api.automation.Queue.GoalRef
 import com.histmersion.api.automation.Goal.Plans.LinkKind
-import com.histmersion.api.automation.Queue.Kind
 import com.histmersion.domain.automation.goals.GoalService
 import com.histmersion.domain.automation.worklists.QueueScope
 import com.histmersion.domain.automation.worklists.QueueService
@@ -67,12 +69,12 @@ final class WorkListView(
                 Acquire.Checks.AcquireCheck(
                   i.id,
                   Acquire.Checks.AcquireCheck.CheckedAt(last.at.toString),
-                  AcquireRecheck.Outcome
+                  domain.acquirerecheck.Outcome
                     .of(last.outcome)
                     .fold(AcquireAttemptRow.LegacyWire)(_.wire)
                     .transformInto[Acquire.Checks.AcquireCheck.Outcome],
-                  AcquireRecheck.Rationale.Said
-                    .of(AcquireRecheck.Rationale.of(last))
+                  Rationale.Said
+                    .of(Rationale.of(last))
                     .transformInto[Acquire.Checks.AcquireCheck.Said],
                   AcquireAttempt.Tries.of(as).transformInto[Acquire.Checks.AcquireCheck.Tries]
                 )
@@ -82,7 +84,7 @@ final class WorkListView(
         .goalsOfItems(items.map(i => GoalLinkRepo.ItemId(i.id.value)))
         .map((id, slug, title) =>
           (
-            Queue.QueueItem.Id(id.value),
+            api.automation.queue.QueueItem.Id(id.value),
             GoalRef(ApiGoal.Slug(slug.value), ApiGoal.Title(title.value))
           )
         )
@@ -101,7 +103,7 @@ object WorkListView:
     * enum's `Outcome.Wire`, the record's `Outcome`), so chimney-iron's same-name pairing does not apply.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  given Transformer[AcquireRecheck.Outcome.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
+  given Transformer[domain.acquirerecheck.Outcome.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
     Acquire.Checks.AcquireCheck.Outcome(wire.value)
   type IncludeAll = IncludeAll.T
   object IncludeAll extends Newtype[Boolean, Pure]

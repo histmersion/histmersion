@@ -1,6 +1,10 @@
 package com.histmersion
 package domain.library.search
 
+import com.histmersion.api.library.query.QueryRequest
+import com.histmersion.api.library.query.QueryResult
+import com.histmersion.api.library.query.SchemaTables
+
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.library.Query.*
@@ -35,4 +39,4 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
     * bigger problems than a thin tool description.
     */
   def toolDescription: Query.ToolDescription =
-    Query.toolDescription(scala.util.Try(schemaTables).getOrElse(SchemaTables(Nil)))
+    scala.util.Try(schemaTables).getOrElse(SchemaTables(Nil)).toolDescription

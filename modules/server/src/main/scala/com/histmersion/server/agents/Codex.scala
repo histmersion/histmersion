@@ -1,5 +1,7 @@
 package com.histmersion
 package server.agents
+
+import com.histmersion.api.automation.agents.ModelRef
 import com.histmersion.util.json.RawJson
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.automation.agents.SttpAiJson
@@ -12,7 +14,7 @@ import com.histmersion.domain.automation.agents.*
 import com.histmersion.domain.automation.managers.Zero
 
 import com.histmersion.config.CodexConfig
-import com.histmersion.api.automation.Agents.{ModelRef, ProviderKind}
+import com.histmersion.api.automation.Agents.ProviderKind
 import sttp.ai.core.agent.*
 import com.histmersion.api.Plural
 import com.histmersion.domain.CodexRetention
@@ -100,7 +102,7 @@ object Codex:
       }
     val _ = env.put("CODEX_HOME", home.toString)
     // the base config makes Histmersion's MCP server required: a step with no tools still starts it
-    val _ = env.put(AgentGenerator.TokenEnv, token.fold("none")(_.value))
+    val _ = env.put(AgentDefinitions.TokenEnv, token.fold("none")(_.value))
 
   /** `codex exec --json` events → the outcome: `item.completed` agent messages (the last is the answer), MCP tool calls
     * with their results, reasoning; `turn.completed.usage`; `turn.failed` and `error` messages.

@@ -1,6 +1,8 @@
 package com.histmersion
 package api.research
 
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.json.TapirJson.*
 import com.histmersion.api.Api
@@ -32,9 +34,9 @@ object ResearchApi:
           "owner, and what the agents will handle."
       )
 
-  lazy val acquisition: PublicEndpoint[Queue.QueueItem.Id, Api.Error, OpenWork.History, Any] =
+  lazy val acquisition: PublicEndpoint[QueueItem.Id, Api.Error, OpenWork.History, Any] =
     base.get
-      .in("acquisitions" / path[Queue.QueueItem.Id]("id"))
+      .in("acquisitions" / path[QueueItem.Id]("id"))
       .out(jsonBody[OpenWork.History])
       .description("One acquisition's verdict and its kept attempts, with what each provider answered.")
 

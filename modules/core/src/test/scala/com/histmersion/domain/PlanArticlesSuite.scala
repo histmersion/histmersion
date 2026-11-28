@@ -9,8 +9,6 @@ import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
 
-import com.histmersion.domain.PlanArticles.*
-import com.histmersion.domain.PlanArticles.Limits
 import com.histmersion.api.research.Article
 import com.histmersion.domain.library.Citekey
 import com.histmersion.domain.automation.Goal
@@ -25,16 +23,16 @@ import com.histmersion.lint.{tolerated, LintRule}
 class PlanArticlesSuite extends munit.FunSuite:
 
   private def art(
-      slug: ArticleAnswer.Slug,
-      topics: List[ArticleAnswer.Topics],
-      title: ArticleAnswer.Title = ArticleAnswer.Title("T")
+      slug: ArticlesAnswer.ArticleAnswer.Slug,
+      topics: List[ArticlesAnswer.ArticleAnswer.Topics],
+      title: ArticlesAnswer.ArticleAnswer.Title = ArticlesAnswer.ArticleAnswer.Title("T")
   ) =
-    ArticleAnswer(slug, title, None, None, topics, Nil, Plans.ArticlePlan.Rationale("why"))
+    ArticlesAnswer.ArticleAnswer(slug, title, None, None, topics, Nil, Plans.ArticlePlan.Rationale("why"))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def slug(s: String) = ArticleAnswer.Slug(s)
+  private def slug(s: String) = ArticlesAnswer.ArticleAnswer.Slug(s)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def topics(ts: String*) = ts.toList.map(ArticleAnswer.Topics(_))
+  private def topics(ts: String*) = ts.toList.map(ArticlesAnswer.ArticleAnswer.Topics(_))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def citekeys(ks: String*) = ks.map(Citekey.assume(_)).toSet
 
@@ -48,10 +46,10 @@ class PlanArticlesSuite extends munit.FunSuite:
         art(slug("Bad Slug"), topics("x")),
         art(slug("good"), topics("tin")),
         art(slug("nofilter"), Nil),
-        art(slug("untitled"), topics("x"), title = ArticleAnswer.Title(" "))
+        art(slug("untitled"), topics("x"), title = ArticlesAnswer.ArticleAnswer.Title(" "))
       )
     )
-    val back = check(a, maxArticles = Limits.MaxArticles(6), last = LastRound(false))
+    val back = a.check(maxArticles = ArticlesAnswer.Limits.MaxArticles(6), last = ArticlesAnswer.LastRound(false))
     assert(
       back.left.exists(ps =>
         ps.exists(_.sentence.contains("Bad Slug")) && ps.exists(_.sentence.contains("no filter")) &&
@@ -59,7 +57,7 @@ class PlanArticlesSuite extends munit.FunSuite:
       ),
       back.toString
     )
-    check(a, maxArticles = Limits.MaxArticles(6), last = LastRound(true)) match
+    a.check(maxArticles = ArticlesAnswer.Limits.MaxArticles(6), last = ArticlesAnswer.LastRound(true)) match
       case Right((cs, dropped)) =>
         assertEquals(cs.map(c => (c.slug, c.kind)), List(("good", "concept")))
         // the sentences the dropped entries had as text before they were typed (G60 step 5)
@@ -72,22 +70,22 @@ class PlanArticlesSuite extends munit.FunSuite:
         assert(said.contains("not proposed: article 'untitled': it has no title"), said)
       case other => fail(other.toString)
     assert(
-      check(ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil), Limits.MaxArticles(6), last = LastRound(false)).isLeft
+      ArticlesAnswer(ArticlesAnswer.Rationale(""), Nil)
+        .check(ArticlesAnswer.Limits.MaxArticles(6), last = ArticlesAnswer.LastRound(false))
+        .isLeft
     )
     assert(
-      check(
-        ArticlesAnswer(ArticlesAnswer.Rationale("r"), List(art(slug("a"), topics("x")), art(slug("b"), topics("y")))),
-        Limits.MaxArticles(1),
-        last = LastRound(false)
-      ).left
+      ArticlesAnswer(ArticlesAnswer.Rationale("r"), List(art(slug("a"), topics("x")), art(slug("b"), topics("y"))))
+        .check(ArticlesAnswer.Limits.MaxArticles(1), last = ArticlesAnswer.LastRound(false))
+        .left
         .exists(_.exists(_.sentence.contains("at most 1")))
     )
 
   test("verify: slug taken, too few sources, too much overlap with an area article or an earlier proposal are dropped"):
-    val lim = Limits(
-      minSources = Limits.MinSources(3),
-      maxOverlap = Limits.MaxOverlap(0.5),
-      maxArticles = Limits.MaxArticles(6)
+    val lim = ArticlesAnswer.Limits(
+      minSources = ArticlesAnswer.Limits.MinSources(3),
+      maxOverlap = ArticlesAnswer.Limits.MaxOverlap(0.5),
+      maxArticles = ArticlesAnswer.Limits.MaxArticles(6)
     )
     val sets = Map(
       Article.Filter.Topics("tin") -> citekeys("a", "b", "c", "d"),
@@ -96,14 +94,14 @@ class PlanArticlesSuite extends munit.FunSuite:
       Article.Filter.Topics("old") -> citekeys("a", "b", "c", "x"),
       Article.Filter.Topics("dup") -> citekeys("e", "f", "g", "h")
     )
-    def c(slug: Article.Slug, topic: Article.Filter.Topics) = Candidate(
+    def c(slug: Article.Slug, topic: Article.Filter.Topics) = ArticlesAnswer.Candidate(
       slug,
       Article.Title(slug.value),
       Article.Kind.Wire("concept"),
       Article.Filter(topics = List(topic)),
       Plans.ArticlePlan.Rationale("w")
     )
-    val plan = verify(
+    val plan = ArticlesAnswer.verify(
       Goal.Slug("goal"),
       ArticlesAnswer.Rationale(" r "),
       List(
@@ -128,7 +126,7 @@ class PlanArticlesSuite extends munit.FunSuite:
     assert(said.exists(d => d.startsWith("'small': ") && d.endsWith(" returns 1 source; at least 3")), said)
     assert(said.contains("'copper-again': 75% of its sources are [[cop]]'s already (less than 50%)"), said)
     // the overlap with an area article: 3 of "old"'s 4 sources are "existing2"'s
-    val p2 = verify(
+    val p2 = ArticlesAnswer.verify(
       Goal.Slug("goal"),
       ArticlesAnswer.Rationale("r"),
       List(c(Article.Slug("old"), Article.Filter.Topics("old"))),
@@ -146,7 +144,8 @@ class PlanArticlesSuite extends munit.FunSuite:
 
   test("overlap: the share of mine the other holds"):
     assertEquals(
-      overlap(Set(Citekey.assume("a"), Citekey.assume("b")), Set(Citekey.assume("b"), Citekey.assume("c"))),
+      ArticlesAnswer
+        .overlap(Set(Citekey.assume("a"), Citekey.assume("b")), Set(Citekey.assume("b"), Citekey.assume("c"))),
       0.5
     )
-    assertEquals(overlap(Set.empty, Set(Citekey.assume("a"))), 0.0)
+    assertEquals(ArticlesAnswer.overlap(Set.empty, Set(Citekey.assume("a"))), 0.0)

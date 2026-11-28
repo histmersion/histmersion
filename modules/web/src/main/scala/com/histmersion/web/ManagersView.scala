@@ -1,5 +1,38 @@
 package com.histmersion
 package web
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerConfig
+import com.histmersion.api.automation.managers.Sweep
+import com.histmersion.api.automation.agents.ModelOverride
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.HintAdd
+import com.histmersion.api.automation.managers.HintEffect
+import com.histmersion.api.automation.managers.EnqueueKind
+import com.histmersion.api.automation.managers.EnqueueResult
+import com.histmersion.api.automation.managers.EnqueueRequest
+import com.histmersion.api.automation.autopilot.GoalProgress
+import com.histmersion.api.automation.autopilot.FocusGoal
+import com.histmersion.api.automation.autopilot.FocusWaiting
+import com.histmersion.api.automation.autopilot.FocusInfo
+import com.histmersion.api.automation.autopilot.FocusSet
+import com.histmersion.api.automation.autopilot.DrainInfo
+import com.histmersion.api.automation.autopilot.DrainSet
+import com.histmersion.api.automation.autopilot.AutopilotSet
+import com.histmersion.api.automation.autopilot.EngineStatus
+import com.histmersion.api.automation.agentscheduler.Waiting
+import com.histmersion.api.automation.agentscheduler.StrategyLine
+import com.histmersion.api.automation.agentscheduler.SchedulerStatus
+import com.histmersion.api.automation.agentscheduler.SchedulerSet
+import com.histmersion.api.automation.Stall
+import com.histmersion.api.automation.agentscheduler.Started
+import com.histmersion.api.automation.managers.ItemCounts
+import com.histmersion.api.automation.managers.ManagerDetail
+import com.histmersion.api.automation.managers.ItemPage
+import com.histmersion.api.automation.managers.EventPage
+import com.histmersion.api.automation.managers.ItemPatch
+import com.histmersion.api.automation.managers.ManagerUpdate
 import com.histmersion.util.problem.{Legacy, Problem}
 import com.histmersion.util.problem.Text.sentence
 
@@ -20,8 +53,7 @@ import com.histmersion.api.automation.{
   AgentSchedulerMarkdown,
   Autopilot,
   ManagersApi,
-  ManagersMarkdown,
-  Stalls
+  ManagersMarkdown
 }
 import com.histmersion.api.views.AutopilotStatus
 import com.histmersion.api.automation.Goal
@@ -126,7 +158,7 @@ object ManagersView:
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def managerMeaning(id: Managers.ManagerInfo.Id): Option[ManagerMeaning] =
+  def managerMeaning(id: ManagerInfo.Id): Option[ManagerMeaning] =
     val goal = id.value.dropWhile(_ != ':').drop(1)
     Kind.parse(Kind.Wire(id.value.takeWhile(_ != ':'))).map {
       case Kind.Review =>
@@ -218,7 +250,7 @@ object ManagersView:
     val usd = g("budgetUsd")
     val daily = g("dailyUsd")
     val models =
-      list(g("models"), ";").getOrElse(Nil).map(w => Agents.ModelOverride.parse(Agents.ModelOverride.Wire(w)))
+      list(g("models"), ";").getOrElse(Nil).map(w => ModelOverride.parse(ModelOverride.Wire(w)))
     val result: Either[String, ManagerConfig] =
       if bad.nonEmpty then Left(s"not a whole number: ${bad.mkString(", ")}")
       else if usd.nonEmpty && usd.toDoubleOption.forall(_ <= 0) then Left("budget USD is not a positive number")
@@ -354,27 +386,27 @@ object ManagersView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def hint(
-      text: Managers.HintAdd.Text,
-      item: Managers.HintAdd.Item,
-      once: Managers.HintAdd.Once,
-      action: Managers.HintEffect.Action,
-      targets: Managers.HintEffect.Targets,
-      tag: Managers.HintEffect.Tag,
-      until: Managers.HintEffect.Until,
-      untilSource: Managers.HintEffect.UntilSource,
-      suggest: Managers.HintAdd.Suggest = Managers.HintAdd.Suggest.Direct
-  ): Either[Managers.HintAdd.Text, HintAdd] =
+      text: HintAdd.Text,
+      item: HintAdd.Item,
+      once: HintAdd.Once,
+      action: HintEffect.Action,
+      targets: HintEffect.Targets,
+      tag: HintEffect.Tag,
+      until: HintEffect.Until,
+      untilSource: HintEffect.UntilSource,
+      suggest: HintAdd.Suggest = HintAdd.Suggest.Direct
+  ): Either[HintAdd.Text, HintAdd] =
     val t = text.value.trim
     val none = HintEffect.Action.none(action)
     val itemText = Option(item.value.trim).filter(_.nonEmpty).map(HintAdd.Item(_))
-    if t.isEmpty then Left(Managers.HintAdd.Text("a hint needs text"))
+    if t.isEmpty then Left(HintAdd.Text("a hint needs text"))
     else if suggest.suggest && !none then
-      Left(Managers.HintAdd.Text("choose an action, or let the model suggest one — not both"))
+      Left(HintAdd.Text("choose an action, or let the model suggest one — not both"))
     else if suggest.suggest then Right(HintAdd(HintAdd.Text(t), itemText, Some(once), suggest = Some(suggest)))
     else if none then Right(HintAdd(HintAdd.Text(t), itemText, Some(once)))
     else
       HintEffect.Action.verb(action).filter(HintEffect.Verb.Actions.contains) match
-        case None       => Left(Managers.HintAdd.Text(s"unknown action $action"))
+        case None       => Left(HintAdd.Text(s"unknown action $action"))
         case Some(verb) =>
           val e = HintEffect(
             verb.word,
@@ -386,9 +418,9 @@ object ManagersView:
             Option(untilSource.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_))
           )
           if verb == HintEffect.Verb.Hold && e.until.isEmpty && e.untilSource.isEmpty then
-            Left(Managers.HintAdd.Text("hold: give a date or a source"))
+            Left(HintAdd.Text("hold: give a date or a source"))
           else if e.targets.isEmpty && e.tag.isEmpty && item.value.trim.isEmpty then
-            Left(Managers.HintAdd.Text(s"${verb.word}: name the articles or a tag"))
+            Left(HintAdd.Text(s"${verb.word}: name the articles or a tag"))
           else Right(HintAdd(HintAdd.Text(t), itemText, Some(once), Some(e)))
 
   // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
@@ -421,7 +453,7 @@ object ManagersView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def enqueueButtons(
-      target: Managers.EnqueueRequest.Target,
+      target: EnqueueRequest.Target,
       buttons: List[(EnqueueKind, Icon, ButtonLabel, Hint)]
   ): HtmlElement =
     val note = Var(Option.empty[(String, String)])
@@ -522,7 +554,7 @@ object ManagersView:
   /** One goal's line in the autopilot's table: its counts and its pace. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def goalLine(g: Autopilot.GoalProgress): GoalLine =
+  def goalLine(g: GoalProgress): GoalLine =
     GoalLine(
       s"${counted(g.sources.value, "source")} · ${counted(g.articles.value, "article")}" +
         (if g.openApprovals.value > 0 then s" · ${counted(g.openApprovals.value, "open approval")}" else "") +
@@ -532,12 +564,12 @@ object ManagersView:
   /** An active or queued goal's pace, in a line. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def focusPace(g: Autopilot.FocusGoal): FocusPace =
+  def focusPace(g: FocusGoal): FocusPace =
     FocusPace(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)"))
 
   /** The goals that cannot use a focus slot now, by why, the commonest first. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def waitingSummary(ws: List[Autopilot.FocusWaiting]): WaitingSummary =
+  def waitingSummary(ws: List[FocusWaiting]): WaitingSummary =
     WaitingSummary(
       ws.groupBy(_.code).toList.sortBy((c, xs) => (-xs.size, c.value)).map((c, xs) => s"${xs.size} $c").mkString(" · ")
     )
@@ -545,7 +577,7 @@ object ManagersView:
   /** The focus's heading: the cap and where it comes from, or why it is not in force. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def focusHead(f: Autopilot.FocusInfo): FocusHead =
+  def focusHead(f: FocusInfo): FocusHead =
     FocusHead(
       (if f.on.on then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
         (if f.maxFrom.value == "person" then " (cap set by a person)" else "") +
@@ -565,18 +597,18 @@ object ManagersView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def focusPanel(
-      f: Autopilot.FocusInfo,
-      changed: Autopilot.FocusInfo => Unit,
+      f: FocusInfo,
+      changed: FocusInfo => Unit,
       failure: Var[Option[String]]
   ): HtmlElement =
     val cap = Var(f.max.toString)
-    def go(what: WriteLabel)(call: => scala.concurrent.Future[Autopilot.FocusInfo]): Unit =
+    def go(what: WriteLabel)(call: => scala.concurrent.Future[FocusInfo]): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         call.onComplete(
           _.fold(e => failure.set(Some(shown"focus $what: ${e.getMessage}")), x => { failure.set(None); changed(x) })
         )
-    def pinButton(g: Autopilot.FocusGoal) =
+    def pinButton(g: FocusGoal) =
       val (verb, tip) = if g.pinned.pinned then ("unpin", "Let the focus choose again")
       else ("pin", "Keep this goal active (it takes a slot now)")
       button(
@@ -586,11 +618,11 @@ object ManagersView:
         title := tip,
         onClick --> (_ =>
           go(WriteLabel(shown"$verb ${g.slug}"))(
-            ApiClient.setFocus(Autopilot.FocusSet.Action(verb), Some(Goal.Slug(g.slug.value)))
+            ApiClient.setFocus(FocusSet.Action(verb), Some(Goal.Slug(g.slug.value)))
           )
         )
       )
-    def goalLink(slug: Autopilot.FocusGoal.Slug) = WinLink(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), slug.value)
+    def goalLink(slug: FocusGoal.Slug) = WinLink(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), slug.value)
     div(
       cls := "autopilot-focus",
       div(
@@ -613,7 +645,7 @@ object ManagersView:
             onClick --> (_ =>
               whole(cap.now()).foreach(n =>
                 go(WriteLabel("cap"))(
-                  ApiClient.setFocus(Autopilot.FocusSet.Action("max"), value = Some(Autopilot.FocusSet.Value(n)))
+                  ApiClient.setFocus(FocusSet.Action("max"), value = Some(FocusSet.Value(n)))
                 )
               )
             )
@@ -624,7 +656,7 @@ object ManagersView:
               cls := "btn btn--sm",
               "default",
               title := "back to agents.autopilot.max-active-goals",
-              onClick --> (_ => go(WriteLabel("cap"))(ApiClient.setFocus(Autopilot.FocusSet.Action("max"))))
+              onClick --> (_ => go(WriteLabel("cap"))(ApiClient.setFocus(FocusSet.Action("max"))))
             )
           )
         )
@@ -681,7 +713,7 @@ object ManagersView:
   /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def drainLine(d: Autopilot.DrainInfo): DrainLine =
+  def drainLine(d: DrainInfo): DrainLine =
     val line =
       if d.drained.drained then
         s"Paused since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
@@ -694,7 +726,7 @@ object ManagersView:
 
   /** The goals by stage, in the order a goal moves through them: how many in each. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def stages(gs: List[Autopilot.GoalProgress]): Stages =
+  def stages(gs: List[GoalProgress]): Stages =
     Stages(
       Goal.Status.all
         .map(st => st -> gs.count(_.status.value == st.value))
@@ -715,13 +747,13 @@ object ManagersView:
     def load(): Unit = ApiClient.autopilot.onComplete(
       _.fold(e => failure.set(Some(e.getMessage)), s => { failure.set(None); st.set(Some(s)) })
     )
-    def drain(on: Autopilot.DrainSet.On): Unit =
+    def drain(on: DrainSet.On): Unit =
       ApiClient
         .drain(on)
         .onComplete(
           _.fold(e => failure.set(Some(s"drain: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
         )
-    def flip(on: Autopilot.AutopilotSet.On): Unit =
+    def flip(on: AutopilotSet.On): Unit =
       pending.set(Some(on.on))
       ApiClient.setAutopilot(on).onComplete { r =>
         pending.set(None)
@@ -753,14 +785,14 @@ object ManagersView:
                 Icon.Managers,
                 "Pause",
                 "Pause the seeding managers and watchers the autopilot runs",
-                () => flip(Autopilot.AutopilotSet.On.Off)
+                () => flip(AutopilotSet.On.Off)
               )
             else
               WriteButton(
                 Icon.Managers,
                 "Start working",
                 "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself",
-                () => flip(Autopilot.AutopilotSet.On.On)
+                () => flip(AutopilotSet.On.On)
               )
           )
         ),
@@ -772,14 +804,14 @@ object ManagersView:
                 Icon.Managers,
                 Wording.Undrain,
                 "The scheduler admits work again (undrain)",
-                () => drain(Autopilot.DrainSet.On.Off)
+                () => drain(DrainSet.On.Off)
               )
             case None =>
               WriteButton(
                 Icon.Managers,
                 Wording.Drain,
                 "Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)",
-                () => drain(Autopilot.DrainSet.On.On)
+                () => drain(DrainSet.On.On)
               )
           }
         )
@@ -801,8 +833,8 @@ object ManagersView:
             div(
               cls := "muted",
               ManagersMarkdown.backlog(
-                Managers.ManagerInfo.Backlog(s.backlog.value),
-                s.backlogDays.map(d => Managers.ManagerInfo.BacklogDays(d.value))
+                ManagerInfo.Backlog(s.backlog.value),
+                s.backlogDays.map(d => ManagerInfo.BacklogDays(d.value))
               )
             )
           ),
@@ -813,7 +845,7 @@ object ManagersView:
               .mkString(" · ")
           ),
           Option.when(!s.cronsEnabled.cronsEnabled)(
-            p(cls := "form-error", role := "alert", Autopilot.EngineStatus.CronsOff)
+            p(cls := "form-error", role := "alert", EngineStatus.CronsOff)
           ),
           Option.when(s.changes.nonEmpty)(div(cls := "form-ok", s.changes.mkString("; ").take(400))),
           s.focus.map(f => focusPanel(f, x => st.update(_.map(_.modify(_.focus).setTo(Some(x)))), failure)),
@@ -857,11 +889,11 @@ object ManagersView:
   /** The waiting items a person's filters leave: any of the job types, any of the reasons, the target text. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def visibleWaiting(
-      ws: List[AgentScheduler.Waiting],
-      types: List[AgentScheduler.Waiting.JobType],
-      codes: List[AgentScheduler.Waiting.Code],
+      ws: List[Waiting],
+      types: List[Waiting.JobType],
+      codes: List[Waiting.Code],
       subject: Option[Activity.Subject]
-  ): List[AgentScheduler.Waiting] =
+  ): List[Waiting] =
     ws.filter(w =>
       (types.isEmpty || types.contains(w.jobType)) && (codes.isEmpty || codes.contains(w.code)) &&
         subject.forall(t =>
@@ -900,7 +932,7 @@ object ManagersView:
   /** Why an item waits, by its code (the queue's, and an item's own); a tooltip on the "why" chips. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def waitMeaning(code: AgentScheduler.Waiting.Code): Option[WaitMeaning] = code.value match
+  def waitMeaning(code: Waiting.Code): Option[WaitMeaning] = code.value match
     case "capacity" =>
       Some(
         WaitMeaning(
@@ -937,8 +969,8 @@ object ManagersView:
   /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def facet(
-      ws: List[AgentScheduler.Waiting],
-      of: AgentScheduler.Waiting => Facet.Value
+      ws: List[Waiting],
+      of: Waiting => Facet.Value
   ): List[(Facet.Value, Facet.Count)] =
     ws.groupMapReduce(of)(_ => 1)(_ + _)
       .toList
@@ -947,7 +979,7 @@ object ManagersView:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def strategyLabel(name: AgentScheduler.StrategyLine.Name): StrategyLabel =
+  def strategyLabel(name: StrategyLine.Name): StrategyLabel =
     StrategyLabel(Wording.strategies.getOrElse(name, Wording.humanize(Wording.Id(name.value))))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -955,13 +987,13 @@ object ManagersView:
     UiLabels.Text(Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(Wording.Id(t.value))))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def waitLabel(code: AgentScheduler.Waiting.Code): WaitLabel =
+  def waitLabel(code: Waiting.Code): WaitLabel =
     WaitLabel(AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(Wording.Id(code.value))))
 
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def schedulerHead(s: AgentScheduler.SchedulerStatus): SchedulerHead =
+  def schedulerHead(s: SchedulerStatus): SchedulerHead =
     SchedulerHead(
       shown"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom.value == "person"
                                                         then " (set by a person)"
@@ -980,23 +1012,23 @@ object ManagersView:
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def schedulerSection: HtmlElement =
-    val st = Var(Option.empty[AgentScheduler.SchedulerStatus])
+    val st = Var(Option.empty[SchedulerStatus])
     val failure = Var(Option.empty[String])
     def load(): Unit = ApiClient
       .scheduler(Some(Paging.Limit(300)))
       .onComplete(_.fold(e => failure.set(Some(e.getMessage)), s => { failure.set(None); st.set(Some(s)) }))
-    def switch(name: AgentScheduler.StrategyLine.Name): Unit =
+    def switch(name: StrategyLine.Name): Unit =
       if !Auth.writableNow then WindowManager.open(WindowKey.ApiKey)
       else
         ApiClient
-          .setScheduler(AgentScheduler.SchedulerSet.Strategy(name.value))
+          .setScheduler(SchedulerSet.Strategy(name.value))
           .onComplete(
             _.fold(e => failure.set(Some(s"scheduler: ${e.getMessage}")), s => { failure.set(None); st.set(Some(s)) })
           )
     val filters = List(UiState.schedTypes, UiState.schedCodes, UiState.schedSubject)
-    val stalls = Var(Option.empty[Stalls.StallReport])
-    val waiting = st.signal.map(_.fold(List.empty[AgentScheduler.Waiting])(_.waiting))
-    def openRuns(manager: AgentScheduler.Started.Manager): Unit =
+    val stalls = Var(Option.empty[Stall.StallReport])
+    val waiting = st.signal.map(_.fold(List.empty[Waiting])(_.waiting))
+    def openRuns(manager: Started.Manager): Unit =
       UiState.set(UiState.runManager := Some(manager.value), UiState.runStatus := None)()
       WindowManager.open(WindowKey.Runs)
     div(
@@ -1148,8 +1180,8 @@ object ManagersView:
           "why",
           waiting.map(facet(_, w => Facet.Value(w.code.value))),
           UiState.schedCodes,
-          show = c => waitLabel(AgentScheduler.Waiting.Code(c)).value,
-          hint = c => waitMeaning(AgentScheduler.Waiting.Code(c)).map(_.value),
+          show = c => waitLabel(Waiting.Code(c)).value,
+          hint = c => waitMeaning(Waiting.Code(c)).map(_.value),
           about = "Show only waiting items held back for the reasons picked (any of them)."
         ),
         div(
@@ -1163,8 +1195,8 @@ object ManagersView:
         .map { (ws, ty, co, su) =>
           val shown = visibleWaiting(
             ws,
-            ty.map(AgentScheduler.Waiting.JobType(_)),
-            co.map(AgentScheduler.Waiting.Code(_)),
+            ty.map(Waiting.JobType(_)),
+            co.map(Waiting.Code(_)),
             su.map(Activity.Subject(_))
           )
           if ws.isEmpty then p(cls := "muted", "Nothing waits.")
@@ -1290,7 +1322,7 @@ object ManagersView:
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def managerPane(id: Managers.ManagerInfo.Id): HtmlElement =
+  def managerPane(id: ManagerInfo.Id): HtmlElement =
     val detail = Var(Option.empty[ManagerDetail])
     val page = Var(Option.empty[ItemPage])
     val offset = Var(Offset(0))
@@ -1621,7 +1653,7 @@ object ManagersView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def itemRow(
-      mid: Managers.ManagerInfo.Id,
+      mid: ManagerInfo.Id,
       i: ManagerItem,
       busy: Signal[Boolean],
       write: WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
@@ -1681,13 +1713,13 @@ object ManagersView:
                         disabled <-- busy,
                         onClick --> { _ =>
                           val u = until.now().trim
-                          val patch = if u.isEmpty then ItemPatch(Managers.ItemPatch.Action("hold"))
+                          val patch = if u.isEmpty then ItemPatch(ItemPatch.Action("hold"))
                           else if ManagerPolicyText.isDate(u) then
-                            ItemPatch(Managers.ItemPatch.Action("hold"), until = Some(Managers.ItemPatch.Until(u)))
+                            ItemPatch(ItemPatch.Action("hold"), until = Some(ItemPatch.Until(u)))
                           else
                             ItemPatch(
-                              Managers.ItemPatch.Action("hold"),
-                              untilSource = Some(Managers.ItemPatch.UntilSource(u))
+                              ItemPatch.Action("hold"),
+                              untilSource = Some(ItemPatch.UntilSource(u))
                             )
                           write(WriteLabel(s"hold ${i.target}"))(ApiClient.managerPatchItem(mid, i.id, patch))
                         }
@@ -1715,8 +1747,8 @@ object ManagersView:
                                   mid,
                                   i.id,
                                   ItemPatch(
-                                    Managers.ItemPatch.Action("priority"),
-                                    priority = Some(Managers.ItemPatch.Priority(p))
+                                    ItemPatch.Action("priority"),
+                                    priority = Some(ItemPatch.Priority(p))
                                   )
                                 )
                               )
@@ -1732,7 +1764,7 @@ object ManagersView:
                       disabled <-- busy,
                       onClick --> (_ =>
                         write(WriteLabel(s"$a ${i.target}"))(
-                          ApiClient.managerPatchItem(mid, i.id, ItemPatch(Managers.ItemPatch.Action(a)))
+                          ApiClient.managerPatchItem(mid, i.id, ItemPatch(ItemPatch.Action(a)))
                         )
                       )
                     )
@@ -1751,7 +1783,7 @@ object ManagersView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def hintBox(
-      id: Managers.ManagerInfo.Id,
+      id: ManagerInfo.Id,
       busy: Signal[Boolean],
       write: WriteLabel => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =

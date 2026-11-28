@@ -1,5 +1,7 @@
 package com.histmersion
 package api.library
+
+import com.histmersion.api.checks.lint.LintItem
 import com.histmersion.api.checks.Lint.*
 import com.histmersion.lint.{tolerated, LintRule}
 

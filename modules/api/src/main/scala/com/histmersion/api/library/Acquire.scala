@@ -1,6 +1,9 @@
 package com.histmersion
 package api.library
 
+import com.histmersion.api.library.acquire.RetractionRow
+import com.histmersion.api.automation.queue.QueueItem
+
 import com.histmersion.util.problem.Problem
 import com.histmersion.util.problem.Text.sentence
 
@@ -300,16 +303,6 @@ object Acquire:
       (if (r.isInfluential).isInfluential then 0 else 1, if strong then 0 else 1, -r.year.fold(0L)(y => (y).value))
     }
 
-  final case class RetractionRow(
-      doi: Doi,
-      reason: Option[RetractionNotice.Account],
-      date: Option[RetractionRow.Date],
-      nature: Option[RetractionRow.Nature]
-  )
-
-  object RetractionRow:
-    export RetractionNotice.{Date, Nature}
-
   private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
   /** DOIs are case-insensitive, so they are stored lower-case: the DOI a text gives (bare, `doi:`, or as a resolver
@@ -375,7 +368,7 @@ object Acquire:
 
     @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
     final case class AcquireCheck(
-        item: Queue.QueueItem.Id,
+        item: QueueItem.Id,
         checkedAt: AcquireCheck.CheckedAt,
         outcome: AcquireCheck.Outcome,
         reason: Said,
@@ -413,7 +406,7 @@ object Acquire:
         extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
       type Limit = Limit.T
       object Limit extends Newtype[Int, Pure]
-      export Queue.QueueItem.Id
+      export QueueItem.Id
       type By = By.T
       object By extends Newtype[String, Pure]
       enum All derives CanEqual:

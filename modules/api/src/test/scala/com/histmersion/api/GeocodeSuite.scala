@@ -1,6 +1,14 @@
 package com.histmersion
 package api
 
+import com.histmersion.api.catalogue.geocode.Attempt
+import com.histmersion.api.catalogue.geocode.Approximation
+import com.histmersion.api.catalogue.geocode.Candidate
+import com.histmersion.api.catalogue.geocode.KindHint
+import com.histmersion.api.catalogue.geocode.Resolution
+import com.histmersion.api.catalogue.geocode.Move
+import com.histmersion.api.catalogue.geocode.Placement
+
 import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
@@ -44,50 +52,50 @@ class GeocodeSuite extends munit.FunSuite:
   // ── attempts ─────────────────────────────────────────────────────────────────────────────────
 
   test("qualifiers: a directional prefix is dropped as a whole word, and something must remain"):
-    assertEquals(stripQualifier(Geocode.Attempt.Name("southern Levant")), Some(("southern", "Levant")))
-    assertEquals(stripQualifier(Geocode.Attempt.Name("Northern Albania")), Some(("Northern", "Albania")))
+    assertEquals(Attempt.stripQualifier(Attempt.Name("southern Levant")), Some(("southern", "Levant")))
+    assertEquals(Attempt.stripQualifier(Attempt.Name("Northern Albania")), Some(("Northern", "Albania")))
     assertEquals(
-      stripQualifier(Geocode.Attempt.Name("Western and Central Balkans")),
+      Attempt.stripQualifier(Attempt.Name("Western and Central Balkans")),
       Some(("Western and Central", "Balkans"))
     )
-    assertEquals(stripQualifier(Geocode.Attempt.Name("North-western Anatolia")), Some(("North western", "Anatolia")))
-    assertEquals(stripQualifier(Geocode.Attempt.Name("Northern")), None)
-    assertEquals(stripQualifier(Geocode.Attempt.Name("Northumbria")), None)
-    assertEquals(stripQualifier(Geocode.Attempt.Name("Albania")), None)
+    assertEquals(Attempt.stripQualifier(Attempt.Name("North-western Anatolia")), Some(("North western", "Anatolia")))
+    assertEquals(Attempt.stripQualifier(Attempt.Name("Northern")), None)
+    assertEquals(Attempt.stripQualifier(Attempt.Name("Northumbria")), None)
+    assertEquals(Attempt.stripQualifier(Attempt.Name("Albania")), None)
 
   test("attempts: the name, its aside, X within Y, the qualifier dropped, Y alone — in that order"):
     assertEquals(
-      attempts(Geocode.Attempt.Name("Ur (Tell el-Muqayyar)")).map(a => (a.name, a.within)),
+      Attempt.attempts(Attempt.Name("Ur (Tell el-Muqayyar)")).map(a => (a.name, a.within)),
       List(("Ur (Tell el-Muqayyar)", None), ("Tell el-Muqayyar", None))
     )
     assertEquals(
-      attempts(Geocode.Attempt.Name("Gornij, Croatia")),
+      Attempt.attempts(Attempt.Name("Gornij, Croatia")),
       List(
-        Attempt(Geocode.Attempt.Name("Gornij, Croatia")),
-        Attempt(Geocode.Attempt.Name("Gornij"), Some(Geocode.Attempt.Within("Croatia"))),
+        Attempt(Attempt.Name("Gornij, Croatia")),
+        Attempt(Attempt.Name("Gornij"), Some(Attempt.Within("Croatia"))),
         Attempt(
-          Geocode.Attempt.Name("Croatia"),
+          Attempt.Name("Croatia"),
           None,
-          Some(Approximation.OnlyWithin(Geocode.Approximation.OnlyWithin.Missing("Gornij")))
+          Some(Approximation.OnlyWithin(Approximation.OnlyWithin.Missing("Gornij")))
         )
       )
     )
     assertEquals(
-      attempts(Geocode.Attempt.Name("southern Levant")),
+      Attempt.attempts(Attempt.Name("southern Levant")),
       List(
-        Attempt(Geocode.Attempt.Name("southern Levant")),
+        Attempt(Attempt.Name("southern Levant")),
         Attempt(
-          Geocode.Attempt.Name("Levant"),
+          Attempt.Name("Levant"),
           None,
-          Some(Approximation.Qualifier(Geocode.Approximation.Qualifier.Dropped("southern")))
+          Some(Approximation.Qualifier(Approximation.Qualifier.Dropped("southern")))
         )
       )
     )
     assertEquals(
-      attempts(Geocode.Attempt.Name("Northern Albania")).last.approx,
-      Some(Approximation.Qualifier(Geocode.Approximation.Qualifier.Dropped("Northern")))
+      Attempt.attempts(Attempt.Name("Northern Albania")).last.approx,
+      Some(Approximation.Qualifier(Approximation.Qualifier.Dropped("Northern")))
     )
-    assertEquals(attempts(Geocode.Attempt.Name("  ")), Nil)
+    assertEquals(Attempt.attempts(Attempt.Name("  ")), Nil)
 
   // ── ranking ──────────────────────────────────────────────────────────────────────────────────
 
@@ -200,25 +208,24 @@ class GeocodeSuite extends munit.FunSuite:
     )
     assertEquals(best(ph :+ curated), "mesopotamia")
     // alone, a placeholder still resolves — and the choice says it is rough
-    val r = choose(
-      Geocode.Resolution.Asked("Mesopotamia"),
-      Attempt(Geocode.Attempt.Name("Mesopotamia")),
-      rank(ph, KindHint.Unknown, None, Min),
-      Min
-    ).get
-    assertEquals(r.approximate, List(Approximation.Rough(Geocode.Approximation.Rough.Places(17))))
+    val r = Resolution
+      .choose(
+        Resolution.Asked("Mesopotamia"),
+        Attempt(Attempt.Name("Mesopotamia")),
+        rank(ph, KindHint.Unknown, None, Min),
+        Min
+      )
+      .get
+    assertEquals(r.approximate, List(Approximation.Rough(Approximation.Rough.Places(17))))
     assert(r.describe.contains("placeholder point shared by 17 places"), r.describe)
     assert(
-      !isPlaceholder(
-        c(
-          Place.Id("x"),
-          Place.Label("x"),
-          Candidate.Kind(Place.Kind.Site),
-          dim = Candidate.Dimension(0),
-          shared = Approximation.Rough.Places(3)
-        ),
-        Min
-      ),
+      !c(
+        Place.Id("x"),
+        Place.Label("x"),
+        Candidate.Kind(Place.Kind.Site),
+        dim = Candidate.Dimension(0),
+        shared = Approximation.Rough.Places(3)
+      ).isPlaceholder(Min),
       "fewer than the minimum is a real point"
     )
 
@@ -259,12 +266,14 @@ class GeocodeSuite extends munit.FunSuite:
     )
     assertEquals(best(List(province, site)), "pleiades_x", "a precise alias beats a grid-square label")
     // alone, it still resolves — marked approximate
-    val r = choose(
-      Geocode.Resolution.Asked("Thessalia"),
-      Attempt(Geocode.Attempt.Name("Thessalia")),
-      rank(List(province), KindHint.Unknown, None, Min),
-      Min
-    ).get
+    val r = Resolution
+      .choose(
+        Resolution.Asked("Thessalia"),
+        Attempt(Attempt.Name("Thessalia")),
+        rank(List(province), KindHint.Unknown, None, Min),
+        Min
+      )
+      .get
     assertEquals(r.approximate, List(Approximation.GridSquare))
     assert(r.describe.contains("atlas grid square"), r.describe)
 
@@ -367,14 +376,15 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(best(List(snap, ne)), "ne_country_dnk")
 
   test("a qualifier-stripped choice is approximate and says what was dropped"):
-    val a = attempts(Geocode.Attempt.Name("Northern Albania")).last
-    val r = choose(Geocode.Resolution.Asked("Northern Albania"), a, rank(albania, KindHint.Unknown, None, Min), Min).get
+    val a = Attempt.attempts(Attempt.Name("Northern Albania")).last
+    val r =
+      Resolution.choose(Resolution.Asked("Northern Albania"), a, rank(albania, KindHint.Unknown, None, Min), Min).get
     assertEquals((r.placeId, r.isApproximate), ("ne_country_alb", true))
     assertEquals(r.describe, "'Northern Albania' → Albania [ne_country_alb] (approximate: 'Northern' dropped)")
 
   test("nothing to rank, nothing chosen"):
     assertEquals(
-      choose(Geocode.Resolution.Asked("Dead Sea"), Attempt(Geocode.Attempt.Name("Dead Sea")), Nil, Min),
+      Resolution.choose(Resolution.Asked("Dead Sea"), Attempt(Attempt.Name("Dead Sea")), Nil, Min),
       None
     )
 
@@ -395,12 +405,12 @@ class GeocodeSuite extends munit.FunSuite:
     )
 
   test("kind hints parse leniently: a model's synonym is a hint, anything else none"):
-    assertEquals(KindHint.parse(Geocode.KindHint.Wire("Site")), KindHint.Site)
-    assertEquals(KindHint.parse(Geocode.KindHint.Wire("city")), KindHint.Site)
-    assertEquals(KindHint.parse(Geocode.KindHint.Wire("country")), KindHint.Region)
-    assertEquals(KindHint.parse(Geocode.KindHint.Wire("kingdom")), KindHint.Polity)
-    assertEquals(KindHint.parse(Geocode.KindHint.Wire("lake")), KindHint.Water)
-    assertEquals(KindHint.parse(Geocode.KindHint.Wire("galaxy")), KindHint.Unknown)
+    assertEquals(KindHint.parse(KindHint.Wire("Site")), KindHint.Site)
+    assertEquals(KindHint.parse(KindHint.Wire("city")), KindHint.Site)
+    assertEquals(KindHint.parse(KindHint.Wire("country")), KindHint.Region)
+    assertEquals(KindHint.parse(KindHint.Wire("kingdom")), KindHint.Polity)
+    assertEquals(KindHint.parse(KindHint.Wire("lake")), KindHint.Water)
+    assertEquals(KindHint.parse(KindHint.Wire("galaxy")), KindHint.Unknown)
 
   // ── the repair ───────────────────────────────────────────────────────────────────────────────
 
@@ -409,12 +419,12 @@ class GeocodeSuite extends munit.FunSuite:
     val m = Move(
       Finding.Id("heraclides2025_ancient#0"),
       Citekey("heraclides2025_ancient"),
-      Geocode.Move.Name("Albania"),
-      Some(Geocode.Move.Name("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
+      Move.Name("Albania"),
+      Some(Move.Name("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
       Longitude(45.85589),
       Latitude(34.46511),
       Resolution(
-        Geocode.Resolution.Asked("Albania"),
+        Resolution.Asked("Albania"),
         Place.Id("ne_country_alb"),
         Place.Label("Albania"),
         Longitude(19.97),
@@ -423,10 +433,10 @@ class GeocodeSuite extends munit.FunSuite:
     )
     assert(m.km.value > 2000 && m.km.value < 2500, m.km)
     assert(
-      worthMoving(m, Geocode.Move.MinKm(25)) && !worthMoving(
-        m.modify(_.to).setTo(m.to.modify(_.lon).setTo(Longitude(45.86)).modify(_.lat).setTo(Latitude(34.47))),
-        Geocode.Move.MinKm(25)
-      )
+      m.worthMoving(Move.MinKm(25)) && !m
+        .modify(_.to)
+        .setTo(m.to.modify(_.lon).setTo(Longitude(45.86)).modify(_.lat).setTo(Latitude(34.47)))
+        .worthMoving(Move.MinKm(25))
     )
     assertEquals(
       m.describe,
@@ -440,9 +450,9 @@ class GeocodeSuite extends munit.FunSuite:
     val p = Placement(
       Finding.Id("meshel2025_dead#2"),
       Citekey("meshel2025_dead"),
-      Geocode.Placement.Region("Dead Sea"),
+      Placement.Region("Dead Sea"),
       Resolution(
-        Geocode.Resolution.Asked("Dead Sea"),
+        Resolution.Asked("Dead Sea"),
         Place.Id("ne_lake_1159126747"),
         Place.Label("Dead Sea"),
         Longitude(35.5),
@@ -453,14 +463,14 @@ class GeocodeSuite extends munit.FunSuite:
     val q = Placement(
       Finding.Id("x#0"),
       Citekey("x"),
-      Geocode.Placement.Region("southern Levant"),
+      Placement.Region("southern Levant"),
       Resolution(
-        Geocode.Resolution.Asked("southern Levant"),
+        Resolution.Asked("southern Levant"),
         Place.Id("levant"),
         Place.Label("Levant"),
         Longitude(36.0),
         Latitude(33.0),
-        List(Approximation.Qualifier(Geocode.Approximation.Qualifier.Dropped("southern")))
+        List(Approximation.Qualifier(Approximation.Qualifier.Dropped("southern")))
       )
     )
     assert(q.describe.endsWith("(approximate: 'southern' dropped)"), q.describe)
@@ -477,14 +487,18 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(periodOf(None, None), None)
 
   test("a dropped compass qualifier names one part of the shape's box; two directions or none keep it whole"):
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("Eastern")), Some((0.5, 0.0, 1.0, 1.0)))
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("southern")), Some((0.0, 0.0, 1.0, 0.5)))
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("Northwestern")), Some((0.0, 0.5, 0.5, 1.0)))
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("south-east")), None, "two words, two directions")
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("central")), Some((0.25, 0.25, 0.75, 0.75)))
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("Western and Central")), None)
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("upper")), None)
-    assertEquals(compassBox(Geocode.Approximation.Qualifier.Dropped("coastal")), None)
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("Eastern")), Some((0.5, 0.0, 1.0, 1.0)))
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("southern")), Some((0.0, 0.0, 1.0, 0.5)))
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("Northwestern")), Some((0.0, 0.5, 0.5, 1.0)))
+    assertEquals(
+      Approximation.compassBox(Approximation.Qualifier.Dropped("south-east")),
+      None,
+      "two words, two directions"
+    )
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("central")), Some((0.25, 0.25, 0.75, 0.75)))
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("Western and Central")), None)
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("upper")), None)
+    assertEquals(Approximation.compassBox(Approximation.Qualifier.Dropped("coastal")), None)
 
   // ── the external sources (#1064) ─────────────────────────────────────────────────────────────
 

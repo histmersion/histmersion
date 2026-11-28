@@ -1,12 +1,26 @@
 package com.histmersion
 package domain.automation.managers
+
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.domain.managerpolicy.ReviewSettings
+import com.histmersion.api.automation.managers.ManagerEvent
+import com.histmersion.api.automation.managers.ItemOrigin
+import com.histmersion.api.automation.managers.ItemState
+import com.histmersion.api.automation.managers.ManagerItem
+import com.histmersion.api.automation.managers.ManagerHint
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.domain.managerpolicy.StepFacts
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.agents.RunRequest
+import com.histmersion.api.automation.agents.RunParams
+import com.histmersion.domain.managerpolicy.Next
+import com.histmersion.domain.managerpolicy.Candidate
 import com.histmersion.util.problem.Problem
 
-import com.histmersion.api.automation.Agents.{ApprovalInfo, Pipeline, RunInfo, RunParams, RunRequest, RunState}
+import com.histmersion.api.automation.Agents.{Pipeline, RunState}
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.api.automation.Managers.*
 import com.histmersion.config.AgentsConfig
-import com.histmersion.domain.ManagerPolicy.{ReviewSettings, StepFacts}
 
 import java.time.Instant
 import scala.collection.mutable.Builder
@@ -208,12 +222,12 @@ trait ManagerContext:
   )(using WritePermit)(using Creator.New): Unit
 
 object ManagerContext:
-  export ManagerPolicy.Next.Retry.Failures as FailureCount
+  export Next.Retry.Failures as FailureCount
   export Item.{Id as ItemId, Kind as ItemKind}
-  export ManagerPolicy.Candidate.Target as ItemTarget
+  export Candidate.Target as ItemTarget
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
-  export ManagerPolicy.Candidate.Priority
+  export Candidate.Priority
   type EventFeed = EventFeed.T
   object EventFeed extends Newtype[String, Pure]
   type EventText = EventText.T

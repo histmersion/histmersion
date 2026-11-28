@@ -1,5 +1,7 @@
 package com.histmersion
 package api.media
+
+import com.histmersion.api.library.repairacquire.RepairRequest
 import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
@@ -14,7 +16,7 @@ import com.histmersion.api.json.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class MediaCoversRequest(
-    dryRun: RepairAcquire.RepairRequest.DryRun = RepairAcquire.RepairRequest.DryRun.DryRun,
+    dryRun: RepairRequest.DryRun = RepairRequest.DryRun.DryRun,
     limit: Option[MediaCoversRequest.Limit] = None,
     citekey: Option[Citekey] = None,
     refresh: MediaImportRequest.Refresh = MediaImportRequest.Refresh.Reuse,

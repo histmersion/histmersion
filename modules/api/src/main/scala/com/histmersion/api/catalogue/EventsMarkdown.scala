@@ -49,7 +49,7 @@ object EventsMarkdown:
     val corrections = if d.corrections.isEmpty then ""
     else
       "\n\n**Corrected by hand** (kept over the catalogue on a re-import)\n" +
-        d.corrections.map(c => s"- ${Corrections.describe(c)}").mkString("\n")
+        d.corrections.map(c => s"- ${c.describe}").mkString("\n")
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.value.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("")

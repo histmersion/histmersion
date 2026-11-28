@@ -1,5 +1,7 @@
 package com.histmersion
 package server
+
+import com.histmersion.api.automation.queue.QueueItem
 import com.histmersion.util.json.RawJson.*
 import com.histmersion.util.json.RawJson
 
@@ -79,7 +81,7 @@ class UiNoticesHttpSuite extends DbSuite:
       val b = Composition.server(cfg, ServerConfig.Host("127.0.0.1"), ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       // `var`: the fixture's row, removed whatever the assertions did
-      var added = Option.empty[Queue.QueueItem.Id]
+      var added = Option.empty[QueueItem.Id]
       try
         val (s0, b0) = get(s"$url/ui/counters")
         assertEquals(s0, 200, b0)
@@ -98,7 +100,7 @@ class UiNoticesHttpSuite extends DbSuite:
         assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""", None)._1, 401)
         val (as, ab) = post(s"$url/queue/tasks", """{"text":"zz notice task"}""", Some("s3cret"))
         assertEquals(as, 200, ab)
-        added = RawJson.decode[Queue.QueueItem](ab).toOption.map(_.id)
+        added = RawJson.decode[QueueItem](ab).toOption.map(_.id)
         val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key.value == "tasks").get
         assertEquals(after.count, tasks0.count.map(c => UiNotices.Counter.Count(c.value + 1)))
         assert(after.fresh.fresh, after.toString)

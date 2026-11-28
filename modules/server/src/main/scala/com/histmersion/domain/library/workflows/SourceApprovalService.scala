@@ -1,7 +1,9 @@
 package com.histmersion
 package domain.library.workflows
 
-import com.histmersion.api.automation.Agents.{ApprovalInfo, ApprovalKind, ApprovalState}
+import com.histmersion.api.automation.agents.ApprovalInfo
+
+import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState}
 import com.histmersion.domain.library.{Edge, Source}
 import com.histmersion.domain.automation.AutomationState
 import com.histmersion.domain.automation.agents.{ApprovalRecord, ApprovalService}

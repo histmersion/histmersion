@@ -18,7 +18,6 @@ import com.histmersion.api.VocabularyCodecs.given
 import sttp.ai.core.agent.AgentTool
 import sttp.shared.Identity
 import com.histmersion.domain.research.Slug
-import com.histmersion.api.research.Articles
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** The agent tools research offers the engine: an article, a dry run of edits to it, its coverage — each a thin, typed
@@ -49,7 +48,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
         Slug
           .parse(in.slug.value)
           .left
-          .map(_ => Articles.notFound(in.slug))
+          .map(_ => Article.notFound(in.slug))
           .flatMap(articles.get(_))
           .fold(
             e => s"No article '${in.slug}': ${e.problems.sentences.mkString("; ")}",

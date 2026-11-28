@@ -1,11 +1,13 @@
 package com.histmersion
 package domain.automation.managers
 
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.managers.ManagerItem
+
 import sttp.tapir.server.ServerEndpoint
 import sttp.shared.Identity
 import io.scalaland.chimney.dsl.*
 import com.histmersion.api.automation.ManagersApi
-import com.histmersion.api.automation.Managers.{ManagerInfo, ManagerItem}
 import com.histmersion.config.AgentAutopilotConfig
 import com.histmersion.{Offset, PageSize}
 import com.histmersion.domain.automation.ItemStatus

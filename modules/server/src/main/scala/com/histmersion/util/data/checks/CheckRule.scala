@@ -1,7 +1,9 @@
 package com.histmersion
 package util.data.checks
 
-import com.histmersion.api.checks.Lint.{LintRuleReport, Rule}
+import com.histmersion.api.checks.lint.Rule
+import com.histmersion.api.checks.lint.LintRuleReport
+
 import com.histmersion.util.data.DataOwner
 import com.augustnagro.magnum.DbCon
 import io.github.iltotore.iron.constraint.any.Pure

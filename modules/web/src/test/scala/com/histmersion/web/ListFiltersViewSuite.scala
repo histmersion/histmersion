@@ -1,11 +1,19 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.agents.ApprovalInfo
+import com.histmersion.api.automation.listfilters.ApprovalFilter
+import com.histmersion.api.automation.agents.Decision
+import com.histmersion.api.automation.agents.RunInfo
+import com.histmersion.api.automation.managers.ManagerInfo
+import com.histmersion.api.automation.listfilters.RunFilter
+import com.histmersion.api.automation.listfilters.JobFilter
+
 import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.{UiLabels, Wording}
 import com.histmersion.api.jobs.{JobInfo, JobState}
 import com.histmersion.api.automation.ListFilters
-import com.histmersion.api.automation.Agents.{ApprovalInfo, Decision, RunInfo, RunState}
+import com.histmersion.api.automation.Agents.RunState
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Managers
@@ -76,7 +84,7 @@ class ListFiltersViewSuite extends munit.FunSuite:
     UiState.set(UiState.approvalKinds := List("goal-plan"), UiState.approvalBy := List("person"))()
     assertEquals(
       ApprovalsView.currentFilter(),
-      ListFilters.ApprovalFilter(
+      ApprovalFilter(
         kind = List(Approval.Kind.Wire("goal-plan")),
         decidedBy = List(Approval.DecidedBy.Wire("person"))
       )
@@ -88,7 +96,7 @@ class ListFiltersViewSuite extends munit.FunSuite:
     )
     assertEquals(
       ApprovalsView
-        .visible(rows, ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan"))))
+        .visible(rows, ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan"))))
         .map(_.id.value),
       List(1L)
     )
@@ -96,20 +104,19 @@ class ListFiltersViewSuite extends munit.FunSuite:
       ApprovalsView
         .visible(
           rows,
-          ListFilters
-            .ApprovalFilter(state = Some(Approval.State.Wire("all")), kind = List(Approval.Kind.Wire("goal-plan")))
+          ApprovalFilter(state = Some(Approval.State.Wire("all")), kind = List(Approval.Kind.Wire("goal-plan")))
         )
         .map(_.id.value),
       List(1L, 3L)
     )
     assertEquals(
       ApprovalsView
-        .visible(rows, ListFilters.ApprovalFilter(state = Some(Approval.State.Wire("approved"))))
+        .visible(rows, ApprovalFilter(state = Some(Approval.State.Wire("approved"))))
         .map(_.id.value),
       List(3L)
     )
     assertEquals(
-      ApprovalsView.qualifier(ListFilters.ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.value),
+      ApprovalsView.qualifier(ApprovalFilter(kind = List(Approval.Kind.Wire("goal-plan")))).map(_.value),
       Some("open goal-plan")
     )
 
@@ -160,36 +167,36 @@ class ListFiltersViewSuite extends munit.FunSuite:
       status: RunInfo.Status,
       pipeline: RunInfo.Pipeline,
       origin: Option[RunInfo.Origin] = None,
-      manager: Option[Managers.ManagerInfo.Id] = None
+      manager: Option[ManagerInfo.Id] = None
   ) =
     RunInfo(id, pipeline, RunInfo.Target("t"), status, origin = origin, managerId = manager)
 
   test("runs: the query from the fields; the rows the state, pipelines, origins and manager show at once"):
     val f = RunsView.filterOf(
       Some(RunState.Failed),
-      List(ListFilters.RunFilter.Pipeline("review-article")),
+      List(RunFilter.Pipeline("review-article")),
       Nil,
-      Some(ListFilters.RunFilter.Manager("review")),
-      Some(ListFilters.RunFilter.Provider("codex")),
+      Some(RunFilter.Manager("review")),
+      Some(RunFilter.Provider("codex")),
       None,
       Some(Goal.Slug("g")),
-      Some(ListFilters.RunFilter.Since("2026-10-01")),
+      Some(RunFilter.Since("2026-10-01")),
       None,
-      Some(ListFilters.RunFilter.Subject("tin"))
+      Some(RunFilter.Subject("tin"))
     )
     assertEquals(
       f,
-      ListFilters.RunFilter(
-        List(ListFilters.RunFilter.Status("failed")),
-        List(ListFilters.RunFilter.Pipeline("review-article")),
-        List(ListFilters.RunFilter.Manager("review")),
+      RunFilter(
+        List(RunFilter.Status("failed")),
+        List(RunFilter.Pipeline("review-article")),
+        List(RunFilter.Manager("review")),
         Some(Goal.Slug("g")),
         Nil,
-        List(ListFilters.RunFilter.Provider("codex")),
+        List(RunFilter.Provider("codex")),
         Nil,
-        Some(ListFilters.RunFilter.Since("2026-10-01")),
+        Some(RunFilter.Since("2026-10-01")),
         None,
-        Some(ListFilters.RunFilter.Subject("tin"))
+        Some(RunFilter.Subject("tin"))
       )
     )
     val rows = List(
@@ -198,14 +205,14 @@ class ListFiltersViewSuite extends munit.FunSuite:
         RunInfo.Status("failed"),
         RunInfo.Pipeline("review-article"),
         Some(RunInfo.Origin("manager")),
-        Some(Managers.ManagerInfo.Id("review"))
+        Some(ManagerInfo.Id("review"))
       ),
       run(RunInfo.Id("b"), RunInfo.Status("done"), RunInfo.Pipeline("review-article")),
       run(RunInfo.Id("c"), RunInfo.Status("failed"), RunInfo.Pipeline("enrich-source"))
     )
     assertEquals(
       RunsView
-        .visible(rows, ListFilters.RunFilter(pipeline = List(ListFilters.RunFilter.Pipeline("review-article"))))
+        .visible(rows, RunFilter(pipeline = List(RunFilter.Pipeline("review-article"))))
         .map(_.id.value),
       List("a", "b")
     )
@@ -213,9 +220,9 @@ class ListFiltersViewSuite extends munit.FunSuite:
       RunsView
         .visible(
           rows,
-          ListFilters.RunFilter(
-            status = List(ListFilters.RunFilter.Status("failed")),
-            manager = List(ListFilters.RunFilter.Manager("review"))
+          RunFilter(
+            status = List(RunFilter.Status("failed")),
+            manager = List(RunFilter.Manager("review"))
           )
         )
         .map(_.id.value),
@@ -223,18 +230,18 @@ class ListFiltersViewSuite extends munit.FunSuite:
     )
     // a run with no origin was a person's
     assertEquals(
-      RunsView.visible(rows, ListFilters.RunFilter(origin = List(Agents.Origin.Wire("person")))).map(_.id.value),
+      RunsView.visible(rows, RunFilter(origin = List(api.automation.agents.Origin.Wire("person")))).map(_.id.value),
       List("b", "c")
     )
 
   test("jobs: the query from the fields; the rows the states and kinds show at once"):
     assertEquals(
       JobsView.filterOf(Some(JobState.Failed), List("ingest"), None, Some("2026-10-01"), None),
-      ListFilters.JobFilter(
+      JobFilter(
         List(JobState.Wire("failed")),
         List(JobKinds.Wire("ingest")),
         None,
-        Some(ListFilters.JobFilter.Until("2026-10-01")),
+        Some(JobFilter.Until("2026-10-01")),
         None
       )
     )
@@ -244,14 +251,14 @@ class ListFiltersViewSuite extends munit.FunSuite:
       JobInfo(SpatialHierarchyResult.Job.Id("3"), JobKinds.Wire("ingest"), JobInfo.Status("failed"))
     )
     assertEquals(
-      JobsView.visible(rows, ListFilters.JobFilter(kind = List(JobKinds.Wire("ingest")))).map(_.id),
+      JobsView.visible(rows, JobFilter(kind = List(JobKinds.Wire("ingest")))).map(_.id),
       List("1", "3").map(SpatialHierarchyResult.Job.Id.apply)
     )
     assertEquals(
       JobsView
         .visible(
           rows,
-          ListFilters.JobFilter(status = List(JobState.Wire("failed")), kind = List(JobKinds.Wire("ingest")))
+          JobFilter(status = List(JobState.Wire("failed")), kind = List(JobKinds.Wire("ingest")))
         )
         .map(_.id),
       List("3").map(SpatialHierarchyResult.Job.Id.apply)

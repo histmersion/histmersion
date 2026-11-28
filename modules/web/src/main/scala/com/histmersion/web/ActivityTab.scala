@@ -1,6 +1,8 @@
 package com.histmersion
 package web
 
+import com.histmersion.api.automation.activity.Show
+
 import scala.scalajs.js
 import com.histmersion.api.automation.Activity
 
@@ -12,49 +14,49 @@ enum ActivityTab(
     val slug: String,
     val label: String,
     val agents: Boolean,
-    val show: Option[Activity.Show]
+    val show: Option[Show]
 ):
   case Everything
       extends ActivityTab(
         "",
         "Everything",
         agents = false,
-        Some(Activity.Show.Everything)
+        Some(Show.Everything)
       )
   case Running
       extends ActivityTab(
         "running",
         "Running now",
         agents = false,
-        Some(Activity.Show.Running)
+        Some(Show.Running)
       )
   case Agents
       extends ActivityTab(
         "agents",
         "Agent work",
         agents = true,
-        Some(Activity.Show.Agents)
+        Some(Show.Agents)
       )
   case Jobs
       extends ActivityTab(
         "jobs",
         "Background jobs",
         agents = false,
-        Some(Activity.Show.Jobs)
+        Some(Show.Jobs)
       )
   case Yours
       extends ActivityTab(
         "yours",
         "Your actions",
         agents = true,
-        Some(Activity.Show.Yours)
+        Some(Show.Yours)
       )
   case Problems
       extends ActivityTab(
         "problems",
         "Problems",
         agents = false,
-        Some(Activity.Show.Problems)
+        Some(Show.Problems)
       )
   case Runs extends ActivityTab("runs", "Every agent run", agents = true, None)
   case JobList extends ActivityTab("all-jobs", "Every background job", agents = false, None)
