@@ -9,7 +9,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** The refresh downloads ~30 MB and rewrites ~60 000 rows, far longer than one HTTP request may take, so `POST` starts
   * it and `GET` is polled until `running` is false.

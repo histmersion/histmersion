@@ -53,7 +53,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
       Some(
         InitPlan(
           gazetteer = InitPlan.Gazetteer.Included,
-          periodPresets = InitPlan.PeriodPresets.Included,
+          periodPresets = InitPlan.Presets.Included,
           fetch = List(InitPlan.Fetch("land"))
         )
       )

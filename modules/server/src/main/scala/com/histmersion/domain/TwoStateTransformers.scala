@@ -5,7 +5,7 @@ import io.github.iltotore.iron.RefinedType
 import io.github.iltotore.iron.constraint.any.Pure
 import io.scalaland.chimney.Transformer
 
-import api.TwoStates
+import api.json.TwoStates
 
 object TwoStateTransformers:
   given toState: [N, E <: reflect.Enum]

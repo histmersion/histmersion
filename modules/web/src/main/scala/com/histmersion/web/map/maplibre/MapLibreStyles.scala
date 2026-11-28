@@ -180,7 +180,6 @@ object MapLibreStyles:
     * are traced from (the extract's relief alone is too coarse for them).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def deeperRelief(s: Basemap.Status): Option[Basemap.LayerInfo] =
     info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled.enabled))
 

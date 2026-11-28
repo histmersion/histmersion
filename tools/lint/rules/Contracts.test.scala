@@ -365,7 +365,7 @@ class ContractsSuite extends munit.FunSuite:
         |""".stripMargin
     def lines(key: String) =
       Rules.all(List(file(key, home))).filter(_.rule == "derives").map(v => (v.count, v.at))
-    assertEquals(lines("api:api/TwoStates.scala"), Nil)
+    assertEquals(lines("api:api/json/TwoStates.scala"), Nil)
     assertEquals(lines("api:api/Other.scala"), List((1, "api:api/Other.scala:2")))
 
   test("a CanEqual given is no codec given: CanEqual.derived and a hand-written CanEqual do not count for derives"):

@@ -54,7 +54,6 @@ object ModelsView:
 
   /** The state class of one chained model. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def entryState(e: ChainEntry): String =
     if e.usable.usable then "is-usable" else if !e.ready.ready then "is-unready" else "is-paused"
 
@@ -81,7 +80,6 @@ object ModelsView:
   // ── the window ──────────────────────────────────────────────────────────────────────────────────
 
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def pane: HtmlElement =
     val info = Var(Option.empty[ModelsInfo])
     val quota = Var(Option.empty[PlanQuota.QuotaInfo])
@@ -138,7 +136,6 @@ object ModelsView:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def body(m: ModelsInfo, busy: Signal[Boolean], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
       Option.when(!m.enabled.enabled)(

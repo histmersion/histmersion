@@ -22,7 +22,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 final case class Goal(

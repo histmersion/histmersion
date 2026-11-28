@@ -682,7 +682,7 @@ object PlaceService:
               o.kind.map(k => Place.Override.Kind(k.value)),
               period.map(_.start),
               period.map(_.end),
-              (if o.period.isDefined then Place.Override.PeriodSet.PeriodSet else Place.Override.PeriodSet.NoPeriod),
+              (if o.period.isDefined then Place.Override.Dated.PeriodSet else Place.Override.Dated.NoPeriod),
               o.reason,
               Place.Override.SourceKind(o.sourceKind.value),
               o.sourcePeriod.map(_.start),

@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 final case class MediaCount(
     key: MediaCount.Key,

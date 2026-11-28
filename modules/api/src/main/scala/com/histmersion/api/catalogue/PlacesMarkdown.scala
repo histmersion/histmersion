@@ -137,7 +137,7 @@ object PlacesMarkdown:
           val pt = for la <- r.lat; lo <- r.lon yield s"point ${Place.Overrides.pointText(la, lo)}"
           val set =
             r.kind.toList ++ Option
-              .when(((r.periodSet) == Place.Override.PeriodSet.PeriodSet))(
+              .when(((r.periodSet) == Place.Override.Dated.PeriodSet))(
                 Place.Overrides.periodText(r.periodStart, r.periodEnd)
               )
               .toList ++

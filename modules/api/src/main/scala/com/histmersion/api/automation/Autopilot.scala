@@ -10,7 +10,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.automation.Creation
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.Wording
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Autopilot:
@@ -265,8 +265,8 @@ object Autopilot:
       on: EngineStatus.On,
       since: Option[EngineStatus.Since] = None,
       by: Option[EngineStatus.By] = None,
-      agentsEnabled: EngineStatus.AgentsEnabled = EngineStatus.AgentsEnabled.Disabled,
-      managersEnabled: EngineStatus.ManagersEnabled = EngineStatus.ManagersEnabled.Disabled,
+      agentsEnabled: EngineStatus.AgentSwitch = EngineStatus.AgentSwitch.Disabled,
+      managersEnabled: EngineStatus.ManagingSwitch = EngineStatus.ManagingSwitch.Disabled,
       cronsEnabled: EngineStatus.CronsEnabled = EngineStatus.CronsEnabled.Enabled,
       approvals: List[ApprovalRule] = Nil,
       ingestedToday: EngineStatus.IngestedToday = EngineStatus.IngestedToday(0),
@@ -289,14 +289,14 @@ object Autopilot:
     object Since extends Newtype[String, Pure]
     type By = By.T
     object By extends Newtype[String, Pure]
-    enum AgentsEnabled derives CanEqual:
+    enum AgentSwitch derives CanEqual:
       case Enabled, Disabled
-    object AgentsEnabled extends TwoStates[AgentsEnabled]:
-      extension (agentsEnabled: AgentsEnabled) def agentsEnabled: Boolean = agentsEnabled == Enabled
-    enum ManagersEnabled derives CanEqual:
+    object AgentSwitch extends TwoStates[AgentSwitch]:
+      extension (agentsEnabled: AgentSwitch) def agentsEnabled: Boolean = agentsEnabled == Enabled
+    enum ManagingSwitch derives CanEqual:
       case Enabled, Disabled
-    object ManagersEnabled extends TwoStates[ManagersEnabled]:
-      extension (managersEnabled: ManagersEnabled) def managersEnabled: Boolean = managersEnabled == Enabled
+    object ManagingSwitch extends TwoStates[ManagingSwitch]:
+      extension (managersEnabled: ManagingSwitch) def managersEnabled: Boolean = managersEnabled == Enabled
     enum CronsEnabled derives CanEqual:
       case Enabled, Disabled
     object CronsEnabled extends TwoStates[CronsEnabled]:

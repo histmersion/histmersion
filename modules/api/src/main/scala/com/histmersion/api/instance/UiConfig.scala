@@ -9,7 +9,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 final case class UiConfig(
     tiles: UiConfig.Tiles,
@@ -31,7 +31,7 @@ final case class UiConfig(
     countersPollSeconds: UiConfig.CountersPollSeconds = UiConfig.CountersPollSeconds(30),
     jobPollMs: UiConfig.JobPollMs = UiConfig.JobPollMs(1000),
     keyRequired: UiConfig.KeyRequired = UiConfig.KeyRequired.Open,
-    agentsEnabled: UiConfig.AgentsEnabled = UiConfig.AgentsEnabled.Disabled,
+    agentsEnabled: UiConfig.AgentSwitch = UiConfig.AgentSwitch.Disabled,
     tilesTone: UiConfig.TilesTone = UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
     docsUrl: UiConfig.DocsUrl = UiConfig.DocsUrl(""),
@@ -83,10 +83,10 @@ object UiConfig:
     case KeyRequired, Open
   object KeyRequired extends TwoStates[KeyRequired]:
     extension (keyRequired: KeyRequired) def keyRequired: Boolean = keyRequired == KeyRequired
-  enum AgentsEnabled derives CanEqual:
+  enum AgentSwitch derives CanEqual:
     case Enabled, Disabled
-  object AgentsEnabled extends TwoStates[AgentsEnabled]:
-    extension (agentsEnabled: AgentsEnabled) def agentsEnabled: Boolean = agentsEnabled == Enabled
+  object AgentSwitch extends TwoStates[AgentSwitch]:
+    extension (agentsEnabled: AgentSwitch) def agentsEnabled: Boolean = agentsEnabled == Enabled
   type TilesTone = TilesTone.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object TilesTone extends Newtype[String, Pure]

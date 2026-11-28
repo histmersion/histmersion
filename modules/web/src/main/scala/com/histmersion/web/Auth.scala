@@ -70,7 +70,6 @@ object Auth:
 
   /** The page is up, with what `/api/config` said: a refusal from now on opens the key window. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def start(keyRequired: UiConfig.KeyRequired): Unit =
     started = true
     required.set(keyRequired.keyRequired)

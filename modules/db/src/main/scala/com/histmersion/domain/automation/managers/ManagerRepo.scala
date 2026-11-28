@@ -1164,7 +1164,6 @@ object ManagerRepo:
           AND retired_at IS NULL""".update.run() > 0
 
   /** In the dispatch transaction: the hints a run was given, and the once-hints among them retired. */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def usedIn(hints: List[ManagerHint], runId: Run.Id)(using DbCon): Unit =
     hints.foreach { h =>
       Unused(

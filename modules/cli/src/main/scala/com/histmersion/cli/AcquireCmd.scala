@@ -41,7 +41,6 @@ object AcquireCmd:
     * plus 60 000 inserts — so the CLI drives the wait, exactly as `reindex` does.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   @annotation.tailrec
   private def pollRetractions(c: AcquireClient, waited: Int)(using

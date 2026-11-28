@@ -22,7 +22,7 @@ import sttp.tapir.Schema
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 @atBoundary(BoundaryKind.Json, "reads gazetteer download files into place records")
 object Gazetteer:

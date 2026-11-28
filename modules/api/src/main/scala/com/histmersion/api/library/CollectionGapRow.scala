@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** One source the library lists as not in a collection: its push metadata, where its original is (`local`, `stored`,
   * `none`, `unknown`) and whether it counts as a gap (a record with no fetched file never does).

@@ -15,7 +15,7 @@ import com.histmersion.api.catalogue.Longitude
 import com.histmersion.api.catalogue.Latitude
 import com.histmersion.api.ByteCount
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Basemap:
   object Tile:
@@ -290,7 +290,6 @@ object Basemap:
   )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def droppedLayers(keepAll: FetchQuery.KeepAll, drop: Option[DropRule.Spec]): List[LayerInfo.Dropped] =
     if (keepAll).keepAll then Nil
     else
@@ -432,7 +431,6 @@ object Basemap:
   ) derives JsonCodec,
         KindlingsSchema,
         api.json.Schema:
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def deepest: Option[Focus.MaxZoom] =
       (maxZoom.toList ++ focus
         .map(_.maxZoom) ++ onDemand.filter(d => (d.enabled).enabled).map(_.maxZoom).toList).maxOption

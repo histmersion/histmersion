@@ -79,7 +79,6 @@ object MapRegionsView:
 
   @tolerated(LintRule.RawRequest, "pending G107 (requests through the one Request type)")
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def start(dryRun: Basemap.FetchQuery.DryRun): Unit =
     current(dryRun) match
       case Left(m)  => error.set(Some(m.sentence))

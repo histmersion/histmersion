@@ -3,7 +3,7 @@ package api.text
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object WikiLinks:
   type Alias = Alias.T

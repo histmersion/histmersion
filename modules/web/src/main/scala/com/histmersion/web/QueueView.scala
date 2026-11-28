@@ -107,15 +107,12 @@ object QueueView:
       tick: (Spec.TickDone, Spec.TickReopen)
   ):
     /** Whether items carry a checkbox; the worklog's do not. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def checkable: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item can be edited and deleted here; the worklog is only added to. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def editable: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item carries a reason (why it is wanted); a worklog entry is its own record. */
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def reasons: Boolean = kind.checkboxes.checkboxes
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */

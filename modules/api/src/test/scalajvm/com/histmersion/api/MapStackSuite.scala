@@ -2,9 +2,7 @@ package com.histmersion
 package api
 
 import MapStack.Pane
-import com.histmersion.lint.{tolerated, LintRule}
 
-@tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
 class MapStackSuite extends munit.FunSuite:
 
   test("every point pane is above every area pane"):

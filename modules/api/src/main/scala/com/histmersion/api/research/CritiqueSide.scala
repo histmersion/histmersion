@@ -9,7 +9,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.library.Title
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 final case class CritiqueSide(
     citekey: Citekey,

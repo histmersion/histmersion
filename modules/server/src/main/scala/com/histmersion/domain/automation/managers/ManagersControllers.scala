@@ -549,10 +549,6 @@ final class ManagersControllers(
   def delete(id: ManagerLight.Id): Either[Api.Error, Removed] =
     held(WriteGate.OperationName("delete_manager"))(deleteHeld(id))
 
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def deleteHeld(id: ManagerLight.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
       inFlight(lightId(m)).foreach(r => Unused(agents.engine.cancel(runIdOf(r.id)), Unused.Why.Idempotent))
@@ -1359,10 +1355,6 @@ final class ManagersControllers(
     held(WriteGate.OperationName("delete_hint"))(deleteHintHeld(id, hint))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def deleteHintHeld(id: ManagerLight.Id, hint: ManagerHint.Id)(using WritePermit): Either[Api.Error, Removed] =
     manager(id).map { m =>
       val gone = Transactor(ds).write(ManagerRepo.retireHint(m.id, hint))

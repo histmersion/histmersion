@@ -17,7 +17,7 @@ import org.scalajs.dom.window
 import scala.scalajs.js
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** A viewer's options over the vector styles ([[BaseMaps]]): names on or off, their language, the contours (Physical),
   * the sea's depth in each style (`depthPhysical`, `depthReadable`). `None`: the default (names on, English — or
@@ -33,13 +33,11 @@ final case class MapPrefs(
       CanEqual:
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def seaDepth(style: VectorStyle): Boolean = style match
     case VectorStyle.Physical => depthPhysical.fold(MapPrefs.depthByDefault(style))(_.shown)
     case VectorStyle.Readable => depthReadable.fold(MapPrefs.depthByDefault(style))(_.shown)
 
   /** The viewer's choice of the depth in `style`; the style's default is kept as no choice. Pure. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def withSeaDepth(style: VectorStyle, on: MapPrefs.SeaDepth): MapPrefs =
     val v = Option.when(on.shown != MapPrefs.depthByDefault(style))(on.shown)
     style match

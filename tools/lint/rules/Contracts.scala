@@ -361,7 +361,7 @@ object Contracts:
 
     val Derived = "(?<!\\bCanEqual)\\.derived\\b".r
 
-    val CodecHomes: Set[String] = Set("api:api/TwoStates.scala")
+    val CodecHomes: Set[String] = Set("api:api/json/TwoStates.scala")
 
     private def derives(s: SourceFile): List[Violation] =
       if module(s) == "json" || CodecHomes(s.key) then Nil

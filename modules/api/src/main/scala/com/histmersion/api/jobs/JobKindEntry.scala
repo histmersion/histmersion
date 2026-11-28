@@ -3,7 +3,7 @@ package api.jobs
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** A kind of job as its owner registers it: its name and meaning for a person, whether a person may pause and cancel
   * its jobs, whether those go to the kind's own runner instead (an agent run's), and what one of its jobs is about,

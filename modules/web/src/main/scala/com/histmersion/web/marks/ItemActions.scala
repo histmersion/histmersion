@@ -45,7 +45,6 @@ object ItemActions:
     )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def apply(ref: ItemRef, byline: String = ""): HtmlElement =
     val read = MyItems.isRead(ref)
     div(

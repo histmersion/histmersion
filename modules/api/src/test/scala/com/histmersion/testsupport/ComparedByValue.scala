@@ -4,7 +4,7 @@ package testsupport
 import io.github.iltotore.iron.RefinedType
 import munit.Compare
 
-import api.TwoStates
+import api.json.TwoStates
 import com.histmersion.lint.{tolerated, LintRule}
 
 /** Tests state expected values as literals of the base type. Two values compare by `==` when their types have the same

@@ -9,7 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.library.Finding
 import com.histmersion.api.library.Citekey
 import com.histmersion.lint.{tolerated, LintRule}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** Pleiades snaps imprecise places to stand-in points: 17 places, three of them "Mesopotamia", share 37.5 N 37.5 E, and
   * some sit on the centre of an atlas grid square ([[LocationPrecision.GridCell]]). Such points rank below every

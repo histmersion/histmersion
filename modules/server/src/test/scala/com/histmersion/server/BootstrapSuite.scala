@@ -218,7 +218,7 @@ class BootstrapSuite extends DbSuite:
     // #770: the job says what it imports from the start; #771: and which period definitions it left out
     assertEquals(
       job.detail.flatMap(InitPlan.Detail.of),
-      Some(InitPlan(gazetteer = InitPlan.Gazetteer.Included, periodPresets = InitPlan.PeriodPresets.Included))
+      Some(InitPlan(gazetteer = InitPlan.Gazetteer.Included, periodPresets = InitPlan.Presets.Included))
     )
     assertEquals(end.detail.flatMap(InitPlan.Detail.of), job.detail.flatMap(InitPlan.Detail.of))
     assertEquals(end.detail.map(SkippedPeriod.SkippedCount.of), Some(2))

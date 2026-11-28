@@ -18,7 +18,6 @@ import com.histmersion.lint.{tolerated, LintRule}
   * inputs.
   */
 @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-@tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
 @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
 class UpstreamRecordsSuite extends munit.FunSuite:
 

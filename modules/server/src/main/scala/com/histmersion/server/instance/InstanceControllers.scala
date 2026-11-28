@@ -6,6 +6,8 @@ import com.histmersion.util.problem.Text.{sentence, sentences}
 import com.histmersion.util.database.Transactor
 
 import com.histmersion.domain.personal.seen.{SeenBoard, SeenService}
+import com.histmersion.domain.TwoStateTransformers.given
+import io.scalaland.chimney.dsl.*
 import com.histmersion.server.{BuildMeta, Deps, StorageLocations, Supervisor}
 import com.histmersion.server.UiConfigViews
 import com.histmersion.util.basemap.BasemapService
@@ -263,8 +265,7 @@ final class InstanceControllers(
   def uiConfig(keyRequired: UiConfig.KeyRequired): UiConfig = UiConfigViews.page(
     cfg.ui,
     keyRequired = keyRequired,
-    agentsEnabled =
-      (if cfg.agents.enabled.value then UiConfig.AgentsEnabled.Enabled else UiConfig.AgentsEnabled.Disabled),
+    agentsEnabled = cfg.agents.enabled.transformInto[UiConfig.AgentSwitch],
     plugins = deps.plugins.report,
     baseMapSource = baseMapSource,
     mapLanguage = UiConfig.MapLanguage(cfg.basemap.labels.language.value),

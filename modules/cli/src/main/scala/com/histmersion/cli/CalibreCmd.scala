@@ -535,7 +535,6 @@ object CalibreCmd:
     * file are not gaps, so they are neither pushed nor reported as skipped — one summary line says how many there are.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[cli] def syncGaps(using
       console: Console
   )(
@@ -626,7 +625,6 @@ object CalibreCmd:
 
   /** `calibre gaps` on the server: the same table, `--quiet` line and exit codes as [[listGaps]]. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   private def serverGaps(
       s: CollectionsClient,
@@ -704,7 +702,6 @@ object CalibreCmd:
       else shown"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
     )
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def hostUpdateAll(c: Client, apply: Api.Apply, json: Cli.JsonOutput)(using console: Console) =
     for
       linked <- linkedRecords(c)

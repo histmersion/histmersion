@@ -66,7 +66,7 @@ final private[events] case class EventRow(
         placeKind.map(k => com.histmersion.api.catalogue.Place.Kind.Wire(k.value)),
         geometryType.map(g => EventScale.GeometryType(g.value))
       ),
-      (if scale.isDefined then EventSummary.ScaleStated.Stated else EventSummary.ScaleStated.Inferred),
+      (if scale.isDefined then EventSummary.Basis.Stated else EventSummary.Basis.Inferred),
       EventSummary.Tier(tier.value),
       EventPrecision.of(uncertainty.map(u => EventPrecision.Uncertainty(u.value))),
       central.map(c => EventSummary.Central(c.value)),

@@ -68,7 +68,6 @@ object AgentsApi:
         (refactorEncoded3: ReviewGoal.Slug) => (refactorEncoded3).value
       )
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(
     LintRule.GetWrites,
     "pending S1 follow-up 5 (a GET or HEAD route writes nothing): GET: Process ProcessBuilder.start"

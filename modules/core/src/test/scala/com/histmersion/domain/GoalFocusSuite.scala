@@ -748,8 +748,8 @@ class GoalFocusSuite extends munit.FunSuite:
     val st =
       Autopilot.EngineStatus(
         on = Autopilot.EngineStatus.On.On,
-        agentsEnabled = Autopilot.EngineStatus.AgentsEnabled.Enabled,
-        managersEnabled = Autopilot.EngineStatus.ManagersEnabled.Enabled,
+        agentsEnabled = Autopilot.EngineStatus.AgentSwitch.Enabled,
+        managersEnabled = Autopilot.EngineStatus.ManagingSwitch.Enabled,
         goalPlansWait = Some(Autopilot.EngineStatus.GoalPlansWait(why))
       )
     assert(

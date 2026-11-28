@@ -12,7 +12,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.web.ErrorLine
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.web.{:=, given}
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** The settings as the server reads its settings file, for every Settings page: read once when a page opens and again
   * after each change; and the change itself — written into the file by the server, then applied.

@@ -105,7 +105,6 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def importText(list: Kind.Label, req: QueueImport): Either[Api.Error, QueueImported] =
     maintenance.guard(WriteGate.OperationName("queue/import")):

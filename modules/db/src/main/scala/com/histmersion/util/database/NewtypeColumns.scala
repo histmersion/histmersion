@@ -11,7 +11,7 @@ import java.sql.{PreparedStatement, ResultSet, SQLException, Types}
 import util.problem.Problem
 import util.nonempty.NonEmptyVector
 import util.json.RawJson
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 import util.json.RawJson.*
 import com.histmersion.api.json.NewtypeCodecs.{problemCodec, vector}
 import com.histmersion.lint.{atBoundary, BoundaryKind}

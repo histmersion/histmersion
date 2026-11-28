@@ -130,7 +130,7 @@ import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.api.automation.Agents
 import com.histmersion.api.library.Histogram
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** Every endpoint here and in the other `*Api` objects is a `lazy val`: initialising an object runs all of its strict
   * vals, so Scala.js would link every endpoint and every codec it names into the web bundle as soon as the page used
@@ -887,7 +887,6 @@ object Api:
     base.post.in("bundle" / "verify").in(fileBody).out(jsonBody[Bundle.VerifyResult])
 
   /** Not an MCP tool: its input is a file upload, which an MCP call cannot carry. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val importBundle: PublicEndpoint[(Apply, TapirFile), Error, Bundle.ImportResult, Any] =
     (base.post
       .in("bundle" / "import")
@@ -1598,7 +1597,6 @@ object Api:
         (refactorEncoded157: Period.Id) => (refactorEncoded157).value
       )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val seedPeriods: PublicEndpoint[Overwrite, Error, Period.ImportResult, Any] =
     (base.post
       .in("periods" / "seed")
@@ -1666,7 +1664,6 @@ object Api:
         )
       )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val init: PublicEndpoint[Fetching, Error, JobInfo, Any] =
     (base.post
       .in("init")
@@ -2668,7 +2665,6 @@ object Api:
         ((refactorDecoded96)._1, FileBytes((refactorDecoded96)._2))
       )((refactorEncoded96: (SourceCoverParams, FileBytes)) => ((refactorEncoded96)._1, ((refactorEncoded96)._2).value))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   lazy val fillFigureLicences: PublicEndpoint[Apply, Error, FigureLicenceFill, Any] =
     (base.post
       .in("media" / "fill-licences")

@@ -231,7 +231,6 @@ object ApiClient:
   ): Future[List[Place.Hit]] =
     call(Api.places)((q.map(t => Place.Kind.Wire(t.value)), asOf, limit.map(l => Api.PlacesGeoQuery.Limit(l.value))))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def place(
       id: Place.Id,
       asOf: Option[Api.AggregateQuery.AsOf],

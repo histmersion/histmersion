@@ -7,7 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.catalogue.Year
 import io.github.iltotore.iron.constraint.any.Pure
-import com.histmersion.api.TwoStates
+import com.histmersion.api.json.TwoStates
 
 /** @param lendingOnly
   *   the item must be borrowed on archive.org; it is never downloaded (no DRM circumvention)
