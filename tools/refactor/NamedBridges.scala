@@ -157,6 +157,16 @@ class NamedBridges(config: NamedBridges.Config, index: ConcurrentHashMap[String,
               case Some(r) if inCompanionOf(a, r.from) =>
                 log.add(s"own-body\t${r.from}\t$to\t$path:${a.pos.startLine + 1}")
                 Patch.empty
+              case Some(r) if Iterator.iterate(a.parent)(_.flatMap(_.parent)).takeWhile(_.nonEmpty).flatten.exists {
+                    case outer: Term.Apply => outer.argClause.values.size == 1 && construction(outer.fun).exists(c => targets(c._1)) &&
+                      (outer.argClause.values.head match {
+                        case Term.Select(_, v) => isIronValue(v)
+                        case _ => false
+                      })
+                    case _ => false
+                  } =>
+                log.add(s"nested\t${r.from}\t$to\t${r.name}\t$path:${a.pos.startLine + 1}")
+                Patch.empty
               case Some(r) =>
                 log.add(s"named\t${r.from}\t$to\t${r.name}\t$how\t$path:${a.pos.startLine + 1}")
                 Patch.replaceTree(a, s"${receiver(q)}.${r.name}")

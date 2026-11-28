@@ -700,7 +700,7 @@ final class ManagerSupervisor(
               now
             )
             val next = plan.nextTick.flatMap(ManagerPolicy.parseInstant)
-            val cron = plan.cron.map(c => c)
+            val cron = plan.cron.map(c => ManagerInfo.Cron(c.value))
             existing match
               case None =>
                 Unused(

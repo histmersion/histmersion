@@ -4,7 +4,6 @@ package util.jobs
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.TwoCases
-import com.histmersion.api.automation.{Managers, Run}
 
 /** A job that runs as checkpointed steps (an agent run): what its row records when it is created. Its `status`, `kind`
   * and `params` are the owner's words, stored as given; `citekey` is the source it works on, when it works on one.
@@ -33,7 +32,8 @@ final case class RunRow(
 object RunRow:
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
-  export Run.State.Wire as Status
+  type Status = Status.T
+  object Status extends Newtype[String, Pure]
   type Pipeline = Pipeline.T
   object Pipeline extends Newtype[String, Pure]
   export domain.automation.Pipeline.Version as PipelineVersion
@@ -64,4 +64,5 @@ object RunRow:
     extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type ManagerId = ManagerId.T
   object ManagerId extends Newtype[String, Pure]
-  export Managers.ManagerItem.Id as ManagerItem
+  type ManagerItem = ManagerItem.T
+  object ManagerItem extends Newtype[Long, Pure]

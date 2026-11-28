@@ -45,7 +45,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
         )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def get(id: QueueItemId): Option[QueueItem] = items.find(_.id == id)
+  def get(id: QueueItemId): Option[QueueItem] = items.find(_.id.value == id.value)
 
   /** The items of `kind` whose text names `doi`, as the database's `strpos` and the DOI rule find them. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -87,7 +87,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: QueueItemId):
       })
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def removed(id: QueueItemId): WorkListState = this.modify(_.items).using(_.filterNot(_.id == id))
+  def removed(id: QueueItemId): WorkListState = this.modify(_.items).using(_.filterNot(_.id.value == id.value))
 
   def emptied(kind: Kind): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
 
@@ -105,7 +105,7 @@ object WorkListState:
   def item(kind: Kind, in: QueueAdd, creator: Creator.New, id: QueueItemId, now: Instant): QueueItem =
     val status = in.status.map(_.value.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Queue.Open)
     QueueItem(
-      id,
+      QueueItem.Id(id.value),
       kind.label,
       in.text,
       in.topic,

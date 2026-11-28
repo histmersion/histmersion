@@ -164,7 +164,8 @@ object AssetService:
   export Target.TargetType
   export Target.Id as TargetId
   export CollectionLibrary.Bytes
-  export Api.ContentType as Mime
+  type Mime = Mime.T
+  object Mime extends Newtype[String, Pure]
 
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
@@ -425,7 +426,7 @@ object AssetService:
     def detail(citekey: Citekey, name: AssetName): Option[AssetDetail] =
       named(citekey, name).map { a =>
         AssetDetail(
-          a.name,
+          Bundle.Asset.FileName(a.name.value),
           Bundle.Asset.MimeText(a.mime.value),
           ByteCount(a.bytes.value.length.toLong),
           Sha256(a.sha256.value),
@@ -703,7 +704,7 @@ object AssetService:
     private def item(a: HeldAsset): MediaItem =
       MediaItem(
         MediaItem.Uid(a.uid.value),
-        a.name,
+        Bundle.Asset.FileName(a.name.value),
         Bundle.Asset.MimeText(a.mime.value),
         ByteCount(a.bytes.value.length.toLong),
         a.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
@@ -803,7 +804,7 @@ object AssetService:
     private def hit(a: HeldAsset, p: (HeldAsset.Latitude, HeldAsset.Longitude)): MediaGeoHit =
       MediaGeoHit(
         a.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
-        a.name,
+        Bundle.Asset.FileName(a.name.value),
         a.kind.map(k => MediaItem.Kind(k.value)),
         Latitude(p._1.value),
         Longitude(p._2.value),

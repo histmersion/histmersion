@@ -9,7 +9,6 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.TwoCases
-import com.histmersion.api.automation.Managers
 
 /** A five-field cron expression, in UTC — the schedule of a goal's currency check or acquisition sweep
   * (docs/research-embedded-agents.md §14). `minute hour day-of-month month day-of-week`, each `*`, a number, a range
@@ -76,7 +75,8 @@ object Cron:
   object GapMinutes extends Newtype[Long, Pure]
   type SampleCount = SampleCount.T
   object SampleCount extends Newtype[Int, Pure]
-  export Managers.ManagerInfo.Cron as Text
+  type Text = Text.T
+  object Text extends Newtype[String, Pure]
   type Minutes = Minutes.T
   object Minutes extends Newtype[Int, Pure]
   type Hours = Hours.T

@@ -3,7 +3,6 @@ package util.data.exchange
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.TwoCases
-import com.histmersion.config.PlacesConfig
 
 final case class ImportOptions(
     dryRun: ImportOptions.DryRun,
@@ -18,4 +17,5 @@ object ImportOptions:
     extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type ChunkChars = ChunkChars.T
   object ChunkChars extends Newtype[Int, Pure]
-  export PlacesConfig.PointToleranceKm as ToleranceKm
+  type ToleranceKm = ToleranceKm.T
+  object ToleranceKm extends Newtype[Double, Pure]

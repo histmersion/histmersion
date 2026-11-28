@@ -1408,10 +1408,10 @@ object BasemapService:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def inside(h: PmTiles.Header, z: PmTiles.Zoom, x: PmTiles.TileColumn, y: PmTiles.TileRow): Boolean =
     val b = BBox(
-      h.minLon,
-      h.minLat,
-      h.maxLon,
-      h.maxLat
+      Longitude(h.minLon.value),
+      Latitude(h.minLat.value),
+      Longitude(h.maxLon.value),
+      Latitude(h.maxLat.value)
     )
     val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z.value))
     x.value >= x0.value && x.value <= x1.value && y.value >= y0.value && y.value <= y1.value

@@ -17,6 +17,9 @@ object ValueOntoType {
       operations: Boolean = true,
       roundTrips: Boolean = true,
       comparisons: Boolean = true,
+      forwarders: Boolean = false,
+      forwardersFrom: String = "",
+      forwarded: Map[String, String] = Map.empty,
       sinks: List[String] = Nil,
       sinkReceivers: List[String] = Nil,
       sinkImport: String = "",
@@ -75,6 +78,12 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
       new ValueOntoType(cfg, buildIndex(cfg.semanticdbRoots.map(_.replace("{scalaVersion}", c.scalaVersion))))
     }
 
+  private val forwardedTo: Map[String, String] = config.forwarded ++ (
+    if (config.forwardersFrom.isEmpty || !Files.isRegularFile(Paths.get(config.forwardersFrom))) Nil
+    else scala.io.Source.fromFile(config.forwardersFrom, "UTF-8").getLines().toList.map(_.split("\t")).collect {
+      case Array(alias, target) => alias -> target
+    }
+  )
   private val rewritten = new ConcurrentLinkedQueue[String]()
   private val missing = new ConcurrentLinkedQueue[String]()
   private val sinkPatterns = config.sinks.map(_.r)
@@ -179,12 +188,22 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
         }
       }
     }
+    // With `forwarders`, an export alias's term (`export Shared.Label as Label`) constructs the object it forwards to:
+    // SemanticDB records no information for a forwarder, so the aliases come from `forwarded` (alias symbol -> object
+    // symbol) or `forwardersFrom` (a file of `alias<TAB>object` lines, as BridgeTypes' `aliasesFrom` reads).
+    def behind(sym: String): Option[String] =
+      if (isNewtypeObject(sym)) Some(sym)
+      else if (!config.forwarders) None
+      else forwardedTo.get(sym.stripSuffix("().") + (if (sym.endsWith("().")) "." else "")).filter(isNewtypeObject) orElse infoS(sym).map(_.signature).collect {
+        case v: s.ValueSignature => v.tpe
+        case m: s.MethodSignature if m.parameterLists.isEmpty => m.returnType
+      }.collect { case st: s.SingleType if isNewtypeObject(st.symbol) => st.symbol }
     def constructionOf(fun: Term): Option[String] = fun match {
-      case n: Term.Name if isNewtypeObject(n.symbol.value) => Some(n.symbol.value)
-      case Term.Select(q, n) if isNewtypeObject(n.symbol.value) => Some(n.symbol.value)
+      case n: Term.Name if behind(n.symbol.value).nonEmpty => behind(n.symbol.value)
+      case Term.Select(q, n) if behind(n.symbol.value).nonEmpty => behind(n.symbol.value)
       case Term.Select(q, n) if constructions(n.value) && n.symbol.value.startsWith(ironValue) => q match {
-        case qn: Term.Name if isNewtypeObject(qn.symbol.value) => Some(qn.symbol.value)
-        case qs: Term.Select if isNewtypeObject(qs.name.symbol.value) => Some(qs.name.symbol.value)
+        case qn: Term.Name => behind(qn.symbol.value)
+        case qs: Term.Select => behind(qs.name.symbol.value)
         case _ => None
       }
       case _ => None
