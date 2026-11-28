@@ -4,7 +4,6 @@ package domain.library.workflows
 import com.histmersion.domain.library.workflows.VerifiedFindings
 import com.histmersion.domain.library.workflows.Geocoded
 import com.histmersion.domain.library.workflows.Classified
-import com.histmersion.domain.automation.agents.Stored
 
 import com.histmersion.util.problem.Text.sentence
 import com.histmersion.domain.{AgentVerify, CompareRuns}
@@ -24,7 +23,6 @@ final class EnrichComparison(records: EnrichRecords) extends OutputComparison:
   /** A rejected findings answer's quote failures are counted from the verifier's own words. */
   private val QuoteFailure = "the quote is not in the text"
 
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def isFindings(name: Step.Name) = name.value.startsWith("findings-")
 
@@ -39,13 +37,13 @@ final class EnrichComparison(records: EnrichRecords) extends OutputComparison:
       rest match
         case Nil                                                              => (checked, passed)
         case s :: tail if s.status == domain.automation.Step.Status.Done.wire =>
-          s.output.flatMap(o => verifiedFindings.read(Stored.Json(o.value)).toOption) match
+          s.output.flatMap(o => verifiedFindings.read(o.checkpoint).toOption) match
             case Some(v) =>
               val n = v.proposed.fold(v.findings.size)(_.value)
               loop(tail, checked + n, passed + n - v.quoteFailed.fold(0)(_.value))
             case None => loop(tail, checked, passed)
         case s :: tail =>
-          s.output.flatMap(o => findings.read(Stored.Json(o.value)).toOption) match
+          s.output.flatMap(o => findings.read(o.checkpoint).toOption) match
             case Some(f) =>
               val n = f.findings.size
               val fails =
@@ -59,7 +57,6 @@ final class EnrichComparison(records: EnrichRecords) extends OutputComparison:
     (EnrichSide.QuotesChecked(checked), EnrichSide.QuotesPassed(passed))
 
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
-  @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def claims(d: Run): List[String] =
     d.stored[Geocoded](CompareRuns.OutputName("geocode"))

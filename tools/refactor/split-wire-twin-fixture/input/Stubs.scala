@@ -6,11 +6,14 @@ package sttp.tapir {
   class Schema[A]:
     def modify[U](path: A => U)(f: Schema[U] => Schema[U]): Schema[A] = this
     def description(text: String): Schema[A] = this
+    def name(n: Schema.SName): Schema[A] = this
 
   object Schema:
     given [A]: Schema[A] = Schema[A]()
+    final case class SName(fullName: String)
     object annotations:
       class description(text: String) extends scala.annotation.StaticAnnotation
+      class customise(f: Schema[?] => Schema[?]) extends scala.annotation.StaticAnnotation
 }
 
 package hearth.kindlings.tapirschemaderivation {

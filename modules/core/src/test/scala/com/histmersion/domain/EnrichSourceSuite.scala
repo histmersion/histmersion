@@ -11,8 +11,8 @@ import com.histmersion.domain.library.workflows.Findings
 import com.histmersion.domain.library.workflows.Loaded
 import com.histmersion.api.catalogue.geocode.KindHint
 import com.histmersion.domain.library.workflows.VerifiedFindings
-import com.histmersion.domain.library.workflows.EnrichSourceTransformers.given
-import com.histmersion.testsupport.StoredCodecs.given
+import com.histmersion.domain.library.workflows.EnrichmentTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 import com.histmersion.domain.library.workflows.Notes
 import com.histmersion.domain.library.workflows.Classified
 import com.histmersion.util.json.RawJson

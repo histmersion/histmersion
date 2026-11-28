@@ -27,10 +27,10 @@ object LibraryAnswers:
   object Name extends Newtype[String, Pure]
 
   val classification: ResponseSchema[Classification] =
-    answer[Classification, wire.Classification](EnrichSourceTransformers.classificationAnswer)
+    answer[Classification, wire.Classification](EnrichmentTransformers.classificationAnswer)
   val findings: ResponseSchema[Findings] =
-    answer[Findings, wire.Findings](EnrichSourceTransformers.findingsAnswer)
-  val notes: ResponseSchema[Notes] = answer[Notes, wire.Notes](EnrichSourceTransformers.notesAnswer)
+    answer[Findings, wire.ProposedFindings](EnrichmentTransformers.findingsAnswer)
+  val notes: ResponseSchema[Notes] = answer[Notes, wire.Notes](EnrichmentTransformers.notesAnswer)
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   val ranking: ResponseSchema[AcquisitionSweepRules.Ranking] = ResponseSchema.derived[AcquisitionSweepRules.Ranking]()
 

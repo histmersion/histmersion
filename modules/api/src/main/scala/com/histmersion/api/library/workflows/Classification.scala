@@ -15,10 +15,16 @@ final case class Classification(
     topics: List[Classification.Topic] = Nil,
     regions: List[Classification.Region] = Nil,
     @description("lowercase_snake_case; prefer tags the facets tool lists") tags: List[Classification.Tag] = Nil,
-    @description("The deep-time span the source is ABOUT (not its publication date); null if none") period: Option[StatedPeriod],
-    @description("foundational | current | contested | superseded | debunked | retracted | unassessed") status: Source.Status.Wire,
+    @description("The deep-time span the source is ABOUT (not its publication date); null if none") period: Option[
+      StatedPeriod
+    ],
+    @description(
+      "foundational | current | contested | superseded | debunked | retracted | unassessed"
+    ) status: Source.Status.Wire,
     @description("Why that status, from the text; empty if unassessed") statusEvidence: Classification.StatusEvidence
-) derives JsonCodec, KindlingsSchema, Schema
+) derives JsonCodec,
+      KindlingsSchema,
+      Schema
 
 object Classification:
   type Summary = Summary.T

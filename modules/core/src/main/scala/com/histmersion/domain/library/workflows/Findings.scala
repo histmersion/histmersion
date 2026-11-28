@@ -31,7 +31,6 @@ import com.histmersion.domain.library.workflows.VerifiedFinding
 import com.histmersion.domain.EnrichSource.CheckFindingsMaxAbsYear
 import com.histmersion.api.catalogue.geocode.KindHint
 
-@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Findings(findings: List[FindingProposal] = Nil)
 
 object Findings:

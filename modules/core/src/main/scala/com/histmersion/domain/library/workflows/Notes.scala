@@ -13,7 +13,6 @@ import com.histmersion.domain.research.Slug
 import com.histmersion.domain.AgentVerify.*
 import com.histmersion.domain.EnrichSource.Description
 
-@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class Notes(notes: Notes.Value)
 
 object Notes:

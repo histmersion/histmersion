@@ -2,8 +2,8 @@ package com.histmersion
 package server.agents
 
 import com.histmersion.api.automation.agents.ModelRef
-import com.histmersion.domain.library.workflows.EnrichSourceTransformers.given
-import com.histmersion.testsupport.StoredCodecs.given
+import com.histmersion.domain.library.workflows.EnrichmentTransformers.given
+import com.histmersion.testsupport.CheckpointCodecs.given
 import com.histmersion.domain.automation.agents.SttpAiJson
 import com.histmersion.domain.automation.agents.SttpAiJson.given
 import com.histmersion.api.json.NewtypeCodecs.given
@@ -49,7 +49,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   * (`HISTMERSION_UPDATE_TRAFFIC=1` rewrites it): moving the providers into plugins changes no request.
   */
 class AiTrafficSuite extends munit.FunSuite:
-  private given JsonValueCodec[Classification] = EnrichSourceTransformers.classificationAnswer
+  private given JsonValueCodec[Classification] = EnrichmentTransformers.classificationAnswer
 
   /** One scripted answer: a status, its headers, its body. */
   private given Stores = Stores.disk

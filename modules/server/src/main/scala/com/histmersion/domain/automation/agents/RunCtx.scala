@@ -31,6 +31,7 @@ import sttp.shared.Identity
 
 import java.util.concurrent.{ConcurrentHashMap, Semaphore}
 import scala.jdk.CollectionConverters.*
+import scala.util.NotGiven
 import com.histmersion.domain.automation.Run
 import com.histmersion.util.jobs.Job
 import com.histmersion.util.jobs.JobRepo
@@ -161,7 +162,7 @@ final class RunCtx private[automation] (
         )
       else
         summon[RunCtx.Stores[O]]
-          .read(Stored.Json(json.value))
+          .read(Checkpointed.Json(json.value))
           .left
           .map(e =>
             Halt.Fail(
@@ -675,7 +676,7 @@ final class RunCtx private[automation] (
                         prompt,
                         use,
                         billing,
-                        Some(summon[RunCtx.Stores[O]].write(o).value),
+                        Some(summon[RunCtx.Stores[O]].write(o).text),
                         None,
                         started,
                         msgs,
@@ -787,16 +788,14 @@ object RunCtx:
   object LastAttempt extends Newtype[Boolean, Pure]
 
   trait Stores[O]:
-    def write(o: O): Stored.Json
-    def read(json: Stored.Json): Either[Stored.Unread, O]
+    def write(o: O): Checkpointed.Json
+    def read(json: Checkpointed.Json): Either[Checkpointed.Unread, O]
 
-  object Stores extends StoresByCodec:
-    given byPort: [O] => (port: Stored[O]) => Stores[O]:
-      def write(o: O): Stored.Json = port.write(o)
-      def read(json: Stored.Json): Either[Stored.Unread, O] = port.read(json)
+  object Stores:
+    given byPort: [O] => (port: Checkpointed[O]) => Stores[O]:
+      def write(o: O): Checkpointed.Json = port.write(o)
+      def read(json: Checkpointed.Json): Either[Checkpointed.Unread, O] = port.read(json)
 
-  trait StoresByCodec:
-    given byCodec: [O] => (codec: JsonValueCodec[O]) => Stores[O]:
-      def write(o: O): Stored.Json = Stored.Json(o.asJson.noSpaces)
-      def read(json: Stored.Json): Either[Stored.Unread, O] =
-        RawJson.decode[O](json.value).left.map(Stored.Unread(_))
+    given byCodec: [O] => (codec: JsonValueCodec[O], noPort: NotGiven[Checkpointed[O]]) => Stores[O]:
+      def write(o: O): Checkpointed.Json = Checkpointed.Json.of(o.asJson.noSpaces)
+      def read(json: Checkpointed.Json): Either[Checkpointed.Unread, O] = json.parsed(RawJson.decode[O](_))

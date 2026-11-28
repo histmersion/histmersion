@@ -9,7 +9,14 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema.annotations.description
 
-final case class StatedYear(@description("The number as written, always positive (3300 for 3300 BCE)") value: StatedYear.ToSignedYearValue, @description("BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)") unit: StatedYear.Wire) derives JsonCodec, KindlingsSchema, Schema
+final case class StatedYear(
+    @description("The number as written, always positive (3300 for 3300 BCE)") value: StatedYear.ToSignedYearValue,
+    @description(
+      "BCE | CE | calBP (calibrated years before 1950) | BP (UNcalibrated radiocarbon years)"
+    ) unit: StatedYear.Wire
+) derives JsonCodec,
+      KindlingsSchema,
+      Schema
 
 object StatedYear:
   type ToSignedYearValue = ToSignedYearValue.T

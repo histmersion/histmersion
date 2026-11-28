@@ -53,10 +53,10 @@ final class LibraryWorkflows(
   )
 
   val enrichSource: WorkflowDefinition = LibraryWorkflow(
-    EnrichSourcePipeline(site, cfg().agents, cfg().libraryAgents, upstream, proposals, EnrichSourceTransformers),
+    EnrichSourcePipeline(site, cfg().agents, cfg().libraryAgents, upstream, proposals, EnrichmentTransformers),
     List(StepAgent.EnrichClassify, StepAgent.EnrichFindings, StepAgent.EnrichNotes),
     a.definitions,
-    EnrichComparison(EnrichSourceTransformers)
+    EnrichComparison(EnrichmentTransformers)
   )
 
   val currencyCheck: WorkflowDefinition =

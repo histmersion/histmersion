@@ -133,15 +133,17 @@ object CompareRuns:
     type Turns = Turns.T
     object Turns extends Newtype[Int, Pure]
     type Output = Output.T
-    object Output extends Newtype[String, Pure]
+    object Output extends Newtype[String, Pure]:
+      extension (output: Output)
+        def checkpoint: automation.agents.Checkpointed.Json = automation.agents.Checkpointed.Json(output.value)
 
   final case class Run(run: RunHead, steps: List[Step]):
-    def stored[O](name: OutputName)(using port: automation.agents.Stored[O]): Option[O] =
+    def stored[O](name: OutputName)(using port: automation.agents.Checkpointed[O]): Option[O] =
       steps
         .filter(s => s.name == name && s.status == automation.Step.Status.Done.wire)
         .lastOption
         .flatMap(_.output)
-        .flatMap(o => port.read(automation.agents.Stored.Json(o.value)).toOption)
+        .flatMap(o => port.read(o.checkpoint).toOption)
 
   // ── what a comparison says ───────────────────────────────────────────────────────────────────
 

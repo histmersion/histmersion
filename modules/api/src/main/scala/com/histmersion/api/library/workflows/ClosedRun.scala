@@ -6,7 +6,8 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class ClosedRun(line: ClosedRun.Line, lint: List[ClosedRun.Lint], acquire: Option[ClosedRun.Acquire]) derives JsonCodec
+final case class ClosedRun(line: ClosedRun.Line, lint: List[ClosedRun.Lint], acquire: Option[ClosedRun.Acquire])
+    derives JsonCodec
 
 object ClosedRun:
   type Line = Line.T

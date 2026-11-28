@@ -720,7 +720,8 @@ the spelled root package counts as the client naming a package outside the api. 
 newtypes, aliases and exports) into another layer as its twin. Domain to api (`strip = true`): the twin derives the
 codecs and the original loses them (its codec derives, its codec givens with their annotations, and the listed imports
 nothing else in the file uses); a `given Schema[R] = KindlingsSchema.derived[R].schema.modify(_.f)(_.description("…"))`
-becomes `@description("…")` on the twin's field. Every name the twin uses is resolved through SemanticDB: the twin's own
+becomes `@description("…")` on the twin's field; a renamed twin that derives a schema gets `@customise(_.name(SName("<original
+name>")))` (Kindlings ignores a class-level `@encodedName`), so the schema's name (and every model-facing `$defs` title) stays the original's. Every name the twin uses is resolved through SemanticDB: the twin's own
 companion (renamed with the twin), another configured record (its twin), `types` (a symbol or prefix mapped elsewhere;
 an own newtype mapped there is not declared again), `redeclare` (a newtype declared again in the twin's companion),
 `visible` (as is). Anything else is reported `unmapped`/`nested` and that twin is not written. Run it with

@@ -8,7 +8,10 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None) derives JsonCodec, KindlingsSchema, Schema
+final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None)
+    derives JsonCodec,
+      KindlingsSchema,
+      Schema
 
 object StatedPeriod:
   type Name = Name.T

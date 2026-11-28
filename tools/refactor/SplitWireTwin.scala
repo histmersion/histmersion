@@ -36,6 +36,7 @@ object SplitWireTwin {
   }
 
   val DescriptionImport = "sttp.tapir.Schema.annotations.description"
+  val NameImports = List("sttp.tapir.Schema.SName", "sttp.tapir.Schema.annotations.customise")
 
   def fqn(s: Symbol): String =
     s.value.stripSuffix("#").stripSuffix(".").stripSuffix("/").replace('/', '.').replace('#', '.')
@@ -334,7 +335,9 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
           }
         case _ => Nil
       }
-      val recordText = (top.map(t => s"@description($t)\n").getOrElse("")) + header + derivesText +
+      val schemaNamed = nameEdit.nonEmpty && twinDerives.exists(n => n == "KindlingsSchema" || n == "Schema")
+      val nameText = if (schemaNamed) s"@customise(_.name(SName(\"${nameTree.value}\")))\n" else ""
+      val recordText = (top.map(t => s"@description($t)\n").getOrElse("")) + nameText + header + derivesText +
         (if (cases.isEmpty) "" else cases.mkString(":\n", "\n", ""))
 
       val companionStats = companion.toList.flatMap(_.templ.body.stats).flatMap {
@@ -371,7 +374,8 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
         if (Symbol(sym).info.exists(i => i.isClass || i.isTrait)) report("nested", tw.from, sym)
       }
       val imports = (recImports ++ compRefs.flatMap(_._2) ++ redeclImports ++ config.twinImports ++
-        twinDerives.flatMap(config.derivesImports.get) ++ (if (fields.nonEmpty || top.nonEmpty) List(DescriptionImport) else Nil))
+        twinDerives.flatMap(config.derivesImports.get) ++ (if (fields.nonEmpty || top.nonEmpty) List(DescriptionImport) else Nil) ++
+        (if (schemaNamed) NameImports else Nil))
         .filterNot(i => packageOf(i) == packageOf(tw.to))
       val clashes = imports.filterNot(_.endsWith(".given")).groupBy(i => simple(i)).filter { case (n, is) => is.size > 1 || n == simple(tw.to) }
       clashes.foreach { case (n, is) => report("clash", tw.from, n, is.toList.sorted.mkString(" ")) }

@@ -16,7 +16,6 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.domain.AgentVerify.*
 import com.histmersion.domain.EnrichSource.MaxAbsYear
 
-@tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
 final case class StatedPeriod(start: StatedYear, end: StatedYear, name: Option[StatedPeriod.Name] = None)
 
 object StatedPeriod:

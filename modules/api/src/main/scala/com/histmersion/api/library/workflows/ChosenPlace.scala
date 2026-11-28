@@ -7,15 +7,15 @@ import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
-final case class PlaceChoice(
-    claim: PlaceChoice.Claim,
-    asked: PlaceChoice.Asked,
+final case class ChosenPlace(
+    claim: ChosenPlace.Claim,
+    asked: ChosenPlace.Asked,
     placeId: Option[Place.Id],
-    label: Option[PlaceChoice.Label],
-    approximate: Option[PlaceChoice.Approximate]
+    label: Option[ChosenPlace.Label],
+    approximate: Option[ChosenPlace.Approximate]
 ) derives JsonCodec
 
-object PlaceChoice:
+object ChosenPlace:
   type Claim = Claim.T
   object Claim extends Newtype[String, Pure]
   type Asked = Asked.T

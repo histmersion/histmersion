@@ -59,13 +59,13 @@ object CheckpointGolden:
       val decoder: JsonValueCodec[A]
   )
 
-  import com.histmersion.domain.library.workflows.EnrichSourceTransformers.given
-  import com.histmersion.domain.library.workflows.EnrichSourceTransformers
+  import com.histmersion.domain.library.workflows.EnrichmentTransformers.given
+  import com.histmersion.domain.library.workflows.EnrichmentTransformers
 
-  private given JsonValueCodec[Classification] = EnrichSourceTransformers.classificationAnswer
-  private given JsonValueCodec[Notes] = EnrichSourceTransformers.notesAnswer
+  private given JsonValueCodec[Classification] = EnrichmentTransformers.classificationAnswer
+  private given JsonValueCodec[Notes] = EnrichmentTransformers.notesAnswer
 
-  import com.histmersion.testsupport.StoredCodecs.given
+  import com.histmersion.testsupport.CheckpointCodecs.given
 
   private val findingInputs = List(
     Finding.Input(
