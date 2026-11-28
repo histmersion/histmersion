@@ -3,7 +3,11 @@ import scala.meta._
 import metaconfig.{ConfDecoder, Configured, generic}
 
 object RenameSymbols {
-  case class Config(renames: Map[String, String] = Map.empty, imports: Map[String, String] = Map.empty)
+  case class Config(
+      renames: Map[String, String] = Map.empty,
+      imports: Map[String, String] = Map.empty,
+      inPlace: Boolean = false
+  )
   object Config {
     implicit val surface: generic.Surface[Config] = generic.deriveSurface[Config]
     implicit val decoder: ConfDecoder[Config] = generic.deriveDecoder(Config()).noTypos
@@ -37,7 +41,10 @@ class RenameSymbols(config: RenameSymbols.Config) extends SemanticRule("RenameSy
   }
 
   override def fix(implicit doc: SemanticDocument): Patch =
-    doc.tree.collect {
+    if (config.inPlace) doc.tree.collect {
+      case n: Name if config.renames.contains(n.symbol.value) => Patch.replaceTree(n, config.renames(n.symbol.value))
+    }.asPatch
+    else doc.tree.collect {
       case i: Importee.Name if config.renames.contains(i.name.symbol.value) =>
         Patch.removeImportee(i) + config.imports.get(i.name.symbol.value).fold(Patch.empty)(p =>
           Patch.addGlobalImport(importerOf(p)))
