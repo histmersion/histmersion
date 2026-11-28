@@ -208,7 +208,6 @@ object Tree:
         regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
     )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def regionTimeTree(
       rows: List[TreeRow],
       from: Year,

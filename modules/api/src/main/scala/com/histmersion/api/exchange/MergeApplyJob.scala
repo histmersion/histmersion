@@ -56,7 +56,6 @@ object MergeApplyJob:
   /** A restart cut the apply short: its transaction was committed or rolled back as a whole, never half applied. */
   val InterruptedText: Problem = Problem.Run.CutShort(Problem.Conflict.Activity.MergeApply)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(
       id: SpatialHierarchyResult.Job.Id,
       status: JobState,
