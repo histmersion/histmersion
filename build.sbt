@@ -22,7 +22,6 @@ Global / onLoad := (Global / onLoad).value.andThen { state =>
   state
 }
 ThisBuild / organization := "com.histmersion"
-ThisBuild / version := "0.1.0-SNAPSHOT"
 
 // Every module is AGPL-3.0-or-later, plugin-api and the first-party plugins included (LICENSE, NOTICE).
 ThisBuild / licenses := List(License("AGPL-3.0-or-later", uri("https://www.gnu.org/licenses/agpl-3.0.html")))
@@ -178,8 +177,6 @@ lazy val commonDeps = Seq(
   // netty at its newest 4.2 patch (project/Dependencies.scala, V.netty): netty-all pins every netty module it lists
   dependencyOverrides += "io.netty" % "netty-all" % V.netty,
   testFrameworks += new TestFramework("munit.Framework"),
-  // every compile formats the module's sources first (.scalafmt.conf); `just fmt-check` is the gate
-  scalafmtOnCompile := true,
   Test / fork := false,
   Test / extraTestDigests += sbt.util.Digest.sha256Hash(s"test-db=${(ThisBuild / testDbOn).value}".getBytes("UTF-8"))
 )
@@ -417,8 +414,9 @@ lazy val core = projectMatrix
     )
   )
   .settings(
-    // the build's pure helper is tested with the other suites (BuildTestGroupsSuite)
-    Test / unmanagedSources += (ThisBuild / baseDirectory).value / "project" / "TestGroups.scala",
+    // the build's pure helpers are tested with the other suites (BuildTestGroupsSuite, BuildLedgerSitesSuite)
+    Test / unmanagedSources ++= Seq("TestGroups.scala", "LedgerSitesPlan.scala")
+      .map((ThisBuild / baseDirectory).value / "project" / _),
     // the fixtures convert reference.conf's records into the domain's settings, as the server does
     libraryDependencies += "io.scalaland" %% "chimney" % V.chimney % Test
   )
@@ -603,8 +601,7 @@ lazy val pluginHello = project
   .dependsOn(pluginApi, lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-plugin-hello",
-    description := "A test plugin jar for the plugin and relink tests",
-    publish / skip := true
+    description := "A test plugin jar for the plugin and relink tests"
   )
   .settings(commonDeps)
 
@@ -613,8 +610,7 @@ lazy val pluginHelloAi = project
   .dependsOn(pluginApi, lint.jvm(scala3) % "provided;test")
   .settings(
     name := "histmersion-plugin-hello-ai",
-    description := "A test AI-provider plugin jar: scripted, no network",
-    publish / skip := true
+    description := "A test AI-provider plugin jar: scripted, no network"
   )
   .settings(commonDeps)
 
@@ -624,8 +620,7 @@ lazy val pluginHelloLib = project
   .settings(
     name := "histmersion-plugin-hello-lib",
     description := "A test library that the hello-deps test plugin depends on",
-    version := "0.1.0",
-    publish / skip := true
+    version := "0.1.0"
   )
   .settings(commonDeps)
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
@@ -638,8 +633,7 @@ lazy val pluginHelloDeps = project
   .settings(
     name := "histmersion-plugin-hello-deps",
     description := "A test plugin with a dependency of its own, published to a fixture Maven repository",
-    version := "0.1.0",
-    publish / skip := true
+    version := "0.1.0"
   )
   .settings(commonDeps)
   .settings(
@@ -670,7 +664,7 @@ lazy val console = project
   .in(file("modules/console"))
   .dependsOn(newtype.jvm(scala3), lint.jvm(scala3))
   .settings(commonDeps)
-  .settings(name := "histmersion-console", publish / skip := true)
+  .settings(name := "histmersion-console")
   .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
 
 lazy val pluginResolver = project
@@ -679,8 +673,7 @@ lazy val pluginResolver = project
   // run from the relink kit's tools/, never on the server's class path: coursier's jar carries native-image settings
   .settings(
     name := "histmersion-plugin-resolver",
-    description := "Resolves user plugins' dependencies against the server's modules (coursier)",
-    publish / skip := true
+    description := "Resolves user plugins' dependencies against the server's modules (coursier)"
   )
   .settings(commonDeps)
   .settings(
@@ -723,8 +716,7 @@ lazy val chimneyIronTests = project
   .dependsOn(chimneyIron % Provided, newtype.jvm(scala3), lint.jvm(scala3))
   .settings(
     name := "histmersion-chimney-iron-tests",
-    description := "chimney-iron used as a layer uses it, as a Provided dependency",
-    publish / skip := true
+    description := "chimney-iron used as a layer uses it, as a Provided dependency"
   )
   .settings(commonDeps)
   .settings(
@@ -825,6 +817,12 @@ val sourcesDigest = taskKey[String]("A digest of every module's sources and of t
 /** Every module compiled with its tests: the SemanticDB LedgerSites reads is that of the last compile. */
 val everyModuleCompiled = taskKey[Unit]("Compile every module of the build, main and test")
 
+val ledgerSitesKey = taskKey[String]("The key of the ledger sites' inputs: the sources' digest and the versions")
+val ledgerSites = taskKey[Unit](
+  "Write target/guidelines' ledger sites (Scalafix over every module's SemanticDB) unless they are current; " +
+    "the server's tests start after it"
+)
+
 lazy val server = project
   .in(file("modules/server"))
   .dependsOn(nonEmptyDerivation.jvm(scala3) % Provided, lint.jvm(scala3))
@@ -880,8 +878,29 @@ lazy val server = project
       digest.digest.map(b => f"${b & 0xff}%02x").mkString
     },
     Test / extraTestDigests += sbt.util.Digest.sha256Hash(s"sources=${sourcesDigest.value}".getBytes("UTF-8")),
+    ledgerSitesKey := Def.uncached(LedgerSitesPlan.key(sourcesDigest.value, BuildVersions.text)),
+    ledgerSites := Def.uncached {
+      val _ = everyModuleCompiled.value
+      val root = (ThisBuild / baseDirectory).value
+      val roots = LedgerSitesGen.semanticdbTargetRoots(root / "target" / "out", V.scala).map(_.getPath)
+      LedgerSitesGen.ensure(
+        root,
+        ledgerSitesKey.value,
+        LedgerSitesPlan.command(roots, V.scala, V.scalafixScala, V.scalafix),
+        LedgerSitesPlan.timeoutSeconds(sys.env.get(LedgerSitesPlan.TimeoutEnv)),
+        streams.value.log
+      )
+    },
+    Test / resourceGenerators += Def.task {
+      Def.uncached {
+        val out = (Test / resourceManaged).value / LedgerSitesGen.KeyResource
+        val key = ledgerSitesKey.value
+        if !out.exists() || IO.read(out) != key then IO.write(out, key)
+        Seq(out)
+      }
+    }.taskValue,
     // `test` and `testOnly` both find the suites first: no suite starts before every module is compiled
-    Test / definedTests := (Test / definedTests).dependsOn(everyModuleCompiled).value
+    Test / definedTests := (Test / definedTests).dependsOn(everyModuleCompiled, ledgerSites).value
   )
   .enablePlugins(NativeImage)
   .settings(
@@ -1311,36 +1330,56 @@ lazy val web = project
     )
   )
 
+lazy val matrices = Seq(
+  lint,
+  newtype,
+  nonEmpty,
+  nonEmptyDerivation,
+  problem,
+  json,
+  values,
+  api,
+  core,
+  pluginsFetchers,
+  pluginsEvents,
+  pluginsMedia,
+  pluginsGazetteers,
+  pluginsAiHttp,
+  pluginsCalibre
+)
+
+lazy val jvmProjects = Seq(
+  config,
+  files,
+  pluginApi,
+  upstreams,
+  pluginHost,
+  pluginTestkit,
+  pluginVaults,
+  pluginHello,
+  pluginHelloAi,
+  pluginHelloLib,
+  pluginHelloDeps,
+  pluginResolver,
+  console,
+  chimneyIron,
+  chimneyIronTests,
+  db,
+  server,
+  cli
+)
+
+lazy val jsProjects = Seq(web)
+
+lazy val al = new HistmersionAliases(matrices, jvmProjects, jsProjects)
+
 lazy val root = project
   .in(file("."))
-  .aggregate(
-    (lint.projectRefs ++ newtype.projectRefs ++ nonEmpty.projectRefs ++ nonEmptyDerivation.projectRefs ++ problem.projectRefs ++ json.projectRefs ++ values.projectRefs ++ api.projectRefs ++ core.projectRefs ++ pluginsFetchers.projectRefs ++
-      pluginsEvents.projectRefs ++ pluginsMedia.projectRefs ++
-      pluginsGazetteers.projectRefs ++ pluginsAiHttp.projectRefs ++ pluginsCalibre.projectRefs)*
-  )
-  .aggregate(
-    config,
-    files,
-    pluginApi,
-    upstreams,
-    pluginHost,
-    pluginTestkit,
-    pluginVaults,
-    pluginHello,
-    pluginHelloAi,
-    pluginHelloLib,
-    pluginHelloDeps,
-    pluginResolver,
-    console,
-    chimneyIron,
-    chimneyIronTests,
-    db,
-    server,
-    cli,
-    web
-  )
+  .enablePlugins(KubuszokRootPlugin)
+  .aggregate(matrices.flatMap(_.projectRefs)*)
+  .aggregate((jvmProjects ++ jsProjects).map(p => p: ProjectReference)*)
   .settings(
     name := "histmersion",
-    description := "Histmersion: a geo-temporal research corpus with MCP, REST, a web UI and a CLI",
-    publish / skip := true
+    description := "Histmersion: a geo-temporal research corpus with MCP, REST, a web UI and a CLI"
   )
+  .settings(al.commandAliases())

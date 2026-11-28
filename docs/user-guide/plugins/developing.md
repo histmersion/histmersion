@@ -100,8 +100,8 @@ The two Scala files are the ones you edit, and `project.scala` is the build:
 ```scala
 //> using scala 3.10.1
 //> using repository m2Local
-//> using compileOnly.dep com.histmersion::histmersion-plugin-api:0.1.0-SNAPSHOT
-//> using compileOnly.dep com.histmersion::histmersion-plugin-platform:0.1.0-SNAPSHOT
+//> using compileOnly.dep com.histmersion::histmersion-plugin-api:<version>
+//> using compileOnly.dep com.histmersion::histmersion-plugin-platform:<version>
 //> using resourceDir resources
 
 //> using publish.organization doimirror
@@ -110,8 +110,8 @@ The two Scala files are the ones you edit, and `project.scala` is the build:
 //> using publish.doc false
 
 //> using test.dep org.scalameta::munit:1.3.6
-//> using test.dep com.histmersion::histmersion-plugin-platform:0.1.0-SNAPSHOT
-//> using test.dep com.histmersion::histmersion-plugin-testkit:0.1.0-SNAPSHOT
+//> using test.dep com.histmersion::histmersion-plugin-platform:<version>
+//> using test.dep com.histmersion::histmersion-plugin-testkit:<version>
 //> using test.resourceDir test-resources
 //> using test.javaProp histmersion.plugin.project=${.}
 ```
@@ -123,8 +123,10 @@ The two Scala files are the ones you edit, and `project.scala` is the build:
   jar nor in its POM. A compile-only dependency is not on the test class path, so the tests, which run
   the plugin, name the platform again; the **plugin testkit** loads and runs the plugin as the server
   does (see [Testing](#testing)) and brings the API with it.
-- The Histmersion version is written on four lines. scala-cli has no variables, so to build against
-  another Histmersion change all four.
+- The Histmersion version (`<version>` above) is written on four lines: the version your Histmersion
+  was built as, which the generated project already names. It comes from the source repository's git
+  history (`<commit>-SNAPSHOT` before the first release tag). scala-cli has no variables, so to build
+  against another Histmersion change all four.
 - `publish.doc false`: `publish` would otherwise build a Scaladoc jar, and Scaladoc warns about every
   link into the compile-only API. The sources jar is still published, for editors.
 - `test.javaProp histmersion.plugin.project=${.}` gives the tests the project's directory (`${.}` is
@@ -240,7 +242,7 @@ scalaVersion := "3.10.1"
 organization := "org.example"
 version      := "0.1.0"
 resolvers += Resolver.mavenLocal                 // ~/.m2/repository: histmersion plugin repo --m2
-val histmersion = "0.1.0-SNAPSHOT"
+val histmersion = "<version>"
 libraryDependencies ++= Seq(
   "com.histmersion" %% "histmersion-plugin-api"      % histmersion % Provided,
   "com.histmersion" %% "histmersion-plugin-platform" % histmersion % Provided,
