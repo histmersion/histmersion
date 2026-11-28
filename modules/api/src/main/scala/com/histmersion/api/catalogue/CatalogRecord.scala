@@ -63,7 +63,21 @@ object CatalogRecord:
   export EventCatalogueRef.{ProviderId, Url}
   type Label = Label.T
   object Label extends Newtype[String, Pure]
-  export EventSummary.Kind
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]:
+    extension (k: Kind) def summary: EventSummary.Kind = EventSummary.Kind(k.value)
+    val known: List[Kind] =
+      List(
+        EventKind.Event,
+        EventKind.Battle,
+        EventKind.Migration,
+        EventKind.Construction,
+        EventKind.Destruction,
+        EventKind.Founding,
+        EventKind.Treaty,
+        EventKind.Reign,
+        EventKind.EventPeriod
+      ).map(Kind(_))
   type Historicity = Historicity.T
   object Historicity extends Newtype[String, Pure]
   export EventCatalogueRef.{Deaths, Magnitude, Vei}

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """The alias list for BridgeTypes from its report, under owner decision N1 (2026-11-27): "same-name pairs only".
 
   python3 tools/refactor/bridge-aliases.py <bridge-types.tsv> <out.txt> [<excluded symbols file>]
@@ -12,6 +11,8 @@ general owner); then the first by symbol. A member becomes an export of it only 
 (the export would name itself); the others stay as they are. `Wire` types are left out: each is one enum's spelling,
 a different concept per enum (census section 2c), whatever its name.
 A symbol in the excluded file (one per line) takes no part.
+Two top-level objects never export from each other both ways (the compiler accepts it, but reading the TASTy back
+cycles): of the two directions only the one with more exports stays.
 """
 import re
 import sys
@@ -69,6 +70,22 @@ def rank(sym):
     return 5
 
 
+def top_object(sym):
+    return sym.rsplit("/", 1)[0] + "/" + owners(sym)[0]
+
+
+def one_way(rows):
+    count = defaultdict(int)
+    for m, c in rows:
+        count[(top_object(m), top_object(c))] += 1
+
+    def kept(m, c):
+        there, back = (top_object(m), top_object(c)), (top_object(c), top_object(m))
+        return there[0] == there[1] or count[back] == 0 or (count[there], there) > (count[back], back)
+
+    return [(m, c) for m, c in rows if kept(m, c)]
+
+
 def main(report, out, excluded_file=None):
     excluded = set(open(excluded_file).read().split()) if excluded_file else set()
     parent, mod, pairs = {}, {}, set()
@@ -114,6 +131,7 @@ def main(report, out, excluded_file=None):
         for m in members:
             if m != canon and paired(m, canon) and sees(m, canon) and top not in owners(m)[:-1]:
                 rows.append((m, canon))
+    rows = one_way(rows)
     with open(out, "w") as o:
         for s, c in sorted(rows):
             o.write(f"{s}\t{c}\n")

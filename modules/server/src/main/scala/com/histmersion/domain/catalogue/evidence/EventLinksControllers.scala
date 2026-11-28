@@ -508,7 +508,7 @@ final class EventLinksControllers(
         ArticleEventLead(
           com.histmersion.api.catalogue.Event.Id(id.value),
           ArticleEventLead.Label(label.value),
-          ArticleEventLead.Kind(EventTaxonomy.canonical(kind).value),
+          ArticleEventLead.Kind(EventTaxonomy.canonical(kind.summary).value),
           EventLeads.years(ts),
           EventLeads
             .size(vei.map(v => LeadFacts.Vei(v.value)), mag.map(m => LeadFacts.Magnitude(m.value)))

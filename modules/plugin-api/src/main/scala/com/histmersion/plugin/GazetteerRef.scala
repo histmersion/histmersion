@@ -9,4 +9,5 @@ import io.github.iltotore.iron.constraint.any.Pure
 object GazetteerRef:
   type Scheme = Scheme.T
   object Scheme extends Newtype[String, Pure]
-  export GazetteerPlace.Id
+  type Id = Id.T
+  object Id extends Newtype[String, Pure]
