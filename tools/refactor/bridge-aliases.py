@@ -1,19 +1,3 @@
-"""The alias list for BridgeTypes from its report, under owner decision N1 (2026-11-27): "same-name pairs only".
-
-  python3 tools/refactor/bridge-aliases.py <bridge-types.tsv> <out.txt> [<excluded symbols file>]
-
-Bridges `To(x.value)` whose two newtypes have the same simple name, base type and constraint are joined into groups.
-In each group one canonical type is chosen: the member directly bridged with, and visible to (its own module, or one
-their module depends on), the most members; then a member of an object (an export cannot name a package's top-level
-type); then the lowest layer; then the shortest owner path (the type's name appears in problem texts, so the most
-general owner); then the first by symbol. A member becomes an export of it only when the two are bridged directly
-(no transitive merging), it can see it, and it is not inside an object named like the canonical's outermost object
-(the export would name itself); the others stay as they are. `Wire` types are left out: each is one enum's spelling,
-a different concept per enum (census section 2c), whatever its name.
-A symbol in the excluded file (one per line) takes no part.
-Two top-level objects never export from each other both ways (the compiler accepts it, but reading the TASTy back
-cycles): of the two directions only the one with more exports stays.
-"""
 import re
 import sys
 from collections import defaultdict
