@@ -11,12 +11,8 @@ com/histmersion/api/Paging.Page.Total.	com/histmersion/api/library/TimeHistogram
 com/histmersion/api/Years.Text.	com/histmersion/api/UiLabels.Text.
 com/histmersion/api/automation/Activity.Cursor.	com/histmersion/api/Paging.Cursor.
 com/histmersion/api/automation/Activity.Limit.	com/histmersion/api/Paging.Limit.
-com/histmersion/api/automation/AgentMode.Step.Drain.On.	com/histmersion/api/automation/Autopilot.DrainSet.On.
-com/histmersion/api/automation/AgentScheduler.WhyInfo.Target.	com/histmersion/api/automation/Managers.ManagerItem.Target.
 com/histmersion/api/automation/Agents.RunInfo.Id.	com/histmersion/api/SpatialHierarchyResult.Job.Id.
-com/histmersion/api/automation/Agents.RunRequest.BudgetUsd.	com/histmersion/api/automation/Managers.ManagerConfig.BudgetUsd.
 com/histmersion/api/automation/Agents.RunRequest.Tags.	com/histmersion/api/library/Filter.Tags.
-com/histmersion/api/automation/Agents.RunRequest.Target.	com/histmersion/api/automation/Managers.ManagerItem.Target.
 com/histmersion/api/automation/Agents.RunRequest.Title.	com/histmersion/api/research/Article.Title.
 com/histmersion/api/automation/Agents.RunRequest.Topics.	com/histmersion/api/library/Filter.Topics.
 com/histmersion/api/automation/Autopilot.AutopilotSet.On.	com/histmersion/api/automation/AgentMode.Step.Autopilot.On.
@@ -35,9 +31,6 @@ com/histmersion/api/automation/ModelChains.ChainEntry.Model.	com/histmersion/api
 com/histmersion/api/automation/PlanQuota.Login.Present.Detail.	com/histmersion/api/automation/Agents.DoctorCheck.Detail.
 com/histmersion/api/automation/ProviderKind.Plugin.Id.	com/histmersion/api/Wording.Id.
 com/histmersion/api/automation/Queue.QueueItem.Text.	com/histmersion/api/UiLabels.Text.
-com/histmersion/api/catalogue/CatalogRecord.Kind.	com/histmersion/api/catalogue/EventSummary.Kind.
-com/histmersion/api/catalogue/EventGeo.Kind.	com/histmersion/api/catalogue/EventSummary.Kind.
-com/histmersion/api/catalogue/EventGeo.Scale.	com/histmersion/api/catalogue/EventSummary.Scale.
 com/histmersion/api/catalogue/EventGeo.Tier.	com/histmersion/api/Api.EventQuery.Tier.
 com/histmersion/api/catalogue/EventImportReport.Citation.	com/histmersion/api/catalogue/EventCatalogueRef.Citation.
 com/histmersion/api/catalogue/EventImportReport.Licence.	com/histmersion/api/catalogue/EventCatalogueRef.Licence.
@@ -56,7 +49,6 @@ com/histmersion/api/catalogue/LeadFacts.Kind.	com/histmersion/api/catalogue/Even
 com/histmersion/api/catalogue/LeadFacts.Magnitude.	com/histmersion/api/catalogue/EventCatalogueRef.Magnitude.
 com/histmersion/api/catalogue/LeadFacts.Tier.	com/histmersion/api/catalogue/EventLead.Tier.
 com/histmersion/api/catalogue/LeadFacts.Vei.	com/histmersion/api/catalogue/EventCatalogueRef.Vei.
-com/histmersion/api/catalogue/ManualPlaceName.Label.	com/histmersion/api/catalogue/Place.Label.
 com/histmersion/api/catalogue/Period.Id.	com/histmersion/api/catalogue/HistoricalPeriod.Id.
 com/histmersion/api/catalogue/Place.Name.Lang.	com/histmersion/api/catalogue/ManualPlaceName.Lang.
 com/histmersion/api/catalogue/Place.Properties.	com/histmersion/api/catalogue/GazRecord.Properties.
@@ -156,7 +148,6 @@ com/histmersion/domain/media/imports/ImportService.CheckName.	com/histmersion/do
 com/histmersion/domain/media/imports/ImportService.Refresh.	com/histmersion/domain/media/imports/CollectionImport.Refresh.
 com/histmersion/domain/media/imports/MediaImporter.DryRun.	com/histmersion/domain/media/imports/CollectionImport.DryRun.
 com/histmersion/domain/research/Slug.	com/histmersion/domain/automation/Goal.Slug.
-com/histmersion/plugin/GazetteerRef.Id.	com/histmersion/plugin/GazetteerPlace.Id.
 com/histmersion/pluginhost/HttpAnswer.Body.	com/histmersion/pluginhost/Challenge.Body.
 com/histmersion/plugins/calibre/AuditRecord.CalibreId.	com/histmersion/plugins/calibre/AuditFinding.CalibreId.
 com/histmersion/plugins/calibre/Calibre.Settings.WriteBack.	com/histmersion/plugins/calibre/CalibreCollection.WriteBack.
@@ -169,7 +160,6 @@ com/histmersion/web/EventPlayback.Note.	com/histmersion/web/DotEntry.Note.
 com/histmersion/web/MapLabels.Entry.Rank.	com/histmersion/web/EventPlayback.Rank.
 com/histmersion/web/MapListRow.Href.	com/histmersion/web/marks/ItemRef.Href.
 com/histmersion/web/MediaPopup.PeriodText.	com/histmersion/web/Fmt.PeriodText.
-com/histmersion/web/Member.Undated.	com/histmersion/web/TileCellPoint.Undated.
 com/histmersion/web/NewTabLink.Href.	com/histmersion/web/marks/ItemRef.Href.
 com/histmersion/web/Preview.ScreenPixels.	com/histmersion/web/PinRules.ScreenPixels.
 com/histmersion/web/TileCellPoint.N.	com/histmersion/web/Member.N.

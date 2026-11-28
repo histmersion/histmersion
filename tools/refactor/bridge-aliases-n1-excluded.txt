@@ -25,3 +25,4 @@ com/histmersion/domain/automation/Run.Id.
 com/histmersion/domain/catalogue/places/GeocodeSettings.ToleranceKm.
 com/histmersion/api/catalogue/Event.Id.
 com/histmersion/domain/library/sources/SourceNote.Text.
+com/histmersion/plugin/GazetteerRef.Id.

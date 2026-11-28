@@ -170,7 +170,7 @@ object EventImportService:
               .setTo(
                 HeldEvent.Kind(
                   text(EventFields.Kind).flatten
-                    .getOrElse(EventTaxonomy.canonical(r.kind).value)
+                    .getOrElse(EventTaxonomy.canonical(r.kind.summary).value)
                 )
               )
               .modify(_.historicity)
@@ -209,7 +209,7 @@ object EventImportService:
       val e = HeldEvent(
         id,
         HeldEvent.Label(r.label.value),
-        HeldEvent.Kind(EventTaxonomy.canonical(r.kind).value),
+        HeldEvent.Kind(EventTaxonomy.canonical(r.kind.summary).value),
         r.timeSpan,
         HeldEvent.Historicity(r.historicity.value),
         for la <- r.lat; lo <- r.lon yield HeldEvent.Geometry(EventFields.point(la, lo).noSpaces),
@@ -327,7 +327,7 @@ object EventImportService:
     ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
       state.get.catalogueRecords.collect {
         case (_, r) if r.provider == provider =>
-          r.key -> EventTaxonomy.canonical(r.kind)
+          r.key -> EventTaxonomy.canonical(r.kind.summary)
       }.toMap
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

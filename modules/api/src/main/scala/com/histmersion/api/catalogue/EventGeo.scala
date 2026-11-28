@@ -40,8 +40,11 @@ object EventGeo:
   type Label = Label.T
   object Label extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
-  export EventSummary.Kind
-  export EventSummary.Scale
+  type Kind = Kind.T
+  object Kind extends Newtype[String, Pure]:
+    extension (k: Kind) def summary: EventSummary.Kind = EventSummary.Kind(k.value)
+  type Scale = Scale.T
+  object Scale extends Newtype[String, Pure]
   type Historicity = Historicity.T
   object Historicity extends Newtype[String, Pure]
   type Anchor = Anchor.T

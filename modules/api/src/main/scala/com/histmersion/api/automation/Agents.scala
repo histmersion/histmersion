@@ -395,10 +395,12 @@ object Agents:
   object RunRequest:
     type Pipeline = Pipeline.T
     object Pipeline extends Newtype[String, Pure]
-    export Managers.ManagerItem.Target
+    type Target = Target.T
+    object Target extends Newtype[String, Pure]
     type Model = Model.T
     object Model extends Newtype[String, Pure]
-    export Managers.ManagerConfig.BudgetUsd
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends Newtype[Double, Pure]
     type BudgetTokens = BudgetTokens.T
     object BudgetTokens extends Newtype[Long, Pure]
     type Fix = Fix.T

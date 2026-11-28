@@ -161,7 +161,7 @@ final class EventImports(
                   r.modify(_.kind)
                     .setTo(
                       CatalogRecord.Kind(
-                        EventProviders.WikidataEvents.moreSpecific(classOrder, k, r.kind).value
+                        EventProviders.WikidataEvents.moreSpecific(classOrder, k, r.kind.summary).value
                       )
                     )
                 )
@@ -232,7 +232,7 @@ final class EventImports(
               EventImportReport.Matched(matched),
               EventImportReport.Updated(saved.fold(0)(_.updated.value)),
               EventCount.of(
-                kept.map(r => EventCount.Key(EventTaxonomy.canonical(r.kind).value))
+                kept.map(r => EventCount.Key(EventTaxonomy.canonical(r.kind.summary).value))
               ),
               EventCount.of(skipped),
               matchedIds.result().take(20).map(EventImportReport.MatchedEvents(_)),
@@ -329,7 +329,7 @@ final class EventImports(
       // a Wikidata item read in two classes keeps the more specific kind (V085 stored the last class's)
       val k = if r.provider == CatalogProvider.Wikidata then
         CatalogRecord.Kind(
-          EventProviders.WikidataEvents.moreSpecific(classOrder, d.kind, eventKind).value
+          EventProviders.WikidataEvents.moreSpecific(classOrder, d.kind.summary, eventKind).value
         )
       else d.kind
       (eventId, r, d.modify(_.kind).setTo(k), reread.isDefined)

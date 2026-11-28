@@ -247,10 +247,10 @@ object PointKinds:
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def inner(e: EventGeo): Html =
-      Glyphs.badge(Glyphs.Name(CardIcons.event(e.kind).value))
+      Glyphs.badge(Glyphs.Name(CardIcons.event(e.kind.summary).value))
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def classes(e: EventGeo): String =
-      s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(e.kind).group}" +
+      s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(e.kind.summary).group}" +
         (if e.precision.value == EventPrecision.Approximate then " hd-ev--approximate" else "") +
         (if undated(e) then s" ${MapView.UndatedClass}" else "")
 
@@ -279,7 +279,7 @@ object PointKinds:
             DotKind.Event,
             DotEntry.Id(e.id.value),
             DotEntry.Label(e.label.value),
-            DotEntry.Icon(CardIcons.event(e.kind).value),
+            DotEntry.Icon(CardIcons.event(e.kind.summary).value),
             mid(e).map(DotEntry.Mid(_)),
             DotEntry.Note(EventPlayback.note(e).value)
           )

@@ -146,7 +146,7 @@ private[events] object EventImportRepo:
     def text(f: String): Option[Option[String]] = keep.get(Correction.Field(f)).map(_.asString)
     val label: String = text(EventFields.Label).flatten.getOrElse(r.label.value)
     val kind: String =
-      text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind).value)
+      text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind.summary).value)
     val hist: String = text(EventFields.Historicity).flatten.getOrElse(r.historicity.value)
     val desc: Option[String] = text(EventFields.Description).getOrElse(r.description.map(_.value))
     val spanKept = keep.contains(Correction.Field(EventFields.Span))
@@ -182,7 +182,7 @@ private[events] object EventImportRepo:
                               description, wikidata, names, catalogue, central, plus_minus, dating_method, creator,
                               created_at)
           VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(
-        r.kind
+        r.kind.summary
       )}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
@@ -261,7 +261,7 @@ private[events] object EventImportRepo:
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
           VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(
-        r.kind
+        r.kind.summary
       )},
                   ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy}, ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter},
                   ${r.lat}, ${r.lon}, ${r.vei}, ${r.magnitude}, ${r.deaths}, ${r.historicity}, $json::jsonb)
