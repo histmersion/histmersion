@@ -5,11 +5,18 @@
     },
     "virtuslab-scala-skill": {
       "source": { "source": "github", "repo": "virtuslab/scala-skill" }
+    },
+    "kubuszok": {
+      "source": { "source": "github", "repo": "kubuszok/agent-skills" },
+      "autoUpdate": true
     }
   },
   "enabledPlugins": {
     "cellar@virtuslab-cellar": true,
-    "direct-style-scala@virtuslab-scala-skill": true
+    "direct-style-scala@virtuslab-scala-skill": true,
+    "hearth@kubuszok": true,
+    "kindlings@kubuszok": true,
+    "sbt-kubuszok@kubuszok": true
   },
   "permissions": {
     "deny": [
