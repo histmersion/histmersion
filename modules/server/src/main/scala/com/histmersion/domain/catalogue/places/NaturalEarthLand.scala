@@ -89,7 +89,7 @@ object NaturalEarthLand:
           )
         else Right(())
     yield
-      if dryRun.value then
+      if dryRun.dryRun then
         Place.ImportResult(
           Place.ImportResult.Places(0),
           Place.ImportResult.Names(0),

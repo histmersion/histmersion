@@ -200,8 +200,8 @@ class CollectionsSuite extends munit.FunSuite:
   private val Aic = BuiltinMedia.EntryName("aic")
   private val Cleveland = BuiltinMedia.EntryName("cleveland")
   private val Loc = BuiltinMedia.EntryName("loc")
-  private val DryOn = CollectionImport.DryRun(true)
-  private val DryOff = CollectionImport.DryRun(false)
+  private val DryOn = CollectionImport.DryRun.DryRun
+  private val DryOff = CollectionImport.DryRun.Applied
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def run(
@@ -216,7 +216,7 @@ class CollectionsSuite extends munit.FunSuite:
       http,
       cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(col.conf.requestIntervalMs.value))
     )
-    CollectionImport(col, polite, cfg, conv).run(targets, dryRun, refresh = CollectionImport.Refresh(false), store)
+    CollectionImport(col, polite, cfg, conv).run(targets, dryRun, refresh = CollectionImport.Refresh.Reuse, store)
 
   // ── the Met ──────────────────────────────────────────────────────────────────────────────────
 
@@ -323,8 +323,8 @@ class CollectionsSuite extends munit.FunSuite:
     val (polite, _) = FakeMediaHttp.polite(http, c)
     val r = CollectionImport(FakeMediaHttp.builtin(Met), polite, c, ThumbConverter()).run(
       List(target(mycenae)),
-      CollectionImport.DryRun(false),
-      CollectionImport.Refresh(false),
+      CollectionImport.DryRun.Applied,
+      CollectionImport.Refresh.Reuse,
       store
     )
     assert(r.failed.exists(_.value.contains("search for pleiades_570491")), r.failed.toString)

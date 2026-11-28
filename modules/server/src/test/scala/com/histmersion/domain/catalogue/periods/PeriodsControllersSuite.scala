@@ -98,7 +98,7 @@ class PeriodsControllersSuite extends munit.FunSuite:
   test("the seed's absence is the answer of a seed; a held lock refuses every write"):
     assertEquals(
       controllers()
-        .seed(Caller.Local, replace = PeriodImports.Replace(false))
+        .seed(Caller.Local, replace = PeriodImports.Replace.Merge)
         .left
         .map(_.problems.head)
         .left
@@ -110,7 +110,7 @@ class PeriodsControllersSuite extends munit.FunSuite:
     val held = gate.exclusively(WriteGate.OperationName("restore")) {
       Right(
         (
-          c.seed(Caller.Local, replace = PeriodImports.Replace(false)),
+          c.seed(Caller.Local, replace = PeriodImports.Replace.Merge),
           c.importDataset(Caller.Local, Nil, None, PeriodImports.DatasetBody(dump)),
           c.fetch(Caller.Local, PeriodSources.PeriodoUrl("periodo"), Nil)
         )

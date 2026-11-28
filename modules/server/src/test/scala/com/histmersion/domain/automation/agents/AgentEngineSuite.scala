@@ -295,7 +295,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assert(msgs.exists(m => m.toolName.contains("facets") && m.role.value == "tool"))
     // bookkeeping: one log line
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -396,7 +396,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       h.workListView
-        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.OpenOnly)
         .toOption
         .get
         .items
@@ -522,7 +522,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     def meta(doi: Doi) = { calls.add(s"meta $doi"); Right(work) }
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def refs(citekey: Citekey, apply: AgentUpstream.RefsApply)(using Creator.New) =
-      calls.add(s"refs $citekey"); applies.add(apply.value)
+      calls.add(s"refs $citekey"); applies.add(apply.refsApply)
       Right(
         RefsResult(
           RefsResult.Target(citekey.value),
@@ -536,7 +536,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def assess(citekey: Citekey, apply: AgentUpstream.AssessApply)(using Creator.New) =
-      calls.add(s"assess $citekey"); applies.add(apply.value)
+      calls.add(s"assess $citekey"); applies.add(apply.assessApply)
       Right(
         Assessment(
           Assessment.Target(citekey.value),
@@ -608,7 +608,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
     assertEquals(done.status, Queue.Done)
     assert(done.reason.exists(_.recordsIngestOf(ApiCk)), done)
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -787,7 +787,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
         .run()
     val firstSeq = connect(ds)(AgentRepo.messages(jobId(run.id))).map(_.seq).minBy[Int](_.value)
     val old = connect(ds)(AgentRepo.messages(jobId(run.id))).count(_.seq == firstSeq)
-    assertEquals(a.engine.pruneTrace(force = Engine.PruneTraceForce(true)), old)
+    assertEquals(a.engine.pruneTrace(force = Engine.PruneTraceForce.Force), old)
     assertEquals(connect(ds)(AgentRepo.messages(jobId(run.id))).size, before - old)
     assertEquals(
       connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(10))).size,
@@ -807,7 +807,7 @@ class AgentEngineSuite extends DbSuite with RunTranscripts:
               .setTo(baseCfg.agents.trace.modify(_.keepMessagesDays).setTo(AgentTraceConfig.KeepMessagesDays(0)))
           )
       )
-    assertEquals(keepAll.engine.pruneTrace(force = Engine.PruneTraceForce(true)), 0)
+    assertEquals(keepAll.engine.pruneTrace(force = Engine.PruneTraceForce.Force), 0)
 
   // #882: a blocking approval decided after the step opened it but BEFORE the run reached `waiting`.
   // The decision's wake finds the run still `running` and does nothing; unless the engine looks again

@@ -75,7 +75,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
             Left(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"${raw.value.trim}"))))
           case Some(ck) =>
             site.sources
-              .get(ck, body = SourcesControllers.GetBody(false))
+              .get(ck, body = SourcesControllers.GetBody.WithoutBody)
               .left
               .map(Api.Error(_))
               .map(s => ManagerContext.ItemTarget(s.source.citekey.value))
@@ -94,7 +94,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     val asSource = Citekey
       .option(text)
       .toRight(Api.Error(Problem.NotFound.Entity(Problem.TypeName.of(Citekey), Problem.Raw(s"$text"))))
-      .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)))
+      .flatMap(ck => site.sources.get(ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)))
     asSource
       .map(s =>
         (List(ManagerContext.ItemTarget(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandSkipped])
@@ -138,7 +138,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def enrichedWhy(c: ManagerContext, ck: Citekey): Option[AutoEnrich.Rationale] =
-    site.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption match
+    site.sources.get(ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)).toOption match
       case None      => Some(AutoEnrich.Rationale.NoSource)
       case Some(src) =>
         val runs = priorRuns(c, Citekey.assume(src.source.citekey.value))
@@ -173,7 +173,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
-        site.sources.get(citekey, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)) match
+        site.sources.get(citekey, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)) match
           case Left(e)    => Some(AutoEnrich.notQueued(e.problems))
           case Right(src) =>
             val ck = Citekey.assume(src.source.citekey.value)
@@ -221,7 +221,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       ManagerContext.ItemTarget(citekey.value),
       ItemOrigin.FromIngest,
       ManagerContext.Priority(0),
-      reopen = ManagerContext.UpsertReopen(true)
+      reopen = ManagerContext.UpsertReopen.Reopen
     )
     c.event(
       enrichId,
@@ -254,7 +254,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           .toRight(())
           .flatMap(ck =>
             site.sources
-              .get(ck, body = SourcesControllers.GetBody(false))
+              .get(ck, body = SourcesControllers.GetBody.WithoutBody)
               .left
               .map(Api.Error(_))
               .left

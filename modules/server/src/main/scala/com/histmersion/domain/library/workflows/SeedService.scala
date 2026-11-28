@@ -121,7 +121,7 @@ final class SeedService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   def seed(goal: Goal.Slug)(using WritePermit)(using Creator.New): Option[String] =
-    acquisition().sweepCandidates(goal, dryRun = AgentUpstream.SweepCandidatesDryRun(false)) match
+    acquisition().sweepCandidates(goal, dryRun = AgentUpstream.SweepCandidatesDryRun.Applied) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: ${why.sentences.mkString("; ")}")
         None

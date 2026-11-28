@@ -57,7 +57,12 @@ object OpsRoutes:
       for
         g <- scoped(goal, "goal slug")(Goal.Slug.either(_))
         j <- scoped(job, "job id")(Job.Id.either(_))
-        r <- w.workListView.list(WorkListControllers.KindOfList(list.value), WorkListView.IncludeAll(all), g, j)
+        r <- w.workListView.list(
+          WorkListControllers.KindOfList(list.value),
+          (if all then WorkListView.IncludeAll.All else WorkListView.IncludeAll.OpenOnly),
+          g,
+          j
+        )
       yield r
     ),
     OpsApi.queueAdd.serverLogic[Identity]((list, in) =>

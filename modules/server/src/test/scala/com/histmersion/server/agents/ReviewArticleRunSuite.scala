@@ -411,7 +411,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       "nothing is applied before approval"
     )
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -499,7 +499,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       )
     )
     val tasks = h.workListView
-      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.OpenOnly)
       .toOption
       .get
       .items
@@ -511,7 +511,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       tasks.head.text
     )
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -1155,7 +1155,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(led.lessons.map(l => (l.text, l.source)), List((lesson, ReviewLedger.LessonSource.Recheck)))
     assert(h.research.articles.get(Slug).toOption.get.article.body.value.contains("The cargo dates to about 1320 BCE"))
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -1170,7 +1170,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       h.workListView
-        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.OpenOnly)
         .toOption
         .get
         .items
@@ -1258,7 +1258,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
       assertEquals(r.status, "done", r.error)
       r
     def items = h.workListView
-      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -1395,7 +1395,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     val r = start(a2, RunRequest(Agents.RunRequest.Pipeline("review-article"), SlugTarget))
     assertEquals(r.status, "done", r.error)
     val items = h.workListView
-      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -1482,7 +1482,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     assertEquals(led.task, None)
     assert(
       !h.workListView
-        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -2009,7 +2009,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(ledger.openMajors, Nil)
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -2162,7 +2162,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def logOf(h: ServerWiring) =
     h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -2171,7 +2171,7 @@ class ReviewArticleRunSuite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def tasksOf(h: ServerWiring) =
     h.workListView
-      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+      .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.OpenOnly)
       .toOption
       .get
       .items

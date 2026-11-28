@@ -100,7 +100,7 @@ final class AcquisitionSweepPipeline(
                 .checkRanking(
                   r,
                   found.candidates,
-                  (if last.value then AcquisitionSweepRules.LastAttempt.Last
+                  (if last.lastAttempt then AcquisitionSweepRules.LastAttempt.Last
                    else AcquisitionSweepRules.LastAttempt.More)
                 )
                 .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws.map(d => Checked.Warnings(d.value))))
@@ -211,7 +211,10 @@ final class AcquisitionSweepPipeline(
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def discover(ctx: RunCtx, goal: Goal.Slug)(using WritePermit)(using Creator.New): Either[Problems, Found] =
-    upstream().sweepCandidates(goal, AgentUpstream.SweepCandidatesDryRun(ctx.dryRun)) match
+    upstream().sweepCandidates(
+      goal,
+      (if ctx.dryRun then AgentUpstream.SweepCandidatesDryRun.DryRun else AgentUpstream.SweepCandidatesDryRun.Applied)
+    ) match
       case Left(_)   => liveDiscover(ctx, goal)
       case Right(sw) =>
         sw.watches

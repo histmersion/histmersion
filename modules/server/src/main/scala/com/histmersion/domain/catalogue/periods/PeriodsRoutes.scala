@@ -31,7 +31,9 @@ object PeriodsRoutes:
         )
       ),
       Api.period.serverLogic[Identity](id => periods.period(id)),
-      Api.seedPeriods.serverLogic[Identity](replace => periods.seed(me, PeriodImports.Replace(replace.overwrites))),
+      Api.seedPeriods.serverLogic[Identity](replace =>
+        periods.seed(me, (if replace.overwrites then PeriodImports.Replace.Replace else PeriodImports.Replace.Merge))
+      ),
       Api.importPeriods.serverLogic[Identity]((cols, dataset, body) =>
         periods.importDataset(
           me,

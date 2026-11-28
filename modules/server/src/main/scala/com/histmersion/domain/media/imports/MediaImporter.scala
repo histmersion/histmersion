@@ -113,13 +113,14 @@ object MediaImporter:
         else
           imports.collectionTargets(
             ImportService.CheckName(check.value),
-            places = ImportService.Places(!events),
+            places = (if !events then ImportService.Places.WithPlaces else ImportService.Places.WithoutPlaces),
             place,
             event,
             ImportService.CollectionTargetsLimit(limit.value),
             refresh,
             since,
-            pleiadesOnly = ImportService.PleiadesOnly(pleiades)
+            pleiadesOnly =
+              (if pleiades then ImportService.PleiadesOnly.PleiadesOnly else ImportService.PleiadesOnly.AnyGazetteer)
           )
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def pending(since: Option[ImportService.Since]) =
@@ -127,9 +128,10 @@ object MediaImporter:
         else
           imports.collectionPending(
             ImportService.CheckName(check.value),
-            places = ImportService.Places(!events),
+            places = (if !events then ImportService.Places.WithPlaces else ImportService.Places.WithoutPlaces),
             since,
-            pleiadesOnly = ImportService.PleiadesOnly(pleiades)
+            pleiadesOnly =
+              (if pleiades then ImportService.PleiadesOnly.PleiadesOnly else ImportService.PleiadesOnly.AnyGazetteer)
           )
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
       def start()(using WritePermit)(using Creator.New) =

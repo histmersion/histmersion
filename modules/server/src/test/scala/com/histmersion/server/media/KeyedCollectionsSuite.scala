@@ -111,8 +111,8 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   private def target(f: PlaceFacts) =
     Target(Target.TargetType("place"), Target.Id(f.id.value), Target.Qid(""), Target.Label(f.label.value))
 
-  private val DryOn = CollectionImport.DryRun(true)
-  private val DryOff = CollectionImport.DryRun(false)
+  private val DryOn = CollectionImport.DryRun.DryRun
+  private val DryOff = CollectionImport.DryRun.Applied
   private val Smithsonian = BuiltinMedia.EntryName("smithsonian")
   private val Europeana = BuiltinMedia.EntryName("europeana")
 
@@ -128,7 +128,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     CollectionImport(col, polite, cfg, NoConverter()).run(
       targets,
       dryRun,
-      refresh = CollectionImport.Refresh(false),
+      refresh = CollectionImport.Refresh.Reuse,
       store
     )
 

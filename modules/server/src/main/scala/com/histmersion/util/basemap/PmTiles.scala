@@ -14,6 +14,7 @@ import com.histmersion.util.storage.{Blob, RandomReader}
 import java.util.concurrent.ConcurrentHashMap
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The PMTiles v3 archive format (https://github.com/protomaps/PMTiles/blob/main/spec/v3/spec.md): one file holding a
   * tile pyramid, addressed by a Hilbert-curve tile id, readable with HTTP range requests. The terrain base map's two
@@ -141,8 +142,10 @@ object PmTiles:
     object TileEntries extends Newtype[Long, Pure]
     type TileContents = TileContents.T
     object TileContents extends Newtype[Long, Pure]
-    type Clustered = Clustered.T
-    object Clustered extends Newtype[Boolean, Pure]
+    enum Clustered derives CanEqual:
+      case Clustered, Unclustered
+    object Clustered extends TwoCases[Clustered]:
+      extension (clustered: Clustered) def clustered: Boolean = clustered == Clustered
     export PmTiles.{Zoom as MaxZoom, Zoom as MinZoom}
     type MinLon = MinLon.T
     object MinLon extends Newtype[Double, Pure]
@@ -242,7 +245,7 @@ object PmTiles:
         Header.AddressedTiles(l(72)),
         Header.TileEntries(l(80)),
         Header.TileContents(l(88)),
-        Header.Clustered(u8(96) == 1),
+        (if u8(96) == 1 then Header.Clustered.Clustered else Header.Clustered.Unclustered),
         Compression.of(Compression.Code(u8(97))),
         Compression.of(Compression.Code(u8(98))),
         TileType.of(TileType.Code(u8(99))),
@@ -275,7 +278,7 @@ object PmTiles:
       h.tileEntries.value,
       h.tileContents.value
     ).foreach(bb.putLong)
-    bb.put((if h.clustered.value then 1 else 0).toByte)
+    bb.put((if h.clustered.clustered then 1 else 0).toByte)
       .put(h.internalCompression.code.value.toByte)
       .put(h.tileCompression.code.value.toByte)
       .put(h.tileType.code.value.toByte)

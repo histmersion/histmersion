@@ -35,6 +35,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The subscription pools in effect (docs/research-plan-quotas.md §5): the readings every source writes, the floors
   * (saved over config), the hold switch, the provider's own refusals — and the verdict the model pick asks before every
@@ -178,7 +179,7 @@ final class PlanPools(
     val (v, states) = current(p, model, now)
     if need(p, model, now).isEmpty then (v, states, None)
     else
-      refreshPool(p, trigger, model, force = PlanPools.Force(false), now) match
+      refreshPool(p, trigger, model, force = PlanPools.Force.Safe, now) match
         // not taken — perhaps because the caller waited while another took one: ask again either way
         case Left(_) =>
           val (v2, s2) = current(p, model, now0)
@@ -222,9 +223,9 @@ final class PlanPools(
     * (`force`: now).
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def login(p: PoolId, now: PlanQuota.Now = now0, force: PlanPools.Force = PlanPools.Force(false)): Login =
+  def login(p: PoolId, now: PlanQuota.Now = now0, force: PlanPools.Force = PlanPools.Force.Safe): Login =
     val every = math.max(1, cfg.quota.pollSeconds.value).toLong * 1000L
-    Option(logins.get(p)).filter((at, _) => !force.value && now.value - at < every).map(_._2).getOrElse {
+    Option(logins.get(p)).filter((at, _) => !force.force && now.value - at < every).map(_._2).getOrElse {
       val l = p match
         case PoolId.ClaudePlan  => claudeLogin()
         case PoolId.ChatgptPlan => PlanPools.codexLogin(codexHome(), cfg.providers.codex.command)
@@ -320,7 +321,7 @@ final class PlanPools(
             .refreshDecision(
               None,
               login(p, PlanQuota.Now(at)),
-              seams.refreshes.value && refreshMode(p).isDefined,
+              seams.refreshes.refreshes && refreshMode(p).isDefined,
               last.map(l => PlanQuota.RefreshInfo.LastAttempt(l.value)),
               PlanQuota.Rules.MinGap(staleMs),
               PlanQuota.Now(at),
@@ -347,7 +348,7 @@ final class PlanPools(
       p: PoolId,
       trigger: RefreshTrigger,
       model: Option[ChainEntry.Model] = None,
-      force: PlanPools.Force = PlanPools.Force(false),
+      force: PlanPools.Force = PlanPools.Force.Safe,
       now: PlanQuota.Now = now0
   )(using WritePermit): Either[PlanQuota.Rationale, Refreshed] =
     gate.exclusive(p, now.value) { last =>
@@ -357,11 +358,11 @@ final class PlanPools(
         .refreshDecision(
           needNow,
           login(p, now, force),
-          seams.refreshes.value && refreshMode(p).isDefined,
+          seams.refreshes.refreshes && refreshMode(p).isDefined,
           last.map(l => PlanQuota.RefreshInfo.LastAttempt(l.value)),
           PlanQuota.Rules.MinGap(staleMs),
           now,
-          force.value
+          force.force
         )
         .map(n =>
           takeAndLog(
@@ -381,13 +382,13 @@ final class PlanPools(
   ): Refreshed =
     val r = take(p, now)
     val line = s"plan refresh ${p.wire} ($why) ${r.text}"
-    if r.ok.value then scribe.info(line) else scribe.warn(line)
+    if r.ok.ok then scribe.info(line) else scribe.warn(line)
     Transactor(ds).write(
       PlanQuotaRepo.logRefresh(
         p,
         PlanQuotaRepo.RefreshMode(r.mode.value),
         PlanQuotaRepo.RefreshTrigger(trigger.wire.value),
-        r.ok.value,
+        r.ok.ok,
         PlanQuotaRepo.RefreshDetail(r.detail.value)
       )
     )
@@ -397,12 +398,12 @@ final class PlanPools(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def take(p: PoolId, now: PlanQuota.Now)(using WritePermit): Refreshed = p match
     case PoolId.ChatgptPlan =>
-      poll(now, force = PlanPools.Force(true)) match
-        case Some(why) => Refreshed(Refreshed.Mode("app-server"), ok = Refreshed.Ok(false), why)
+      poll(now, force = PlanPools.Force.Force) match
+        case Some(why) => Refreshed(Refreshed.Mode("app-server"), ok = Refreshed.Ok.Failed, why)
         case None      =>
           Refreshed(
             Refreshed.Mode("app-server"),
-            ok = Refreshed.Ok(true),
+            ok = Refreshed.Ok.Ok,
             PlanPools.summary(Transactor(ds).read(PlanQuotaRepo.readings(p)), now)
           )
     case PoolId.ClaudePlan =>
@@ -415,27 +416,27 @@ final class PlanPools(
         CliProcess.RunStdin(ClaudeCode.ProbePrompt),
         CliProcess.RunTimeoutSeconds(math.max(5, qc.probeTimeoutSeconds.value))
       ) match
-        case Left(why)  => Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(false), Refreshed.Detail(why.sentence))
+        case Left(why)  => Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok.Failed, Refreshed.Detail(why.sentence))
         case Right(run) =>
           PlanPools.probeReadings(run, now, cc.limitCooldownMinutes) match
             case Left(why) =>
-              Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(false), Refreshed.Detail(why.sentence))
+              Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok.Failed, Refreshed.Detail(why.sentence))
             case Right(rs) =>
               record(PoolId.ClaudePlan, rs)
-              Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok(true), PlanPools.summary(rs, now))
+              Refreshed(Refreshed.Mode("probe"), ok = Refreshed.Ok.Ok, PlanPools.summary(rs, now))
 
   /** Read the ChatGPT plan through `codex app-server` (it generates nothing), at most once per `poll-seconds`, and only
     * with `app-server` on and a CODEX_HOME to read.
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def poll(now: PlanQuota.Now, force: PlanPools.Force = PlanPools.Force(false))(using
+  def poll(now: PlanQuota.Now, force: PlanPools.Force = PlanPools.Force.Safe)(using
       WritePermit
   ): Option[Refreshed.Detail] =
     val every = math.max(1, cfg.quota.pollSeconds.value).toLong * 1000L
     val last = lastPoll.get()
     if !cfg.providers.codex.appServer.value then
       Some(Refreshed.Detail("app-server reads are off (agents.providers.codex.app-server)"))
-    else if (!force.value && now.value - last < every) || !lastPoll.compareAndSet(last, now.value) then None
+    else if (!force.force && now.value - last < every) || !lastPoll.compareAndSet(last, now.value) then None
     else
       codexHome() match
         case None       => Some(Refreshed.Detail("no CODEX_HOME to read"))
@@ -555,8 +556,10 @@ final class PlanPools(
     }
 
 object PlanPools:
-  type Force = Force.T
-  object Force extends Newtype[Boolean, Pure]
+  enum Force derives CanEqual:
+    case Force, Safe
+  object Force extends TwoCases[Force]:
+    extension (force: Force) def force: Boolean = force == Force
 
   /** The process a ChatGPT plan's read runs. */
   private val AppServer = Problem.Io.Tool("codex app-server")
@@ -586,12 +589,14 @@ object PlanPools:
           Map[ProcessLaunch.EnvironmentKey, Option[ProcessLaunch.EnvironmentValue]],
           AgentsConfig.DoctorTimeoutSeconds
       ) => Either[Problem, (ProcessResult.ExitCode, AgentDoctor.Output)],
-      refreshes: Seams.Refreshes = Seams.Refreshes(true)
+      refreshes: Seams.Refreshes = Seams.Refreshes.Refreshes
   )
 
   object Seams:
-    type Refreshes = Refreshes.T
-    object Refreshes extends Newtype[Boolean, Pure]
+    enum Refreshes derives CanEqual:
+      case Refreshes, Reads
+    object Refreshes extends TwoCases[Refreshes]:
+      extension (refreshes: Refreshes) def refreshes: Boolean = refreshes == Refreshes
 
     val Real: Seams = Seams(readCodex, runProbe, AgentDoctor.runCommand)
 
@@ -601,7 +606,7 @@ object PlanPools:
       (_, _, _) => Left(Problem.Config.Unavailable(Problem.Config.Capability.AppServerRead)),
       (_, _, _, _) => Left(Problem.Config.Unavailable(Problem.Config.Capability.PlanProbe)),
       (_, _, _) => Left(Problem.Config.Unavailable(Problem.Config.Capability.LoginCheck)),
-      refreshes = Refreshes(false)
+      refreshes = Refreshes.Reads
     )
 
   /** The one `claude -p` probe: in an empty scratch directory, its output read whole. */

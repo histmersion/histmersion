@@ -7,6 +7,7 @@ import scala.jdk.CollectionConverters.*
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What one refresh did: how (`probe`, `app-server`), whether a reading came back, and what. */
 @movesTo(FeaturePlace.AutomationAgents)
@@ -20,7 +21,9 @@ object Refreshed:
 
   type Mode = Mode.T
   object Mode extends Newtype[String, Pure]
-  type Ok = Ok.T
-  object Ok extends Newtype[Boolean, Pure]
+  enum Ok derives CanEqual:
+    case Ok, Failed
+  object Ok extends TwoCases[Ok]:
+    extension (ok: Ok) def ok: Boolean = ok == Ok
   type Detail = Detail.T
   object Detail extends Newtype[String, Pure]

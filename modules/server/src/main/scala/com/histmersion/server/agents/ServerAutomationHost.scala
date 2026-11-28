@@ -56,7 +56,9 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
             .parse(raw.value)
             .left
             .map(Api.Error(_))
-            .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)))
+            .flatMap(ck =>
+              h.library.sources.get(ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_))
+            )
             .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
         )
       case TargetKind.Article if p == Pipeline.CompileArticle =>
@@ -159,12 +161,12 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
         .parse(raw.value)
         .left
         .map(Api.Error(_))
-        .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)))
+        .flatMap(ck => h.library.sources.get(ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)))
         .map(w => AutomationHost.CanonicalKey(w.source.citekey.value))
 
   def probeSubject(citekey: Citekey): Either[Api.Error, ProbeAnswer] =
     h.library.sources
-      .get(citekey, body = SourcesControllers.GetBody(false))
+      .get(citekey, body = SourcesControllers.GetBody.WithoutBody)
       .left
       .map(Api.Error(_))
       .map(s => ProbeAnswer(s.source.citekey, s.source.title, s.source.year))

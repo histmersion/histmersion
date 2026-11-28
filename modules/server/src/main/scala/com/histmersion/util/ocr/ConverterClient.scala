@@ -8,6 +8,7 @@ import com.histmersion.util.storage.Blob
 import java.time.Duration
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The seam between the server and the Python OCR sidecar (plan §1.8).
   *
@@ -46,8 +47,10 @@ object ConverterClient:
   object Filename extends Newtype[String, Pure]
   type HealthSummary = HealthSummary.T
   object HealthSummary extends Newtype[String, Pure]
-  type HighQuality = HighQuality.T
-  object HighQuality extends Newtype[Boolean, Pure]
+  enum HighQuality derives CanEqual:
+    case HighQuality, Fast
+  object HighQuality extends TwoCases[HighQuality]:
+    extension (highQuality: HighQuality) def highQuality: Boolean = highQuality == HighQuality
 
   /** A thumbnail the sidecar made. */
 
@@ -85,7 +88,7 @@ object ConverterClient:
         val pages = c.pages.value
         val scanned = math.max(0, math.min(c.scanned.value, pages)).toLong
         val text = math.max(0, pages).toLong - scanned
-        if quality.value then pages.toLong * math.max(0, cfg.perPageQuality.value)
+        if quality.highQuality then pages.toLong * math.max(0, cfg.perPageQuality.value)
         else text * math.max(0, perPage) + scanned * math.max(0, math.max(perPage, cfg.perScannedPage.value))
       }
       .getOrElse(0L)

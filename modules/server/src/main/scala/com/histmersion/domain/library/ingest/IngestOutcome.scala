@@ -4,6 +4,7 @@ package domain.library.ingest
 import com.histmersion.domain.library.Citekey
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** @param created false when the citekey already existed and was enriched rather than replaced */
 final case class IngestOutcome(
@@ -14,7 +15,9 @@ final case class IngestOutcome(
 )
 
 object IngestOutcome:
-  type Created = Created.T
-  object Created extends Newtype[Boolean, Pure]
+  enum Created derives CanEqual:
+    case Created, Existing
+  object Created extends TwoCases[Created]:
+    extension (created: Created) def created: Boolean = created == Created
   type Detail = Detail.T
   object Detail extends Newtype[String, Pure]

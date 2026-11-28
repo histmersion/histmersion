@@ -18,6 +18,7 @@ import com.histmersion.domain.catalogue.places.Wikidata
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What the media imports ask about and what they recorded asking (#1446): the places on the map and the events a
   * provider has not been asked about, the facts a collection's match reads of a place, and the checks — that a provider
@@ -94,10 +95,14 @@ object ImportService:
   object CommonsCategory extends Newtype[String, Pure]
   type PlaceKey = PlaceKey.T
   object PlaceKey extends Newtype[String, Pure]
-  type Places = Places.T
-  object Places extends Newtype[Boolean, Pure]
-  type PleiadesOnly = PleiadesOnly.T
-  object PleiadesOnly extends Newtype[Boolean, Pure]
+  enum Places derives CanEqual:
+    case WithPlaces, WithoutPlaces
+  object Places extends TwoCases[Places]:
+    extension (places: Places) def places: Boolean = places == WithPlaces
+  enum PleiadesOnly derives CanEqual:
+    case PleiadesOnly, AnyGazetteer
+  object PleiadesOnly extends TwoCases[PleiadesOnly]:
+    extension (pleiadesOnly: PleiadesOnly) def pleiadesOnly: Boolean = pleiadesOnly == PleiadesOnly
   export CollectionImport.Refresh
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
@@ -124,7 +129,7 @@ object ImportService:
           place,
           event,
           ImportRepo.Limit(limit.value),
-          (if refresh.value then ImportRepo.Refresh.Refresh else ImportRepo.Refresh.Reuse),
+          (if refresh.refresh then ImportRepo.Refresh.Refresh else ImportRepo.Refresh.Reuse),
           since.map(s => ImportRepo.Since(s.value))
         )
       )
@@ -145,13 +150,14 @@ object ImportService:
       db.read(
         ImportRepo.collectionTargets(
           MediaItemRow.Provider(check.value),
-          (if places.value then ImportRepo.Places.WithPlaces else ImportRepo.Places.WithoutPlaces),
+          (if places.places then ImportRepo.Places.WithPlaces else ImportRepo.Places.WithoutPlaces),
           place,
           event,
           ImportRepo.Limit(limit.value),
-          (if refresh.value then ImportRepo.Refresh.Refresh else ImportRepo.Refresh.Reuse),
+          (if refresh.refresh then ImportRepo.Refresh.Refresh else ImportRepo.Refresh.Reuse),
           since.map(s => ImportRepo.Since(s.value)),
-          (if pleiadesOnly.value then ImportRepo.PleiadesOnly.PleiadesOnly else ImportRepo.PleiadesOnly.AnyGazetteer)
+          (if pleiadesOnly.pleiadesOnly then ImportRepo.PleiadesOnly.PleiadesOnly
+           else ImportRepo.PleiadesOnly.AnyGazetteer)
         )
       )
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -164,9 +170,10 @@ object ImportService:
       db.read(
         ImportRepo.collectionPending(
           MediaItemRow.Provider(check.value),
-          (if places.value then ImportRepo.Places.WithPlaces else ImportRepo.Places.WithoutPlaces),
+          (if places.places then ImportRepo.Places.WithPlaces else ImportRepo.Places.WithoutPlaces),
           since.map(s => ImportRepo.Since(s.value)),
-          (if pleiadesOnly.value then ImportRepo.PleiadesOnly.PleiadesOnly else ImportRepo.PleiadesOnly.AnyGazetteer)
+          (if pleiadesOnly.pleiadesOnly then ImportRepo.PleiadesOnly.PleiadesOnly
+           else ImportRepo.PleiadesOnly.AnyGazetteer)
         )
       )
     def placeFacts(ids: List[Place.Id]): Map[Place.Id, PlaceFacts] = db.read(ImportRepo.placeFacts(ids))
@@ -234,9 +241,9 @@ object ImportService:
         pleiadesOnly: PleiadesOnly
     ): Either[Problem, List[Target]] =
       (place.map(_.value.trim).filter(_.nonEmpty), event.map(_.value.trim).filter(_.nonEmpty)) match
-        case (Some(_), _) if !places.value =>
+        case (Some(_), _) if !places.places =>
           Left(Problem.Unclassified(Legacy.Text("this import is about events: name one with --event")))
-        case (None, Some(_)) if places.value =>
+        case (None, Some(_)) if places.places =>
           Left(Problem.Unclassified(Legacy.Text("this import is about places: name one with --place")))
         case _ => one(place, event).toLeft(Nil)
     def collectionPending(

@@ -51,7 +51,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       val where = copy.map(c => s", file spooled at ${c.where}").getOrElse(", no file")
       IngestOutcome(
         citekey,
-        created = IngestOutcome.Created(!exists),
+        created = (if !exists then IngestOutcome.Created.Created else IngestOutcome.Created.Existing),
         jobId = None,
         detail = IngestOutcome.Detail(
           s"${if exists then "updated" else "created"} skeleton source" +

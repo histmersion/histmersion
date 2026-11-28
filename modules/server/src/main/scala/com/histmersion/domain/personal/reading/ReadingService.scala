@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicReference
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** Whether a person has read a source or an article — only what they marked ("Mark as read") — and when they last
   * opened it, which marks nothing read. Marking unread keeps the row, with no read time. What is not read yet is the
@@ -37,8 +38,10 @@ trait ReadingService:
   def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems
 
 object ReadingService:
-  type Read = Read.T
-  object Read extends Newtype[Boolean, Pure]
+  enum Read derives CanEqual:
+    case Read, Unread
+  object Read extends TwoCases[Read]:
+    extension (read: Read) def read: Boolean = read == Read
 
   def apply(db: Transactor, items: Referables, readables: List[Readable]): ReadingService =
     Implementation(db, items, readables)
@@ -130,7 +133,6 @@ object ReadingService:
       }
       shown(find(after, user, kind, key).toList, items).head
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setRead(
         user: UserId,
         kind: ItemKind,
@@ -140,7 +142,7 @@ object ReadingService:
         at: MarkTime
     )(using WritePermit): ReadMark =
       upsert(user, kind, key, title, at)(m =>
-        m.modify(_.readAt).setTo(if read.value then m.readAt.orElse(Some(at)) else None)
+        m.modify(_.readAt).setTo(if read.read then m.readAt.orElse(Some(at)) else None)
       )
 
     def opened(user: UserId, kind: ItemKind, key: ItemKey, title: Option[TargetLabel], at: MarkTime)(using

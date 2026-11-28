@@ -6,6 +6,7 @@ import com.histmersion.util.database.Transactor
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A source's figures take the source's licence: the figures with no licence whose source records one, counted, and
   * with `apply` given it.
@@ -18,15 +19,16 @@ trait FigureService:
   def countLicences(): FigureLicenceFill
 
 object FigureService:
-  type Apply = Apply.T
-  object Apply extends Newtype[Boolean, Pure]
+  enum Apply derives CanEqual:
+    case Apply, DryRun
+  object Apply extends TwoCases[Apply]:
+    extension (apply: Apply) def applies: Boolean = apply == Apply
 
   def apply(db: Transactor): FigureService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends FigureService:
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fillLicences(apply: Apply)(using WritePermit): FigureLicenceFill =
-      if apply.value then db.write(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied.Applied))
+      if apply.applies then db.write(FigureRepo.fillLicences(apply = FigureLicenceFill.Applied.Applied))
       else countLicences()
 
     def countLicences(): FigureLicenceFill =
@@ -35,11 +37,10 @@ object FigureService:
   /** Media's rows alone, in memory: no source is held, so no figure has a source licence to take. */
   final class InMemory extends FigureService:
     def fillLicences(apply: Apply)(using WritePermit): FigureLicenceFill = filled(apply)
-    def countLicences(): FigureLicenceFill = filled(Apply(false))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+    def countLicences(): FigureLicenceFill = filled(Apply.DryRun)
     private def filled(apply: Apply): FigureLicenceFill = FigureLicenceFill(
       FigureLicenceFill.Candidates(0),
       FigureLicenceFill.Updated(0),
-      (if apply.value then FigureLicenceFill.Applied.Applied else FigureLicenceFill.Applied.Previewed),
+      (if apply.applies then FigureLicenceFill.Applied.Applied else FigureLicenceFill.Applied.Previewed),
       Nil
     )

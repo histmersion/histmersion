@@ -268,7 +268,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def status(h: ServerWiring, id: Queue.QueueItem.Id): String =
     h.workListView
-      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -331,7 +331,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(status(h, full), Queue.Done)
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -348,7 +348,10 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(SourceFixtures.load(ds, Citekey("zzrecheck_meta")).flatMap(_.notes), Some("Compiled."))
     // what each check found is kept, and shown with the item
     val listing =
-      h.workListView.list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false)).toOption.get
+      h.workListView
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.OpenOnly)
+        .toOption
+        .get
     val day = java.time.LocalDate.now(java.time.ZoneOffset.UTC)
     assertEquals(
       listing.checks.find(_.item == none).map(_.reason),
@@ -361,7 +364,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assert(listing.markdown.map(_.value).getOrElse("").contains(s"_checked $day: no legal copy"))
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -806,7 +809,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     )
     val log =
       h.workListView
-        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items

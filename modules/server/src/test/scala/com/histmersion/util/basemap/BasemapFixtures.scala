@@ -145,7 +145,7 @@ object BasemapFixtures:
       PmTiles.Header.AddressedTiles(0),
       PmTiles.Header.TileEntries(0),
       PmTiles.Header.TileContents(0),
-      PmTiles.Header.Clustered(true),
+      PmTiles.Header.Clustered.Clustered,
       PmTiles.Compression.Gzip,
       c,
       t,

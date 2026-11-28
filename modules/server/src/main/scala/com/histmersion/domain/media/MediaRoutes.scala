@@ -89,7 +89,9 @@ object MediaRoutes:
       Api.mediaCovers.serverLogic[Identity](req => CreatorControllers.rest(req)(covers.covers(req))),
       Api.mediaCoversJob.serverLogic[Identity](req => CreatorControllers.rest(req)(covers.coversJob(req))),
       Api.putSourceCover.serverLogic[Identity]((p, bytes) => covers.putCover(p, AssetService.Bytes(bytes.value))),
-      Api.fillFigureLicences.serverLogic[Identity](apply => figures.fillLicences(FigureService.Apply(apply.applies))),
+      Api.fillFigureLicences.serverLogic[Identity](apply =>
+        figures.fillLicences((if apply.applies then FigureService.Apply.Apply else FigureService.Apply.DryRun))
+      ),
       Api.mediaList.serverLogicSuccess[Identity](q => assets.list(q)),
       Api.mediaShow.serverLogic[Identity](uid => assets.show(AssetService.AssetUid(uid.value))),
       Api.mediaThumb.serverLogic[Identity](uid =>

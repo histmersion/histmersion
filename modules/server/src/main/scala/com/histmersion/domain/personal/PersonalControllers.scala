@@ -303,17 +303,20 @@ final class PersonalControllers(
         .map(ItemKey(_))
         .toRight(bad(Problem.Invalid.Missing.here(Problem.Field("id"))))
 
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   def setRead(caller: Caller, in: ReadMark.Set): Either[Api.Error, WireReadMark] =
     maintenance.guard(WriteGate.OperationName("set_read")):
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)
       yield reading
-        .setRead(user, MarkTarget.itemKind(in.kind), key, ReadingService.Read(in.read.read), label(in.title), now())
+        .setRead(
+          user,
+          MarkTarget.itemKind(in.kind),
+          key,
+          (if in.read.read then ReadingService.Read.Read else ReadingService.Read.Unread),
+          label(in.title),
+          now()
+        )
         .wire
 
   def opened(caller: Caller, in: ReadOpened): Either[Api.Error, WireReadMark] =

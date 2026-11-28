@@ -26,7 +26,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         Some(Place.Id.assume(" zq_p ")),
         None,
         ImportService.TargetsLimit(10),
-        refresh = ImportService.Refresh(false),
+        refresh = ImportService.Refresh.Reuse,
         None
       ).left
         .map(_.sentence),
@@ -38,7 +38,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         None,
         Some(Event.Id("zq_e")),
         ImportService.TargetsLimit(10),
-        refresh = ImportService.Refresh(false),
+        refresh = ImportService.Refresh.Reuse,
         None
       ).left
         .map(_.sentence),
@@ -50,7 +50,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
         None,
         None,
         ImportService.TargetsLimit(10),
-        refresh = ImportService.Refresh(true),
+        refresh = ImportService.Refresh.Refresh,
         None
       ),
       Right(Nil)
@@ -59,13 +59,13 @@ abstract class ImportServiceContract extends MediaStoreSuite:
     assertEquals(
       i.collectionTargets(
         ImportService.CheckName("zq"),
-        places = ImportService.Places(false),
+        places = ImportService.Places.WithoutPlaces,
         Some(Place.Id("zq_p")),
         None,
         ImportService.CollectionTargetsLimit(10),
-        ImportService.Refresh(false),
+        ImportService.Refresh.Reuse,
         None,
-        ImportService.PleiadesOnly(false)
+        ImportService.PleiadesOnly.AnyGazetteer
       ).left
         .map(_.sentence),
       Left("this import is about events: name one with --event")
@@ -73,13 +73,13 @@ abstract class ImportServiceContract extends MediaStoreSuite:
     assertEquals(
       i.collectionTargets(
         ImportService.CheckName("zq"),
-        places = ImportService.Places(true),
+        places = ImportService.Places.WithPlaces,
         None,
         Some(Event.Id("zq_e")),
         ImportService.CollectionTargetsLimit(10),
-        ImportService.Refresh(false),
+        ImportService.Refresh.Reuse,
         None,
-        ImportService.PleiadesOnly(false)
+        ImportService.PleiadesOnly.AnyGazetteer
       ).left
         .map(_.sentence),
       Left("this import is about places: name one with --place")
@@ -87,13 +87,13 @@ abstract class ImportServiceContract extends MediaStoreSuite:
     assertEquals(
       i.collectionTargets(
         ImportService.CheckName("zq"),
-        places = ImportService.Places(true),
+        places = ImportService.Places.WithPlaces,
         Some(Place.Id("zq_p")),
         None,
         ImportService.CollectionTargetsLimit(10),
-        ImportService.Refresh(false),
+        ImportService.Refresh.Reuse,
         None,
-        ImportService.PleiadesOnly(true)
+        ImportService.PleiadesOnly.PleiadesOnly
       ).left
         .map(_.sentence),
       Left("no place id 'zq_p'")
@@ -101,22 +101,22 @@ abstract class ImportServiceContract extends MediaStoreSuite:
     assertEquals(
       i.collectionTargets(
         ImportService.CheckName("zq"),
-        places = ImportService.Places(true),
+        places = ImportService.Places.WithPlaces,
         None,
         None,
         ImportService.CollectionTargetsLimit(10),
-        ImportService.Refresh(false),
+        ImportService.Refresh.Reuse,
         None,
-        ImportService.PleiadesOnly(false)
+        ImportService.PleiadesOnly.AnyGazetteer
       ),
       Right(Nil)
     )
     assertEquals(
       i.collectionPending(
         ImportService.CheckName("zq"),
-        places = ImportService.Places(false),
+        places = ImportService.Places.WithoutPlaces,
         None,
-        pleiadesOnly = ImportService.PleiadesOnly(false)
+        pleiadesOnly = ImportService.PleiadesOnly.AnyGazetteer
       ),
       0
     )

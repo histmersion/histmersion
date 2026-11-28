@@ -64,7 +64,8 @@ object LibraryRoutes:
           sources
             .markdown(
               ck,
-              SourcesControllers.MarkdownFullText(q.fullText.fullText),
+              (if q.fullText.fullText then SourcesControllers.MarkdownFullText.FullText
+               else SourcesControllers.MarkdownFullText.SummaryOnly),
               q.section,
               q.heading.map(h => SourceService.Heading(h.value)),
               q.offset.map(o => Offset.option(o.value).getOrElse(Offset.Start)),
@@ -78,7 +79,15 @@ object LibraryRoutes:
       Api.passages.serverLogic[Identity](q => sources.passages(q)),
       resolveId,
       Api.getSource.serverLogic[Identity]((ck, body) =>
-        citekey(ck).flatMap(sources.get(_, SourcesControllers.GetBody(body.fullText)).left.map(Api.Error(_)))
+        citekey(ck).flatMap(
+          sources
+            .get(
+              _,
+              (if body.fullText then SourcesControllers.GetBody.WithBody else SourcesControllers.GetBody.WithoutBody)
+            )
+            .left
+            .map(Api.Error(_))
+        )
       ),
       Api.findingsPage.serverLogicSuccess[Identity](q => findings.page(q)),
       Api.findings.serverLogicSuccess[Identity](q => findings.feed(q)),
@@ -96,12 +105,24 @@ object LibraryRoutes:
       exportSource,
       Api.putSource.serverLogic[Identity]((ck, in, strict) =>
         CreatorControllers.rest(in)(
-          citekey(ck).flatMap(sources.put(_, in, SourcesControllers.PutStrict(strict.strict)))
+          citekey(ck).flatMap(
+            sources.put(
+              _,
+              in,
+              (if strict.strict then SourcesControllers.PutStrict.Strict else SourcesControllers.PutStrict.Lenient)
+            )
+          )
         )
       ),
       Api.patchSource.serverLogic[Identity]((ck, p, strict) =>
         CreatorControllers.rest(p) {
-          citekey(ck).flatMap(sources.patch(_, p.patch, SourcesControllers.PatchStrict(strict.strict)))
+          citekey(ck).flatMap(
+            sources.patch(
+              _,
+              p.patch,
+              (if strict.strict then SourcesControllers.PatchStrict.Strict else SourcesControllers.PatchStrict.Lenient)
+            )
+          )
         }
       ),
       Api.renameSource.serverLogic[Identity]((ck, req) =>

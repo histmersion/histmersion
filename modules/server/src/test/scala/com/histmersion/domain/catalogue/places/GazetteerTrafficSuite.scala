@@ -82,7 +82,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
       http,
       null,
       null,
-      dryRun = GazetteerControllers.DryRun(true),
+      dryRun = GazetteerControllers.DryRun.DryRun,
       GeocodeSettings.ToleranceKm(0.0)
     )
 

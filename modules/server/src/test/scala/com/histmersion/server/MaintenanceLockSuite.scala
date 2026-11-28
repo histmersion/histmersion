@@ -206,7 +206,7 @@ class MaintenanceLockSuite extends DbSuite:
     assert(reads.isRight, s"lint (a read) must still answer: $reads")
     assert(
       underLock(
-        h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(true))
+        h.workListView.list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.All)
       ).isRight
     )
 

@@ -130,7 +130,7 @@ class SourcesControllersSuite extends munit.FunSuite:
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict(true))
+      c.put(Walls90, put.modify(_.notes).setTo(Div), strict = SourcesControllers.PutStrict.Strict)
         .left
         .map(_.problems.head)
         .left
@@ -145,7 +145,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     val _ = c.put(Walls90, put)
     val _ = c.rename(Walls90, Rename.Request(Walls91))
     assertEquals(
-      c.get(Walls90, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).map(_.source.citekey),
+      c.get(Walls90, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)).map(_.source.citekey),
       Right("zqa1991_walls")
     )
     assertEquals(c.canonical(Walls90), "zqa1991_walls")
@@ -154,7 +154,7 @@ class SourcesControllersSuite extends munit.FunSuite:
       Right(Some("s"))
     )
     assert(
-      c.markdown(Walls90, SourcesControllers.MarkdownFullText(false))
+      c.markdown(Walls90, SourcesControllers.MarkdownFullText.SummaryOnly)
         .left
         .map(Api.Error(_))
         .toOption
@@ -163,7 +163,7 @@ class SourcesControllersSuite extends munit.FunSuite:
         .endsWith("(mentioned: zqa1991_walls)")
     )
     assert(
-      c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("toc")))
+      c.markdown(Walls90, SourcesControllers.MarkdownFullText.SummaryOnly, Some(Source.Section.Wire("toc")))
         .left
         .map(Api.Error(_))
         .toOption
@@ -172,7 +172,7 @@ class SourcesControllersSuite extends munit.FunSuite:
         .contains("Gate")
     )
     assert(
-      c.markdown(Walls90, SourcesControllers.MarkdownFullText(false), Some(Source.Section.Wire("nonsense")))
+      c.markdown(Walls90, SourcesControllers.MarkdownFullText.SummaryOnly, Some(Source.Section.Wire("nonsense")))
         .left
         .map(Api.Error(_))
         .left

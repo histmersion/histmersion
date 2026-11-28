@@ -25,6 +25,7 @@ import com.histmersion.domain.ManagerPolicy.Item
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What the supervisor gives a [[ManagerKindDefinition]]: its managers' items, events and hints, the runs and approvals
   * they left, and the engine's mechanics of starting, retrying and settling an item. Every write is the one the
@@ -218,8 +219,10 @@ object ManagerContext:
   object EventFeed extends Newtype[String, Pure]
   type EventText = EventText.T
   object EventText extends Newtype[String, Pure]
-  type UpsertReopen = UpsertReopen.T
-  object UpsertReopen extends Newtype[Boolean, Pure]
+  enum UpsertReopen derives CanEqual:
+    case Reopen, LeaveClosed
+  object UpsertReopen extends TwoCases[UpsertReopen]:
+    extension (upsertReopen: UpsertReopen) def upsertReopen: Boolean = upsertReopen == Reopen
   export Item.{Note as RetryNote, Outcome as EvaluatedOutcome, Outcome as SettleNowWhy}
   type StartWhat = StartWhat.T
   object StartWhat extends Newtype[String, Pure]

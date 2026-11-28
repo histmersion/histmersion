@@ -44,7 +44,7 @@ class ConverterClientSuite extends munit.FunSuite:
       ConverterClient.timeoutFor(
         ConverterWiring.settings(c),
         pc(ConverterClient.PageCount.Pages(10)),
-        quality = ConverterClient.HighQuality(false)
+        quality = ConverterClient.HighQuality.Fast
       ),
       Duration.ofSeconds(600)
     )
@@ -52,7 +52,7 @@ class ConverterClientSuite extends munit.FunSuite:
       ConverterClient.timeoutFor(
         ConverterWiring.settings(c),
         pc(ConverterClient.PageCount.Pages(600)),
-        quality = ConverterClient.HighQuality(false)
+        quality = ConverterClient.HighQuality.Fast
       ),
       Duration.ofSeconds(1200)
     )
@@ -60,12 +60,12 @@ class ConverterClientSuite extends munit.FunSuite:
       ConverterClient.timeoutFor(
         ConverterWiring.settings(c),
         pc(ConverterClient.PageCount.Pages(600)),
-        quality = ConverterClient.HighQuality(true)
+        quality = ConverterClient.HighQuality.HighQuality
       ),
       Duration.ofSeconds(4800)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = ConverterClient.HighQuality(true)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = ConverterClient.HighQuality.HighQuality),
       Duration.ofSeconds(600)
     )
 
@@ -83,7 +83,7 @@ class ConverterClientSuite extends munit.FunSuite:
       ConverterClient.timeoutFor(
         ConverterWiring.settings(c),
         pc(ConverterClient.PageCount.Pages(155), scanned = ConverterClient.PageCount.Scanned(155)),
-        quality = ConverterClient.HighQuality(false)
+        quality = ConverterClient.HighQuality.Fast
       ),
       Duration.ofSeconds(2325)
     )
@@ -91,7 +91,7 @@ class ConverterClientSuite extends munit.FunSuite:
       ConverterClient.timeoutFor(
         ConverterWiring.settings(c),
         pc(ConverterClient.PageCount.Pages(400), scanned = ConverterClient.PageCount.Scanned(100)),
-        quality = ConverterClient.HighQuality(false)
+        quality = ConverterClient.HighQuality.Fast
       ),
       Duration.ofSeconds(300 * 2 + 100 * 15)
     )
@@ -99,7 +99,7 @@ class ConverterClientSuite extends munit.FunSuite:
       ConverterClient.timeoutFor(
         ConverterWiring.settings(c),
         pc(ConverterClient.PageCount.Pages(10), scanned = ConverterClient.PageCount.Scanned(99)),
-        quality = ConverterClient.HighQuality(false)
+        quality = ConverterClient.HighQuality.Fast
       ),
       Duration.ofSeconds(600),
       "scanned is capped at pages"
@@ -144,7 +144,7 @@ class ConverterClientSuite extends munit.FunSuite:
         .convert(
           OfflineConverter.blob(file),
           ConverterClient.Filename("book.pdf"),
-          quality = ConverterClient.HighQuality(false)
+          quality = ConverterClient.HighQuality.Fast
         )
     finally Files.deleteIfExists(file)
 

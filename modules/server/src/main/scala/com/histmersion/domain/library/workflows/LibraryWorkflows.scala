@@ -43,7 +43,7 @@ final class LibraryWorkflows(
     ck =>
       Citekey
         .option(ck.value)
-        .flatMap(c => site.sources.get(c, body = SourcesControllers.GetBody(false)).toOption.map(_.source.status)),
+        .flatMap(c => site.sources.get(c, body = SourcesControllers.GetBody.WithoutBody).toOption.map(_.source.status)),
     p =>
       site.sources
         .patch(p.citekey, p.patch)

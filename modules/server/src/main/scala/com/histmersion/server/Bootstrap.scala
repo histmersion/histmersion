@@ -154,7 +154,7 @@ final class Bootstrap(
           start(
             InitPlan(
               fetch = List(InitPlan.Fetch(k.wire.value)),
-              check = (if !apply.value then InitPlan.Check.Check else InitPlan.Check.NoCheck)
+              check = (if !apply.loadApply then InitPlan.Check.Check else InitPlan.Check.NoCheck)
             )
           )
         )
@@ -208,7 +208,7 @@ final class Bootstrap(
         Option.when(p.periodPresets.included)(
           "period presets" -> (() =>
             periodImports
-              .applySeed(replace = PeriodImports.Replace(false))
+              .applySeed(replace = PeriodImports.Replace.Merge)
               .map(withSkipped)
               .map(r =>
                 s"${Plural.count(Plural.Count(r.periods.value.toLong), Plural.CountSingular("period"))}, ${Plural.count(Plural.Count(r.presets.value.toLong), Plural.CountSingular("preset"))}" + skippedNote(
@@ -264,7 +264,7 @@ final class Bootstrap(
       gazetteer match
         case Some(k) =>
           gazetteerImports
-            .load(k, apply = GazetteerLoad.LoadApply(!check), note)
+            .load(k, apply = (if !check then GazetteerLoad.LoadApply.Apply else GazetteerLoad.LoadApply.DryRun), note)
             .left
             .map(_.sentence)
             .map(_.map(_.describe).mkString("; "))
@@ -287,7 +287,7 @@ final class Bootstrap(
           )
       case NaturalEarthLand.name =>
         gazetteerImports
-          .land(dryRun = GazetteerControllers.DryRun(false))
+          .land(dryRun = GazetteerControllers.DryRun.Applied)
           .left
           .map(_.sentence)
           .map(r => s"${r.places} polit(y/ies) clipped")
@@ -298,7 +298,7 @@ final class Bootstrap(
             BuiltinGazetteers.Entry.Name(other),
             Problem.Unclassified(Legacy.Text(s"unknown source '$other' (available: ${available.mkString(", ")})"))
           )
-          .flatMap(src => gazetteerImports.fetch(src, dryRun = GazetteerControllers.DryRun(false)))
+          .flatMap(src => gazetteerImports.fetch(src, dryRun = GazetteerControllers.DryRun.Applied))
           .left
           .map(_.sentence)
           .map(r => s"${r.places} place(s)")

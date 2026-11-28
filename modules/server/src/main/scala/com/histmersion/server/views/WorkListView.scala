@@ -24,6 +24,7 @@ import com.histmersion.domain.automation.Goal
 import com.histmersion.util.jobs.Job
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A work list as `GET /api/queue/{list}` shows it: its items (open, all, a goal's or a job's) as the automation keeps
   * them, the goals each belongs to or is linked from, and — for the ACQUIRE list — the library's last legal check of
@@ -53,9 +54,10 @@ final class WorkListView(
               .refs(g, Goal.LinkKind.QueueItem)
               .map(r => QueueScope.ForGoal.Linked(r.value))
               .toSet,
-            withDone = QueueScope.ForGoal.WithDone(all.value)
+            withDone =
+              (if all.includeAll then QueueScope.ForGoal.WithDone.WithDone else QueueScope.ForGoal.WithDone.OpenOnly)
           )
-        case (None, None) => if all.value then QueueScope.All else QueueScope.Open
+        case (None, None) => if all.includeAll then QueueScope.All else QueueScope.Open
       val items = queues.list(k, scope)
       val checks =
         if k != Kind.Acquire then Nil
@@ -103,5 +105,7 @@ object WorkListView:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   given Transformer[AcquireRecheck.Outcome.Wire, Acquire.Checks.AcquireCheck.Outcome] = wire =>
     Acquire.Checks.AcquireCheck.Outcome(wire.value)
-  type IncludeAll = IncludeAll.T
-  object IncludeAll extends Newtype[Boolean, Pure]
+  enum IncludeAll derives CanEqual:
+    case All, OpenOnly
+  object IncludeAll extends TwoCases[IncludeAll]:
+    extension (includeAll: IncludeAll) def includeAll: Boolean = includeAll == All

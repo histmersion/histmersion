@@ -399,7 +399,7 @@ object ManagerService:
           ManagerInfo.Kind(m.kind.wire.value),
           m.goal.map(g => com.histmersion.api.automation.Goal.Slug(g.value)),
           ManagerInfo.State(m.state.wire.value),
-          (if m.pauseRuns.value then ManagerInfo.PauseRuns.Pause else ManagerInfo.PauseRuns.Run),
+          (if m.pauseRuns.pauseRuns then ManagerInfo.PauseRuns.Pause else ManagerInfo.PauseRuns.Run),
           m.config,
           ManagerConfig(),
           m.statusNote,
@@ -498,7 +498,7 @@ object ManagerService:
                   kind.transformInto[DomainManager.Kind],
                   goal.map(g => ManagerRecord.Goal(g.value)),
                   state.transformInto[DomainManager.State],
-                  ManagerRecord.PauseRuns(false),
+                  ManagerRecord.PauseRuns.Running,
                   config,
                   None,
                   cron.map(c => ManagerRecord.Cron(c.value)),
@@ -516,14 +516,13 @@ object ManagerService:
         .getAndUpdate(_.modify(_.managers).using(_.map(m => if m.id.value == id.value then f(m) else m)))
         .managers
         .exists(_.id.value == id.value)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setState(id: ManagerInfo.Id, state: State, pauseRuns: ManagerInfo.PauseRuns)(using WritePermit): Boolean =
       val at = now
       changeManager(id)(
         _.modify(_.state)
           .setTo(state.transformInto[DomainManager.State])
           .modify(_.pauseRuns)
-          .setTo(ManagerRecord.PauseRuns(pauseRuns.pauseRuns))
+          .setTo((if pauseRuns.pauseRuns then ManagerRecord.PauseRuns.Paused else ManagerRecord.PauseRuns.Running))
           .modify(_.updatedAt)
           .setTo(at)
       )

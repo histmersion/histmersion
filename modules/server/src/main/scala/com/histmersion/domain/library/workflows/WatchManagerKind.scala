@@ -90,7 +90,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
               target,
               ItemOrigin.Cron,
               ManagerContext.Priority(0),
-              reopen = ManagerContext.UpsertReopen(true)
+              reopen = ManagerContext.UpsertReopen.Reopen
             )
             s"${sw.itemKind} due"
         )
@@ -240,7 +240,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
             val swept =
               Option.when(item.kind.value == AcquisitionSweep)(
                 work.acquisition
-                  .sweepCandidates(Goal.Slug.assume(g.slug.value), dryRun = AgentUpstream.SweepCandidatesDryRun(false))
+                  .sweepCandidates(Goal.Slug.assume(g.slug.value), dryRun = AgentUpstream.SweepCandidatesDryRun.Applied)
               )
             swept.filter(WatchManagerKind.nothingNew).flatMap(_.toOption) match
               case Some(s) =>

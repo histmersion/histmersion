@@ -13,7 +13,7 @@ class FiguresControllersSuite extends munit.FunSuite:
     val gate = WriteGate()
     val c = FiguresControllers(FigureService.InMemory(), gate)
     val held = gate.exclusively(WriteGate.OperationName("restore"))(
-      Right((c.fillLicences(apply = FigureService.Apply(false)), c.fillLicences(apply = FigureService.Apply(true))))
+      Right((c.fillLicences(apply = FigureService.Apply.DryRun), c.fillLicences(apply = FigureService.Apply.Apply)))
     )
     val (dry, wet) = held.fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assert(dry.isRight && wet.isLeft, (dry, wet))

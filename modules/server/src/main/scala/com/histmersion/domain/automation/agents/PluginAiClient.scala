@@ -17,6 +17,7 @@ import sttp.shared.Identity
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A PLUGIN's AI provider as the engine sees it (docs/research-plugins.md §22): sttp-ai's own agent loop over a backend
   * that asks the provider for ONE turn at a time. So the host keeps everything but the model call — the tools (run in
@@ -35,8 +36,10 @@ final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHt
     LlmClient.configure(builder, call).run(call.user.value)(PluginAiClient.NoHttp)
 
 object PluginAiClient:
-  type Loopback = Loopback.T
-  object Loopback extends Newtype[Boolean, Pure]
+  enum Loopback derives CanEqual:
+    case Loopback, Remote
+  object Loopback extends TwoCases[Loopback]:
+    extension (loopback: Loopback) def loopback: Boolean = loopback == Loopback
 
   /** The sttp backend the loop is handed: the provider sends through [[AiHttp]], so it is never used. */
   private[automation] val NoHttp: Backend[Identity] = sttp.client4.testing.SyncBackendStub
@@ -46,7 +49,7 @@ object PluginAiClient:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Loopback): Either[Problem, LlmClient] =
-    if provider.spendsPersonalPlan.value && !loopback.value then
+    if provider.spendsPersonalPlan.value && !loopback.loopback then
       Left(
         Problem.Run.AtModel(
           Problem.Run.Model.of(ref.wire),

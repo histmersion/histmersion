@@ -50,26 +50,31 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
       check: SettingsFile.Staged => Either[SettingError, Unit]
   ): Either[SettingError, Option[WriteOutcome.Backup]] =
     try
-      store.reserve(key, TempName.Unique, throughLink = Store.ThroughLink(true)).left.map(io).flatMap { reservation =>
-        Using.resource(reservation) { r =>
-          Using.resource(r.output())(_.write(text.value.getBytes(UTF_8)))
-          for
-            temp <- r.onDisk.left.map(io)
-            _ <- check(
-              SettingsFile.Staged(
-                parsed(AppConfig.parseUserFile(temp), temp.toString),
-                AppConfig.writtenIn(temp),
-                env =>
-                  AppConfig
-                    .loadWithUserFile(env, Some(temp))
-                    .left
-                    .map(_.toNonEmpty.map(p => readAt(temp.toString, p)))
+      store.reserve(key, TempName.Unique, throughLink = Store.ThroughLink.ThroughLink).left.map(io).flatMap {
+        reservation =>
+          Using.resource(reservation) { r =>
+            Using.resource(r.output())(_.write(text.value.getBytes(UTF_8)))
+            for
+              temp <- r.onDisk.left.map(io)
+              _ <- check(
+                SettingsFile.Staged(
+                  parsed(AppConfig.parseUserFile(temp), temp.toString),
+                  AppConfig.writtenIn(temp),
+                  env =>
+                    AppConfig
+                      .loadWithUserFile(env, Some(temp))
+                      .left
+                      .map(_.toNonEmpty.map(p => readAt(temp.toString, p)))
+                )
               )
-            )
-            bak <- backup(existed)
-            _ <- r.commit(keepPermissions = Store.KeepPermissions(existed.value)).left.map(io)
-          yield bak
-        }
+              bak <- backup(existed)
+              _ <- r
+                .commit(keepPermissions = (if existed.value then Store.KeepPermissions.KeepPermissions
+                                           else Store.KeepPermissions.DefaultPermissions))
+                .left
+                .map(io)
+            yield bak
+          }
       }
     catch case e: IOException => Left(SettingError.Io(failed(Problem.Io.Access.Write, e)))
 
@@ -79,7 +84,11 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
     if !existed.value then Right(None)
     else
       store
-        .copy(key, key.withSuffix(TempName.Suffixed.Suffix(".bak")), keepAttributes = Store.KeepPermissions(true))
+        .copy(
+          key,
+          key.withSuffix(TempName.Suffixed.Suffix(".bak")),
+          keepAttributes = Store.KeepPermissions.KeepPermissions
+        )
         .left
         .map(io)
         .map(_ => Some(WriteOutcome.Backup(s"$shown.bak")))

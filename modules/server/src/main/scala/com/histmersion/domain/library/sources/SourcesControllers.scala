@@ -33,6 +33,7 @@ import com.histmersion.util.problem.Problems
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
 import com.histmersion.domain.automation.agents.ToolResultCap
+import com.histmersion.TwoCases
 
 /** A source over REST and MCP: read whole or by section, its passages, its note, written whole or in part, renamed,
   * deleted, its formatting checked and repaired, a note imported. Every citekey asked for is resolved first (an old one
@@ -108,21 +109,20 @@ final class SourcesControllers(
     */
   def canonical(id: Citekey): Citekey = currentOf(id).getOrElse(id)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def get(
       citekey: Citekey,
-      body: SourcesControllers.GetBody = SourcesControllers.GetBody(true)
+      body: SourcesControllers.GetBody = SourcesControllers.GetBody.WithBody
   ): Either[Problems, Source.WithFindings] =
     val ck = canonical(citekey)
     sources
       .get(ck)
       .map((s, fs) =>
         Source.WithFindings(
-          if body.value then s else s.modify(_.ocrMarkdown).setTo(None),
+          if body.getBody then s else s.modify(_.ocrMarkdown).setTo(None),
           fs,
           illustration = figures.sourceThumb(ck)
         )
@@ -143,12 +143,11 @@ final class SourcesControllers(
   /** Create or REPLACE everything under one citekey. An OLD citekey follows the alias (#1799): the put replaces the
     * source it was renamed to — it never creates a second source under the old name, which the alias would then shadow.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def put(
       citekey: Citekey,
       in: Source.Put,
-      strict: SourcesControllers.PutStrict = SourcesControllers.PutStrict(false)
+      strict: SourcesControllers.PutStrict = SourcesControllers.PutStrict.Lenient
   )(using Creator.New): Either[Api.Error, Source.WithFindings] =
     maintenance.guard(WriteGate.OperationName("put_source")):
       val ck = current(AliasKinds.SourceRecords, citekey)
@@ -156,22 +155,21 @@ final class SourcesControllers(
         .applyPut(apiCk(ck), in, sources.aliasesOf(ck).map(apiCk))
         .left
         .map(m => Write.invalid(m))
-        .flatMap(s => strictGate(strict.value, issuesOf(s.summary, s.notes)).map(_ => s))
+        .flatMap(s => strictGate(strict.putStrict, issuesOf(s.summary, s.notes)).map(_ => s))
         .flatMap { s =>
           val _ = sources.put(s, Caller.Local); get(ck).left.map(Api.Error(_)).map(withFormatting)
         }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def patch(
       citekey: Citekey,
       p: Source.Patch,
-      strict: SourcesControllers.PatchStrict = SourcesControllers.PatchStrict(false)
+      strict: SourcesControllers.PatchStrict = SourcesControllers.PatchStrict.Lenient
   )(using Creator.New): Either[Api.Error, Source.WithFindings] =
     maintenance.guard(WriteGate.OperationName("patch_source")):
       // only what this patch writes is gated: a strict patch of the tags is not refused for old notes
-      strictGate(strict.value, issuesOf(p.summary, p.notes))
+      strictGate(strict.patchStrict, issuesOf(p.summary, p.notes))
         .flatMap(_ => sources.patch(citekey, p, Caller.Local))
         .flatMap(_ => get(citekey).left.map(Api.Error(_)))
         .map(withFormatting)
@@ -190,7 +188,7 @@ final class SourcesControllers(
         .map(m => Write.invalid(m))
         .flatMap { now =>
           sources.rename(from, now, Caller.Local).flatMap { counts =>
-            get(now, body = SourcesControllers.GetBody(false)).left
+            get(now, body = SourcesControllers.GetBody.WithoutBody).left
               .map(Api.Error(_))
               .map(sw =>
                 Source.Renamed(
@@ -342,7 +340,7 @@ final class SourcesControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   def lint(citekey: Citekey): Either[Api.Error, FormatReport] =
-    get(citekey, body = SourcesControllers.GetBody(false)).left
+    get(citekey, body = SourcesControllers.GetBody.WithoutBody).left
       .map(Api.Error(_))
       .map(sw =>
         FormatReport(FormatReport.Subject(sw.source.citekey.value), formatIssues(sw.source.summary, sw.source.notes))
@@ -399,7 +397,6 @@ final class SourcesControllers(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def markdown(
       requested: Citekey,
@@ -450,7 +447,7 @@ final class SourcesControllers(
               .getOrElse("_(no notes)_")
 
           case Some(Source.Section.All) =>
-            val ft = fullText.value || offset.isDefined || heading.isDefined
+            val ft = fullText.markdownFullText || offset.isDefined || heading.isDefined
             val md = if ft && (offset.isDefined || chars.isDefined) then
               val bodyText = bodySlice(citekey, heading, offset, chars)
               SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
@@ -462,10 +459,10 @@ final class SourcesControllers(
 
           case None =>
             val md =
-              if fullText.value && (offset.isDefined || chars.isDefined) then
+              if fullText.markdownFullText && (offset.isDefined || chars.isDefined) then
                 val bodyText = bodySlice(citekey, heading, offset, chars)
                 SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + s"\n\n---\n\n$bodyText"
-              else SourcesMarkdown.source(sw.source, sw.findings.toVector, fullText.value)
+              else SourcesMarkdown.source(sw.source, sw.findings.toVector, fullText.markdownFullText)
             absolute(md + mentions(citekey).value, citekey)
         SourcesControllers.Markdown(text)
       }
@@ -535,12 +532,19 @@ object SourcesControllers:
   type Chars = Chars.T
   object Chars extends Newtype[Int, Pure]
   export ToolResultCap.Markdown
-
-  type GetBody = GetBody.T
-  object GetBody extends Newtype[Boolean, Pure]
-  type PutStrict = PutStrict.T
-  object PutStrict extends Newtype[Boolean, Pure]
-  type PatchStrict = PatchStrict.T
-  object PatchStrict extends Newtype[Boolean, Pure]
-  type MarkdownFullText = MarkdownFullText.T
-  object MarkdownFullText extends Newtype[Boolean, Pure]
+  enum GetBody derives CanEqual:
+    case WithBody, WithoutBody
+  object GetBody extends TwoCases[GetBody]:
+    extension (getBody: GetBody) def getBody: Boolean = getBody == WithBody
+  enum PutStrict derives CanEqual:
+    case Strict, Lenient
+  object PutStrict extends TwoCases[PutStrict]:
+    extension (putStrict: PutStrict) def putStrict: Boolean = putStrict == Strict
+  enum PatchStrict derives CanEqual:
+    case Strict, Lenient
+  object PatchStrict extends TwoCases[PatchStrict]:
+    extension (patchStrict: PatchStrict) def patchStrict: Boolean = patchStrict == Strict
+  enum MarkdownFullText derives CanEqual:
+    case FullText, SummaryOnly
+  object MarkdownFullText extends TwoCases[MarkdownFullText]:
+    extension (markdownFullText: MarkdownFullText) def markdownFullText: Boolean = markdownFullText == FullText

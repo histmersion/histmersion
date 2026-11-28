@@ -556,7 +556,7 @@ final class ManagersControllers(
     }
 
   private def inFlight(id: ManagerLight.Id): List[RunInfo] =
-    agents.runs.forManager(id, active = RunService.Active(true)).toList
+    agents.runs.forManager(id, active = RunService.Active.Active).toList
 
   /** `POST /api/agents/managers/{id}/{pause|resume|stop}[?runs=true]`. Pause = no new runs (with `runs`, its in-flight
     * runs are paused too, cooperatively); resume reverses both (only the runs paused on request); stop cancels its

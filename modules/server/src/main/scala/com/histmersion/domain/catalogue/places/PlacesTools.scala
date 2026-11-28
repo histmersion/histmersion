@@ -25,6 +25,7 @@ import com.histmersion.domain.Creator
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The gazetteer for agents: `places` (search, or show one place with its hierarchy), `place_names` (a person's names),
   * `place_override` (a person's kind, period and point; merge, remove) and `add_place`.
@@ -86,12 +87,16 @@ object PlacesTools:
     object PlaceId extends Newtype[String, Pure]
     type Kind = Kind.T
     object Kind extends Newtype[String, Pure]
-    type Reset = Reset.T
-    object Reset extends Newtype[Boolean, Pure]
+    enum Reset derives CanEqual:
+      case Reset, Keep
+    object Reset extends TwoCases[Reset]:
+      extension (reset: Reset) def reset: Boolean = reset == Reset
     type MergeInto = MergeInto.T
     object MergeInto extends Newtype[String, Pure]
-    type Remove = Remove.T
-    object Remove extends Newtype[Boolean, Pure]
+    enum Remove derives CanEqual:
+      case Remove, Keep
+    object Remove extends TwoCases[Remove]:
+      extension (remove: Remove) def remove: Boolean = remove == Remove
     type PointLat = PointLat.T
     object PointLat extends Newtype[Double, Pure]
     type PointLon = PointLon.T
@@ -131,8 +136,10 @@ object PlacesTools:
     object Name extends Newtype[String, Pure]
     type Lang = Lang.T
     object Lang extends Newtype[String, Pure]
-    type Remove = Remove.T
-    object Remove extends Newtype[Boolean, Pure]
+    enum Remove derives CanEqual:
+      case Remove, Keep
+    object Remove extends TwoCases[Remove]:
+      extension (remove: Remove) def remove: Boolean = remove == Remove
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
@@ -238,7 +245,7 @@ object PlacesTools:
               McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("placeId"))), FindPlaceId)
             case (Some(pid), Some(n)) =>
               val r = placeId(pid).flatMap(found =>
-                if in.remove.exists(_.value) then
+                if in.remove.exists(_.remove) then
                   places.removeName(
                     me,
                     found,
@@ -279,10 +286,10 @@ object PlacesTools:
           CreatorControllers.mcp(in) {
             val id = in.placeId.map(_.value.trim).filter(_.nonEmpty)
             val into = in.mergeInto.map(_.value.trim).filter(_.nonEmpty)
-            val gone = into.isDefined || in.remove.exists(_.value)
+            val gone = into.isDefined || in.remove.exists(_.remove)
             val ask =
               gone || in.kind.exists(_.value.trim.nonEmpty) || in.periodStart.isDefined || in.periodEnd.isDefined ||
-                in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.value)
+                in.pointLat.isDefined || in.pointLon.isDefined || in.reset.exists(_.reset)
             def text(r: Either[Api.Error, String]) = McpOut.ofText(r)
             (id, ask) match
               case (_, false) =>
@@ -295,7 +302,7 @@ object PlacesTools:
               case (None, true) =>
                 McpOut.error(Api.Error(Problem.Invalid.Missing.here(Problem.Field("placeId"))), FindPlaceId)
               case (Some(pid), true) =>
-                (into, in.remove.exists(_.value)) match
+                (into, in.remove.exists(_.remove)) match
                   case (Some(_), true) =>
                     McpOut.refused(
                       Problem.Invalid.Inconsistent.here(
@@ -336,7 +343,7 @@ object PlacesTools:
                               in.periodStart.map(year),
                               in.periodEnd.map(year),
                               in.reason,
-                              (if in.reset.exists(_.value) then ApiPlace.OverrideSet.Reset.Reset
+                              (if in.reset.exists(_.reset) then ApiPlace.OverrideSet.Reset.Reset
                                else ApiPlace.OverrideSet.Reset.Set),
                               in.pointLat.map(l => Latitude(l.value)),
                               in.pointLon.map(l => Longitude(l.value))

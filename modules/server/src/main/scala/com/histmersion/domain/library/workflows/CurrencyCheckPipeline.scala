@@ -81,7 +81,7 @@ final class CurrencyCheckPipeline(
       .map(site.sources.canonical)
       .flatMap(ck =>
         site.sources
-          .get(ck, body = SourcesControllers.GetBody(false))
+          .get(ck, body = SourcesControllers.GetBody.WithoutBody)
           .left
           .map(Api.Error(_))
           .toOption
@@ -91,7 +91,10 @@ final class CurrencyCheckPipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def assess(ctx: RunCtx, ts: List[Target])(using WritePermit)(using Creator.New): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
-      upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
+      upstream().assess(
+        t.citekey,
+        apply = (if !ctx.dryRun then AgentUpstream.AssessApply.Apply else AgentUpstream.AssessApply.DryRun)
+      ) match
         case Left(m)  => ctx.warn(s"assess ${t.citekey}: ${m.sentences.mkString("; ")}"); None
         case Right(a) =>
           if a.isRetracted.isRetracted then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")

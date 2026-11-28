@@ -27,6 +27,7 @@ import com.histmersion.domain.automation.goals.FocusRepo
 import com.histmersion.domain.CodexRetention
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The agent runs as the engine's features read them — each run's row with its steps' usage summed — and the steps
   * themselves: the checkpoints a resume replays, the attempts, the trace, the spend.
@@ -70,7 +71,7 @@ trait RunService:
   /** The runs a manager dispatched, newest first (`active`: those not settled yet). */
   def forManager(
       managerId: ManagerLight.Id,
-      active: RunService.Active = RunService.Active(false),
+      active: RunService.Active = RunService.Active.Inactive,
       limit: RunQuery.Limit = RunQuery.Limit(200)
   ): Vector[RunInfo]
 
@@ -103,12 +104,16 @@ trait RunService:
   def pruneMessages(days: RunService.RetentionDays)(using WritePermit): RunService.Count
 
 object RunService:
-  type Active = Active.T
-  object Active extends Newtype[Boolean, Pure]
+  enum Active derives CanEqual:
+    case Active, Inactive
+  object Active extends TwoCases[Active]:
+    extension (active: Active) def active: Boolean = active == Active
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Applied
+  object DryRun extends TwoCases[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
   type RetentionDays = RetentionDays.T
   object RetentionDays extends Newtype[Int, Pure]
 
@@ -150,7 +155,7 @@ object RunService:
       goal.map(g => RunRow.Goal(g.value)),
       parent.map(r => RunRow.Parent(r.value)),
       RunRow.Origin(origin.wire.value),
-      (if dryRun.value then RunRow.DryRun.DryRun else RunRow.DryRun.Applied),
+      (if dryRun.dryRun then RunRow.DryRun.DryRun else RunRow.DryRun.Applied),
       managerId.map(m => RunRow.ManagerId(m.value)),
       managerItem.map(i => RunRow.ManagerItem(i.value))
     )
@@ -199,7 +204,7 @@ object RunService:
       db.read(
         AgentRepo.forManager(
           Managers.ManagerInfo.Id(managerId.value),
-          (if active.value then AgentRepo.ActiveOnly.ActiveOnly else AgentRepo.ActiveOnly.All),
+          (if active.active then AgentRepo.ActiveOnly.ActiveOnly else AgentRepo.ActiveOnly.All),
           size(limit)
         )
       )
@@ -406,7 +411,7 @@ object RunService:
     def forManager(managerId: ManagerLight.Id, active: Active, limit: RunQuery.Limit): Vector[RunInfo] =
       newest(
         runs.filter(r =>
-          r.row.managerId.exists(_.value == managerId.value) && (!active.value || Unsettled(r.row.status.value))
+          r.row.managerId.exists(_.value == managerId.value) && (!active.active || Unsettled(r.row.status.value))
         )
       )
         .take(math.max(1, limit.value))

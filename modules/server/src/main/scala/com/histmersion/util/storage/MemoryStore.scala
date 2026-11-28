@@ -102,10 +102,9 @@ final class MemoryStore private (
       state.updateAndGet(_.modify(_.files).using(_.removed(full(from)).updated(full(to), e))): Unit
     }
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def copy(from: Store.Key, to: Store.Key, keepAttributes: Store.KeepPermissions): Either[Store.Error, Unit] =
     state.get.files.get(full(from)).toRight(Store.Error.NotFound(where(from))).map { e =>
-      val copied = if keepAttributes.value then e else e.modify(_.modified).setTo(now)
+      val copied = if keepAttributes.keepPermissions then e else e.modify(_.modified).setTo(now)
       state.updateAndGet(_.modify(_.files).using(_.updated(full(to), copied))): Unit
     }
 
@@ -144,8 +143,8 @@ final class MemoryStore private (
       Store.Measure(
         ByteCount.applyUnsafe(counted.iterator.map(_.size.value).sum),
         Store.Measure.Files(counted.size.toLong),
-        exists = Store.Measure.Exists(true),
-        partial = Store.Measure.Partial(counted.size < held.size)
+        exists = Store.Measure.Exists.Exists,
+        partial = (if counted.size < held.size then Store.Measure.Partial.Partial else Store.Measure.Partial.Complete)
       )
     else Store.Measure.absent
 

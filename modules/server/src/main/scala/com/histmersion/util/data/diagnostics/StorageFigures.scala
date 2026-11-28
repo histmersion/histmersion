@@ -118,7 +118,7 @@ final class StorageFigures(registry: DataContributions):
     val problems = List.newBuilder[String]
     val measured = spotted.map { spot =>
       val results = spot.stores.map(_.measure(budget))
-      val exists = results.exists(_.exists.value)
+      val exists = results.exists(_.exists.exists)
       val unread = results.map(_.unreadable.value).sum
       if unread > 0 then
         problems += s"${spot.label}: ${Plural.count(Plural.CountN(unread.toLong), Plural.CountSingular("entry"), Plural.CountPlural("entries"))} could not be read"
@@ -133,7 +133,7 @@ final class StorageFigures(registry: DataContributions):
           .when(exists)(results.map(_.files.value).sum))
           .map(com.histmersion.api.maintenance.Storage.FileCount.apply),
         exists = (if exists then StorageReports.Entry.Exists.Exists else StorageReports.Entry.Exists.Missing),
-        partial = (if results.exists(_.partial.value) then StorageReports.Entry.Partial.Partial
+        partial = (if results.exists(_.partial.partial) then StorageReports.Entry.Partial.Partial
                    else StorageReports.Entry.Partial.Whole),
         detail = (spot.detail.toList ++ extra.toList)
           .map[String](_.value)

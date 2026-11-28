@@ -33,7 +33,7 @@ object CollectionsRoutes:
           CollectionsService.CollectionName(name.value),
           q.map(x => Search.Query(x.value)),
           limit.map(l => CollectionsService.Limit(l.value)),
-          CollectionsService.SearchUnlinked(unlinked)
+          (if unlinked then CollectionsService.SearchUnlinked.Unlinked else CollectionsService.SearchUnlinked.All)
         )
       ),
       CollectionsApi.importItem.serverLogic[Identity]((name, req) =>

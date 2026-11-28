@@ -120,7 +120,7 @@ class WikidataCommonsSuite extends munit.FunSuite:
       http: FakeMediaHttp,
       dryRun: MediaImporter.DryRun,
       store: MemStore = MemStore(),
-      refresh: ImportService.Refresh = ImportService.Refresh(false),
+      refresh: ImportService.Refresh = ImportService.Refresh.Reuse,
       cfg: MediaConfig = FakeMediaHttp.cfg,
       ts: List[Target] = targets,
       settings: String = ""
@@ -133,9 +133,9 @@ class WikidataCommonsSuite extends munit.FunSuite:
       cfg
     ).run(ts, dryRun, refresh, store)
 
-  private val DryOn = MediaImporter.DryRun(true)
-  private val DryOff = MediaImporter.DryRun(false)
-  private val RefreshOn = ImportService.Refresh(true)
+  private val DryOn = MediaImporter.DryRun.DryRun
+  private val DryOff = MediaImporter.DryRun.Applied
+  private val RefreshOn = ImportService.Refresh.Refresh
 
   test("dry run: counts per provider, licence and role, the refusals with reasons — two requests, nothing stored"):
     val http = provider()

@@ -359,7 +359,7 @@ object Composition:
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
       def source(citekey: Citekey) =
-        h.library.sources.get(citekey, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_))
+        h.library.sources.get(citekey, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_))
       def create(citekey: Citekey, put: Source.Put)(using Creator.New) = h.library.sources.put(citekey, put)
       def patch(citekey: Citekey, patch: Source.Patch)(using Creator.New) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: Citekey) = h.calibreGaps.pushMeta(citekey)
@@ -385,7 +385,7 @@ object Composition:
         h.workListView
           .list(
             WorkListControllers.KindOfList(Queue.Kind.Acquire.label.value),
-            all = WorkListView.IncludeAll(true)
+            all = WorkListView.IncludeAll.All
           )
           .map(_.items.find(_.id.value == id.value))
       @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

@@ -59,7 +59,7 @@ object QueueService:
             list,
             QueueRepo.GoalText(goal.value),
             linked.toList.map(l => GoalLink.Ref(l.value)),
-            withDone.value
+            withDone.withDone
           ))
       .toList
 

@@ -90,7 +90,7 @@ class GazetteerLoadSuite extends DbSuite:
       maxLpfBytes = GazetteerLoad.Settings.MaxLpfBytes(1 << 20),
       downloadTimeoutSeconds = Timeout,
       toleranceKm = GeocodeSettings.ToleranceKm(10),
-      rebuild = GazetteerLoad.Settings.Rebuild(false),
+      rebuild = GazetteerLoad.Settings.Rebuild.Reuse,
       clock = TestCreators.clock
     )
 
@@ -281,7 +281,7 @@ class GazetteerLoadSuite extends DbSuite:
   ):
     val s = layout()
     val lpf = GazetteerLoad
-      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
       .fold(e => fail(e.sentence), identity)
     assertEquals(lpf.map(c => c.source -> c.created), List("lpf:zzgaz_hittite" -> 2L, "lpf:zzgaz_kultepe" -> 1L))
     val rows = PlaceFixtures.gazetteerSources(ds).filter(_.key.value.startsWith("lpf:zzgaz")).map(r => r.key -> r).toMap
@@ -315,7 +315,7 @@ class GazetteerLoadSuite extends DbSuite:
     // GeoNames 999000202 names wd:Q999000101, which the LPF record links: its names go to the LPF place
     val gn =
       GazetteerLoad
-        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
         .fold(e => fail(e.sentence), identity)
         .head
     assertEquals((gn.records, gn.created, gn.joined), (2L, 1L, 1L))
@@ -336,11 +336,11 @@ class GazetteerLoadSuite extends DbSuite:
 
     // idempotent: the same versions again change nothing
     val again = GazetteerLoad
-      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
       .toOption
       .get ++
       GazetteerLoad
-        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
         .toOption
         .get
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
@@ -368,7 +368,7 @@ class GazetteerLoadSuite extends DbSuite:
   dbTest("Getty TGN (#1403): joins by a shared tgn id only, keeps open name spans, drops a point-only region"):
     val s = withTgn(layout())
     val _ = GazetteerLoad
-      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .load(db, s, Gazetteer.Kind.Lpf, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
       .fold(e => fail(e.sentence), identity)
     val hattusa = "lpf_zzgaz_hittite_hattusa"
     // what the Wikidata extract does for 25 753 items: a tgn: link on a place (here, by hand)
@@ -376,7 +376,7 @@ class GazetteerLoadSuite extends DbSuite:
                       VALUES ($hattusa, 'tgn', '999000301', 'close_match')""".update.run())
     val c =
       GazetteerLoad
-        .load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+        .load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
         .fold(e => fail(e.sentence), identity)
         .head
     assertEquals((c.source, c.records, c.joined, c.created, c.pointAreasSkipped), ("tgn", 3L, 1L, 1L, 1L), c.describe)
@@ -407,7 +407,7 @@ class GazetteerLoadSuite extends DbSuite:
     )
     assertEquals(desc, List("Capital of the Hittites."))
     val again = GazetteerLoad
-      .load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply(true), _ => (), noNet)
+      .load(db, s, Gazetteer.Kind.Tgn, apply = GazetteerLoad.LoadApply.Apply, _ => (), noNet)
       .fold(e => fail(e.sentence), identity)
     assert(again.forall(_.unchanged), again.map(_.describe).mkString("; "))
 
@@ -415,7 +415,7 @@ class GazetteerLoadSuite extends DbSuite:
     val s = layout()
     val c =
       GazetteerLoad
-        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply(false), _ => (), noNet)
+        .load(db, s, Gazetteer.Kind.Geonames, apply = GazetteerLoad.LoadApply.DryRun, _ => (), noNet)
         .fold(e => fail(e.sentence), identity)
         .head
     assertEquals(c.created, 2L)

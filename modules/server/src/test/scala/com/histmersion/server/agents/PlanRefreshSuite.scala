@@ -286,14 +286,14 @@ class PlanRefreshSuite extends munit.FunSuite:
       ModelPicker.lifts(
         since = PlanQuotaRepo.EpochMillis(1000L),
         observed = Some(PlanQuotaRepo.EpochMillis(1001L)),
-        usable = ModelPicker.PoolUsable(true)
+        usable = ModelPicker.PoolUsable.Usable
       )
     )
     assert(
       !ModelPicker.lifts(
         PlanQuotaRepo.EpochMillis(1000L),
         Some(PlanQuotaRepo.EpochMillis(1000L)),
-        usable = ModelPicker.PoolUsable(true)
+        usable = ModelPicker.PoolUsable.Usable
       ),
       "the reading the limit came with says nothing about a reset"
     )
@@ -301,19 +301,19 @@ class PlanRefreshSuite extends munit.FunSuite:
       !ModelPicker.lifts(
         PlanQuotaRepo.EpochMillis(1000L),
         Some(PlanQuotaRepo.EpochMillis(999L)),
-        usable = ModelPicker.PoolUsable(true)
+        usable = ModelPicker.PoolUsable.Usable
       )
     )
     assert(
       !ModelPicker.lifts(
         PlanQuotaRepo.EpochMillis(1000L),
         Some(PlanQuotaRepo.EpochMillis(2000L)),
-        usable = ModelPicker.PoolUsable(false)
+        usable = ModelPicker.PoolUsable.Unusable
       ),
       "still below its floor"
     )
     assert(
-      !ModelPicker.lifts(PlanQuotaRepo.EpochMillis(1000L), None, usable = ModelPicker.PoolUsable(true)),
+      !ModelPicker.lifts(PlanQuotaRepo.EpochMillis(1000L), None, usable = ModelPicker.PoolUsable.Usable),
       "no reading at all"
     )
 

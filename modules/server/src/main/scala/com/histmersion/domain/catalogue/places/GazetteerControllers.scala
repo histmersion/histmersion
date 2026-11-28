@@ -19,6 +19,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The gazetteer's background work as REST, MCP and the CLI reach it: a source a plugin registers fetched, the land
   * fetched, the hierarchy built from spatial containment — one at a time (each rewrites places the others read), each a
@@ -74,7 +75,8 @@ final class GazetteerControllers(
   )(using Creator.New): Either[Api.Error, Place.ImportResult] =
     maintenance.guard(WriteGate.OperationName("places/fetch")):
       val name = source.value.trim.toLowerCase
-      if name == NaturalEarthLand.name then land(GazetteerControllers.DryRun(!apply.applies))
+      if name == NaturalEarthLand.name then
+        land((if !apply.applies then GazetteerControllers.DryRun.DryRun else GazetteerControllers.DryRun.Applied))
       else
         imports
           .source(
@@ -89,11 +91,11 @@ final class GazetteerControllers(
           .map(refused)
           .flatMap { src =>
             given Creator.New = imports.importerOf(src)
-            if !apply.applies then imports.fetch(src, dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
+            if !apply.applies then imports.fetch(src, dryRun = GazetteerControllers.DryRun.DryRun).left.map(refused)
             else
               job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), s"fetch $name")(
                 imports
-                  .fetch(src, dryRun = GazetteerControllers.DryRun(false))
+                  .fetch(src, dryRun = GazetteerControllers.DryRun.Applied)
                   .map(r =>
                     s"${r.places} places, ${r.names} names, ${r.relations} relations" +
                       (if r.failed.nonEmpty then s", ${r.failed.size} failed" else "")
@@ -112,11 +114,11 @@ final class GazetteerControllers(
   private def land(
       dryRun: GazetteerControllers.DryRun
   )(using WritePermit)(using Creator.New): Either[Api.Error, Place.ImportResult] =
-    if dryRun.value then imports.land(dryRun = GazetteerControllers.DryRun(true)).left.map(refused)
+    if dryRun.dryRun then imports.land(dryRun = GazetteerControllers.DryRun.DryRun).left.map(refused)
     else
       job(Job.Kind.assume(PlacesJobKinds.PlacesFetch.kind.value), "fetch land")(
         imports
-          .land(dryRun = GazetteerControllers.DryRun(false))
+          .land(dryRun = GazetteerControllers.DryRun.Applied)
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => importStarted(j))
 
@@ -160,5 +162,7 @@ final class GazetteerControllers(
       )
 
 object GazetteerControllers:
-  type DryRun = DryRun.T
-  object DryRun extends Newtype[Boolean, Pure]
+  enum DryRun derives CanEqual:
+    case DryRun, Applied
+  object DryRun extends TwoCases[DryRun]:
+    extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun

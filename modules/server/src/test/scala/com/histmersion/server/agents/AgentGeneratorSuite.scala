@@ -178,8 +178,8 @@ class AgentGeneratorSuite extends munit.FunSuite:
     GenSettings.AgentMcpUrl("http://127.0.0.1:18000/mcp/agent"),
     Some(GenSettings.McpUrl("http://127.0.0.1:18000/mcp")),
     GenSettings.QuotaUrl("http://127.0.0.1:18000/api/agents/quota/claude"),
-    claudeMod = GenSettings.ClaudeMod(true),
-    interactiveMod = GenSettings.InteractiveMod(false),
+    claudeMod = GenSettings.ClaudeMod.On,
+    interactiveMod = GenSettings.InteractiveMod.Off,
     GenSettings.Version("0.3.0+t")
   )
 
@@ -218,7 +218,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(tree("claude-code/histmersion/.mcp.json").contains("http://127.0.0.1:18000/mcp\""))
     assert(tree("claude-code/.claude-plugin/marketplace.json").contains("\"histmersion-local\""))
     assert(!tree.values.exists(_.contains("{{tool:")), "no placeholder survives")
-    val noMod = AgentGenerator.claudeCode(d, Settings.modify(_.claudeMod).setTo(GenSettings.ClaudeMod(false)))
+    val noMod = AgentGenerator.claudeCode(d, Settings.modify(_.claudeMod).setTo(GenSettings.ClaudeMod.Off))
     assert(!noMod.keys.exists(_.contains("quota-guard")))
 
   test("Codex: everything off in the base, one profile per role with its prompt and tools"):
@@ -281,7 +281,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("Codex lean: the home carries Histmersion's base prompt and names it; builtin writes neither"):
     val lean = Settings
       .modify(_.codexLeanBase)
-      .setTo(GenSettings.CodexLeanBase(true))
+      .setTo(GenSettings.LeanBase.Lean)
       .modify(_.codexToolOutputTokens)
       .setTo(GenSettings.CodexToolOutputTokens(6000))
     val tree = AgentGenerator.codex(d, lean)
@@ -310,7 +310,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(file.length < 1600, s"${file.length} characters")
     assertEquals(
       AgentGenerator
-        .codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(GenSettings.CodexLeanBase(true)))
+        .codexBaseInstructions(d, Settings.modify(_.codexLeanBase).setTo(GenSettings.LeanBase.Lean))
         .contains("@exec"),
       false,
       "no output limit: no budget line"

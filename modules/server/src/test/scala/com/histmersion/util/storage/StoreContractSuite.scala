@@ -141,9 +141,9 @@ abstract class StoreContractSuite extends munit.FunSuite:
     (1 to 30).foreach(i => s.put(key(f"f$i%02d.bin"), ByteSource.Content(Array.fill[Byte](10)(1))): Unit)
     val b = MeasureBudget(MeasureBudget.MaxEntries(10), MeasureBudget.DeadlineNanos(Long.MaxValue))
     val r = s.measure(b)
-    assert(r.partial.value && r.files.value < 30L && r.bytes.value < 300L, r)
+    assert(r.partial.partial && r.files.value < 30L && r.bytes.value < 300L, r)
     assert(b.exhausted)
-    assert(s.measure(b).partial.value)
+    assert(s.measure(b).partial.partial)
 
   test("names: what a directory holds directly, by name; none for a missing one"):
     val s = fresh()
@@ -175,10 +175,12 @@ class DiskStoreSuite extends StoreContractSuite:
     val real = Files.writeString(dir.resolve("real.conf"), "old")
     Files.createSymbolicLink(dir.resolve("link.conf"), real)
     val r =
-      s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = Store.ThroughLink(true)).toOption.get
+      s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = Store.ThroughLink.ThroughLink)
+        .toOption
+        .get
     Using.resource(r.output())(_.write("new".getBytes(UTF_8)))
     assert(r.onDisk.exists(p => p.getFileName.toString.startsWith(".link.conf.")))
-    assert(r.commit(keepPermissions = Store.KeepPermissions(true)).isRight)
+    assert(r.commit(keepPermissions = Store.KeepPermissions.KeepPermissions).isRight)
     assert(Files.isSymbolicLink(dir.resolve("link.conf")))
     assertEquals(Files.readString(real), "new")
     assert(s.usableSpace.value > 0)

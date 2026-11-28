@@ -22,7 +22,8 @@ final class FormatView(articles: => ArticlesControllers, sources: => SourcesCont
         MarkdownLint.fix(
           MarkdownLint.Scan.Text(in.text.value),
           in.field,
-          MarkdownLint.Context(article = MarkdownLint.Context.Article(in.field == FormatField.Body))
+          MarkdownLint.Context(article = (if in.field == FormatField.Body then MarkdownLint.Context.Article.Article
+                                          else MarkdownLint.Context.Article.Other))
         )
       else (MarkdownLint.Scan.Text(in.text.value), Nil)
     val issues = in.field match

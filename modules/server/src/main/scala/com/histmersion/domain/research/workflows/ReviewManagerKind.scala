@@ -252,7 +252,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         )
       case ArticleExtend =>
         CompileArticlePipeline.written(c, run) match
-          case Some(w) if w.written.value =>
+          case Some(w) if w.written.written =>
             StepFacts.Finished(Item.Outcome(s"extended (${w.why})"))
           case Some(w) => StepFacts.Finished(Item.Outcome(s"nothing appended: ${w.why}"))
           case None    => StepFacts.Finished(Item.Outcome(s"nothing to extend — $progress"))
@@ -268,7 +268,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       run: Option[Run.Id],
       out: Builder[ManagerContext.TickLine, List[ManagerContext.TickLine]]
   )(using WritePermit)(using Creator.New): Unit =
-    if item.kind.value == ArticleExtend && run.flatMap(CompileArticlePipeline.written(c, _)).exists(_.written.value)
+    if item.kind.value == ArticleExtend && run.flatMap(CompileArticlePipeline.written(c, _)).exists(_.written.written)
     then
       c.chainReview(
         ManagerLight.Id(m.id.value),
@@ -304,7 +304,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     val s = c.settings(m)
     val manager = ManagerLight.Id(m.id.value)
     val pending = c.pending(manager)
-    if (force.value || pending.value < s.lowWater.value) && s.refillBatch.value > 0 then
+    if (force.refillForce || pending.value < s.lowWater.value) && s.refillBatch.value > 0 then
       val (tags, goal) = scopeOf(m).getOrElse((Nil, None))
       val selectable = scopeOf(m).isDefined
       val majors =
@@ -339,7 +339,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               ManagerContext.ItemTarget(p.target.value),
               ItemOrigin.Selection,
               prio,
-              reopen = ManagerContext.UpsertReopen(false)
+              reopen = ManagerContext.UpsertReopen.LeaveClosed
             )
             val label =
               if p.kind == Item.Kind.ArticleReview then p.target.value else s"${p.target} [${p.kind}]"
@@ -411,7 +411,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           ManagerContext.ItemTarget(slug.value),
           ItemOrigin.Selection,
           ManagerContext.Priority(0),
-          reopen = ManagerContext.UpsertReopen(true)
+          reopen = ManagerContext.UpsertReopen.Reopen
         )
         val item = c.item(id)
         Option.when(isNew || item.exists(_.status == ItemStatus.Pending.wire))(s"$slug ($why)")
@@ -533,7 +533,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           target,
           ItemOrigin.Chain,
           priority,
-          reopen = ManagerContext.UpsertReopen(false)
+          reopen = ManagerContext.UpsertReopen.LeaveClosed
         )
         c.event(
           manager,

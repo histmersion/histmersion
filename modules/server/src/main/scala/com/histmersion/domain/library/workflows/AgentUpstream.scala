@@ -29,6 +29,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Api
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The acquisition operations an agent run uses — OpenAlex/Crossref metadata, the deposited reference list, the
   * retraction/impact assessment, the citation graph forward — as a small seam over [[AcquisitionControllers]] (built
@@ -45,7 +46,7 @@ trait AgentUpstream:
     */
   def refs(
       citekey: Citekey,
-      apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply(true)
+      apply: AgentUpstream.RefsApply = AgentUpstream.RefsApply.Apply
   )(using Creator.New): Either[Problems, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
@@ -53,7 +54,7 @@ trait AgentUpstream:
     */
   def assess(
       citekey: Citekey,
-      apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply(true)
+      apply: AgentUpstream.AssessApply = AgentUpstream.AssessApply.Apply
   )(using Creator.New): Either[Problems, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
@@ -121,15 +122,21 @@ trait AgentUpstream:
 object AgentUpstream:
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
-
-  type RefsApply = RefsApply.T
-  object RefsApply extends Newtype[Boolean, Pure]
-  type AssessApply = AssessApply.T
-  object AssessApply extends Newtype[Boolean, Pure]
+  enum RefsApply derives CanEqual:
+    case Apply, DryRun
+  object RefsApply extends TwoCases[RefsApply]:
+    extension (refsApply: RefsApply) def refsApply: Boolean = refsApply == Apply
+  enum AssessApply derives CanEqual:
+    case Apply, DryRun
+  object AssessApply extends TwoCases[AssessApply]:
+    extension (assessApply: AssessApply) def assessApply: Boolean = assessApply == Apply
   type FollowupsId = FollowupsId.T
   object FollowupsId extends Newtype[String, Pure]
-  type SweepCandidatesDryRun = SweepCandidatesDryRun.T
-  object SweepCandidatesDryRun extends Newtype[Boolean, Pure]
+  enum SweepCandidatesDryRun derives CanEqual:
+    case DryRun, Applied
+  object SweepCandidatesDryRun extends TwoCases[SweepCandidatesDryRun]:
+    extension (sweepCandidatesDryRun: SweepCandidatesDryRun)
+      def sweepCandidatesDryRun: Boolean = sweepCandidatesDryRun == DryRun
 
   private def problem(e: Api.Error): Problems = e.problems
 
@@ -160,13 +167,14 @@ object AgentUpstream:
       a.refs(
         RefsRequest(
           RefsRequest.Id(citekey.value),
-          apply = (if apply.value then RefsRequest.Apply.Apply else RefsRequest.Apply.DryRun)
+          apply = (if apply.refsApply then RefsRequest.Apply.Apply else RefsRequest.Apply.DryRun)
         )
       ).left
         .map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def assess(citekey: Citekey, apply: AssessApply)(using Creator.New) =
-      (if apply.value then a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply.Apply))
+      (if apply.assessApply then
+         a.assess(AssessRequest(AssessRequest.Id(citekey.value), apply = AssessRequest.Apply.Apply))
        else a.assessReadOnly(AssessRequest.Id(citekey.value))).left.map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def followups(id: FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit])(using Creator.New) =
@@ -202,7 +210,8 @@ object AgentUpstream:
       a.sweepCandidates(
         CandidateSweep.Request(
           CandidateSweep.Request.Goal(goal.value),
-          (if dryRun.value then CandidateSweep.Request.DryRun.DryRun else CandidateSweep.Request.DryRun.Apply)
+          (if dryRun.sweepCandidatesDryRun then CandidateSweep.Request.DryRun.DryRun
+           else CandidateSweep.Request.DryRun.Apply)
         )
       ).left
         .map(problem)

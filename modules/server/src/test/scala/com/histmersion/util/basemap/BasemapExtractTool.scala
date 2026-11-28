@@ -229,7 +229,12 @@ object BasemapExtractTool:
       BasemapFetch.Attribution(cfg.vector.attribution.value),
       BasemapFetch.FetchedAt(java.time.Instant.now().toString),
       Basemap.Layer.Vector,
-      Some((BasemapFetch.Filtered(keepAll), BasemapFetch.FilterSpec(cfg.vector.drop.value)))
+      Some(
+        (
+          (if keepAll then BasemapFetch.Filtered.Filtered else BasemapFetch.Filtered.Whole),
+          BasemapFetch.FilterSpec(cfg.vector.drop.value)
+        )
+      )
     )
     val (bytes, tiles) = orDie(
       BasemapFetch
@@ -276,7 +281,7 @@ object BasemapExtractTool:
             }
           List(
             Some(PmTiles.CompressedBytes(stored.value)),
-            Mvt.filter(raw, drop, others = Mvt.Others(true)).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip),
+            Mvt.filter(raw, drop, others = Mvt.Others.Others).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip),
             Mvt.filter(raw, OldKeep).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip)
           ).zipWithIndex.foreach {
             case (Some(t), i) => if seen(i).add(digest(t)) then sums(i) += t.value.length

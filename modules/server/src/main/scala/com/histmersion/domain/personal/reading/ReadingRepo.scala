@@ -52,12 +52,11 @@ private[reading] object ReadingRepo:
 
   /** Mark read (keeping when it was first marked) or not read yet. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def setRead(user: UserId, ref: ItemRef, targetLabel: Option[TargetLabel], read: ReadingService.Read, at: MarkTime)(
       using DbCon
   ): Unit =
     val stamp = at.iso
-    val readAt = Option.when(read.value)(stamp)
+    val readAt = Option.when(read.read)(stamp)
     sql"""INSERT INTO read_marks (user_id, target_kind, target_id, target_uid, target_label, read_at, created_at, updated_at)
           VALUES ($user, ${ref.kind}, ${ref.key}, ${ref.uid}, $targetLabel, $readAt::timestamptz,
                   $stamp::timestamptz, $stamp::timestamptz)

@@ -22,22 +22,22 @@ abstract class SiteTypeServiceContract extends CatalogueStoreSuite:
     s.site("wikidata_q3", onMap = false, None)
     s.site("pleiades_1", onMap = true, None)
     assertEquals(
-      t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh(false), None),
+      t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh.Reuse, None),
       List(("wikidata_q1", "Q1", None), ("wikidata_q2", "Q2", Some("Q123")))
     )
     assertEquals(
-      t.sitesToType(PageSize(1), refresh = SiteTypeService.Refresh(false), None).map(_._1),
+      t.sitesToType(PageSize(1), refresh = SiteTypeService.Refresh.Reuse, None).map(_._1),
       List("wikidata_q1")
     )
-    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh(false), None), 2)
+    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh.Reuse, None), 2)
     t.setSiteTypes(List(Place.Id("wikidata_q1") -> Some(SiteTypes.SiteType.Id("palace"))))
     assertEquals(
-      t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh(false), None).map(_._1),
+      t.sitesToType(PageSize(10), refresh = SiteTypeService.Refresh.Reuse, None).map(_._1),
       List("wikidata_q2")
     )
-    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh(true), None), 2, "a refresh asks every one")
+    assertEquals(t.countSitesToType(refresh = SiteTypeService.Refresh.Refresh, None), 2, "a refresh asks every one")
     assertEquals(
-      t.countSitesToType(refresh = SiteTypeService.Refresh(true), Some(DeepTime.SignedYear(0L))),
+      t.countSitesToType(refresh = SiteTypeService.Refresh.Refresh, Some(DeepTime.SignedYear(0L))),
       1,
       "asked since the run began: not again"
     )

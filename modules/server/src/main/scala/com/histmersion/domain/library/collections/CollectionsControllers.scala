@@ -100,9 +100,9 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   ): Either[Api.Error, CollectionUpdateAll] =
     if req.apply.applies then
       maintenance.guard(WriteGate.OperationName("collections/update"))(
-        service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(true))
+        service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply.Apply)
       )
-    else service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(false))
+    else service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply.DryRun)
 
   def set(
       caller: Caller,

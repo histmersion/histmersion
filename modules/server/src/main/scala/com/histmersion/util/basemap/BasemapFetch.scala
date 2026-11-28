@@ -30,6 +30,7 @@ import com.histmersion.api.library.Source
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Plural
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A regional extract of a remote PMTiles archive (a Protomaps build, Mapterhorn's planet), read with HTTP range
   * requests — the way `pmtiles extract` reads it, and what both providers document for a partial download — and written
@@ -56,8 +57,10 @@ object BasemapFetch:
   object FetchedAt extends Newtype[String, Pure]
   type FilterSpec = FilterSpec.T
   object FilterSpec extends Newtype[String, Pure]
-  type Filtered = Filtered.T
-  object Filtered extends Newtype[Boolean, Pure]
+  enum Filtered derives CanEqual:
+    case Filtered, Whole
+  object Filtered extends TwoCases[Filtered]:
+    extension (filtered: Filtered) def filtered: Boolean = filtered == Filtered
   type Note = Note.T
   object Note extends Newtype[String, Pure]
   type TileCount = TileCount.T
@@ -579,8 +582,8 @@ object BasemapFetch:
             .deepMerge(
               filter.fold(Json.obj())((all, drop) =>
                 Json.obj(
-                  "keepAll" -> Json.fromBoolean(all.value),
-                  "drop" -> Json.fromString(if all.value then "" else drop.value)
+                  "keepAll" -> Json.fromBoolean(all.filtered),
+                  "drop" -> Json.fromString(if all.filtered then "" else drop.value)
                 )
               )
             )

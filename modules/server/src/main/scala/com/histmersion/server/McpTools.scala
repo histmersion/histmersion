@@ -686,7 +686,7 @@ final class McpTools(
                     .repair(
                       RepairAcquire
                         .RepairRequest(
-                          (if dry.value then RepairAcquire.RepairRequest.DryRun.DryRun
+                          (if dry.repairAcquire then RepairAcquire.RepairRequest.DryRun.DryRun
                            else RepairAcquire.RepairRequest.DryRun.Apply),
                           Some(Activity.Actor("mcp"))
                         )

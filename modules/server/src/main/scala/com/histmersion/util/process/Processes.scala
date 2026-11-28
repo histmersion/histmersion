@@ -41,7 +41,8 @@ object Processes:
         out <- log(launch)
         started <-
           try
-            val pb = ProcessBuilder(launch.command.map(_.value).asJava).redirectErrorStream(launch.mergeErrors.value)
+            val pb =
+              ProcessBuilder(launch.command.map(_.value).asJava).redirectErrorStream(launch.mergeErrors.mergeErrors)
             dir.foreach(d => pb.directory(d))
             out.foreach(o => pb.redirectOutput(o))
             val env = pb.environment()

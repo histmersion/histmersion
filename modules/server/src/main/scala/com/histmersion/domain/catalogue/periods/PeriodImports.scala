@@ -12,6 +12,7 @@ import com.histmersion.util.database.WritePermit
 import com.histmersion.util.database.Unused
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
   * a PeriodO dataset a client sends, and the live PeriodO dump's configured collections. `seed` reads the bundled
@@ -41,7 +42,7 @@ final class PeriodImports(
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
       Unused(periods.retainPresets(d.presets.keys.toList.map(k => HistoricalPeriod.Id(k.value))), Unused.Why.Reported)
-      val removed = if replace.value then periods.deleteSeedExcept(ids).value else 0
+      val removed = if replace.replace then periods.deleteSeedExcept(ids).value else 0
       d.version.foreach(v =>
         periods.setSeedVersion(PeriodService.SeedName(PeriodImports.SeedName), PeriodService.SeedVersion(v.value))
       )
@@ -106,8 +107,10 @@ object PeriodImports:
   /** The text of a PeriodO dataset: the bundled seed or a dump. */
   type Document = Document.T
   object Document extends Newtype[String, Pure]
-  type Replace = Replace.T
-  object Replace extends Newtype[Boolean, Pure]
+  enum Replace derives CanEqual:
+    case Replace, Merge
+  object Replace extends TwoCases[Replace]:
+    extension (replace: Replace) def replace: Boolean = replace == Replace
 
   /** The `seed_versions` name of the bundled period seed. */
 

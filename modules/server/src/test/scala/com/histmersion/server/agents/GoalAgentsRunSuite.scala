@@ -158,7 +158,7 @@ final class StubUpstream extends AgentUpstream:
           CandidateSweep.Again(0),
           Map.empty,
           CandidateSweep.Unseen(cs.count(c => !marked.containsKey(c.id))),
-          (if dryRun.value then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply)
+          (if dryRun.sweepCandidatesDryRun then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply)
         )
       )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -439,7 +439,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
       List((LinkKind.Source, Ck.value), (LinkKind.Query, "Bronze Age tin isotopes"))
     )
     val items = h.workListView
-      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false))
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.OpenOnly)
       .toOption
       .get
       .items
@@ -478,7 +478,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -580,7 +580,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     )
     assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == SlugRef))
     val log = h.workListView
-      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+      .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
       .toOption
       .get
       .items
@@ -693,7 +693,7 @@ class GoalAgentsRunSuite extends DbSuite with db.Bounded with RunTranscripts:
     assert(done.warnings.exists(_.value.contains("NOT appended")), done.warnings)
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll(false))
+        .list(WorkListControllers.KindOfList("tasks"), all = WorkListView.IncludeAll.OpenOnly)
         .toOption
         .get
         .items

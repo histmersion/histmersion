@@ -88,7 +88,7 @@ final class ProposeArticlesPipeline(
         StepAgent.ArticlePlanner,
         Prompt.UserText(input(ctx, loaded)),
         ResearchAnswers.articles
-      )((a, last) => check(ctx, loaded, a, last.value).map(Checked(_, Nil)))
+      )((a, last) => check(ctx, loaded, a, last.lastAttempt).map(Checked(_, Nil)))
       recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(
         ctx.byAnswer(AgentRepo.StepRecord.Name("propose"))(record(ctx, goal, plan))
       )

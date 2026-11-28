@@ -8,6 +8,7 @@ import java.time.Instant
 import com.histmersion.domain.automation.Manager
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A manager as [[ManagerService.InMemory]] holds it. */
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
@@ -30,7 +31,9 @@ object ManagerRecord:
   object Id extends Newtype[String, Pure]
   type Goal = Goal.T
   object Goal extends Newtype[String, Pure]
-  type PauseRuns = PauseRuns.T
-  object PauseRuns extends Newtype[Boolean, Pure]
+  enum PauseRuns derives CanEqual:
+    case Paused, Running
+  object PauseRuns extends TwoCases[PauseRuns]:
+    extension (pauseRuns: PauseRuns) def pauseRuns: Boolean = pauseRuns == Paused
   type Cron = Cron.T
   object Cron extends Newtype[String, Pure]

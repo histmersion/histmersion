@@ -261,7 +261,8 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         m.toolName.contains("facets") && m.role.value == "tool"
       )
     )
-    val got = h.library.sources.get(Ck, body = SourcesControllers.GetBody(false)).left.map(Api.Error(_)).toOption.get
+    val got =
+      h.library.sources.get(Ck, body = SourcesControllers.GetBody.WithoutBody).left.map(Api.Error(_)).toOption.get
     assertEquals(got.source.summary, Some("Tin reached the Aegean by sea."))
     assert(got.findings.exists(_.claim.value.contains("Uluburun")), got.findings.toString)
     assert(got.source.notes.exists(_.value.contains("tin by sea")), got.source.notes.toString)
@@ -294,7 +295,7 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
     val chain =
       a.picker.roleChains(PlanQuotaRepo.EpochMillis(System.currentTimeMillis())).find(_.role.value == "extractor").get
     assertEquals(chain.active, Some("hello-ai:echo"))
-    val d = a.doctor(offline = AgentsControllers.Offline(true))
+    val d = a.doctor(offline = AgentsControllers.Offline.Offline)
     val sec = d.providers.find(_.provider.value == "hello-ai").get
     assert(sec.used.used, sec.toString)
     assert(sec.checks.exists(c => c.name.value == "plugin" && c.detail.value.contains("Hello AI")), sec.checks)
@@ -330,4 +331,4 @@ class PluginAiRunSuite extends DbSuite with RunTranscripts:
         .left
         .exists(_.sentences.mkString("; ").contains("unknown provider kind 'hello-ai'"))
     )
-    assert(!gone.doctor(offline = AgentsControllers.Offline(true)).providers.exists(_.provider.value == "hello-ai"))
+    assert(!gone.doctor(offline = AgentsControllers.Offline.Offline).providers.exists(_.provider.value == "hello-ai"))

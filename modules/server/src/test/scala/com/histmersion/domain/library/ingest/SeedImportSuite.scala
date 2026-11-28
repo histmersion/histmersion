@@ -50,7 +50,7 @@ class SeedImportSuite extends DbSuite:
   private lazy val seed = SeedImport(sources, (_, figures) => RowCount(figures.size))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def run(dir: java.nio.file.Path, force: SeedImport.RunForce = SeedImport.RunForce(false)) =
+  private def run(dir: java.nio.file.Path, force: SeedImport.RunForce = SeedImport.RunForce.Safe) =
     seed.run(SeedNoteFiles(dir, None), force, SeedFolder.MaxBytes(1 << 20))
 
   test("seed skips a file older than the stored row, and force overwrites it"):
@@ -78,7 +78,7 @@ class SeedImportSuite extends DbSuite:
     assert(sources.load(ckS).get.tags.exists(_.value == "enriched"))
 
     // --force: the file wins and the enrichment is gone (the deliberate re-import)
-    val forced = run(dir, force = SeedImport.RunForce(true))
+    val forced = run(dir, force = SeedImport.RunForce.Force)
     assertEquals(forced.imported, 1)
     assertEquals(forced.skipped, Nil)
     assertEquals(sources.load(ckS).get.tags, List("fromfile"))
@@ -87,7 +87,7 @@ class SeedImportSuite extends DbSuite:
     val dir = Files.createTempDirectory("histmersion-seed-bad")
     val _ = Files.writeString(dir.resolve("zz_seed_bad.md"), "no frontmatter here\n")
     val _ = Files.writeString(dir.resolve("zz_seed_ok.md"), "---\ncitekey: zz_seed_ok\ntitle: Fine\n---\n")
-    val r = run(dir, force = SeedImport.RunForce(true))
+    val r = run(dir, force = SeedImport.RunForce.Force)
     assertEquals(r.imported, 1)
     assertEquals(r.failed, List("zz_seed_bad.md: no frontmatter"))
 
@@ -124,10 +124,10 @@ class SeedImportSuite extends DbSuite:
       dir0.resolve(s"$ck.md"),
       s"---\ncitekey: $ck\ntitle: Round trip\nauthors: [A, B]\nyear: 2020\ntopics: [t]\ntags: [x]\n---\nThe notes.\n"
     )
-    val _ = run(dir0, force = SeedImport.RunForce(true))
+    val _ = run(dir0, force = SeedImport.RunForce.Force)
     val one = SourceNote.note(SourceFixtures.load(ds, ck).get)
     val dir = Files.createTempDirectory("histmersion-export")
     val _ = Files.writeString(dir.resolve(s"$ck.md"), one.value)
-    assertEquals(run(dir, force = SeedImport.RunForce(true)).imported, 1)
+    assertEquals(run(dir, force = SeedImport.RunForce.Force).imported, 1)
     val two = SourceNote.note(SourceFixtures.load(ds, ck).get)
     assertEquals(two, one)

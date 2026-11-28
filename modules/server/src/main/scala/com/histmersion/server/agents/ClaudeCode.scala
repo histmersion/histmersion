@@ -23,6 +23,7 @@ import com.histmersion.server.agents.CliOutcomes.finishEquality
 import com.histmersion.util.database.WritePermit
 import com.histmersion.lint.{atBoundary, movesTo, BoundaryKind, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The pure half of the `claude-code` provider: the argument vector, the environment, the MCP config, and the
   * `stream-json` output read back into sttp-ai's result types.
@@ -273,8 +274,10 @@ object ClaudeCode:
   object Result:
     type Subtype = Subtype.T
     object Subtype extends Newtype[String, Pure]
-    type IsError = IsError.T
-    object IsError extends Newtype[Boolean, Pure]
+    enum IsError derives CanEqual:
+      case Error, Success
+    object IsError extends TwoCases[IsError]:
+      extension (isError: IsError) def isError: Boolean = isError == Error
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     type Turns = Turns.T
@@ -426,7 +429,8 @@ object ClaudeCode:
           result = Some(
             Result(
               subtype = Result.Subtype(c.downField("subtype").as[String].getOrElse("")),
-              isError = Result.IsError(c.downField("is_error").as[Boolean].getOrElse(false)),
+              isError = (if c.downField("is_error").as[Boolean].getOrElse(false) then Result.IsError.Error
+                         else Result.IsError.Success),
               text = Result.Text(c.downField("result").as[String].getOrElse("")),
               structured = c.downField("structured_output").focus.filterNot(_.isNull),
               turns = Result.Turns(c.downField("num_turns").as[Int].getOrElse(turn)),
@@ -477,7 +481,7 @@ object ClaudeCode:
     val all = (r.text.value :: r.errors.map(_.value)).mkString(" ")
     val low = all.toLowerCase(java.util.Locale.ROOT)
     Option.when(
-      r.isError.value && (low.contains("usage limit") || low.contains("limit reached") || low.contains(
+      r.isError.isError && (low.contains("usage limit") || low.contains("limit reached") || low.contains(
         "hit your limit"
       ))
     ) {
@@ -509,7 +513,7 @@ object ClaudeCode:
     val r = o.result.getOrElse(
       Result(
         Result.Subtype("missing"),
-        isError = Result.IsError(true),
+        isError = Result.IsError.Error,
         Result.Text(""),
         None,
         Result.Turns(0),
@@ -522,10 +526,10 @@ object ClaudeCode:
       case Some(l) => Left(l)
       case None    =>
         val finish = r.subtype.value match
-          case "success" if !r.isError.value => FinishReason.NaturalStop
-          case "error_max_turns"             => FinishReason.MaxIterations
-          case "error_max_budget_usd"        => FinishReason.BudgetExceeded
-          case other                         =>
+          case "success" if !r.isError.isError => FinishReason.NaturalStop
+          case "error_max_turns"               => FinishReason.MaxIterations
+          case "error_max_budget_usd"          => FinishReason.BudgetExceeded
+          case other                           =>
             FinishReason.Error(
               (List(Option(r.text.value).filter(_.nonEmpty), Some(other).filter(_.nonEmpty)).flatten ++
                 r.errors.map(_.value) ++ o.mcpProblem.toList.map(_.sentence) ++

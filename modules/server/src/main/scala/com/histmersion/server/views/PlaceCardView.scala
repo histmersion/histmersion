@@ -10,6 +10,7 @@ import com.histmersion.domain.DeepTime
 import com.histmersion.api.catalogue.Place
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** A place's page as the gazetteer, the corpus and the pictures show it together (the web UI's map hover card): the
   * gazetteer's `place` (the row, its geometry and the hierarchy around it), and — with `counts` — what `place=<id>`
@@ -28,7 +29,7 @@ final class PlaceCardView(
       withCounts: PlaceCardView.WithCounts
   ): Either[Api.Error, PlaceDetail] =
     place(id, asOf).map(d =>
-      if withCounts.value then
+      if withCounts.withCounts then
         d.modify(_.counts)
           .setTo(Some(counts(now(id))))
           .into[PlaceDetail]
@@ -39,6 +40,7 @@ final class PlaceCardView(
 
 object PlaceCardView:
   export domain.catalogue.Place.Id as PlaceId
-
-  type WithCounts = WithCounts.T
-  object WithCounts extends Newtype[Boolean, Pure]
+  enum WithCounts derives CanEqual:
+    case WithCounts, WithoutCounts
+  object WithCounts extends TwoCases[WithCounts]:
+    extension (withCounts: WithCounts) def withCounts: Boolean = withCounts == WithCounts

@@ -175,7 +175,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
         CollectionsService.CollectionName("calibre"),
         None,
         Some(CollectionsService.Limit(1)),
-        unlinked = CollectionsService.SearchUnlinked(true)
+        unlinked = CollectionsService.SearchUnlinked.Unlinked
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals((r.entries.map(_.id), r.total), (List("3"), 2))
@@ -185,7 +185,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
           CollectionsService.CollectionName("calibre"),
           None,
           None,
-          unlinked = CollectionsService.SearchUnlinked(false)
+          unlinked = CollectionsService.SearchUnlinked.All
         )
         .left
         .map(_.code),
@@ -217,7 +217,7 @@ class CollectionsServiceSuite extends munit.FunSuite:
       .updateAll(
         Caller.Local,
         CollectionsService.CollectionName("calibre"),
-        apply = CollectionsService.UpdateAllApply(false)
+        apply = CollectionsService.UpdateAllApply.DryRun
       )
       .fold(e => fail(e.problems.sentences.mkString("; ")), identity)
     assertEquals(shelf.written.toList, List("updateAll 99:zz_lost,2:zz_two false"))

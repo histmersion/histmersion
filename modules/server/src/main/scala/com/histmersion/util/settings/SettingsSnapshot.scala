@@ -4,6 +4,7 @@ package util.settings
 import com.histmersion.config.{PgBytes, PgParameter}
 import com.histmersion.config.edit.{FileVersion, SettingReading}
 import io.github.iltotore.iron.constraint.any.Pure
+import com.histmersion.TwoCases
 
 /** The settings as the settings file and the environment have them now: where the file is (as messages name it), every
   * setting (or those asked for), the file's version a change is made against, what is wrong with the file, whether the
@@ -22,9 +23,13 @@ final case class SettingsSnapshot(
 object SettingsSnapshot:
   type File = File.T
   object File extends Newtype[String, Pure]
-  type Exists = Exists.T
-  object Exists extends Newtype[Boolean, Pure]
+  enum Exists derives CanEqual:
+    case Exists, Missing
+  object Exists extends TwoCases[Exists]:
+    extension (exists: Exists) def exists: Boolean = exists == Exists
   type Problems = Problems.T
   object Problems extends Newtype[String, Pure]
-  type SetupDue = SetupDue.T
-  object SetupDue extends Newtype[Boolean, Pure]
+  enum SetupDue derives CanEqual:
+    case Due, Done
+  object SetupDue extends TwoCases[SetupDue]:
+    extension (setupDue: SetupDue) def setupDue: Boolean = setupDue == Due

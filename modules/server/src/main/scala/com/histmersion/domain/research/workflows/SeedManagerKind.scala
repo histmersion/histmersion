@@ -74,7 +74,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         ManagerContext.ItemTarget(g.value),
         ItemOrigin.Cron,
         ManagerContext.Priority(0),
-        reopen = ManagerContext.UpsertReopen(true)
+        reopen = ManagerContext.UpsertReopen.Reopen
       )
       ManagerKindDefinition.FirePhrase(s"$ProposeArticles ${if isNew then "added" else "due"}")
     }
@@ -91,7 +91,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
         )
       case ArticleCompile =>
         CompileArticlePipeline.written(c, run) match
-          case Some(w) if w.written.value =>
+          case Some(w) if w.written.written =>
             StepFacts.Finished(Item.Outcome(s"compiled (${w.why})"))
           case Some(w) =>
             // a draft the autopilot's checks rejected is compiled again (a new draft may pass them)

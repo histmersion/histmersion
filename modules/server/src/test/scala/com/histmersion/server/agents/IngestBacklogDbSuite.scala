@@ -273,7 +273,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
     h.workListView
-      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll(false))
+      .list(WorkListControllers.KindOfList("acquire"), all = WorkListView.IncludeAll.OpenOnly)
       .toOption
       .get
       .items
@@ -392,7 +392,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     )
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -400,7 +400,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     )
     assertEquals(
       h.workListView
-        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items
@@ -613,7 +613,7 @@ class IngestBacklogDbSuite extends DbSuite with RunTranscripts:
     )
     assert(
       h.workListView
-        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll(true))
+        .list(WorkListControllers.KindOfList("log"), all = WorkListView.IncludeAll.All)
         .toOption
         .get
         .items

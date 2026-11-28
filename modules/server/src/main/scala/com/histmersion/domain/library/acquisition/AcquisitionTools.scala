@@ -43,6 +43,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.domain.CreatorControllers
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The acquisition's MCP tools. Every tool returns Markdown and delegates to the same [[AcquisitionControllers]] the
   * REST routes call, so the two surfaces cannot drift.
@@ -66,7 +67,6 @@ final class AcquisitionTools(
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   private val discover =
     tool("discover")
@@ -90,7 +90,7 @@ final class AcquisitionTools(
           case (_, _, Some(url)) => render(h.wikirefs(url))(AcquireMarkdown.wikirefs)
           case (_, Some(doi), _) => render(h.meta(doi))(AcquireMarkdown.work)
           case (Some(q), _, _)   =>
-            render(h.discover(q, in.since, in.sort, in.limit, in.notInDb.value))(AcquireMarkdown.discover)
+            render(h.discover(q, in.since, in.sort, in.limit, in.notInDb.notInDb))(AcquireMarkdown.discover)
           case _ => oneOf(Problem.Field("query"), Problem.Field("doi"), Problem.Field("wikipediaUrl"))
       }
 
@@ -122,8 +122,9 @@ final class AcquisitionTools(
       .input[AssessInput]
       .handle { in =>
         CreatorControllers.mcp(in) {
-          if in.updateRetractions.value then render(h.updateRetractions())(AcquireMarkdown.retractionsUpdate)
-          else if in.retractionsStatus.value then
+          if in.updateRetractions.updateRetractions then
+            render(h.updateRetractions())(AcquireMarkdown.retractionsUpdate)
+          else if in.retractionsStatus.retractionsStatus then
             ToolResult.text(AcquireMarkdown.retractionsUpdate(h.retractionsStatus))
           else
             in.id.map(i => AssessRequest.Id(i.value.trim)).filter(_.value.nonEmpty) match
@@ -162,7 +163,6 @@ final class AcquisitionTools(
         }
       )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val ingestDoi =
     tool("ingest_doi")
       .description(
@@ -187,7 +187,8 @@ final class AcquisitionTools(
               in.citekey,
               in.arxiv,
               in.refetch,
-              (if in.legalOnly.value then Ingest.Request.LegalOnly.LegalOnly else Ingest.Request.LegalOnly.AnySource),
+              (if in.legalOnly.legalOnly then Ingest.Request.LegalOnly.LegalOnly
+               else Ingest.Request.LegalOnly.AnySource),
               in.createdBy
             )
           )
@@ -210,7 +211,7 @@ final class AcquisitionTools(
             in.query.map(q => AcquireApi.Query(q.value.trim)).filter(_.value.nonEmpty),
             in.id.map(i => ArchiveImportRequest.Id(i.value.trim)).filter(_.value.nonEmpty)
           ) match
-            case (_, Some(id)) if in.`import`.value =>
+            case (_, Some(id)) if in.`import`.imports =>
               render(collections.archiveImport(Caller.Local, ArchiveImportRequest(id, in.citekey, in.format)))(
                 AcquireMarkdown.ingest
               )
@@ -244,7 +245,7 @@ final class AcquisitionTools(
       .input[CandidatesInput]
       .handle { in =>
         CreatorControllers.mcp(in) {
-          if in.sweep.value then
+          if in.sweep.sweep then
             in.goal.map(_.value.trim).filter(_.nonEmpty) match
               case Some(g) =>
                 render(
@@ -252,7 +253,7 @@ final class AcquisitionTools(
                     CandidateSweep
                       .Request(
                         CandidateSweep.Request.Goal(g),
-                        (if in.dryRun.value then CandidateSweep.Request.DryRun.DryRun
+                        (if in.dryRun.dryRun then CandidateSweep.Request.DryRun.DryRun
                          else CandidateSweep.Request.DryRun.Apply)
                       )
                   )
@@ -285,14 +286,16 @@ object AcquisitionTools:
       since: Option[Year] = None,
       sort: Option[AcquireApi.Filter] = None,
       limit: Option[AcquireApi.Limit] = None,
-      notInDb: DiscoverInput.NotInDb = DiscoverInput.NotInDb(false)
+      notInDb: DiscoverInput.NotInDb = DiscoverInput.NotInDb.Everywhere
   ) derives JsonCodec,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   object DiscoverInput:
-    type NotInDb = NotInDb.T
-    object NotInDb extends Newtype[Boolean, Pure]
+    enum NotInDb derives CanEqual:
+      case Outside, Everywhere
+    object NotInDb extends TwoCases[NotInDb]:
+      extension (notInDb: NotInDb) def notInDb: Boolean = notInDb == Outside
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class CandidatesInput(
@@ -302,16 +305,20 @@ object AcquisitionTools:
       offset: Option[CandidateList.Offset] = None,
       mark: List[Source.Candidate.Id] = Nil,
       as: Option[Source.Candidate.State] = None,
-      sweep: CandidatesInput.Sweep = CandidatesInput.Sweep(false),
-      dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun(false),
+      sweep: CandidatesInput.Sweep = CandidatesInput.Sweep.Single,
+      dryRun: CandidatesInput.DryRun = CandidatesInput.DryRun.Applied,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object CandidatesInput:
-    type Sweep = Sweep.T
-    object Sweep extends Newtype[Boolean, Pure]
-    type DryRun = DryRun.T
-    object DryRun extends Newtype[Boolean, Pure]
+    enum Sweep derives CanEqual:
+      case Sweep, Single
+    object Sweep extends TwoCases[Sweep]:
+      extension (sweep: Sweep) def sweep: Boolean = sweep == Sweep
+    enum DryRun derives CanEqual:
+      case DryRun, Applied
+    object DryRun extends TwoCases[DryRun]:
+      extension (dryRun: DryRun) def dryRun: Boolean = dryRun == DryRun
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class RefsInput(
@@ -325,16 +332,20 @@ object AcquisitionTools:
       id: Option[AssessRequest.Id] = None,
       apply: AssessRequest.Apply = AssessRequest.Apply.DryRun,
       forceStatus: AssessRequest.ForceStatus = AssessRequest.ForceStatus.KeepStatus,
-      updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions(false),
-      retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus(false),
+      updateRetractions: AssessInput.UpdateRetractions = AssessInput.UpdateRetractions.Keep,
+      retractionsStatus: AssessInput.RetractionsStatus = AssessInput.RetractionsStatus.Assess,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object AssessInput:
-    type UpdateRetractions = UpdateRetractions.T
-    object UpdateRetractions extends Newtype[Boolean, Pure]
-    type RetractionsStatus = RetractionsStatus.T
-    object RetractionsStatus extends Newtype[Boolean, Pure]
+    enum UpdateRetractions derives CanEqual:
+      case Update, Keep
+    object UpdateRetractions extends TwoCases[UpdateRetractions]:
+      extension (updateRetractions: UpdateRetractions) def updateRetractions: Boolean = updateRetractions == Update
+    enum RetractionsStatus derives CanEqual:
+      case StatusOnly, Assess
+    object RetractionsStatus extends TwoCases[RetractionsStatus]:
+      extension (retractionsStatus: RetractionsStatus) def retractionsStatus: Boolean = retractionsStatus == StatusOnly
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   final case class FollowupsInput(
@@ -350,12 +361,14 @@ object AcquisitionTools:
       citekey: Option[Citekey] = None,
       arxiv: Option[Ingest.Request.Arxiv] = None,
       refetch: Ingest.Request.Refetch = Ingest.Request.Refetch.Reuse,
-      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly(true),
+      legalOnly: IngestInput.LegalOnly = IngestInput.LegalOnly.LegalOnly,
       createdBy: Option[Creation.By] = None
   ) extends Creation.Named derives JsonCodec
   object IngestInput:
-    type LegalOnly = LegalOnly.T
-    object LegalOnly extends Newtype[Boolean, Pure]
+    enum LegalOnly derives CanEqual:
+      case LegalOnly, AnySource
+    object LegalOnly extends TwoCases[LegalOnly]:
+      extension (legalOnly: LegalOnly) def legalOnly: Boolean = legalOnly == LegalOnly
 
     @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
     @tolerated(LintRule.G48, "pending G48 (schemas from Kindlings annotations)")
@@ -373,7 +386,7 @@ object AcquisitionTools:
   final case class ArchiveInput(
       query: Option[AcquireApi.Query] = None,
       id: Option[ArchiveImportRequest.Id] = None,
-      `import`: ArchiveInput.Import = ArchiveInput.Import(false),
+      `import`: ArchiveInput.Import = ArchiveInput.Import.Inspect,
       citekey: Option[Citekey] = None,
       format: Option[ArchiveImportRequest.Format] = None,
       rows: Option[AcquireApi.Limit] = None,
@@ -381,5 +394,7 @@ object AcquisitionTools:
   ) extends Creation.Named derives JsonCodec, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ArchiveInput:
-    type Import = Import.T
-    object Import extends Newtype[Boolean, Pure]
+    enum Import derives CanEqual:
+      case Import, Inspect
+    object Import extends TwoCases[Import]:
+      extension (`import`: Import) def imports: Boolean = `import` == Import

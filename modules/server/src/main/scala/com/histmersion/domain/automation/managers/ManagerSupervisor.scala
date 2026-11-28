@@ -270,7 +270,17 @@ final class ManagerSupervisor(
         val mid = m.id.transformInto[ManagerLight.Id]
         val fired = guarded(mid, out)(fireCron(m, now, out))
         guarded(mid, out)(
-          byKind.get(kindOf(m)).foreach(_.refill(this, m, now, ManagerKindDefinition.RefillForce(fired), out))
+          byKind
+            .get(kindOf(m))
+            .foreach(
+              _.refill(
+                this,
+                m,
+                now,
+                (if fired then ManagerKindDefinition.RefillForce.Force else ManagerKindDefinition.RefillForce.Safe),
+                out
+              )
+            )
         )
       }
       // the autopilot's focus: which goals are active; the others' model-using items are held (after the
@@ -1052,7 +1062,6 @@ final class ManagerSupervisor(
   def countEvents(id: ManagerLight.Id, feed: ManagerContext.EventFeed, since: Instant): RowCount =
     Transactor(ds).read(ManagerRepo.countEvents(id.transformInto[ManagerInfo.Id], ManagerEvent.Kind(feed.value), since))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  @tolerated(LintRule.G44PlainDef, "pending G1 (the parameter takes the newtype, not its raw value)")
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def upsert(
       id: ManagerLight.Id,
@@ -1069,7 +1078,7 @@ final class ManagerSupervisor(
       target.transformInto[ManagerItem.Target],
       origin,
       priority.transformInto[ManagerItem.Priority],
-      reopen.value,
+      reopen.upsertReopen,
       state
     )
     (ManagerContext.ItemId(itemId.value), isNew)

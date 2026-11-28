@@ -294,10 +294,13 @@ abstract class QueueServiceContract(name: String) extends DbSuite:
           withDone
         )
       ).map(_.id)
-    assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(false)), List(own.id, linked.id))
-    assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(true)), List(own.id, linked.id, closed.id))
-    assert(!forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone(true)).contains(other.id))
-    assertEquals(forGoal(Kind.Acquire, withDone = QueueScope.ForGoal.WithDone(true)), Nil)
+    assertEquals(forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone.OpenOnly), List(own.id, linked.id))
+    assertEquals(
+      forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone.WithDone),
+      List(own.id, linked.id, closed.id)
+    )
+    assert(!forGoal(Kind.Tasks, withDone = QueueScope.ForGoal.WithDone.WithDone).contains(other.id))
+    assertEquals(forGoal(Kind.Acquire, withDone = QueueScope.ForGoal.WithDone.WithDone), Nil)
   }
 
   qtest("a run's or job's items: those it wrote and those it ticked off") { q =>

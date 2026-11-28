@@ -31,6 +31,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** What a running pipeline sees: its run, and the two kinds of step. Every step is checkpointed in `agent_steps`;
   * before running step `n` the context looks for a finished attempt of `n` and, if there is one, REPLAYS its output
@@ -282,7 +283,8 @@ final class RunCtx private[automation] (
           case Some(a)                                       =>
             done(
               Decided(
-                Decided.Approved(a.state == ApprovalState.Approved.wire),
+                (if a.state == ApprovalState.Approved.wire then Decided.Approved.Approved
+                 else Decided.Approved.Rejected),
                 Decided.Approval(a.id.value),
                 a.note.map(n => Decided.Note(n.value))
               )
@@ -323,7 +325,9 @@ final class RunCtx private[automation] (
                     WouldWrite.Payload(json)
                   )
                 )
-                done(Decided(Decided.Approved(true), Decided.Approval(0L), Some(Decided.Note(Engine.DryRunApproval))))
+                done(
+                  Decided(Decided.Approved.Approved, Decided.Approval(0L), Some(Decided.Note(Engine.DryRunApproval)))
+                )
               case Right(json) if mode == ApprovalMode.Auto =>
                 val a = approvalStore.openForStep(
                   jobId,
@@ -334,7 +338,7 @@ final class RunCtx private[automation] (
                   ApprovalState.Approved,
                   Some(ApprovalService.StepOutcome("approved automatically (agents.approvals)"))
                 )
-                done(Decided(Decided.Approved(true), Decided.Approval(a.id.value)))
+                done(Decided(Decided.Approved.Approved, Decided.Approval(a.id.value)))
               case Right(json) =>
                 waitFor(
                   approvalStore.openForStep(
@@ -424,7 +428,8 @@ final class RunCtx private[automation] (
               maxTokens.getOrElse(LlmCall.MaxTokens(cfg.step.maxTokens.value)),
               Engine.stepTurns(d, turns.map(t => AgentDef.MaxTurns(t.value))),
               validate,
-              Engine.ceiling(Engine.CapKeyOverridden(maxTokens.isDefined))
+              Engine.ceiling((if maxTokens.isDefined then Engine.CapKeyOverridden.Overridden
+                              else Engine.CapKeyOverridden.Default))
             )
           }
       }
@@ -653,7 +658,8 @@ final class RunCtx private[automation] (
                   // #941: the decoder's error (path + message) is recorded and goes back with the retry
                   val verdict = res.finalAnswer match
                     case Left(f)  => Left(List(Engine.answerProblem(f, res.finishReason)))
-                    case Right(a) => validate(a, RunCtx.LastAttempt(last), calls)
+                    case Right(a) =>
+                      validate(a, (if last then RunCtx.LastAttempt.Last else RunCtx.LastAttempt.More), calls)
                   // a well-formed answer that failed a check goes back with the problems, to be amended
                   val rejected = res.finalAnswer.toOption.map(a => schema.codec(a).noSpaces)
                   verdict match
@@ -774,5 +780,7 @@ object RunCtx:
       p <- Creator.Provider.Name.from(model.provider.wire).toOption
       m <- Creator.LanguageModel.Name.from(model.model).toOption
     yield Creator.Agent.Model(d, p, m)
-  type LastAttempt = LastAttempt.T
-  object LastAttempt extends Newtype[Boolean, Pure]
+  enum LastAttempt derives CanEqual:
+    case Last, More
+  object LastAttempt extends TwoCases[LastAttempt]:
+    extension (lastAttempt: LastAttempt) def lastAttempt: Boolean = lastAttempt == Last

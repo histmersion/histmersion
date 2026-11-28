@@ -168,7 +168,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
 
     val counted = MediaImportReport(
       provider = com.histmersion.api.media.MediaItem.Provider(check),
-      dryRun = (if dryRun.value then MediaImportRequest.DryRun.DryRun else MediaImportRequest.DryRun.Apply),
+      dryRun = (if dryRun.dryRun then MediaImportRequest.DryRun.DryRun else MediaImportRequest.DryRun.Apply),
       targets = MediaImportReport.Targets(found.asked.size),
       items = MediaImportReport.Items(found.read.value),
       statements = MediaImportReport.Statements(uses.size),
@@ -209,7 +209,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
         )
       )
 
-    if dryRun.value then base.modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
+    if dryRun.dryRun then base.modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
     else
       val asked = found.asked.toSet -- found.unanswered
       val answered = targets.filter(t => asked(idOf(t)))
@@ -265,7 +265,8 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
     accepted.toList.sortBy(_._1.value).foreach { case (key, (item, r)) =>
       known.get(providerKey(key)) match
         case Some(k) =>
-          if refresh.value then each(s"$key (licence re-read)")(db.refreshRights(AssetService.AssetUid(k.uid.value), r))
+          if refresh.refresh then
+            each(s"$key (licence re-read)")(db.refreshRights(AssetService.AssetUid(k.uid.value), r))
           uids(key) = AssetService.AssetUid(k.uid.value)
         case None =>
           download(item, completed.items.get(key)) match
@@ -304,7 +305,7 @@ final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fe
                 uids(key) = uid
               }
     }
-    if refresh.value then updated += accepted.keys.count(k => known.contains(providerKey(k)))
+    if refresh.refresh then updated += accepted.keys.count(k => known.contains(providerKey(k)))
 
     val linked = uses.count(u =>
       uids

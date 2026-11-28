@@ -27,6 +27,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The deterministic new-source search of one goal (#3761, docs/research-goal-advancement.md): its WATCHES — every
   * saved query (its linked `query` links, else its title) on every index of `acquire.candidates.indexes`, and for up to
@@ -189,7 +190,7 @@ final class CandidateSearch(
         val earlier = candidates.dois(goal)
         val again = fresh.count((k, _, _) => earlier.contains(k))
         val added =
-          if dryRun.value then fresh.count((k, _, _) => !earlier.contains(k))
+          if dryRun.sweepDryRun then fresh.count((k, _, _) => !earlier.contains(k))
           else
             fresh.count { (k, w, by) =>
               candidates.upsert(
@@ -212,7 +213,7 @@ final class CandidateSearch(
         val watches = read.map { (w, _, got) =>
           val mark = got.toOption.map(_ => CandidateWatch.Watermark(now.toString))
           val lastFound = CandidateWatch.LastFound(got.map(_.size).getOrElse(0))
-          if !dryRun.value then
+          if !dryRun.sweepDryRun then
             candidates.recordWatch(
               w,
               mark,
@@ -220,7 +221,7 @@ final class CandidateSearch(
               lastFound
             )
           w.modify(_.watermark)
-            .setTo(if dryRun.value then w.watermark else mark.orElse(w.watermark))
+            .setTo(if dryRun.sweepDryRun then w.watermark else mark.orElse(w.watermark))
             .modify(_.lastError)
             .setTo(got.left.toOption)
             .modify(_.lastFound)
@@ -245,11 +246,13 @@ final class CandidateSearch(
           skipped
             .map((reason, n) => CandidateSweep.SkippedKey(reason.said) -> CandidateSweep.SkippedValue(n.value)),
           unseen,
-          (if dryRun.value then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply),
+          (if dryRun.sweepDryRun then CandidateSweep.DryRun.DryRun else CandidateSweep.DryRun.Apply),
           notes
         )
       }
 
 object CandidateSearch:
-  type SweepDryRun = SweepDryRun.T
-  object SweepDryRun extends Newtype[Boolean, Pure]
+  enum SweepDryRun derives CanEqual:
+    case DryRun, Applied
+  object SweepDryRun extends TwoCases[SweepDryRun]:
+    extension (sweepDryRun: SweepDryRun) def sweepDryRun: Boolean = sweepDryRun == DryRun

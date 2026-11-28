@@ -27,6 +27,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.util.database.WritePermit
 import com.histmersion.domain.Creator
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.TwoCases
 
 /** The gazetteer's external sources (#1064) — the `geonames`, `wikidata`, `tgn` (#1403) and `lpf` steps of the one-time
   * gazetteer import job (the init job, the same that imports the bundled seed and fetches Cliopatria or PeriodO).
@@ -53,9 +54,10 @@ object GazetteerLoad:
     * dir>/gazetteer`, until 2026-10-17: a pinned extract found there and not in `extracts` is moved over once,
     * [[extract]]), the drop folder, and the manifest's text (`manifestAt` names it in messages).
     */
-
-  type LoadApply = LoadApply.T
-  object LoadApply extends Newtype[Boolean, Pure]
+  enum LoadApply derives CanEqual:
+    case Apply, DryRun
+  object LoadApply extends TwoCases[LoadApply]:
+    extension (loadApply: LoadApply) def loadApply: Boolean = loadApply == Apply
 
   final case class Stores(
       extracts: Store,
@@ -293,7 +295,7 @@ object GazetteerLoad:
       downloadTimeoutSeconds: Settings.DownloadTimeoutSeconds,
       toleranceKm: GeocodeSettings.ToleranceKm,
       clock: java.time.Clock,
-      rebuild: Settings.Rebuild = Settings.Rebuild(true),
+      rebuild: Settings.Rebuild = Settings.Rebuild.Rebuild,
       openStartWindowYears: Gazetteer.ValidityWindowYears =
         Gazetteer.ValidityWindowYears(Gazetteer.DefaultOpenStartWindowYears.value),
       pointAreaKinds: Set[Gazetteer.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
@@ -306,8 +308,10 @@ object GazetteerLoad:
     object MaxLpfBytes extends Newtype[Long, Pure]
     type DownloadTimeoutSeconds = DownloadTimeoutSeconds.T
     object DownloadTimeoutSeconds extends Newtype[Int, Pure]
-    type Rebuild = Rebuild.T
-    object Rebuild extends Newtype[Boolean, Pure]
+    enum Rebuild derives CanEqual:
+      case Rebuild, Reuse
+    object Rebuild extends TwoCases[Rebuild]:
+      extension (rebuild: Rebuild) def rebuild: Boolean = rebuild == Rebuild
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -336,7 +340,7 @@ object GazetteerLoad:
       download: Download
   )(using WritePermit)(using Creator.New): Either[Problem, List[Gazetteer.LoadCounts]] =
     val result: Either[Problem, List[Gazetteer.LoadCounts]] = kind match
-      case Gazetteer.Kind.Lpf => loadLpf(db, s, apply.value, note)
+      case Gazetteer.Kind.Lpf => loadLpf(db, s, apply.loadApply, note)
       case k                  =>
         for
           x <- pin(s.stores, k)
@@ -347,13 +351,13 @@ object GazetteerLoad:
             s,
             Gazetteer.sourceKey(k),
             Gazetteer.LoadCounts.Version(x.version.value),
-            apply.value,
+            apply.loadApply,
             note,
             f.key.name.value
           ) { b =>
             lines(f)((line, n) => b.add(parseLine(line, n, Gazetteer.DatasetName(""), None)))
           }
-          if apply.value then
+          if apply.loadApply then
             db.read(
               GazetteerRepo.recordSource(
                 GazetteerSourceRow.Key(Gazetteer.sourceKey(k).value),
@@ -370,7 +374,7 @@ object GazetteerLoad:
             )
           List(c)
     result.map { cs =>
-      if apply.value && s.rebuild.value && cs.exists(!_.unchanged) then
+      if apply.loadApply && s.rebuild.rebuild && cs.exists(!_.unchanged) then
         note(JobInfo.Progress("matching findings to places"))
         val _ = db.write(FindingPlaceRepo.rebuildFindingPlaces(s.toleranceKm))
       cs

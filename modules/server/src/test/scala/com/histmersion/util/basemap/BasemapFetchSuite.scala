@@ -345,7 +345,7 @@ class BasemapFetchSuite extends munit.FunSuite:
           BasemapFetch.Attribution("© OSM"),
           BasemapFetch.FetchedAt("2026-10-19T00:00:00Z"),
           Basemap.Layer.Vector,
-          Some((BasemapFetch.Filtered(false), BasemapFetch.FilterSpec("roads; places")))
+          Some((BasemapFetch.Filtered.Whole, BasemapFetch.FilterSpec("roads; places")))
         ),
         _ => ()
       )

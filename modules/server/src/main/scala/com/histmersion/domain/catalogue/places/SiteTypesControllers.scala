@@ -58,7 +58,7 @@ final class SiteTypesControllers(
   )
   def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit)(using WritePermit): SiteTypes.Report =
     val started = DeepTime.SignedYear(clock.millis())
-    val refresh = SiteTypeService.Refresh(req.refresh.refresh)
+    val refresh = (if req.refresh.refresh then SiteTypeService.Refresh.Refresh else SiteTypeService.Refresh.Reuse)
     if req.dryRun.dryRun then
       SiteTypes.Report(
         dryRun = SiteTypes.Report.DryRun.DryRun,

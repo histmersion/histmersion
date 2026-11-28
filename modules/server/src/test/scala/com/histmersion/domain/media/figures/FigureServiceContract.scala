@@ -15,7 +15,7 @@ abstract class FigureServiceContract extends MediaStoreSuite:
   stest("no source records a licence: nothing counted, nothing written") { s =>
     s.source("zqfg2001_x")
     assertEquals(
-      s.figures.fillLicences(apply = FigureService.Apply(false)),
+      s.figures.fillLicences(apply = FigureService.Apply.DryRun),
       FigureLicenceFill(
         FigureLicenceFill.Candidates(0),
         FigureLicenceFill.Updated(0),
@@ -24,7 +24,7 @@ abstract class FigureServiceContract extends MediaStoreSuite:
       )
     )
     assertEquals(
-      s.figures.fillLicences(apply = FigureService.Apply(true)),
+      s.figures.fillLicences(apply = FigureService.Apply.Apply),
       FigureLicenceFill(
         FigureLicenceFill.Candidates(0),
         FigureLicenceFill.Updated(0),

@@ -48,7 +48,7 @@ object ImportRunner:
     for
       (all, refused) <- ImportRunner.places(source, http)
       result <-
-        if dryRun.value then
+        if dryRun.dryRun then
           Right(
             Place.ImportResult(
               Place.ImportResult.Places(all.size),

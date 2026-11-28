@@ -360,7 +360,11 @@ object Supervisor:
     scribe.info(s"runtime: bundle ${l.home}, data ${l.data}")
     l.rewritePluginFiles()
     PgRelocation
-      .relocate(Storage.at(Location.Postgres, l.pgBin.getParent), PgRelocation.MacOsMode(paths.isMac), processes)
+      .relocate(
+        Storage.at(Location.Postgres, l.pgBin.getParent),
+        (if paths.isMac then PgRelocation.MacOsMode.MacOs else PgRelocation.MacOsMode.Portable),
+        processes
+      )
       .foreach(r =>
         scribe.info(
           s"runtime: relocated PostgreSQL to ${l.pgBin.getParent} " +
