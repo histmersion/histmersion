@@ -560,8 +560,6 @@ object CheckpointGolden:
 
   private val runId = automation.Run.Id("0123abcd-0000-4000-8000-0000000000aa")
 
-  /** The review ledger an article's review keeps in the database (`ReviewLedgerRepo`), every status among its entries.
-    */
   val ledgers: Golden[Ledger] = Golden(
     "review-ledger.ndjson",
     List(

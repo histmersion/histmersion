@@ -6,24 +6,6 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
-/** G7 (separate types per layer): copies a record (a case class or an enum, with the newtypes, aliases and exports of
-  * its companion) into another layer as its twin, and takes the codecs off the original.
-  *
-  * Domain -> api (`strip = true`): the twin is the wire record. It derives the original's codecs (`twinDerives` adds
-  * more), a hand-written `given Schema[R] = KindlingsSchema.derived[R].schema.modify(_.f)(_.description("…"))` becomes
-  * `@description("…")` on the twin's field and `derives KindlingsSchema, Schema`. The original loses its codec derives,
-  * its codec givens (with their annotations) and the imports in `stripImports`.
-  *
-  * Api -> domain (`strip = false`, no `twinDerives`): the twin is the domain record, without codecs; the original stays.
-  *
-  * Every type or term the twin names is resolved through SemanticDB: the twin's own companion stays as written; another
-  * configured record becomes its twin; `types` maps a symbol (or a prefix of one) to its counterpart; `redeclare` declares
-  * a newtype of elsewhere in the twin's companion under its own name (`"a.b.X" = "Newtype[String, Pure]"`, the twin's
-  * companion then gets `type X = X.T` and `object X extends Newtype[String, Pure]`, and `redeclareImports`); `visible` lists what the twin's layer may name as is. Anything
-  * else is reported `unmapped` (a record or enum among them also `nested`, to add to `twins`), and the twin is not
-  * written. A field description the rule cannot place, or a codec given it cannot read, is reported `manual` and the
-  * twin is not written either. The report is a TSV (`twin`, `stripped`, `unmapped`, `nested`, `manual`, `clash`).
-  */
 object SplitWireTwin {
   case class Twin(from: String = "", to: String = "")
   object Twin {
@@ -63,7 +45,6 @@ object SplitWireTwin {
 
   def packageOf(f: String): String = if (f.contains('.')) f.substring(0, f.lastIndexOf('.')) else ""
 
-  /** Names that need no import: Scala's and java.lang's own. */
   private val Predefined = "^(?:scala\\.(?:package\\.|Predef\\.)?|java\\.lang\\.)[A-Za-z]\\w*$".r
 
   def predefined(f: String): Boolean = Predefined.pattern.matcher(f).matches()
@@ -130,7 +111,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
     case _ => false
   }
 
-  /** The edits and imports that make `tree`'s references right in the twin; `Left` lists what has no counterpart. */
   private def references(tree: Tree, own: Twin, skip: Set[Tree])(implicit
       doc: SemanticDocument
   ): (List[Edit], Set[String], List[(String, String)], Set[String]) = {
@@ -151,7 +131,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
               val first = ss.indexWhere(s => !s.value.endsWith("/"))
               val typed = if (first < 0) None else (first until ns.size).find(i => config.types.contains(fqn(ss(i))))
               def ownLocal(s: Symbol) = { val g = fqn(s); g == own.from || g.startsWith(own.from + ".") }
-              // the twin's own name where it differs (`Findings` -> `ProposedFindings`)
               def ownText(i: Int) = (ns.drop(i).zipWithIndex.map { case (n, k) =>
                 if (k == 0 && fqn(ss(i)) == own.from) simple(own.to) else n.value
               }).mkString(".")
@@ -167,7 +146,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
                         val full = (to0 :: ns.drop(i + 1).map(_.value)).mkString(".")
                         full.endsWith("." + ns.drop(first).map(_.value).mkString("."))
                       } =>
-                    // `library.Source.Status.Wire` keeps its shape: `Source.Status.Wire`, `Source` imported
                     val written = ns.drop(first).map(_.value)
                     val full = (to0 :: ns.drop(i + 1).map(_.value)).mkString(".")
                     val holder = full.stripSuffix("." + written.tail.mkString("."))
@@ -196,7 +174,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
 
   private def notAnnotation(m: Mod): Boolean = !m.is[Mod.Annot]
 
-  /** Where a definition starts once its annotations are left out. */
   private def startAfterAnnotations(d: Tree, mods: List[Mod]): Int = {
     val annotEnd = mods.collect { case a: Mod.Annot => a.pos.end }.foldLeft(d.pos.start)(math.max)
     d.tokens.find(t => t.pos.start >= annotEnd && !t.is[Token.Whitespace] && !t.is[Token.Comment]).map(_.pos.start)
@@ -213,7 +190,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
     case _ => false
   }
 
-  /** The field descriptions of `given Schema[R] = KindlingsSchema.derived[R].schema.modify(_.f)(_.description("…"))`. */
   private def descriptions(body: Term): Either[String, (Map[String, String], Option[String])] = {
     def loop(t: Term, acc: Map[String, String], top: Option[String]): Either[String, (Map[String, String], Option[String])] =
       t match {
@@ -258,7 +234,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
     def gone(t: Tree) = ranges.exists { case (s, e) => t.pos.start >= s && t.pos.end <= e }
     def inImport(t: Tree): Boolean = t.parent.exists(p => p.is[Import] || inImport(p))
     val names = doc.tree.collect { case n: Name if !inImport(n) && !gone(n) => n }
-    // a codec still derived or given outside what was stripped keeps the codec imports' givens
     val codecLeft = doc.tree.collect {
       case t: Template if t.derives.exists(d => config.codecDerives.contains(d.syntax)) && !t.derives.forall(gone) => t
       case s: Stat if isCodecGiven(s) && !gone(s) => s
@@ -285,7 +260,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
     doc.tokens.filter(k => k.pos.start >= from && k.pos.end <= to && (k.pos.start >= t.pos.start || k.is[Token.Whitespace]))
   }
 
-  /** A statement and the blank lines before it, back to the end of what precedes it. */
   private def statTokens(t: Tree, code: String)(implicit doc: SemanticDocument): Iterable[Token] = {
     val from = code.lastIndexWhere(c => !c.isWhitespace, t.pos.start - 1) + 1
     doc.tokens.filter(k => k.pos.start >= from && k.pos.end <= t.pos.end)
@@ -335,7 +309,6 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
       val twinDerives = (kept ++ codec.map(n => config.derivesAs.getOrElse(n, n)) ++ config.twinDerives ++
         (if (schemaGiven) List("KindlingsSchema", "Schema") else Nil)).distinct
 
-      // the record's own text, references resolved, descriptions placed, derives replaced
       val start = startAfterAnnotations(d, mods)
       val derivesSkip: Set[Tree] = templ.derives.toSet
       val caseStats = templ.body.stats.filter(s => s.is[Defn.EnumCase] || s.is[Defn.RepeatedEnumCase])
@@ -364,9 +337,7 @@ class SplitWireTwin(config: SplitWireTwin.Config) extends SemanticRule("SplitWir
       val recordText = (top.map(t => s"@description($t)\n").getOrElse("")) + header + derivesText +
         (if (cases.isEmpty) "" else cases.mkString(":\n", "\n", ""))
 
-      // the companion's newtypes, aliases and exports
       val companionStats = companion.toList.flatMap(_.templ.body.stats).flatMap {
-        // a newtype `types` maps elsewhere is not declared again
         case t: Defn.Type if !config.types.contains(tw.from + "." + t.name.value) => Some(t)
         case o: Defn.Object
             if o.templ.inits.exists(_.tpe.syntax.startsWith("Newtype")) && !config.types.contains(tw.from + "." + o.name.value) =>

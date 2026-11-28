@@ -1,11 +1,6 @@
 import scalafix.v1._
 import scala.meta._
 
-/** Drops `import com.histmersion.X` of a root-package type (`X` capitalised, not a given or wildcard) from a file whose
-  * outermost package clause is `package com.histmersion`: the chained clause already brings `X` into scope, and a client
-  * file that spells the root package names a package outside the api (ContractLint.Layer). An importer that selects
-  * several names loses only the root ones; one left empty is removed.
-  */
 class DropRootImports extends SyntacticRule("DropRootImports") {
 
   private def rootChained(tree: Tree): Boolean = tree match {
