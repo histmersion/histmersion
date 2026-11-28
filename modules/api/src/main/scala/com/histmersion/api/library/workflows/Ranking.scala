@@ -8,4 +8,9 @@ import com.histmersion.util.json.JsonCodec
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema.annotations.description
 
-final case class Ranking(@description("The candidates that belong to the goal, most important first; leave out the rest") picks: List[Pick] = Nil) derives JsonCodec, KindlingsSchema, Schema
+final case class Ranking(
+    @description("The candidates that belong to the goal, most important first; leave out the rest") picks: List[Pick] =
+      Nil
+) derives JsonCodec,
+      KindlingsSchema,
+      Schema

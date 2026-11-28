@@ -9,7 +9,12 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.github.iltotore.iron.constraint.any.Pure
 import sttp.tapir.Schema.annotations.description
 
-final case class Pick(@description("The DOI of a candidate, exactly as listed") doi: Pick.ListedDoi, @description("Why it belongs to the goal, in one sentence") why: Pick.Rationale) derives JsonCodec, KindlingsSchema, Schema
+final case class Pick(
+    @description("The DOI of a candidate, exactly as listed") doi: Pick.ListedDoi,
+    @description("Why it belongs to the goal, in one sentence") why: Pick.Rationale
+) derives JsonCodec,
+      KindlingsSchema,
+      Schema
 
 object Pick:
   type ListedDoi = ListedDoi.T

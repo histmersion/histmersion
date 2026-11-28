@@ -11,13 +11,13 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class DiscoveredWorks(
-      title: Goal.Title,
-      notes: Option[Goal.Notes],
-      queries: List[DiscoveredWorks.Query],
-      candidates: List[RankableWork],
-      skipped: Map[CandidateSweep.SkippedKey, DiscoveredWorks.SkipCount],
-      stored: Map[Doi, Source.Candidate.Id] = Map.empty
-  ) derives JsonCodec
+    title: Goal.Title,
+    notes: Option[Goal.Notes],
+    queries: List[DiscoveredWorks.Query],
+    candidates: List[RankableWork],
+    skipped: Map[CandidateSweep.SkippedKey, DiscoveredWorks.SkipCount],
+    stored: Map[Doi, Source.Candidate.Id] = Map.empty
+) derives JsonCodec
 
 object DiscoveredWorks:
   type Query = Query.T

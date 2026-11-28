@@ -13,15 +13,15 @@ import com.histmersion.util.json.JsonCodec
 import io.github.iltotore.iron.constraint.any.Pure
 
 final case class RankableWork(
-      doi: Doi,
-      title: Title,
-      year: Option[Year],
-      authors: List[AuthorName],
-      venue: Option[Source.Venue],
-      isOa: WorkRef.IsOa,
-      query: RankableWork.Query,
-      abstractText: Option[WorkRef.AbstractText]
-  ) derives JsonCodec
+    doi: Doi,
+    title: Title,
+    year: Option[Year],
+    authors: List[AuthorName],
+    venue: Option[Source.Venue],
+    isOa: WorkRef.IsOa,
+    query: RankableWork.Query,
+    abstractText: Option[WorkRef.AbstractText]
+) derives JsonCodec
 
 object RankableWork:
   type Query = Query.T
