@@ -9,6 +9,7 @@ import com.histmersion.api.catalogue.Year
 import com.histmersion.api.automation.Goal
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Paging
 
 /** A DOI contains a `/`, so identifiers travel as `id=` query parameters rather than in the path. */
 @tolerated(LintRule.G9PrefixRole, "pending G9 (namespaces, not prefixes)")
@@ -21,8 +22,7 @@ object AcquireApi:
   object Filter extends Newtype[String, Pure]
   type Identifier = Identifier.T
   object Identifier extends Newtype[String, Pure]
-  type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  export Paging.Limit
   type Query = Query.T
   object Query extends Newtype[String, Pure]
 

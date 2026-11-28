@@ -38,9 +38,7 @@ object EventImportReport:
   object Markdown extends Newtype[String, Pure]
 
   /** An events import job's report, in its detail. */
-
-  type Provider = Provider.T
-  object Provider extends Newtype[String, Pure]
+  export CatalogRecord.Provider
   type DryRun = DryRun.T
   object DryRun extends Newtype[Boolean, Pure]
   type Records = Records.T
@@ -66,10 +64,8 @@ object EventImportReport:
   object Requests extends Newtype[Int, Pure]
   type Failed = Failed.T
   object Failed extends Newtype[String, Pure]
-  type Licence = Licence.T
-  object Licence extends Newtype[String, Pure]
-  type Citation = Citation.T
-  object Citation extends Newtype[String, Pure]
+  export EventCatalogueRef.Licence
+  export EventCatalogueRef.Citation
 
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   val Detail: JobDetail.Field[Option[EventImportReport]] =

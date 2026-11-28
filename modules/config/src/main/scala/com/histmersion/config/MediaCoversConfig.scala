@@ -20,8 +20,7 @@ object MediaCoversConfig:
   object OpenLibraryUrl extends Newtype[String, Pure]
   type OpenLibraryPage = OpenLibraryPage.T
   object OpenLibraryPage extends Newtype[String, Pure]
-  type RequestIntervalMs = RequestIntervalMs.T
-  object RequestIntervalMs extends Newtype[Int, Pure]
+  export MediaConfig.RequestIntervalMs
   type Size = Size.T
   object Size extends Newtype[String, Pure]
   type ThumbSize = ThumbSize.T

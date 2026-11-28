@@ -26,8 +26,7 @@ object RegionNode:
 
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type Label = Label.T
-  object Label extends Newtype[String, Pure]
+  export Place.Label
   type Kind = Kind.T
   object Kind extends Newtype[String, Pure]
   type Contested = Contested.T

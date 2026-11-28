@@ -17,14 +17,12 @@ final case class BBox(minLon: Longitude, minLat: Latitude, maxLon: Longitude, ma
     derives JsonCodec,
       KindlingsSchema,
       json.Schema:
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def crossesAntimeridian: Boolean = (minLon).value > (maxLon).value
+  def crossesAntimeridian: Boolean = (minLon) > (maxLon)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def contains(lon: Longitude, lat: Latitude): Boolean =
-    val latOk = (lat).value >= (minLat).value && (lat).value <= (maxLat).value
-    val lonOk = if crossesAntimeridian then (lon).value >= (minLon).value || (lon).value <= (maxLon).value
-    else (lon).value >= (minLon).value && (lon).value <= (maxLon).value
+    val latOk = (lat) >= (minLat) && (lat) <= (maxLat)
+    val lonOk = if crossesAntimeridian then (lon) >= (minLon) || (lon) <= (maxLon)
+    else (lon) >= (minLon) && (lon) <= (maxLon)
     latOk && lonOk
 
 object BBox:

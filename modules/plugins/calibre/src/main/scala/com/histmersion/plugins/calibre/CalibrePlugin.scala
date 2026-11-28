@@ -23,7 +23,6 @@ final class CalibrePlugin extends Plugin:
     Plugin.Info.Version(CalibrePlugin.Version),
     Plugin.Info.SpiVersion(Spi.Version)
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def register(c: Calibre.Settings, ctx: Plugin.Context): Either[Problems, Unit] =
     given files: LocalFiles = ctx.files
     given processes: Processes = ctx.processes
@@ -32,7 +31,7 @@ final class CalibrePlugin extends Plugin:
         Registry.AddId("calibre"),
         CalibreCollection(
           c.library(ctx.env(EnvVar.Name("HOME")), ctx.env(EnvVar.Name("PATH"))),
-          CalibreCollection.WriteBack(c.writeBack.value),
+          c.writeBack,
           Shell.system
         )
       )

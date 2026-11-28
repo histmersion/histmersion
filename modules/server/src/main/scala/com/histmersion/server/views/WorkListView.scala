@@ -89,7 +89,7 @@ final class WorkListView(
       val titles = items
         .flatMap(_.goal)
         .distinct
-        .flatMap(s => Goal.Slug.option(s.value).flatMap(goals.get).map(g => s -> ApiGoal.Title(g.title.value)))
+        .flatMap(s => Goal.Slug.option(s.value).flatMap(goals.get).map(g => s -> g.title))
         .toMap
       val own = items.flatMap(i => i.goal.map(s => (i.id, GoalRef(s, titles.getOrElse(s, ApiGoal.Title(s.value))))))
       QueueListing(k.label, items, checks, Queue.itemGoals(own, linked))

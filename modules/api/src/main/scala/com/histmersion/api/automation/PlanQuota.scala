@@ -324,8 +324,7 @@ object PlanQuota:
 
   object Login:
     object Present:
-      type Detail = Detail.T
-      object Detail extends Newtype[String, Pure]
+      export Agents.DoctorCheck.Detail
 
   enum RefreshNeed(val text: RefreshNeed.Text):
     case StaleOnly extends RefreshNeed(RefreshNeed.Text("the reading is stale"))

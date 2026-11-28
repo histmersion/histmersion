@@ -13,6 +13,7 @@ import com.histmersion.api.library.Citekey
 import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.AuthorName
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.maintenance.ReindexResult
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 object Lint:
@@ -118,8 +119,7 @@ object Lint:
     object SourcesReindexed extends Newtype[Int, Pure]
     type ChunksWritten = ChunksWritten.T
     object ChunksWritten extends Newtype[Int, Pure]
-    type Remaining = Remaining.T
-    object Remaining extends Newtype[Int, Pure]
+    export ReindexResult.Remaining
     type FindingsRegeocoded = FindingsRegeocoded.T
     object FindingsRegeocoded extends Newtype[Int, Pure]
     type FindingsPlaced = FindingsPlaced.T

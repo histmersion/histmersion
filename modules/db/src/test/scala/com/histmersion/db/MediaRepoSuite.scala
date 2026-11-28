@@ -1032,7 +1032,7 @@ class MediaRepoSuite extends DbSuite with Bounded:
         .contains("zqmd2022_paper")
     )
     val fig = AssetFixtures.figures(ds, Citekey("zqmd2022_paper")).head
-    val figUid = MediaItemRow.Uid(fig.uid.value)
+    val figUid = fig.uid
     AssetFixtures.setSourcePicture(ds, Citekey("zqmd2022_paper"), figUid, MediaRole.Wire(MediaRole.Illustration), None)
     assert(
       !CoverFixtures

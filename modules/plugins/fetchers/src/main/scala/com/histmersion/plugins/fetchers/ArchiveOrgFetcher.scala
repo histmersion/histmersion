@@ -29,5 +29,5 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
               case None       => ByDoi.notHeld(Problem.Raw(s"${item.identifier}"))
               case Some(file) =>
                 archive
-                  .download(ArchiveId(item.identifier.value), ArchiveOrg.DownloadFile(file.name.value))
+                  .download(item.identifier, ArchiveOrg.DownloadFile(file.name.value))
                   .fold[Fetch](Fetch.failed, Fetch.Found(_))

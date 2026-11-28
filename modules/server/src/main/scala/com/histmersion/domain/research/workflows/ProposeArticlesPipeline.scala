@@ -215,10 +215,9 @@ final class ProposeArticlesPipeline(
       f"${lim.maxOverlap.value * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def sourcesOf(e: Existing): Set[Citekey] =
     e.filter.fold(Set.empty[Citekey])(f =>
-      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => Citekey.assume(r.value)).toSet
+      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => r).toSet
     ) ++ e.cited
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -248,7 +247,7 @@ final class ProposeArticlesPipeline(
             val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap)
             (
               Article.Plans.ProposedArticle.Hits(n.value),
-              rows.map(r => Citekey.assume(r.value)).toSet
+              rows.map(r => r).toSet
             )
           },
           existing,

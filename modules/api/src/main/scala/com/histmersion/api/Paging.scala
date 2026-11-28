@@ -10,6 +10,7 @@ import com.histmersion.api.automation.Activity
 import com.histmersion.api.catalogue.CatalogRecord
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.library.TimeHistogram
 
 /** Paging travels in response headers so the JSON body stays the plain array older CLIs and MCP clients read. */
 @movesTo(FeaturePlace.Kernel)
@@ -54,9 +55,7 @@ object Paging:
   object Page:
     type CountState = CountState.T
     object CountState extends Newtype[String, Pure]
-
-    type Total = Total.T
-    object Total extends Newtype[Int, Pure]
+    export TimeHistogram.Total
     export Paging.Cursor as Next
 
     val empty: Page = Page(Total(0), None, Nil)

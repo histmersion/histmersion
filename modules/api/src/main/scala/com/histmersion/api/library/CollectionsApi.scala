@@ -7,6 +7,7 @@ import com.histmersion.api.Api
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{atBoundary, BoundaryKind}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Paging
 
 /** The library's source collections (the Calibre library, archive.org): what the server can run, and the operations
   * `histmersion calibre …` makes over HTTP. `{name}` is the collection's registered name.
@@ -16,8 +17,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   "declares the Tapir endpoints of the collections routes with their request and response bodies"
 )
 object CollectionsApi:
-  type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  export Paging.Limit
   type Query = Query.T
   object Query extends Newtype[String, Pure]
 

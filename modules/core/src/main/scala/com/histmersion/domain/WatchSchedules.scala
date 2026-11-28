@@ -82,9 +82,9 @@ object WatchSchedules:
         )
     val budget = base.budgetUsd
       .orElse(
-        ordered.find(_.kind == ScheduleKind.Acquisition).flatMap(_.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value)))
+        ordered.find(_.kind == ScheduleKind.Acquisition).flatMap(_.budgetUsd.map(b => b))
       )
-      .orElse(ordered.flatMap(_.budgetUsd).headOption.map(b => ManagerConfig.BudgetUsd(b.value)))
+      .orElse(ordered.flatMap(_.budgetUsd).headOption.map(b => b))
     val notes =
       on.map(s => s"${s.kind.wire} schedule `${s.cron}` → the ${sweepOf(s.kind).itemKind} sweep") ++
         off.map(s => s"${s.kind.wire} schedule `${s.cron}` was off: not swept") ++

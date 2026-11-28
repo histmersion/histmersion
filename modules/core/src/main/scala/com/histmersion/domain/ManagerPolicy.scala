@@ -57,8 +57,7 @@ object ManagerPolicy:
   object Room extends Newtype[Int, Pure]
   type StepLabel = StepLabel.T
   object StepLabel extends Newtype[String, Pure]
-  type Tag = Tag.T
-  object Tag extends Newtype[String, Pure]
+  export EnrichSource.Tag
   type Topic = Topic.T
   object Topic extends Newtype[String, Pure]
   type Attempts = Attempts.T

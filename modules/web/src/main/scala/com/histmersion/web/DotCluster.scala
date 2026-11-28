@@ -39,8 +39,7 @@ object DotCluster:
     given Display[T] = Display(_.value)
   type Total = Total.T
   object Total extends Newtype[Int, Pure]
-  type Undated = Undated.T
-  object Undated extends Newtype[Int, Pure]
+  export TileCellPoint.Undated
 
   /** A bubble's content: what its markers hold. */
 

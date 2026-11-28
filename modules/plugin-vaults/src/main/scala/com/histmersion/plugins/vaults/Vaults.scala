@@ -20,8 +20,7 @@ import com.histmersion.lint.{tolerated, LintRule}
   * answers that it is locked.
   */
 object Vaults:
-  type Field = Field.T
-  object Field extends Newtype[String, Pure]
+  export BitwardenConfig.Field
   type Operation = Operation.T
   object Operation extends Newtype[String, Pure]
   type Path = Path.T

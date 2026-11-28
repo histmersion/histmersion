@@ -37,7 +37,7 @@ object EventFields:
   def upstream(r: CatalogRecord): Map[String, Json] =
     Map(
       Label -> (r.label.value: String).asJson,
-      Kind -> (EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value: String).asJson,
+      Kind -> (EventTaxonomy.canonical(r.kind).value: String).asJson,
       Span -> r.timeSpan.asJson,
       Historicity -> (r.historicity.value: String).asJson,
       Description -> r.description.map(d => d.value: String).asJson,

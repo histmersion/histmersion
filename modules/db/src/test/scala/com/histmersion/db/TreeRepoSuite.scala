@@ -120,7 +120,6 @@ class TreeRepoSuite extends DbSuite:
 
   private val Tag = "zzt-tree-fixture"
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val src = Source(
     citekey = Citekey("zzt_src"),
     title = api.library.Title("Tree fixture"),

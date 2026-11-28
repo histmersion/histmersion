@@ -67,10 +67,8 @@ object Place:
   object KindValue extends Newtype[String, Pure]
   type Geometry = Geometry.T
   object Geometry extends Newtype[String, Pure]
-  type Source = Source.T
-  object Source extends Newtype[String, Pure]
-  type Properties = Properties.T
-  object Properties extends Newtype[String, Pure]
+  export GazRecord.Source
+  export GazRecord.Properties
 
   object Kind:
     type Parsed = Parsed.T
@@ -733,8 +731,7 @@ object Place:
 
     type Value = Value.T
     object Value extends Newtype[String, Pure]
-    type Lang = Lang.T
-    object Lang extends Newtype[String, Pure]
+    export ManualPlaceName.Lang
 
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   final case class NameAdd(name: NameAdd.Name, lang: Option[NameAdd.Lang] = None)

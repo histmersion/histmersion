@@ -10,7 +10,5 @@ import io.github.iltotore.iron.constraint.any.Pure
 final case class RunScope(run: RunScope.Run, step: RunScope.Step)
 
 object RunScope:
-  type Run = Run.T
-  object Run extends Newtype[String, Pure]
-  type Step = Step.T
-  object Step extends Newtype[Int, Pure]
+  export RunGrant.Run
+  export RunGrant.Step

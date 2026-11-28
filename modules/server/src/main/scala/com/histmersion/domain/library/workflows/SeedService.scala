@@ -95,7 +95,7 @@ final class SeedService(
           .toSet
       val goals = due(
         agents.focusStore.goals(),
-        agents.focusStore.sourceCounts().map((g, c) => Goal.Slug.assume(g.value) -> RowCount(c.value)),
+        agents.focusStore.sourceCounts().map((g, c) => g -> c),
         watchers,
         g =>
           (candidates

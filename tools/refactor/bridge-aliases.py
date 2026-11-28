@@ -4,10 +4,13 @@
   python3 tools/refactor/bridge-aliases.py <bridge-types.tsv> <out.txt> [<excluded symbols file>]
 
 Bridges `To(x.value)` whose two newtypes have the same simple name, base type and constraint are joined into groups.
-In each group one canonical type is chosen: the member that the most members' modules can see (its own module, or
-one their module depends on), then a member of an object (an export cannot name a package's top-level type), then the
-lowest layer, then the first by symbol. Every member that can see it, and is not inside an object named like the
-canonical's outermost object (the export would name itself), becomes an export of it; the others stay as they are.
+In each group one canonical type is chosen: the member directly bridged with, and visible to (its own module, or one
+their module depends on), the most members; then a member of an object (an export cannot name a package's top-level
+type); then the lowest layer; then the shortest owner path (the type's name appears in problem texts, so the most
+general owner); then the first by symbol. A member becomes an export of it only when the two are bridged directly
+(no transitive merging), it can see it, and it is not inside an object named like the canonical's outermost object
+(the export would name itself); the others stay as they are. `Wire` types are left out: each is one enum's spelling,
+a different concept per enum (census section 2c), whatever its name.
 A symbol in the excluded file (one per line) takes no part.
 """
 import re
@@ -24,6 +27,9 @@ DEPENDS = {
     "cli": ["api", "config", "files", "console"], "web": ["api"], "console": ["newtype"],
     "plugin-resolver": ["console", "problem"],
 }
+
+
+EXCLUDED_NAMES = {"Wire"}
 
 
 def module(path):
@@ -65,7 +71,7 @@ def rank(sym):
 
 def main(report, out, excluded_file=None):
     excluded = set(open(excluded_file).read().split()) if excluded_file else set()
-    parent, mod = {}, {}
+    parent, mod, pairs = {}, {}, set()
 
     def find(x):
         parent.setdefault(x, x)
@@ -81,9 +87,10 @@ def main(report, out, excluded_file=None):
         a, b, base_a, base_b, constraint_a, constraint_b = f[1:7]
         if base_a != base_b or constraint_a != constraint_b or simple(a) != simple(b):
             continue
-        if a in excluded or b in excluded:
+        if a in excluded or b in excluded or simple(a) in EXCLUDED_NAMES:
             continue
         mod[a], mod[b] = module(f[9]), module(f[10])
+        pairs.add(frozenset((a, b)))
         ra, rb = find(a), find(b)
         if ra != rb:
             parent[ra] = rb
@@ -96,12 +103,16 @@ def main(report, out, excluded_file=None):
         groups[find(s)].append(s)
     rows = []
     for members in groups.values():
-        canon = min(members, key=lambda c: (-sum(sees(m, c) for m in members), not exportable(c), rank(c), c))
+        def paired(m, c):
+            return frozenset((m, c)) in pairs
+
+        canon = min(members, key=lambda c: (-sum(paired(m, c) and sees(m, c) for m in members), not exportable(c),
+                                            rank(c), len(owners(c)), c))
         if not exportable(canon):
             continue
         top = owners(canon)[0]
         for m in members:
-            if m != canon and sees(m, canon) and top not in owners(m)[:-1]:
+            if m != canon and paired(m, canon) and sees(m, canon) and top not in owners(m)[:-1]:
                 rows.append((m, canon))
     with open(out, "w") as o:
         for s, c in sorted(rows):

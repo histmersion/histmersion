@@ -17,8 +17,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 object BuiltinMedia:
   type Alias = Alias.T
   object Alias extends Newtype[String, Pure]
-  type CheckName = CheckName.T
-  object CheckName extends Newtype[String, Pure]
+  export MediaImporter.CheckName
   export Registries.MediaCollectionsKey as EntryKey
   export MediaCollectionConfig.Licences
   export domain.media.assets.MediaItemRow.Provider

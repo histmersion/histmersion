@@ -9,6 +9,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.api.Html
 import com.histmersion.web.HtmlSink
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.web.PointKind
 
 /** A DOM marker at (`lat`, `lon`): its element's top-left at the point, or — `box` given — the box centred on it.
   * `.hd-marker` is the stylesheet's hook for every marker (and the map's sign that a pointer event is the marker's,
@@ -97,8 +98,7 @@ final class DomMarker(
 object DomMarker:
   type BoxSize = BoxSize.T
   object BoxSize extends Newtype[Int, Pure]
-  type ZIndex = ZIndex.T
-  object ZIndex extends Newtype[Int, Pure]
+  export PointKind.ZIndex
 
   /** A marker element of class `cls` holding `html`. */
   def element(cls: String, html: Html): dom.HTMLElement =

@@ -23,7 +23,7 @@ object EventCount:
     keys
       .groupBy(identity)
       .toList
-      .map((k, v) => EventCount(Key((k).value), N(v.size)))
+      .map((k, v) => EventCount(k, N(v.size)))
       .sortBy(c => (-(c.n).value, c.key))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def add(a: List[EventCount], b: List[EventCount]): List[EventCount] =

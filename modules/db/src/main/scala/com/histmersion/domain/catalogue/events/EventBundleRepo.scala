@@ -275,7 +275,7 @@ private[events] object EventBundleRepo:
               ${e.placeId.map(p =>
           placeHere(BPlaceRow.Id(p.value))
         )}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
-              ${e.scale.flatMap(s => EventScale.parse(EventSummary.Scale(s.value)).flatten)},
+              ${e.scale.flatMap(s => EventScale.parse(s).flatten)},
               ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod},
               ${StoredCreator.carried(e.creator)}::jsonb, ${w.at}::timestamptz)
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,

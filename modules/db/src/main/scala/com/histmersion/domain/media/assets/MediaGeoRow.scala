@@ -34,8 +34,7 @@ object MediaGeoRow:
   object Kind extends Newtype[String, Pure]
   type Caption = Caption.T
   object Caption extends Newtype[String, Pure]
-  type Uid = Uid.T
-  object Uid extends Newtype[String, Pure]
+  export MediaItemRow.Uid
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
   type License = License.T

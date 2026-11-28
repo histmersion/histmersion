@@ -13,7 +13,6 @@ object EventLeads:
   object LeadList extends Newtype[String, Pure]
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def years(ts: TimeSpan): EventLead.Years =
     EventLead.Years(YearFmt.span(ts))
 
@@ -70,7 +69,7 @@ object EventLeads:
   def of(f: LeadFacts): Option[EventLead] =
     if f.tier != LeadFacts.Tier(EventTier.Catalogue) || (f.attesting).value > 0 then None
     else
-      val kind = EventSummary.Kind(f.kind.value)
+      val kind = f.kind
       val label = EventLead.Label(f.label.value)
       val k = EventTaxonomy.of(kind).label.value
       val yrs = years(f.timeSpan)
@@ -87,11 +86,11 @@ object EventLeads:
           f.eventId,
           label,
           EventLead.Kind(EventTaxonomy.canonical(kind).value),
-          EventLead.Tier(f.tier.value),
+          f.tier,
           yrs,
           EventLead.Text(text),
           actions(f.eventId, label, yrs, f.proposed),
-          EventLead.FindingsNear(f.findingsNear.value),
+          f.findingsNear,
           EventLead.Candidates(f.proposed.value)
         )
       )

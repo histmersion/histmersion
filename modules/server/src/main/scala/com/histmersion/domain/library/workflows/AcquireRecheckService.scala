@@ -145,7 +145,7 @@ final class AcquireRecheckService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def facts(only: Option[RecheckRequest.Id]): List[Facts] =
     val items =
-      site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_.value == i.id.value))
+      site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_ == i.id))
     val dois = items.map(i => i.id.value -> orderedDois(i.text)).toMap
     val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
     val attempts = checks.of(items.map(keyOf))

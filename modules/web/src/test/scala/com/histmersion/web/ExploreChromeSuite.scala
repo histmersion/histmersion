@@ -155,9 +155,8 @@ class ExploreChromeSuite extends munit.FunSuite:
     assert(s.undated.undated)
     assert(PointKinds.Sites.classes(s).contains(MapView.UndatedClass))
     assert(
-      PointKinds.Sites.zIndex(s).value < PointKinds.Sites
+      PointKinds.Sites.zIndex(s) < PointKinds.Sites
         .zIndex(s.modify(_.undated).setTo(SitePoint.Undated.Dated))
-        .value
     )
     assertEquals(PointKinds.Sites.member(s).undated.value, 1)
     assert(
@@ -195,7 +194,7 @@ class ExploreChromeSuite extends munit.FunSuite:
     assert(PointKinds.Events.classes(e).contains(MapView.UndatedClass))
     val dated = e.modify(_.timeSpan).setTo(TimeSpan(Some(Year(-1200L)), None, None, Some(Year(-1190L))))
     assert(!PointKinds.Events.undated(dated))
-    assert(PointKinds.Events.zIndex(e).value < PointKinds.Events.zIndex(dated).value)
+    assert(PointKinds.Events.zIndex(e) < PointKinds.Events.zIndex(dated))
 
   test("the legend keys the dashed outline while undated places are drawn"):
     assert(

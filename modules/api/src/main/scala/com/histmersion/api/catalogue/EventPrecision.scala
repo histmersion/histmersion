@@ -15,7 +15,6 @@ object EventPrecision:
   val Approximate = "approximate"
   val Imprecise = "imprecise"
   val Undated = "undated"
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   val all: List[EventSummary.Precision] = List(
     EventSummary.Precision(Precise),
     EventSummary.Precision(Approximate),
@@ -42,7 +41,6 @@ object EventPrecision:
       Uncertainty(derived.max(plusMinus.fold(0L)(p => (p).value).max(0)))
     }
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(uncertainty: Option[Uncertainty]): EventSummary.Precision =
     uncertainty match
       case None                                => EventSummary.Precision(Undated)
@@ -56,7 +54,6 @@ object EventPrecision:
   )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def mapped(precision: EventSummary.Precision): Boolean =
     (precision != EventSummary.Precision(Imprecise) && precision != EventSummary.Precision(Undated))
 

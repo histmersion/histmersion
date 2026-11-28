@@ -17,8 +17,7 @@ final case class Period(start: Year, end: Year):
 object Period:
   type End = End.T
   object End extends Newtype[Long, Pure]
-  type Id = Id.T
-  object Id extends Newtype[String, Pure]
+  export HistoricalPeriod.Id
   type IsoYear = IsoYear.T
   object IsoYear extends Newtype[Long, Pure]
   type Start = Start.T

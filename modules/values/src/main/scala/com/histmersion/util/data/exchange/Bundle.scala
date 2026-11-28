@@ -18,8 +18,7 @@ object Bundle:
 
     case Place, Period
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-    def wire: Kind.Wire = Kind.Wire((Kind.wireOf(this)).value)
+    def wire: Kind.Wire = Kind.wireOf(this)
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def file: Kind.EntryPath = Kind.EntryPath(s"entities/${Kind.fileStem(this)}.ndjson")

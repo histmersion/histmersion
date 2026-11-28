@@ -36,7 +36,7 @@ final case class ChatAnswer(
           provider,
           url,
           Problem.Upstream.Status((status).value),
-          External.ReplyExcerpt.head(ChatAnswer.errorMessage(ChatAnswer.Status((status).value), body))
+          External.ReplyExcerpt.head(ChatAnswer.errorMessage(status, body))
         )
       )
     else

@@ -145,10 +145,10 @@ object Goal:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def of(total: RowCount, rows: scala.List[Goal], offset: UnreadPage.Offset): List =
       List(
-        RowCount((total).value),
+        total,
         rows,
         Offset((offset).value),
-        OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(rows.size)).next
+        OffsetPage(total, Offset((offset).value), RowCount(rows.size)).next
       )
 
   final case class Patch(
@@ -354,8 +354,7 @@ object Goal:
         given Display[T] = Display(_.value)
       type Enabled = Enabled.T
       object Enabled extends Newtype[Boolean, Pure]
-      type BudgetUsd = BudgetUsd.T
-      object BudgetUsd extends Newtype[Double, Pure]
+      export Managers.ManagerConfig.BudgetUsd
       type NextRunAt = NextRunAt.T
       object NextRunAt extends Newtype[String, Pure]
       type LastRunAt = LastRunAt.T
@@ -380,8 +379,7 @@ object Goal:
       object Cron extends Newtype[String, Pure]
       type Enabled = Enabled.T
       object Enabled extends Newtype[Boolean, Pure]
-      type BudgetUsd = BudgetUsd.T
-      object BudgetUsd extends Newtype[Double, Pure]
+      export Managers.ManagerConfig.BudgetUsd
 
     final case class Removed(removed: Removed.Value) derives JsonCodec, KindlingsSchema, api.json.Schema
 
@@ -442,7 +440,6 @@ object Goal:
     )
 
     @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def meaning(status: Stage): Option[StageMeaning] = all.collectFirst {
-      case (s, m) if s == status => StageMeaning((m).value)
+      case (s, m) if s == status => m
     }

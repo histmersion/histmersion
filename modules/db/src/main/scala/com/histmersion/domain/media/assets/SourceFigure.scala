@@ -13,10 +13,8 @@ final case class SourceFigure(
 )
 
 object SourceFigure:
-  type Uid = Uid.T
-  object Uid extends Newtype[String, Pure]
-  type Name = Name.T
-  object Name extends Newtype[String, Pure]
+  export MediaItemRow.Uid
+  export AssetInfoRow.Name
   type Width = Width.T
   object Width extends Newtype[Int, Pure]
   type Height = Height.T

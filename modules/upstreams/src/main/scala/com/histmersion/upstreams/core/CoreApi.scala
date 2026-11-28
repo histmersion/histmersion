@@ -51,7 +51,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
             val answered = Problem.Upstream.Http.here(
               Problem.Upstream.Name("core"),
               Problem.Upstream.Url(s"$url"),
-              Problem.Upstream.Status((a.status).value),
+              a.status,
               External.ReplyExcerpt.head(String(a.body.value, UTF_8))
             )
             if a.status == Problem.Upstream.Status(429) then Left(CoreFailure.Skipped(answered))

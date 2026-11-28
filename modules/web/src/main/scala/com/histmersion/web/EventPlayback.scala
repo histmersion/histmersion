@@ -121,7 +121,7 @@ object EventPlayback:
     // the dot carries the kind's icon (#1449): what happened reads before the name does
     val dot = if local then
       markup"""<span class="hd-event-dot hd-badge">${Glyphs.badge(
-          Glyphs.BadgeName(EventTaxonomy.icon(EventSummary.Kind(e.kind.value)).value)
+          Glyphs.BadgeName(EventTaxonomy.icon(e.kind).value)
         )}</span>"""
     else Html.empty
     val approx = if e.precision.value == EventPrecision.Approximate then " hd-event--approximate" else ""

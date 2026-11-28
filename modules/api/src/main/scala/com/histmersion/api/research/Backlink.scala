@@ -17,5 +17,4 @@ object Backlink:
   object Kind extends Newtype[String, Pure]
   type Id = Id.T
   object Id extends Newtype[String, Pure]
-  type Title = Title.T
-  object Title extends Newtype[String, Pure]
+  export Article.Title

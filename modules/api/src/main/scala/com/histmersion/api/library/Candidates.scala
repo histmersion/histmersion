@@ -17,8 +17,7 @@ object Candidates:
   object Index extends Newtype[String, Pure]
   type Lookback = Lookback.T
   object Lookback extends Newtype[Int, Pure]
-  type Watermark = Watermark.T
-  object Watermark extends Newtype[String, Pure]
+  export CandidateWatch.Watermark
 
   type Indexes = IndexesValue
   @tolerated(LintRule.G46, "pending G46 (re-export, don't alias)")

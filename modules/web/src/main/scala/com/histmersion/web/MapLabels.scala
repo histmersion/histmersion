@@ -85,8 +85,7 @@ object MapLabels:
   )
 
   object Entry:
-    type Rank = Rank.T
-    object Rank extends Newtype[Double, Pure]
+    export EventPlayback.Rank
 
   private val entries = mutable.LinkedHashMap.empty[String, Entry]
 
@@ -325,7 +324,6 @@ object MapLabels:
     state.filterInPlace((k, _) => !k.startsWith(EventKey))
     if entries.size != before then schedule()
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def register(k: String, m: DomMarker, s: LabelPlacement.Shape): Unit =
     entries(k) = Entry(m.at, Entry.Rank(s.size0), Some(s), () => inner(m), marker = Some(m))
 

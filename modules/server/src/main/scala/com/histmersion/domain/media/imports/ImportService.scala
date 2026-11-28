@@ -89,8 +89,7 @@ object ImportService:
   export MediaItemRow.Provider
   export Target.Id as TargetId
   export Target.TargetType
-  type CheckName = CheckName.T
-  object CheckName extends Newtype[String, Pure]
+  export MediaImporter.CheckName
   type CommonsCategory = CommonsCategory.T
   object CommonsCategory extends Newtype[String, Pure]
   type PlaceKey = PlaceKey.T
@@ -99,8 +98,7 @@ object ImportService:
   object Places extends Newtype[Boolean, Pure]
   type PleiadesOnly = PleiadesOnly.T
   object PleiadesOnly extends Newtype[Boolean, Pure]
-  type Refresh = Refresh.T
-  object Refresh extends Newtype[Boolean, Pure]
+  export CollectionImport.Refresh
   type Since = Since.T
   object Since extends Newtype[Long, Pure]
   type TargetsLimit = TargetsLimit.T

@@ -62,7 +62,7 @@ object MediaText:
         val kept = query.split("&").filterNot(p => p.toLowerCase(Locale.ROOT).startsWith("utm_") || p.isEmpty)
         if kept.isEmpty then RepositoryLanding.Candidate.Url(base)
         else RepositoryLanding.Candidate.Url(base + "?" + kept.mkString("&"))
-      case _ => RepositoryLanding.Candidate.Url((url).value)
+      case _ => url
 
   /** Pure: a link-safe file name for a provider's file title (`File:Lions Gate.jpg` → `Lions_Gate.jpg`). */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

@@ -155,7 +155,7 @@ object EventImportService:
             .find(_._1.id == c.id)
             .fold(c) { case (_, o, up) =>
               c.modify(_.status)
-                .setTo(Correction.StatusValue(Corrections.status(o).value))
+                .setTo(Corrections.status(o))
                 .modify(_.upstreamNow)
                 .setTo(Some(Correction.UpstreamNow(up.noSpaces)))
             }
@@ -170,7 +170,7 @@ object EventImportService:
               .setTo(
                 HeldEvent.Kind(
                   text(EventFields.Kind).flatten
-                    .getOrElse(EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value)
+                    .getOrElse(EventTaxonomy.canonical(r.kind).value)
                 )
               )
               .modify(_.historicity)
@@ -209,7 +209,7 @@ object EventImportService:
       val e = HeldEvent(
         id,
         HeldEvent.Label(r.label.value),
-        HeldEvent.Kind(EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value),
+        HeldEvent.Kind(EventTaxonomy.canonical(r.kind).value),
         r.timeSpan,
         HeldEvent.Historicity(r.historicity.value),
         for la <- r.lat; lo <- r.lon yield HeldEvent.Geometry(EventFields.point(la, lo).noSpaces),
@@ -322,13 +322,12 @@ object EventImportService:
         )
       (rows, RowCount(0))
 
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def storedKinds(
         provider: CatalogRecord.Provider
     ): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
       state.get.catalogueRecords.collect {
         case (_, r) if r.provider == provider =>
-          r.key -> EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))
+          r.key -> EventTaxonomy.canonical(r.kind)
       }.toMap
 
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

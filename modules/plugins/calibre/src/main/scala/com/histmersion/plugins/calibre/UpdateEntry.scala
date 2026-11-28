@@ -11,8 +11,6 @@ final case class UpdateEntry(
 )
 
 object UpdateEntry:
-  type CalibreId = CalibreId.T
-  @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
-  object CalibreId extends Newtype[Int, Pure]
+  export LinkedRecord.CalibreId
   type Citekeys = Citekeys.T
   object Citekeys extends Newtype[String, Pure]

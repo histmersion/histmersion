@@ -43,7 +43,7 @@ class TextAnchorSuite extends munit.FunSuite:
     assertEquals(byHint, byContext)
     val first =
       TextAnchor.reanchor(body, TextAnchor.Quote("storm god"), None, None, Some(TextAnchor.ReanchorHint(0))).get
-    assert(first.start.value < byContext.start.value)
+    assert(first.start < byContext.start)
 
   test("a quote that is not there is not found — never guessed"):
     assertEquals(

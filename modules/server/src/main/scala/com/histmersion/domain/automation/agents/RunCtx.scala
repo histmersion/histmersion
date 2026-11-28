@@ -515,7 +515,7 @@ final class RunCtx private[automation] (
           val budget = engine.budgetInterceptor(runId, billing)
           val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(runId))(using engine.agents.timer)
           val allowance = AllowanceGuard(
-            picked.headroomTokens.map(h => AllowanceGuard.HeadroomTokens(h.value)),
+            picked.headroomTokens.map(h => h),
             picked.headroomUsd,
             billing
           )
@@ -523,7 +523,7 @@ final class RunCtx private[automation] (
           // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10
           // claims needs more than a one-shot step
           val call = LlmCall[A](
-            LlmCall.System(prompt.system.value),
+            prompt.system,
             LlmCall.User(user.value),
             engine.agents.toolbox.tools(engine.offered(run, agent))(using stepCreator(agent, client.model)),
             schema,

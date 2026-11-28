@@ -455,7 +455,6 @@ private[assets] object MediaRepo:
       .map(geoHit)
 
   /** The pictures of `uids` as the map's tiles draw one ([[geo]]'s hits), by uid. */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geoOf(uids: List[MediaItemRow.Uid])(using DbCon): Map[MediaItemRow.Uid, MediaGeoHit] =
     if uids.isEmpty then Map.empty
     else
@@ -463,7 +462,7 @@ private[assets] object MediaRepo:
           WHERE a.geom IS NOT NULL AND a.uid = ANY($uids::uuid[])"""
         .query[MediaGeoRow]
         .run()
-        .map(r => MediaItemRow.Uid(r.uid.value) -> geoHit(r))
+        .map(r => r.uid -> geoHit(r))
         .toMap
 
   /** The pictures of the media layer as the map's tiles select them — [[geo]]'s selection, every one whose dates

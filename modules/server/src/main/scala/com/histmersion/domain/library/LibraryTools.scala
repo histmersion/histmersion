@@ -208,7 +208,7 @@ object LibraryTools:
         .handle { in =>
           val unit = in.unit.getOrElse(Api.AggregateQuery.Unit("sources"))
           search.aggregate(Api.AggregateQuery.time(in.toFilter, Some(unit))) match
-            case Right(hist) => ToolResult.text(SearchMarkdown.histogram(hist, Histogram.Unit(unit.value)))
+            case Right(hist) => ToolResult.text(SearchMarkdown.histogram(hist, unit))
             case Left(e)     => McpOut.error(e)
         }
 

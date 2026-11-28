@@ -22,7 +22,6 @@ final case class Picked(
 )
 
 object Picked:
-  type HeadroomTokens = HeadroomTokens.T
-  object HeadroomTokens extends Newtype[Long, Pure]
+  export AllowanceGuard.HeadroomTokens
   type Skipped = Skipped.T
   object Skipped extends Newtype[String, Pure]

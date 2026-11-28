@@ -116,7 +116,7 @@ class DirSizeSuite extends munit.FunSuite:
     assert(v.isDefined)
     assertEquals(v.map(_.id), DirSize.volume(d).map(_.id))
     assert(
-      v.forall(x => x.totalBytes.value > 0 && x.freeBytes.value >= 0 && x.freeBytes.value <= x.totalBytes.value),
+      v.forall(x => x.totalBytes.value > 0 && x.freeBytes.value >= 0 && x.freeBytes <= x.totalBytes),
       v
     )
 

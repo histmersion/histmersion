@@ -23,3 +23,5 @@ com/histmersion/domain/AutopilotPolicy.Left.
 com/histmersion/domain/SchedulerPolicy.Candidate.Id.
 com/histmersion/domain/automation/Run.Id.
 com/histmersion/domain/catalogue/places/GeocodeSettings.ToleranceKm.
+com/histmersion/api/catalogue/Event.Id.
+com/histmersion/domain/library/sources/SourceNote.Text.
