@@ -53,7 +53,7 @@ object PlacesRoutes:
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   private def year(asOf: Option[Api.AggregateQuery.AsOf]): Option[DeepTime.SignedYear] =
-    asOf.map(y => DeepTime.SignedYear(y.value))
+    asOf.map(y => api.catalogue.Year(y.value))
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

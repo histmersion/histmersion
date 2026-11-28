@@ -77,9 +77,8 @@ object HeldPlace:
     def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = Manual(false))
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def covers(period: Option[Period], asOf: Option[DeepTime.SignedYear]): Boolean =
-    asOf.forall(y => period.forall(p => p.start.value <= y.value && y.value <= p.end.value))
+    asOf.forall(y => period.forall(p => p.start <= y && y <= p.end))
 
   /** The case-insensitive form a search compares. */
   def lower(s: String): String = s.toLowerCase(Locale.ROOT)

@@ -437,8 +437,8 @@ object AssetService:
           a.license.map(l => MediaItem.License(l.value)),
           a.point.map(p => Latitude(p._1.value)),
           a.point.map(p => Longitude(p._2.value)),
-          a.period.flatMap(_._1).map(y => Year(y.value)),
-          a.period.flatMap(_._2).map(y => Year(y.value))
+          a.period.flatMap(_._1).map(y => y),
+          a.period.flatMap(_._2).map(y => y)
         )
       }
 
@@ -808,8 +808,8 @@ object AssetService:
         a.kind.map(k => MediaItem.Kind(k.value)),
         Latitude(p._1.value),
         Longitude(p._2.value),
-        a.period.flatMap(_._1).map(y => Year(y.value)),
-        a.period.flatMap(_._2).map(y => Year(y.value)),
+        a.period.flatMap(_._1).map(y => y),
+        a.period.flatMap(_._2).map(y => y),
         a.caption.map(c => MediaItem.Caption(c.value)),
         MediaItem.Uid(a.uid.value),
         a.provider.map(x => MediaItem.Provider(x.value)),

@@ -398,7 +398,7 @@ private[places] object PlaceRepo:
         parents(id, asOf).toList,
         kids(id, asOf, Limit(Int.MaxValue), modernFrom).toList,
         Place.Counts.Findings(r.findings.value),
-        asOf.map(y => Year(y.value)),
+        asOf.map(y => y),
         (if r.contested.contested then Place.Entry.Contested.Contested else Place.Entry.Contested.Settled),
         fps,
         lks,
@@ -625,7 +625,6 @@ private[places] object PlaceRepo:
     * always a superset of the true circle.
     */
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G47Self, "pending G47 (no FQN noise)")
   private[places] def geoJsonQuery(
       kind: Option[PlaceRepo.GeoJsonQueryKind],
@@ -633,7 +632,7 @@ private[places] object PlaceRepo:
       limit: GeoJsonQueryLimit,
       modernFrom: PlaceRepo.GeoJsonQueryModernFrom = DefaultModernFrom
   ): Frag =
-    geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(Year(y.value))), limit, modernFrom)
+    geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(y)), limit, modernFrom)
 
   /** [[geoJsonQuery]] for any [[GeoTime]]: across all time, at a year, or over a whole range. `pairsByIndex = false`
     * makes a range of areas pair its shapes the plain way ([[rangeShadowedSql]]) — the reference `PlaceGeoSuite` holds
@@ -783,7 +782,6 @@ private[places] object PlaceRepo:
     * coexist), and different states may overlap: all are drawn.
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[places] def pickVersionSql(w: GeoTime.Within): Frag =
     val (lo, hi) = (sql"${w.from.literal}::bigint", sql"${w.to.literal}::bigint")
     val (edge, anchor) = if w.latest.latest then (sql"ee", sql"max") else (sql"es", sql"min")
@@ -795,14 +793,13 @@ private[places] object PlaceRepo:
     * The limit applies after that, largest shapes first, so it drops the smallest rather than whatever sorts last by
     * name.
     */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def geoJson(
       kind: Option[domain.catalogue.Place.Kind.Wire],
       asOf: Option[DeepTime.SignedYear],
       limit: Limit,
       modernFrom: DeepTime.SignedYear = DefaultModernFrom
   )(using DbCon): GeoJson =
-    geoJsonAt(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(Year(y.value))), limit, modernFrom)
+    geoJsonAt(kind, asOf.fold(GeoTime.Always)(y => GeoTime.At(y)), limit, modernFrom)
 
   /** [[geoJson]] for any [[GeoTime]]. Over a range ([[GeoTime.Within]]) every state alive at any time in it is drawn,
     * one version each ([[pickVersionSql]]), after the same cross-tier collapse among the shapes that coexist; the limit

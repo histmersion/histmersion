@@ -84,8 +84,8 @@ private[search] object AggregateRepo:
         Tree.TreeRow.Key(key.value),
         com.histmersion.api.library.Citekey(citekey.value),
         com.histmersion.api.library.Title(title.value),
-        periodStart.map(y => Year(y.value)),
-        periodEnd.map(y => Year(y.value)),
+        periodStart.map(y => y),
+        periodEnd.map(y => y),
         placeIds.distinct.map(p => RegionNode.Id(p.value))
       )
 
