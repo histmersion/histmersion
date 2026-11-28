@@ -8,12 +8,6 @@ import java.nio.file.{Files, Paths}
 import java.util.concurrent.{ConcurrentHashMap, ConcurrentLinkedQueue}
 import scala.jdk.CollectionConverters._
 
-/** Kept different-name pairs (owner 2026-11-28): a bridge `To.m(x.value)`, `x` of the newtype `from`, becomes `x.name`,
-  * a named function the `from` type's companion defines (an extension, so the site needs no import). Inside that
-  * companion the bridge is the function's own body and stays. `method` limits a row to one construction (apply,
-  * applyUnsafe or assume); empty takes any. Sites the rule cannot type (a lambda's `_.value`) are reported as
-  * `unresolved` only when their `To` matches a row, for a hand edit.
-  */
 object NamedBridges {
   case class Bridge(from: String = "", to: String = "", name: String = "", method: String = "")
   object Bridge {

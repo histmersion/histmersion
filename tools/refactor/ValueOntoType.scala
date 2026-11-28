@@ -188,9 +188,6 @@ class ValueOntoType(config: ValueOntoType.Config, index: ConcurrentHashMap[Strin
         }
       }
     }
-    // With `forwarders`, an export alias's term (`export Shared.Label as Label`) constructs the object it forwards to:
-    // SemanticDB records no information for a forwarder, so the aliases come from `forwarded` (alias symbol -> object
-    // symbol) or `forwardersFrom` (a file of `alias<TAB>object` lines, as BridgeTypes' `aliasesFrom` reads).
     def behind(sym: String): Option[String] =
       if (isNewtypeObject(sym)) Some(sym)
       else if (!config.forwarders) None
