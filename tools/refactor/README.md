@@ -695,6 +695,16 @@ The fixture (input, expected, and the files the rule creates):
   tools/refactor/move-onto-type-fixture/input tools/refactor/move-onto-type-fixture/expected
 ```
 
+`StripSelfQualifier` (G47Self) drops a qualifier that names the enclosing object (`Obj.x` inside `object Obj`) when the
+object defines `x` and nothing closer takes the name: a nested template, an import of that name, a block's local
+definition, an enclosing def of that name, a parameter, a case or for binding. Run it with
+`bash tools/refactor/move-onto-type.sh tools/refactor/strip-self-qualifier.conf`; the fixture:
+
+```text
+.claude/skills/scalafix/scripts/run-rule.sh tools/refactor/StripSelfQualifier.scala \
+  tools/refactor/strip-self-qualifier-fixture/input tools/refactor/strip-self-qualifier-fixture/expected
+```
+
 ## Remaining work
 
 - Extend the repository call graph to dispatch, supplied callbacks and initializer effects; define approved capability boundaries before adding propagation for other capabilities.
