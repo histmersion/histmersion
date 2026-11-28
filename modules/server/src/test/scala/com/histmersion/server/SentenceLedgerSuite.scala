@@ -43,6 +43,11 @@ class SentenceLedgerSuite extends munit.FunSuite:
         s"architecture/sentences.tsv is not what the code writes — review, then regenerate it:\n${differences.mkString("\n")}"
       )
 
+  test("the ledger sites are current only when their key file names these sources"):
+    assert(LedgerSites.current(Some("abc\n"), "abc"))
+    assert(!LedgerSites.current(Some("abd\n"), "abc"))
+    assert(!LedgerSites.current(None, "abc"))
+
   test("a template's splices are any text; doubled braces are braces"):
     assertEquals(Ledger.shape("no such file: {p} ({n + 1} {{tries}})"), "no such file: … (… {tries})")
     assert(DocQuotedSentencesSuite.Shape.matches(Ledger.shape("no such file: {p}"), "no such file: /tmp/a b"))

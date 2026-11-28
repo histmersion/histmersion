@@ -66,3 +66,4 @@ audited and moved here.
 | [0030](0030-problem-cases-collapse.md) | Problem cases collapse into parameterised homes; old stored entries are translated on read |
 | [0031](0031-ci-on-linux-bundles-on-demand.md) | Every PR check runs on Linux; the per-platform bundles are built on demand |
 | [0032](0032-lint-rules-with-in-source-suppressions.md) | The checks are stateless lint rules; a finding is fixed or tolerated in the source, with a reason |
+| [0033](0033-sbt-kubuszok-and-build-time-ledger-sites.md) | The build follows sbt-kubuszok; the ledger sites are written by the build, once, before any test JVM |

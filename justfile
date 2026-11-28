@@ -113,15 +113,15 @@ health:
 
 # ── build & test ─────────────────────────────────────────────────────────────────────────────────
 
-# Format every Scala source, build.sbt and project/*.scala (scalafmt, .scalafmt.conf); compiling formats a module's sources too
+# Format every file .scalafmt.conf covers with the scalafmt CLI (`cs install scalafmt`), as CI checks it; compiling formats a module's sources too
 [group('dev')]
 fmt:
-    {{sbt}} scalafmtAll scalafmtSbt
+    scalafmt
 
-# Fail when a Scala source or build file is not formatted (`just fmt` fixes it); test-quick runs it first
+# Fail when a file .scalafmt.conf covers is not formatted (`just fmt` fixes it), as CI's format job; test-quick runs it first
 [group('dev')]
 fmt-check:
-    {{sbt}} scalafmtCheckAll scalafmtSbtCheck
+    scalafmt --check
 
 # The lint rules (tools/lint): their tests, every rule over every module, and no more suppressions than the merge base
 [group('dev')]
