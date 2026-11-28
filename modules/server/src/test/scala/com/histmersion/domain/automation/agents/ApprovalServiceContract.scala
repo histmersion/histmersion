@@ -95,7 +95,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       assertEquals(propose(s, status, None), None, "identical and open")
       assert(propose(s, edge, None).isDefined, "another change")
       assertEquals(
-        a(s).payload(idOf(first)).map(p => Jsonb.JsonText(p.value)).flatMap(Jsonb.read[Proposal]),
+        a(s).payload(idOf(first)).map(p => p.asJsonText).flatMap(Jsonb.read[Proposal]),
         Some(status)
       )
       assert(before(s, status))

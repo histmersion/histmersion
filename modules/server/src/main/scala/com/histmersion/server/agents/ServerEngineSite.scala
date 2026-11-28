@@ -23,7 +23,6 @@ import com.histmersion.util.time.Pause
 import com.histmersion.config.UserPaths
 import com.histmersion.util.plugins.Plugin
 import com.histmersion.lint.{movesTo, FeaturePlace}
-import com.histmersion.lint.{tolerated, LintRule}
 
 /** The engine's [[EngineSite]] over the composition: the `Deps` of the server, the domains' contributions
   * ([[EngineContributions]]), the approval effects they contribute (the library's source proposals, research's article
@@ -46,9 +45,8 @@ final class ServerEngineSite(deps: Deps, w: ServerWiring, digestOn: Option[java.
   def pause: Pause = deps.pause
   override def userPaths: UserPaths = deps.userPaths
   def digestClock: Option[java.time.Clock] = digestOn
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def aiProviders: () => ListMap[Plugin.Id, AiProvider] = () =>
-    deps.plugins.registries.aiProviders.map((k, p) => Plugin.Id.assume(k.value) -> p)
+    deps.plugins.registries.aiProviders.map((k, p) => k.pluginId -> p)
   def roster: AgentRoster = EngineContributions.roster
   def contributions(a: AgentsControllers): Contributions = EngineContributions.of(deps, w, a)
   def approvalEffects: ApprovalEffects = ApprovalEffects.of(

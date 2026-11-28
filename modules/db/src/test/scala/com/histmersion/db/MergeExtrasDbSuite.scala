@@ -205,7 +205,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
         Some(Place.Geometry(s"""{"type":"Point","coordinates":[$lon,$lat]}""")),
         Some(Period(Year(-1650), Year(-1180)))
       ),
-      List(Place.Name(Place.Name.Value(label.value)))
+      List(Place.Name(label.asNameValue))
     )
 
   test("places and periods: the collection's own travel and import; the seeds do not; the dataset marks which"):
@@ -291,7 +291,7 @@ class MergeExtrasDbSuite extends DbSuite with Bounded:
       home,
       bundle,
       sh,
-      MergeResolutions(List(MergeResolution(MergeResolution.Issue(q.id.value), MergeResolution.Decision("keep-right"))))
+      MergeResolutions(List(MergeResolution(q.id, MergeResolution.Decision("keep-right"))))
     )
     assert(a.applied.applied, (a.problems ++ a.issues.map(_.title)).mkString("\n"))
     assertEquals(text(home, "SELECT ST_AsText(geom) FROM places WHERE id = 'zz_ugarit'"), Some("POINT(35.78 35.6)"))

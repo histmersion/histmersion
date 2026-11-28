@@ -750,7 +750,7 @@ final class ArticlesControllers(
         label <- LabelRenames.validate(
           Bundle.Kind.Article,
           LabelRenames.Label(from.value),
-          LabelRenames.Label(req.to.value)
+          req.to
         )
         to <- Slug.parse(label.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid))))
         rewritten <- store.rename(from, to, Caller.Local)

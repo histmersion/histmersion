@@ -194,7 +194,7 @@ object MediaWire:
         Some(Place.Geometry(s"""{"type":"Point","coordinates":[${lon.value},${lat.value}]}""")),
         period
       ),
-      List(Place.Name(Place.Name.Value(label.value)))
+      List(Place.Name(label.asNameValue))
     )
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

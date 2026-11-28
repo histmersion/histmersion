@@ -7,6 +7,7 @@ import com.histmersion.domain.catalogue.periods.StoredPeriod
 import com.histmersion.domain.catalogue.places.{HeldOverride, HeldPlace, HeldSite}
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.catalogue.Place
 
 /** The catalogue's rows held in memory, one record the `InMemory` services of its features share (each reads and
   * changes its own part, through lenses): the named periods and the bundled seeds' versions; the attestations and the
@@ -49,7 +50,8 @@ object CatalogueState:
   type EventAliasesKey = EventAliasesKey.T
   object EventAliasesKey extends Newtype[String, Pure]
   type EventAliasesValue = EventAliasesValue.T
-  object EventAliasesValue extends Newtype[String, Pure]
+  object EventAliasesValue extends Newtype[String, Pure]:
+    extension (value: EventAliasesValue) def eventId: Event.Id = Event.Id.assume(value.value)
   type LastCorrectionId = LastCorrectionId.T
   object LastCorrectionId extends Newtype[Long, Pure]
   type ImportPartsKey = ImportPartsKey.T
@@ -60,8 +62,7 @@ object CatalogueState:
   object ImportPartsValueValue extends Newtype[Int, Pure]
   type Checked = Checked.T
   object Checked extends Newtype[String, Pure]
-  type PlaceAliasesKey = PlaceAliasesKey.T
-  object PlaceAliasesKey extends Newtype[String, Pure]
+  export Place.Id as PlaceAliasesKey
   type PlaceAliasesValue = PlaceAliasesValue.T
   object PlaceAliasesValue extends Newtype[String, Pure]
   type PlaceRemovals = PlaceRemovals.T

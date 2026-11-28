@@ -132,7 +132,7 @@ final class IngestControllers(
         quality,
         force,
         title.map(t => com.histmersion.api.library.Title(t.value)),
-        authors.map(a => AuthorName(a.value)),
+        authors.map(a => a.asAuthorName),
         year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
         doi.map(d => com.histmersion.api.library.Doi(d.value)),
         acquireItem = acquireItem.map(i => Ingest.Params.AcquireItem(i.value))

@@ -31,9 +31,8 @@ object GraphPanel:
   val Citekey: api.library.Citekey.type = api.library.Citekey
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def open(citekey: Citekey): Unit =
-    WindowManager.open(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)))
+    WindowManager.open(WindowKey.Graph(citekey))
 
   private val Depth = 2
 
@@ -79,7 +78,7 @@ object GraphPanel:
           .filter(_.value.trim.nonEmpty)
           .foreach(t =>
             WindowManager.retitle(
-              WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)),
+              WindowKey.Graph(citekey),
               UiLabels.Text(shown"Citation graph · $t")
             )
           )
@@ -122,7 +121,7 @@ object GraphPanel:
         case None    => span(cls := "muted", "hover a node · double-click opens it · drag to move · wheel to zoom")
         case Some(n) =>
           span(
-            SourceLink(Preview.Target.Source.Citekey(n.id.value)),
+            SourceLink(n.id),
             " ",
             n.title.map(_.value).getOrElse(""),
             n.year.fold("")(y => s" ($y)"),

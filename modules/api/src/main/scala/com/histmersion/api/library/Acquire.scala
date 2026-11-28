@@ -432,8 +432,7 @@ object Acquire:
           api.json.Schema
 
     object RecheckRow:
-      type Item = Item.T
-      object Item extends Newtype[Int, Pure]
+      export Queue.QueueItem.Id as Item
       type Action = Action.T
       object Action extends Newtype[String, Pure]
       type Detail = Detail.T

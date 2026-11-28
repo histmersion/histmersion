@@ -19,7 +19,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
 abstract class PeriodServiceContract extends CatalogueStoreSuite:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def hp(id: HistoricalPeriod.Id, s: Year, e: Year, parent: Option[HistoricalPeriod.ParentId] = None) =
+  private def hp(id: HistoricalPeriod.Id, s: Year, e: Year, parent: Option[HistoricalPeriod.Id] = None) =
     HistoricalPeriod(
       id,
       HistoricalPeriod.Label(id.value.toUpperCase),
@@ -31,9 +31,9 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
 
   private val tree = List(
     hp(HistoricalPeriod.Id("zzr_root"), Year(-3000), Year(-1000)),
-    hp(HistoricalPeriod.Id("zzr_bronze"), Year(-3000), Year(-1200), Some(HistoricalPeriod.ParentId("zzr_root"))),
-    hp(HistoricalPeriod.Id("zzr_lba"), Year(-1600), Year(-1200), Some(HistoricalPeriod.ParentId("zzr_bronze"))),
-    hp(HistoricalPeriod.Id("zzr_lm"), Year(-1700), Year(-1050), Some(HistoricalPeriod.ParentId("zzr_bronze")))
+    hp(HistoricalPeriod.Id("zzr_bronze"), Year(-3000), Year(-1200), Some(HistoricalPeriod.Id("zzr_root"))),
+    hp(HistoricalPeriod.Id("zzr_lba"), Year(-1600), Year(-1200), Some(HistoricalPeriod.Id("zzr_bronze"))),
+    hp(HistoricalPeriod.Id("zzr_lm"), Year(-1700), Year(-1050), Some(HistoricalPeriod.Id("zzr_bronze")))
   )
 
   private def ids(ps: List[HistoricalPeriod]) = ps.map(_.id)
@@ -48,7 +48,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
     assertEquals(p.write(Nil, Dataset.Seed), 0)
     intercept[Exception](
       p.write(
-        List(hp(HistoricalPeriod.Id("zzr_orphan"), Year(1), Year(2), Some(HistoricalPeriod.ParentId("zzr_missing")))),
+        List(hp(HistoricalPeriod.Id("zzr_orphan"), Year(1), Year(2), Some(HistoricalPeriod.Id("zzr_missing")))),
         Dataset.Seed
       )
     )
@@ -89,7 +89,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
       List(HistoricalPeriod.Id("zzt_y"), HistoricalPeriod.Id("zzt_x")).map(id =>
         tie(id, HistoricalPeriod.Label("Zzt part"))
           .modify(_.parentId)
-          .setTo(Some(HistoricalPeriod.ParentId("zzt_root")))
+          .setTo(Some(HistoricalPeriod.Id("zzt_root")))
       ),
       Dataset.Seed
     )
@@ -108,7 +108,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
     assertEquals(p.placement(Nil), Map.empty)
     val before = p.count()
     p.write(
-      List(hp(HistoricalPeriod.Id("zzr_lba"), Year(-1600), Year(-1200), Some(HistoricalPeriod.ParentId("zzr_root")))),
+      List(hp(HistoricalPeriod.Id("zzr_lba"), Year(-1600), Year(-1200), Some(HistoricalPeriod.Id("zzr_root")))),
       Dataset.Seed
     )
     assertEquals(p.count(), before)
@@ -182,7 +182,7 @@ abstract class PeriodServiceContract extends CatalogueStoreSuite:
       val p = s.periods
       p.write(tree, Dataset.Seed)
       p.write(
-        List(hp(HistoricalPeriod.Id("zzr_mine"), Year(1), Year(2), Some(HistoricalPeriod.ParentId("zzr_lm")))),
+        List(hp(HistoricalPeriod.Id("zzr_mine"), Year(1), Year(2), Some(HistoricalPeriod.Id("zzr_lm")))),
         Dataset.Local
       )
       assertEquals(s.seedRows().toSet, tree.map(_.id).toSet)

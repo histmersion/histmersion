@@ -31,8 +31,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.Helper, "pending G63 (no free-standing helper objects)")
 object Plugins:
-  type CoreKey = CoreKey.T
-  object CoreKey extends Newtype[String, Pure]
+  export config.ApiKey as CoreKey
 
   /** The config keys the plugin generation is built from: every plugin's block (and `order`), the keys that shape the
     * client every plugin is lent, and the host settings the first-party plugins read ([[FirstPartySettings]]).
@@ -121,7 +120,7 @@ object Plugins:
     */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def firstParty(set: Option[PluginSet])(id: Plugin.Info.Id): Boolean =
-    ReservedNames.firstPartyPlugins(ReservedNames.Name(id.value)) && !set.exists(
+    ReservedNames.firstPartyPlugins(id) && !set.exists(
       _.jars.exists(_.plugins.exists(_.id.value == id.value))
     )
 

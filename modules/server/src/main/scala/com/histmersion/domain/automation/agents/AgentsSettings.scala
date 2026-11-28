@@ -20,18 +20,14 @@ import com.histmersion.lint.{tolerated, LintRule}
 
 extension (c: AgentApprovalsConfig)
   @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def statusMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.statusChange.value))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def edgeMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.edges.value))
+  def statusMode: Approval.Mode = ApprovalModes.configured(c.statusChange)
+  def edgeMode: Approval.Mode = ApprovalModes.configured(c.edges)
 
   /** `compile-article`: `manual` (the default) waits for a person before the article is written. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def publishMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.articlePublish.value))
+  def publishMode: Approval.Mode = ApprovalModes.configured(c.articlePublish)
 
   /** `infer-filter`: `manual` (the default) records the filter only once a person approves it. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def filterMode: Approval.Mode = ApprovalModes.configured(Approval.Mode.Wire(c.articleFilter.value))
+  def filterMode: Approval.Mode = ApprovalModes.configured(c.articleFilter)
 
   /** Whether the managers' supervisor decides an open approval of `kind` by its code checks (the autopilot's auto
     * approvals): `article-plan` and `goal-plan` = `auto` (or `checked`); `article-publish` = `checked` — its `auto`

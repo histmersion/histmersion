@@ -43,11 +43,7 @@ final class PlacesControllers(
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
   )
   private def modernFrom: DeepTime.SignedYear = api.catalogue.Year(cfg().places.modernFrom.value)
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
-  private def tolKm: GeocodeSettings.ToleranceKm = GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
+  private def tolKm: GeocodeSettings.ToleranceKm = cfg().places.pointToleranceKm
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
@@ -72,12 +68,8 @@ final class PlacesControllers(
   private def named(id: Option[Place.Id]): Option[Place.Id] = id.map(_.trimmed).filterNot(_.isBlank).map(placeId)
 
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. */
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   def geocode(name: Geocode.Attempt.Name, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
-    geocoder.resolve(name, hint, at, GeocodeSettings.PlaceholderMin(cfg().places.geocodePlaceholderMin.value))
+    geocoder.resolve(name, hint, at, cfg().places.geocodePlaceholderMin)
 
   /** `GET /api/places` — name search; `limit <= 0` means the configured `places.search-limit`. */
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -108,7 +100,7 @@ final class PlacesControllers(
         )
       case p =>
         val time = GeoPick.resolve(
-          q.asOf.map(y => Year(y.value)),
+          q.asOf.map(y => y),
           q.from.map(y => Year(y.value)),
           q.to.map(y => Year(y.value)),
           p.flatMap(GeoPick.parse).getOrElse(GeoPick.Mid)
@@ -336,7 +328,7 @@ final class PlacesControllers(
       id,
       from =>
         LabelRenames
-          .validate(Bundle.Kind.Place, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
+          .validate(Bundle.Kind.Place, LabelRenames.Label(from.value), req.to)
           .flatMap(to =>
             Place.Id
               .checked(to.value)

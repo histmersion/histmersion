@@ -645,7 +645,7 @@ class AcquireRecheckDbSuite extends DbSuite with RunTranscripts:
     assertEquals(unauthorisedAsked.get, 0, "a fetcher the config marks unauthorised is never asked")
     assertEquals((r.fetched, r.noCopy), (1, 1), r.toString)
     assertEquals(
-      r.rows.find(_.item.value == oa.value).flatMap(_.citekey),
+      r.rows.find(_.item == oa).flatMap(_.citekey),
       Some("zzrecheck_kept"),
       "fetched into the metadata-only source"
     )

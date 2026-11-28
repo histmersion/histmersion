@@ -16,7 +16,7 @@ final case class HistoricalPeriod(
     authority: Option[HistoricalPeriod.Authority] = None,
     period: Period,
     region: Option[HistoricalPeriod.Region] = None,
-    parentId: Option[HistoricalPeriod.ParentId] = None,
+    parentId: Option[HistoricalPeriod.Id] = None,
     preset: Option[PresetRegion] = None
 ) derives JsonCodec,
       KindlingsSchema,
@@ -32,5 +32,3 @@ object HistoricalPeriod:
   object Authority extends Newtype[String, Pure]
   type Region = Region.T
   object Region extends Newtype[String, Pure]
-  type ParentId = ParentId.T
-  object ParentId extends Newtype[String, Pure]

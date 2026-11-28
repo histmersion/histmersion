@@ -118,7 +118,7 @@ final class TiledPoints[A](
               fresh._2,
               shown._2,
               (c: TileCellPoint) => c.key.value,
-              c => near((Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value)))
+              c => near((c.lat, c.lon))
             )
           )
       readAt = Some(at)
@@ -145,7 +145,7 @@ final class TiledPoints[A](
         shown._1.filter(a => seen(items.kind.at(a))),
         RowCount(
           shown._2
-            .filter(c => seen((Geo.Latitude(c.lat.value), Geo.Longitude(c.lon.value))))
+            .filter(c => seen((c.lat, c.lon)))
             .map(_.n.value)
             .sum
         )

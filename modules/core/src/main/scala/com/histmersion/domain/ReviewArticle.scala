@@ -722,6 +722,7 @@ object ReviewArticle:
       */
     @tolerated(LintRule.G5Problem, "pending G60 (one typed Problem ADT)")
     object Problem extends Newtype[String, Pure]:
+      extension (problem: Problem) def asCompared: CompareRuns.Text = CompareRuns.Text(problem.value)
       type Section = Section.T
       object Section extends Newtype[String, Pure]
       type Count = Count.T

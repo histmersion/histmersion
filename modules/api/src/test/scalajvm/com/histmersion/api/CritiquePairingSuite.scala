@@ -57,8 +57,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     Citekey("pache2020_homerguide") -> (List(AuthorName("Corinne Pache")), Year(2020))
   )
   private val work: Citekey => Option[Work] = ck => authors.get(ck).map((as, y) => Work(ck, names(ck, as), Some(y)))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val resolve: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value)).filter(authors.contains)
+  private val resolve: Article.Link.Target => Option[Citekey] = t => Some(t.asCitekey).filter(authors.contains)
 
   test("names: the authors' word that is the citekey's leading name, else the first author's last word"):
     assertEquals(names(Citekey("latacz2004_troy"), List(AuthorName("Joachim Latacz"))), List("Latacz"))
@@ -120,7 +119,7 @@ class CritiquePairingSuite extends munit.FunSuite:
       Citekey("west1997_helicon") -> Work(Citekey("west1997_helicon"), List(Work.Names("West")), Some(Year(1997))),
       Citekey("west2011_making") -> Work(Citekey("west2011_making"), List(Work.Names("West")), Some(Year(2011)))
     ).get
-    val r: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value))
+    val r: Article.Link.Target => Option[Citekey] = t => Some(t.asCitekey)
     val cited = "\n\nWest wrote twice [[west1997_helicon]] [[west2011_making]]."
     // both Wests are partners: without a year the name means neither for sure
     val shared = hits(Article.Body("Alpha answers West's reading [[a2000_x]]." + cited), r, es, w)

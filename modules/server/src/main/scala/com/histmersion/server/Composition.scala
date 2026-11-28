@@ -384,7 +384,7 @@ object Composition:
       def queueItem(id: CollectionLibrary.QueueItemId) =
         h.workListView
           .list(
-            WorkListControllers.KindOfList(Queue.Kind.Acquire.label.value),
+            Queue.Kind.Acquire.label,
             all = WorkListView.IncludeAll.All
           )
           .map(_.items.find(_.id.value == id.value))

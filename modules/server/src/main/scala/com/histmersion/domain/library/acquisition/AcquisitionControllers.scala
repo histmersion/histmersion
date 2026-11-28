@@ -203,7 +203,7 @@ final class AcquisitionControllers(
       val from = offset.flatMap(o => Offset.option(o.value)).getOrElse(Offset.Start)
       val page = candidateStore.list(
         g,
-        Source.Candidate.State(s.wire.value),
+        s.wire,
         CandidateService.ListLimit(n.value + 1),
         from
       )
@@ -234,14 +234,14 @@ final class AcquisitionControllers(
   def markCandidates(m: CandidateMark): Either[Api.Error, CandidateMarked] =
     maintenance.guard(WriteGate.OperationName("candidates/mark")):
       Candidates.State
-        .parse(Candidates.State.Wire(m.state.value))
+        .parse(m.state)
         .toRight(
           Api.Error(unknownState(Problem.Raw.of(m.state)), Some(Api.Error.Code(Write.CodeInvalid)))
         )
         .map(s =>
           CandidateMarked(
-            Source.Candidate.State(s.wire.value),
-            CandidateMarked.Updated(candidateStore.mark(m.ids.distinct, Source.Candidate.State(s.wire.value)).value)
+            s.wire,
+            CandidateMarked.Updated(candidateStore.mark(m.ids.distinct, s.wire).value)
           )
         )
 

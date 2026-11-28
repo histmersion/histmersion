@@ -670,7 +670,7 @@ object Cli:
                 case None    => Right(())
                 case Some(d) =>
                   Backup
-                    .safeName(Backup.Name(r.file.value))
+                    .safeName(r.file.asName)
                     .left
                     .map(m =>
                       Error.answered(
@@ -680,7 +680,7 @@ object Cli:
                     .flatMap { name =>
                       val dir = Path.of(d)
                       val _ = Files.createDirectories(dir)
-                      c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
+                      c.downloadBackup(name.asName, dir.resolve(name.value).toFile)
                         .map(f => out.println(s"downloaded → ${f.getAbsolutePath}"))
                     }
             }

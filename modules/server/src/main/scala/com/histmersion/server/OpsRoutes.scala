@@ -58,16 +58,14 @@ object OpsRoutes:
         g <- scoped(goal, "goal slug")(Goal.Slug.either(_))
         j <- scoped(job, "job id")(Job.Id.either(_))
         r <- w.workListView.list(
-          WorkListControllers.KindOfList(list.value),
+          list,
           (if all then WorkListView.IncludeAll.All else WorkListView.IncludeAll.OpenOnly),
           g,
           j
         )
       yield r
     ),
-    OpsApi.queueAdd.serverLogic[Identity]((list, in) =>
-      w.workLists.addOverRest(WorkListControllers.ListName(list.value), in)
-    ),
+    OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.addOverRest(list, in)),
     OpsApi.goalsExport.serverLogicSuccess[Identity](_ =>
       com.histmersion.api.automation.Goal.Export(w.goals.exportText())
     )

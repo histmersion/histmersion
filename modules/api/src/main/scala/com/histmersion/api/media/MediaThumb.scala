@@ -32,12 +32,14 @@ final case class MediaThumb(
 
 object MediaThumb:
   type FilePath = FilePath.T
-  object FilePath extends Newtype[String, Pure]
+  object FilePath extends Newtype[String, Pure]:
+    extension (path: FilePath) def asFileUrl: MediaItem.FileUrl = MediaItem.FileUrl(path.value)
   type MarkdownLine = MarkdownLine.T
   @tolerated(LintRule.G9Prefix, "pending G9 (namespaces, not prefixes)")
   object MarkdownLine extends Newtype[String, Pure]
   type ThumbPath = ThumbPath.T
-  object ThumbPath extends Newtype[String, Pure]
+  object ThumbPath extends Newtype[String, Pure]:
+    extension (path: ThumbPath) def asThumbUrl: MediaItem.ThumbUrl = MediaItem.ThumbUrl(path.value)
 
   type Role = Role.T
   object Role extends Newtype[String, Pure]

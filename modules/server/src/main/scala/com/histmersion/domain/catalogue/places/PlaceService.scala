@@ -271,7 +271,7 @@ object PlaceService:
           .map(_.place.id)
           .filter(id =>
             s0.placeRemovals(CatalogueState.PlaceRemovals(id.value)) || s0.placeAliases
-              .contains(CatalogueState.PlaceAliasesKey(id.value))
+              .contains(id)
           )
           .toSet
         val kept = batch.filterNot(in => skip(in.place.id))
@@ -407,7 +407,7 @@ object PlaceService:
           parentsOf(p, asOf),
           kidsOf(apiId(id), asOf).toList.map(_.summary),
           Place.Counts.Findings(0),
-          asOf.map(y => Year(y.value)),
+          asOf.map(y => y),
           (if p.contested then Place.Entry.Contested.Contested else Place.Entry.Contested.Settled),
           links = p.links.sortBy(l => (l.scheme.value, l.externalId.value)).toList
         )
@@ -521,7 +521,7 @@ object PlaceService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def rename(from: DPlace.Id, to: DPlace.Id)(using WritePermit): Either[Api.Error, Unit] =
       val (o, n) = (Place.Id(from.value.trim), Place.Id(to.value.trim))
-      val aliasOf = state.get.placeAliases.get(CatalogueState.PlaceAliasesKey(n.value))
+      val aliasOf = state.get.placeAliases.get(n)
       if find(o).isEmpty then Left(notFound(o.value))
       else if find(n).isDefined then
         Left(invalid(Problem.Conflict.AlreadyExists(Problem.TypeName.of(Place.Id), Problem.Raw.of(n))))
@@ -544,9 +544,9 @@ object PlaceService:
             })
             .modify(_.placeAliases)
             .using(as =>
-              (as - CatalogueState.PlaceAliasesKey(n.value)).map((a, t) =>
+              (as - n).map((a, t) =>
                 a -> (if t.value == o.value then CatalogueState.PlaceAliasesValue(n.value) else t)
-              ) + (CatalogueState.PlaceAliasesKey(o.value) -> CatalogueState.PlaceAliasesValue(n.value))
+              ) + (o -> CatalogueState.PlaceAliasesValue(n.value))
             )
             .modify(_.placeOverrides)
             .using(_.map(x => if x.placeId.value == o.value then x.modify(_.placeId).setTo(to) else x))
@@ -655,10 +655,10 @@ object PlaceService:
         invalid(Problem.Conflict.Claimed(Problem.TypeName.of(Place.Id), Problem.Raw.of(id), clash))
       if find(id).isDefined then Left(claimed(Problem.Conflict.Clash.Taken))
       else if s.placeRemovals(CatalogueState.PlaceRemovals(id.value)) then Left(claimed(Problem.Conflict.Clash.Removed))
-      else if s.placeAliases.contains(CatalogueState.PlaceAliasesKey(id.value)) then
+      else if s.placeAliases.contains(id) then
         Left(
           claimed(
-            Problem.Conflict.Clash.OldKeyOf(Problem.Raw.of(s.placeAliases(CatalogueState.PlaceAliasesKey(id.value))))
+            Problem.Conflict.Clash.OldKeyOf(Problem.Raw.of(s.placeAliases(id)))
           )
         )
       else

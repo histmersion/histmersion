@@ -16,9 +16,7 @@ final case class MergeResolution(
       api.json.Schema
 
 object MergeResolution:
-  type Issue = Issue.T
-  object Issue extends Newtype[String, Pure]:
-    given Display[T] = Display(_.value)
+  export MergeIssue.Id as Issue
   export MergeDecision.Kind.Wire as Decision
   type Text = Text.T
   object Text extends Newtype[String, Pure]

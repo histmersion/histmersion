@@ -171,7 +171,7 @@ object QueueItemRef:
     Option
       .when(raw.nonEmpty)(raw)
       .flatMap(k => UploadView.suggestCitekey(Api.FileName(k)))
-      .map(c => Preview.Target.Source.Citekey(c.value))
+      .map(c => c)
 
   /** The runs of letters in `s`. */
   private def words(s: String): List[String] =

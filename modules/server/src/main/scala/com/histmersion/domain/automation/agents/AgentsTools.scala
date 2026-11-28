@@ -152,7 +152,7 @@ object AgentsTools:
                         c =>
                           Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`")
                       )
-                      .map(t => Paging.Cursor(t.value))
+                      .map(t => t.asCursor)
                   )
               )
         }
@@ -188,7 +188,7 @@ object AgentsTools:
                         Paging.OlderLine
                           .Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")
                     )
-                    .map(t => Paging.Cursor(t.value))
+                    .map(t => t.asCursor)
                 )
             )
         }

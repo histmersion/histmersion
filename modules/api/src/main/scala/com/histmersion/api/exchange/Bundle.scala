@@ -1210,8 +1210,7 @@ object Bundle:
     object InfluentialCitations extends Newtype[Int, Pure]
     type AddedDate = AddedDate.T
     object AddedDate extends Newtype[String, Pure]
-    type BodySha256 = BodySha256.T
-    object BodySha256 extends Newtype[String, Pure]
+    export api.Sha256 as BodySha256
     type OriginalSha256 = OriginalSha256.T
     object OriginalSha256 extends Newtype[String, Pure]
     type OriginalExt = OriginalExt.T

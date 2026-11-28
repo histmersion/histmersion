@@ -1110,7 +1110,7 @@ final class ReviewArticlePipeline(
       .filter(i => i.list == tasks && i.status.value == Queue.Open)
       .orElse(
         open
-          .filter(i => ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
+          .filter(i => ReviewLedger.articleTask(slug, i.text))
           .sortBy(_.id)
           .headOption
       )
@@ -1129,7 +1129,7 @@ final class ReviewArticlePipeline(
           case None =>
             val add = Pipelines.entry(ctx, Pipelines.EntryText(text), Some(Pipelines.EntryTopic("agent review")))
             ctx.write("tasks item", add.asJson)(
-              site.workLists.record(WorkListControllers.ListName(tasks.value), add, ctx.creator).toOption.map(_.id)
+              site.workLists.record(tasks, add, ctx.creator).toOption.map(_.id)
             )(None)
       case None =>
         current.foreach { item =>
@@ -1151,8 +1151,8 @@ final class ReviewArticlePipeline(
     open
       .filter(i =>
         !current.exists(_.id == i.id) && !kept.contains(i.id) &&
-          (ReviewLedger.legacyTask(slug, ReviewLedger.TaskText(i.text.value)) ||
-            ReviewLedger.articleTask(slug, ReviewLedger.TaskText(i.text.value)))
+          (ReviewLedger.legacyTask(slug, i.text) ||
+            ReviewLedger.articleTask(slug, i.text))
       )
       .foreach { item =>
         val why = kept.fold(s"no MAJOR open after agent run ${ctx.run.id.value.take(8)}")(id =>

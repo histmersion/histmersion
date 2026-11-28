@@ -142,8 +142,7 @@ object CollectionsService:
   object Limit extends Newtype[Int, Pure]
 
   /** A source collection, by the name the registry knows it under. */
-  type CollectionName = CollectionName.T
-  object CollectionName extends Newtype[String, Pure]
+  export Collection.Name as CollectionName
   enum SearchUnlinked derives CanEqual:
     case Unlinked, All
   object SearchUnlinked extends TwoCases[SearchUnlinked]:

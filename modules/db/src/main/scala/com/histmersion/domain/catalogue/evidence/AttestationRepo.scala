@@ -22,8 +22,7 @@ import com.histmersion.lint.{tolerated, LintRule}
 @tolerated(LintRule.Layer, "pending G7 (separate types per layer)")
 @atBoundary(BoundaryKind.Sql, "reads and writes the attestation tables and their row codecs")
 private[evidence] object AttestationRepo:
-  type AttestationId = AttestationId.T
-  object AttestationId extends Newtype[Long, Pure]
+  export Attestation.Id as AttestationId
 
   @tolerated(LintRule.Derives, "pending G18 (derives instead of hand-written givens)")
   private given DbCodec[Attestation] = DbCodec.derived

@@ -51,9 +51,8 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   private def plan(in: MergePlanner.Input = input(), res: MergeResolutions = MergeResolutions()): MergePlanner.Result =
     MergePlanner.plan(in, sketches, res, cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(pairs: (MergeIssue.Id, MergeResolution.Decision)*): MergeResolutions =
-    MergeResolutions(pairs.toList.map((i, d) => MergeResolution(MergeResolution.Issue(i.value), d)))
+    MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.SilentInterp, "pending G35 (a vocabulary renders through its wire string)")
@@ -348,7 +347,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       while current.issues.exists(i => i.decision.isEmpty && i.condition.isEmpty && i.options.nonEmpty) do
         val open = current.issues.filter(i => i.decision.isEmpty && i.condition.isEmpty && i.options.nonEmpty)
         val pick = open(rnd.nextInt(open.size))
-        decided += MergeResolution(MergeResolution.Issue(pick.id.value), someDecision(pick, rnd))
+        decided += MergeResolution(pick.id, someDecision(pick, rnd))
         val next = plan(res = MergeResolutions(decided.toList)).plan
         val added = next.issues.map(_.id).toSet -- current.issues.map(_.id).toSet
         assertEquals(added, Set.empty, s"round $round: deciding ${pick.id} added issues")
@@ -651,7 +650,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       MergeResolutions(
         List(
           MergeResolution(
-            MergeResolution.Issue(q.id.value),
+            q.id,
             MergeResolution.Decision("file:merged.md"),
             Some(MergeResolution.Text("By hand."))
           )
@@ -671,7 +670,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
         val open = current.plan.issues.filter(i => i.decision.isEmpty && i.condition.isEmpty && i.options.nonEmpty)
         val pick = open(rnd.nextInt(open.size))
         decided += MergeResolution(
-          MergeResolution.Issue(pick.id.value),
+          pick.id,
           someDecision(pick, rnd),
           Some(MergeResolution.Text("text"))
         )

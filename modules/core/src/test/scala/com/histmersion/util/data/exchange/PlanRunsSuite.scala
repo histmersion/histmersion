@@ -43,7 +43,6 @@ class PlanRunsSuite extends munit.FunSuite:
     override def notices: List[PairQuestions.InfoLine] = List(PairQuestions.InfoLine(s"$name notice"))
     override def ownerSource(foreign: UUID, kind: api.exchange.Bundle.Kind): Option[UUID] =
       Option.when(answers)(uid(name))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def bodiesWanted(
         pairs: List[(api.exchange.Bundle.Source, api.exchange.Bundle.Source)]
     ): Set[api.exchange.Bundle.Source.BodySha256] = Set(

@@ -401,16 +401,12 @@ final class AgentsControllers(
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   @tolerated(LintRule.UnnamedBoolean, "pending ADR 0027 (a Boolean argument is passed by name)")
   def setFallthrough(role: Role.Wire, in: PlanQuota.FallthroughSet): Either[Problems, PlanQuota.QuotaInfo] =
     maintenance.writing:
       roleOf(role).map { r =>
         Transactor(ds).write(
-          PlanQuotaRepo.setFallthrough(ModelSettingsRepo.ChainRole(r.wire.value), in.fallthrough.fallthrough)
+          PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough.fallthrough)
         )
         quota
       }
@@ -588,7 +584,7 @@ final class AgentsControllers(
       val shown = c.active.map(_.value).orElse(c.models.headOption.map(_.model.value))
       val entry = c.models.find(e => shown.contains(e.model.value))
       RoleModel(
-        Role.Wire(c.role.value),
+        c.role,
         shown.map(RoleModel.Model(_)),
         ready = (if c.active.isDefined then RoleModel.Ready.Ready else RoleModel.Ready.Unready),
         if c.active.isDefined then Nil
@@ -648,7 +644,6 @@ final class AgentsControllers(
         )
       )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
@@ -656,7 +651,7 @@ final class AgentsControllers(
   private def chainOf(role: Role): Either[Problems, ModelChains.RoleChain] =
     picker
       .roleChains(PlanQuotaRepo.EpochMillis(clock.millis()))
-      .find(_.role.value == role.wire.value)
+      .find(_.role == role.wire)
       .toRight(Problem.NotFound.Entity(Problem.TypeName.of(Role.Wire), Problem.Raw.of(role.wire)))
 
   /** `PUT /api/agents/models/{role}` — the role's chain, saved over `agents.roles.<role>`. Every model must be a
@@ -682,21 +677,17 @@ final class AgentsControllers(
         (),
         Problem.Invalid.Broken.here(Problem.Invalid.Rule.ChainGiven)
       )
-      _ = Transactor(ds).write(ModelSettingsRepo.setChain(ModelSettingsRepo.ChainRole(r.wire.value), ms.map(_.wire)))
+      _ = Transactor(ds).write(ModelSettingsRepo.setChain(r.wire, ms.map(_.wire)))
       c <- chainOf(r)
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
   def resetChain(role: Role.Wire): Either[Problems, ModelChains.RoleChain] = maintenance.writing(resetChainHeld(role))
 
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def resetChainHeld(role: Role.Wire)(using WritePermit): Either[Problems, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
-      _ = Transactor(ds).write(ModelSettingsRepo.removeChain(ModelSettingsRepo.ChainRole(r.wire.value)))
+      _ = Transactor(ds).write(ModelSettingsRepo.removeChain(r.wire))
       c <- chainOf(r)
     yield c
 
@@ -890,7 +881,7 @@ final class AgentsControllers(
     for
       _ <- enabled.left.map(Api.Error(_))
       p <- Pipeline
-        .parse(Pipeline.Wire(req.pipeline.value))
+        .parse(req.pipeline)
         .toRight(
           Api.Error(
             Problem.Invalid.Unknown.here(
@@ -1178,7 +1169,7 @@ final class AgentsControllers(
           q,
           RunQuery.Limit(site.config.limits.page(limit, searchPage).value),
           cursor(before).map(c => AgentRepo.PageCursor(c.value)),
-          cursor(upTo).map(c => RunQuery.UpTo(c.value))
+          cursor(upTo).map(c => AgentRepo.PageCursor(c.value))
         )
         .left
         .map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeNotFound))))

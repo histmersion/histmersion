@@ -229,7 +229,7 @@ final class CandidateSearch(
         }
         val unseen = candidates
           .counts(Some(goal))
-          .find(_.state.value == Candidates.State.New.wire.value)
+          .find(_.state == Candidates.State.New.wire)
           .fold(CandidateSweep.Unseen(0))(n => CandidateSweep.Unseen(n.count.value))
         val notes = leftOut.toList.map { case (index, (why, n)) =>
           CandidateSweep.Notes(

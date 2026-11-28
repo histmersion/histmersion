@@ -239,7 +239,7 @@ final class EventsControllers(
       id,
       from =>
         LabelRenames
-          .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
+          .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), req.to)
           .flatMap(l => Event.Id.parse(l.value).left.map(p => Api.Error(p, Some(Api.Error.Code(Write.CodeInvalid)))))
     ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 

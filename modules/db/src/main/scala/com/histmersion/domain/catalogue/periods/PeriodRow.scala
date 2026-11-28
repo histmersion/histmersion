@@ -35,5 +35,5 @@ final private[periods] case class PeriodRow(
     )
 
 object PeriodRow:
-  export HistoricalPeriod.{Authority, Id, Label, ParentId, Region}
+  export HistoricalPeriod.{Authority, Id, Id as ParentId, Label, Region}
   export PresetRegion.Wire as Preset

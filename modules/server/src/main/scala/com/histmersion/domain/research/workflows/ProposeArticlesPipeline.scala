@@ -154,7 +154,7 @@ final class ProposeArticlesPipeline(
       val planned = area
         .flatMap(a =>
           managers.items(
-            Managers.seedId(com.histmersion.api.automation.Goal.Ref(a.value)),
+            Managers.seedId(com.histmersion.api.automation.Goal.Slug(a.value)),
             PageSize(1000)
           )
         )

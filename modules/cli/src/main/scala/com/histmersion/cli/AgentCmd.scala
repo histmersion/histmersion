@@ -186,7 +186,7 @@ object AgentCmd:
                     "agent runs",
                     f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))
                   )
-                  .map(t => Paging.Cursor(t.value))
+                  .map(t => t.asCursor)
               )
             )
           }
@@ -216,7 +216,7 @@ object AgentCmd:
                     "agent approvals",
                     f.options.map((k, v) => (k.value, v.map(_.value))) ++ List("limit" -> limit.map(_.toString))
                   )
-                  .map(t => Paging.Cursor(t.value))
+                  .map(t => t.asCursor)
               )
             )
           }

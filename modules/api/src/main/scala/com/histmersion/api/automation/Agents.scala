@@ -27,6 +27,7 @@ import com.histmersion.api.Wording
 import com.histmersion.api.time.IsoLocal
 import com.histmersion.api.library.Filter
 import com.histmersion.api.json.TwoStates
+import com.histmersion.api.automation.Pipeline as PipelineSpelling
 
 @tolerated(LintRule.Direction, "pending G12 (a domain names only lower places)")
 @tolerated(LintRule.FileSystem, "pending G23 (files only through util.storage)")
@@ -396,8 +397,7 @@ object Agents:
   ) extends Creation.Requested derives JsonCodec, KindlingsSchema, api.json.Schema
 
   object RunRequest:
-    type Pipeline = Pipeline.T
-    object Pipeline extends Newtype[String, Pure]
+    export PipelineSpelling.Wire as Pipeline
     type Target = Target.T
     object Target extends Newtype[String, Pure]
     type Model = Model.T

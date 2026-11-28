@@ -21,7 +21,6 @@ import com.histmersion.lint.{tolerated, LintRule}
   */
 object LibraryRoutes:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(
     LintRule.G44Conversion,
     "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
@@ -95,9 +94,7 @@ object LibraryRoutes:
       Api.neighbors.serverLogic[Identity]((ck, kinds) =>
         citekey(ck).map(citations.neighbors(_, kinds.map(k => Edge.Kind.Wire(k.value))))
       ),
-      Api.graph.serverLogic[Identity]((ck, depth) =>
-        citekey(ck).map(citations.graph(_, depth.map(d => CitationService.Depth(d.value))))
-      ),
+      Api.graph.serverLogic[Identity]((ck, depth) => citekey(ck).map(citations.graph(_, depth.map(d => d)))),
       Api.contradictions.serverLogic[Identity]((ck, since) =>
         citekeyOpt(ck).map(citations.contradictions(_, since.map(a => CitationService.Since(a.value))))
       ),

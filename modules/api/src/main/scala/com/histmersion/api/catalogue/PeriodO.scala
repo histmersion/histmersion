@@ -267,7 +267,7 @@ object PeriodO:
               a.periods.map(_.period.start).minBy(y => (y.value: Long)),
               a.periods.map(_.period.end).maxBy(y => (y.value: Long))
             ),
-            parentId = existing.get(a.id).flatten.map(p => HistoricalPeriod.ParentId(p.value))
+            parentId = existing.get(a.id).flatten.map(p => p)
           )
         }
     val rows = defs.map { (a, d) =>
@@ -285,19 +285,18 @@ object PeriodO:
         Some(a.cite(d.id)),
         d.period,
         d.region,
-        parent.filter(_ != d.id).map(p => HistoricalPeriod.ParentId(p.value)),
+        parent.filter(_ != d.id).map(p => p),
         ds.presets.get(PeriodODataset.PresetsKey(d.id.value))
       )
     }
     parentsFirst(authorityRoots ++ rows)
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private[api] def parentsFirst(rows: List[HistoricalPeriod]): List[HistoricalPeriod] =
     val byId = rows.map(r => r.id -> r).toMap
     val out = scala.collection.mutable.LinkedHashMap.empty[HistoricalPeriod.Id, HistoricalPeriod]
     def visit(r: HistoricalPeriod, path: Set[HistoricalPeriod.Id]): Unit =
       if !out.contains(r.id) then
-        val parent = r.parentId.flatMap(pid => byId.get(HistoricalPeriod.Id(pid.value)))
+        val parent = r.parentId.flatMap(pid => byId.get(pid))
         parent match
           case Some(p) if path.contains(p.id) => out(r.id) = r.modify(_.parentId).setTo(None)
           case Some(p)                        =>

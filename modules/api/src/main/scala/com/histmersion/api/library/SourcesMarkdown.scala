@@ -80,9 +80,7 @@ object SourcesMarkdown:
       if !(fullText) then ""
       else
         s.ocrMarkdown
-          .map(t =>
-            s"\n\n---\n\n${AssetLinks.normalizeBody(AssetLinks.Body(t.value), AssetLinks.Title(s.title.value))}"
-          )
+          .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t.asLinksBody, AssetLinks.Title(s.title.value))}")
           .getOrElse("\n\n_(no full text stored)_")
     (header + topics + regions + tags + doi + prov + uid + created + summary + notes + findingsMd + body)
 

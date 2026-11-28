@@ -425,7 +425,7 @@ class GazetteerRepoSuite extends DbSuite with db.Bounded:
           Geocode.Attempt.Name("Zzgazmikoyan"),
           KindHint.Unknown,
           p,
-          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+          cfg.places.geocodePlaceholderMin
         )
       )
         .map(_.placeId)

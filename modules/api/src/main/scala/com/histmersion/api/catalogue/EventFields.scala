@@ -53,7 +53,7 @@ object EventFields:
       p.timeSpan.map(Span -> _.asJson),
       p.historicity.map(h => Historicity -> (h.value: String).asJson),
       p.description.map(d => Description -> Option(d.value: String).filter(_.nonEmpty).asJson),
-      p.geometry.map(g => Geometry -> geometry(Some(EventGeometry.Geojson(g.value))))
+      p.geometry.map(g => Geometry -> geometry(Some(g)))
     ).flatten.toMap
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
@@ -65,5 +65,5 @@ object EventFields:
       Span -> p.timeSpan.asJson,
       Historicity -> (p.historicity.value: String).asJson,
       Description -> p.description.map(d => d.value: String).filter(_.nonEmpty).asJson,
-      Geometry -> geometry(p.geometry.map(g => EventGeometry.Geojson(g.value)))
+      Geometry -> geometry(p.geometry.map(g => g))
     )

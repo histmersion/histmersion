@@ -2,6 +2,7 @@ package com.histmersion
 package domain.library.ingest
 
 import com.histmersion.api.library.Edge
+import com.histmersion.api.library.AuthorName
 import com.histmersion.domain.library.Doi
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
@@ -27,7 +28,8 @@ object IngestMeta:
   type Title = domain.Title
   val Title: domain.Title.type = domain.Title
   type Authors = Authors.T
-  object Authors extends Newtype[String, Pure]
+  object Authors extends Newtype[String, Pure]:
+    extension (authors: Authors) def asAuthorName: AuthorName = AuthorName(authors.value)
   type Venue = Venue.T
   object Venue extends Newtype[String, Pure]
   type Summary = Summary.T

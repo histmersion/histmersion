@@ -43,7 +43,7 @@ object SourcesData:
         Chunker.ChunkMaxChars(site.settings.limits.chunkChars.value),
         slice.after.flatMap(a => Citekey.option(a.value)),
         slice.limit.map(l => SourceRepairs.MaxSources(l.value)),
-        SourceRepairs.MaxChars(site.settings.limits.reindexChars.value)
+        site.settings.limits.reindexChars
       )
 
   final private class Check(val owner: DataOwner, name: Rule.Name, override val fix: Option[SafeFix]) extends CheckRule:
@@ -59,7 +59,7 @@ object SourcesData:
           context.config,
           context.format(ck => Citekey.option(ck.value).exists(stored))
         ),
-        Lint.ItemLimit(maxItems.value)
+        maxItems
       )
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

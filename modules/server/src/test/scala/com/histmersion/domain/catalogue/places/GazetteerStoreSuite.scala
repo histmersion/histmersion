@@ -72,7 +72,6 @@ class GazetteerStoreSuite extends DbSuite:
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) =
         wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def importOnce(name: Registries.GazetteerSourcesKey): Either[Problem, Place.ImportResult] =
     val db = Transactor(ds)
     ImportRunner.fetchAndImport(
@@ -81,7 +80,7 @@ class GazetteerStoreSuite extends DbSuite:
       PlaceService(db, TestCreators.clock),
       PlaceGeometry(db)(using new SystemTimer),
       dryRun = GazetteerControllers.DryRun.Applied,
-      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+      cfg.places.pointToleranceKm
     )
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────

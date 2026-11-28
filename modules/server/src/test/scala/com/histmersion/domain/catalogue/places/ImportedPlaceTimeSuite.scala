@@ -267,7 +267,7 @@ class ImportedPlaceTimeSuite extends DbSuite with db.Bounded:
           Geocode.Attempt.Name("Zzpt Kingdom of Patones"),
           KindHint.Unknown,
           Some(p),
-          GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value)
+          cfg.places.geocodePlaceholderMin
         )
       )
         .map(_.placeId)

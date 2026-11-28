@@ -28,8 +28,8 @@ object GeoHitPage:
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(total: SearchResult.Total, hits: List[GeoHit], offset: UnreadPage.Offset): GeoHitPage =
     GeoHitPage(
-      RowCount((total).value),
+      total.rows,
       hits,
       Offset((offset).value),
-      OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next
+      OffsetPage(total.rows, Offset((offset).value), RowCount(hits.size)).next
     )

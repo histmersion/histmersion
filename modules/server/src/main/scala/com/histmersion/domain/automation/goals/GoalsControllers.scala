@@ -87,7 +87,7 @@ final class GoalsControllers(
         valid <- LabelRenames.validate(
           Bundle.Kind.Goal,
           LabelRenames.Label(from.value),
-          LabelRenames.Label(req.to.value)
+          req.to
         )
         to <- domain.automation.Goal.Slug
           .either(valid.value)

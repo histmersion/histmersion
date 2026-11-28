@@ -174,7 +174,7 @@ class PeriodsSuite extends munit.FunSuite:
   test("rows come parents first, and a cycle is cut rather than looped"):
     val rows = PeriodO.toPeriods(parsed, roots = true)
     rows.zipWithIndex.foreach { (r, i) =>
-      r.parentId.foreach(p => assert(rows.indexWhere(_.id.value == p.value) < i, s"${r.id} before its parent $p"))
+      r.parentId.foreach(p => assert(rows.indexWhere(_.id == p) < i, s"${r.id} before its parent $p"))
     }
     val a = HistoricalPeriod(
       HistoricalPeriod.Id("a"),
@@ -182,7 +182,7 @@ class PeriodsSuite extends munit.FunSuite:
       None,
       Period(Year(1), Year(2)),
       None,
-      Some(HistoricalPeriod.ParentId("b"))
+      Some(HistoricalPeriod.Id("b"))
     )
     val b = HistoricalPeriod(
       HistoricalPeriod.Id("b"),
@@ -190,7 +190,7 @@ class PeriodsSuite extends munit.FunSuite:
       None,
       Period(Year(1), Year(2)),
       None,
-      Some(HistoricalPeriod.ParentId("a"))
+      Some(HistoricalPeriod.Id("a"))
     )
     val out = PeriodO.parentsFirst(List(a, b))
     assertEquals(out.map(_.id).toSet, Set("a", "b"))
@@ -387,7 +387,7 @@ class PeriodsSuite extends munit.FunSuite:
     def chain(id: HistoricalPeriod.Id): List[String] = m
       .get(id)
       .toList
-      .flatMap(p => p.label.value :: p.parentId.toList.flatMap(pid => chain(HistoricalPeriod.Id(pid.value))))
+      .flatMap(p => p.label.value :: p.parentId.toList.flatMap(pid => chain(pid)))
     // Late Minoan → Bronze Age Minoan → Bronze Age (the BSA's, for Greece) — and nothing above it
     assertEquals(chain(HistoricalPeriod.Id("p0ds9qjh4dh")), List("Late Minoan", "Bronze Age Minoan", "Bronze Age"))
     assertEquals(
@@ -396,14 +396,10 @@ class PeriodsSuite extends munit.FunSuite:
     ) // Bronze Age Helladic under the BSA's Bronze Age
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).parentId, None) // no longer under ROAD's Eurasia
     assert(
-      m.values.exists(p =>
-        p.label.value == "Early Helladic" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9pc2"))
-      )
+      m.values.exists(p => p.label.value == "Early Helladic" && p.parentId.contains(HistoricalPeriod.Id("p0ds9qj9pc2")))
     )
     assert(
-      m.values.exists(p =>
-        p.label.value == "Middle Minoan" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9kdj"))
-      )
+      m.values.exists(p => p.label.value == "Middle Minoan" && p.parentId.contains(HistoricalPeriod.Id("p0ds9qj9kdj")))
     )
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).region, Some("Greece"))
     assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).preset, Some(PresetRegion.Aegean))

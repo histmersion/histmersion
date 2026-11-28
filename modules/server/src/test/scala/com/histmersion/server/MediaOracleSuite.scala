@@ -257,7 +257,7 @@ class MediaOracleSuite extends DbSuite:
     List("defaults" -> defaults, "configured" -> configured).foreach { (what, cfg) =>
       names.foreach { n =>
         val csv = BuiltinMedia.licencesFor(n, cfg)
-        val allow = Licence.allowList(Licence.AllowList(csv.value))
+        val allow = Licence.allowList(csv)
         out ++= s"$what $n: ${(csv.value: String).asJson.noSpaces} → " +
           families.filter(f => Licence.allowed(Licence(Licence.Id("x"), f), allow)).map(_.wire).mkString(",") + "\n"
       }

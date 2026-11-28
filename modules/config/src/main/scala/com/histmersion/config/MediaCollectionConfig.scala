@@ -5,6 +5,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{movesTo, FeaturePlace}
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.domain.Licence
 
 /** One open-access collection (`media.met`, `.cleveland`, `.aic`, `.loc`, `.pleiades`, `.open-context`, `.smithsonian`,
   * `.europeana`): its API, its own pace, how many records are looked at and kept per place, and the licence families it
@@ -65,8 +66,7 @@ object MediaCollectionConfig:
   object DisplayPx extends Newtype[Int, Pure]
   type MaxYear = MaxYear.T
   object MaxYear extends Newtype[Int, Pure]
-  type Licences = Licences.T
-  object Licences extends Newtype[String, Pure]
+  export Licence.AllowList as Licences
   type RefusalBackoffSeconds = RefusalBackoffSeconds.T
   object RefusalBackoffSeconds extends Newtype[String, Pure]
   type ExcludeProviders = ExcludeProviders.T

@@ -3,6 +3,7 @@ package api.automation
 
 import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.api.Wording
 enum AgentRole(val wire: AgentRole.Wire) derives CanEqual:
   case Probe extends AgentRole(AgentRole.Wire("probe"))
   case Extractor extends AgentRole(AgentRole.Wire("extractor"))
@@ -19,7 +20,8 @@ enum AgentRole(val wire: AgentRole.Wire) derives CanEqual:
 
 object AgentRole:
   type Wire = Wire.T
-  object Wire extends Newtype[String, Pure]
+  object Wire extends Newtype[String, Pure]:
+    given Display[T] = Display(role => Wording.humanize(Wording.Id(role.value)))
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def parse(s: Wire): Option[AgentRole] = values.find(_.wire == Wire((s).value.trim.toLowerCase))

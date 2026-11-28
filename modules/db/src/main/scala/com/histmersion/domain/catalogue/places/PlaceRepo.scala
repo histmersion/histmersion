@@ -411,7 +411,7 @@ private[places] object PlaceRepo:
         descriptions = descriptionsOf(id),
         timeBasis = r.timeBasis,
         locationPrecision = r.precision.transformInto[Place.Precision],
-        siteType = siteTypeOf(id).map(t => Place.Entry.SiteType(t.value)),
+        siteType = siteTypeOf(id).map(t => t),
         record = recordOf(id),
         creator = creator,
         createdAt = createdAt

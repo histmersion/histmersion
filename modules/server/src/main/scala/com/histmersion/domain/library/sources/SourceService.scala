@@ -676,8 +676,8 @@ object SourceService:
         .using(_.map(e => e.modify(_.src).using(s => if s.value == from.value then toApi else s)))
       val waiting =
         keyed.parked.map(_.dst).filter(d => d.value == to.value || to.value.startsWith(d.value + "_")).toList.distinct
-      val resolvedNow = resolveIn(keyed, waiting.map(d => WikiLinks.Occurrence.Target(d.value)))
-      val promotable = waiting.filter(d => resolvedNow.get(WikiLinks.Occurrence.Target(d.value)).contains(to)).toSet
+      val resolvedNow = resolveIn(keyed, waiting.map(d => d.asLinkTarget))
+      val promotable = waiting.filter(d => resolvedNow.get(d.asLinkTarget).contains(to)).toSet
       val promoting = keyed.parked.filter(e => promotable(e.dst) && e.src.value != to.value)
       val newEdges = promoting.map(_.modify(_.dst).setTo(toApi)).filterNot(keyed.edges)
       val linked = keyed.modify(_.edges).using(_ ++ newEdges).modify(_.parked).using(_ -- promoting)
@@ -817,7 +817,7 @@ object SourceService:
     def resolveEdges(caller: Caller)(using WritePermit)(using Creator.New): RowCount =
       var moved = 0
       val _ = state.updateAndGet { st =>
-        val targets = resolveIn(st, st.parked.toList.map(e => WikiLinks.Occurrence.Target(e.dst.value)))
+        val targets = resolveIn(st, st.parked.toList.map(e => e.dst.asLinkTarget))
         val moves = st.parked.toList.flatMap(e =>
           targets
             .get(WikiLinks.Occurrence.Target(e.dst.value.trim.toLowerCase))

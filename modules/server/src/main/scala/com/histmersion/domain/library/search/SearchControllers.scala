@@ -183,7 +183,7 @@ final class SearchControllers(
     // the same axis says so by asking for a `depth`/`samples` — which is exactly what the "by time"
     // tab does, and what the CLI's `--group time` sends.
     if axes == List(Tree.KindTime) && q.depth.isEmpty && q.samples.isEmpty then base
-    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf.map(a => Year(a.value)), base)
+    else treeOn(axes, rowUnit, window, scope, from, to, depth, samples, q.asOf.map(a => a), base)
 
   /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
   @tolerated(

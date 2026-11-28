@@ -67,7 +67,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
         apiKey(citekey),
         Source.Put(
           title = Title(meta.title.value),
-          authors = meta.authors.map(a => AuthorName(a.value)),
+          authors = meta.authors.map(a => a.asAuthorName),
           doi = meta.doi.map(d => Doi(d.value)),
           year = meta.year.map(y => Year(y.value.toLong)),
           venue = meta.venue.map(v => Source.Venue(v.value)),
@@ -93,7 +93,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
           metadata = Some(
             MetadataPatch(
               title = Some(meta.title).filter(_.value.nonEmpty).map(t => Title(t.value)),
-              authors = Option(meta.authors).filter(_.nonEmpty).map(_.map(a => AuthorName(a.value))),
+              authors = Option(meta.authors).filter(_.nonEmpty).map(_.map(a => a.asAuthorName)),
               year = meta.year.map(y => Year(y.value.toLong)),
               venue = meta.venue.map(v => Source.Venue(v.value)),
               doi = meta.doi.map(d => Doi(d.value))

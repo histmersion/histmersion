@@ -166,10 +166,8 @@ final class StubUpstream extends AgentUpstream:
     Right(
       sweepFinds
         .getOrElse(goal.value, Nil)
-        .map(c =>
-          c.modify(_.state).setTo(Option(marked.get(c.id)).map(w => Source.Candidate.State(w.value)).getOrElse(c.state))
-        )
-        .filter(_.state == Source.Candidate.State(state.value))
+        .map(c => c.modify(_.state).setTo(Option(marked.get(c.id)).map(w => w).getOrElse(c.state)))
+        .filter(_.state == state)
         .take(limit.value)
     )
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

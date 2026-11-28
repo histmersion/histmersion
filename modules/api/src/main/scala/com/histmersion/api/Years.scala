@@ -23,7 +23,8 @@ object Years:
     type Wire = Wire.T
     object Wire extends Newtype[String, Pure]
   type Astronomical = Astronomical.T
-  object Astronomical extends Newtype[Long, Pure]
+  object Astronomical extends Newtype[Long, Pure]:
+    extension (year: Astronomical) def numberAsYear: Year = Year(year.value)
   type Shift = Shift.T
   object Shift extends Newtype[Long, Pure]
   type Text = Text.T
@@ -34,13 +35,13 @@ object Years:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def fromAstronomical(a: Astronomical): Year = if a.value <= 0 then Year((a).value - 1) else Year((a).value)
+  def fromAstronomical(a: Astronomical): Year = if a.value <= 0 then Year((a).value - 1) else a.numberAsYear
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def toAstronomical(h: Year): Astronomical = if (h).value < 0 then Astronomical((h).value + 1)
   else if h.value == 0 then Astronomical((0).toLong)
-  else Astronomical((h).value)
+  else h.numberAsAstronomical
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

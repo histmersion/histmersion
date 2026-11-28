@@ -80,8 +80,7 @@ class ClaudeCodeSuite extends munit.FunSuite:
     env = Map.empty
   )
   private val Sonnet = ModelRef(ProviderKind.ClaudeCode, ModelRef.Model("sonnet"))
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val AllTools = ToolboxOrder.names.map(t => ToolUse.Tool(t.value))
+  private val AllTools = ToolboxOrder.names.map(t => t.asToolUse)
   private val Offered = List(ToolUse.Tool("get_source"), ToolUse.Tool("search"))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def stream(lines: String*): List[CliProcess.Run.Lines] = lines.toList.map(CliProcess.Run.Lines(_))

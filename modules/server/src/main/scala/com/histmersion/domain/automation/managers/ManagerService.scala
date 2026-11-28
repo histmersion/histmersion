@@ -569,7 +569,7 @@ object ManagerService:
               ManagerItemRecord.ManagerId(managerId.value),
               ManagerItemRecord.Kind(kind.value),
               ManagerItemRecord.Target(target.value),
-              ManagerItemRecord.Status(ItemStatus.Pending.wire.value),
+              ItemStatus.Pending.wire,
               ManagerItemRecord.Priority(priority.value),
               ManagerItemRecord.Attempts(0),
               ManagerItemRecord.Failures(0),
@@ -591,7 +591,7 @@ object ManagerService:
               val back = Settled(old.status.value)
               val again = old
                 .modify(_.status)
-                .using(st => if back then ManagerItemRecord.Status(ItemStatus.Pending.wire.value) else st)
+                .using(st => if back then ItemStatus.Pending.wire else st)
                 .modify(_.attempts)
                 .using(n => if back then ManagerItemRecord.Attempts(0) else n)
                 .modify(_.failures)
@@ -636,7 +636,7 @@ object ManagerService:
       RowCount(
         items.count(i =>
           i.managerId.value == managerId.value && kinds.exists(_.value == i.kind.value) &&
-            statuses.exists(_.value == i.status.value) &&
+            statuses.exists(_ == i.status) &&
             (focusHeld || !this.focusHeld(i))
         )
       )
@@ -733,7 +733,7 @@ object ManagerService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def setItemState(itemId: ManagerItem.Id, state: ItemState, from: List[ItemStatus])(using WritePermit): Boolean =
       val at = now
-      changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
+      changeItems(i => i.id.value == itemId.value && from.exists(_.wire == i.status))(
         _.modify(_.state).setTo(state).modify(_.updatedAt).setTo(at)
       ) > 0
 
@@ -754,10 +754,9 @@ object ManagerService:
       }.toMap
     private def changeItems(which: ManagerItemRecord => Boolean)(f: ManagerItemRecord => ManagerItemRecord): Int =
       state.getAndUpdate(_.modify(_.items).using(_.map(i => if which(i) then f(i) else i))).items.count(which)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     private def released(at: Instant)(i: ManagerItemRecord): ManagerItemRecord =
       i.modify(_.status)
-        .setTo(ManagerItemRecord.Status(ItemStatus.Pending.wire.value))
+        .setTo(ItemStatus.Pending.wire)
         .modify(_.hold)
         .setTo(None)
         .modify(_.updatedAt)
@@ -767,7 +766,7 @@ object ManagerService:
       val at = now
       changeItems(i => i.id.value == itemId.value && (i.status.value == "pending" || i.status.value == "held"))(
         _.modify(_.status)
-          .setTo(ManagerItemRecord.Status(ItemStatus.Held.wire.value))
+          .setTo(ItemStatus.Held.wire)
           .modify(_.hold)
           .setTo(Some(h))
           .modify(_.updatedAt)
@@ -784,9 +783,9 @@ object ManagerService:
         from: List[ItemStatus]
     )(using WritePermit): Boolean =
       val at = now
-      changeItems(i => i.id.value == itemId.value && from.exists(_.wire.value == i.status.value))(
+      changeItems(i => i.id.value == itemId.value && from.exists(_.wire == i.status))(
         _.modify(_.status)
-          .setTo(ManagerItemRecord.Status(status.wire.value))
+          .setTo(status.wire)
           .modify(_.outcome)
           .setTo(Some(ManagerItemRecord.Outcome(outcome.value)))
           .modify(_.hold)
@@ -797,9 +796,9 @@ object ManagerService:
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def dispatch(itemId: ManagerItem.Id, run: Run.Id, state: ItemState)(using WritePermit): Boolean =
       val at = now
-      changeItems(i => i.id.value == itemId.value && i.status.value == ItemStatus.Pending.wire.value)(
+      changeItems(i => i.id.value == itemId.value && i.status == ItemStatus.Pending.wire)(
         _.modify(_.status)
-          .setTo(ManagerItemRecord.Status(ItemStatus.Active.wire.value))
+          .setTo(ItemStatus.Active.wire)
           .modify(_.runId)
           .setTo(Some(run))
           .modify(_.attempts)
@@ -814,7 +813,7 @@ object ManagerService:
       val at = now
       changeItems(i => i.id.value == itemId.value && i.status.value == "pending")(
         _.modify(_.status)
-          .setTo(ManagerItemRecord.Status(ItemStatus.Held.wire.value))
+          .setTo(ItemStatus.Held.wire)
           .modify(_.hold)
           .setTo(Some(h))
           .modify(_.updatedAt)

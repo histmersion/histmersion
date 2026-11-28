@@ -103,13 +103,13 @@ object ResearchOverview:
       case Some(ApprovalKind.StatusChange) =>
         List(
           UiLabels.Text("See the evidence") -> UiLabels.Text(
-            SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value))
+            SourceLink.href(a.citekey)
           )
         )
       case Some(ApprovalKind.Edge) =>
         List(
           UiLabels.Text("See the evidence") -> UiLabels.Text(
-            SourceLink.href(Preview.Target.Source.Citekey(a.citekey.value))
+            SourceLink.href(a.citekey)
           )
         ) ++ a.target.map(t =>
           UiLabels.Text("Compare the two") -> UiLabels.Text(SourceLink.href(Preview.Target.Source.Citekey(t.value)))

@@ -37,5 +37,5 @@ object EventsData:
       Lint.report(
         rule,
         CorrectionRepo.conflictsIn().map((id, detail) => LintItem(Citekey(id.value), detail)),
-        Lint.ItemLimit(maxItems.value)
+        maxItems
       )

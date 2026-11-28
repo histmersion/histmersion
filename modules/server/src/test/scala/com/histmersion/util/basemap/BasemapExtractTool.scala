@@ -130,7 +130,7 @@ object BasemapExtractTool:
       y <- y0.value to y1.value
       b <- f.tile(PmTiles.Zoom(z.value), PmTiles.TileColumn(x), PmTiles.TileRow(y)).toOption.flatten
     do
-      val raw = PmTiles.gunzip(PmTiles.CompressedBytes(b.value)).getOrElse(PmTiles.PlainBytes(b.value))
+      val raw = PmTiles.gunzip(b.asCompressed).getOrElse(b.asPlain)
       Mvt
         .layerNames(raw)
         .getOrElse(Nil)
@@ -273,14 +273,14 @@ object BasemapExtractTool:
       val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
       for x <- x0.value to x1.value; y <- y0.value to y1.value do
         f.tile(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)).toOption.flatten.foreach { stored =>
-          val raw = orDie(PmTiles.gunzip(PmTiles.CompressedBytes(stored.value)))
+          val raw = orDie(PmTiles.gunzip(stored.asCompressed))
           if z == h.maxZoom.value then
             Mvt.layerNames(raw).toOption.get.foreach { l =>
               val one = Mvt.filter(raw, Map(l -> Mvt.Rule())).toOption.get
               perLayer(l.value) = perLayer.getOrElse(l.value, 0L) + PmTiles.gzip(one).value.length
             }
           List(
-            Some(PmTiles.CompressedBytes(stored.value)),
+            Some(stored.asCompressed),
             Mvt.filter(raw, drop, others = Mvt.Others.Others).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip),
             Mvt.filter(raw, OldKeep).toOption.filter(_.value.nonEmpty).map(PmTiles.gzip)
           ).zipWithIndex.foreach {
@@ -305,7 +305,7 @@ object BasemapExtractTool:
     val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
     for x <- x0.value to x1.value; y <- y0.value to y1.value do
       f.tile(PmTiles.Zoom(z.value), PmTiles.TileColumn(x), PmTiles.TileRow(y)).toOption.flatten.foreach { stored =>
-        val raw = orDie(PmTiles.gunzip(PmTiles.CompressedBytes(stored.value)))
+        val raw = orDie(PmTiles.gunzip(stored.asCompressed))
         Mvt.layerNames(raw).toOption.get.foreach { l =>
           bytes(l.value) = bytes.getOrElse(l.value, 0L) +
             PmTiles.gzip(Mvt.filter(raw, Map(l -> Mvt.Rule())).toOption.get).value.length

@@ -483,7 +483,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       itemKindOf(api.automation.Manager.Kind.Watch, api.ItemKind.Word("review")),
       None
     )
-    assertEquals(watchId(Goal.Ref(" tin ")), "watch:tin")
+    assertEquals(watchId(Goal.Slug(" tin ")), "watch:tin")
     assertEquals(Sweep.of(ManagerConfig()), List(Sweep.Acquisition, Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(List(Managers.Sweep.Wire("currency"))))), List(Sweep.Currency))
     assertEquals(Sweep.of(ManagerConfig(sweeps = Some(Nil))), Nil)

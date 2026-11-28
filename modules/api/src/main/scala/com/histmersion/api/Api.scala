@@ -558,8 +558,7 @@ object Api:
     export Histogram.Unit
     type Depth = Depth.T
     object Depth extends Newtype[Int, Pure]
-    type AsOf = AsOf.T
-    object AsOf extends Newtype[Long, Pure]
+    export api.catalogue.Year as AsOf
     type Samples = Samples.T
     object Samples extends Newtype[Int, Pure]
     type Size = Size.T

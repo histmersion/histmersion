@@ -50,7 +50,6 @@ object EventsCmd:
 
   /** The arguments of `events patch <id>`: the id and the patch they make (or why they make none). */
   /** The patch `events patch` flags spell, or why they spell none. Pure. */
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   @tolerated(LintRule.G60FromString, "pending G60 (problems built from cases, not text)")
   def patch(
       scale: Option[String],
@@ -84,7 +83,7 @@ object EventsCmd:
         label = label.map(EventSummary.Label(_)),
         kind = kind.map(EventSummary.Kind(_)),
         historicity = hist.map(EventSummary.Historicity(_)),
-        geometry = geom.map(g => EventPatch.Geometry(g.value)),
+        geometry = geom.map(g => g),
         placeId = place.map(Place.Id(_)),
         parentId = parent.map(Event.Id(_)),
         description = desc.map(EventSummary.Description(_)),

@@ -207,7 +207,7 @@ class AiTrafficSuite extends munit.FunSuite:
     val g = ServerPlugins.load(l, core = CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     val f = LlmClient.factory(
       CliRuntime(l.config, EngineContributions.roster),
-      () => g.registries.aiProviders.map((k, p) => Plugin.Id.assume(k.value) -> p)
+      () => g.registries.aiProviders.map((k, p) => k.pluginId -> p)
     )
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match

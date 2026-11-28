@@ -51,7 +51,6 @@ object GoalsCmd:
 
   /** Carries out Command commands against one server. */
   final private[cli] class Perform(c: Client)(using console: Console):
-    @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
     def apply(cmd: Command): Either[Cli.Error, Unit] =
       cmd match
         case Command.Listing(status, limit, offset, json) =>
@@ -79,7 +78,7 @@ object GoalsCmd:
         case Command.Plan(slug, model, budget, fol) =>
           c.call(AgentsApi.startRun)(
             RunRequest(
-              RunRequest.Pipeline(Agents.Pipeline.PlanGoal.wire.value),
+              Agents.Pipeline.PlanGoal.wire,
               RunRequest.Target(slug),
               model.map(RunRequest.Model(_)),
               budget.map(RunRequest.BudgetUsd(_))

@@ -1472,9 +1472,8 @@ object BasemapService:
       props: Option[Set[Mvt.Rule.Props]] = None
   ): Either[Problem, PmTiles.TileBytes] =
     val raw =
-      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then
-        PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
-      else Right(PmTiles.PlainBytes(stored.value))
+      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored.asCompressed)
+      else Right(stored.asPlain)
     raw
       .flatMap(
         Mvt.filter(
@@ -1514,9 +1513,8 @@ object BasemapService:
       rules: Map[Mvt.LayerName, Mvt.Rule]
   ): Either[Problem, Option[PmTiles.TileBytes]] =
     val raw =
-      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then
-        PmTiles.gunzip(PmTiles.CompressedBytes(stored.value))
-      else Right(PmTiles.PlainBytes(stored.value))
+      if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored.asCompressed)
+      else Right(stored.asPlain)
     raw.flatMap(Mvt.filter(_, rules, others = Mvt.Others.Others)).map { t =>
       Option.when(t.value.nonEmpty)(PmTiles.TileBytes(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t).value
       else t.value))

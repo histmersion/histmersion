@@ -40,8 +40,7 @@ class CritiquesSuite extends munit.FunSuite:
       case x                  => Some(Citekey(x))
 
   /** Every link target is itself a citekey. */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private val selfResolve: Article.Link.Target => Option[Citekey] = t => Some(Citekey(t.value))
+  private val selfResolve: Article.Link.Target => Option[Citekey] = t => Some(t.asCitekey)
 
   private def edge(a: Citekey, k: Coverage.Edge.Kind, b: Citekey) = Coverage.Edge(a, k, b)
   private val refs: Citekey => Option[(Title, Option[Year])] = Map(

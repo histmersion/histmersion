@@ -228,7 +228,7 @@ object AgentUpstream:
         .map(problem)
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
-      a.markCandidates(CandidateMark(ids, Source.Candidate.State(state.value)))
+      a.markCandidates(CandidateMark(ids, state))
         .map(m => RowCount(m.updated.value))
         .left
         .map(problem)

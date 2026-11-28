@@ -18,6 +18,7 @@ import com.histmersion.api.Offset
 import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.library.Doi
 import com.histmersion.api.library.AuthorName
+import com.histmersion.api.Wording
 import com.histmersion.api.library.Citekey
 import com.histmersion.api.automation.Creation
 import com.histmersion.api.automation.Creation
@@ -52,8 +53,6 @@ object Goal:
   object Export extends Newtype[String, Pure]
   type LinkSectionKey = LinkSectionKey.T
   object LinkSectionKey extends Newtype[String, Pure]
-  type Ref = Ref.T
-  object Ref extends Newtype[String, Pure]
   type Stage = Stage.T
   object Stage extends Newtype[String, Pure]
   type StageMeaning = StageMeaning.T
@@ -67,6 +66,10 @@ object Goal:
   type Slug = Slug.T
   object Slug extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)
+    extension (slug: Slug)
+      def wordingId: Wording.Id = Wording.Id(slug.value)
+      def asRunTarget: Agents.RunRequest.Target = Agents.RunRequest.Target(slug.value)
+      def asEnqueueTarget: Managers.EnqueueRequest.Target = Managers.EnqueueRequest.Target(slug.value)
   type Title = Title.T
   object Title extends Newtype[String, Pure]:
     given Display[T] = Display(_.value)

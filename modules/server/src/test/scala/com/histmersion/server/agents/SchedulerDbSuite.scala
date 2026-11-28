@@ -92,7 +92,7 @@ class SchedulerDbSuite extends DbSuite with RunTranscripts:
   private val goals = (1 to 20).toList.map(i => DomainGoal.Slug.applyUnsafe(f"zzfocus-g$i%02d"))
   private def g(i: Int) = goals(i - 1)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def ref(g: DomainGoal.Slug) = Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = Goal.Slug(g.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def apiSlug(g: DomainGoal.Slug) = Goal.Slug(g.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

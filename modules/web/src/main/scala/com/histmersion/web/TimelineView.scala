@@ -45,9 +45,8 @@ object TimelineView:
 
   /** A span of the timeline as the filter and the labels read it. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def period(from: Years.Astronomical, to: Years.Astronomical): Period =
-    Period(Year(from.value), Year(to.value))
+    Period(from.numberAsYear, to.numberAsYear)
   private val detailBars = Var(List.empty[TimeBucket])
   private val overviewBars = Var(List.empty[TimeBucket])
   private val loading = Var(false)
@@ -373,8 +372,8 @@ object TimelineView:
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private[web] def hoverText(b: TimeBucket): UiLabels.Text =
-    val years = if b.start.value == b.end.value then Fmt.yr(Year(b.start.value)).value
-    else shown"${Fmt.yr(Year(b.start.value))}–${Fmt.yr(Year(b.end.value))}"
+    val years = if b.start.value == b.end.value then Fmt.yr(b.start).value
+    else shown"${Fmt.yr(b.start)}–${Fmt.yr(Year(b.end.value))}"
     UiLabels.Text(shown"$years: ${Plural.count(Plural.CountN(b.count.value.toLong), Plural.CountSingular("source"))}")
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
@@ -453,7 +452,6 @@ object TimelineView:
   private def dtHeight: Double = elHeight(detailSvg, DH.toDouble)
   private def dtBase(h: Double): Double = h - (DH - D_BASE)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def renderOverviewCurve(): Unit =
     if overviewSvg != null then
       val w = elWidth(overviewSvg)
@@ -465,8 +463,8 @@ object TimelineView:
         ovPts = drawAreaCurve(
           ovCurveLayer,
           bs,
-          Years.Astronomical(limits.min.value),
-          Years.Astronomical(limits.max.value),
+          limits.min.numberAsAstronomical,
+          limits.max.numberAsAstronomical,
           w,
           ovBase(h) - 2,
           "ov-grad"
@@ -524,8 +522,8 @@ object TimelineView:
         g.appendChild(h)
       // the two years: inside the selection, outside its handles when they are close, else one label
       val labels = RangeLabels.place(
-        UiLabels.Text(Fmt.yr(Year(sf.value)).value),
-        UiLabels.Text(Fmt.yr(Year(st.value)).value),
+        UiLabels.Text(Fmt.yr(sf.numberAsYear).value),
+        UiLabels.Text(Fmt.yr(st.numberAsYear).value),
         RangeLabels.ScreenPixels(selX0),
         RangeLabels.ScreenPixels(selX1),
         RangeLabels.ElementSize(w)
@@ -696,7 +694,7 @@ object TimelineView:
           label.setAttribute("class", "tl-playhead-label")
           label.setAttribute("x", (px + 3).toString)
           label.setAttribute("y", "10")
-          label.textContent = Fmt.yr(Year(ph.value)).value
+          label.textContent = Fmt.yr(ph.numberAsYear).value
           g.appendChild(label)
       }
 
@@ -740,7 +738,7 @@ object TimelineView:
           ),
           span(cls := "tl-preset-meta", s"$where · $who"),
           onClick --> { _ =>
-            setSpan(Years.Astronomical(p.period.start.value), Years.Astronomical(p.period.end.value))
+            setSpan(p.period.start.numberAsAstronomical, p.period.end.numberAsAstronomical)
             showPresets.set(false)
           }
         )
@@ -799,7 +797,7 @@ object TimelineView:
         .section(
           namingPeriod,
           () => (Year(spanFrom.value), Year(spanTo.value)),
-          (a, b) => { setSpan(Years.Astronomical(a.value), Years.Astronomical(b.value)); showPresets.set(false) }
+          (a, b) => { setSpan(a.numberAsAstronomical, b.numberAsAstronomical); showPresets.set(false) }
         ),
       children <-- periodPresets.signal.combineWith(presetView.signal).map { (ps, view) =>
         val groups = PresetMenu.groups(ps, view)
@@ -1171,7 +1169,7 @@ object TimelineView:
             idAttr := "tl-all-time",
             title := "Show every year the timeline holds",
             "Show all time",
-            onClick --> { _ => setSpan(Years.Astronomical(limits.min.value), Years.Astronomical(limits.max.value)) }
+            onClick --> { _ => setSpan(limits.min.numberAsAstronomical, limits.max.numberAsAstronomical) }
           ),
           // shown in the narrow layout only, where the detail strip starts folded
           button(

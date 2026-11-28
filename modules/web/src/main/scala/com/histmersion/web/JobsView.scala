@@ -313,7 +313,7 @@ object JobsView:
         div(
           cls := "job-subject",
           j.citekey match
-            case Some(ck) if subjectStored(j) => SourceLink(Preview.Target.Source.Citekey(ck.value))
+            case Some(ck) if subjectStored(j) => SourceLink(ck)
             case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck)
             case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)),
           span(cls := "muted", s" · ${kindLabel(j.kind.value)}"),

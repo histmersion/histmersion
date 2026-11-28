@@ -47,9 +47,8 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
   ): MergePlanner.Result =
     MergePlanner.plan(in0(input(es)), sketches, res, cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def resolve(pairs: (Issue.Id, MergeResolution.Decision)*): MergeResolutions =
-    MergeResolutions(pairs.toList.map((i, d) => MergeResolution(MergeResolution.Issue(i.value), d)))
+    MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
 
   // hex EWKB of POINT(32.5 40) and POINT(33 41), SRID 4326
   private val PointA = Bundle.Place.Geom("0101000020e610000000000000004040400000000000004440")
@@ -718,7 +717,7 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
         val res = MergeResolutions(
           List(
             MergeResolution(
-              MergeResolution.Issue(id.value),
+              id,
               MergeResolution.Decision("file:merged.md"),
               Some(MergeResolution.Text(t))
             )

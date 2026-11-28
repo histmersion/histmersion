@@ -509,16 +509,14 @@ object UiState:
   /** What the Articles tab asks for: the global filter, title included — the server lists the articles citing the
     * sources it selects.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def articleQuery(): Api.ArticleQuery =
-    Api.ArticleQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
+    Api.ArticleQuery(toFilter().modify(_.limit).setTo(Layout.tabFetch.asLimit))
 
   /** What the Events tab asks for: the global filter, title included — the server lists the events whose source it
     * selects, in its period.
     */
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def eventQuery(): Api.EventQuery =
-    Api.EventQuery(toFilter().modify(_.limit).setTo(Filter.Limit(Layout.tabFetch.value)))
+    Api.EventQuery(toFilter().modify(_.limit).setTo(Layout.tabFetch.asLimit))
 
   private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
     s.split(",").flatMap(_.trim.toDoubleOption).toList match

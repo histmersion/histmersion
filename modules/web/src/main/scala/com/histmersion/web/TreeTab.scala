@@ -161,7 +161,7 @@ object TreeTab:
       Plural.Noun.Singular("source"),
       extras = List(
         UiLabels.Text(groups.value),
-        ResultsPaging.span(Some(Year(from.value)), Some(Year(to.value)))
+        ResultsPaging.span(Some(from.numberAsYear), Some(to.numberAsYear))
       ) ++ data.asOf.map(a => UiLabels.Text(shown"as of ${Fmt.yr(a)}"))
     )
 
@@ -337,6 +337,6 @@ object TreeTab:
       b.placeId.foreach { pid =>
         PlacesInput.preview(
           PlacesInput.PlaceId(pid.value),
-          lastData.flatMap(_.asOf).map(y => Years.Astronomical(y.value))
+          lastData.flatMap(_.asOf).map(y => y.numberAsAstronomical)
         )
       }

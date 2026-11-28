@@ -450,16 +450,14 @@ object ApiClient:
     call(AgentsApi.control)((id, action, budgetUsd, None))
   def agentModels: Future[Agents.ModelsInfo] = call(AgentsApi.models)(())
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def setChain(
       role: ModelChains.RoleChain.Role,
       models: List[ModelChains.ChainSet.Models]
   ): Future[ModelChains.RoleChain] =
-    call(AgentsApi.setChain)((AgentRole.Wire(role.value), ModelChains.ChainSet(models)))
+    call(AgentsApi.setChain)((role, ModelChains.ChainSet(models)))
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   def resetChain(role: ModelChains.RoleChain.Role): Future[ModelChains.RoleChain] =
-    call(AgentsApi.resetChain)(AgentRole.Wire(role.value))
+    call(AgentsApi.resetChain)(role)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   def setAllowance(in: ModelChains.AllowanceSet): Future[ModelChains.AllowanceStatus] = call(AgentsApi.setAllowance)(in)
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

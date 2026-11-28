@@ -61,7 +61,7 @@ class CardIconsSuite extends munit.FunSuite:
   test("every icon a card or a marker can name is in the registry"):
     val names = Source.Kinds.all.flatMap(k => List(CardIcons.sourceKind(k), CardIcons.sourceKind(k, marker = true))) ++
       Place.Kind.all.map(k => CardIcons.place(Place.Kind.Wire(k.value), None)) ++ SiteTypes.all.map(t =>
-        CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(Place.Entry.SiteType(t.id.value)))
+        CardIcons.place(Place.Kind.Wire(Place.Kind.Site), Some(t.id))
       ) ++
       List(
         Glyphs.Name(CardIcons.Article),

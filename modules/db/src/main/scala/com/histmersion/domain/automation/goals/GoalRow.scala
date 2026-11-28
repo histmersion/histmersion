@@ -59,7 +59,8 @@ object GoalRow:
   type Notes = Notes.T
   object Notes extends Newtype[String, Pure]
   type Tags = Tags.T
-  object Tags extends Newtype[String, Pure]
+  object Tags extends Newtype[String, Pure]:
+    extension (tags: Tags) def asTag: EnrichSource.Tag = EnrichSource.Tag(tags.value)
   type Regions = Regions.T
   object Regions extends Newtype[String, Pure]
   type ParentSlug = ParentSlug.T

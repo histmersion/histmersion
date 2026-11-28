@@ -48,12 +48,8 @@ object PlacesRoutes:
   private def trimmed(id: ApiPlace.Id): Either[Api.Error, Place.Id] =
     Place.Id.either(id.value.trim).left.map(_ => missing(id))
 
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   private def year(asOf: Option[Api.AggregateQuery.AsOf]): Option[DeepTime.SignedYear] =
-    asOf.map(y => api.catalogue.Year(y.value))
+    asOf.map(y => y)
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

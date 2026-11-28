@@ -193,7 +193,7 @@ object SourceEditor:
             draft.set(Some(Draft.of(sw.source)))
             notice.set(then0)
             WindowManager.retitle(
-              WindowKey.EditSource(WindowKey.EditSource.Citekey(ck.value)),
+              WindowKey.EditSource(ck),
               UiLabels.Text(shown"Edit · ${sw.source.title}")
             )
         )
@@ -227,7 +227,7 @@ object SourceEditor:
                     draft.set(Some(Draft.of(sw.source)))
                     notice.set(Some("Saved."))
                     Preview.forget(ck)
-                    WindowManager.reload(WindowKey.Source(WindowKey.Source.Citekey(ck.value)))
+                    WindowManager.reload(WindowKey.Source(ck))
                 )
               }
         case _ => ()

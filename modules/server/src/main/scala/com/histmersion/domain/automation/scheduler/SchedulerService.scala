@@ -66,7 +66,6 @@ final class SchedulerService(
   def chosen: Option[(AutopilotRepo.StrategyName, AutopilotRepo.Row.ChangedBy, AutopilotRepo.Row.ChangedAt)] =
     agents.autopilotRow.strategy()
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def instantOf(text: String): Option[Instant] = ManagerPolicy.parseInstant(ManagerPolicy.InstantText(text))
 
   /** The model a manager's override names for `role`, if any. */
@@ -270,7 +269,7 @@ final class SchedulerService(
           (if info.exists(_.gathering) then Candidate.Gathering.Gathering else Candidate.Gathering.Working),
           Candidate.ItemPriority(i.priority.value),
           since.getOrElse(now),
-          pools.toOption.getOrElse(Nil).map(p => Candidate.Pools(p.wire.value)),
+          pools.toOption.getOrElse(Nil).map(p => p.wire),
           block,
           (if i.origin == ItemOrigin.Person.wire then Candidate.Person.ForPerson else Candidate.Person.ForModel)
         )
@@ -298,11 +297,11 @@ final class SchedulerService(
           .value
       ),
       poolCap = PlanQuota.PoolId.values.toList
-        .map(p => Candidate.Pools(p.wire.value) -> Resources.PoolCapValue(poolCap(p)))
+        .map(p => p.wire -> Resources.PoolCapValue(poolCap(p)))
         .toMap,
       poolUsed = runs
         .flatMap((p, _) => poolsOfRun(p))
-        .groupMapReduce(p => Candidate.Pools(p.wire.value))(_ => 1)(_ + _)
+        .groupMapReduce(p => p.wire)(_ => 1)(_ + _)
         .view
         .mapValues(Resources.PoolUsedValue(_))
         .toMap,
@@ -348,7 +347,7 @@ final class SchedulerService(
         .refreshOnSchedule(
           p,
           (if autopilotOn then PlanReadSchedule.AutopilotOn.On else PlanReadSchedule.AutopilotOn.Off),
-          (if wanted.contains(Candidate.Pools(p.wire.value)) then PlanReadSchedule.Wanted.Wanted
+          (if wanted.contains(p.wire) then PlanReadSchedule.Wanted.Wanted
            else PlanReadSchedule.Wanted.Unwanted),
           now
         )
@@ -372,7 +371,7 @@ final class SchedulerService(
         agents.picker.chainFor(r, modelOf(over, r)).getOrElse(Nil)
       }
       .flatMap(agents.pools.poolOf)
-      .map(p => Candidate.Pools(p.wire.value))
+      .map(p => p.wire)
       .distinct
 
   /** The managers that may start runs (active, of a kind the supervisor runs). */
@@ -605,7 +604,7 @@ final class SchedulerService(
       now: Instant = Instant.now(agents.clock)
   ): Stalls.StallReport =
     val n = math.max(0, days.fold(cfg.autopilot.stallDays.value)(_.value))
-    val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(DomainGoal.Status.Wire(g.status.value)))
+    val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(g.status))
     val progress = agents.managerStore.lastProgress()
     val articles = agents.workflows.linked()
     val bySubj = agents.approvalStore.openLight().groupBy(_.subject)
@@ -656,7 +655,7 @@ final class SchedulerService(
         (if sweeps.get(slug).exists(_.value.contains("no new candidates")) then Stalls.Facts.NoCandidates.NoCandidates
          else Stalls.Facts.NoCandidates.HasCandidates),
         Stalls.Facts.Open(
-          List(seedId(Goal.Ref(g.slug.value)), watchId(Goal.Ref(g.slug.value))).flatMap(pace.get).map(_._1.value).sum
+          List(seedId(Goal.Slug(g.slug.value)), watchId(Goal.Slug(g.slug.value))).flatMap(pace.get).map(_._1.value).sum
         ),
         Stalls.Facts.Running(running.get(slug).fold(0)(_.value))
       )

@@ -251,7 +251,7 @@ class ToolsSuite extends munit.FunSuite:
     assert(ItemStatus.values.forall(s => ManagersView.itemStatusMeaning(s).value.nonEmpty))
     assert(Manager.Kind.values.forall(k => ManagersView.managerMeaning(Managers.ManagerInfo.Id(k.wire.value)).nonEmpty))
     assert(
-      ManagersView.managerMeaning(Managers.seedId(Goal.Ref("sea-peoples"))).exists(_.value.contains("sea-peoples"))
+      ManagersView.managerMeaning(Managers.seedId(Goal.Slug("sea-peoples"))).exists(_.value.contains("sea-peoples"))
     )
     assertEquals(ManagersView.managerMeaning(Managers.ManagerInfo.Id("nobody")), None)
     val jobTypes =

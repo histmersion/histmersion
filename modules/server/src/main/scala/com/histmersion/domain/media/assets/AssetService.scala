@@ -164,8 +164,7 @@ object AssetService:
   export Target.TargetType
   export Target.Id as TargetId
   export CollectionLibrary.Bytes
-  type Mime = Mime.T
-  object Mime extends Newtype[String, Pure]
+  export Api.ContentType as Mime
 
   type Limit = Limit.T
   object Limit extends Newtype[Int, Pure]
@@ -721,8 +720,8 @@ object AssetService:
         a.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
         a.originalUrl.map(u => MediaItem.OriginalUrl(u.value)),
         a.retrievedAt.map(t => MediaItem.RetrievedAt(stamp.format(t))),
-        Option.when(a.thumb.isDefined)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).value)),
-        MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(a.uid.value)).value),
+        Option.when(a.thumb.isDefined)(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).asThumbUrl),
+        MediaThumb.filePath(Bundle.Asset.Uid(a.uid.value)).asFileUrl,
         targetsOf(a.uid)
       )
 
@@ -815,8 +814,8 @@ object AssetService:
         a.provider.map(x => MediaItem.Provider(x.value)),
         a.license.map(l => MediaItem.License(l.value)),
         a.credit.map(c => MediaItem.Credit(c.value)),
-        Option.when(a.thumb.isDefined)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).value)),
-        fileUrl = Some(MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(a.uid.value)).value)),
+        Option.when(a.thumb.isDefined)(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).asThumbUrl),
+        fileUrl = Some(MediaThumb.filePath(Bundle.Asset.Uid(a.uid.value)).asFileUrl),
         sourceUrl = a.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
         licenseUrl = a.licenseUrl.map(u => MediaItem.LicenseUrl(u.value)),
         author = a.author.map(x => MediaItem.Author(x.value))

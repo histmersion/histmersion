@@ -303,11 +303,9 @@ final class SourcesControllers(
                       .modify(_.ocrMarkdown)
                       .using(
                         _.map(m =>
-                          Source.OcrMarkdown(
-                            AssetLinks
-                              .normalizeBody(AssetLinks.Body(m.value), AssetLinks.Title(withBody.title.value))
-                              .value
-                          )
+                          AssetLinks
+                            .normalizeBody(m.asLinksBody, AssetLinks.Title(withBody.title.value))
+                            .asOcrMarkdown
                         )
                       )
                   val _ = sources.put(normalised, Caller.Local)

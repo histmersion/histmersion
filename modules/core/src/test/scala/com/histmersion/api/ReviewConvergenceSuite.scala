@@ -303,9 +303,8 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       )
     )
   )
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def together(b: ReviewArticle.Fix.Body, r: CritiqueRef) =
-    Critiques.together(b, r, t => Some(Citekey(t.value)))
+    Critiques.together(b, r, t => Some(t.asCitekey))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def cites(b: ReviewArticle.Fix.Body, ck: domain.library.Citekey) =
     AgentVerify.wikilinks(AgentVerify.Text(b.value)).exists(_.value == ck.value)

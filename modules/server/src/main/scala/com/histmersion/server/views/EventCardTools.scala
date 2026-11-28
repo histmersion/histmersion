@@ -200,7 +200,7 @@ object EventCardTools:
                   label = in.label,
                   kind = in.kind,
                   historicity = in.historicity,
-                  geometry = geom.map(g => EventPatch.Geometry(g.value)),
+                  geometry = geom.map(g => g),
                   placeId = in.placeId,
                   parentId = in.parentId,
                   description = in.description,

@@ -274,7 +274,6 @@ class PlanQuotaSuite extends munit.FunSuite:
 
   // ── a fresh reading before pausing (#989) ─────────────────────────────────────────────────────
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private val Old = Reading.ObservedAt(Now - 60 * Min) // a reading older than stale-minutes (10)
   private val In = Login.Present(PlanQuota.Login.Present.Detail("logged in"))
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

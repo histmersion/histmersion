@@ -213,7 +213,8 @@ object ManagerContext:
   export Item.{Id as ItemId, Kind as ItemKind}
   export ManagerPolicy.Candidate.Target as ItemTarget
   type Limit = Limit.T
-  object Limit extends Newtype[Int, Pure]
+  object Limit extends Newtype[Int, Pure]:
+    extension (limit: Limit) def pageSize: PageSize = PageSize.assume(limit.value)
   export ManagerPolicy.Candidate.Priority
   type EventFeed = EventFeed.T
   object EventFeed extends Newtype[String, Pure]

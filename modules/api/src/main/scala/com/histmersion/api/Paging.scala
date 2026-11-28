@@ -17,7 +17,8 @@ import com.histmersion.api.library.TimeHistogram
 object Paging:
   object OlderLine:
     type Text = Text.T
-    object Text extends Newtype[String, Pure]
+    object Text extends Newtype[String, Pure]:
+      extension (text: Text) def asCursor: Cursor = Cursor(text.value)
   type Count = Count.T
   object Count extends Newtype[Int, Pure]
   type Cursor = Cursor.T
@@ -121,7 +122,7 @@ object Paging:
               p.facets.map((name, vs) =>
                 (
                   ListFilters.FacetName(name.value),
-                  vs.map((v, n) => (ListFilters.Term(v.value), RowCount(n.value)))
+                  vs.map((v, n) => (ListFilters.Term(v.value), n.rows))
                 )
               )
             )

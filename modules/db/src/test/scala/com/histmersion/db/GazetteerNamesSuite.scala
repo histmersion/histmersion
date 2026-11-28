@@ -55,12 +55,11 @@ class GazetteerNamesSuite extends DbSuite with Bounded:
     val d = testPool(cfg.db.modify(_.url).setTo(DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private lazy val settings =
     GeocodeSettings(
-      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
-      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
-      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+      cfg.places.geocodePlaceholderMin,
+      cfg.places.geocodeRepairKm,
+      cfg.places.pointToleranceKm
     )
 
   private val DeadSea = Set("ne_lake_1159126747", "ne_lake_1159126865")

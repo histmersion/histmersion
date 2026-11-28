@@ -48,9 +48,8 @@ final class GazetteerImports(
   def importerOf(source: GazetteerSource): Creator.New =
     InTreeWorkflow.imported(owners().get(source), InTreeWorkflow.Catalogue, InTreeWorkflow.GazetteerImporting)
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def pointTolerance: GeocodeSettings.ToleranceKm =
-    GeocodeSettings.ToleranceKm(cfg().places.pointToleranceKm.value)
+    cfg().places.pointToleranceKm
 
   /** `GET /api/places/sources` — the pinned extracts, the LPF drop folder, and what was imported. */
   def sources(): List[Gazetteer.SourceInfo] = GazetteerLoad.list(db, settings)

@@ -242,7 +242,7 @@ class ManagerPhase2Suite extends DbSuite with RunTranscripts:
        |Where the tin was mined is open [[$Ck]].""".stripMargin
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Ref(g.value)
+  private def ref(g: DomainGoal.Slug) = api.automation.Goal.Slug(g.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   private def goalTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")

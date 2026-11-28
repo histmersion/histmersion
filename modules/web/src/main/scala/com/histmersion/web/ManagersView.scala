@@ -497,10 +497,9 @@ object ManagersView:
     * (the sources linked to it that are not enriched yet).
     */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def goalActions(slug: Goal.Slug): HtmlElement =
     enqueueButtons(
-      EnqueueRequest.Target(slug.value),
+      slug.asEnqueueTarget,
       List(
         (
           EnqueueKind.Seed,
@@ -1183,7 +1182,7 @@ object ManagersView:
                       span(
                         cls := "muted",
                         shown" · ${jobTypeLabel(w.jobType)} · ${Wording.manager(Wording.Id(w.manager.value))}" + w.goal
-                          .fold("")(g => s" · goal ${Wording.humanize(Wording.Id(g.value))}") +
+                          .fold("")(g => s" · goal ${Wording.humanize(g.wordingId)}") +
                           (if w.position.value > 0 then s" · #${w.position} in line" else "")
                       )
                     ),

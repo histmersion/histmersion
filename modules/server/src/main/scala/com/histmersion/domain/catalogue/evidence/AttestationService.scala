@@ -69,23 +69,20 @@ object AttestationService:
         offset
       )
     )
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def get(id: Attestation.Id): Option[Attestation] =
-      db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
+      db.read(AttestationRepo.get(id))
     def create(in: Attestation.Put)(using WritePermit)(using Creator.New): Attestation =
       db.write:
         given CreatedAt = CreatedAt.now(clock)
         AttestationRepo.create(in)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def patch(id: Attestation.Id, p: Attestation.Patch)(using WritePermit): Either[Api.Error, Attestation] =
       db.write:
-        if !AttestationRepo.exists(AttestationRepo.AttestationId(id.value)) then Left(missing(id))
+        if !AttestationRepo.exists(id) then Left(missing(id))
         else
-          AttestationRepo.update(AttestationRepo.AttestationId(id.value), p)
-          Right(AttestationRepo.get(AttestationRepo.AttestationId(id.value)).get)
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
+          AttestationRepo.update(id, p)
+          Right(AttestationRepo.get(id).get)
     def delete(id: Attestation.Id)(using WritePermit): Boolean =
-      db.write(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
+      db.write(AttestationRepo.delete(id))
 
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
   final class InMemory(state: AtomicReference[CatalogueState]) extends AttestationService:

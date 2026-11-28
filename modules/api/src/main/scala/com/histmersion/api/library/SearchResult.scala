@@ -27,13 +27,14 @@ final case class SearchResult(
   def page: OffsetPage = OffsetPage(total, offset, RowCount(hits.size))
 object SearchResult:
   type Total = Total.T
-  object Total extends Newtype[Int, Pure]
+  object Total extends Newtype[Int, Pure]:
+    extension (total: Total) def rows: RowCount = RowCount(total.value)
 
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def of(total: Total, hits: List[Hit], offset: UnreadPage.Offset): SearchResult =
     SearchResult(
-      RowCount((total).value),
+      total.rows,
       hits,
       Offset((offset).value),
-      OffsetPage(RowCount((total).value), Offset((offset).value), RowCount(hits.size)).next
+      OffsetPage(total.rows, Offset((offset).value), RowCount(hits.size)).next
     )

@@ -145,8 +145,7 @@ object PlanQuota:
       case Rejected, Accepted
     object Rejected extends TwoStates[Rejected]:
       extension (rejected: Rejected) def rejected: Boolean = rejected == Rejected
-    type ObservedAt = ObservedAt.T
-    object ObservedAt extends Newtype[Long, Pure]
+    export PlanQuota.Now as ObservedAt
     export ModelChains.ChainEntry.Model
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):

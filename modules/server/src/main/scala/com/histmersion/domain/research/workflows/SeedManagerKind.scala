@@ -315,8 +315,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m,
               item,
               RunRequest(
-                RunRequest.Pipeline(Pipeline.ProposeArticles.wire.value),
-                RunRequest.Target(g.slug.value),
+                Pipeline.ProposeArticles.wire,
+                g.slug.asRunTarget,
                 budgetUsd = budget
               ),
               _.modify(_.minSources)
@@ -343,7 +343,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m,
               item,
               RunRequest(
-                RunRequest.Pipeline(Pipeline.CompileArticle.wire.value),
+                Pipeline.CompileArticle.wire,
                 RunRequest.Target(item.target.value),
                 budgetUsd = budget,
                 title = Some(RunRequest.Title(sp.title.value)),
@@ -373,8 +373,8 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               m,
               item,
               RunRequest(
-                RunRequest.Pipeline(Pipeline.PlanGoal.wire.value),
-                RunRequest.Target(g.slug.value),
+                Pipeline.PlanGoal.wire,
+                g.slug.asRunTarget,
                 budgetUsd = budget
               ),
               p => if leaf then p.modify(_.subGoals).setTo(Some(RunParams.SubGoals(0))) else p,

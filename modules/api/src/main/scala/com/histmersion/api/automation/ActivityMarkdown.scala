@@ -27,7 +27,7 @@ object ActivityMarkdown:
         .fold(Wording.humanize(Wording.Id(e.what.value)))(Wording.pipeline)
       what + e.target.map(_.value).filter(_.nonEmpty).fold("")(t => s" — $t")
     case Some(EntryKind.Job) =>
-      Wording.jobKindOf(JobKinds.Wire(e.what.value)) + e.citekey
+      Wording.jobKindOf(e.what.asJobKind) + e.citekey
         .map(_.value)
         .orElse(e.target.map(_.value))
         .filter(_.nonEmpty)

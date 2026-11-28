@@ -39,9 +39,8 @@ object PlacesCmd:
   private def defaultBatch(using console: Console): Paging.Limit = Paging.Limit(cfg.importBatch.value)
   private def seedDir(using console: Console): PlacesConfig.SeedDir = cfg.seedDir
 
-  @tolerated(LintRule.G45Boundary, "pending G45 (boundaries lift type classes instead of hand .value)")
   private def show(rows: List[Place.Hit], asOf: Option[Api.AggregateQuery.AsOf])(using console: Console): Unit =
-    Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf.map(a => Year(a.value))))
+    Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf.map(a => a)))
 
   /** Read one LPF / GeoJSON file and upsert it, `batch` features per request. */
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")

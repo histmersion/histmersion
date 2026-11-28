@@ -92,10 +92,9 @@ final class OpenAccess(cfg: UpstreamSettings, client: () => Plugin.Http, log: Pl
     */
   def core(key: Option[OpenAccess.CoreKey], quota: UpstreamQuota): SourceFetcher = new SourceFetcher:
     val access = Access.Open
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
       work.doi
-        .map(d => OaRecords.Doi(d.value))
+        .map(d => d)
         .fold[Fetch](ByDoi.noIdentifier(Problem.Field("doi")))(corePdf(ctx, _, key, quota))
 
   val openalex: SourceFetcher = ByDoi(ByDoi.Step("openalex"), (ctx, d) => openalexOa(ctx, records(ctx, d)))

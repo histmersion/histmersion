@@ -59,7 +59,7 @@ final class SeedService(
     goals
       .map(g => g -> Goal.Slug.assume(g.slug.value))
       .filter((g, slug) =>
-        !GoalFocus.finished(Goal.Status.Wire(g.status.value)) &&
+        !GoalFocus.finished(g.status) &&
           sources.get(slug).fold(0)(_.value) == 0 && watchers(watcherOf(slug))
       )
       .filter((_, slug) => lastSweep(slug).forall(t => !t.plusSeconds(every).isAfter(now)))
@@ -76,7 +76,7 @@ final class SeedService(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def watcherOf(goal: Goal.Slug): ManagerInfo.Id =
-    watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
+    watchId(com.histmersion.api.automation.Goal.Slug(goal.value))
 
   /** When each goal was last seeded here (in memory: the candidate watches' own `last_run` covers restarts). */
   private val seeded = java.util.concurrent.ConcurrentHashMap[String, Instant]()

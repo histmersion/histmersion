@@ -199,7 +199,7 @@ final class AcquisitionSweepPipeline(
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def backlogged(goal: Goal.Slug): Set[Doi] =
     val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
-    val watcher = Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
+    val watcher = Managers.watchId(com.histmersion.api.automation.Goal.Slug(goal.value))
     agents.managerStore
       .backlogOpen()
       .filter(i => i.state.oa.exists(_.goals.contains(apiGoal)) || i.managerId == watcher)
@@ -398,7 +398,7 @@ final class AcquisitionSweepPipeline(
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   @tolerated(LintRule.G47Fqn, "pending G47 (no FQN noise)")
   private def park(ctx: RunCtx, goal: Goal.Slug, picks: List[Picked])(using WritePermit)(using Creator.New): Parked =
-    val mid = ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value)))
+    val mid = ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Slug(goal.value)))
     val placed = picks.map { p =>
       val c = p.candidate
       val w = Managers.OaWork(

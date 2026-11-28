@@ -141,11 +141,11 @@ object Managers:
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def seedId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"seed:${(goal).value.trim}")
+  def seedId(goal: Goal.Slug): ManagerInfo.Id = ManagerInfo.Id(s"seed:${(goal).value.trim}")
 
   @tolerated(LintRule.G3Misplaced, "pending G3 (a function about a type lives on the type)")
   @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
-  def watchId(goal: Goal.Ref): ManagerInfo.Id = ManagerInfo.Id(s"watch:${(goal).value.trim}")
+  def watchId(goal: Goal.Slug): ManagerInfo.Id = ManagerInfo.Id(s"watch:${(goal).value.trim}")
 
   enum Sweep(val wire: Sweep.Wire, val itemKind: ManagerItem.Kind) derives CanEqual:
     case Acquisition extends Sweep(Sweep.Wire("acquisition"), ManagerItem.Kind(AcquisitionSweep))
@@ -868,8 +868,7 @@ object Managers:
   object ManagerHint:
     type Id = Id.T
     object Id extends Newtype[Long, Pure]
-    type ItemId = ItemId.T
-    object ItemId extends Newtype[Long, Pure]
+    export Managers.ManagerItem.Id as ItemId
     type Text = Text.T
     object Text extends Newtype[String, Pure]
     type Author = Author.T

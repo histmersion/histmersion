@@ -3,7 +3,7 @@ package util.data.checks
 
 import com.histmersion.util.problem.Problem
 import io.scalaland.chimney.dsl.*
-import com.histmersion.api.checks.Lint.{FormatChecker, LintFixResult, LintReport}
+import com.histmersion.api.checks.Lint.{FormatChecker, ItemLimit, LintFixResult, LintReport}
 import com.histmersion.config.AppConfig
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.WritePermit
@@ -37,14 +37,10 @@ final class CheckControllers(
   private def context: CheckContext = CheckContext(config(), ds, format, write, timer)
 
   /** `GET /api/lint` — read-only. */
-  @tolerated(
-    LintRule.G44Conversion,
-    "pending G44 (a controller hands the wire value to the domain's parse, not .value)"
-  )
   def lint(rules: List[CheckRule.Name]): Either[Problems, LintReport] =
     checks
       .select(rules)
-      .map(rs => checks.report(rs, context, CheckRule.MaxItems(config().lint.maxItems.value)))
+      .map(rs => checks.report(rs, context, ItemLimit(config().lint.maxItems.value)))
 
   /** `POST /api/lint/fix` — the repairs that are safe to make without a person, each owner's, in their ranks: the ones
     * that run on every call, and those of the rules `rules` names. Each is bounded per call; `remaining > 0` (or

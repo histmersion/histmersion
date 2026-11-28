@@ -18,7 +18,8 @@ trait MediaSources:
 
 object MediaSources:
   type Current = Current.T
-  object Current extends Newtype[String, Pure]
+  object Current extends Newtype[String, Pure]:
+    extension (current: Current) def citekey: Citekey = Citekey.assume(current.value)
   type Markdown = Markdown.T
   object Markdown extends Newtype[String, Pure]
 

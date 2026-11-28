@@ -96,7 +96,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
           launch,
           mcp,
           call.tools.map(t => ToolUse.Tool.assume(t.name)),
-          rt.definitions.tools.map(t => ToolUse.Tool(t.value)),
+          rt.definitions.tools.map(t => t.asToolUse),
           web
         )
         val pool = rt.pools

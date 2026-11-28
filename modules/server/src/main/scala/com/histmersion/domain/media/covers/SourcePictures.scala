@@ -275,7 +275,7 @@ final class SourcePictures(
                 )
               )
             case Some(current) =>
-              val ck = Citekey.assume(current.value)
+              val ck = current.citekey
               val key = p.key.value.trim
               val size = ImageSize.of(ImageSize.Bytes(bytes.value))
               val thumb = thumbnail(bytes, s"cover-$key")
@@ -326,9 +326,7 @@ final class SourcePictures(
     val refresh =
       (if req.refresh.refresh then CoverService.CandidatesRefresh.Refresh else CoverService.CandidatesRefresh.Reuse)
     val named = req.citekey.map(_.value.trim).filter(_.nonEmpty)
-    val only = named.flatMap(c =>
-      Citekey.option(c).map(k => sources.current(k).map(cur => Citekey.assume(cur.value)).getOrElse(k))
-    )
+    val only = named.flatMap(c => Citekey.option(c).map(k => sources.current(k).map(cur => cur.citekey).getOrElse(k)))
     // a citekey that cannot be one names no source
     val nobody = named.isDefined && only.isEmpty
     val limit = CoverService.CandidatesLimit(req.limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue))

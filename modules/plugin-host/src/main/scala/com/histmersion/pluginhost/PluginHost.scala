@@ -33,6 +33,7 @@ import io.github.iltotore.iron.constraint.any.Pure
 import com.histmersion.util.plugins.PluginKit
 import com.histmersion.config.edit.SettingKind.valueTypeEquality
 import com.histmersion.lint.{tolerated, LintRule}
+import com.histmersion.plugin.Secret
 
 /** The host side of the SPI (docs/research-plugins.md §2–§3.7): ServiceLoader discovery, the config contract (each
   * plugin's block layered over its own defaults resource, type-checked by key, decoded with the plugin's own reader),
@@ -46,8 +47,7 @@ object PluginHost:
   object ConfigPath extends Newtype[String, Pure]
   type Provider = Provider.T
   object Provider extends Newtype[String, Pure]
-  type SecretValue = SecretValue.T
-  object SecretValue extends Newtype[String, Pure]
+  export Secret.Resolved as SecretValue
   type Warning = Warning.T
   object Warning extends Newtype[String, Pure]
 
@@ -473,7 +473,7 @@ object PluginHost:
         vaults.get(name) match
           case None    => Left(Problem.Plugin.Vault(Problem.Plugin.Id(s"$name"), Problem.Plugin.Retrieval.NoVault))
           case Some(v) =>
-            try v.resolve(Secret.Vault.ResolveRef(r.value)).map(x => SecretValue(x.value))
+            try v.resolve(Secret.Vault.ResolveRef(r.value)).map(x => x)
             catch case NonFatal(e) => Left(vaultThrew(e, s"$name"))
 
   /** The vault of this name threw instead of answering: logged under its problem's id. */
@@ -495,14 +495,14 @@ object PluginHost:
   ): Map[Secret.Ref.Vault.Ref, Either[Problems, SecretValue]] =
     val asked = refs.distinct
     def one(r: Secret.Ref.Vault.Ref) =
-      try vault.resolve(Secret.Vault.ResolveRef(r.value)).map(x => SecretValue(x.value))
+      try vault.resolve(Secret.Vault.ResolveRef(r.value)).map(x => x)
       catch case NonFatal(e) => Left(vaultThrew(e, s"$name"))
     try
       val answers = Option(vault.resolveAll(asked.map(r => Secret.Vault.ResolveRef(r.value)))).getOrElse(Map.empty)
       asked.map { r =>
         val answer: Either[Problems, SecretValue] =
           answers.get(Secret.Vault.ResolveRef(r.value)).flatMap(Option(_)) match
-            case Some(Right(v)) => Right(SecretValue(v.value))
+            case Some(Right(v)) => Right(v)
             case Some(Left(e))  => Left(e)
             case None           =>
               Left(
@@ -617,10 +617,9 @@ object PluginHost:
       Option(services.env.root.get(name.value))
         .flatMap(v => Option(v.unwrapped))
         .map(v => EnvVar.Value(v.toString))
-    @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     def secret(s: Secret) =
       resolved(s)
-        .map(v => Secret.Resolved(v.value))
+        .map(v => v)
     def secretVaults = vaults
     @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
     override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.Upstream(upstream.value))

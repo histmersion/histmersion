@@ -54,8 +54,7 @@ object SourceFixtures:
       ds: DataSource,
       s: Source,
       chunkChars: Limits.ChunkChars,
-      toleranceKm: PlacesConfig.PointToleranceKm =
-        PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
+      toleranceKm: PlacesConfig.PointToleranceKm = FindingPlacement.DefaultToleranceKm
   ): Source.UpdatedAt = db(ds).write(
     SourceRepo.putIn(
       s,
@@ -64,13 +63,11 @@ object SourceFixtures:
     )
   )
 
-  @tolerated(LintRule.G44, "pending G44 (raw value only in the newtype's companion or at a lifted boundary)")
   def upsert(
       ds: DataSource,
       s: Source,
       chunkChars: Limits.ChunkChars,
-      toleranceKm: PlacesConfig.PointToleranceKm =
-        PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
+      toleranceKm: PlacesConfig.PointToleranceKm = FindingPlacement.DefaultToleranceKm
   ): Unit =
     val _ = put(ds, s, chunkChars, toleranceKm)
 
@@ -80,8 +77,7 @@ object SourceFixtures:
       requested: Citekey,
       p: Source.Patch,
       chunkChars: Limits.ChunkChars,
-      toleranceKm: PlacesConfig.PointToleranceKm =
-        PlacesConfig.PointToleranceKm(FindingPlacement.DefaultToleranceKm.value)
+      toleranceKm: PlacesConfig.PointToleranceKm = FindingPlacement.DefaultToleranceKm
   ): Either[Api.Error, Source.UpdatedAt] = db(ds).write(
     SourceRepo.patchIn(
       requested,

@@ -486,7 +486,7 @@ object QueueView:
         p(
           cls := "muted queue-goal",
           "Only the items of the goal ",
-          RouteLink(Route.Goal(g), Wording.humanize(Wording.Id(g.value))),
+          RouteLink(Route.Goal(g), Wording.humanize(g.wordingId)),
           " · ",
           RouteLink(
             if kind == Queue.Kind.Acquire then Route.Research(ResearchSection.Acquire)
@@ -739,7 +739,7 @@ object QueueView:
                   Option(g.title)
                     .filter(_.value.trim.nonEmpty)
                     .map(_.value)
-                    .getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
+                    .getOrElse(Wording.humanize(g.slug.wordingId))
                 )
               )
               .flatMap(l => List[Modifier[HtmlElement]](", ", l))
@@ -960,7 +960,7 @@ object QueueView:
                   span(cls := "hit-title", h.title),
                   h.year.map(y => span(cls := "muted", s" ($y)")),
                   span(cls := "muted hit-key", " · ", code(h.citekey)),
-                  onClick --> (_ => { ops.fulfil(item, Preview.Target.Source.Citekey(h.citekey.value)); close() })
+                  onClick --> (_ => { ops.fulfil(item, h.citekey); close() })
                 )
               )
             )

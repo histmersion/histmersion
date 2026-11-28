@@ -49,8 +49,8 @@ object TileDecode:
     TileCellPoint(
       TileCellPoint.Key(str(p, P.Key).getOrElse(s"${f.at.lat}|${f.at.lon}")),
       kind,
-      TileCellPoint.Lat(f.at.lat.value),
-      TileCellPoint.Lon(f.at.lon.value),
+      f.at.lat,
+      f.at.lon,
       TileCellPoint.N(num(p, P.Count).fold(1)(_.toInt)),
       num(p, P.MidLo).map(TileCellPoint.MidLo(_)),
       num(p, P.MidHi).map(TileCellPoint.MidHi(_)),
@@ -123,7 +123,7 @@ object TileDecode:
       str(p, P.Credit).map(MediaItem.Credit(_)),
       str(p, P.ThumbUrl).map(MediaItem.ThumbUrl(_)),
       fileUrl = Some(
-        MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(uid)).value)
+        MediaThumb.filePath(Bundle.Asset.Uid(uid)).asFileUrl
       ),
       sourceUrl = str(p, P.SourceUrl).map(MediaItem.SourceUrl(_)),
       licenseUrl = str(p, P.LicenseUrl).map(MediaItem.LicenseUrl(_)),

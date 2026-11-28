@@ -37,7 +37,8 @@ object RangeHttp:
   type ContentRangeHeader = ContentRangeHeader.T
   object ContentRangeHeader extends Newtype[String, Pure]
   type ResponseBytes = ResponseBytes.T
-  object ResponseBytes extends Newtype[Array[Byte], Pure]
+  object ResponseBytes extends Newtype[Array[Byte], Pure]:
+    extension (bytes: ResponseBytes) def asTile: PmTiles.TileBytes = PmTiles.TileBytes(bytes.value)
   type ResponseText = ResponseText.T
   object ResponseText extends Newtype[String, Pure]
   type StatusCode = StatusCode.T
