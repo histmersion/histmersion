@@ -19,6 +19,10 @@ import com.histmersion.domain.research.workflows.Check
 import com.histmersion.domain.research.workflows.SpotCheck
 import com.histmersion.domain.research.workflows.Merged
 import com.histmersion.domain.library.workflows.Loaded
+import com.histmersion.domain.library.workflows.{AcquisitionSweepRules, Classification, Closed, Frame, MetaChecked}
+import com.histmersion.domain.library.workflows.{Notes, Patched, StatusRouted, Upstreamed}
+import com.histmersion.Year as StoredYear
+import com.histmersion.domain.research.workflows.{Closure, Entry, Ledger, Lesson, LessonSource, Recheck, Status}
 import com.github.plokhotnyuk.jsoniter_scala.core.JsonValueCodec
 
 import com.histmersion.util.problem.{Legacy, Problem}
@@ -259,6 +263,177 @@ object CheckpointGolden:
     )
   )
 
+  private val frames = List(
+    Frame(Frame.Index(0), Some(Frame.Heading("Introduction")), Frame.Text("Tin came from the east.")),
+    Frame(Frame.Index(1), None, Frame.Text(""))
+  )
+
+  val loaded: Golden[Loaded] = Golden(
+    "enrich-loaded.ndjson",
+    List(
+      Loaded(
+        library.Citekey("smith1987_tin"),
+        Loaded.Title("Tin in the Aegean"),
+        List(AuthorName("Smith, J."), AuthorName("Doe, A.")),
+        Some(StoredYear(1987)),
+        Some(Loaded.Venue("Antiquity")),
+        Source.Status.Wire("current"),
+        Loaded.HasSummary(true),
+        Loaded.HasNotes(false),
+        Loaded.HasPeriod(true),
+        Some(Period(Year(-2500), Year(-2000))),
+        List(EnrichSource.Topic("bronze_age")),
+        List(EnrichSource.Region("Aegean")),
+        List(Loaded.ExistingClaims("Tin came from the east.")),
+        Some(Source.UpdatedAt("2026-11-28T10:00:00Z")),
+        Loaded.Head("Tin in the Aegean. Smith 1987."),
+        frames,
+        List(EnrichSource.Tag("tin")),
+        Some(library.Doi("10.1/x"))
+      ),
+      Loaded(
+        library.Citekey("doe2001_tin"),
+        Loaded.Title(""),
+        Nil,
+        None,
+        None,
+        Source.Status.Wire("unassessed"),
+        Loaded.HasSummary(false),
+        Loaded.HasNotes(false),
+        Loaded.HasPeriod(false),
+        None,
+        Nil,
+        Nil,
+        Nil,
+        None,
+        Loaded.Head(""),
+        Nil
+      )
+    )
+  )
+
+  val metaChecked: Golden[MetaChecked] = Golden(
+    "enrich-meta-checked.ndjson",
+    List(
+      MetaChecked(
+        MetaChecked.Checked(true),
+        List(MetaChecked.Differences("year: 1987 vs 1988")),
+        MetaChecked.Note("n")
+      ),
+      MetaChecked(MetaChecked.Checked(false), Nil)
+    )
+  )
+
+  val patched: Golden[Patched] = Golden(
+    "enrich-patched.ndjson",
+    List(
+      Patched(
+        Patched.FindingsAdded(3),
+        List(Patched.FieldsSet("summary"), Patched.FieldsSet("topics")),
+        Some(Patched.StatusProposal("contested"))
+      ),
+      Patched(Patched.FindingsAdded(0), Nil, None)
+    )
+  )
+
+  val upstreamed: Golden[Upstreamed] = Golden(
+    "enrich-upstreamed.ndjson",
+    List(
+      Upstreamed(Upstreamed.Ran(true), Upstreamed.Summary("12 references"), Upstreamed.Retracted(true)),
+      Upstreamed(Upstreamed.Ran(false), Upstreamed.Summary(""))
+    )
+  )
+
+  val statusRouted: Golden[StatusRouted] = Golden(
+    "enrich-status-routed.ndjson",
+    List(
+      StatusRouted(
+        Some(StatusRouted.Applied("contested")),
+        Some(StatusRouted.Approval(42L)),
+        StatusRouted.Note("routed")
+      ),
+      StatusRouted(None, None, StatusRouted.Note(""))
+    )
+  )
+
+  val closed: Golden[Closed] = Golden(
+    "enrich-closed.ndjson",
+    List(
+      Closed(Closed.Line("enriched"), List(Closed.Lint("no period")), Some(Closed.Acquire("doe2001_tin"))),
+      Closed(Closed.Line(""), Nil, None)
+    )
+  )
+
+  val classifications: Golden[Classification] = Golden(
+    "enrich-classification.ndjson",
+    List(
+      Classification(
+        Classification.Summary("A summary."),
+        List(EnrichSource.Topic("bronze_age")),
+        List(EnrichSource.Region("Aegean")),
+        List(EnrichSource.Tag("tin")),
+        Some(
+          StatedPeriod(
+            StatedYear(AgentVerify.ToSignedYearValue(2500), AgentVerify.YearUnit.Wire("BCE")),
+            StatedYear(AgentVerify.ToSignedYearValue(2000), AgentVerify.YearUnit.Wire("BCE")),
+            Some(StatedPeriod.Name("Early Bronze Age"))
+          )
+        ),
+        library.Source.Status.Wire("current"),
+        Classification.StatusEvidence("It is cited as current.")
+      ),
+      Classification(
+        Classification.Summary(""),
+        period = None,
+        status = library.Source.Status.Wire("unassessed"),
+        statusEvidence = Classification.StatusEvidence("")
+      )
+    )
+  )
+
+  val notes: Golden[Notes] = Golden("enrich-notes.ndjson", List(Notes(Notes.Value("See [[smith1987_tin]]."))))
+
+  val candidates: Golden[AcquisitionSweepRules.Candidate] = Golden(
+    "acquisition-candidate.ndjson",
+    List(
+      AcquisitionSweepRules.Candidate(
+        library.Doi("10.1/x"),
+        api.library.Title("Tin in the Aegean"),
+        Some(Year(1987)),
+        List(api.library.AuthorName("Smith, J.")),
+        Some(Source.Venue("Antiquity")),
+        WorkRef.IsOa(true),
+        AcquisitionSweepRules.Candidate.Query("bronze age tin"),
+        Some(WorkRef.AbstractText("An abstract."))
+      ),
+      AcquisitionSweepRules.Candidate(
+        library.Doi("10.2/y"),
+        api.library.Title(""),
+        None,
+        Nil,
+        None,
+        WorkRef.IsOa(false),
+        AcquisitionSweepRules.Candidate.Query(""),
+        None
+      )
+    )
+  )
+
+  val rankings: Golden[AcquisitionSweepRules.Ranking] = Golden(
+    "acquisition-ranking.ndjson",
+    List(
+      AcquisitionSweepRules.Ranking(
+        List(
+          AcquisitionSweepRules.Pick(
+            AcquisitionSweepRules.Pick.DoiText("10.1/x"),
+            AcquisitionSweepRules.Rationale("on the goal")
+          )
+        )
+      ),
+      AcquisitionSweepRules.Ranking()
+    )
+  )
+
   private val evidence =
     List(
       domain.research.workflows.Quotation(
@@ -383,6 +558,47 @@ object CheckpointGolden:
     )
   )
 
+  private val runId = automation.Run.Id("0123abcd-0000-4000-8000-0000000000aa")
+
+  /** The review ledger an article's review keeps in the database (`ReviewLedgerRepo`), every status among its entries.
+    */
+  val ledgers: Golden[Ledger] = Golden(
+    "review-ledger.ndjson",
+    List(
+      Ledger(
+        research.Slug("tin_trade"),
+        Status.values.toList.zip(reviewFindings.values).map { (s, f) =>
+          Entry(
+            f,
+            runId,
+            Merged.Round(2),
+            s,
+            Entry.Claimed(true),
+            Some(Entry.NotFixed("still there")),
+            Entry.Reopened(1),
+            Some(
+              Closure(
+                Reviewer.Wire("rules"),
+                Merged.Round(2),
+                runId,
+                Closure.Note("fixed"),
+                domain.research.workflows.Quotation.Quote("the route"),
+                Some(library.Citekey("smith1987_tin"))
+              )
+            ),
+            Entry.NotFixedCount(2),
+            Some(runId)
+          )
+        } :+ Entry(reviewFindings.values.head, runId, Merged.Round(1)),
+        LessonSource.values.toList.map(src =>
+          Lesson(Recheck.Lessons("Quote the record."), src, runId, Merged.Round(1))
+        ),
+        Some(Ledger.Task(908))
+      ),
+      Ledger(research.Slug("empty"))
+    )
+  )
+
   val all: List[Golden[?]] = List(
     sourcePatches,
     proposals,
@@ -394,7 +610,18 @@ object CheckpointGolden:
     reviewFindings,
     reports,
     merged,
-    workRefs
+    workRefs,
+    loaded,
+    metaChecked,
+    patched,
+    upstreamed,
+    statusRouted,
+    closed,
+    classifications,
+    notes,
+    candidates,
+    rankings,
+    ledgers
   )
 
 /** The patches `enrich-source` builds from its checkpoints: one that fills everything, one that fills nothing. */

@@ -117,6 +117,14 @@ class AnswerSchemasSuite extends munit.FunSuite:
     assertEquals(allSchemas.map(_._1).distinct.size, allSchemas.size)
     assert(allSchemas.size >= 12, allSchemas.map(_._1))
 
+  test("every step schema renders as recorded (golden/answer-schemas.tsv, written from the schemas of 2026-11-28)"):
+    val recorded = scala.io.Source
+      .fromResource("golden/answer-schemas.tsv")(using scala.io.Codec.UTF8)
+      .getLines()
+      .filter(_.nonEmpty)
+      .toList
+    assertEquals(allSchemas.map((name, s) => s"$name\t${derived(s).noSpaces}"), recorded)
+
   test("no step derives its schema at the call: every ResponseSchema the server sends is in AnswerSchemas"):
     val main = Iterator
       .iterate(Paths.get(sys.props("user.dir")).toAbsolutePath)(_.getParent)
